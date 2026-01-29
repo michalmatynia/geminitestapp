@@ -176,6 +176,7 @@ const configFiles = [
   "final-fix-api-handlers.js",
   "fix-api-handlers-v4.js",
   "fix-api-imports.js",
+  "fix_simple.cjs",
 ];
 
 const disableTypeCheckedForConfigFiles = compat
@@ -241,7 +242,13 @@ const nextRouteConfig = {
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
-    ignores: ["lib/generated/prisma/**", "scripts/backfill-note-colors.mjs", "*.py"],
+    ignores: [
+      "lib/generated/prisma/**",
+      "scripts/backfill-note-colors.mjs",
+      "*.py",
+      "fix_all_api.cjs",
+      "fix_simple.cjs",
+    ],
   },
   ...compat.extends(
     "plugin:@typescript-eslint/recommended-type-checked",

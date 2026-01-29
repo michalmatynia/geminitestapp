@@ -24,7 +24,7 @@ const pageUpdateSchema = z.object({
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
     const { id } = params;
     const cmsRepository = await getCmsRepository();
@@ -48,7 +48,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext, params: Par
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
     const { id } = params;
 
@@ -89,7 +89,7 @@ async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Par
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
     const { id } = params;
     const cmsRepository = await getCmsRepository();

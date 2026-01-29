@@ -362,7 +362,27 @@ export function normalizePlanHierarchy(parsed: {
   if (!Array.isArray(parsed.goals) || parsed.goals.length === 0) {
     return null;
   }
-  const goals: PlanHierarchy["goals"] = parsed.goals.map((goal) => {
+  const goals: PlanHierarchy["goals"] = parsed.goals.map((goal: {
+    title?: string;
+    successCriteria?: string;
+    priority?: number;
+    dependsOn?: number[] | string[];
+    subgoals?: Array<{
+      title?: string;
+      successCriteria?: string;
+      priority?: number;
+      dependsOn?: number[] | string[];
+      steps?: Array<{
+        title?: string;
+        tool?: string;
+        expectedObservation?: string;
+        successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+      }>;
+    }>;
+  }) => {
     const goalId = randomUUID();
     const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
     return {
@@ -371,7 +391,21 @@ export function normalizePlanHierarchy(parsed: {
       successCriteria: goal.successCriteria?.trim() || null,
       priority: typeof goal.priority === "number" ? goal.priority : null,
       dependsOn: Array.isArray(goal.dependsOn) ? goal.dependsOn : null,
-      subgoals: subgoals.map((subgoal) => {
+      subgoals: subgoals.map((subgoal: {
+        title?: string;
+        successCriteria?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+        steps?: Array<{
+          title?: string;
+          tool?: string;
+          expectedObservation?: string;
+          successCriteria?: string;
+          phase?: string;
+          priority?: number;
+          dependsOn?: number[] | string[];
+        }>;
+      }) => {
         const subgoalId = randomUUID();
         const steps = Array.isArray(subgoal.steps) ? subgoal.steps : [];
         return {
@@ -383,7 +417,15 @@ export function normalizePlanHierarchy(parsed: {
           dependsOn: Array.isArray(subgoal.dependsOn)
             ? subgoal.dependsOn
             : null,
-          steps: steps.map((step) => ({
+          steps: steps.map((step: {
+            title?: string;
+            tool?: string;
+            expectedObservation?: string;
+            successCriteria?: string;
+            phase?: string;
+            priority?: number;
+            dependsOn?: number[] | string[];
+          }) => ({
             title: step.title?.trim() || "Review the page state.",
             tool: step.tool === "none" ? "none" : "playwright" as const,
             expectedObservation: step.expectedObservation?.trim() || null,

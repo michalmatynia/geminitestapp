@@ -16,7 +16,7 @@ const pageCreateSchema = z.object({
  * GET /api/cms/pages
  * Fetches a list of all pages.
  */
-async function GET_handler(): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   try {
     const cmsRepository = await getCmsRepository();
     const pages = await cmsRepository.getPages();
@@ -27,6 +27,7 @@ async function GET_handler(): Promise<NextResponse | Response> {
       method: "GET",
     });
     return createErrorResponse(_error, {
+      request: req,
       source: "cms.pages.GET",
       fallbackMessage: "Failed to fetch pages",
     });
@@ -69,9 +70,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 }
 
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "cms.pages.GET" });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "cms.pages.POST" });
+export const GET = apiHandler(GET_handler, { source: "cms.pages.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.pages.POST" });

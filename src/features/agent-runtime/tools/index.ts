@@ -114,7 +114,7 @@ type FailureRecoveryPlan = {
 
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 
-const resolveIgnoreRobotsTxt = (planState: unknown) => {
+const resolveIgnoreRobotsTxt = (planState: unknown): boolean => {
   if (!planState || typeof planState !== "object") return false;
   const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
     .preferences;
@@ -156,7 +156,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     const memoryKey = runRecord?.memoryKey ?? null;
     
     // Resolve specific models from preferences
-    const getPrefModel = (key: string) => {
+    const getPrefModel = (key: string): string | null => {
       if (!runRecord?.planState || typeof runRecord.planState !== "object") {
         return null;
       }
@@ -196,19 +196,19 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       level: string,
       message: string,
       metadata?: Record<string, unknown>
-    ) => {
-      const normalizeLogMetadata = async (payload?: Record<string, unknown>) => {
+    ): Promise<void> => {
+      const normalizeLogMetadata = async (payload?: Record<string, unknown>): Promise<Record<string, unknown> | undefined> => {
         if (!payload || !outputNormalizationModel) return payload;
         const extractionType = payload.extractionType;
         if (extractionType !== "product_names" && extractionType !== "emails") {
           return payload;
         }
         // Helper to normalize fields in metadata using LLM if configured
-        const normalizeField = async (key: string) => {
+        const normalizeField = async (key: string): Promise<void> => {
           const value = payload[key];
           if (!Array.isArray(value)) return;
           const items = value.filter(
-            (item): item is string => typeof item === "string"
+            (item: unknown): item is string => typeof item === "string"
           );
           if (items.length === 0) return;
           const typedExtractionType: "product_names" | "emails" = extractionType;
@@ -251,7 +251,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       });
     };
 
-    const enforceRobotsPolicy = async (url: string) => {
+    const enforceRobotsPolicy = async (url: string): Promise<boolean> => {
       if (ignoreRobotsTxt) return true;
       if (!url || url === "about:blank") return true;
       const robots = await loadRobotsTxt(url);
@@ -314,7 +314,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     });
 
     let cloudflareDetected = false;
-    const flagCloudflare = async (source: string, detail?: string) => {
+    const flagCloudflare = async (source: string, detail?: string): Promise<void> => {
         if (cloudflareDetected) return;
         cloudflareDetected = true;
         await log("warning", "Cloudflare challenge detected.", {
@@ -369,7 +369,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           const query = searchFirstDecision.query;
           const results = query ? await fetchSearchResults(query, resolvedSearchProvider, log) : [];
           const allowedResults = targetHostname
-            ? results.filter((result) => isAllowedUrl(result.url, targetHostname))
+            ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
             : results;
           
            if (targetHostname && allowedResults.length === 0) {
@@ -445,7 +445,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 const results = await fetchSearchResults(query, resolvedSearchProvider, log);
                 if (results.length > 0) {
                     const allowedResults = targetHostname
-                        ? results.filter((result) => isAllowedUrl(result.url, targetHostname))
+                        ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
                         : results;
                     
                     if (targetHostname && allowedResults.length === 0) {
@@ -504,7 +504,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
              const results = await fetchSearchResults(query, resolvedSearchProvider, log);
              if (results.length > 0) {
                  const allowedResults = targetHostname
-                     ? results.filter((result) => isAllowedUrl(result.url, targetHostname))
+                     ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
                      : results;
                  
                  if (targetHostname && allowedResults.length === 0) {
@@ -935,7 +935,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
         // Product extraction logic
         await waitForProductContent(page);
-        const cleanProductNames = (items: string[]) => normalizeProductNames(items);
+        const cleanProductNames = (items: string[]): string[] => normalizeProductNames(items);
         let extractedNames = cleanProductNames(await extractProductNames(page));
         
         if (extractedNames.length === 0) {
@@ -1409,10 +1409,10 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             }
          }
 
-         const locateBySelector = async (selector: string | null) => {
+         const locateBySelector = async (selector: string | null): Promise<any> => {
           if (!selector) return null;
           try {
-            return await findFirstVisible(page.locator(selector));
+            return await findFirstVisible(page!.locator(selector));
           } catch {
             return null;
           }
@@ -1699,7 +1699,7 @@ export async function runAgentBrowserControl({
       level: string,
       message: string,
       metadata?: Record<string, unknown>
-    ) => {
+    ): Promise<void> => {
       await prisma.agentBrowserLog.create({
         data: {
           runId,

@@ -5,14 +5,9 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type Params = { id: string };
-type Ctx = { params: Promise<Params> } | { params: Params };
-
-async function getId(ctx: Ctx): Promise<string> {
-  const p = await Promise.resolve(ctx.params);
-  return p.id;
-}
 
 const slugUpdateSchema = z.object({
   slug: z.string().trim().min(1),
@@ -23,9 +18,9 @@ const slugUpdateSchema = z.object({
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
     const cmsRepository = await getCmsRepository();
     const slug = await cmsRepository.getSlugById(id);
 
@@ -47,9 +42,9 @@ async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
     const cmsRepository = await getCmsRepository();
     
     await cmsRepository.deleteSlug(id);
@@ -68,9 +63,9 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse 
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
 
     const parsed = await parseJsonBody(req, slugUpdateSchema, {
       logPrefix: "cms-slugs",

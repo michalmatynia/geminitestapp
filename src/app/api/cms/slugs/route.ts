@@ -14,13 +14,14 @@ const slugSchema = z.object({
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
-async function GET_handler(): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   try {
     const cmsRepository = await getCmsRepository();
     const slugs = await cmsRepository.getSlugs();
     return NextResponse.json(slugs);
   } catch (_error) {
     return createErrorResponse(_error, {
+      request: req,
       source: "cms.slugs.GET",
       fallbackMessage: "Failed to fetch slugs",
     });
@@ -45,15 +46,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return NextResponse.json(newSlug);
   } catch (error) {
     return createErrorResponse(error, {
+      request: req,
       source: "cms.slugs.POST",
       fallbackMessage: "Failed to create slug",
     });
   }
 }
 
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "cms.slugs.GET" });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "cms.slugs.POST" });
+export const GET = apiHandler(GET_handler, { source: "cms.slugs.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.slugs.POST" });

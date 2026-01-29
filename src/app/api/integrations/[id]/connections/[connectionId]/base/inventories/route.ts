@@ -5,6 +5,7 @@ import { fetchBaseInventories } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/[id]/connections/[connectionId]/base/inventories

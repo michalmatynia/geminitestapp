@@ -19,7 +19,7 @@ type CreateMappingRequest = {
  *   - connectionId (required): The integration connection ID
  *   - catalogId (optional): Filter by catalog ID
  */
-async function GET_handler(request: NextRequest): Promise<Response> {
+async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get("connectionId");
@@ -46,7 +46,7 @@ async function GET_handler(request: NextRequest): Promise<Response> {
  * POST /api/marketplace/mappings
  * Creates a new category mapping.
  */
-async function POST_handler(request: NextRequest): Promise<Response> {
+async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const body = (await request.json()) as CreateMappingRequest;
     const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;

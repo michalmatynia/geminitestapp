@@ -4,7 +4,7 @@ import type { Asset3DUpdateInput } from "@/features/viewer3d/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import { notFoundError, badRequestError } from "@/shared/errors/app-error";
 
-async function GET_handler(_req: NextRequest, _ctx: any, params: { id: string }): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: unknown, params: { id: string }): Promise<Response> {
   const repository = getAsset3DRepository();
   const asset = await repository.getAsset3DById(params.id);
 
@@ -15,7 +15,7 @@ async function GET_handler(_req: NextRequest, _ctx: any, params: { id: string })
   return NextResponse.json(asset);
 }
 
-async function PATCH_handler(req: NextRequest, _ctx: any, params: { id: string }): Promise<Response> {
+async function PATCH_handler(req: NextRequest, _ctx: unknown, params: { id: string }): Promise<Response> {
   let body: Asset3DUpdateInput;
   try {
     body = (await req.json()) as Asset3DUpdateInput;
@@ -33,7 +33,7 @@ async function PATCH_handler(req: NextRequest, _ctx: any, params: { id: string }
   return NextResponse.json(asset);
 }
 
-async function DELETE_handler(_req: NextRequest, _ctx: any, params: { id: string }): Promise<Response> {
+async function DELETE_handler(_req: NextRequest, _ctx: unknown, params: { id: string }): Promise<Response> {
   const success = await deleteAsset3D(params.id);
 
   if (!success) {

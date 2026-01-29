@@ -246,7 +246,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
         }),
       });
       if (response.ok) {
-        const payload: unknown = await response.ok ? await response.json() : null;
+        const payload: unknown = await response.json();
         const content = extractMessageContent(payload);
         const parsed = parseJsonObject(content) as {
           summary?: unknown;

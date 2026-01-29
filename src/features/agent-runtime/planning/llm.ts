@@ -445,7 +445,7 @@ export async function buildAdaptivePlanReview({
               signals,
               browserContext,
               completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step) => ({
+              currentPlan: currentPlan.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 tool: step.tool,
@@ -831,7 +831,7 @@ export async function buildResumePlanReview({
               browserContext,
               lastError,
               completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step) => ({
+              currentPlan: currentPlan.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 tool: step.tool,
@@ -980,7 +980,7 @@ export async function evaluatePlanWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 tool: step.tool,
                 expectedObservation: step.expectedObservation,
@@ -1584,7 +1584,7 @@ export async function dedupePlanStepsWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 tool: step.tool,
                 expectedObservation: step.expectedObservation,
@@ -1687,7 +1687,7 @@ export async function guardRepetitionWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              recentSteps: currentPlan.map((step) => ({
+              recentSteps: currentPlan.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 phase: step.phase,
@@ -1904,7 +1904,7 @@ export async function optimizePlanWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 tool: step.tool,
                 expectedObservation: step.expectedObservation,

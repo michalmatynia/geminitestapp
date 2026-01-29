@@ -12,7 +12,7 @@ type LLMContext = {
   stepLabel?: string | null;
 };
 
-const extractMessageContent = (payload: unknown) => {
+const extractMessageContent = (payload: unknown): string => {
   if (!payload || typeof payload !== "object") return "";
   const message = (payload as { message?: { content?: unknown } }).message;
   return typeof message?.content === "string" ? message.content : "";
@@ -42,7 +42,14 @@ export const validateExtractionWithLLM = async (
     targetHostname: string | null;
     evidence: Array<{ item: string; snippet: string }>;
   }
-) => {
+): Promise<{
+  valid: boolean;
+  acceptedItems: string[];
+  rejectedItems: string[];
+  issues: string[];
+  missingCount: number;
+  evidence: Array<{ item: string; snippet: string }>;
+}> => {
   const { model } = context;
   const {
     prompt,
@@ -126,11 +133,11 @@ export const validateExtractionWithLLM = async (
       evidence: Array.isArray(parsed?.evidence) ? parsed.evidence : [],
     };
   } catch (error) {
-    const fallbackAccepted = evidence.map((entry) => entry.item);
+    const fallbackAccepted = evidence.map((entry: { item: string; snippet: string }) => entry.item);
     return {
       valid: fallbackAccepted.length >= requiredCount,
       acceptedItems: fallbackAccepted,
-      rejectedItems: items.filter((item) => !fallbackAccepted.includes(item)),
+      rejectedItems: items.filter((item: string) => !fallbackAccepted.includes(item)),
       issues: [
         `LLM validation failed: ${
           error instanceof Error ? error.message : String(error)
@@ -150,7 +157,7 @@ export const normalizeExtractionItemsWithLLM = async (
     items: string[];
     normalizationModel?: string | null;
   }
-) => {
+): Promise<string[]> => {
   const { prompt, extractionType, items, normalizationModel } = params;
   if (!normalizationModel || items.length === 0) {
     return items;
@@ -202,7 +209,7 @@ export const inferSelectorsFromLLM = async (
   task: string,
   label: string,
   inferenceModel?: string | null
-) => {
+): Promise<string[]> => {
   const { runId, model, log, activeStepId } = context;
   if (!uiInventory) return [];
   try {
@@ -283,7 +290,13 @@ export const buildExtractionPlan = async (
     uiInventory: unknown;
   },
   inferenceModel?: string | null
-) => {
+): Promise<{
+  target: string | null;
+  fields: string[];
+  primarySelectors: string[];
+  fallbackSelectors: string[];
+  notes: string | null;
+} | null> => {
   const { runId, model, log, activeStepId } = context;
   if (!request.uiInventory) return null;
   try {
@@ -378,7 +391,17 @@ export const buildFailureRecoveryPlan = async (
     loginCandidates?: unknown;
   },
   inferenceModel?: string | null
-) => {
+): Promise<{
+  reason: string | null;
+  selectors: string[];
+  listingUrls: string[];
+  clickSelector: string | null;
+  loginUrl: string | null;
+  usernameSelector: string | null;
+  passwordSelector: string | null;
+  submitSelector: string | null;
+  notes: string | null;
+} | null> => {
   const { runId, model, log, activeStepId } = context;
   if (!request.uiInventory) return null;
   try {
@@ -477,7 +500,7 @@ export const buildFailureRecoveryPlan = async (
 export const buildSearchQueryWithLLM = async (
   context: LLMContext,
   prompt: string
-) => {
+): Promise<string | null> => {
   const { model, log, activeStepId } = context;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -525,7 +548,7 @@ export const pickSearchResultWithLLM = async (
   query: string,
   prompt: string,
   results: Array<{ title: string; url: string }>
-) => {
+): Promise<string | null> => {
   const { model, log, activeStepId } = context;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -575,7 +598,7 @@ export const decideSearchFirstWithLLM = async (
   _memoryKey?: string | null,
   _memoryValidationModel?: string | null,
   _memorySummarizationModel?: string | null
-) => {
+): Promise<{ useSearchFirst: boolean; query: string | null; reason: unknown } | null> => {
   const { runId, model, log, activeStepId } = context;
   if (!prompt || hasExplicitUrl) return null;
   try {

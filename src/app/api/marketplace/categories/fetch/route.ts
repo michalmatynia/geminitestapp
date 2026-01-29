@@ -16,7 +16,7 @@ type FetchCategoriesRequest = {
  * Fetches categories from the marketplace API and stores them locally.
  * Currently supports Base.com (BaseLinker).
  */
-async function POST_handler(request: NextRequest): Promise<Response> {
+async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const body = (await request.json()) as FetchCategoriesRequest;
     const { connectionId } = body;

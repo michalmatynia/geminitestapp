@@ -18,7 +18,7 @@ type BulkMappingRequest = {
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
  */
-async function POST_handler(request: NextRequest): Promise<Response> {
+async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const body = (await request.json()) as BulkMappingRequest;
     const { connectionId, catalogId, mappings } = body;

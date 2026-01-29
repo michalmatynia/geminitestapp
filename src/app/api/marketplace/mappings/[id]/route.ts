@@ -3,23 +3,22 @@ import { getCategoryMappingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type UpdateMappingRequest = {
   internalCategoryId?: string;
   isActive?: boolean;
 };
 
-type RouteParams = {
-  params: Promise<{ id: string }>;
-};
+type Params = { id: string };
 
 /**
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-async function GET_handler(request: NextRequest, { params }: RouteParams): Promise<Response> {
+async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     const repo = getCategoryMappingRepository();
     const mapping = await repo.getById(id);
@@ -42,9 +41,9 @@ async function GET_handler(request: NextRequest, { params }: RouteParams): Promi
  * PUT /api/marketplace/mappings/[id]
  * Updates a category mapping.
  */
-async function PUT_handler(request: NextRequest, { params }: RouteParams): Promise<Response> {
+async function PUT_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = (await request.json()) as UpdateMappingRequest;
 
     const repo = getCategoryMappingRepository();
@@ -76,9 +75,9 @@ async function PUT_handler(request: NextRequest, { params }: RouteParams): Promi
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-async function DELETE_handler(request: NextRequest, { params }: RouteParams): Promise<Response> {
+async function DELETE_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     const repo = getCategoryMappingRepository();
 

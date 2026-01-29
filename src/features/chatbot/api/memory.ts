@@ -1,7 +1,7 @@
 import type { ChatbotMemoryItem } from "../types";
 import { requestJson } from "./client";
 
-export const fetchChatbotMemory = async (queryString: string) => {
+export const fetchChatbotMemory = async (queryString: string): Promise<ChatbotMemoryItem[]> => {
   const url = queryString
     ? `/api/chatbot/memory?${queryString}`
     : "/api/chatbot/memory";

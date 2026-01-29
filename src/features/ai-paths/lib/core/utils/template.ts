@@ -5,9 +5,9 @@ export const renderTemplate = (
   template: string,
   context: Record<string, unknown>,
   currentValue: unknown
-) =>
+): string =>
   template
-    .replace(/{{\s*([^}]+)\s*}}/g, (_match, token) => {
+    .replace(/{{\s*([^}]+)\s*}}/g, (_match: string, token: string) => {
       const key = String(token).trim();
       if (key === "value" || key === "current") {
         return safeStringify(currentValue);
@@ -15,7 +15,7 @@ export const renderTemplate = (
       const resolved = getValueAtMappingPath(context, key);
       return safeStringify(resolved);
     })
-    .replace(/\[\s*([^\]]+)\s*\]/g, (_match, token) => {
+    .replace(/\[\s*([^\]]+)\s*\]/g, (_match: string, token: string) => {
       const key = String(token).trim();
       if (key === "value" || key === "current") {
         return safeStringify(currentValue);
@@ -28,16 +28,16 @@ export const renderJsonTemplate = (
   template: string,
   context: Record<string, unknown>,
   currentValue: unknown
-) => {
-  const resolveToken = (token: string) => {
+): string => {
+  const resolveToken = (token: string): unknown => {
     const key = String(token).trim();
     if (key === "value" || key === "current") {
       return currentValue;
     }
     return getValueAtMappingPath(context, key);
   };
-  const escapeQuoted = (input: string) => {
-    const replaceQuoted = (text: string, pattern: RegExp) =>
+  const escapeQuoted = (input: string): string => {
+    const replaceQuoted = (text: string, pattern: RegExp): string =>
       text.replace(pattern, (_match: string, token: string) => {
         const value: unknown = resolveToken(token);
         const asString: string =

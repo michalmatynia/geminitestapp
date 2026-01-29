@@ -1530,7 +1530,7 @@ export async function buildMidRunAdaptationWithLLM({
     }
     return {
       shouldAdapt: true,
-      reason: parsed.reason,
+      ...(typeof parsed.reason === "string" ? { reason: parsed.reason } : {}),
       steps: stepsResult,
       hierarchy,
       meta,
@@ -1828,6 +1828,7 @@ export async function buildCheckpointBriefWithLLM({
       risks?: string[];
     } | null;
     if (!parsed?.summary) return null;
+    const { summary } = parsed;
     const nextActions = Array.isArray(parsed.nextActions)
       ? parsed.nextActions.filter((item: unknown) => typeof item === "string")
       : [];
@@ -1849,11 +1850,11 @@ export async function buildCheckpointBriefWithLLM({
       });
     }
     return { summary, nextActions, risks };
-  } catch (error) {
+  } catch (err) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Checkpoint brief failed", {
         ...(runId && { runId }),
-        error: error instanceof Error ? error.message : String(error),
+        error: err instanceof Error ? err.message : String(err),
       });
     }
     return null;

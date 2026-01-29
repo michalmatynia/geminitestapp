@@ -5,7 +5,7 @@ export const readErrorResponse = async (res: Response): Promise<{ message: strin
     const data = (await res.json()) as { error?: string; errorId?: string };
     return {
       message: data.error || defaultErrorMessage,
-      errorId: data.errorId,
+      ...(typeof data.errorId === "string" ? { errorId: data.errorId } : {}),
     };
   } catch (_error) {
     try {

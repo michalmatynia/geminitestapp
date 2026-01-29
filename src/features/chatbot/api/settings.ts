@@ -4,8 +4,8 @@ import { fetchWithTimeout, readErrorResponse, requestJson } from "./client";
 
 export const fetchChatbotSettings = async (
   key: string,
-  timeoutMs = 5000
-) => {
+  timeoutMs: number = 5000
+): Promise<{ settings?: { settings?: unknown } | null }> => {
   return requestJson<{ settings?: { settings?: unknown } | null }>(
     `/api/chatbot/settings?key=${encodeURIComponent(key)}`,
     undefined,
@@ -16,8 +16,8 @@ export const fetchChatbotSettings = async (
 export const saveChatbotSettings = async (
   key: string,
   settings: ChatbotSettingsPayload,
-  timeoutMs = 5000
-) => {
+  timeoutMs: number = 5000
+): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> => {
   const res = await fetchWithTimeout(
     "/api/chatbot/settings",
     {
@@ -34,7 +34,7 @@ export const saveChatbotSettings = async (
   return (await res.json()) as { settings?: { settings?: ChatbotSettingsPayload } };
 };
 
-export const fetchSettings = async () =>
+export const fetchSettings = async (): Promise<SettingRecord[]> =>
   requestJson<SettingRecord[]>(
     "/api/settings",
     { cache: "no-store" },
@@ -44,8 +44,8 @@ export const fetchSettings = async () =>
 export const saveSetting = async (
   key: string,
   value: string,
-  fallbackMessage = "Failed to save setting."
-) =>
+  fallbackMessage: string = "Failed to save setting."
+): Promise<SettingRecord> =>
   requestJson<SettingRecord>(
     "/api/settings",
     {

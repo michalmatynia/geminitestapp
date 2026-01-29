@@ -228,31 +228,35 @@ export function buildPlanStepsFromSpecs(
   const preflightSteps = includeSafety
     ? buildSafetyCheckSteps(meta ?? undefined, maxStepAttempts)
     : [];
-  const plannedSteps: PlanStep[] = stepSpecs.map((step: {
-    title?: string;
-    tool?: string;
-    expectedObservation?: string | null;
-    successCriteria?: string | null;
-    phase?: string | null;
-    priority?: number | null;
-    dependsOn?: number[] | string[] | null;
-    goalId?: string | null;
-    subgoalId?: string | null;
-  }, _index: number) => ({
-    id: randomUUID(),
-    title: step.title?.trim() || "Review the page state.",
-    status: "pending" as const,
-    tool: step.tool === "none" ? "none" : "playwright",
-    expectedObservation: step.expectedObservation?.trim() || null,
-    successCriteria: step.successCriteria?.trim() || null,
-    goalId: step.goalId ?? null,
-    subgoalId: step.subgoalId ?? null,
-    phase: normalizePhase(step.phase ?? undefined),
-    priority: typeof step.priority === "number" ? step.priority : null,
-    dependsOn: normalizeDependencies(step.dependsOn ?? undefined, stepSpecs),
-    attempts: 0,
-    maxAttempts: maxStepAttempts,
-  }));
+  const plannedSteps: PlanStep[] = stepSpecs.map(
+    (
+      step: {
+        title?: string;
+        tool?: string;
+        expectedObservation?: string | null;
+        successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
+        goalId?: string | null;
+        subgoalId?: string | null;
+      },
+      _index: number
+    ) => ({
+      id: randomUUID(),
+      title: step.title?.trim() || "Review the page state.",
+      status: "pending" as const,
+      tool: step.tool === "none" ? ("none" as const) : ("playwright" as const),
+      expectedObservation: step.expectedObservation?.trim() || null,
+      successCriteria: step.successCriteria?.trim() || null,
+      goalId: step.goalId ?? null,
+          subgoalId: step.subgoalId ?? null,
+          phase: normalizePhase(step.phase) as PlanStep["phase"],
+          priority: typeof step.priority === "number" ? step.priority : null,
+          dependsOn: normalizeDependencies(step.dependsOn ?? undefined, stepSpecs),
+          attempts: 0,
+          maxAttempts: maxStepAttempts,
+        }));
   const verificationSteps = includeSafety
     ? buildVerificationSteps(meta ?? undefined, maxStepAttempts)
     : [];
@@ -298,7 +302,9 @@ export function buildBranchStepsFromAlternatives(
   );
 }
 
-export function normalizePhase(value?: string): PlanStep["phase"] | null {
+export function normalizePhase(
+  value?: string | null
+): "observe" | "act" | "verify" | "recover" | null {
   if (!value) return null;
   const normalized = value.toLowerCase();
   if (normalized === "observe") return "observe";

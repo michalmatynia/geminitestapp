@@ -1,9 +1,9 @@
 import type { JsonPathEntry } from "@/shared/types/ai-paths";
 import { cloneValue } from "./runtime";
 
-export const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
+export const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathEntry[] => {
   const entries: JsonPathEntry[] = [];
-  const walk = (node: unknown, prefix: string, depth: number) => {
+  const walk = (node: unknown, prefix: string, depth: number): void => {
     if (node === null || node === undefined || depth < 0) return;
     const isArray = Array.isArray(node);
     const isObject = !isArray && typeof node === "object";
@@ -20,7 +20,7 @@ export const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
       return;
     }
     if (!isObject) return;
-    Object.entries(node as Record<string, unknown>).forEach(([key, child]) => {
+    Object.entries(node as Record<string, unknown>).forEach(([key, child]: [string, unknown]) => {
       const nextPrefix = prefix ? `${prefix}.${key}` : key;
       walk(child, nextPrefix, depth - 1);
     });
@@ -29,11 +29,11 @@ export const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
   return entries;
 };
 
-export const extractJsonPaths = (value: unknown, maxDepth = 2) => {
-  return extractJsonPathEntries(value, maxDepth).map((entry) => entry.path);
+export const extractJsonPaths = (value: unknown, maxDepth: number = 2): string[] => {
+  return extractJsonPathEntries(value, maxDepth).map((entry: JsonPathEntry) => entry.path);
 };
 
-export const buildTopLevelMappings = (value: unknown) => {
+export const buildTopLevelMappings = (value: unknown): Record<string, string> => {
   if (!value) return {} as Record<string, string>;
   let root: unknown = value;
   let prefix = "$.";
@@ -43,7 +43,7 @@ export const buildTopLevelMappings = (value: unknown) => {
   }
   if (!root || typeof root !== "object") return {} as Record<string, string>;
   return Object.keys(root as Record<string, unknown>).reduce<Record<string, string>>(
-    (acc, key) => {
+    (acc: Record<string, string>, key: string) => {
       acc[key] = `${prefix}${key}`;
       return acc;
     },
@@ -51,7 +51,7 @@ export const buildTopLevelMappings = (value: unknown) => {
   );
 };
 
-export const normalizeMappingPath = (path: string, root?: unknown) => {
+export const normalizeMappingPath = (path: string, root?: unknown): string => {
   if (!path) return "";
   let next = path.trim();
   if (next.startsWith("$.")) {
@@ -69,7 +69,7 @@ export const normalizeMappingPath = (path: string, root?: unknown) => {
   return next;
 };
 
-export const parsePathTokens = (path: string) => {
+export const parsePathTokens = (path: string): Array<string | number> => {
   const tokens: Array<string | number> = [];
   const regex = /([^\[.\]]+)|\[(\d+)\]/g;
   let match: RegExpExecArray | null;
@@ -106,20 +106,20 @@ export const buildFlattenedMappings = (
   depth: number,
   keyStyle: "path" | "leaf",
   includeContainers: boolean
-) => {
-  const entries = extractJsonPathEntries(value, depth).filter((entry) => {
+): Record<string, string> => {
+  const entries = extractJsonPathEntries(value, depth).filter((entry: JsonPathEntry) => {
     if (includeContainers) return true;
     return entry.type === "value" || entry.type === "array";
   });
   const mappings: Record<string, string> = {};
   const used = new Set<string>();
-  entries.forEach((entry) => {
+  entries.forEach((entry: JsonPathEntry) => {
     const path = entry.path;
     const jsonPath = path.startsWith("[") ? `$${path}` : `$.${path}`;
     const tokens = parsePathTokens(path);
     if (tokens.length === 0) return;
     const pathKey = tokens
-      .map((token) => (typeof token === "number" ? String(token) : token))
+      .map((token: string | number) => (typeof token === "number" ? String(token) : token))
       .join("_");
     let leafKey = "";
     for (let index = tokens.length - 1; index >= 0; index -= 1) {
@@ -151,17 +151,17 @@ export const buildFlattenedMappings = (
   return mappings;
 };
 
-export const getValueAtPath = (obj: unknown, path: string) => {
-  return path.split(".").reduce<unknown>((acc, key) => {
+export const getValueAtPath = (obj: unknown, path: string): unknown => {
+  return path.split(".").reduce<unknown>((acc: unknown, key: string) => {
     if (!acc || typeof acc !== "object") return undefined;
     return (acc as Record<string, unknown>)[key];
   }, obj);
 };
 
-export const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown) => {
+export const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown): void => {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
-  keys.forEach((key, index) => {
+  keys.forEach((key: string, index: number) => {
     if (index === keys.length - 1) {
       current[key] = value;
       return;
@@ -177,14 +177,14 @@ export const setValueAtMappingPath = (
   obj: Record<string, unknown>,
   path: string,
   value: unknown
-) => {
+): void => {
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return;
   const tokens = parsePathTokens(normalized);
   let current: Record<string, unknown> | unknown[] = obj;
   let parent: Record<string, unknown> | unknown[] | null = null;
   let parentKey: string | number | null = null;
-  tokens.forEach((token, index) => {
+  tokens.forEach((token: string | number, index: number) => {
     const isLast = index === tokens.length - 1;
     if (isLast) {
       if (typeof token === "number") {
@@ -194,12 +194,12 @@ export const setValueAtMappingPath = (
             if (Array.isArray(parent)) {
               (parent)[Number(parentKey)] = nextArray;
             } else {
-              (parent)[String(parentKey)] = nextArray;
+              (parent as Record<string, unknown>)[String(parentKey)] = nextArray;
             }
           }
           current = nextArray;
         }
-        (current)[token] = value;
+        (current as unknown[])[token] = value;
       } else {
         (current as Record<string, unknown>)[token] = value;
       }
@@ -213,12 +213,12 @@ export const setValueAtMappingPath = (
           if (Array.isArray(parent)) {
             (parent)[Number(parentKey)] = nextArray;
           } else {
-            (parent)[String(parentKey)] = nextArray;
+            (parent as Record<string, unknown>)[String(parentKey)] = nextArray;
           }
         }
         current = nextArray;
       }
-      const curArr = current;
+      const curArr = current as unknown[];
       if (curArr[token] == null || typeof curArr[token] !== "object") {
         curArr[token] = typeof nextToken === "number" ? [] : {};
       }
@@ -237,9 +237,9 @@ export const setValueAtMappingPath = (
   });
 };
 
-export const pickByPaths = (obj: Record<string, unknown>, paths: string[]) => {
+export const pickByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
-  paths.forEach((path) => {
+  paths.forEach((path: string) => {
     const value = getValueAtPath(obj, path);
     if (value !== undefined) {
       setValueAtPath(result, path, value);
@@ -248,10 +248,10 @@ export const pickByPaths = (obj: Record<string, unknown>, paths: string[]) => {
   return result;
 };
 
-export const deletePath = (obj: Record<string, unknown>, path: string) => {
+export const deletePath = (obj: Record<string, unknown>, path: string): void => {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
-  keys.forEach((key, index) => {
+  keys.forEach((key: string, index: number) => {
     if (!current || typeof current !== "object") return;
     if (index === keys.length - 1) {
       delete current[key];
@@ -261,8 +261,8 @@ export const deletePath = (obj: Record<string, unknown>, path: string) => {
   });
 };
 
-export const omitByPaths = (obj: Record<string, unknown>, paths: string[]) => {
-  const clone = cloneValue(obj);
-  paths.forEach((path) => deletePath(clone, path));
+export const omitByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
+  const clone = cloneValue(obj) as Record<string, unknown>;
+  paths.forEach((path: string) => deletePath(clone, path));
   return clone;
 };

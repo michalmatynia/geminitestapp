@@ -119,7 +119,7 @@ export const parseRobotsRules = (robotsTxt: string): Map<string, Array<{ type: "
       if (currentAgents.length === 0) continue;
       for (const agent of currentAgents) {
         const list = rules.get(agent) ?? [];
-        list.push({ type: key as "allow" | "disallow", path: value });
+        list.push({ type: key, path: value });
         rules.set(agent, list);
       }
     }
@@ -167,7 +167,11 @@ export const parseCredentials = (prompt?: string): { email?: string; username?: 
   const username = userMatch?.[1];
   const password = passMatch?.[1];
   if (!password || (!email && !username)) return null;
-  return { email, username, password };
+  return {
+    ...(email ? { email } : {}),
+    ...(username ? { username } : {}),
+    password,
+  };
 };
 
 export const parseExtractionRequest = (prompt?: string): { type: "product_names" | "emails"; count: number | null } | null => {
@@ -182,16 +186,15 @@ export const parseExtractionRequest = (prompt?: string): { type: "product_names"
   const isEmail = /email/i.test(prompt);
   const countMatch = prompt.match(/(\d+)\s*(?:products?|product names?|emails?)/i);
   const count = countMatch ? Number(countMatch[1]) : null;
-  if (isEmail) {
-    return { type: "emails" as const, count };
-  }
-  if (isProduct) {
-    return { type: "product_names" as const, count };
-  }
-  if (taskTypeHint) {
-    return { type: "emails" as const, count };
-  }
-  return null;
+      if (isEmail) {
+      return { type: "emails", count };
+    }
+    if (isProduct) {
+      return { type: "product_names", count };
+    }
+    if (taskTypeHint) {
+      return { type: "emails", count };
+    }  return null;
 };
 
 export const buildEvidenceSnippets = (items: string[], domText: string): Array<{ item: string; snippet: string }> => {

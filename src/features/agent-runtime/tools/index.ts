@@ -5,7 +5,7 @@ import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
-import type { Browser, BrowserContext, Page, ConsoleMessage, Request, Response } from "playwright";
+import type { Browser, BrowserContext, Page, ConsoleMessage, Request, Response, Locator } from "playwright";
 import {
   extractTargetUrl,
   getTargetHostname,
@@ -300,14 +300,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     }
 
     // Page event handlers
-    page.on("console", async (msg: ConsoleMessage) => {
+    page.on("console", async (msg: ConsoleMessage): Promise<void> => {
       const type = msg.type();
       await log(type === "error" ? "error" : "info", `[console:${type}] ${msg.text()}`);
     });
-    page.on("pageerror", async (err: Error) => {
+    page.on("pageerror", async (err: Error): Promise<void> => {
       await log("error", `Page error: ${err.message}`);
     });
-    page.on("requestfailed", async (req: Request) => {
+    page.on("requestfailed", async (req: Request): Promise<void> => {
       await log("warning", `Request failed: ${req.url()}`, {
         error: req.failure()?.errorText,
       });
@@ -323,7 +323,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           stepId: stepId ?? null,
         });
     };
-    page.on("response", async (res: Response) => {
+    page.on("response", async (res: Response): Promise<void> => {
       const status = res.status();
       if (status === 403) {
         const url = res.url();
@@ -1409,7 +1409,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             }
          }
 
-         const locateBySelector = async (selector: string | null): Promise<any> => {
+         const locateBySelector = async (selector: string | null): Promise<Locator | null> => {
           if (!selector) return null;
           try {
             return await findFirstVisible(page.locator(selector));
@@ -1483,7 +1483,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             await log("warning", "No visible username/email field found.");
         }
 
-        if (passwordInput) {
+        if (passwordInput && credentials.password) {
             await passwordInput.fill(credentials.password);
             passwordFilled = true;
             await log("info", "Filled password field.");

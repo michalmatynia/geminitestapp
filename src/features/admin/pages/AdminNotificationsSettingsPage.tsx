@@ -85,7 +85,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
                   <SelectContent>
-                    {positionOptions.map((option) => (
+                    {positionOptions.map((option: (typeof positionOptions)[number]) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div>
                           <p className="font-medium">{option.label}</p>
@@ -110,7 +110,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
                     <SelectValue placeholder="Select accent color" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accentOptions.map((option) => (
+                    {accentOptions.map((option: (typeof accentOptions)[number]) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center gap-2">
                           <div className={`size-3 rounded-full ${option.color}`} />
@@ -129,7 +129,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
               <div className="pt-2">
                 <Label className="mb-3 block text-sm font-semibold">Available Colors</Label>
                 <div className="grid grid-cols-5 gap-2">
-                  {accentOptions.map((option) => (
+                  {accentOptions.map((option: (typeof accentOptions)[number]) => (
                     <Button
                       key={option.value}
                       onClick={() => setAccent(option.value)}

@@ -1,13 +1,52 @@
 import type { Page } from "playwright";
 import prisma from "@/shared/lib/db/prisma";
 
+export type UiElement = {
+  tag: string;
+  id: string | null;
+  name: string | null;
+  type: string | null;
+  text: string | null;
+  placeholder: string | null;
+  ariaLabel: string | null;
+  role: string | null;
+  selector: string | null;
+  href?: string; // For links
+  action?: string | null; // For forms
+  method?: string | null; // For forms
+};
+
+export type UiInventory = {
+  url: string;
+  title: string;
+  counts: {
+    inputs: number;
+    buttons: number;
+    links: number;
+    headings: number;
+    forms: number;
+  };
+  inputs: UiElement[];
+  buttons: UiElement[];
+  links: UiElement[];
+  headings: UiElement[];
+  forms: UiElement[];
+  truncated: {
+    inputs: boolean;
+    buttons: boolean;
+    links: boolean;
+    headings: boolean;
+    forms: boolean;
+  };
+};
+
 export const collectUiInventory = async (
   page: Page,
   runId: string,
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-): Promise<any> => {
+): Promise<UiInventory | null> => {
   if (!page) return null;
   try {
     const uiInventory = await page.evaluate(() => {
@@ -45,7 +84,7 @@ export const collectUiInventory = async (
 
       const visible = (el: Element): boolean =>
         (el as HTMLElement).offsetParent !== null;
-      const describe = (el: Element): any => ({
+      const describe = (el: Element): UiElement => ({
         tag: el.tagName.toLowerCase(),
         id: (el as HTMLElement).id || null,
         name: (el as HTMLInputElement).name || null,

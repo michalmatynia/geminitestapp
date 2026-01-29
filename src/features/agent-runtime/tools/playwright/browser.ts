@@ -1,7 +1,7 @@
 import "server-only";
 
 import { chromium, firefox, webkit } from "playwright";
-import type { Browser, BrowserContext, Page } from "playwright";
+import type { Browser, BrowserContext, Page, Cookie } from "playwright";
 import prisma from "@/shared/lib/db/prisma";
 import path from "path";
 import { promises as fs } from "fs";
@@ -45,7 +45,7 @@ export const captureSessionContext = async (
   if (!page || !context) return;
   try {
     const cookies = await context.cookies();
-    const cookieSummary = cookies.map((cookie: any) => ({
+    const cookieSummary = cookies.map((cookie: Cookie) => ({
       name: cookie.name,
       domain: cookie.domain,
       path: cookie.path,

@@ -9,10 +9,10 @@ import {
   triggers,
 } from "../constants";
 
-export const createPathId = () =>
+export const createPathId = (): string =>
   `path_${Math.random().toString(36).slice(2, 8)}`;
 
-export const createPresetId = () =>
+export const createPresetId = (): string =>
   `preset_${Math.random().toString(36).slice(2, 8)}`;
 
 export const createDefaultPathConfig = (id: string): PathConfig => {

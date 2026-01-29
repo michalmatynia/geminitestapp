@@ -9,13 +9,13 @@ import {
   PORT_COMPATIBILITY,
 } from "../constants";
 
-export const getPortOffsetY = (index: number, totalPorts: number) => {
+export const getPortOffsetY = (index: number, totalPorts: number): number => {
   const totalHeight = (totalPorts - 1) * PORT_GAP;
   const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
   return startY + index * PORT_GAP;
 };
 
-export const normalizePortName = (port: string) =>
+export const normalizePortName = (port: string): string =>
   port === "productJson" ? "entityJson" : port;
 
 export const isValidConnection = (
@@ -23,7 +23,7 @@ export const isValidConnection = (
   to: AiNode,
   fromPort?: string,
   toPort?: string
-) => {
+): boolean => {
   if (!fromPort || !toPort) return false;
   if (!from.outputs.includes(fromPort)) return false;
   if (!to.inputs.includes(toPort)) return false;
@@ -33,8 +33,8 @@ export const isValidConnection = (
 };
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-  return edges.flatMap((edge) => {
+  const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
+  return edges.flatMap((edge: Edge) => {
     if (!edge.from || !edge.to) return [];
     const from = nodeMap.get(edge.from);
     const to = nodeMap.get(edge.to);
@@ -71,7 +71,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       }
       return [];
     }
-    const matches = from.outputs.filter((output) => to.inputs.includes(output));
+    const matches = from.outputs.filter((output: string) => to.inputs.includes(output));
     if (matches.length !== 1) return [];
     const port = matches[0];
     if (!port) return [];
@@ -85,20 +85,20 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   });
 };
 
-export const ensureUniquePorts = (ports: string[], add: string[]) => {
+export const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
   const set = new Set(ports.map(normalizePortName));
-  add.forEach((port) => set.add(normalizePortName(port)));
+  add.forEach((port: string) => set.add(normalizePortName(port)));
   return Array.from(set);
 };
 
-export const createParserMappings = (outputs: string[]) =>
-  outputs.reduce<Record<string, string>>((acc, output) => {
+export const createParserMappings = (outputs: string[]): Record<string, string> =>
+  outputs.reduce<Record<string, string>>((acc: Record<string, string>, output: string) => {
     acc[output] = "";
     return acc;
   }, {});
 
-export const createViewerOutputs = (inputs: string[]) =>
-  inputs.reduce<Record<string, string>>((acc, input) => {
+export const createViewerOutputs = (inputs: string[]): Record<string, string> =>
+  inputs.reduce<Record<string, string>>((acc: Record<string, string>, input: string) => {
     acc[input] = "";
     return acc;
   }, {});
@@ -119,7 +119,7 @@ export const validateConnection = (
   return { valid: true };
 };
 
-export const clampScale = (value: number) =>
+export const clampScale = (value: number): number =>
   Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
 
 export const clampTranslate = (
@@ -127,7 +127,7 @@ export const clampTranslate = (
   y: number,
   scale: number,
   _viewport: DOMRect | null
-) => {
+): { x: number; y: number } => {
   const minX = -CANVAS_WIDTH * scale + 200;
   const minY = -CANVAS_HEIGHT * scale + 200;
   const maxX = 300;

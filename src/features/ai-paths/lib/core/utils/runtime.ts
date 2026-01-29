@@ -1,4 +1,4 @@
-export const toNumber = (value: string, fallback: number) => {
+export const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
@@ -33,13 +33,13 @@ export const formatRuntimeValue = (value: unknown): string => {
   }
 };
 
-export const parsePathList = (value: string) =>
+export const parsePathList = (value: string): string[] =>
   value
     .split("\n")
-    .map((line) => line.trim())
+    .map((line: string) => line.trim())
     .filter(Boolean);
 
-export const safeParseJson = (value: string) => {
+export const safeParseJson = (value: string): { value: unknown; error: string } => {
   if (!value.trim()) return { value: null as unknown, error: "" };
   try {
     return { value: JSON.parse(value) as unknown, error: "" };

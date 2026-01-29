@@ -2,7 +2,7 @@ import type { ContextConfig } from "@/shared/types/ai-paths";
 import { CONTEXT_PRESET_FIELDS } from "../constants";
 import { omitByPaths, pickByPaths } from "./json";
 
-export const getContextPresetSet = (entityType?: string) => {
+export const getContextPresetSet = (entityType?: string): Record<string, string[]> => {
   const key = entityType === "auto" ? "" : entityType ?? "";
   return (CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS["default"])!;
 };
@@ -22,7 +22,7 @@ export const applyContextPreset = (
   };
 };
 
-export const toggleContextTarget = (current: ContextConfig, field: string) => {
+export const toggleContextTarget = (current: ContextConfig, field: string): ContextConfig => {
   const isIncluded = (current.includePaths ?? []).includes(field);
   if (current.scopeMode === "include") {
     const includePaths = current.includePaths ?? [];
@@ -38,12 +38,12 @@ export const toggleContextTarget = (current: ContextConfig, field: string) => {
   return {
     ...current,
     excludePaths: isExcluded
-      ? excludePaths.filter((p) => p !== field)
+      ? excludePaths.filter((p: string) => p !== field)
       : [...excludePaths, field],
   };
 };
 
-export const applyContextScope = (payload: Record<string, unknown>, config?: ContextConfig) => {
+export const applyContextScope = (payload: Record<string, unknown>, config?: ContextConfig): Record<string, unknown> => {
   const scopeMode = config?.scopeMode ?? "full";
   const includePaths = config?.includePaths ?? [];
   const excludePaths = config?.excludePaths ?? [];

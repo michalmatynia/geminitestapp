@@ -1,7 +1,7 @@
 import type { JsonPathEntry } from "@/shared/types/ai-paths";
 import { extractJsonPathEntries, getValueAtMappingPath } from "./json";
 
-export const looksLikeImageUrl = (value: string) =>
+export const looksLikeImageUrl = (value: string): boolean =>
   /(\.(png|jpe?g|webp|gif|svg)|\/uploads\/|^https?:\/\/)/i.test(value);
 
 export const isImageLikeValue = (value: unknown): boolean => {
@@ -10,7 +10,7 @@ export const isImageLikeValue = (value: unknown): boolean => {
     return looksLikeImageUrl(value);
   }
   if (Array.isArray(value)) {
-    return value.some((item) => isImageLikeValue(item));
+    return value.some((item: unknown) => isImageLikeValue(item));
   }
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
@@ -33,14 +33,14 @@ export const isImageLikeValue = (value: unknown): boolean => {
       "gallery",
     ];
     if (
-      candidates.some((key) => {
+      candidates.some((key: string) => {
         const val = record[key];
         return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
       })
     ) {
       return true;
     }
-    return Object.entries(record).some(([key, val]) => {
+    return Object.entries(record).some(([key, val]: [string, unknown]) => {
       if (typeof val === "string") {
         if (!looksLikeImageUrl(val)) return false;
         return /(url|path|file|image|media|photo|thumb|preview)/i.test(key);
@@ -54,19 +54,19 @@ export const isImageLikeValue = (value: unknown): boolean => {
   return false;
 };
 
-export const inferImageMappingPath = (value: unknown, depth: number) => {
+export const inferImageMappingPath = (value: unknown, depth: number): string | null => {
   if (!value) return null;
   const keyword = /(image|img|photo|picture|media|gallery)/i;
-  const searchIn = (root: unknown, prefix: string) => {
+  const searchIn = (root: unknown, prefix: string): string | null => {
     if (!root) return null;
     const entries = extractJsonPathEntries(root, depth);
-    const candidates = entries.filter((entry) => keyword.test(entry.path));
-    const resolveFullPath = (match: string) => {
+    const candidates = entries.filter((entry: JsonPathEntry) => keyword.test(entry.path));
+    const resolveFullPath = (match: string): string => {
       if (!prefix) return match;
       const prefixPath = prefix.startsWith("$") ? prefix : `$.${prefix}`;
       return `${prefixPath}${match.slice(1)}`;
     };
-    const checkEntry = (entry: JsonPathEntry) => {
+    const checkEntry = (entry: JsonPathEntry): string | null => {
       const jsonPath = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
       const resolved = getValueAtMappingPath(root, jsonPath);
       if (isImageLikeValue(resolved)) return resolveFullPath(jsonPath);

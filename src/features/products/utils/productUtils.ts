@@ -13,7 +13,7 @@ export async function createMockProduct(productData: {
   stock?: number;
   weight?: number;
   length?: number;
-}) {
+}): Promise<any> {
   const productRepository = await getProductRepository();
   const validated = productCreateSchema.parse({
     name_en: productData.name_en || "Mock Product (EN)",

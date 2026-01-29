@@ -5,7 +5,7 @@ import { fetchWithTimeout, readErrorMessage, requestJson } from "./client";
 export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
   scope?: "ids";
   query?: string;
-}) => {
+}): Promise<{ sessions?: TSession[]; ids?: string[] }> => {
   const searchParams = new URLSearchParams();
   if (params?.scope) searchParams.set("scope", params.scope);
   if (params?.query) searchParams.set("query", params.query);
@@ -16,7 +16,7 @@ export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
   });
 };
 
-export const fetchChatbotSessionIds = async (query?: string) => {
+export const fetchChatbotSessionIds = async (query?: string): Promise<string[]> => {
   const searchParams = new URLSearchParams({ scope: "ids" });
   if (query) searchParams.set("query", query);
   const url = `/api/chatbot/sessions?${searchParams.toString()}`;
@@ -26,7 +26,7 @@ export const fetchChatbotSessionIds = async (query?: string) => {
   return Array.isArray(data.ids) ? data.ids : [];
 };
 
-export const fetchChatbotSession = async (sessionId: string) => {
+export const fetchChatbotSession = async (sessionId: string): Promise<ChatSession> => {
   const data = await requestJson<{ session: ChatSession }>(
     `/api/chatbot/sessions/${sessionId}`,
     undefined,
@@ -38,7 +38,7 @@ export const fetchChatbotSession = async (sessionId: string) => {
 export const createChatbotSession = async (payload: {
   title?: string;
   settings?: ChatSession["settings"];
-}) =>
+}): Promise<{ sessionId: string; session?: ChatSession }> =>
   requestJson<{ sessionId: string; session?: ChatSession }>(
     "/api/chatbot/sessions",
     {
@@ -52,7 +52,7 @@ export const createChatbotSession = async (payload: {
 export const updateChatbotSessionTitle = async (
   sessionId: string,
   title: string
-) => {
+): Promise<ChatbotSessionListItem> => {
   const data = await requestJson<{ session: ChatbotSessionListItem }>(
     "/api/chatbot/sessions",
     {
@@ -65,7 +65,7 @@ export const updateChatbotSessionTitle = async (
   return data.session;
 };
 
-export const deleteChatbotSession = async (sessionId: string) => {
+export const deleteChatbotSession = async (sessionId: string): Promise<void> => {
   await requestJson<{ success?: boolean }>(
     "/api/chatbot/sessions",
     {
@@ -77,7 +77,7 @@ export const deleteChatbotSession = async (sessionId: string) => {
   );
 };
 
-export const deleteChatbotSessions = async (sessionIds: string[]) => {
+export const deleteChatbotSessions = async (sessionIds: string[]): Promise<void> => {
   await requestJson<{ success?: boolean }>(
     "/api/chatbot/sessions",
     {
@@ -93,7 +93,7 @@ export const persistSessionMessage = async (
   sessionId: string,
   role: ChatMessage["role"],
   content: string
-) => {
+): Promise<void> => {
   const res = await fetchWithTimeout(
     `/api/chatbot/sessions/${sessionId}/messages`,
     {

@@ -130,7 +130,17 @@ export const validateExtractionWithLLM = async (
       rejectedItems,
       issues,
       missingCount,
-      evidence: Array.isArray(parsed?.evidence) ? parsed.evidence : [],
+      evidence: Array.isArray(parsed?.evidence)
+        ? parsed.evidence.filter(
+            (item: unknown): item is { item: string; snippet: string } =>
+              typeof item === "object" &&
+              item !== null &&
+              "item" in item &&
+              typeof item.item === "string" &&
+              "snippet" in item &&
+              typeof item.snippet === "string"
+          )
+        : [],
     };
   } catch (error) {
     const fallbackAccepted = evidence.map((entry: { item: string; snippet: string }) => entry.item);

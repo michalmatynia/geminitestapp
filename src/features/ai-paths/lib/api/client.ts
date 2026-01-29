@@ -20,26 +20,26 @@ export type ApiResponse<T> = {
 export type DbActionPayload = {
   action: string;
   collection: string;
-  filter?: unknown;
-  pipeline?: unknown[];
-  document?: unknown;
-  documents?: unknown[];
-  update?: unknown;
-  projection?: unknown;
-  sort?: unknown;
-  limit?: number;
-  idType?: string;
+  filter?: unknown | undefined;
+  pipeline?: unknown[] | undefined;
+  document?: unknown | undefined;
+  documents?: unknown[] | undefined;
+  update?: unknown | undefined;
+  projection?: unknown | undefined;
+  sort?: unknown | undefined;
+  limit?: number | undefined;
+  idType?: string | undefined;
 };
 
 export type DbQueryPayload = {
   provider: string;
   collection: string;
   query: unknown;
-  projection?: unknown;
-  sort?: unknown;
-  limit?: number;
-  single?: boolean;
-  idType?: string;
+  projection?: unknown | undefined;
+  sort?: unknown | undefined;
+  limit?: number | undefined;
+  single?: boolean | undefined;
+  idType?: string | undefined;
 };
 
 export type DbUpdatePayload = {
@@ -47,8 +47,8 @@ export type DbUpdatePayload = {
   collection: string;
   query: unknown;
   updates: unknown;
-  single?: boolean;
-  idType?: string;
+  single?: boolean | undefined;
+  idType?: string | undefined;
 };
 
 export type EntityUpdatePayload = {

@@ -1,3 +1,23 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useToast, Button, Input, SectionHeader, SectionPanel } from "@/shared/ui";
+import Link from "next/link";
+import {
+  AgentAuditLog,
+  AgentBrowserLog,
+  AgentSnapshot,
+} from "@/shared/types/chatbot";
+import { AiPathRunRecord } from "@/shared/types/ai-paths";
+
+// import { AgentRun } from "@/features/agent-runtime/types/agent";
+
+// import { getAgentRunsApi, getAgentSnapshotsApi, getAgentBrowserLogsApi, getAgentAuditLogsApi } from "@/features/agent-runtime/api/client"; // Commented out unused imports
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { AppModal } from "@/shared/ui/app-modal";
+import { ModalShell } from "@/shared/ui";
+
+
 export default function AgentRunsPage(): React.ReactElement {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -5,7 +25,7 @@ export default function AgentRunsPage(): React.ReactElement {
   const [query, setQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [bulkDeletingAgents, setBulkDeletingAgents] = useState(false);
-  const [agentRuns, setAgentRuns] = useState<AgentRun[]>([]);
+  const [agentRuns, setAgentRuns] = useState<AiPathRunRecord[]>([]);
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
     null
   );
@@ -28,7 +48,7 @@ export default function AgentRunsPage(): React.ReactElement {
       if (!res.ok) {
         throw new Error("Failed to load agent runs.");
       }
-      const data = (await res.json()) as { runs?: AgentRun[] };
+      const data = (await res.json()) as { runs?: AiPathRunRecord[] };
       setAgentRuns(data.runs ?? []);
       setError(null);
     } catch (error: unknown) {
@@ -140,10 +160,10 @@ export default function AgentRunsPage(): React.ReactElement {
   const filteredRuns = useMemo(() => {
     const term = query.trim().toLowerCase();
     const sorted = [...agentRuns].sort(
-      (a: AgentRun, b: AgentRun) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: AiPathRunRecord, b: AiPathRunRecord) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     if (!term) return sorted;
-    return sorted.filter((run: AgentRun) =>
+    return sorted.filter((run: AiPathRunRecord) =>
       [run.id, run.status, run.model ?? "", run.prompt]
         .join(" ")
         .toLowerCase()
@@ -208,7 +228,7 @@ export default function AgentRunsPage(): React.ReactElement {
   };
 
   const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AgentRun) => run.id === selectedAgentRunId) ?? null,
+    () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
   );
   const sessionContextLogs = useMemo(
@@ -255,7 +275,7 @@ export default function AgentRunsPage(): React.ReactElement {
     [agentAudits]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
-  const latestLoginCandidates = latestLoginCandidateLogs.at(-1)?.metadata ?? null;
+  const latestLoginCandidates = (loginCandidateLogs.at(-1)?.metadata ?? null) as Record<string, unknown> | null;
   const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
   const latestPlanHierarchy =
     (
@@ -358,7 +378,7 @@ export default function AgentRunsPage(): React.ReactElement {
           <p className="text-sm text-gray-400">No runs yet.</p>
         ) : (
           <div className="space-y-3">
-            {filteredRuns.map((job: AgentRun) => (
+            {filteredRuns.map((job: AiPathRunRecord) => (
               <div
                 key={job.id}
                 className="rounded-md border border-border bg-gray-900 px-4 py-3"
@@ -1049,7 +1069,7 @@ export default function AgentRunsPage(): React.ReactElement {
                           </p>
                           <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
                             {(
-                              latestLoginCandidates.inputs as
+                              latestLoginCandidates?.inputs as
                                 | Array<{
                                     tag: string;
                                     id: string | null;
@@ -1093,7 +1113,7 @@ export default function AgentRunsPage(): React.ReactElement {
                           </p>
                           <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
                             {(
-                              latestLoginCandidates.buttons as
+                              latestLoginCandidates?.buttons as
                                 | Array<{
                                     tag: string;
                                     id: string | null;

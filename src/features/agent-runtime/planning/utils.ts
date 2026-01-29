@@ -250,13 +250,15 @@ export function buildPlanStepsFromSpecs(
       expectedObservation: step.expectedObservation?.trim() || null,
       successCriteria: step.successCriteria?.trim() || null,
       goalId: step.goalId ?? null,
-              subgoalId: step.subgoalId ?? null,
-              ...(normalizePhase(step.phase) !== null ? { phase: normalizePhase(step.phase) } : {}),
-              priority: typeof step.priority === "number" ? step.priority : null,
-              dependsOn: normalizeDependencies(step.dependsOn ?? undefined, stepSpecs),
-              attempts: 0,
-              maxAttempts: maxStepAttempts,
-            }));  const verificationSteps = includeSafety
+      subgoalId: step.subgoalId ?? null,
+      phase: normalizePhase(step.phase),
+      priority: typeof step.priority === "number" ? step.priority : null,
+      dependsOn: normalizeDependencies(step.dependsOn ?? undefined, stepSpecs),
+      attempts: 0,
+      maxAttempts: maxStepAttempts,
+    })
+  );
+  const verificationSteps = includeSafety
     ? buildVerificationSteps(meta ?? undefined, maxStepAttempts)
     : [];
   return [...preflightSteps, ...plannedSteps, ...verificationSteps];

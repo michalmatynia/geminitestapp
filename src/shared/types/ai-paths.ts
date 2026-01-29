@@ -331,9 +331,26 @@ export type AiPathRunEventLevel = "info" | "warning" | "error";
 
 export type AiPathRunRecord = {
   id: string;
-  pathId: string;
+  pathId?: string; // This is actually pathId in AiPathRun, but ChatbotAgentRun has no pathId, so making it optional
   pathName?: string | null;
   status: AiPathRunStatus;
+
+  // ChatbotAgentRun specific fields
+  prompt: string;
+  model?: string | null;
+  tools?: string[];
+  searchProvider?: string | null;
+  agentBrowser?: string | null;
+  runHeadless?: boolean;
+  logLines?: string[];
+  requiresHumanIntervention?: boolean;
+  errorMessage?: string | null;
+  memoryKey?: string | null;
+  recordingPath?: string | null;
+  planState?: Record<string, unknown> | null; // Changed from Json? to Record<string, unknown> | null
+  activeStepId?: string | null;
+  checkpointedAt?: Date | string | null;
+  
   triggerEvent?: string | null;
   triggerNodeId?: string | null;
   triggerContext?: Record<string, unknown> | null;
@@ -342,15 +359,23 @@ export type AiPathRunRecord = {
   meta?: Record<string, unknown> | null;
   entityId?: string | null;
   entityType?: string | null;
-  errorMessage?: string | null;
   retryCount?: number | null;
   maxAttempts?: number | null;
   nextRetryAt?: Date | string | null;
   deadLetteredAt?: Date | string | null;
+
   startedAt?: Date | string | null;
   finishedAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt?: Date | string | null;
+
+  _count?: {
+    auditLogs: number;
+    browserSnapshots: number;
+    browserLogs: number;
+    memoryItems: number;
+    longTermMemory: number;
+  }
 };
 
 export type AiPathRunNodeRecord = {

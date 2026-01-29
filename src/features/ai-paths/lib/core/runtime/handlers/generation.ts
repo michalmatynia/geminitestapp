@@ -11,6 +11,7 @@ import {
   resolveJobProductId,
 } from "../utils";
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { AiNode, Edge } from "@/shared/types/ai-paths";
 import { aiJobsApi, aiGenerationApi } from "../../../api";
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }): any => {

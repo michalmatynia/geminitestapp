@@ -19,6 +19,7 @@ import {
   resolveEntityIdFromInputs,
 } from "../utils";
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { AiNode, Edge } from "@/shared/types/ai-paths";
 import { dbApi, entityApi } from "../../../api";
 
 export const handleTrigger: NodeHandler = ({
@@ -1356,7 +1357,7 @@ export const handleDatabase: NodeHandler = async ({
             query,
             updates,
             single: false,
-            idType: queryPayload.idType,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
           });
           executed.updater.add(node.id);
           if (!dbUpdateResult.ok) {

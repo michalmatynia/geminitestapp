@@ -341,13 +341,13 @@ export const buildDbQueryPayload = (
     | undefined;
   return {
     query,
-    projection,
-    sort,
     provider: queryConfig.provider,
     collection: queryConfig.collection,
-    limit: queryConfig.limit,
-    single: queryConfig.single,
-    idType: queryConfig.idType,
+    ...(projection !== undefined ? { projection } : {}),
+    ...(sort !== undefined ? { sort } : {}),
+    ...(queryConfig.limit !== undefined ? { limit: queryConfig.limit } : {}),
+    ...(queryConfig.single !== undefined ? { single: queryConfig.single } : {}),
+    ...(queryConfig.idType !== undefined ? { idType: queryConfig.idType } : {}),
   };
 };
 

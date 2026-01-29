@@ -13,9 +13,7 @@ const messageSchema = z.object({
   content: z.string().trim().min(1),
 });
 
-async function GET_handler(req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
@@ -26,7 +24,7 @@ async function GET_handler(req: NextRequest,
         { request: req, source: "chatbot.sessions.[sessionId].messages.GET" }
       );
     }
-    const { sessionId } = await params;
+    const { sessionId } = params;
     const session = await prisma.chatbotSession.findUnique({
       where: { id: sessionId },
       select: { id: true },
@@ -58,9 +56,7 @@ async function GET_handler(req: NextRequest,
   }
 }
 
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
@@ -71,7 +67,7 @@ async function POST_handler(req: NextRequest,
         { request: req, source: "chatbot.sessions.[sessionId].messages.POST" }
       );
     }
-    const { sessionId } = await params;
+    const { sessionId } = params;
     const session = await prisma.chatbotSession.findUnique({
       where: { id: sessionId },
       select: { id: true },

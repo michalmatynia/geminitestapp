@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage, Button, DropdownMenu, DropdownMenu
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogOut, LogIn } from "lucide-react";
 
-export function UserNav() {
+export function UserNav(): React.ReactNode {
   const { data: session } = useSession();
 
   if (!session) {

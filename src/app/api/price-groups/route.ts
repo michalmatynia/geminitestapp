@@ -109,7 +109,7 @@ const resolveCurrency = (
  * GET /api/price-groups
  * Fetches all price groups with currency details.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -231,7 +231,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/price-groups
  * Creates a price group and enforces a single default group.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, priceGroupSchema, {
       logPrefix: "priceGroups.POST",

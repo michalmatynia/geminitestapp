@@ -77,7 +77,7 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
@@ -130,7 +130,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }
@@ -139,7 +139,7 @@ async function POST_handler(req: NextRequest): Promise<Response> {
       logPrefix: "settings.POST",
     });
     if (!parsed.ok) {
-      return parsed.response;
+      return parsed.response as Response;
     }
     const { key, value } = parsed.data;
     if (shouldLog()) {

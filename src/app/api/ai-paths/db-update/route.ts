@@ -72,12 +72,12 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Rec
   return next;
 };
 
-async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",
     });
-    if (!parsed.ok) return parsed.response;
+    if (!parsed.ok) return parsed.response as Response;
     if (!process.env.MONGODB_URI) {
       return createErrorResponse(internalError("MongoDB is not configured"), {
         request: req,

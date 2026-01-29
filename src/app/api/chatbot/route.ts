@@ -9,7 +9,8 @@ import {
   externalServiceError,
   internalError,
 } from "@/shared/errors/app-error";
-import {  apiHandler, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 

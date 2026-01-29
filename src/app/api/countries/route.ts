@@ -131,7 +131,7 @@ const normalizeCountryResponse = (
  * GET /api/countries
  * Fetches all countries (and ensures defaults exist).
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -199,7 +199,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/countries
  * Creates a country.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, countrySchema, {
       logPrefix: "countries.POST",

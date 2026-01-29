@@ -16,12 +16,12 @@ const requeueSchema = z.object({
   limit: z.number().int().min(1).max(1000).optional(),
 });
 
-async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requeueSchema, {
       logPrefix: "ai-paths.runs.dead-letter.requeue",
     });
-    if (!parsed.ok) return parsed.response;
+    if (!parsed.ok) return parsed.response as Response;
 
     const runIds = Array.isArray(parsed.data.runIds) ? parsed.data.runIds : [];
     const pathId = parsed.data.pathId?.trim() || undefined;

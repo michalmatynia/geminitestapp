@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
 
-export default function Menu() {
+export default function Menu(): React.ReactNode {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -39,11 +39,11 @@ export default function Menu() {
 
   const handleOpenChat = (
     event: React.MouseEvent<HTMLAnchorElement>
-  ) => {
+  ): void => {
     if (typeof window === "undefined") return;
     event.preventDefault();
 
-    const openChat = async () => {
+    const openChat = async (): Promise<void> => {
       const storedSession = window.localStorage.getItem("chatbotSessionId");
       if (storedSession) {
         router.push(`/admin/chatbot?session=${storedSession}`);
@@ -86,7 +86,7 @@ export default function Menu() {
     void openChat();
   };
 
-  const handleCreatePageClick = () => {
+  const handleCreatePageClick = (): void => {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
     router.push("/admin/cms/pages/create");

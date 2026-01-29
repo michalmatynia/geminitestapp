@@ -16,7 +16,7 @@ const settingsSchema = z.object({
   settings: z.record(z.string(), z.any()).optional(),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {
@@ -49,7 +49,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {

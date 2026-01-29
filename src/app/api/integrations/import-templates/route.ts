@@ -23,7 +23,7 @@ const templateSchema = z.object({
   mappings: z.array(mappingSchema).default([]),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const templates = await listImportTemplates();
     return NextResponse.json(templates);
@@ -36,7 +36,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, templateSchema, {
       logPrefix: "import-templates.POST",

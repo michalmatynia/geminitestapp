@@ -25,7 +25,7 @@ type CategoryFromDb = {
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");

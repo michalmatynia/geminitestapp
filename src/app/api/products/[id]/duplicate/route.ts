@@ -15,12 +15,10 @@ const duplicateSchema = z.object({
  * POST /api/products/[id]/duplicate
  * Duplicates a product with a new SKU.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let productId = "";
   try {
-    const { id } = await params;
+    const { id } = params;
     productId = id;
     if (!id) {
       throw badRequestError("Product id is required");

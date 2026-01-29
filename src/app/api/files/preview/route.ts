@@ -10,7 +10,7 @@ import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const fileId = req.nextUrl.searchParams.get("fileId");
 
   if (!fileId) {

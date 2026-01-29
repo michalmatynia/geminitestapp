@@ -83,7 +83,7 @@ async function GET_handler(): Promise<Response> {
  * PATCH /api/user/preferences
  * Update user preferences
  */
-async function PATCH_handler(req: NextRequest): Promise<Response> {
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let data: Partial<UserPreferencesData> = {};
   let userId = DEFAULT_USER_ID;
   try {

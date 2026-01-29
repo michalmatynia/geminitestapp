@@ -8,7 +8,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/integrations/product-listings
  * Returns a map of product IDs to their most relevant listing status.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const repo = await getProductListingRepository();
     const listings = await repo.listAllListings();

@@ -21,12 +21,10 @@ const catalogUpdateSchema = z.object({
  * PUT /api/catalogs/[id]
  * Updates a catalog.
  */
-async function PUT_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let catalogId = "";
   try {
-    const { id } = await params;
+    const { id } = params;
     catalogId = id;
     if (!id) {
       throw badRequestError("Catalog id is required");
@@ -91,12 +89,10 @@ async function PUT_handler(req: NextRequest,
  * DELETE /api/catalogs/[id]
  * Deletes a catalog.
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let catalogId = "";
   try {
-    const { id } = await params;
+    const { id } = params;
     catalogId = id;
     if (!id) {
       throw badRequestError("Catalog id is required");

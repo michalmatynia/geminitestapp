@@ -101,7 +101,7 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  * GET /api/languages
  * Fetches available languages (seeds defaults if empty).
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -154,7 +154,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/languages
  * Creates a language with optional country assignments.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, languageCreateSchema, {
       logPrefix: "languages.POST",

@@ -1,7 +1,10 @@
 
 > libapp2@0.1.0 lint
-> eslint .
+> eslint . --fix
 
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/final-fix-api-handlers.js
+  2:8  error  'path' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
   14:33  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
@@ -6093,5 +6096,5 @@
   6:8  warning  Missing return type on function  @typescript-eslint/explicit-function-return-type
   6:8  warning  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
-✖ 5314 problems (0 errors, 5314 warnings)
+✖ 5315 problems (1 error, 5314 warnings)
 

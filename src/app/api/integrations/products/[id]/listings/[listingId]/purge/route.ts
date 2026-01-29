@@ -5,11 +5,9 @@ import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; listingId: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   try {
-    const { id: productId, listingId } = await params;
+    const { id: productId, listingId } = params;
     if (!productId || !listingId) {
       throw badRequestError("Product id and listing id are required");
     }

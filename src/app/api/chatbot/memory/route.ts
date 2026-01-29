@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("agentLongTermMemory" in prisma)) {

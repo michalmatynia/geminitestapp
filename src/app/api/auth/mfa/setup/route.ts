@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const session = await auth();
     const userId = session?.user?.id;

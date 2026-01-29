@@ -29,16 +29,13 @@ const toErrorRedirect = (origin: string, reason: string): string => {
   return url.toString();
 };
 
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let connectionId: string | null = null;
   const requestUrl = new URL(req.url);
 
   try {
-    const { id, connectionId: connId } = await params;
+    const { id, connectionId: connId } = params;
     integrationId = id;
     connectionId = connId;
 

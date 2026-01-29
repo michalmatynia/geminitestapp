@@ -12,7 +12,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/notes/categories
  * Fetches all categories.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");
@@ -34,7 +34,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/notes/categories
  * Creates a new category.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, categoryCreateSchema, {
       logPrefix: "categories.POST",

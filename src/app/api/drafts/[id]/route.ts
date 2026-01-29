@@ -51,12 +51,9 @@ const updateDraftSchema = z.object({
  * GET /api/drafts/[id]
  * Get a single draft by ID
  */
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const draft = await getDraft(id);
 
     if (!draft) {
@@ -80,12 +77,9 @@ async function GET_handler(
  * PUT /api/drafts/[id]
  * Update a draft
  */
-async function PUT_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const parsed = await parseJsonBody(req, updateDraftSchema, {
       logPrefix: "drafts.byId.PUT",
     });
@@ -116,12 +110,9 @@ async function PUT_handler(
  * DELETE /api/drafts/[id]
  * Delete a draft
  */
-async function DELETE_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const success = await deleteDraft(id);
 
     if (!success) {

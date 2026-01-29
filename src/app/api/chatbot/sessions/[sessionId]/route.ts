@@ -7,11 +7,9 @@ import {  apiHandlerWithParams , type ApiHandlerContext } from "@/shared/lib/api
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
-async function GET_handler(req: NextRequest,
-  props: { params: Promise<{ sessionId: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
   try {
-    const params = await props.params;
+    
     const session = await chatbotSessionRepository.findById(params.sessionId);
 
     if (!session) {

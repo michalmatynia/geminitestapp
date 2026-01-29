@@ -26,7 +26,7 @@ const enqueueSchema = z.object({
   meta: z.record(z.string(), z["unknown"]()).optional().nullable(),
 });
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, enqueueSchema, {
       logPrefix: "ai-paths.runs.enqueue",

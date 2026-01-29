@@ -19,10 +19,8 @@ const productTagUpdateSchema = z.object({
  * PUT /api/products/tags/[id]
  * Updates a product tag.
  */
-async function PUT_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   try {
     if (!params.id) {
       throw badRequestError("Tag id is required");
@@ -135,10 +133,8 @@ async function PUT_handler(req: NextRequest,
  * DELETE /api/products/tags/[id]
  * Deletes a product tag.
  */
-async function DELETE_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   try {
     if (!params.id) {
       throw badRequestError("Tag id is required");

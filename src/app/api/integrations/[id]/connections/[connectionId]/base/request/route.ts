@@ -7,7 +7,6 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 const normalizeParameters = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -27,11 +26,9 @@ const requestSchema = z
  * POST /api/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   try {
-    const { id, connectionId } = await params;
+    const { id, connectionId } = params;
     if (!id || !connectionId) {
       throw badRequestError("Integration id and connection id are required");
     }
@@ -189,5 +186,4 @@ async function POST_handler(req: NextRequest,
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.request.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].base.request.POST" });

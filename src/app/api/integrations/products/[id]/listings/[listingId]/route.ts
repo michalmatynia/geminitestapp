@@ -15,11 +15,9 @@ const updateListingSchema = z.object({
  * DELETE /api/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; listingId: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   try {
-    const { id: productId, listingId } = await params;
+    const { id: productId, listingId } = params;
     if (!productId || !listingId) {
       throw badRequestError("Product id and listing id are required");
     }
@@ -54,11 +52,9 @@ async function DELETE_handler(req: NextRequest,
  * PATCH /api/products/[id]/listings/[listingId]
  * Updates listing metadata (e.g., inventoryId).
  */
-async function PATCH_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; listingId: string }> }
-): Promise<Response> {
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   try {
-    const { id: productId, listingId } = await params;
+    const { id: productId, listingId } = params;
     if (!productId || !listingId) {
       throw badRequestError("Product id and listing id are required");
     }

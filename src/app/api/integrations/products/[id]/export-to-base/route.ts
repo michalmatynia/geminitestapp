@@ -34,7 +34,6 @@ import {
   notFoundError,
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 const exportSchema = z.object({
   connectionId: z.string().min(1),
@@ -122,15 +121,12 @@ const logImageDiagnostics = async ({
  * POST /api/integrations/products/[id]/export-to-base
  * Exports a product to Base.com using optional template
  */
-async function POST_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const logCapture = new LogCapture();
   logCapture.start();
 
   try {
-    const { id: productId } = await params;
+    const { id: productId } = params;
     const parsed = await parseJsonBody(req, exportSchema, {
       logPrefix: "export-to-base",
     });
@@ -867,5 +863,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].export-to-base.POST" });
+export const POST = apiHandlerWithParams<{ id: string }>(POST_handler, { source: "integrations.products.[id].export-to-base.POST" });

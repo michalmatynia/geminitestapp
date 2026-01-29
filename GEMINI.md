@@ -281,6 +281,8 @@ Queue (src/features/jobs/workers/agentQueue.ts) ──> Engine (core/engine.ts)
 
 ## Testing & Scripts
 
+**IMPORTANT: Do NOT modify eslint settings. Keep them strict.**
+
 ```
 npm run dev
 npm run build

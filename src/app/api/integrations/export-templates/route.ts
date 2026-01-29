@@ -24,7 +24,7 @@ const templateSchema = z.object({
   exportImagesAsBase64: z.boolean().optional(),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const templates = await listExportTemplates();
     return NextResponse.json(templates);
@@ -37,7 +37,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, templateSchema, {
       logPrefix: "export-templates.POST",

@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Used for the product listing dropdown selection.
  * Supports both MongoDB and Prisma based on provider settings.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const integrations = await getIntegrationsWithConnections();
     return NextResponse.json(integrations);

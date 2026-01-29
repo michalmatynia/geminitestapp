@@ -61,7 +61,7 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): 
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -109,7 +109,7 @@ async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
  * POST /api/currencies
  * Creates a currency.
  */
-async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, currencySchema, {
       logPrefix: "currencies.POST",

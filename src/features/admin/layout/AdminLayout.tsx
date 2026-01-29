@@ -11,7 +11,7 @@ import { UserNav } from "@/features/admin/components/UserNav";
 
 import Menu from "@/features/admin/components/Menu";
 
-function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const {
     isMenuCollapsed,
     setIsMenuCollapsed,
@@ -32,7 +32,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     setIsProgrammaticallyCollapsed,
   ]);
 
-  const handleToggleCollapse = () => {
+  const handleToggleCollapse = (): void => {
     setIsMenuCollapsed(!isMenuCollapsed);
     setIsProgrammaticallyCollapsed(false);
   };
@@ -77,7 +77,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+export function AdminLayout({ children }: { children: React.ReactNode }): React.ReactNode {
   return (
     <AdminLayoutProvider>
       <NoteSettingsProvider>

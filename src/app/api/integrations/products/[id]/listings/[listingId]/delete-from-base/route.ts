@@ -14,11 +14,9 @@ const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional(),
 });
 
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; listingId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
   try {
-    const { id: productId, listingId } = await params;
+    const { id: productId, listingId } = params;
     if (!productId || !listingId) {
       throw badRequestError("Product id and listing id are required");
     }

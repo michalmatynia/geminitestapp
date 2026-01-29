@@ -6,7 +6,8 @@ import { startChatbotJobQueue } from "@/features/jobs/server";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import {  apiHandler, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import type { JsonParseResult } from "@/shared/types/api";
 import type { ChatMessage, ChatbotJobStatus, ChatbotJob } from "@/shared/types/chatbot";
 

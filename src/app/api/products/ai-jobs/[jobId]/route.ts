@@ -11,12 +11,9 @@ const actionSchema = z.object({
   action: z.string().trim().min(1),
 });
 
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
   try {
-    const { jobId } = await params;
+    const { jobId } = params;
     if (!jobId) {
       throw badRequestError("Job id is required");
     }
@@ -34,12 +31,9 @@ async function GET_handler(
   }
 }
 
-async function POST_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
   try {
-    const { jobId } = await params;
+    const { jobId } = params;
     if (!jobId) {
       throw badRequestError("Job id is required");
     }
@@ -64,12 +58,9 @@ async function POST_handler(
   }
 }
 
-async function DELETE_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> {
   try {
-    const { jobId } = await params;
+    const { jobId } = params;
     if (!jobId) {
       throw badRequestError("Job id is required");
     }

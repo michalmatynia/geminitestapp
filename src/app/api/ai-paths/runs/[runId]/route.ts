@@ -7,7 +7,7 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 
 async function GET_handler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
@@ -23,7 +23,7 @@ async function GET_handler(
     return NextResponse.json({ run, nodes, events });
   } catch (error) {
     return createErrorResponse(error, {
-      request: _req,
+      request: req,
       source: "ai-paths.runs.detail",
       fallbackMessage: "Failed to load run details",
     });
@@ -31,6 +31,6 @@ async function GET_handler(
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => GET_handler(req, _ctx, params),
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => GET_handler(req, ctx, params),
   { source: "ai-paths.runs.detail" }
 );

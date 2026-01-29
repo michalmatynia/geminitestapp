@@ -119,12 +119,12 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
   return null;
 };
 
-async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, actionSchema, {
       logPrefix: "ai-paths.db-action",
     });
-    if (!parsed.ok) return parsed.response;
+    if (!parsed.ok) return parsed.response as Response;
     if (!process.env.MONGODB_URI) {
       return createErrorResponse(internalError("MongoDB is not configured"), {
         request: req,

@@ -20,14 +20,11 @@ const createConnectionSchema = z
  * GET /api/integrations/[id]/connections
  * Fetch connections for an integration.
  */
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let integrationId: string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } = params;
     integrationId = id;
     if (!integrationId) {
       throw badRequestError("Integration id is required");
@@ -91,14 +88,11 @@ async function GET_handler(
  * POST /api/integrations/[id]/connections
  * Create a new connection for an integration.
  */
-async function POST_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let integrationId: string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } = params;
     integrationId = id;
     if (!integrationId) {
       throw badRequestError("Integration id is required");

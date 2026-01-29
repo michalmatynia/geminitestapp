@@ -12,11 +12,13 @@ import { ErrorSystem } from "@/features/observability/server";
  * GET /api/products/[id]
  * Fetches a single product by its ID.
  */
-async function GET_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
 ): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -44,11 +46,13 @@ async function GET_handler(req: NextRequest,
  * PUT /api/products/[id]
  * Updates an existing product.
  */
-async function PUT_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
 ): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -88,11 +92,13 @@ const patchProductSchema = z.object({
  * PATCH /api/products/[id]
  * Partially updates a product (for quick field edits like price/stock).
  */
-async function PATCH_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+async function PATCH_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
 ): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -101,7 +107,7 @@ async function PATCH_handler(req: NextRequest,
       logPrefix: "products.PATCH",
     });
     if (!parsed.ok) {
-      return parsed.response;
+      return parsed.response as Response;
     }
     const data = parsed.data;
 
@@ -137,11 +143,13 @@ async function PATCH_handler(req: NextRequest,
  * DELETE /api/products/[id]
  * Deletes a product.
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+async function DELETE_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
 ): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -163,23 +171,15 @@ async function DELETE_handler(req: NextRequest,
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "products.[id].GET" }
-);
-export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PUT_handler(req, { params: Promise.resolve(params) }),
-  { source: "products.[id].PUT" }
-);
-export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PATCH_handler(req, { params: Promise.resolve(params) }),
-  { source: "products.[id].PATCH" }
-);
-export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: "products.[id].DELETE" }
-);
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
+  source: "products.[id].GET",
+});
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
+  source: "products.[id].PUT",
+});
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
+  source: "products.[id].PATCH",
+});
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
+  source: "products.[id].DELETE",
+});

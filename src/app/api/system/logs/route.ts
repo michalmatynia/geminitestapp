@@ -39,7 +39,7 @@ const clearSchema = z.object({
   before: z.string().datetime().optional(),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const url = new URL(req.url);
     const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -62,7 +62,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, createSchema, {
       logPrefix: "systemLogs.POST",
@@ -93,7 +93,7 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function DELETE_handler(req: NextRequest): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const url = new URL(req.url);
     const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));

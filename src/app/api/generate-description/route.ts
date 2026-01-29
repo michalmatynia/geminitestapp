@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 /**
  * POST /api/generate-description
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const body = (await req.json()) as {
       productData?: ProductFormData;

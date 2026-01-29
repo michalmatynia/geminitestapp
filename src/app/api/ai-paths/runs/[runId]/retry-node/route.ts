@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import {  apiHandlerWithParams, ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { retryPathRunNode } from "@/features/ai-paths/services/path-run-service";
@@ -11,15 +12,16 @@ const retrySchema = z.object({
   nodeId: z.string().trim().min(1),
 });
 
-async function POST_handler(req: NextRequest,
+async function POST_handler(
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-): Promise<NextResponse | Response> {
+): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, retrySchema, {
       logPrefix: "ai-paths.runs.retry-node",
     });
-    if (!parsed.ok) return parsed.response;
+    if (!parsed.ok) return parsed.response as Response;
 
     const runId = params.runId;
     const nodeId = parsed.data.nodeId;
@@ -35,4 +37,6 @@ async function POST_handler(req: NextRequest,
   }
 }
 
-export const POST = apiHandlerWithParams(POST_handler, { source: "ai-paths.runs.retry-node" });
+export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {
+  source: "ai-paths.runs.retry-node",
+});

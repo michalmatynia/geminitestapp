@@ -255,7 +255,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   return { keys: sortedKeys, values };
 };
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "imports.base.parameters.POST",
@@ -344,7 +344,7 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const cache = await getImportParameterCache();
     return NextResponse.json(

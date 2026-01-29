@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/integrations/jobs
  * Fetches all product listing jobs with product details
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const listingRepo = await getProductListingRepository();
     const productRepo = await getProductRepository();

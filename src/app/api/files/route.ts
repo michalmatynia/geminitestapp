@@ -8,7 +8,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import type { ImageFile } from "@prisma/client";
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
 

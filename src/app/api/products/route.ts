@@ -10,7 +10,7 @@ import { ErrorSystem } from "@/features/observability/server";
  * GET /api/products
  * Fetches a list of products with optional filters.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
 
@@ -35,7 +35,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/products
  * Creates a new product.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     let formData: FormData;
     try {

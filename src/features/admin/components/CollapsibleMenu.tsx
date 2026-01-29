@@ -18,7 +18,7 @@ export default function CollapsibleMenu({
   icon,
   children,
   href,
-}: CollapsibleMenuProps) {
+}: CollapsibleMenuProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const { isMenuCollapsed } = useAdminLayout();
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function CollapsibleMenu({
   return (
     <Collapsible.Root
       open={isOpen}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={(nextOpen: boolean) => {
         setIsOpen(nextOpen);
         if (nextOpen && href) {
           router.push(href);

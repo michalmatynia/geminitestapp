@@ -20,10 +20,8 @@ const productParameterUpdateSchema = z.object({
  * PUT /api/products/parameters/[id]
  * Updates a product parameter.
  */
-async function PUT_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   try {
     if (!params.id) {
       throw badRequestError("Parameter id is required");
@@ -140,10 +138,8 @@ async function PUT_handler(req: NextRequest,
  * DELETE /api/products/parameters/[id]
  * Deletes a product parameter.
  */
-async function DELETE_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   try {
     if (!params.id) {
       throw badRequestError("Parameter id is required");

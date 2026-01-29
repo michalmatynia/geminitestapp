@@ -12,7 +12,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/notes/themes
  * Fetches themes for a notebook.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const notebookIdParam = searchParams.get("notebookId");
   try {
@@ -34,7 +34,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/notes/themes
  * Creates a new theme.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, themeCreateSchema, {
       logPrefix: "themes.POST",

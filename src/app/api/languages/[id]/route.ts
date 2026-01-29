@@ -44,11 +44,9 @@ const LANGUAGES_COLLECTION = "languages";
  * PUT /api/languages/[id]
  * Updates language country assignments.
  */
-async function PUT_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
       throw badRequestError("Language id is required");
     }
@@ -193,11 +191,9 @@ async function PUT_handler(req: NextRequest,
  * DELETE /api/languages/[id]
  * Deletes a language and its assignments.
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
       throw badRequestError("Language id is required");
     }

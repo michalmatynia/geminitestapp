@@ -1,6 +1,6 @@
 
 > libapp2@0.1.0 lint
-> eslint .
+> eslint . --fix
 
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts

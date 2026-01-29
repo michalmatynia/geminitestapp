@@ -28,9 +28,7 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/test
  * Tests Allegro API access using stored credentials.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let integrationConnectionId: string | null = null;
   const steps: TestLogEntry[] = [];
@@ -64,7 +62,7 @@ async function POST_handler(req: NextRequest,
   };
 
   try {
-    const { id, connectionId } = await params;
+    const { id, connectionId } = params;
     integrationId = id;
     integrationConnectionId = connectionId;
     if (!integrationId || !integrationConnectionId) {

@@ -8,7 +8,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/notes/categories/tree
  * Fetches categories as a hierarchical tree structure
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");

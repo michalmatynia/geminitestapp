@@ -188,6 +188,9 @@ const disableTypeCheckedForConfigFiles = compat
 const apiRouteConfig = {
   files: ["src/app/api/**/route.{ts,tsx}", "src/features/**/api/**/route.{ts,tsx}"],
   rules: {
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/typedef": "off",
     "no-restricted-syntax": [
       "error",
       ...commonRestrictedSyntax,

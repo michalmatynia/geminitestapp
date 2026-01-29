@@ -10,7 +10,8 @@ import {
   notFoundError,
   duplicateEntryError,
 } from "@/shared/errors/app-error";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type CurrencyDoc = {
   id: string;
@@ -46,10 +47,11 @@ const currencySchema = z.object({
  */
 async function PUT_handler(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
     const body = (await req.json()) as unknown;
     const data = currencySchema.parse(body);
 
@@ -123,10 +125,11 @@ async function PUT_handler(
  */
 async function DELETE_handler(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   try {
-    const { id } = await params;
+    const id = params.id;
 
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -161,6 +164,10 @@ async function DELETE_handler(
   }
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
+  source: "currencies.[id].PUT",
+});
 
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
+  source: "currencies.[id].DELETE",
+});

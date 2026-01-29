@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * POST /api/products/categories/migrate
  * Copies product categories from Postgres (Prisma) to MongoDB.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     if (!process.env.DATABASE_URL) {
       throw badRequestError("Postgres is not configured.");

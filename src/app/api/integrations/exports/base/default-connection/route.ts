@@ -17,7 +17,7 @@ const postSchema = z.object({
  * GET /api/integrations/exports/base/default-connection
  * Returns the default Base.com connection ID for exports
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const connectionId = await getExportDefaultConnectionId();
     return NextResponse.json({ connectionId });
@@ -34,7 +34,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/integrations/exports/base/default-connection
  * Sets the default Base.com connection ID for exports
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, postSchema, {
       logPrefix: "exports.base.default-connection.POST",

@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 const filesToFix = [
   "src/app/api/auth/users/[id]/route.ts",

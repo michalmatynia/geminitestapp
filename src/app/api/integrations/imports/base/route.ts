@@ -66,7 +66,7 @@ type MappedItem = {
   image: string | null;
 };
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const body: unknown = await req.json();
     const data = requestSchema.parse(body);

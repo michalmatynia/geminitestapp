@@ -6,7 +6,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const staleResult = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleResult.count > 0) {
@@ -35,7 +35,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function DELETE_handler(req: NextRequest): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get("scope");

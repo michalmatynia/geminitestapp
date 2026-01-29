@@ -11,10 +11,10 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),
   type: z.string().trim().min(1),
-  payload: z.record(z.string(), z.unknown()).optional(),
+  payload: z.record(z.string(), z.any()).optional(),
 });
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, enqueueSchema, {
       logPrefix: "products.ai-jobs.enqueue.POST",

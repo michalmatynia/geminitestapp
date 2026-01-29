@@ -16,7 +16,7 @@ const payloadSchema = z.object({
   token: z.string().trim().min(4),
 });
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const session = await auth();
     const userId = session?.user?.id;

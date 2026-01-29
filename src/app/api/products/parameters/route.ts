@@ -23,7 +23,7 @@ const productParameterCreateSchema = z.object({
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");
@@ -79,7 +79,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/products/parameters
  * Creates a new product parameter.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productParameterCreateSchema, {

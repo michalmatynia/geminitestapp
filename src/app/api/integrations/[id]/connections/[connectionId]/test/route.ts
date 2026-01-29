@@ -14,15 +14,12 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
 import { mapStatusToAppError } from "@/shared/errors/error-mapper";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test
  * Performs a lightweight credential check for the integration connection.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let integrationConnectionId: string | null = null;
   const steps: {
@@ -60,7 +57,7 @@ async function POST_handler(req: NextRequest,
   };
 
   try {
-    const { id, connectionId } = await params;
+    const { id, connectionId } = params;
     integrationId = id;
     integrationConnectionId = connectionId;
     if (!integrationId || !integrationConnectionId) {
@@ -955,5 +952,4 @@ async function POST_handler(req: NextRequest,
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].test.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].test.POST" });

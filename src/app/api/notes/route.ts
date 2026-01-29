@@ -12,7 +12,7 @@ import { ErrorSystem } from "@/features/observability/server";
  * GET /api/notes
  * Fetches a list of notes with optional filters.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
 
   const filters: NoteFilters = {
@@ -78,13 +78,13 @@ async function GET_handler(req: NextRequest): Promise<Response> {
  * POST /api/notes
  * Creates a new note.
  */
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, noteCreateSchema, {
       logPrefix: "notes.POST",
     });
     if (!parsed.ok) {
-      return parsed.response;
+      return parsed.response as Response;
     }
 
     const resolvedNotebookId =

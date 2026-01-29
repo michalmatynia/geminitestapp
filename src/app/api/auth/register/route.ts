@@ -32,7 +32,7 @@ type MongoUserDoc = {
   updatedAt: Date;
 };
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, registerSchema, {
       logPrefix: "auth.register.POST",

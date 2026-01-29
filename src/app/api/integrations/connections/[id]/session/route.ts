@@ -4,20 +4,16 @@ import { decryptSecret } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/connections/[id]/session
  * Returns stored Playwright session cookies for a connection.
  */
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let connectionId: string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } = params;
     connectionId = id;
     if (!connectionId) {
       throw badRequestError("Connection id is required");
@@ -55,5 +51,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].session.GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "integrations.connections.[id].session.GET" });

@@ -111,12 +111,9 @@ const resolveCurrency = (
  * PUT /api/price-groups/[id]
  * Updates a price group and enforces a single default group.
  */
-async function PUT_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = (await req.json()) as unknown;
     const data = priceGroupSchema.parse(body);
 
@@ -214,12 +211,9 @@ async function PUT_handler(
  * DELETE /api/price-groups/[id]
  * Deletes a price group.
  */
-async function DELETE_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {

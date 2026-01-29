@@ -18,11 +18,9 @@ const createListingSchema = z.object({
  * GET /api/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
  */
-async function GET_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id: productId } = await params;
+    const { id: productId } = params;
     if (!productId) {
       throw badRequestError("Product id is required");
     }
@@ -42,11 +40,9 @@ async function GET_handler(req: NextRequest,
  * POST /api/integrations/products/[id]/listings
  * Creates a new listing for a product on a marketplace.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id: productId } = await params;
+    const { id: productId } = params;
     if (!productId) {
       throw badRequestError("Product id is required");
     }

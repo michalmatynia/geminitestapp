@@ -13,7 +13,7 @@ const requestSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable().optional(),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const inventoryId = await getExportDefaultInventoryId();
     return NextResponse.json({ inventoryId });
@@ -26,7 +26,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "exports.base.default-inventory.POST",

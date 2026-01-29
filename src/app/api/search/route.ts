@@ -48,7 +48,7 @@ const GOOGLE_SEARCH_API_URL =
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, searchSchema, {
       logPrefix: "search",

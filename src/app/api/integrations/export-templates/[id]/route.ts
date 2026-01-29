@@ -23,11 +23,9 @@ const templateSchema = z.object({
   exportImagesAsBase64: z.boolean().optional(),
 });
 
-async function GET_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
       throw badRequestError("Template id is required");
     }
@@ -45,11 +43,9 @@ async function GET_handler(req: NextRequest,
   }
 }
 
-async function PUT_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
       throw badRequestError("Template id is required");
     }
@@ -79,11 +75,9 @@ async function PUT_handler(req: NextRequest,
   }
 }
 
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     if (!id) {
       throw badRequestError("Template id is required");
     }

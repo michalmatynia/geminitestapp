@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {  apiHandlerWithParams, ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { cancelPathRun } from "@/features/ai-paths/services/path-run-service";
 
-async function POST_handler(req: NextRequest,
+async function POST_handler(
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-): Promise<NextResponse | Response> {
+): Promise<Response> {
   try {
     const runId = params.runId;
     const run = await cancelPathRun(runId);
@@ -21,4 +23,6 @@ async function POST_handler(req: NextRequest,
   }
 }
 
-export const POST = apiHandlerWithParams(POST_handler, { source: "ai-paths.runs.cancel" });
+export const POST = apiHandlerWithParams<{ runId: string }>(POST_handler, {
+  source: "ai-paths.runs.cancel",
+});

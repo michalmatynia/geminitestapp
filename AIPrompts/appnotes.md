@@ -1,3 +1,30 @@
+I'm getting a lot of errors like this where "export const POST = apiHandler(
+    async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req,
+  ctx),
+   { source: "ai-paths.db-action" });" ctx response is not properly mapped in POST method
+  "POST_handler(
+    req: NextRequest,
+    _ctx: ApiHandlerContext,
+  )" or get method "GET_handler(
+    req: NextRequest,
+    _ctx: ApiHandlerContext,
+  )" address this issue
+
+change back to error
+
+         "error",                                                                       │
+│ 299 +       "warn",                                                                        │
+│ 300         {                                                                              │
+│ 301           "parameter": true,                                                           │
+│ 302           "arrowParameter": true,                                                      │
+│ 305           "propertyDeclaration": true                                                  │
+│ 306         }                                                                              │
+│ 307       ],                                                                               │
+│ 308 -     "@typescript-eslint/explicit-function-return-type": "error",                     │
+│ 309 -     "@typescript-eslint/explicit-module-boundary-types": "error",                    │
+│ 308 +     "@typescript-eslint/explicit-function-return-type": "warn",                      │
+│ 309 +     "@typescript-eslint/explicit-module-boundary-types": "warn", 
+
 
 ---
 enable requiring explicit type annotations

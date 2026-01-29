@@ -12,10 +12,8 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * PATCH /api/notes/tags/[id]
  * Updates a tag.
  */
-async function PATCH_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const { id } = await params;
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
   try {
     const parsed = await parseJsonBody(req, tagUpdateSchema, {
       logPrefix: "tags.PATCH",
@@ -42,10 +40,8 @@ async function PATCH_handler(req: NextRequest,
  * DELETE /api/notes/tags/[id]
  * Deletes a tag.
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const { id } = await params;
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  const { id } = params;
   try {
     await noteService.deleteTag(id);
     return NextResponse.json({ success: true });

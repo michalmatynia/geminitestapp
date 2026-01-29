@@ -12,10 +12,8 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * PATCH /api/notes/categories/[id]
  * Updates a category.
  */
-async function PATCH_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   try {
     const parsed = await parseJsonBody(req, categoryUpdateSchema, {
       logPrefix: "categories.PATCH",
@@ -45,10 +43,8 @@ async function PATCH_handler(req: NextRequest,
  * Query params:
  * - recursive=true: Delete all subfolders and notes within the category
  */
-async function DELETE_handler(req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-): Promise<Response> {
-  const params = await props.params;
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+  
   const { searchParams } = new URL(req.url);
   const recursive = searchParams.get("recursive") === "true";
 

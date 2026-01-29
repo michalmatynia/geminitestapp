@@ -4,7 +4,6 @@ import { noteService } from "@/features/notesapp/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 const MAX_SLOT_INDEX = 9;
 
@@ -12,10 +11,8 @@ const MAX_SLOT_INDEX = 9;
  * DELETE /api/notes/[id]/files/[slotIndex]
  * Delete a file from a specific slot
  */
-async function DELETE_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; slotIndex: string }> }
-): Promise<Response> {
-  const { id: noteId, slotIndex: slotIndexStr } = await params;
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; slotIndex: string }): Promise<Response> {
+  const { id: noteId, slotIndex: slotIndexStr } = params;
 
   try {
     const slotIndex = parseInt(slotIndexStr, 10);
@@ -48,5 +45,4 @@ async function DELETE_handler(req: NextRequest,
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(DELETE_handler, { source: "notes.[id].files.[slotIndex].DELETE" });

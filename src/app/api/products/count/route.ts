@@ -8,7 +8,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/products/count
  * Returns the total number of products based on filters.
  */
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
 

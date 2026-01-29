@@ -15,7 +15,7 @@ const metricsSchema = z.object({
   to: z.string().datetime().optional(),
 });
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const url = new URL(req.url);
     const parsed = metricsSchema.parse(Object.fromEntries(url.searchParams.entries()));

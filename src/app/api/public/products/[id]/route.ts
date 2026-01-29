@@ -9,12 +9,9 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * GET /api/public/products/[id]
  * Fetches a single product by its ID for public consumption.
  */
-async function GET_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const product = await productService.getProductById(id);
     if (!product) {
       return createErrorResponse(notFoundError("Product not found"), {

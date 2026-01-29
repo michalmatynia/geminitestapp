@@ -67,12 +67,9 @@ const normalizeCountryResponse = (
  * PUT /api/countries/[id]
  * Updates a country.
  */
-async function PUT_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = (await req.json()) as unknown;
     const data = countrySchema.parse(body);
     const { currencyIds, ...countryData } = data;
@@ -180,12 +177,9 @@ async function PUT_handler(
  * DELETE /api/countries/[id]
  * Deletes a country.
  */
-async function DELETE_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {

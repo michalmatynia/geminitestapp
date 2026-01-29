@@ -13,7 +13,7 @@ const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
   undefined
 );
 
-export function AdminLayoutProvider({ children }: { children: ReactNode }) {
+export function AdminLayoutProvider({ children }: { children: ReactNode }): React.ReactNode {
   const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
 
@@ -26,7 +26,7 @@ export function AdminLayoutProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAdminLayout() {
+export function useAdminLayout(): AdminLayoutContextType {
   const context = useContext(AdminLayoutContext);
   if (context === undefined) {
     throw new Error("useAdminLayout must be used within an AdminLayoutProvider");

@@ -37,14 +37,11 @@ const connectionSchema = z.object({
  * PUT /api/integrations/connections/[id]
  * Updates an integration connection.
  */
-async function PUT_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let connectionId: string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } = params;
     connectionId = id;
     if (!connectionId) {
       throw badRequestError("Connection id is required");
@@ -173,14 +170,11 @@ async function PUT_handler(
  * DELETE /api/integrations/connections/[id]
  * Deletes an integration connection.
  */
-async function DELETE_handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   let connectionId: string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } = params;
     connectionId = id;
     if (!connectionId) {
       throw badRequestError("Connection id is required");

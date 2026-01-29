@@ -5,17 +5,14 @@ import { fetchBaseInventories } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
-async function GET_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   try {
-    const { id, connectionId } = await params;
+    const { id, connectionId } = params;
     if (!id || !connectionId) {
       throw badRequestError("Integration id and connection id are required");
     }
@@ -66,5 +63,4 @@ async function GET_handler(req: NextRequest,
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(GET_handler, { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });

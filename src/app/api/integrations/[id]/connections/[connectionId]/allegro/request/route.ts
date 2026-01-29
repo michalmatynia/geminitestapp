@@ -28,11 +28,9 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/request
  * Proxy Allegro API requests using the stored access token.
  */
-async function POST_handler(req: NextRequest,
-  { params }: { params: Promise<{ id: string; connectionId: string }> }
-): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   try {
-    const { id, connectionId } = await params;
+    const { id, connectionId } = params;
     if (!id || !connectionId) {
       throw badRequestError("Integration id and connection id are required");
     }

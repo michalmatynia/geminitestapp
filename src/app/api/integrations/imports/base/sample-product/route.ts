@@ -66,7 +66,7 @@ const extractFirstProductId = (payload: unknown): string | null => {
   return null;
 };
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const productId = await getImportSampleProductId();
     const inventoryId = await getImportSampleInventoryId();
@@ -80,7 +80,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "imports.base.sample-product.POST",

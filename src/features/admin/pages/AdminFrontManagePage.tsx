@@ -14,7 +14,7 @@ type FrontAppOption = "products" | "chatbot" | "notes";
 
 const FRONT_PAGE_SETTING_KEY = "front_page_app";
 
-export function AdminFrontManagePage() {
+export function AdminFrontManagePage(): React.ReactNode {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isPending || !settingsQuery.data) {
@@ -38,7 +38,7 @@ function AdminFrontManageContent({
   initialSelected,
 }: {
   initialSelected: FrontAppOption;
-}) {
+}): React.ReactNode {
   const { toast } = useToast();
   const [selected, setSelected] = useState<FrontAppOption>(initialSelected);
   const updateSetting = useUpdateSetting();
@@ -67,7 +67,7 @@ function AdminFrontManageContent({
     []
   );
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
         key: FRONT_PAGE_SETTING_KEY,
@@ -102,7 +102,7 @@ function AdminFrontManageContent({
         />
         <div className="space-y-4">
           <div className="grid gap-3">
-            {options.map((option) => (
+            {options.map((option: { id: FrontAppOption; title: string; description: string; route: string }) => (
               <Button
                 key={option.id}
                 type="button"

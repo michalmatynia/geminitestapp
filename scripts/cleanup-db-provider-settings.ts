@@ -32,7 +32,7 @@ async function cleanupMongo() {
   try {
     const db = await getMongoDb();
     const result = await db
-      .collection("settings")
+      .collection<{ _id: string; key: string }>("settings")
       .deleteMany({
         $or: [
           { _id: { $in: LEGACY_KEYS } },

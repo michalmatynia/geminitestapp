@@ -130,9 +130,8 @@ async function PATCH_handler(req: NextRequest) {
   } catch (error) {
     const isAbort =
       req.signal.aborted ||
-      (typeof DOMException !== "undefined" &&
-        error instanceof DOMException &&
-        error.name === "AbortError") ||
+      (error instanceof Error && error.name === "AbortError") ||
+      (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") ||
       (error instanceof Error && (error as { code?: string }).code === "ECONNRESET");
     if (isAbort) {
       return new NextResponse(null, { status: 204 });

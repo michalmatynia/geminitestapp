@@ -408,4 +408,5 @@ export const getLatestAuditByType = (
 };
 
 export const isAbortError = (error: unknown) =>
-  error instanceof DOMException && error.name === "AbortError";
+  (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") ||
+  (error instanceof Error && error.name === "AbortError");

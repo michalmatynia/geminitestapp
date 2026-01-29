@@ -222,6 +222,15 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "error",
       // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector:
+            "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > ArrayExpression > Literal",
+          message:
+            "MongoDB _id with $in using string literals. Ensure collection is typed or use ObjectId() to avoid 'string[] is not assignable to ObjectId[]' errors.",
+        },
+      ],
     },
     settings: {
       react: {

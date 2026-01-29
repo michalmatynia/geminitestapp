@@ -18,11 +18,11 @@ import prisma from "@/shared/lib/db/prisma";
 import { ErrorSystem } from "@/features/observability/server";
 import {
   generateProductDescription,
-  getProductDataProvider,
   getProductRepository,
   getSettingValue,
   translateProduct,
 } from "@/features/products/server";
+import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import type { ProductFormData } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
@@ -218,7 +218,7 @@ const normalizeIdValue = (value: unknown): string => {
 const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => {
   const normalizedIds = ids.map((id) => normalizeIdValue(id)).filter(Boolean);
   if (!normalizedIds.length) return [];
-  const provider = await getProductDataProvider();
+  const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const objectIds = normalizedIds
@@ -247,7 +247,7 @@ const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => 
 };
 
 const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
-  const provider = await getProductDataProvider();
+  const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const docs = await mongo

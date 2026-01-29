@@ -150,6 +150,36 @@ const disableTypeCheckedForConfigFiles = compat
     files: configFiles,
   }));
 
+const nextRouteConfig = {
+  files: [
+    "src/app/**/page.{ts,tsx,js,jsx}",
+    "src/app/**/layout.{ts,tsx,js,jsx}",
+    "src/app/**/route.{ts,tsx,js,jsx}",
+    "src/app/**/loading.{ts,tsx,js,jsx}",
+    "src/app/**/error.{ts,tsx,js,jsx}",
+    "src/app/**/not-found.{ts,tsx,js,jsx}",
+    "src/app/**/template.{ts,tsx,js,jsx}",
+    "src/app/**/default.{ts,tsx,js,jsx}",
+  ],
+  rules: {
+    "no-restricted-syntax": [
+      "warn",
+      {
+        selector:
+          "ExportNamedDeclaration[source] > ExportSpecifier[exported.name='runtime']",
+        message:
+          "Next.js Route Segment Config 'runtime' must be a static string literal. Do not re-export it.",
+      },
+      {
+        selector:
+          "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='runtime'][init.type!='Literal']",
+        message:
+          "Next.js Route Segment Config 'runtime' must be a static string literal.",
+      },
+    ],
+  },
+};
+
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
@@ -204,6 +234,7 @@ const eslintConfig = [
     },
   },
   ...layerBoundaryConfigs,
+  nextRouteConfig,
   {
     files: ["lib/generated/prisma/**/*.ts", "lib/generated/prisma/**/*.js"],
     rules: {

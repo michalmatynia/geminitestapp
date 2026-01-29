@@ -37,7 +37,7 @@ export default function FileManager({
     return query.toString();
   }, [filenameSearch, productNameSearch]);
 
-  const { data: files = [], refetch } = useFiles(queryParams);
+  const { data: files = [] } = useFiles(queryParams);
 
   const handleClick = (file: ExpandedImageFile) => {
     if (mode === "select") {

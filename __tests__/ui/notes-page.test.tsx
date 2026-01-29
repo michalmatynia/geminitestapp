@@ -15,7 +15,17 @@ import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 import { NoteCreateData } from "@/features/notesapp/validations/notes";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 const now = new Date();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 const baseTags: TagRecord[] = [
   {
@@ -88,13 +98,15 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
 
 const renderNotesPage = () =>
   render(
-    <AdminLayoutProvider>
-      <NoteSettingsProvider>
-        <ToastProvider>
-          <AdminNotesPage />
-        </ToastProvider>
-      </NoteSettingsProvider>
-    </AdminLayoutProvider>
+    <QueryClientProvider client={queryClient}>
+      <AdminLayoutProvider>
+        <NoteSettingsProvider>
+          <ToastProvider>
+            <AdminNotesPage />
+          </ToastProvider>
+        </NoteSettingsProvider>
+      </AdminLayoutProvider>
+    </QueryClientProvider>
   );
 
 describe("Notes page UI", () => {

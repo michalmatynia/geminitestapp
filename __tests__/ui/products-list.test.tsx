@@ -11,6 +11,16 @@ import { ToastProvider } from "@/shared/ui/toast";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
 const pushMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -67,9 +77,11 @@ describe("Admin Products List UI", () => {
 
   it("renders product rows", async () => {
     render(
-      <ToastProvider>
-        <AdminProductsPage />
-      </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AdminProductsPage />
+        </ToastProvider>
+      </QueryClientProvider>
     );
 
     expect(await screen.findByText("Product Alpha")).toBeInTheDocument();
@@ -78,9 +90,11 @@ describe("Admin Products List UI", () => {
 
   it("shows row actions menu with Edit, Duplicate, and Remove", async () => {
     render(
-      <ToastProvider>
-        <AdminProductsPage />
-      </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AdminProductsPage />
+        </ToastProvider>
+      </QueryClientProvider>
     );
     await screen.findByText("Product Alpha");
 
@@ -99,9 +113,11 @@ describe("Admin Products List UI", () => {
       .mockReturnValue("abc123");
     
     render(
-      <ToastProvider>
-        <AdminProductsPage />
-      </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AdminProductsPage />
+        </ToastProvider>
+      </QueryClientProvider>
     );
 
     const user = userEvent.setup();

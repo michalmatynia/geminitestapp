@@ -62,3 +62,13 @@ next-env.d.ts
 # Docker
 compose.yaml
 docker.md
+
+# Tests
+/tests/e2e/reports/
+/tests/e2e/videos/
+/tests/e2e/screenshots/
+/tests/e2e/temp/
+/tests/e2e/logs/
+/tests/e2e/.auth/
+/tests/e2e/.env
+/test-results/

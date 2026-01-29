@@ -4,6 +4,9 @@ import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
 import { server } from './src/mocks/server';
 
+// Force Prisma as the database provider for tests to ensure consistency with cleanup logic
+process.env.APP_DB_PROVIDER = 'prisma';
+
 // Mock next/image
 vi.mock('next/image', () => ({
   __esModule: true,

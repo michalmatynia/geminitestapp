@@ -237,6 +237,11 @@ const eslintConfig = [
         }
       ],
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
       // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
       "no-restricted-syntax": ["warn", ...commonRestrictedSyntax],
@@ -253,6 +258,17 @@ const eslintConfig = [
   },
   ...layerBoundaryConfigs,
   nextRouteConfig,
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   {
     files: ["lib/generated/prisma/**/*.ts", "lib/generated/prisma/**/*.js"],
     rules: {

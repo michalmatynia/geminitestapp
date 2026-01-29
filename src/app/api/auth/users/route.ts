@@ -71,16 +71,24 @@ async function GET_handler(req: Request) {
       orderBy: { email: "asc" },
     });
 
-    const payload: AuthUserSummary[] = users.map((user) => ({
-      id: user.id,
-      email: user.email ?? null,
-      name: user.name ?? null,
-      image: user.image ?? null,
-      emailVerified: user.emailVerified
-        ? user.emailVerified.toISOString()
-        : null,
-      provider,
-    }));
+    type PrismaUserSummary = {
+      id: string;
+      email: string | null;
+      name: string | null;
+      image: string | null;
+      emailVerified: Date | null;
+    };
+
+    const payload: AuthUserSummary[] = (users as PrismaUserSummary[]).map(
+      (user) => ({
+        id: user.id,
+        email: user.email ?? null,
+        name: user.name ?? null,
+        image: user.image ?? null,
+        emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
+        provider,
+      })
+    );
 
     return NextResponse.json({ provider, users: payload });
   } catch (error) {

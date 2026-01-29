@@ -27,7 +27,7 @@ filesToFix.forEach(file => {
 
   // 2. Generic fix for apiHandlerWithParams broken pattern
   // We match the whole export line up to the handler call and replace it.
-  const brokenWithParamsRegex = /export const (GET|POST|PUT|DELETE|PATCH) = apiHandlerWithParams<([^>]+)>(\s*async\s*\([^)]*\)\s*:\s*Promise<Response>\s*=>\s*async\s*\([^)]*\)\s*=>\s*([^(\s]+)\(req,\s*\{\s*params:\s*Promise\.resolve\(params\)\s*\}\,\s*\{\/g;
+  const brokenWithParamsRegex = /export const (GET|POST|PUT|DELETE|PATCH) = apiHandlerWithParams<([^>]+)>(\s*async\s*\([^)]*\)\s*:\s*Promise<Response>\s*=>\s*async\s*\([^)]*\)\s*=>\s*([^(\s]+)\(req,\s*\{\s*params:\s*Promise\.resolve\(params\)\s*\}\,\s*\{/g;
   
   if (content.match(brokenWithParamsRegex)) {
       content = content.replace(brokenWithParamsRegex, 'export const $1 = apiHandlerWithParams<$2>(\n  async (req: NextRequest, _ctx: ApiHandlerContext, params: $2): Promise<Response> => $3(req, { params: Promise.resolve(params) }),\n  {');

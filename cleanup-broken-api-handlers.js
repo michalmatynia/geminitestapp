@@ -37,7 +37,7 @@ apiFiles.forEach(file => {
   }
 
   // Broken nested async patterns for apiHandler
-  const brokenRegex = /apiHandler\(\s*async\s*\([^)]*\)\s*:\s*Promise<Response>\s*=>\s*async\s*\([^)]*\)\s*=>\s*([^(\s]+)\(req,\s*ctx\),\s*{\/g;
+  const brokenRegex = /apiHandler\(\s*async\s*\([^)]*\)\s*:\s*Promise<Response>\s*=>\s*async\s*\([^)]*\)\s*=>\s*([^(\s]+)\(req,\s*ctx\),\s*{/g;
   if (content.match(brokenRegex)) {
       content = content.replace(brokenRegex, 'apiHandler(\n  async (req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> => $1(req, _ctx),\n  {');
       changed = true;

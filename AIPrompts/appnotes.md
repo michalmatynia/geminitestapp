@@ -1,6 +1,7 @@
 
 ---
 enable requiring explicit type annotations
+Require typedef and module boundaries and one more need to be set to true
 
 
 Products 

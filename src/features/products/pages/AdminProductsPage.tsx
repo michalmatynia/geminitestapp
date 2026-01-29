@@ -1,5 +1,5 @@
 "use client";
-import type, { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from "react";
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from "react";
 
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";

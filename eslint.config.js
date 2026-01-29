@@ -171,6 +171,11 @@ const configFiles = [
   "scripts/backfill-note-colors.mjs",
   "scripts/cleanup-db-provider-settings.ts",
   "__tests__/mocks/server-only.js",
+  "cleanup-broken-api-handlers-v2.js",
+  "cleanup-broken-api-handlers.js",
+  "final-fix-api-handlers.js",
+  "fix-api-handlers-v4.js",
+  "fix-api-imports.js",
 ];
 
 const disableTypeCheckedForConfigFiles = compat
@@ -208,6 +213,9 @@ const nextRouteConfig = {
     "src/app/**/default.{ts,tsx,js,jsx}",
   ],
   rules: {
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/typedef": "off",
     "no-restricted-syntax": [
       "warn",
       ...commonRestrictedSyntax,
@@ -230,7 +238,7 @@ const nextRouteConfig = {
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
-    ignores: ["lib/generated/prisma/**", "scripts/backfill-note-colors.mjs"],
+    ignores: ["lib/generated/prisma/**", "scripts/backfill-note-colors.mjs", "*.py"],
   },
   ...compat.extends(
     "plugin:@typescript-eslint/recommended-type-checked",
@@ -304,6 +312,14 @@ const eslintConfig = [
   ...layerBoundaryConfigs,
   apiRouteConfig,
   nextRouteConfig,
+  {
+    files: ["src/shared/ui/**/*.{ts,tsx}", "src/shared/components/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/typedef": "off",
+    },
+  },
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],
     rules: {

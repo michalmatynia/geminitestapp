@@ -1,964 +1,62 @@
 
 > libapp2@0.1.0 lint
-> eslint .
+> eslint . --fix
 
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/ai/page.tsx
-  63:31  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/cleanup-broken-api-handlers.js
+  40:22  error  Parsing error: Unterminated regular expression literal
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/database/page.tsx
-  54:33  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/final-fix-api-handlers.js
+  30:32  error  Parsing error: Unterminated regular expression literal
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/logging/page.tsx
-  50:33  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/fix_routes.py
+  2:0  error  Parsing error: '=' expected
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/recovery/page.tsx
-   19:69  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   86:96  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  100:5   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  111:33  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/fix_routes_v2.py
+  2:0  error  Parsing error: '=' expected
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/db-query/route.ts
-  50:38  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  65:43  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  67:77  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  76:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/db-update/route.ts
-  48:38  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  63:43  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  65:77  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  74:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/cancel/route.ts
-  7:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/resume/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/retry-node/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/route.ts
-  8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/dead-letter/requeue/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/enqueue/route.ts
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/update/route.ts
-  52:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  60:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/[id]/route.ts
-   8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/categories/route.ts
-  5:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/route.ts
-   8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/tags/route.ts
-  5:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/disable/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/setup/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/verify/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mock-signin/route.ts
-  33:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/route.ts
-  32:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/security/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  48:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/route.ts
-  23:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/verify-credentials/route.ts
-  24:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/[id]/route.ts
-  24:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  95:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/assign/route.ts
-  20:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/route.ts
-   29:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  154:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/context/route.ts
-   6:52  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  19:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/[jobId]/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  45:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  99:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/route.ts
-   34:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   56:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  125:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/memory/route.ts
-  9:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
-   32:26  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   43:37  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   74:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  117:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
-   16:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   62:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  135:71  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  135:76  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  135:82  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  136:72  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  136:77  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  136:83  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
-  10:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  43:71  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  43:76  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  43:82  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
-   41:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   81:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  104:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  154:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/settings/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  51:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
-  22:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/blocks/[id]/route.ts
-   26:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   50:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   86:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  103:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  103:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  103:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  104:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  104:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  104:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  105:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  105:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  105:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/blocks/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts
-   32:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   56:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   97:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  114:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  114:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  114:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  115:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  115:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  115:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  116:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  116:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  116:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  39:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/slugs/[id]/route.ts
-   26:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   50:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   71:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  111:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  111:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  111:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  112:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  112:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  112:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  113:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  113:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  113:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/slugs/route.ts
-  16:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  33:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/countries/[id]/route.ts
-   46:3   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   70:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  183:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  211:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  211:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  211:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  212:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  212:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  212:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/countries/route.ts
-   53:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  108:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  133:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  201:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/currencies/[id]/route.ts
-   47:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  124:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  164:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  164:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  164:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  165:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  165:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  165:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/currencies/route.ts
-   36:80  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   63:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  111:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/backup/route.ts
-  8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/backups/route.ts
-  56:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/browse/route.ts
-  153:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  153:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/delete/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/preview/route.ts
-  16:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
-  35:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/schema/route.ts
-  141:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  141:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/upload/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/drafts/[id]/route.ts
-   54:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   83:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  119:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  144:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  144:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  144:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  145:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  145:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  145:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  146:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  146:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  146:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/drafts/route.ts
-  53:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  70:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-config/route.ts
+  61:28  error  'ctx' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  64:28  error  'ctx' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/[id]/route.ts
-   9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  46:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  46:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  46:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/preview/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/route.ts
-  10:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  22:64  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/generate-description/route.ts
-  11:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  22:32  error  Expected item to have a type annotation  @typescript-eslint/typedef
+  8:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts
-  14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  86:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  86:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  86:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts
-   24:58  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   31:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  177:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  177:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  177:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts
-   7:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  53:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  53:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  53:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts
-   30:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  110:41  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  190:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  190:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  190:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts
-   30:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   42:5   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   51:47  error  Expected a type annotation                 @typescript-eslint/typedef
-   51:61  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  122:42  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  131:41  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  258:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  258:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  258:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  6:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts
-  13:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  56:37  error  Expected inv to have a type annotation     @typescript-eslint/typedef
-  69:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  69:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  69:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  8:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts
-  20:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  91:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  91:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  91:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  10:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts
-   29:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  126:29  error  Expected entry to have a type annotation   @typescript-eslint/typedef
-  192:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  192:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  192:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  10:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts
-   21:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   33:5   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   42:47  error  Expected a type annotation                 @typescript-eslint/typedef
-   42:61  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  171:39  error  Expected inv to have a type annotation     @typescript-eslint/typedef
-  211:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  211:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  211:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  9:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts
-   22:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   38:5   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   47:47  error  Expected a type annotation                 @typescript-eslint/typedef
-   47:61  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  238:13  error  Expected a type annotation                 @typescript-eslint/typedef
-  238:55  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  255:56  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  261:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  274:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  286:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  298:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  310:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  323:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  336:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  345:59  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  358:34  error  Expected entry to have a type annotation   @typescript-eslint/typedef
-  387:9   error  Expected a type annotation                 @typescript-eslint/typedef
-  388:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  396:9   error  Expected a type annotation                 @typescript-eslint/typedef
-  397:9   error  Expected a type annotation                 @typescript-eslint/typedef
-  398:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  407:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  429:9   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  497:38  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  541:53  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  666:61  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  796:54  error  Expected hint to have a type annotation    @typescript-eslint/typedef
-  958:87  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  958:92  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  958:98  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/route.ts
-   22:1   error  Missing return type on function                @typescript-eslint/explicit-function-return-type
-   37:38  error  Expected connection to have a type annotation  @typescript-eslint/typedef
-   93:1   error  Missing return type on function                @typescript-eslint/explicit-function-return-type
-  173:64  error  Expected req to have a type annotation         @typescript-eslint/typedef
-  173:69  error  Expected _ctx to have a type annotation        @typescript-eslint/typedef
-  173:75  error  Expected params to have a type annotation      @typescript-eslint/typedef
-  174:65  error  Expected req to have a type annotation         @typescript-eslint/typedef
-  174:70  error  Expected _ctx to have a type annotation        @typescript-eslint/typedef
-  174:76  error  Expected params to have a type annotation      @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/connections/[id]/route.ts
-   39:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  175:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  201:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  201:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  201:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  202:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  202:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  202:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  17:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/connections/[id]/session/route.ts
-  12:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  57:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  57:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  57:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/export-templates/[id]/route.ts
-   25:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   48:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   83:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  106:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  106:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  106:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  107:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  107:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  107:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  108:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  108:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  108:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/export-templates/route.ts
-  26:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  39:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/active-template/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/default-connection/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  36:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/default-inventory/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/image-retry-presets/route.ts
-  30:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  43:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/stock-fallback/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/import-templates/[id]/route.ts
-   25:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   48:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   82:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  105:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  105:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  105:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  106:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  106:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  106:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  107:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  107:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  107:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/import-templates/route.ts
-  25:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  38:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/active-template/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/export-warehouse/route.ts
-  16:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  31:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/last-template/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/parameters/route.ts
-   16:4   error  Expected value to have a type annotation  @typescript-eslint/typedef
-   56:67  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-   73:3   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  134:65  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  201:45  error  Expected a to have a type annotation      @typescript-eslint/typedef
-  201:48  error  Expected b to have a type annotation      @typescript-eslint/typedef
-  257:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  283:48  error  Expected i to have a type annotation      @typescript-eslint/typedef
-  289:42  error  Expected c to have a type annotation      @typescript-eslint/typedef
-  346:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/route.ts
-   68:1   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   77:50  error  Expected i to have a type annotation        @typescript-eslint/typedef
-   94:14  error  Expected c to have a type annotation        @typescript-eslint/typedef
-  194:20  error  Expected id to have a type annotation       @typescript-eslint/typedef
-  199:20  error  Expected sku to have a type annotation      @typescript-eslint/typedef
-  239:15  error  Expected record to have a type annotation   @typescript-eslint/typedef
-  276:18  error  Expected item to have a type annotation     @typescript-eslint/typedef
-  278:52  error  Expected item to have a type annotation     @typescript-eslint/typedef
-  322:22  error  Expected id to have a type annotation       @typescript-eslint/typedef
-  333:45  error  Expected record to have a type annotation   @typescript-eslint/typedef
-  346:22  error  Expected sku to have a type annotation      @typescript-eslint/typedef
-  362:43  error  Expected catalog to have a type annotation  @typescript-eslint/typedef
-  364:24  error  Expected catalog to have a type annotation  @typescript-eslint/typedef
-  378:15  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  380:22  error  Expected mongo to have a type annotation    @typescript-eslint/typedef
-  404:44  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  412:41  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  415:41  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  424:61  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  434:75  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/imports/base/sample-product/route.ts
-   68:1   error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-   82:1   error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-  116:50  error  Expected i to have a type annotation  @typescript-eslint/typedef
-  123:44  error  Expected c to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/jobs/route.ts
-  11:1   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  20:60  error  Expected l to have a type annotation          @typescript-eslint/typedef
-  23:29  error  Expected productId to have a type annotation  @typescript-eslint/typedef
-  31:35  error  Expected listing to have a type annotation    @typescript-eslint/typedef
-  52:43  error  Expected job to have a type annotation        @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/product-listings/route.ts
-  10:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/export-to-base/route.ts
-   57:45  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   60:56  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   73:3   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   73:9   error  Expected message to have a type annotation    @typescript-eslint/typedef
-   73:18  error  Expected data to have a type annotation       @typescript-eslint/typedef
-   96:4   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  124:1   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  272:40  error  Expected t to have a type annotation          @typescript-eslint/typedef
-  332:48  error  Expected i to have a type annotation          @typescript-eslint/typedef
-  350:14  error  Expected l to have a type annotation          @typescript-eslint/typedef
-  392:14  error  Expected l to have a type annotation          @typescript-eslint/typedef
-  412:10  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  443:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  481:14  error  Expected warehouse to have a type annotation  @typescript-eslint/typedef
-  512:54  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  518:60  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  520:30  error  Expected mapping to have a type annotation    @typescript-eslint/typedef
-  551:7   error  Expected a type annotation                    @typescript-eslint/typedef
-  552:7   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  571:61  error  Expected key to have a type annotation        @typescript-eslint/typedef
-  573:59  error  Expected field to have a type annotation      @typescript-eslint/typedef
-  576:54  error  Expected field to have a type annotation      @typescript-eslint/typedef
-  579:53  error  Expected field to have a type annotation      @typescript-eslint/typedef
-  630:63  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  635:59  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  651:10  error  Expected mapping to have a type annotation    @typescript-eslint/typedef
-  698:10  error  Expected mapping to have a type annotation    @typescript-eslint/typedef
-  869:65  error  Expected req to have a type annotation        @typescript-eslint/typedef
-  869:70  error  Expected _ctx to have a type annotation       @typescript-eslint/typedef
-  869:76  error  Expected params to have a type annotation     @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts
-   16:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   52:16  error  Expected event to have a type annotation   @typescript-eslint/typedef
-   99:51  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  134:84  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  134:89  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  134:95  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/listings/[listingId]/purge/route.ts
-   7:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  34:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  34:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  34:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/listings/[listingId]/route.ts
-  17:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  57:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  91:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  91:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  91:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  92:85  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  92:90  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  92:96  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/listings/route.ts
-   20:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   45:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  117:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  117:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  117:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  118:65  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  118:70  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  118:76  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  35:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/with-connections/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/languages/[id]/route.ts
-   46:1   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  153:51  error  Expected entry to have a type annotation      @typescript-eslint/typedef
-  154:44  error  Expected countryId to have a type annotation  @typescript-eslint/typedef
-  160:33  error  Expected countryId to have a type annotation  @typescript-eslint/typedef
-  196:1   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  256:64  error  Expected req to have a type annotation        @typescript-eslint/typedef
-  256:69  error  Expected _ctx to have a type annotation       @typescript-eslint/typedef
-  256:75  error  Expected params to have a type annotation     @typescript-eslint/typedef
-  257:67  error  Expected req to have a type annotation        @typescript-eslint/typedef
-  257:72  error  Expected _ctx to have a type annotation       @typescript-eslint/typedef
-  257:78  error  Expected params to have a type annotation     @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/languages/route.ts
-   55:79  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  103:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  156:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/categories/fetch/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/categories/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/mappings/[id]/route.ts
-   20:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   45:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   79:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  103:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  103:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  103:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  104:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  104:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  104:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  105:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  105:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  105:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/mappings/bulk/route.ts
-  20:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/mappings/route.ts
-  21:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  48:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  37:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/files/[slotIndex]/route.ts
-  14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  30:30  error  Expected f to have a type annotation       @typescript-eslint/typedef
-  51:86  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  51:91  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  51:97  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/files/route.ts
-   15:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   36:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   83:46  error  Expected f to have a type annotation       @typescript-eslint/typedef
-  102:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  102:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  102:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  103:65  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  103:70  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  103:76  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts
-  15:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  41:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  74:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  91:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  91:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  91:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  92:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  92:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  92:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  93:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  93:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  93:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/categories/[id]/route.ts
-  14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  48:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  68:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  68:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  68:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  69:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  69:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  69:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/categories/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  36:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/categories/tree/route.ts
-  10:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/import-folder/route.ts
-  51:6  error  Expected data to have a type annotation  @typescript-eslint/typedef
-  94:1  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/notebooks/[id]/route.ts
-  13:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  41:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  58:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  58:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  58:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  59:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  59:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  59:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/notebooks/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  31:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  80:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/tags/[id]/route.ts
-  14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  45:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  62:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  62:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  62:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  63:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  63:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  63:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/tags/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  36:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/themes/[id]/route.ts
-  15:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  39:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  72:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  92:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  92:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  92:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  93:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  93:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  93:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  94:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  94:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  94:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/themes/route.ts
-  14:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  36:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/price-groups/[id]/route.ts
-   26:60  error  Expected value to have a type annotation   @typescript-eslint/typedef
-   34:6   error  Expected data to have a type annotation    @typescript-eslint/typedef
-  113:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  216:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  253:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  253:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  253:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  254:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  254:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  254:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/price-groups/route.ts
-   24:58  error  Expected value to have a type annotation  @typescript-eslint/typedef
-   32:6   error  Expected data to have a type annotation   @typescript-eslint/typedef
-  111:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  233:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/route.ts
-  17:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  50:65  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  50:70  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  50:76  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/images/[imageFileId]/route.ts
-  18:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  46:88  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  46:93  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  46:99  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts
-   14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   47:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   92:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  142:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  169:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  169:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  169:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  170:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  170:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  170:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  171:66  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  171:71  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  171:77  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  172:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  172:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  172:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/[jobId]/route.ts
-  13:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  36:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  66:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  86:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  86:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  86:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  87:68  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  87:73  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  87:79  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  88:70  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  88:75  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  88:81  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/bulk/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/enqueue/route.ts
-  13:33  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
-  16:1   error    Missing return type on function                                                                                                                                                                      @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/ai-jobs/route.ts
-   8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/[id]/route.ts
-   38:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   71:33  error  Expected child to have a type annotation   @typescript-eslint/typedef
-   80:17  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  123:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  322:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  437:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  437:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  437:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  438:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  438:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  438:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  439:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  439:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  439:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/migrate/route.ts
-  12:1   error  Missing return type on function              @typescript-eslint/explicit-function-return-type
-  32:33  error  Expected category to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/route.ts
-  26:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  82:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/tree/route.ts
-  27:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/count/route.ts
-  10:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/migrate/route.ts
-  26:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  46:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/parameters/[id]/route.ts
-   22:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  143:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  178:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  178:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  178:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  179:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  179:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  179:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/parameters/route.ts
-  25:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  81:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/tags/[id]/route.ts
-   21:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  138:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  173:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  173:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  173:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  174:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  174:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  174:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/tags/route.ts
-  24:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  80:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/public/products/[id]/route.ts
-  11:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  32:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  32:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  32:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/search/route.ts
-   50:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-   91:33  error  Expected item to have a type annotation  @typescript-eslint/typedef
-  124:26  error  Expected item to have a type annotation  @typescript-eslint/typedef
-  162:36  error  Expected item to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
-   14:22  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   39:43  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   41:63  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   79:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  132:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/system/logs/metrics/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/system/logs/route.ts
-  41:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  64:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  95:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/user/preferences/route.ts
-  33:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  85:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/auth/register/page.tsx
-  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/auth/signin/page.tsx
-  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/error.tsx
-  8:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  8:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/layout.tsx
-  22:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  22:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/not-found.tsx
-  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  14:33  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/components/CollapsibleMenu.tsx
   16:16  error  Missing return type on function              @typescript-eslint/explicit-function-return-type
@@ -1392,75 +490,62 @@
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/assets/[file]/route.ts
   10:43  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  17:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  50:81  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  50:86  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  50:92  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  50:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  50:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  50:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/audits/route.ts
-  10:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  52:42  error  Expected step to have a type annotation    @typescript-eslint/typedef
-  74:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  74:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  74:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  51:42  error  Expected step to have a type annotation    @typescript-eslint/typedef
+  74:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  74:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  74:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/controls/route.ts
-  10:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  89:68  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  89:73  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  89:79  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  89:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  89:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  89:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/logs/route.ts
-   9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  49:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  49:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  49:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  49:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  49:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  49:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/route.ts
-   19:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   61:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  203:36  error  Expected step to have a type annotation    @typescript-eslint/typedef
-  282:36  error  Expected step to have a type annotation    @typescript-eslint/typedef
-  291:16  error  Expected step to have a type annotation    @typescript-eslint/typedef
-  423:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  483:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  483:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  483:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  484:68  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  484:73  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  484:79  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  485:70  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  485:75  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  485:81  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  201:36  error  Expected step to have a type annotation    @typescript-eslint/typedef
+  280:36  error  Expected step to have a type annotation    @typescript-eslint/typedef
+  289:16  error  Expected step to have a type annotation    @typescript-eslint/typedef
+  481:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  481:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  481:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  485:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  485:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  485:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  489:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  489:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  489:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/snapshots/route.ts
-   9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  50:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  50:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  50:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  50:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  50:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  50:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/[runId]/stream/route.ts
-   9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
   25:7   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
   26:39  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  79:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  79:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  79:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  80:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  80:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  80:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/route.ts
-   14:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-   67:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  131:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  138:9   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  275:1   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  304:27  error  Expected run to have a type annotation    @typescript-eslint/typedef
-  312:16  error  Expected runId to have a type annotation  @typescript-eslint/typedef
+  132:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
+  139:9   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
+  305:27  error  Expected run to have a type annotation    @typescript-eslint/typedef
+  313:16  error  Expected runId to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/api/agent/snapshots/[snapshotId]/route.ts
-   9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  49:72  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  49:77  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  49:83  error  Expected params to have a type annotation  @typescript-eslint/typedef
+  49:10  error  Expected req to have a type annotation     @typescript-eslint/typedef
+  49:15  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
+  49:21  error  Expected params to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agentcreator/components/AgentCreatorSettingsSection.tsx
   23:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
@@ -1529,231 +614,228 @@
   1113:45  error  Expected index to have a type annotation      @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/AiPathsSettings.tsx
-    94:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-    94:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-    96:57  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   283:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
-   368:17  error  Expected a type annotation                    @typescript-eslint/typedef
-   369:25  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-   382:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
-   449:17  error  Expected a type annotation                    @typescript-eslint/typedef
-   450:26  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-   462:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
-   491:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   503:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   515:65  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   569:46  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   570:31  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-   635:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
-   636:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
-   637:16  error  Expected modelId to have a type annotation    @typescript-eslint/typedef
-   678:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
-   690:33  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   745:39  error  Expected item to have a type annotation       @typescript-eslint/typedef
-   747:22  error  Expected value to have a type annotation      @typescript-eslint/typedef
-   747:29  error  Expected key to have a type annotation        @typescript-eslint/typedef
-   800:46  error  Expected item to have a type annotation       @typescript-eslint/typedef
-   811:46  error  Expected item to have a type annotation       @typescript-eslint/typedef
-   826:34  error  Expected meta to have a type annotation       @typescript-eslint/typedef
-   849:53  error  Expected id to have a type annotation         @typescript-eslint/typedef
-   868:57  error  Expected a type annotation                    @typescript-eslint/typedef
-   886:44  error  Expected meta to have a type annotation       @typescript-eslint/typedef
-   890:51  error  Expected meta to have a type annotation       @typescript-eslint/typedef
-  1008:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1012:32  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1017:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1025:22  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1043:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1053:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1061:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1071:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1076:17  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1076:39  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  1084:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1095:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1099:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1099:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
+   284:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
+   369:17  error  Expected a type annotation                    @typescript-eslint/typedef
+   370:25  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+   383:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
+   450:17  error  Expected a type annotation                    @typescript-eslint/typedef
+   451:26  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+   463:15  error  Expected error to have a type annotation      @typescript-eslint/typedef
+   492:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   504:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   516:65  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   570:46  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   571:31  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+   636:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
+   637:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
+   638:16  error  Expected modelId to have a type annotation    @typescript-eslint/typedef
+   679:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
+   691:33  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   746:39  error  Expected item to have a type annotation       @typescript-eslint/typedef
+   748:22  error  Expected value to have a type annotation      @typescript-eslint/typedef
+   748:29  error  Expected key to have a type annotation        @typescript-eslint/typedef
+   801:46  error  Expected item to have a type annotation       @typescript-eslint/typedef
+   812:46  error  Expected item to have a type annotation       @typescript-eslint/typedef
+   827:34  error  Expected meta to have a type annotation       @typescript-eslint/typedef
+   850:53  error  Expected id to have a type annotation         @typescript-eslint/typedef
+   869:57  error  Expected a type annotation                    @typescript-eslint/typedef
+   887:44  error  Expected meta to have a type annotation       @typescript-eslint/typedef
+   891:51  error  Expected meta to have a type annotation       @typescript-eslint/typedef
+  1009:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1013:32  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1018:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1026:22  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1044:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1054:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1062:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1072:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1077:17  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1077:39  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  1085:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1096:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
   1100:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1101:20  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  1107:50  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1127:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1131:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1134:74  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1141:40  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1158:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1166:8   error  Expected acc to have a type annotation        @typescript-eslint/typedef
-  1166:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1198:25  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1202:24  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1208:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1232:23  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1236:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1244:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1259:12  error  Expected n to have a type annotation          @typescript-eslint/typedef
-  1267:40  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1268:81  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1273:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  1319:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1325:30  error  Expected item to have a type annotation       @typescript-eslint/typedef
-  1339:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1358:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1359:23  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1372:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1383:17  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1384:19  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1397:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1404:63  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1445:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1451:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1456:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1494:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1505:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1514:34  error  Expected n to have a type annotation          @typescript-eslint/typedef
-  1535:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1550:70  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1576:69  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1593:68  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1604:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1607:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1608:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1612:19  error  Expected current to have a type annotation    @typescript-eslint/typedef
-  1618:56  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1620:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1621:38  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1623:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1728:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1736:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1740:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1742:42  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1773:18  error  Expected child to have a type annotation      @typescript-eslint/typedef
-  1787:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1830:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1831:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  1843:16  error  Expected entry to have a type annotation      @typescript-eslint/typedef
-  1863:30  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  1876:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1960:84  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  1982:23  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2053:20  error  Expected item to have a type annotation       @typescript-eslint/typedef
-  2054:21  error  Expected modelNode to have a type annotation  @typescript-eslint/typedef
-  2067:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2091:25  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2106:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2129:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2130:17  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2158:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2175:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2188:12  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2192:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2194:10  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2207:77  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2210:16  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2212:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2216:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2218:8   error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2224:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2231:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2234:16  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2236:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2240:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2242:8   error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2295:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
-  2300:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
-  2303:28  error  Expected run to have a type annotation        @typescript-eslint/typedef
-  2306:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2331:76  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2343:49  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2353:57  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2363:71  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2365:36  error  Expected n to have a type annotation          @typescript-eslint/typedef
-  2377:8   error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2382:28  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2384:40  error  Expected n to have a type annotation          @typescript-eslint/typedef
-  2393:32  error  Expected n to have a type annotation          @typescript-eslint/typedef
-  2428:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2476:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2483:45  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2488:38  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2504:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2515:44  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  2544:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2554:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2555:41  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  2559:48  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  2573:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2610:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1100:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1101:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1102:20  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  1108:50  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1128:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1132:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1135:74  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1142:40  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1159:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1167:8   error  Expected acc to have a type annotation        @typescript-eslint/typedef
+  1167:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1199:25  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1203:24  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1209:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1233:23  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1237:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1245:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1260:12  error  Expected n to have a type annotation          @typescript-eslint/typedef
+  1268:40  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1269:81  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1274:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  1320:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1326:30  error  Expected item to have a type annotation       @typescript-eslint/typedef
+  1340:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1359:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1360:23  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1373:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1384:17  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1385:19  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1398:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1405:63  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1446:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1452:67  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1457:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1495:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1506:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1515:34  error  Expected n to have a type annotation          @typescript-eslint/typedef
+  1536:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1551:70  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1577:69  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1594:68  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1605:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1608:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1609:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1613:19  error  Expected current to have a type annotation    @typescript-eslint/typedef
+  1619:56  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1621:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1622:38  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1624:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1729:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1737:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1741:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1743:42  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1774:18  error  Expected child to have a type annotation      @typescript-eslint/typedef
+  1788:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1831:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1832:13  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  1844:16  error  Expected entry to have a type annotation      @typescript-eslint/typedef
+  1864:30  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  1877:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1961:84  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  1983:23  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2054:20  error  Expected item to have a type annotation       @typescript-eslint/typedef
+  2055:21  error  Expected modelNode to have a type annotation  @typescript-eslint/typedef
+  2068:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2092:25  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2107:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2130:16  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2131:17  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2159:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2176:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2189:12  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2193:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2195:10  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2208:77  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2211:16  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2213:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2217:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2219:8   error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2225:30  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2232:5   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2235:16  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2237:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2241:13  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2243:8   error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2296:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
+  2301:10  error  Expected run to have a type annotation        @typescript-eslint/typedef
+  2304:28  error  Expected run to have a type annotation        @typescript-eslint/typedef
+  2307:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2332:76  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2344:49  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2354:57  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2364:71  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2366:36  error  Expected n to have a type annotation          @typescript-eslint/typedef
+  2378:8   error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2383:28  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2385:40  error  Expected n to have a type annotation          @typescript-eslint/typedef
+  2394:32  error  Expected n to have a type annotation          @typescript-eslint/typedef
+  2429:24  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2477:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2484:45  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2489:38  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2505:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2516:44  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  2545:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2555:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2556:41  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  2560:48  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  2574:53  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
   2611:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2617:34  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2623:65  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2645:52  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  2646:38  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  2662:40  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2666:54  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2668:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2671:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2671:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2672:18  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2676:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2678:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2681:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
-  2681:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2682:18  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  2723:47  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2726:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  2727:17  error  Expected path to have a type annotation       @typescript-eslint/typedef
-  2784:36  error  Expected path to have a type annotation       @typescript-eslint/typedef
-  2833:31  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2865:16  error  Expected ok to have a type annotation         @typescript-eslint/typedef
-  2877:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2914:38  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2934:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  2961:43  error  Expected path to have a type annotation       @typescript-eslint/typedef
-  3018:35  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3022:39  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3029:49  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3042:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3049:26  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3061:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3065:31  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3089:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3090:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3104:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3114:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3115:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3131:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3134:37  error  Expected path to have a type annotation       @typescript-eslint/typedef
-  3201:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3218:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3240:41  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3250:46  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3260:39  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3357:45  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3399:32  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3421:70  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3431:43  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  3431:49  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3475:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3476:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3485:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3486:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3497:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3498:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3507:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3508:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3527:36  error  Expected preset to have a type annotation     @typescript-eslint/typedef
-  3609:22  error  Expected filter to have a type annotation     @typescript-eslint/typedef
-  3628:51  error  Expected run to have a type annotation        @typescript-eslint/typedef
-  3767:24  error  Expected pathId to have a type annotation     @typescript-eslint/typedef
-  3771:26  error  Expected pathId to have a type annotation     @typescript-eslint/typedef
-  3823:24  error  Expected open to have a type annotation       @typescript-eslint/typedef
-  3911:26  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3943:29  error  Expected error to have a type annotation      @typescript-eslint/typedef
-  3959:26  error  Expected open to have a type annotation       @typescript-eslint/typedef
-  3970:18  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  3971:50  error  Expected node to have a type annotation       @typescript-eslint/typedef
-  3985:34  error  Expected event to have a type annotation      @typescript-eslint/typedef
-  3987:35  error  Expected prev to have a type annotation       @typescript-eslint/typedef
-  3988:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2612:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2618:34  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2624:65  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2646:52  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  2647:38  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  2663:40  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2667:54  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2669:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2672:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2672:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2673:18  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2677:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2679:10  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2682:15  error  Expected edge to have a type annotation       @typescript-eslint/typedef
+  2682:36  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2683:18  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  2724:47  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2727:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  2728:17  error  Expected path to have a type annotation       @typescript-eslint/typedef
+  2785:36  error  Expected path to have a type annotation       @typescript-eslint/typedef
+  2834:31  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2866:16  error  Expected ok to have a type annotation         @typescript-eslint/typedef
+  2878:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2915:38  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2935:37  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  2962:43  error  Expected path to have a type annotation       @typescript-eslint/typedef
+  3019:35  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3023:39  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3030:49  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3043:15  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3050:26  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3062:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3066:31  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3090:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3091:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3105:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3115:15  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3116:21  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3132:52  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3135:37  error  Expected path to have a type annotation       @typescript-eslint/typedef
+  3202:44  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3219:55  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3241:41  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3251:46  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3261:39  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3358:45  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3400:32  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3422:70  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3432:43  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  3432:49  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3476:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3477:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3486:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3487:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3498:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3499:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3508:30  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3509:37  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3528:36  error  Expected preset to have a type annotation     @typescript-eslint/typedef
+  3610:22  error  Expected filter to have a type annotation     @typescript-eslint/typedef
+  3629:51  error  Expected run to have a type annotation        @typescript-eslint/typedef
+  3768:24  error  Expected pathId to have a type annotation     @typescript-eslint/typedef
+  3772:26  error  Expected pathId to have a type annotation     @typescript-eslint/typedef
+  3824:24  error  Expected open to have a type annotation       @typescript-eslint/typedef
+  3912:26  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3944:29  error  Expected error to have a type annotation      @typescript-eslint/typedef
+  3960:26  error  Expected open to have a type annotation       @typescript-eslint/typedef
+  3971:18  error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  3972:50  error  Expected node to have a type annotation       @typescript-eslint/typedef
+  3986:34  error  Expected event to have a type annotation      @typescript-eslint/typedef
+  3988:35  error  Expected prev to have a type annotation       @typescript-eslint/typedef
+  3989:37  error  Expected node to have a type annotation       @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/AiPathsSettingsUtils.ts
    37:49  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
@@ -2428,35 +1510,35 @@
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/lib/core/runtime/handlers/integration.ts
     24:44  error  Expected a type annotation                  @typescript-eslint/typedef
-   104:49  error  Expected a type annotation                  @typescript-eslint/typedef
-   115:47  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   123:14  error  Expected edge to have a type annotation     @typescript-eslint/typedef
-   124:11  error  Expected edge to have a type annotation     @typescript-eslint/typedef
-   126:29  error  Expected item to have a type annotation     @typescript-eslint/typedef
-   128:14  error  Expected entry to have a type annotation    @typescript-eslint/typedef
-   133:8   error  Expected edge to have a type annotation     @typescript-eslint/typedef
-   176:47  error  Expected a type annotation                  @typescript-eslint/typedef
-   299:47  error  Expected a type annotation                  @typescript-eslint/typedef
-   440:51  error  Expected a type annotation                  @typescript-eslint/typedef
-   451:67  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   453:41  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   455:79  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   472:63  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   549:50  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   648:52  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   728:43  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   741:47  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   747:27  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
-   784:57  error  Expected m to have a type annotation        @typescript-eslint/typedef
-   896:46  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  1097:43  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  1103:23  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
-  1276:22  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
-  1307:50  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  1545:56  error  Expected c to have a type annotation        @typescript-eslint/typedef
-  1548:45  error  Expected c to have a type annotation        @typescript-eslint/typedef
-  1554:51  error  Expected a type annotation                  @typescript-eslint/typedef
-  1598:50  error  Expected c to have a type annotation        @typescript-eslint/typedef
+   111:49  error  Expected a type annotation                  @typescript-eslint/typedef
+   122:47  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   130:14  error  Expected edge to have a type annotation     @typescript-eslint/typedef
+   131:11  error  Expected edge to have a type annotation     @typescript-eslint/typedef
+   133:29  error  Expected item to have a type annotation     @typescript-eslint/typedef
+   135:14  error  Expected entry to have a type annotation    @typescript-eslint/typedef
+   140:8   error  Expected edge to have a type annotation     @typescript-eslint/typedef
+   182:47  error  Expected a type annotation                  @typescript-eslint/typedef
+   305:47  error  Expected a type annotation                  @typescript-eslint/typedef
+   453:51  error  Expected a type annotation                  @typescript-eslint/typedef
+   464:67  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   466:41  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   472:7   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   490:63  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   570:50  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   716:52  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   806:43  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   820:47  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+   826:27  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
+   863:28  error  Expected m to have a type annotation        @typescript-eslint/typedef
+  1020:46  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+  1237:43  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+  1243:23  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
+  1448:22  error  Expected mapping to have a type annotation  @typescript-eslint/typedef
+  1480:50  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
+  1733:56  error  Expected c to have a type annotation        @typescript-eslint/typedef
+  1736:45  error  Expected c to have a type annotation        @typescript-eslint/typedef
+  1742:51  error  Expected a type annotation                  @typescript-eslint/typedef
+  1786:50  error  Expected c to have a type annotation        @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/lib/core/runtime/handlers/transform.ts
    13:50  error  Expected a type annotation                 @typescript-eslint/typedef
@@ -3222,9 +2304,9 @@
   67:24  error  Expected e to have a type annotation      @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/chatbot/components/DebugPanel.tsx
-  19:8   error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-  19:8   error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-  42:32  error  Expected log to have a type annotation  @typescript-eslint/typedef
+  17:8   error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+  17:8   error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
+  40:32  error  Expected log to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/chatbot/components/SessionSidebar.tsx
   16:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
@@ -3663,9 +2745,6 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/validations/slug.ts
   3:44  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
   3:44  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/api/import/route.ts
-  13:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/components/imports/ExportTab.tsx
    66:8   error  Missing return type on function                @typescript-eslint/explicit-function-return-type
@@ -5085,41 +4164,41 @@
   762:55  error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/api/useNoteMutations.ts
-    6:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-    6:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-   26:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   26:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-   39:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
-   47:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   47:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-   65:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   65:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-   84:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-   84:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  104:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  104:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  123:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  123:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  141:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  141:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  159:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  159:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  177:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  177:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  189:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
-  189:24  error  Expected variables to have a type annotation  @typescript-eslint/typedef
-  195:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  195:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  213:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  213:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  227:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  227:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  239:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
-  239:24  error  Expected variables to have a type annotation  @typescript-eslint/typedef
-  245:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  245:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
-  263:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
-  263:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+   18:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   18:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+   38:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   38:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+   51:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
+   59:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   59:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+   77:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   77:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+   96:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+   96:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  116:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  116:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  135:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  135:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  153:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  153:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  171:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  171:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  189:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  189:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  201:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
+  201:24  error  Expected variables to have a type annotation  @typescript-eslint/typedef
+  207:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  207:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  225:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  225:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  239:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  239:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  251:17  error  Expected _data to have a type annotation      @typescript-eslint/typedef
+  251:24  error  Expected variables to have a type annotation  @typescript-eslint/typedef
+  257:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  257:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
+  275:8   error  Missing return type on function               @typescript-eslint/explicit-function-return-type
+  275:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/api/useNoteQueries.ts
   12:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
@@ -5917,9 +4996,10 @@
   401:28  error  Expected event to have a type annotation    @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/ProductListPanel.tsx
-  18:8  error  Expected mod to have a type annotation  @typescript-eslint/typedef
-  26:8  error  Expected mod to have a type annotation  @typescript-eslint/typedef
-  34:8  error  Expected mod to have a type annotation  @typescript-eslint/typedef
+   2:8  error  'type' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  17:8  error  Expected mod to have a type annotation                                  @typescript-eslint/typedef
+  25:8  error  Expected mod to have a type annotation                                  @typescript-eslint/typedef
+  33:8  error  Expected mod to have a type annotation                                  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/ProductModals.tsx
    46:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
@@ -6125,11 +5205,11 @@
   70:45  error  Expected key to have a type annotation      @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductTableFooter.tsx
-  30:37  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  34:18  error  Expected row to have a type annotation   @typescript-eslint/typedef
-  43:54  error  Expected id to have a type annotation    @typescript-eslint/typedef
-  50:47  error  Expected res to have a type annotation   @typescript-eslint/typedef
-  77:26  error  Expected prev to have a type annotation  @typescript-eslint/typedef
+  29:37  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+  33:18  error  Expected row to have a type annotation   @typescript-eslint/typedef
+  42:54  error  Expected id to have a type annotation    @typescript-eslint/typedef
+  49:47  error  Expected res to have a type annotation   @typescript-eslint/typedef
+  76:26  error  Expected prev to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductTableSkeleton.tsx
    7:8   error  Missing return type on function              @typescript-eslint/explicit-function-return-type
@@ -6562,25 +5642,26 @@
   116:22  error  Expected a type annotation                @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/pages/AdminProductsPage.tsx
-   27:49  error  Expected mod to have a type annotation             @typescript-eslint/typedef
-   31:8   error  Missing return type on function                    @typescript-eslint/explicit-function-return-type
-   31:8   error  Missing return type on function                    @typescript-eslint/explicit-module-boundary-types
-   41:56  error  Expected d to have a type annotation               @typescript-eslint/typedef
-  177:50  error  Expected option to have a type annotation          @typescript-eslint/typedef
-  186:26  error  Missing return type on function                    @typescript-eslint/explicit-function-return-type
-  252:53  error  Expected id to have a type annotation              @typescript-eslint/typedef
-  268:24  error  Expected prev to have a type annotation            @typescript-eslint/typedef
-  299:28  error  Expected p to have a type annotation               @typescript-eslint/typedef
-  315:8   error  Expected id to have a type annotation              @typescript-eslint/typedef
-  326:56  error  Expected id to have a type annotation              @typescript-eslint/typedef
-  330:49  error  Expected res to have a type annotation             @typescript-eslint/typedef
-  343:28  error  Expected prev to have a type annotation            @typescript-eslint/typedef
-  372:6   error  Expected _id to have a type annotation             @typescript-eslint/typedef
-  372:11  error  Expected _phase to have a type annotation          @typescript-eslint/typedef
-  372:19  error  Expected actualDuration to have a type annotation  @typescript-eslint/typedef
-  372:35  error  Expected _baseDuration to have a type annotation   @typescript-eslint/typedef
-  372:50  error  Expected _startTime to have a type annotation      @typescript-eslint/typedef
-  372:62  error  Expected commitTime to have a type annotation      @typescript-eslint/typedef
+    2:8   error  'type' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   26:49  error  Expected mod to have a type annotation                                  @typescript-eslint/typedef
+   30:8   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+   30:8   error  Missing return type on function                                         @typescript-eslint/explicit-module-boundary-types
+   40:56  error  Expected d to have a type annotation                                    @typescript-eslint/typedef
+  176:50  error  Expected option to have a type annotation                               @typescript-eslint/typedef
+  185:26  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  251:53  error  Expected id to have a type annotation                                   @typescript-eslint/typedef
+  267:24  error  Expected prev to have a type annotation                                 @typescript-eslint/typedef
+  298:28  error  Expected p to have a type annotation                                    @typescript-eslint/typedef
+  314:8   error  Expected id to have a type annotation                                   @typescript-eslint/typedef
+  325:56  error  Expected id to have a type annotation                                   @typescript-eslint/typedef
+  329:49  error  Expected res to have a type annotation                                  @typescript-eslint/typedef
+  342:28  error  Expected prev to have a type annotation                                 @typescript-eslint/typedef
+  371:6   error  Expected _id to have a type annotation                                  @typescript-eslint/typedef
+  371:11  error  Expected _phase to have a type annotation                               @typescript-eslint/typedef
+  371:19  error  Expected actualDuration to have a type annotation                       @typescript-eslint/typedef
+  371:35  error  Expected _baseDuration to have a type annotation                        @typescript-eslint/typedef
+  371:50  error  Expected _startTime to have a type annotation                           @typescript-eslint/typedef
+  371:62  error  Expected commitTime to have a type annotation                           @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/pages/ProductConstructorPage.tsx
   11:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
@@ -6958,112 +6039,6 @@
   280:33  error  Expected cat to have a type annotation       @typescript-eslint/typedef
   282:15  error  Expected note to have a type annotation      @typescript-eslint/typedef
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/breadcrumb-scroller.tsx
-   7:8   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   7:8   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  30:29  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  33:15  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  39:54  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/data-table.tsx
-  173:41  error  Expected headerGroup to have a type annotation  @typescript-eslint/typedef
-  175:41  error  Expected header to have a type annotation       @typescript-eslint/typedef
-  203:43  error  Expected row to have a type annotation          @typescript-eslint/typedef
-  210:45  error  Expected cell to have a type annotation         @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/list-panel.tsx
-  28:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/modal-shell.tsx
-  15:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  15:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/section-header.tsx
-  23:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  23:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/section-panel.tsx
-  19:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  19:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/theme-toggle.tsx
-  9:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  9:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts
-   63:75  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   63:75  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-   73:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   73:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-   82:3   error  Expected a type annotation       @typescript-eslint/typedef
-   84:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   84:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-   93:3   error  Expected a type annotation       @typescript-eslint/typedef
-   95:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   95:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  104:3   error  Expected a type annotation       @typescript-eslint/typedef
-  106:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  106:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  115:3   error  Expected a type annotation       @typescript-eslint/typedef
-  117:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  117:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  126:3   error  Expected a type annotation       @typescript-eslint/typedef
-  128:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  128:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  137:3   error  Expected a type annotation       @typescript-eslint/typedef
-  140:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  140:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  151:3   error  Expected a type annotation       @typescript-eslint/typedef
-  153:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  153:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  162:3   error  Expected a type annotation       @typescript-eslint/typedef
-  164:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  164:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  177:3   error  Expected a type annotation       @typescript-eslint/typedef
-  179:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  179:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  189:3   error  Expected a type annotation       @typescript-eslint/typedef
-  192:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  192:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  203:3   error  Expected a type annotation       @typescript-eslint/typedef
-  206:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  206:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  217:3   error  Expected a type annotation       @typescript-eslint/typedef
-  219:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  219:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  229:3   error  Expected a type annotation       @typescript-eslint/typedef
-  232:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  232:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  243:3   error  Expected a type annotation       @typescript-eslint/typedef
-  245:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  245:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  259:3   error  Expected a type annotation       @typescript-eslint/typedef
-  261:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  261:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  270:3   error  Expected a type annotation       @typescript-eslint/typedef
-  272:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  272:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  281:3   error  Expected a type annotation       @typescript-eslint/typedef
-  284:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  284:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  294:3   error  Expected a type annotation       @typescript-eslint/typedef
-  296:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  296:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  307:3   error  Expected a type annotation       @typescript-eslint/typedef
-  309:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  309:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  322:3   error  Expected a type annotation       @typescript-eslint/typedef
-  326:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  326:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  337:3   error  Expected a type annotation       @typescript-eslint/typedef
-  340:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  340:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  349:3   error  Expected a type annotation       @typescript-eslint/typedef
-  351:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  351:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  369:3   error  Expected a type annotation       @typescript-eslint/typedef
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/error-mapper.ts
   23:76  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
 
@@ -7172,198 +6147,5 @@
   6:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
   6:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/alert-dialog.tsx
-   16:4   error  Expected a type annotation              @typescript-eslint/typedef
-   16:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   32:4   error  Expected a type annotation              @typescript-eslint/typedef
-   32:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   51:42  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-   51:42  error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-   65:42  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-   65:42  error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-   79:4   error  Expected a type annotation              @typescript-eslint/typedef
-   79:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   92:4   error  Expected a type annotation              @typescript-eslint/typedef
-   92:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  105:4   error  Expected a type annotation              @typescript-eslint/typedef
-  105:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  118:4   error  Expected a type annotation              @typescript-eslint/typedef
-  118:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/app-modal.tsx
-  22:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  22:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/avatar.tsx
-  11:4   error  Expected a type annotation              @typescript-eslint/typedef
-  11:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  26:4   error  Expected a type annotation              @typescript-eslint/typedef
-  26:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  38:4   error  Expected a type annotation              @typescript-eslint/typedef
-  38:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/button.tsx
-  44:4   error  Expected a type annotation              @typescript-eslint/typedef
-  44:61  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/card.tsx
-   8:4   error  Expected a type annotation              @typescript-eslint/typedef
-   8:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  23:4   error  Expected a type annotation              @typescript-eslint/typedef
-  23:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  35:4   error  Expected a type annotation              @typescript-eslint/typedef
-  35:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  50:4   error  Expected a type annotation              @typescript-eslint/typedef
-  50:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  62:4   error  Expected a type annotation              @typescript-eslint/typedef
-  62:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  70:4   error  Expected a type annotation              @typescript-eslint/typedef
-  70:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/checkbox.tsx
-  12:4   error  Expected a type annotation              @typescript-eslint/typedef
-  12:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/dialog.tsx
-  19:4   error  Expected a type annotation              @typescript-eslint/typedef
-  19:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  34:4   error  Expected a type annotation              @typescript-eslint/typedef
-  34:39  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  54:42  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-  54:42  error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-  68:42  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-  68:42  error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-  82:4   error  Expected a type annotation              @typescript-eslint/typedef
-  82:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  97:4   error  Expected a type annotation              @typescript-eslint/typedef
-  97:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/dropdown-menu.tsx
-   26:4   error  Expected a type annotation              @typescript-eslint/typedef
-   26:46  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   46:4   error  Expected a type annotation              @typescript-eslint/typedef
-   46:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   62:4   error  Expected a type annotation              @typescript-eslint/typedef
-   62:45  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   82:4   error  Expected a type annotation              @typescript-eslint/typedef
-   82:36  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   98:4   error  Expected a type annotation              @typescript-eslint/typedef
-   98:48  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  122:4   error  Expected a type annotation              @typescript-eslint/typedef
-  122:39  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  146:4   error  Expected a type annotation              @typescript-eslint/typedef
-  146:36  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  162:4   error  Expected a type annotation              @typescript-eslint/typedef
-  162:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  174:43  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
-  174:43  error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/file-preview-modal.tsx
-  22:16  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  22:16  error  Missing return type on function          @typescript-eslint/explicit-module-boundary-types
-  30:22  error  Expected open to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/input.tsx
-  6:4   error  Expected a type annotation              @typescript-eslint/typedef
-  6:35  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/label.tsx
-  17:4   error  Expected a type annotation              @typescript-eslint/typedef
-  17:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/missing-image-placeholder.tsx
-  8:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  8:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/radio-group.tsx
-  12:4   error  Expected a type annotation              @typescript-eslint/typedef
-  12:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  24:4   error  Expected a type annotation              @typescript-eslint/typedef
-  24:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/select.tsx
-   18:4   error  Expected a type annotation              @typescript-eslint/typedef
-   18:39  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   38:4   error  Expected a type annotation              @typescript-eslint/typedef
-   38:60  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   68:4   error  Expected a type annotation              @typescript-eslint/typedef
-   68:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-   80:4   error  Expected a type annotation              @typescript-eslint/typedef
-   80:39  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  103:4   error  Expected a type annotation              @typescript-eslint/typedef
-  103:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/skeleton.tsx
-  3:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  3:1  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/switch.tsx
-  11:4   error  Expected a type annotation              @typescript-eslint/typedef
-  11:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/table.tsx
-   6:3   error  Expected a type annotation              @typescript-eslint/typedef
-   7:3   error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  22:4   error  Expected a type annotation              @typescript-eslint/typedef
-  22:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  30:4   error  Expected a type annotation              @typescript-eslint/typedef
-  30:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  42:4   error  Expected a type annotation              @typescript-eslint/typedef
-  42:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  57:4   error  Expected a type annotation              @typescript-eslint/typedef
-  57:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  72:4   error  Expected a type annotation              @typescript-eslint/typedef
-  72:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  87:4   error  Expected a type annotation              @typescript-eslint/typedef
-  87:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  99:4   error  Expected a type annotation              @typescript-eslint/typedef
-  99:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/tabs.tsx
-  13:4   error  Expected a type annotation              @typescript-eslint/typedef
-  13:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  28:4   error  Expected a type annotation              @typescript-eslint/typedef
-  28:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-  43:4   error  Expected a type annotation              @typescript-eslint/typedef
-  43:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/textarea.tsx
-  12:4   error  Expected a type annotation              @typescript-eslint/typedef
-  12:29  error  Expected ref to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/toast.tsx
-   48:26  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-   98:82  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  112:46  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  123:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  123:8   error  Missing return type on function           @typescript-eslint/explicit-module-boundary-types
-  145:16  error  Expected prev to have a type annotation   @typescript-eslint/typedef
-  145:38  error  Expected toast to have a type annotation  @typescript-eslint/typedef
-  159:18  error  Expected prev to have a type annotation   @typescript-eslint/typedef
-  197:26  error  Expected item to have a type annotation   @typescript-eslint/typedef
-  229:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  229:8   error  Missing return type on function           @typescript-eslint/explicit-module-boundary-types
-  237:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-  237:8   error  Missing return type on function           @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/tooltip.tsx
-  15:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  15:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/logger.ts
-   8:58  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  14:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  14:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  17:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  17:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  20:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  20:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  23:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  23:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/markdown-utils.ts
-  24:11  error  Expected line to have a type annotation  @typescript-eslint/typedef
-  37:38  error  Expected url to have a type annotation   @typescript-eslint/typedef
-
-✖ 6220 problems (6219 errors, 1 warning)
+✖ 5334 problems (5333 errors, 1 warning)
 

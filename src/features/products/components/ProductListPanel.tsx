@@ -1,5 +1,5 @@
 "use client";
-import type, { Profiler, ProfilerOnRenderCallback, memo, useMemo } from "react";
+import { Profiler, ProfilerOnRenderCallback, memo, useMemo } from "react";
 
 import { DataTable, Button, ListPanel } from "@/shared/ui";
 import dynamic from "next/dynamic";

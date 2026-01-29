@@ -252,10 +252,10 @@ const eslintConfig = [
       ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/typedef": [
-        "warn",
+        "error",
         {
           "parameter": true,
-          "arrowParameter": false,
+          "arrowParameter": true,
           "variableDeclaration": false
         }
       ],

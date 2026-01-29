@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getProductDataProvider } from "@/features/products/server";
 import { fallbackCurrencies } from "@/features/internationalization/server";
@@ -174,7 +175,7 @@ async function PUT_handler(
       });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (data.isDefault) {
         await tx.priceGroup.updateMany({
           where: { id: { not: id } },

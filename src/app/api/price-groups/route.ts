@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getProductDataProvider } from "@/features/products/server";
 import { fallbackCurrencies } from "@/features/internationalization/server";
@@ -175,7 +176,7 @@ async function GET_handler(req: Request) {
       return NextResponse.json(normalized);
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const plnCurrency = await tx.currency.findUnique({
         where: { code: "PLN" },
       });
@@ -286,7 +287,7 @@ async function POST_handler(req: Request) {
       });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (data.isDefault) {
         await tx.priceGroup.updateMany({
           data: { isDefault: false },

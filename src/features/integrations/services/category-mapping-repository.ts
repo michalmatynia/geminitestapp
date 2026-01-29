@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import type {
   CategoryMapping,
   CategoryMappingWithDetails,
@@ -165,7 +166,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       mappings: { externalCategoryId: string; internalCategoryId: string }[]
     ): Promise<number> {
       let count = 0;
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const mapping of mappings) {
           await tx.categoryMapping.upsert({
             where: {

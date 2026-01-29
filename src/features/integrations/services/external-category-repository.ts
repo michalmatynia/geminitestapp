@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import type {
   ExternalCategory,
   ExternalCategoryWithChildren,
@@ -102,7 +103,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
 
       // Upsert all categories in a transaction
       let count = 0;
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         for (const input of syncInputs) {
           await tx.externalCategory.upsert({
             where: {

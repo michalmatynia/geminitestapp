@@ -8,12 +8,14 @@ I'm having a following issue "Type error: Parameter 'tx' implicitly has an 'any'
     143 |         data: {
 
   " Move My internationalization, countries, lanugages and currencies to MongoDB and resolve this issue. Futureproof against
-  similar errors by adjusting typescript config and esling, address the issue and try to resolve it by assigning a correct type
+  similar errors by adjusting typescript config and eslint, address the issue and try to resolve it by assigning a correct type
 
 ---
 
 Products 
 Changing currency doesn't work again
+
+I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a cursor there
 
 ---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework

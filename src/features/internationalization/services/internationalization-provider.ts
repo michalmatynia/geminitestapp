@@ -9,8 +9,8 @@ export type InternationalizationProvider = "prisma" | "mongodb";
  * Currently follows the global app DB provider, but can be overridden here.
  */
 export const getInternationalizationProvider = async (): Promise<InternationalizationProvider> => {
-  // If we specifically want to move internationalization to MongoDB, 
-  // we could force it here if MONGODB_URI is present.
+  // We are moving internationalization to MongoDB.
+  // Return 'mongodb' if MONGODB_URI is present, otherwise fallback to app default.
   if (process.env.MONGODB_URI) {
     return "mongodb";
   }

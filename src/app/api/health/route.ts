@@ -1,5 +1,4 @@
 import { MongoClient } from "mongodb";
-import error from "next/error";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -21,7 +20,7 @@ export async function GET(_req: NextRequest): Promise<NextResponse | Response> {
   } catch (e: unknown) {
     console.error("DB ping failed:", e);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "DB error" },
+      { ok: false, error: e instanceof Error ? e.message : "DB error" },
       { status: 500 },
     );
   } finally {

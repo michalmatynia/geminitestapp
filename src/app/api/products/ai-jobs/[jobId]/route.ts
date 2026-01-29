@@ -85,8 +85,17 @@ async function DELETE_handler(
 }
 
 export const GET = apiHandlerWithParams<{ jobId: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.ai-jobs.[jobId].GET" }
+);
 export const POST = apiHandlerWithParams<{ jobId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> =>
+    POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.ai-jobs.[jobId].POST" }
+);
 export const DELETE = apiHandlerWithParams<{ jobId: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.ai-jobs.[jobId].DELETE" }
+);

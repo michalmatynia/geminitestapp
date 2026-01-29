@@ -172,6 +172,12 @@ async function POST_handler(
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.[id].connections.GET" }
+);
 export const POST = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.[id].connections.POST" }
+);

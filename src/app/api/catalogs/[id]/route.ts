@@ -5,7 +5,7 @@ import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import {  apiHandlerWithParams, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -115,6 +115,12 @@ async function DELETE_handler(req: NextRequest,
 }
 
 export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "catalogs.[id].PUT" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
+  { source: "catalogs.[id].PUT" }
+);
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "catalogs.[id].DELETE" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "catalogs.[id].DELETE" }
+);

@@ -175,6 +175,12 @@ async function DELETE_handler(req: NextRequest,
 }
 
 export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].PUT" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.parameters.[id].PUT" }
+);
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].DELETE" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.parameters.[id].DELETE" }
+);

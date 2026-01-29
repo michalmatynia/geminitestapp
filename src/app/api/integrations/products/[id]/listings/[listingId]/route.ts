@@ -88,6 +88,12 @@ async function PATCH_handler(req: NextRequest,
 }
 
 export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].DELETE" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.products.[id].listings.[listingId].DELETE" }
+);
 export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(
-  async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].PATCH" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> =>
+    PATCH_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.products.[id].listings.[listingId].PATCH" }
+);

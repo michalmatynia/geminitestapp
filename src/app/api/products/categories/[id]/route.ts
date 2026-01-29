@@ -434,8 +434,17 @@ async function collectCategoryIds(
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.categories.[id].GET" }
+);
 export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].PUT" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.categories.[id].PUT" }
+);
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].DELETE" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "products.categories.[id].DELETE" }
+);

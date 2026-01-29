@@ -3,7 +3,7 @@ import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 type Params = { id: string };
@@ -109,16 +109,19 @@ async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    GET_handler(req, { params: Promise.resolve(params) }),
   { source: "cms.slugs.[id].GET" }
 );
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
   { source: "cms.slugs.[id].DELETE" }
 );
 
 export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
   { source: "cms.slugs.[id].PUT" }
 );

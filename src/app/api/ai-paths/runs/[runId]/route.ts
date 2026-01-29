@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {  apiHandlerWithParams, ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 
 async function GET_handler(
-  _req: Request,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-): Promise<NextResponse | Response> {
+): Promise<Response> {
   try {
     const runId = params.runId;
     const repo = await getPathRunRepository();

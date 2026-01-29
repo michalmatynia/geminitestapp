@@ -331,12 +331,12 @@ export type AiPathRunEventLevel = "info" | "warning" | "error";
 
 export type AiPathRunRecord = {
   id: string;
-  pathId?: string; // This is actually pathId in AiPathRun, but ChatbotAgentRun has no pathId, so making it optional
+  pathId?: string | null;
   pathName?: string | null;
   status: AiPathRunStatus;
 
-  // ChatbotAgentRun specific fields
-  prompt: string;
+  // ChatbotAgentRun specific fields (optional for AiPathRun)
+  prompt?: string | null;
   model?: string | null;
   tools?: string[];
   searchProvider?: string | null;

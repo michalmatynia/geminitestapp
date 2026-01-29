@@ -41,8 +41,9 @@ const mapRun = (run: unknown): AiPathRunRecord => {
   const r = run as Record<string, unknown>;
   return {
     id: String(r.id),
-    pathId: String(r.pathId),
+    pathId: (r.pathId as string) ?? null,
     pathName: (r.pathName as string) ?? null,
+    prompt: (r.prompt as string) ?? null,
     status: r.status as AiPathRunRecord["status"],
     triggerEvent: (r.triggerEvent as string) ?? null,
     triggerNodeId: (r.triggerNodeId as string) ?? null,

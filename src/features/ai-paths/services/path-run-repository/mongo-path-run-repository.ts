@@ -74,8 +74,9 @@ type EventDocument = {
 
 const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   id: doc.id || doc._id,
-  pathId: doc.pathId,
+  pathId: doc.pathId ?? null,
   pathName: doc.pathName ?? null,
+  prompt: null,
   status: doc.status as AiPathRunRecord["status"],
   triggerEvent: doc.triggerEvent ?? null,
   triggerNodeId: doc.triggerNodeId ?? null,

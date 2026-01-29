@@ -164,7 +164,7 @@ export default function AgentRunsPage(): React.ReactElement {
     );
     if (!term) return sorted;
     return sorted.filter((run: AiPathRunRecord) =>
-      [run.id, run.status, run.model ?? "", run.prompt]
+      [run.id, run.status, run.model ?? "", run.prompt ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(term)

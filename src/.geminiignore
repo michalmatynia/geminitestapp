@@ -1,0 +1,7 @@
+# .geminiignore
+.eslintrc*
+eslint.config.*
+.eslintignore
+.vscode/settings.json
+
+/AIPrompts

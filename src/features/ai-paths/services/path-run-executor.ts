@@ -215,7 +215,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const resultState = await evaluateGraph({
       nodes,
       edges,
-      activePathId: run.pathId,
+      activePathId: run.pathId ?? null,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext as Record<string, unknown> } : {}),

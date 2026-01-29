@@ -16,6 +16,7 @@ import { conflictError, internalError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { LanguageWithCountries } from "@/shared/types/internationalization";
 
 export const runtime = "nodejs";
 
@@ -118,7 +119,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         .find({})
         .sort({ code: 1 })
         .toArray();
-      return NextResponse.json(languages);
+      return NextResponse.json(languages as LanguageWithCountries[]);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -137,7 +138,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         },
       },
     });
-    return NextResponse.json(languages);
+    return NextResponse.json(languages as LanguageWithCountries[]);
   } catch (error) {
     void logSystemEvent({
       level: "error",

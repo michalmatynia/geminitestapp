@@ -19,6 +19,7 @@ import { logSystemEvent } from "@/features/observability/server";
 import type { CountryCode } from "@prisma/client";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { CountryWithCurrencies } from "@/shared/types/internationalization";
 
 export const runtime = "nodejs";
 
@@ -106,10 +107,12 @@ const seedMongoInternationalization = async (
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-): { id: string; code: string; name: string; currencies: unknown[] } => ({
+): CountryWithCurrencies => ({
   id: country.id,
   code: country.code,
   name: country.name,
+  createdAt: country.createdAt,
+  updatedAt: country.updatedAt,
   currencies: (country.currencyIds ?? [])
     .map((currencyId: string) => {
       const currency = currencyMap.get(currencyId);
@@ -124,7 +127,7 @@ const normalizeCountryResponse = (
         },
       };
     })
-    .filter(Boolean),
+    .filter(Boolean) as CountryWithCurrencies["currencies"],
 });
 
 /**
@@ -182,7 +185,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       },
     });
 
-    return NextResponse.json(countries);
+    return NextResponse.json(countries as CountryWithCurrencies[]);
   } catch (error) {
     void logSystemEvent({
       level: "error",

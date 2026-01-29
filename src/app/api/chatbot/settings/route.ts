@@ -7,6 +7,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ChatbotSettingsRecord } from "@/shared/types/settings";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 const DEFAULT_SETTINGS_KEY = "default";
@@ -39,7 +40,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         durationMs: Date.now() - requestStart,
       });
     }
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings: settings as ChatbotSettingsRecord | null });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -84,7 +85,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         durationMs: Date.now() - requestStart,
       });
     }
-    return NextResponse.json({ settings: saved });
+    return NextResponse.json({ settings: saved as ChatbotSettingsRecord });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

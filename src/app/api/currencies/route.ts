@@ -14,6 +14,7 @@ import { conflictError, internalError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { CurrencyRecord } from "@/shared/types/internationalization";
 
 export const runtime = "nodejs";
 
@@ -78,7 +79,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         .find({})
         .sort({ code: 1 })
         .toArray();
-      return NextResponse.json(currencies);
+      return NextResponse.json(currencies as CurrencyRecord[]);
     }
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(fallbackCurrencies);
@@ -92,7 +93,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       orderBy: { code: "asc" },
     });
 
-    return NextResponse.json(currencies);
+    return NextResponse.json(currencies as CurrencyRecord[]);
   } catch (error) {
     void logSystemEvent({
       level: "error",

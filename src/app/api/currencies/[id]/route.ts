@@ -12,6 +12,7 @@ import {
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { CurrencyRecord } from "@/shared/types/internationalization";
 
 type CurrencyDoc = {
   id: string;
@@ -98,7 +99,7 @@ async function PUT_handler(
         },
         { returnDocument: "after" }
       );
-      return NextResponse.json(updated ?? null);
+      return NextResponse.json((updated ?? null) as CurrencyRecord | null);
     }
 
     const currency = await prisma.currency.update({
@@ -109,7 +110,7 @@ async function PUT_handler(
         ...(data.symbol !== undefined && { symbol: data.symbol }),
       },
     });
-    return NextResponse.json(currency);
+    return NextResponse.json(currency as CurrencyRecord);
   } catch (error: unknown) {
     return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,

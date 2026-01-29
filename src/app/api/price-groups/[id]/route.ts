@@ -14,6 +14,7 @@ import {
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { PriceGroupWithDetails } from "@/features/products/types";
 
 const priceGroupSchema = z
   .object({
@@ -170,7 +171,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
               .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
               .findOne({ id: updateDoc.sourceGroupId })
           : null,
-      });
+      } as unknown as PriceGroupWithDetails);
     }
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {

@@ -9,6 +9,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { LanguageWithCountries } from "@/shared/types/internationalization";
 
 export const runtime = "nodejs";
 
@@ -120,7 +121,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
         throw notFoundError("Language not found.", { languageId: id });
       }
 
-      return NextResponse.json(updated);
+      return NextResponse.json(updated as LanguageWithCountries);
     }
 
     const language = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -177,7 +178,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     if (!language) {
       throw notFoundError("Language not found.", { languageId: id });
     }
-    return NextResponse.json(language);
+    return NextResponse.json(language as LanguageWithCountries);
   } catch (error: unknown) {
     return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,

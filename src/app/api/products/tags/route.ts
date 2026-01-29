@@ -9,6 +9,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ProductTag } from "@/features/products/types";
 
 const productTagCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -53,7 +54,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           id: (rest as { id?: string }).id ?? fallbackId,
         };
       });
-      return NextResponse.json(normalized);
+      return NextResponse.json(normalized as ProductTag[]);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -64,7 +65,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       where: { catalogId },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(tags);
+    return NextResponse.json(tags as ProductTag[]);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -115,7 +116,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         updatedAt: now,
       };
       await db.collection("product_tags").insertOne(tag);
-      return NextResponse.json(tag, { status: 201 });
+      return NextResponse.json(tag as ProductTag, { status: 201 });
     }
 
     if (!process.env.DATABASE_URL) {
@@ -140,7 +141,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       },
     });
 
-    return NextResponse.json(tag, { status: 201 });
+    return NextResponse.json(tag as ProductTag, { status: 201 });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

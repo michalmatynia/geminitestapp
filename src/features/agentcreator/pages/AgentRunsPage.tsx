@@ -402,8 +402,8 @@ export default function AgentRunsPage(): React.ReactElement {
                       <p className="text-[11px] text-gray-500">
                         Run ID: {job.id}
                       </p>
-                      Snapshots: {job._count.browserSnapshots} · Logs:{" "}
-                      {job._count.browserLogs}
+                      Snapshots: {job._count?.browserSnapshots ?? 0} · Logs:{" "}
+                      {job._count?.browserLogs ?? 0}
                       {job.requiresHumanIntervention ? " · needs input" : ""}
                     </div>
                     {job.errorMessage ? (

@@ -1,11 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SystemSetting } from "@/shared/types/settings";
 
-export interface SystemSetting {
-  key: string;
-  value: string;
-}
+export type { SystemSetting };
 
 export function useSettings() {
   return useQuery({

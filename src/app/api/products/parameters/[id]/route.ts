@@ -7,7 +7,8 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ApiHandlerContext, DeleteResponse } from "@/shared/types/api";
+import type { ProductParameter } from "@/features/products/types";
 
 const productParameterUpdateSchema = z.object({
   name_en: z.string().min(1).optional(),
@@ -81,7 +82,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       const updated = await db
         .collection("product_parameters")
         .findOne({ id: params.id });
-      return NextResponse.json(updated);
+      return NextResponse.json(updated as unknown as ProductParameter);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -123,7 +124,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       },
     });
 
-    return NextResponse.json(parameter);
+    return NextResponse.json(parameter as ProductParameter);
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
@@ -151,7 +152,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
       }
       const db = await getMongoDb();
       await db.collection("product_parameters").deleteOne({ id: params.id });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true } as DeleteResponse);
     }
 
     if (!process.env.DATABASE_URL) {

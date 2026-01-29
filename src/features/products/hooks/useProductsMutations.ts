@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products/types";
+import type { DeleteResponse } from "@/shared/types/api";
 import { delay } from "@/shared/utils";
 
 interface UpdateProductPayload {
@@ -55,7 +56,7 @@ export function useDeleteProduct() {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete product");
-      return (await response.json()) as { success: boolean };
+      return (await response.json()) as DeleteResponse;
     },
     onSuccess: async () => {
       await Promise.all([

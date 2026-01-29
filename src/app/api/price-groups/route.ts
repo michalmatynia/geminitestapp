@@ -12,6 +12,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import type { PriceGroupWithDetails } from "@/features/products/types";
 
 const priceGroupSchema = z
   .object({
@@ -175,7 +176,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           ? groupMap.get(group.sourceGroupId) ?? null
           : null,
       }));
-      return NextResponse.json(normalized);
+      return NextResponse.json(normalized as unknown as PriceGroupWithDetails[]);
     }
 
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -217,7 +218,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       },
       orderBy: [{ name: "asc" }],
     });
-    return NextResponse.json(groups);
+    return NextResponse.json(groups as PriceGroupWithDetails[]);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

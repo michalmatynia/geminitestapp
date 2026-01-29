@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach, beforeAll } from "vite
 import { productService } from "@/features/products/services/productService";
 import prisma from "@/shared/lib/db/prisma";
 import { createMockProduct } from "@/features/products/utils/productUtils";
+import { prismaProductRepository } from "@/features/products/services/product-repository/prisma-product-repository";
 import fs from "fs/promises";
 import path from "path";
 
@@ -17,12 +18,22 @@ vi.mock("fs/promises", () => ({
   },
 }));
 
-describe("productService", () => {
-  beforeAll(() => {
-    vi.stubEnv("PRODUCT_DB_PROVIDER", "prisma");
-    vi.stubEnv("APP_DB_PROVIDER", "prisma");
-  });
+vi.mock("@/features/products/services/product-repository", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/products/services/product-repository")>();
+  return {
+    ...actual,
+    getProductRepository: vi.fn().mockImplementation(async () => {
+      const { prismaProductRepository } = await import("@/features/products/services/product-repository/prisma-product-repository");
+      return prismaProductRepository;
+    }),
+  };
+});
 
+vi.mock("@/features/products/services/product-provider", () => ({
+  getProductDataProvider: vi.fn().mockResolvedValue("prisma"),
+}));
+
+describe("productService", () => {
   beforeEach(async () => {
     // Clear the database before each test
     // Order matters because of foreign keys
@@ -86,7 +97,7 @@ describe("productService", () => {
 
       const product = await productService.createProduct(formData);
       
-      const productInCatalog = await prisma.productInCatalog.findFirst({
+      const productInCatalog = await prisma.productCatalog.findFirst({
         where: { productId: product?.id, catalogId: catalog.id },
       });
       expect(productInCatalog).toBeDefined();

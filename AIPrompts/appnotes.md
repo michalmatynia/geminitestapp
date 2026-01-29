@@ -1,4 +1,8 @@
 
+Products 
+Changing currency doesn't work again
+
+---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework
 Jobs system for the whole Path
 
@@ -16,6 +20,10 @@ Action logger
   6. Visual runtime timeline (per-run trace + logs shown in UI)
 
 ---
+node module inputs and output should have a step by step logger, logging all the data that is coming in and that is coming out
+
+---
+
 
 Generating Product updates via Database Query Node works if I click on Run, It works through trigger event as well, and goes through a complete signal path until it reaches the Database Query Node where it updates a product, but only if the ID is harcoded in the Query, like so:
 {
@@ -40,7 +48,8 @@ AI jobs are created even if the signal path in AI Paths doesn't have any AI mode
 
 ---
 
-node module should have a step by step logger
+I need to define schemas for database
+
 
 
 

@@ -1,10 +1,8 @@
-import { describe, it, expect, beforeEach, vi, afterEach, beforeAll } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { productService } from "@/features/products/services/productService";
 import prisma from "@/shared/lib/db/prisma";
 import { createMockProduct } from "@/features/products/utils/productUtils";
-import { prismaProductRepository } from "@/features/products/services/product-repository/prisma-product-repository";
 import fs from "fs/promises";
-import path from "path";
 
 vi.mock("fs/promises", () => ({
   default: {

@@ -29,15 +29,15 @@ describe("asset3dUploader", () => {
       const file = new File(["content"], "test.glb", { type: "model/gltf-binary" });
       // jsdom might not have arrayBuffer on File
       if (!file.arrayBuffer) {
-        file.arrayBuffer = async () => new ArrayBuffer(8);
+        file.arrayBuffer = () => Promise.resolve(new ArrayBuffer(8));
       }
       const mockResult = { id: "1", filename: "test.glb" };
       vi.mocked(prismaAsset3DRepository.createAsset3D).mockResolvedValue(mockResult as any);
 
       const result = await uploadAsset3D(file, { name: "Test Asset" });
 
-      expect(fs.mkdir).toHaveBeenCalled();
-      expect(fs.writeFile).toHaveBeenCalled();
+      expect(vi.mocked(fs.mkdir)).toHaveBeenCalled();
+      expect(vi.mocked(fs.writeFile)).toHaveBeenCalled();
       expect(prismaAsset3DRepository.createAsset3D).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Test Asset",
@@ -63,7 +63,7 @@ describe("asset3dUploader", () => {
       const result = await deleteAsset3D("1");
 
       expect(result).toBe(true);
-      expect(fs.unlink).toHaveBeenCalled();
+      expect(vi.mocked(fs.unlink)).toHaveBeenCalled();
       expect(prismaAsset3DRepository.deleteAsset3D).toHaveBeenCalledWith("1");
     });
 
@@ -73,7 +73,7 @@ describe("asset3dUploader", () => {
       const result = await deleteAsset3D("non-existent");
 
       expect(result).toBe(false);
-      expect(fs.unlink).not.toHaveBeenCalled();
+      expect(vi.mocked(fs.unlink)).not.toHaveBeenCalled();
     });
   });
 });

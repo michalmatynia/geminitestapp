@@ -26,7 +26,6 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single product by id', async () => {
       const response = await fetch('/api/products/1');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
@@ -57,7 +56,6 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(201);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
       expect(data.name_en).toBe('New Product');
       expect(data.id).toBeDefined();
@@ -76,7 +74,6 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
       expect(data.name_en).toBe('Updated Product');
       expect(data.price).toBe(39.99);
@@ -88,7 +85,6 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
       expect(data.success).toBe(true);
     });
@@ -97,7 +93,6 @@ describe('MSW Handlers', () => {
   describe('Catalogs API', () => {
     it('should fetch all catalogs', async () => {
       const response = await fetch('/api/catalogs');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as { data: any[]; total: number };
 
       expect(response.status).toBe(200);
@@ -107,7 +102,6 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single catalog', async () => {
       const response = await fetch('/api/catalogs/1');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
@@ -119,7 +113,6 @@ describe('MSW Handlers', () => {
   describe('Settings API', () => {
     it('should fetch all settings', async () => {
       const response = await fetch('/api/settings');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as { data: any[] };
 
       expect(response.status).toBe(200);
@@ -129,7 +122,6 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single setting', async () => {
       const response = await fetch('/api/settings/SITE_NAME');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
@@ -141,7 +133,6 @@ describe('MSW Handlers', () => {
   describe('Health Check', () => {
     it('should return health status', async () => {
       const response = await fetch('/api/health');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);

@@ -157,6 +157,7 @@ const configFiles = [
   "scripts/cleanup-base-export-templates.mjs",
   "scripts/backfill-note-colors.mjs",
   "scripts/cleanup-db-provider-settings.ts",
+  "__tests__/mocks/server-only.js",
 ];
 
 const disableTypeCheckedForConfigFiles = compat
@@ -267,6 +268,7 @@ const eslintConfig = [
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/unbound-method": "off",
     },
   },
   {

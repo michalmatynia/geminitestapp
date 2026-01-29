@@ -166,8 +166,8 @@ async function PUT_handler(
       });
     });
     return NextResponse.json(country);
-  } catch (error) {
-    return createErrorResponse(error, {
+  } catch (error: unknown) {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "countries.[id].PUT",
       fallbackMessage: "Failed to update country",
@@ -186,7 +186,7 @@ async function DELETE_handler(
   try {
     const { id } = await params;
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw configurationError("MongoDB is not configured");
@@ -198,8 +198,8 @@ async function DELETE_handler(
 
     await prisma.country.delete({ where: { id } });
     return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
+  } catch (error: unknown) {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "countries.[id].DELETE",
       fallbackMessage: "Failed to delete country",

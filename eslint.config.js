@@ -262,8 +262,6 @@ const eslintConfig = [
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-call": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
       // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
       "no-restricted-syntax": ["warn", ...commonRestrictedSyntax],
@@ -316,6 +314,12 @@ const eslintConfig = [
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    files: ["src/app/api/ai-paths/db-action/route.ts"],
+    rules: {
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
 ];

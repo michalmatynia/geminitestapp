@@ -212,7 +212,7 @@ async function POST_handler(req: Request) {
       if (!pipeline || pipeline.length === 0) {
         throw badRequestError("Aggregation pipeline is required");
       }
-      const items = await collectionRef.aggregate(pipeline as Document[]).toArray();
+      const items = await collectionRef.aggregate(pipeline).toArray();
       return NextResponse.json({ items, count: items.length });
     }
 
@@ -265,7 +265,7 @@ async function POST_handler(req: Request) {
       }
       const result = await collectionRef.findOneAndUpdate(
         normalizedFilter,
-        updateDoc as Record<string, unknown> | Record<string, unknown>[],
+        updateDoc,
         { returnDocument, upsert: !!upsert, includeResultMetadata: true }
       );
       return NextResponse.json({
@@ -281,16 +281,12 @@ async function POST_handler(req: Request) {
       }
       const result =
         action === "updateOne"
-          ? await collectionRef.updateOne(
-              normalizedFilter,
-              updateDoc as Record<string, unknown> | Record<string, unknown>[],
-              { upsert: !!upsert }
-            )
-          : await collectionRef.updateMany(
-              normalizedFilter,
-              updateDoc as Record<string, unknown> | Record<string, unknown>[],
-              { upsert: !!upsert }
-            );
+          ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
+              upsert: !!upsert,
+            })
+          : await collectionRef.updateMany(normalizedFilter, updateDoc, {
+              upsert: !!upsert,
+            });
       return NextResponse.json({
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
@@ -325,3 +321,4 @@ async function POST_handler(req: Request) {
 }
 
 export const POST = apiHandler(POST_handler, { source: "ai-paths.db-action" });
+

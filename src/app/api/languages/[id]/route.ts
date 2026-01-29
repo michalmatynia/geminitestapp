@@ -181,7 +181,7 @@ async function PUT_handler(
     }
     return NextResponse.json(language);
   } catch (error: unknown) {
-    return createErrorResponse(error, {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "languages.[id].PUT",
       fallbackMessage: "Failed to update language",
@@ -245,7 +245,7 @@ async function DELETE_handler(
 
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
-    return createErrorResponse(error, {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "languages.[id].DELETE",
       fallbackMessage: "Failed to delete language",

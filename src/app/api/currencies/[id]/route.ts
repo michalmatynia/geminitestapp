@@ -108,8 +108,8 @@ async function PUT_handler(
       },
     });
     return NextResponse.json(currency);
-  } catch (error) {
-    return createErrorResponse(error, {
+  } catch (error: unknown) {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "currencies.[id].PUT",
       fallbackMessage: "Failed to update currency",
@@ -152,8 +152,8 @@ async function DELETE_handler(
 
     await prisma.currency.delete({ where: { id } });
     return new Response(null, { status: 204 });
-  } catch (error) {
-    return createErrorResponse(error, {
+  } catch (error: unknown) {
+    return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,
       source: "currencies.[id].DELETE",
       fallbackMessage: "Failed to delete currency",

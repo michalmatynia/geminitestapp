@@ -77,5 +77,6 @@ async function GET_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
- _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].stream.GET" });
+  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.agent.[runId].stream.GET" }
+);

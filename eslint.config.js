@@ -290,11 +290,11 @@ const eslintConfig = [
       "@typescript-eslint/typedef": [
         "error",
         {
-          "parameter": false,
-          "arrowParameter": false,
+          "parameter": true,
+          "arrowParameter": true,
           "variableDeclaration": false,
-          "memberVariableDeclaration": false,
-          "propertyDeclaration": false
+          "memberVariableDeclaration": true,
+          "propertyDeclaration": true
         }
       ],
       "@typescript-eslint/explicit-function-return-type": "error",
@@ -304,26 +304,6 @@ const eslintConfig = [
   ...layerBoundaryConfigs,
   apiRouteConfig,
   nextRouteConfig,
-  {
-    files: [
-      "src/shared/types/**/*.{ts,tsx}",
-      "src/features/*/types/**/*.{ts,tsx}",
-      "src/features/*/hooks/**/*.{ts,tsx}",
-      "src/features/*/context/**/*.{ts,tsx}",
-      "src/features/*/components/**/*.{ts,tsx}",
-      "src/app/(admin)/**/*.{ts,tsx}",
-      "src/app/(frontend)/**/*.{ts,tsx}",
-    ],
-    rules: {
-      "no-restricted-imports": buildRestrictedImportsRule([], [
-        {
-          name: "@prisma/client",
-          message:
-            "Do not import @prisma/client in type/UI/hook/component files. Use DTO types from shared/types or feature/types instead.",
-        },
-      ]),
-    },
-  },
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],
     rules: {

@@ -478,11 +478,14 @@ async function DELETE_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
- _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].GET" });
+  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.agent.[runId].GET" }
+);
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
- _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].POST" });
+  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.agent.[runId].POST" }
+);
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
- _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].DELETE" });
+  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.agent.[runId].DELETE" }
+);

@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import type { AuthUserSummary } from "@/features/auth/server";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import {  apiHandlerWithParams, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -175,5 +175,7 @@ async function PATCH_handler(req: NextRequest,
 }
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string }) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].PATCH" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    PATCH_handler(req, { params: Promise.resolve(params) }),
+  { source: "auth.users.[id].PATCH" }
+);

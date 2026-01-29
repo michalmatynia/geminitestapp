@@ -8,7 +8,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
-import { apiHandler, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import {  apiHandler, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import type { CatalogRecord } from "@/features/products/types";
 import { type Filter } from "mongodb";
 

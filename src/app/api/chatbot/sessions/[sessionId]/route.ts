@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/features/chatbot/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import {  apiHandlerWithParams , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

@@ -48,5 +48,4 @@ async function POST_handler(req: NextRequest,
 }
 
 export const POST = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });
+  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });

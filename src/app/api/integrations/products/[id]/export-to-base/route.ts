@@ -868,5 +868,4 @@ async function POST_handler(
 }
 
 export const POST = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].export-to-base.POST" });
+  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].export-to-base.POST" });

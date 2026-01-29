@@ -99,8 +99,6 @@ async function POST_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
+  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
 export const POST = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });
+  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });

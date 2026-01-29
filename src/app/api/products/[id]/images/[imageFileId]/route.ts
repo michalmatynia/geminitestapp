@@ -45,5 +45,4 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<Response> {
 }
 
 export const DELETE = apiHandlerWithParams<{ id: string; imageFileId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string; imageFileId: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
- _ctx: ApiHandlerContext, params: { id: string; imageFileId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });
+  async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });

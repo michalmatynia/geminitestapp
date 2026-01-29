@@ -8,7 +8,7 @@ import {
   conflictError,
   notFoundError,
 } from "@/shared/errors/app-error";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import {  apiHandlerWithParams, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

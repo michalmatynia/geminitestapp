@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import {  apiHandlerWithParams, ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";

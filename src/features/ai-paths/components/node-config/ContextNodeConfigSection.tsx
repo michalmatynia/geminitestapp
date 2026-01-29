@@ -457,7 +457,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Target Fields</Label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {presetSet.suggested.map((field) => {
+          {presetSet.suggested?.map((field) => {
             const active = contextConfig.includePaths?.includes(field);
             return (
               <button

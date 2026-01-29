@@ -3,7 +3,52 @@
 import { useState } from "react";
 import { DEFAULT_AGENT_SETTINGS } from "@/features/agentcreator/utils/constants";
 
-export const useAgentCreatorSettings = (): any => {
+export const useAgentCreatorSettings = (): {
+  agentModeEnabled: boolean;
+  setAgentModeEnabled: (value: boolean) => void;
+  agentBrowser: string;
+  setAgentBrowser: (value: string) => void;
+  agentMaxSteps: number;
+  setAgentMaxSteps: (value: number) => void;
+  agentRunHeadless: boolean;
+  setAgentRunHeadless: (value: boolean) => void;
+  agentIgnoreRobotsTxt: boolean;
+  setAgentIgnoreRobotsTxt: (value: boolean) => void;
+  agentRequireHumanApproval: boolean;
+  setAgentRequireHumanApproval: (value: boolean) => void;
+  agentMemoryValidationModel: string | null;
+  setAgentMemoryValidationModel: (value: string | null) => void;
+  agentPlannerModel: string | null;
+  setAgentPlannerModel: (value: string | null) => void;
+  agentSelfCheckModel: string | null;
+  setAgentSelfCheckModel: (value: string | null) => void;
+  agentExtractionValidationModel: string | null;
+  setAgentExtractionValidationModel: (value: string | null) => void;
+  agentLoopGuardModel: string | null;
+  setAgentLoopGuardModel: (value: string | null) => void;
+  agentApprovalGateModel: string | null;
+  setAgentApprovalGateModel: (value: string | null) => void;
+  agentMemorySummarizationModel: string | null;
+  setAgentMemorySummarizationModel: (value: string | null) => void;
+  agentSelectorInferenceModel: string | null;
+  setAgentSelectorInferenceModel: (value: string | null) => void;
+  agentOutputNormalizationModel: string | null;
+  setAgentOutputNormalizationModel: (value: string | null) => void;
+  agentMaxStepAttempts: number;
+  setAgentMaxStepAttempts: (value: number) => void;
+  agentMaxReplanCalls: number;
+  setAgentMaxReplanCalls: (value: number) => void;
+  agentReplanEverySteps: number;
+  setAgentReplanEverySteps: (value: number) => void;
+  agentMaxSelfChecks: number;
+  setAgentMaxSelfChecks: (value: number) => void;
+  agentLoopGuardThreshold: number;
+  setAgentLoopGuardThreshold: (value: number) => void;
+  agentLoopBackoffBaseMs: number;
+  setAgentLoopBackoffBaseMs: (value: number) => void;
+  agentLoopBackoffMaxMs: number;
+  setAgentLoopBackoffMaxMs: (value: number) => void;
+} => {
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [agentBrowser, setAgentBrowser] = useState(
     DEFAULT_AGENT_SETTINGS.agentBrowser
@@ -17,29 +62,29 @@ export const useAgentCreatorSettings = (): any => {
   const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(
     DEFAULT_AGENT_SETTINGS.requireHumanApproval
   );
-  const [agentMemoryValidationModel, setAgentMemoryValidationModel] = useState(
+  const [agentMemoryValidationModel, setAgentMemoryValidationModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.memoryValidationModel
   );
-  const [agentPlannerModel, setAgentPlannerModel] = useState(
+  const [agentPlannerModel, setAgentPlannerModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.plannerModel
   );
-  const [agentSelfCheckModel, setAgentSelfCheckModel] = useState(
+  const [agentSelfCheckModel, setAgentSelfCheckModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.selfCheckModel
   );
   const [agentExtractionValidationModel, setAgentExtractionValidationModel] =
-    useState(DEFAULT_AGENT_SETTINGS.extractionValidationModel);
-  const [agentLoopGuardModel, setAgentLoopGuardModel] = useState(
+    useState<string | null>(DEFAULT_AGENT_SETTINGS.extractionValidationModel);
+  const [agentLoopGuardModel, setAgentLoopGuardModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.loopGuardModel
   );
-  const [agentApprovalGateModel, setAgentApprovalGateModel] = useState(
+  const [agentApprovalGateModel, setAgentApprovalGateModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.approvalGateModel
   );
   const [agentMemorySummarizationModel, setAgentMemorySummarizationModel] =
-    useState(DEFAULT_AGENT_SETTINGS.memorySummarizationModel);
+    useState<string | null>(DEFAULT_AGENT_SETTINGS.memorySummarizationModel);
   const [agentSelectorInferenceModel, setAgentSelectorInferenceModel] =
-    useState(DEFAULT_AGENT_SETTINGS.selectorInferenceModel);
+    useState<string | null>(DEFAULT_AGENT_SETTINGS.selectorInferenceModel);
   const [agentOutputNormalizationModel, setAgentOutputNormalizationModel] =
-    useState(DEFAULT_AGENT_SETTINGS.outputNormalizationModel);
+    useState<string | null>(DEFAULT_AGENT_SETTINGS.outputNormalizationModel);
   const [agentMaxSteps, setAgentMaxSteps] = useState(
     DEFAULT_AGENT_SETTINGS.maxSteps
   );
@@ -77,23 +122,23 @@ export const useAgentCreatorSettings = (): any => {
     agentRequireHumanApproval,
     setAgentRequireHumanApproval,
     agentMemoryValidationModel,
-    setAgentMemoryValidationModel,
+    setAgentMemoryValidationModel: setAgentMemoryValidationModel as (value: string | null) => void,
     agentPlannerModel,
-    setAgentPlannerModel,
+    setAgentPlannerModel: setAgentPlannerModel as (value: string | null) => void,
     agentSelfCheckModel,
-    setAgentSelfCheckModel,
+    setAgentSelfCheckModel: setAgentSelfCheckModel as (value: string | null) => void,
     agentExtractionValidationModel,
-    setAgentExtractionValidationModel,
+    setAgentExtractionValidationModel: setAgentExtractionValidationModel as (value: string | null) => void,
     agentLoopGuardModel,
-    setAgentLoopGuardModel,
+    setAgentLoopGuardModel: setAgentLoopGuardModel as (value: string | null) => void,
     agentApprovalGateModel,
-    setAgentApprovalGateModel,
+    setAgentApprovalGateModel: setAgentApprovalGateModel as (value: string | null) => void,
     agentMemorySummarizationModel,
-    setAgentMemorySummarizationModel,
+    setAgentMemorySummarizationModel: setAgentMemorySummarizationModel as (value: string | null) => void,
     agentSelectorInferenceModel,
-    setAgentSelectorInferenceModel,
+    setAgentSelectorInferenceModel: setAgentSelectorInferenceModel as (value: string | null) => void,
     agentOutputNormalizationModel,
-    setAgentOutputNormalizationModel,
+    setAgentOutputNormalizationModel: setAgentOutputNormalizationModel as (value: string | null) => void,
     agentMaxSteps,
     setAgentMaxSteps,
     agentMaxStepAttempts,

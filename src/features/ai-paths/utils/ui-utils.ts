@@ -1,7 +1,7 @@
-const looksLikeImageUrl = (value: string) =>
+const looksLikeImageUrl = (value: string): boolean =>
   /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
 
-const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] => {
+const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>()): string[] => {
   if (!value) return [];
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -16,11 +16,11 @@ const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] =>
     return looksLikeImageUrl(value) ? [value] : [];
   }
   if (Array.isArray(value)) {
-    return Array.from(new Set(value.flatMap((item) => extractImageUrls(item, seen))));
+    return Array.from(new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen))));
   }
   if (typeof value === "object") {
-    if (seen.has(value)) return [];
-    seen.add(value);
+    if (seen.has(value as object)) return [];
+    seen.add(value as object);
     const record = value as Record<string, unknown>;
     const candidates = [
       "url",
@@ -37,17 +37,17 @@ const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] =>
       "previewUrl",
       "preview",
     ];
-    const urls = candidates.flatMap((key) => extractImageUrls(record[key], seen));
+    const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
     if (urls.length) return Array.from(new Set(urls));
-    const deepUrls = Object.values(record).flatMap((val) => extractImageUrls(val, seen));
+    const deepUrls: string[] = Object.values(record).flatMap((val: unknown) => extractImageUrls(val, seen));
     return Array.from(new Set(deepUrls));
   }
   return [];
 };
 
-const formatPortLabel = (port: string) => (port === "images" ? "images (urls)" : port);
+const formatPortLabel = (port: string): string => (port === "images" ? "images (urls)" : port);
 
-const formatPlaceholderLabel = (port: string) =>
+const formatPlaceholderLabel = (port: string): string =>
   port === "images" ? "{{images}} (urls)" : `{{${port}}}`;
 
 export { extractImageUrls, formatPortLabel, formatPlaceholderLabel };

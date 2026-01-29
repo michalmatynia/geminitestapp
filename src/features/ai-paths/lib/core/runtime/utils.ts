@@ -18,7 +18,7 @@ import type {
 } from "@/shared/types/ai-paths";
 import { aiJobsApi, dbApi } from "../../api";
 
-export const looksLikeObjectId = (value: unknown) =>
+export const looksLikeObjectId = (value: unknown): boolean =>
   typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
 
 export function extractImageUrls(value: unknown, seen: Set<object> = new Set<object>()): string[] {
@@ -37,12 +37,12 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
   }
   if (Array.isArray(value)) {
     return Array.from(
-      new Set(value.flatMap((item) => extractImageUrls(item, seen)))
+      new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen)))
     );
   }
   if (typeof value === "object") {
-    if (seen.has(value)) return [];
-    seen.add(value);
+    if (seen.has(value as object)) return [];
+    seen.add(value as object);
     const record = value as Record<string, unknown>;
     const candidates = [
       "url",
@@ -59,9 +59,9 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
       "previewUrl",
       "preview",
     ];
-    const urls: string[] = candidates.flatMap((key) => extractImageUrls(record[key], seen));
+    const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
     if (urls.length) return Array.from(new Set(urls));
-    const deepUrls: string[] = Object.values(record).flatMap((val) =>
+    const deepUrls: string[] = Object.values(record).flatMap((val: unknown) =>
       extractImageUrls(val, seen)
     );
     return Array.from(new Set(deepUrls));
@@ -69,14 +69,14 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
   return [];
 }
 
-export const buildFallbackEntity = (entityId?: string | null) => ({
+export const buildFallbackEntity = (entityId?: string | null): Record<string, unknown> => ({
   id: entityId ?? "demo-entity",
   title: "Sample entity",
   images: [],
   content_en: "Sample content",
 });
 
-export const coercePayloadObject = (value: unknown) => {
+export const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
   if (!value) return null;
   if (typeof value === "string") {
     const parsed = parseJsonSafe(value);
@@ -94,7 +94,7 @@ export const coercePayloadObject = (value: unknown) => {
 export const buildPromptOutput = (
   promptConfig: { template?: string } | undefined,
   nodeInputs: RuntimePortValues
-) => {
+): { promptOutput: string; imagesValue: unknown } => {
   const resolvedConfig = promptConfig ?? { template: "" };
   const bundleValue = coerceInput(nodeInputs.bundle);
   let bundleContext: Record<string, unknown> = {};
@@ -143,8 +143,8 @@ export const buildPromptOutput = (
         data as Record<string, unknown>,
         currentValue
       )
-    : Object.entries(data)
-        .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
+    : Object.entries(data as Record<string, unknown>)
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
         .join("\n");
   const imagesValue = 
     nodeInputs.images !== undefined
@@ -160,7 +160,7 @@ export const resolveJobProductId = (
   simulationEntityType?: string | null,
   simulationEntityId?: string | null,
   activePathId?: string | null
-) => {
+): string => {
   const direct = 
     coerceInput(nodeInputs.productId) ?? coerceInput(nodeInputs.entityId);
   if (typeof direct === "string" && direct.trim()) return direct.trim();
@@ -188,7 +188,7 @@ export const resolveEntityIdFromInputs = (
   idField?: string,
   simulationEntityType?: string | null,
   simulationEntityId?: string | null
-) => {
+): string => {
   const direct =
     (idField ? coerceInput(nodeInputs[idField]) : undefined) ??
     coerceInput(nodeInputs.entityId) ??
@@ -229,7 +229,7 @@ export const resolveEntityIdFromInputs = (
 export const pollGraphJob = async (
   jobId: string,
   options?: { intervalMs?: number; maxAttempts?: number }
-) => {
+): Promise<string> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -257,7 +257,7 @@ export const pollGraphJob = async (
       throw new Error("AI job was canceled.");
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
     }
   }
   throw new Error("AI job timed out.");
@@ -266,14 +266,23 @@ export const pollGraphJob = async (
 export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
   queryConfig: DbQueryConfig
-) => {
+): {
+  query: Record<string, unknown>;
+  projection?: Record<string, unknown>;
+  sort?: Record<string, unknown>;
+  provider: string;
+  collection: string;
+  limit?: number;
+  single?: boolean;
+  idType?: string;
+} => {
   const inputQuery = coerceInput(nodeInputs.query);
   const aiQueryInput = coerceInput(nodeInputs.aiQuery ?? nodeInputs.queryCallback);
   const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
   const entityIdInput = coerceInput(nodeInputs.entityId);
   const productIdInput = coerceInput(nodeInputs.productId);
   let query: Record<string, unknown> = {};
-  const parseQueryInput = (value: unknown) => {
+  const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
     if (!value) return null;
     if (typeof value === "object" && !Array.isArray(value)) {
       return value as Record<string, unknown>;
@@ -353,8 +362,8 @@ export const pollDatabaseQuery = async (
     successValue: string;
     resultPath: string;
   }
-) => {
-  const evaluateMatch = (value: unknown) => {
+): Promise<{ result: unknown; status: string; bundle: Record<string, unknown> }> => {
+  const evaluateMatch = (value: unknown): boolean => {
     if (config.successOperator === "truthy") return Boolean(value);
     const compareTarget = config.successValue ?? "";
     const valStr = safeStringify(value);
@@ -369,7 +378,7 @@ export const pollDatabaseQuery = async (
     if (config.successOperator === "contains") {
       if (Array.isArray(value)) {
         return value
-          .map((entry) =>
+          .map((entry: unknown) =>
             entry === undefined || entry === null
               ? ""
               : typeof entry === "string"
@@ -443,7 +452,7 @@ export const pollDatabaseQuery = async (
       };
     }
     if (attempt < config.maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, config.intervalMs)));
+      await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, config.intervalMs)));
     }
   }
   const fallbackResult = config.resultPath?.trim()
@@ -456,9 +465,9 @@ export const pollDatabaseQuery = async (
   };
 };
 
-export const buildFormData = (payload: Record<string, unknown>) => {
+export const buildFormData = (payload: Record<string, unknown>): FormData => {
   const formData = new FormData();
-  Object.entries(payload).forEach(([key, value]) => {
+  Object.entries(payload).forEach(([key, value]: [string, unknown]) => {
     if (value === undefined || value === null) return;
     formData.append(key, safeStringify(value));
   });
@@ -472,7 +481,14 @@ export const resolveContextPayload = async (
   simulationEntityId: string | null,
   now: string,
   fetchEntityCached: (type: string, id: string) => Promise<Record<string, unknown> | null>
-) => {
+): Promise<{
+  role: string;
+  entityType: string;
+  entityId: string | null;
+  rawEntity: Record<string, unknown>;
+  scopedEntity: Record<string, unknown>;
+  context: Record<string, unknown>;
+}> => {
   const contextConfig = config;
   const fallbackRole = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
   const baseRole =

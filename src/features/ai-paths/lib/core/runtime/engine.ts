@@ -133,7 +133,7 @@ export async function evaluateGraph({
 }: EvaluateGraphOptions): Promise<RuntimeState> {
   const outputs: Record<string, RuntimePortValues> = seedOutputs
     ? Object.fromEntries(
-        Object.entries(seedOutputs).map(([key, value]) => [key, cloneValue(value)])
+        Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
       )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
@@ -143,7 +143,7 @@ export async function evaluateGraph({
 
   if (triggerNodeId) {
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge) => {
+    edges.forEach((edge: Edge) => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -159,7 +159,7 @@ export async function evaluateGraph({
       if (!current) continue;
       const neighbors = adjacency.get(current);
       if (!neighbors) continue;
-      neighbors.forEach((neighbor) => {
+      neighbors.forEach((neighbor: string) => {
         if (activeNodeIds.has(neighbor)) return;
         activeNodeIds.add(neighbor);
         queue.push(neighbor);
@@ -167,7 +167,7 @@ export async function evaluateGraph({
     }
   }
   const alwaysActiveTypes = new Set(["parser", "prompt", "viewer", "database"]);
-  const isActiveNode = (node: AiNode) =>
+  const isActiveNode = (node: AiNode): boolean =>
     !triggerNodeId ||
     activeNodeIds.has(node.id) ||
     alwaysActiveTypes.has(node.type);
@@ -175,7 +175,7 @@ export async function evaluateGraph({
     ? new Set(Array.isArray(skipNodeIds) ? skipNodeIds : Array.from(skipNodeIds))
     : null;
 
-  const fetchEntityCached = async (entityType: string, entityId: string) => {
+  const fetchEntityCached = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
     if (!entityType || !entityId) return null;
     const key = `${entityType}:${entityId}`;
     if (entityCache.has(key)) return entityCache.get(key) ?? null;
@@ -199,11 +199,11 @@ export async function evaluateGraph({
 
   if (triggerNodeId) {
     const simulationEdge = edges.find(
-      (edge) => edge.to === triggerNodeId && edge.toPort === "simulation"
+      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === "simulation"
     );
     if (simulationEdge) {
       const simNode = nodes.find(
-        (node) => node.id === simulationEdge.from && node.type === "simulation"
+        (node: AiNode) => node.id === simulationEdge.from && node.type === "simulation"
       );
       simulationEntityType =
         simNode?.config?.simulation?.entityType?.trim() ?? "product";
@@ -264,7 +264,7 @@ export async function evaluateGraph({
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const nextInputs: Record<string, RuntimePortValues> = {};
-    edges.forEach((edge) => {
+    edges.forEach((edge: Edge) => {
       const fromOutput = outputs[edge.from];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
       const value = fromOutput[edge.fromPort];

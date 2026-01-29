@@ -13,7 +13,7 @@ import {
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
 import { aiJobsApi, aiGenerationApi } from "../../../api";
 
-export const handleTemplate: NodeHandler = ({ node, nodeInputs }) => {
+export const handleTemplate: NodeHandler = ({ node, nodeInputs }): any => {
   const templateConfig = node.config?.template ?? { template: "" };
   const data = { ...nodeInputs };
   const currentValue = coerceInput(nodeInputs.value) ?? "";
@@ -23,13 +23,13 @@ export const handleTemplate: NodeHandler = ({ node, nodeInputs }) => {
         data as Record<string, unknown>,
         currentValue
       )
-    : Object.entries(nodeInputs)
-        .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
+    : Object.entries(nodeInputs as Record<string, unknown>)
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
         .join("\n");
   return { prompt: prompt || "Prompt: (no template)" };
 };
 
-export const handlePrompt: NodeHandler = ({ node, nodeInputs }) => {
+export const handlePrompt: NodeHandler = ({ node, nodeInputs }): any => {
   const { promptOutput, imagesValue } = buildPromptOutput(
     node.config?.prompt,
     nodeInputs
@@ -54,35 +54,35 @@ export const handleModel: NodeHandler = async ({
   executed,
   toast,
   reportAiPathsError,
-}) => {
+}): Promise<any> => {
   if (skipAiJobs) {
     return prevOutputs;
   }
   const promptInputs = coerceInputArray(nodeInputs.prompt);
   const promptCandidates = edges
-    .filter((edge) => edge.to === node.id && edge.toPort === "prompt")
-    .map((edge) => ({
+    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
+    .map((edge: Edge) => ({
       edge,
-      fromNode: nodes.find((item) => item.id === edge.from),
+      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "prompt"],
     }))
-    .filter((entry) => entry.fromNode?.type === "prompt");
+    .filter((entry: any) => entry.fromNode?.type === "prompt");
   const promptEdge = promptCandidates.find(
-    (entry) =>
+    (entry: any) =>
       entry.value !== undefined &&
       entry.value !== null &&
       (typeof entry.value !== "string" || entry.value.trim() !== "")
   );
   const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
-  const hasMeaningfulValue = (value: unknown) => {
+  const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "object") return Object.keys(value).length > 0;
+    if (typeof value === "object") return Object.keys(value as object).length > 0;
     return true;
   };
   if (promptSourceNode) {
-    const upstreamEdges = edges.filter((edge) => edge.to === promptSourceNode.id);
+    const upstreamEdges = edges.filter((edge: Edge) => edge.to === promptSourceNode.id);
     if (upstreamEdges.length > 0) {
       const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
       const hasInputValue = Object.values(promptSourceInputs).some(
@@ -107,7 +107,7 @@ export const handleModel: NodeHandler = async ({
     promptEdge?.value ??
     [...promptInputs]
       .reverse()
-      .find((value) => {
+      .find((value: unknown) => {
         if (value === undefined || value === null) return false;
         if (typeof value === "string") return Boolean(value.trim());
         return true;
@@ -123,15 +123,15 @@ export const handleModel: NodeHandler = async ({
     vision: node.inputs.includes("images"),
   };
   const hasResultConsumers = edges.some(
-    (edge) =>
+    (edge: Edge) =>
       edge.from === node.id &&
       (edge.fromPort === "result" ||
         (edge.fromPort === undefined && edge.toPort === "result"))
   );
-  const hasPollConsumer = edges.some((edge) => {
+  const hasPollConsumer = edges.some((edge: Edge) => {
     if (edge.from !== node.id) return false;
     if (edge.fromPort && edge.fromPort !== "jobId") return false;
-    const targetNode = nodes.find((item) => item.id === edge.to);
+    const targetNode = nodes.find((item: AiNode) => item.id === edge.to);
     return targetNode?.type === "poll";
   });
   const waitPreference = modelConfig.waitForResult;
@@ -150,14 +150,14 @@ export const handleModel: NodeHandler = async ({
     return prevOutputs;
   }
   const imageEdge = edges
-    .filter((edge) => edge.to === node.id && edge.toPort === "images")
-    .map((edge) => ({
+    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "images")
+    .map((edge: Edge) => ({
       edge,
-      fromNode: nodes.find((item) => item.id === edge.from),
+      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "images"],
     }))
     .find(
-      (entry) =>
+      (entry: any) =>
         entry.fromNode?.type === "prompt" &&
         entry.value !== undefined &&
         entry.value !== null
@@ -239,7 +239,7 @@ export const handleAiDescription: NodeHandler = async ({
   nodeInputs,
   executed,
   reportAiPathsError,
-}) => {
+}): Promise<any> => {
   if (executed.ai.has(node.id)) return {};
   const entityJson = coerceInput(nodeInputs.entityJson) as
     | Record<string, unknown>
@@ -253,7 +253,7 @@ export const handleAiDescription: NodeHandler = async ({
     (entityJson.images as unknown[] | undefined) ??
     [];
   const imageUrls = rawImages
-    .map((item) => {
+    .map((item: unknown) => {
       if (typeof item === "string") return item;
       if (item && typeof item === "object") {
         const url = (item as { url?: string }).url;
@@ -261,7 +261,7 @@ export const handleAiDescription: NodeHandler = async ({
       }
       return null;
     })
-    .filter((item): item is string => Boolean(item));
+    .filter((item: unknown): item is string => Boolean(item));
   const body = {
     entityJson,
     imageUrls,
@@ -292,7 +292,7 @@ export const handleDescriptionUpdater: NodeHandler = async ({
   nodeInputs,
   executed,
   reportAiPathsError,
-}) => {
+}): Promise<any> => {
   if (executed.updater.has(node.id)) return {};
   const productId = nodeInputs.productId as string | undefined;
   const description = nodeInputs.description_en as string | undefined;

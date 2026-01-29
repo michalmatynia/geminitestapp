@@ -264,7 +264,7 @@ const AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [
   { label: "$merge", value: '{ "$merge": "targetCollection" }' },
 ];
 
-const buildPresetQueryTemplate = (queryConfig: DbQueryConfig) => {
+const buildPresetQueryTemplate = (queryConfig: DbQueryConfig): string => {
   const preset = queryConfig.preset;
   let field = "_id";
   let valuePlaceholder = "{{value}}";

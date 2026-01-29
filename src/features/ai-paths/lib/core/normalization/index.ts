@@ -44,12 +44,12 @@ type LegacyUpdaterConfig = {
 };
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] =>
-  items.map((node) => {
+  items.map((node: AiNode): AiNode => {
     const nodeType = node.type as string;
     if (node.type === "context") {
       const contextConfig = node.config?.context;
       const cleanedOutputs = (node.outputs ?? []).filter(
-        (port) => normalizePortName(port) !== "role"
+        (port: string) => normalizePortName(port) !== "role"
       );
       return {
         ...node,
@@ -129,12 +129,12 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         parserConfig?.mappings ??
         (node.outputs.length > 0 ? createParserMappings(node.outputs) : {});
       const mappingKeys = Object.keys(baseMappings)
-        .map((key) => key.trim())
+        .map((key: string) => key.trim())
         .filter(Boolean);
       const outputsFromMappings = mappingKeys.length > 0 ? mappingKeys : node.outputs;
       const outputMode = parserConfig?.outputMode ?? "individual";
       const hasImagesOutput = outputsFromMappings.some(
-        (key) => key.toLowerCase() === "images"
+        (key: string) => key.toLowerCase() === "images"
       );
       const outputs = 
         outputMode === "bundle"

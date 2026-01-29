@@ -96,14 +96,14 @@ const mapEvent = (event: unknown): AiPathRunEventRecord => {
   };
 };
 
-const ensureModels = () => {
+const ensureModels = (): void => {
   if (!prismaAny.aiPathRun || !prismaAny.aiPathRunNode || !prismaAny.aiPathRunEvent) {
     throw new Error("AiPath run models not initialized in Prisma.");
   }
 };
 
 export const prismaPathRunRepository: AiPathRunRepository = {
-  async createRun(input: AiPathRunCreateInput) {
+  async createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord> {
     ensureModels();
     const run = await prismaAny.aiPathRun!.create({
       data: {
@@ -126,7 +126,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapRun(run);
   },
 
-  async updateRun(runId: string, data: AiPathRunUpdate) {
+  async updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord> {
     ensureModels();
     const run = await prismaAny.aiPathRun!.update({
       where: { id: runId },
@@ -135,7 +135,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapRun(run);
   },
 
-  async findRunById(runId: string) {
+  async findRunById(runId: string): Promise<AiPathRunRecord | null> {
     ensureModels();
     const run = await prismaAny.aiPathRun!.findUnique({
       where: { id: runId },
@@ -143,7 +143,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return run ? mapRun(run) : null;
   },
 
-  async listRuns(options: AiPathRunListOptions = {}) {
+  async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     ensureModels();
     const where = {
       ...(options.pathId ? { pathId: options.pathId } : {}),
@@ -158,10 +158,10 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       }),
       prismaAny.aiPathRun!.count({ where }),
     ]);
-    return { runs: runs.map(mapRun), total };
+    return { runs: (runs as unknown[]).map(mapRun), total };
   },
 
-  async claimNextQueuedRun() {
+  async claimNextQueuedRun(): Promise<AiPathRunRecord | null> {
     ensureModels();
     const now = new Date();
     const run = (await prismaAny.aiPathRun!.findFirst({
@@ -179,7 +179,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapRun(updated);
   },
 
-  async createRunNodes(runId: string, nodes: AiNode[]) {
+  async createRunNodes(runId: string, nodes: AiNode[]): Promise<void> {
     ensureModels();
     if (!nodes || nodes.length === 0) return;
     const data = nodes.map((node: AiNode) => ({
@@ -197,7 +197,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     runId: string,
     nodeId: string,
     data: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
-  ) {
+  ): Promise<AiPathRunNodeRecord> {
     ensureModels();
     const node = await prismaAny.aiPathRunNode!.upsert({
       where: { runId_nodeId: { runId, nodeId } },
@@ -219,16 +219,16 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapNode(node);
   },
 
-  async listRunNodes(runId: string) {
+  async listRunNodes(runId: string): Promise<AiPathRunNodeRecord[]> {
     ensureModels();
     const nodes = await prismaAny.aiPathRunNode!.findMany({
       where: { runId },
       orderBy: { createdAt: "asc" },
     });
-    return nodes.map(mapNode);
+    return (nodes as unknown[]).map(mapNode);
   },
 
-  async createRunEvent(input: AiPathRunEventCreateInput) {
+  async createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord> {
     ensureModels();
     const event = await prismaAny.aiPathRunEvent!.create({
       data: {
@@ -241,16 +241,16 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapEvent(event);
   },
 
-  async listRunEvents(runId: string) {
+  async listRunEvents(runId: string): Promise<AiPathRunEventRecord[]> {
     ensureModels();
     const events = await prismaAny.aiPathRunEvent!.findMany({
       where: { runId },
       orderBy: { createdAt: "asc" },
     });
-    return events.map(mapEvent);
+    return (events as unknown[]).map(mapEvent);
   },
 
-  async markStaleRunningRuns(maxAgeMs: number) {
+  async markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }> {
     ensureModels();
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await prismaAny.aiPathRun!.updateMany({

@@ -154,7 +154,7 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }) => {
     errors: shouldPass ? [] : ["Router blocked"],
   };
   if (shouldPass) {
-    ROUTER_OUTPUT_PORTS.forEach((port) => {
+    ROUTER_OUTPUT_PORTS.forEach((port: string) => {
       if (port === "valid" || port === "errors") return;
       if (nodeInputs[port] !== undefined) {
         next[port] = nodeInputs[port];
@@ -164,7 +164,7 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }) => {
   return next;
 };
 
-export const handleGate: NodeHandler = ({ node, nodeInputs }) => {
+export const handleGate: NodeHandler = ({ node, nodeInputs }): any => {
   const contextValue = coerceInput(nodeInputs.context) as
     | Record<string, unknown>
     | undefined;
@@ -186,12 +186,12 @@ export const handleGate: NodeHandler = ({ node, nodeInputs }) => {
   };
 };
 
-export const handleBundle: NodeHandler = ({ node, nodeInputs }) => {
+export const handleBundle: NodeHandler = ({ node, nodeInputs }): any => {
   const config = node.config?.bundle ?? { includePorts: [] };
   const includePorts = config.includePorts?.length
     ? config.includePorts
     : node.inputs;
-  const bundle = includePorts.reduce<Record<string, unknown>>((acc, port) => {
+  const bundle = includePorts.reduce<Record<string, unknown>>((acc: Record<string, unknown>, port: string) => {
     if (nodeInputs[port] !== undefined) {
       acc[port] = nodeInputs[port];
     }
@@ -204,14 +204,14 @@ export const handleDelay: NodeHandler = async ({
   node,
   nodeInputs,
   executed,
-}) => {
+}): Promise<any> => {
   if (!executed.delay.has(node.id)) {
     const delayMs = node.config?.delay?.ms ?? 300;
-    await new Promise((resolve) => setTimeout(resolve, Math.max(0, delayMs)));
+    await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, delayMs)));
     executed.delay.add(node.id);
   }
   const delayed: Record<string, unknown> = {};
-  DELAY_OUTPUT_PORTS.forEach((port) => {
+  DELAY_OUTPUT_PORTS.forEach((port: string) => {
     if (nodeInputs[port] !== undefined) {
       delayed[port] = nodeInputs[port];
     }
@@ -219,7 +219,7 @@ export const handleDelay: NodeHandler = async ({
   return delayed;
 };
 
-export const handleViewer: NodeHandler = ({ node, nodeInputs: _nodeInputs, prevOutputs }) => {
+export const handleViewer: NodeHandler = ({ node, nodeInputs: _nodeInputs, prevOutputs }): any => {
   // Viewer mainly displays data in UI, runtime behavior is pass-through or sync
   // Assuming it might pass through inputs to outputs if connected, but standard viewer has no outputs.
   // We check if it has outputs configured (custom viewer?)

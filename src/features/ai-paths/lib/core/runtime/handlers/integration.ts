@@ -33,7 +33,7 @@ export const handleTrigger: NodeHandler = ({
   resolvedEntity,
   fallbackEntityId,
   now,
-}) => {
+}): any => {
   if (triggerNodeId && node.id !== triggerNodeId) {
     return {};
   }
@@ -117,27 +117,27 @@ export const handleNotification: NodeHandler = ({
   nodes,
   executed,
   toast,
-}) => {
+}): any => {
   if (executed.notification.has(node.id)) return prevOutputs;
-  const hasMeaningfulValue = (value: unknown) => {
+  const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "object") return Object.keys(value).length > 0;
+    if (typeof value === "object") return Object.keys(value as object).length > 0;
     return true;
   };
   const promptCandidates = edges
-    .filter((edge) => edge.to === node.id && edge.toPort === "prompt")
-    .map((edge) => ({
+    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
+    .map((edge: Edge) => ({
       edge,
-      fromNode: nodes.find((item) => item.id === edge.from),
+      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
     }))
-    .filter((entry) => entry.fromNode?.type === "prompt");
+    .filter((entry: any) => entry.fromNode?.type === "prompt");
   const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
   let derivedPromptMessage: string | null = null;
   if (promptSourceNode) {
     const upstreamEdges = edges.filter(
-      (edge) => edge.to === promptSourceNode.id,
+      (edge: Edge) => edge.to === promptSourceNode.id,
     );
     const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
     if (upstreamEdges.length > 0) {

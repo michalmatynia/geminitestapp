@@ -20,7 +20,7 @@ type EnqueueRunInput = {
   meta?: Record<string, unknown> | null;
 };
 
-export const enqueuePathRun = async (input: EnqueueRunInput) => {
+export const enqueuePathRun = async (input: EnqueueRunInput): Promise<any> => {
   const repo = await getPathRunRepository();
   const nodes = normalizeNodes(input.nodes ?? []);
   const edges = sanitizeEdges(nodes, input.edges ?? []);
@@ -54,7 +54,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput) => {
 export const resumePathRun = async (
   runId: string,
   mode: "resume" | "replay" = "resume"
-) => {
+): Promise<any> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");
@@ -79,12 +79,12 @@ export const resumePathRun = async (
   return updated;
 };
 
-export const retryPathRunNode = async (runId: string, nodeId: string) => {
+export const retryPathRunNode = async (runId: string, nodeId: string): Promise<any> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");
   const nodeInfo =
-    run.graph?.nodes?.find((node) => node.id === nodeId) ?? null;
+    (run.graph as any)?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
   await repo.upsertRunNode(runId, nodeId, {
     nodeType: nodeInfo?.type ?? "unknown",
     nodeTitle: nodeInfo?.title ?? null,
@@ -117,7 +117,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string) => {
   return updated;
 };
 
-export const cancelPathRun = async (runId: string) => {
+export const cancelPathRun = async (runId: string): Promise<any> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");

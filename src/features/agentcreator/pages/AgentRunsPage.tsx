@@ -1,72 +1,4 @@
-"use client";
-
-/* eslint-disable @next/next/no-img-element */
-
-import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, ModalShell, AppModal, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-
-
-
-
-
-
-
-
-
-type AgentRun = {
-  id: string;
-  prompt: string;
-  model: string | null;
-  status: string;
-  requiresHumanIntervention: boolean;
-  searchProvider?: string | null;
-  agentBrowser?: string | null;
-  runHeadless?: boolean | null;
-  errorMessage?: string | null;
-  logLines: string[];
-  recordingPath?: string | null;
-  activeStepId?: string | null;
-  checkpointedAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  _count: {
-    browserSnapshots: number;
-    browserLogs: number;
-  };
-};
-
-type AgentSnapshot = {
-  id: string;
-  url: string;
-  title: string | null;
-  domText: string;
-  screenshotData: string | null;
-  screenshotPath: string | null;
-  mouseX: number | null;
-  mouseY: number | null;
-  viewportWidth: number | null;
-  viewportHeight: number | null;
-  createdAt: string;
-};
-
-type AgentBrowserLog = {
-  id: string;
-  level: string;
-  message: string;
-  createdAt: string;
-  metadata?: Record<string, unknown> | null;
-};
-
-type AgentAuditLog = {
-  id: string;
-  level: "info" | "warning" | "error";
-  message: string;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-};
-
-export default function AgentRunsPage() {
+export default function AgentRunsPage(): React.ReactElement {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +21,7 @@ export default function AgentRunsPage() {
     "idle" | "connecting" | "live" | "error"
   >("idle");
 
-  const loadAgentRuns = useCallback(async () => {
+  const loadAgentRuns = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const res = await fetch("/api/agentcreator/agent");
@@ -99,7 +31,7 @@ export default function AgentRunsPage() {
       const data = (await res.json()) as { runs?: AgentRun[] };
       setAgentRuns(data.runs ?? []);
       setError(null);
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load agent runs.";
       setError(message);
@@ -121,7 +53,7 @@ export default function AgentRunsPage() {
     const source = new EventSource(
       `/api/agentcreator/agent/${selectedAgentRunId}/stream`
     );
-    source.onmessage = (event) => {
+    source.onmessage = (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as {
           snapshot?: AgentSnapshot | null;
@@ -139,7 +71,7 @@ export default function AgentRunsPage() {
       source.close();
     };
 
-    const loadSnapshot = async () => {
+    const loadSnapshot = async (): Promise<void> => {
       try {
         const res = await fetch(
           `/api/agentcreator/agent/${selectedAgentRunId}/snapshots`
@@ -156,7 +88,7 @@ export default function AgentRunsPage() {
       }
     };
 
-    const loadLogs = async () => {
+    const loadLogs = async (): Promise<void> => {
       try {
         const res = await fetch(
           `/api/agentcreator/agent/${selectedAgentRunId}/logs`
@@ -173,7 +105,7 @@ export default function AgentRunsPage() {
       }
     };
 
-    const loadAudits = async () => {
+    const loadAudits = async (): Promise<void> => {
       try {
         const res = await fetch(
           `/api/agentcreator/agent/${selectedAgentRunId}/audits`
@@ -208,10 +140,10 @@ export default function AgentRunsPage() {
   const filteredRuns = useMemo(() => {
     const term = query.trim().toLowerCase();
     const sorted = [...agentRuns].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: AgentRun, b: AgentRun) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     if (!term) return sorted;
-    return sorted.filter((run) =>
+    return sorted.filter((run: AgentRun) =>
       [run.id, run.status, run.model ?? "", run.prompt]
         .join(" ")
         .toLowerCase()
@@ -219,7 +151,7 @@ export default function AgentRunsPage() {
     );
   }, [agentRuns, query]);
 
-  const deleteAgentRun = async (runId: string, force = false) => {
+  const deleteAgentRun = async (runId: string, force = false): Promise<void> => {
     setDeletingId(runId);
     try {
       const confirmed = window.confirm(
@@ -241,7 +173,7 @@ export default function AgentRunsPage() {
       }
       await loadAgentRuns();
       toast("Agent run deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete agent run.";
       toast(message, { variant: "error" });
@@ -250,7 +182,7 @@ export default function AgentRunsPage() {
     }
   };
 
-  const deleteCompletedAgentRuns = async () => {
+  const deleteCompletedAgentRuns = async (): Promise<void> => {
     setBulkDeletingAgents(true);
     try {
       const confirmed = window.confirm(
@@ -266,7 +198,7 @@ export default function AgentRunsPage() {
       }
       await loadAgentRuns();
       toast("Completed agent runs deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete agent runs.";
       toast(message, { variant: "error" });
@@ -276,31 +208,31 @@ export default function AgentRunsPage() {
   };
 
   const selectedAgentRun = useMemo(
-    () => agentRuns.find((run) => run.id === selectedAgentRunId) ?? null,
+    () => agentRuns.find((run: AgentRun) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
   );
   const sessionContextLogs = useMemo(
     () =>
-      agentLogs.filter((log) => log.message === "Captured session context."),
+      agentLogs.filter((log: AgentBrowserLog) => log.message === "Captured session context."),
     [agentLogs]
   );
   const loginCandidateLogs = useMemo(
     () =>
-      agentLogs.filter((log) => log.message === "Inferred login candidates."),
+      agentLogs.filter((log: AgentBrowserLog) => log.message === "Inferred login candidates."),
     [agentLogs]
   );
   const plannerContextAudits = useMemo(
     () =>
-      agentAudits.filter((audit) => audit.metadata?.type === "planner-context"),
+      agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "planner-context"),
     [agentAudits]
   );
   const planAudits = useMemo(
-    () => agentAudits.filter((audit) => audit.metadata?.type === "plan"),
+    () => agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan"),
     [agentAudits]
   );
   const planUpdateAudits = useMemo(
     () =>
-      agentAudits.filter((audit) => {
+      agentAudits.filter((audit: AgentAuditLog) => {
         const auditType =
           typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
         return ["plan", "plan-update"].includes(auditType);
@@ -308,12 +240,12 @@ export default function AgentRunsPage() {
     [agentAudits]
   );
   const branchAudits = useMemo(
-    () => agentAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
+    () => agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan-branch"),
     [agentAudits]
   );
   const replanAudits = useMemo(
     () =>
-      agentAudits.filter((audit) => {
+      agentAudits.filter((audit: AgentAuditLog) => {
         const auditType =
           typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
         return ["plan-replan", "plan-adapt", "self-check-replan"].includes(
@@ -323,7 +255,7 @@ export default function AgentRunsPage() {
     [agentAudits]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
-  const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
+  const latestLoginCandidates = latestLoginCandidateLogs.at(-1)?.metadata ?? null;
   const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
   const latestPlanHierarchy =
     (
@@ -332,7 +264,7 @@ export default function AgentRunsPage() {
       } | null
     )?.hierarchy ?? null;
   const latestPlanSteps = useMemo(() => {
-    const latestPlan = planUpdateAudits.find((audit) =>
+    const latestPlan = planUpdateAudits.find((audit: AgentAuditLog) =>
       Array.isArray(audit.metadata?.steps)
     );
     return Array.isArray(latestPlan?.metadata?.steps)
@@ -349,7 +281,7 @@ export default function AgentRunsPage() {
   }, [planUpdateAudits]);
   const planningEventsByStep = useMemo(() => {
     const map = new Map<string, AgentAuditLog[]>();
-    [...branchAudits, ...replanAudits].forEach((audit) => {
+    [...branchAudits, ...replanAudits].forEach((audit: AgentAuditLog) => {
       const meta = audit.metadata as {
         stepId?: string;
         failedStepId?: string;
@@ -365,7 +297,7 @@ export default function AgentRunsPage() {
     return map;
   }, [branchAudits, replanAudits]);
 
-  const closeAgentModal = () => {
+  const closeAgentModal = (): void => {
     setSelectedAgentRunId(null);
     setAgentSnapshot(null);
     setAgentLogs([]);
@@ -393,7 +325,7 @@ export default function AgentRunsPage() {
             className="max-w-sm h-8 text-sm"
             placeholder="Search runs..."
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -426,7 +358,7 @@ export default function AgentRunsPage() {
           <p className="text-sm text-gray-400">No runs yet.</p>
         ) : (
           <div className="space-y-3">
-            {filteredRuns.map((job) => (
+            {filteredRuns.map((job: AgentRun) => (
               <div
                 key={job.id}
                 className="rounded-md border border-border bg-gray-900 px-4 py-3"
@@ -496,7 +428,7 @@ export default function AgentRunsPage() {
       {selectedAgentRunId ? (
         <AppModal
           open={true}
-          onOpenChange={(open) => !open && closeAgentModal()}
+          onOpenChange={(open: boolean) => !open && closeAgentModal()}
           title="Agent job details"
         >
           <ModalShell
@@ -667,7 +599,22 @@ export default function AgentRunsPage() {
                               }>;
                             }>;
                           }>
-                        ).map((goal, goalIndex) => (
+                        ).map((goal: {
+                            id?: string;
+                            title?: string;
+                            successCriteria?: string | null;
+                            subgoals?: Array<{
+                              id?: string;
+                              title?: string;
+                              successCriteria?: string | null;
+                              steps?: Array<{
+                                title?: string;
+                                tool?: string | null;
+                                expectedObservation?: string | null;
+                                successCriteria?: string | null;
+                              }>;
+                            }>;
+                          }, goalIndex: number) => (
                           <div
                             key={goal.id ?? `goal-${goalIndex}`}
                             className="rounded-md border border-border bg-card p-2"
@@ -681,7 +628,17 @@ export default function AgentRunsPage() {
                               </p>
                             ) : null}
                             <div className="mt-2 space-y-2 pl-3">
-                              {goal.subgoals?.map((subgoal, subIndex) => (
+                              {goal.subgoals?.map((subgoal: {
+                                id?: string;
+                                title?: string;
+                                successCriteria?: string | null;
+                                steps?: Array<{
+                                  title?: string;
+                                  tool?: string | null;
+                                  expectedObservation?: string | null;
+                                  successCriteria?: string | null;
+                                }>;
+                              }, subIndex: number) => (
                                 <div
                                   key={
                                     subgoal.id ??
@@ -699,7 +656,12 @@ export default function AgentRunsPage() {
                                     </p>
                                   ) : null}
                                   <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
-                                    {subgoal.steps?.map((step, stepIndex) => (
+                                    {subgoal.steps?.map((step: {
+                                        title?: string;
+                                        tool?: string | null;
+                                        expectedObservation?: string | null;
+                                        successCriteria?: string | null;
+                                      }, stepIndex: number) => (
                                       <li
                                         key={`${goalIndex}-${subIndex}-${stepIndex}`}
                                       >
@@ -746,7 +708,15 @@ export default function AgentRunsPage() {
                     <p className="text-[11px] text-gray-500">Plan steps</p>
                     {latestPlanSteps.length ? (
                       <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
-                        {latestPlanSteps.map((step, index) => {
+                        {latestPlanSteps.map((step: {
+                            id?: string;
+                            title?: string;
+                            status?: string;
+                            tool?: string | null;
+                            expectedObservation?: string | null;
+                            successCriteria?: string | null;
+                            phase?: string | null;
+                          }, index: number) => {
                           const stepId = step.id ?? `step-${index}`;
                           const events = planningEventsByStep.get(stepId) ?? [];
                           return (
@@ -781,7 +751,7 @@ export default function AgentRunsPage() {
                                     Planning events
                                   </p>
                                   <ul className="mt-1 space-y-1 text-[10px] text-gray-300">
-                                    {events.map((event) => (
+                                    {events.map((event: AgentAuditLog) => (
                                       <li key={event.id}>{event.message}</li>
                                     ))}
                                   </ul>
@@ -806,7 +776,7 @@ export default function AgentRunsPage() {
                     </div>
                     {branchAudits.length ? (
                       <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
-                        {branchAudits.map((audit, index) => {
+                        {branchAudits.map((audit: AgentAuditLog, index: number) => {
                           const meta = audit.metadata as {
                             failedStepId?: string;
                             reason?: string;
@@ -845,7 +815,13 @@ export default function AgentRunsPage() {
                               ) : null}
                               {meta?.branchSteps?.length ? (
                                 <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
-                                  {meta.branchSteps.map((step, stepIndex) => (
+                                  {meta.branchSteps.map((step: {
+                                      id?: string;
+                                      title?: string;
+                                      tool?: string | null;
+                                      expectedObservation?: string | null;
+                                      successCriteria?: string | null;
+                                    }, stepIndex: number) => (
                                     <li
                                       key={
                                         step.id ?? `branch-step-${stepIndex}`
@@ -894,7 +870,7 @@ export default function AgentRunsPage() {
                       {agentAudits.length === 0 ? (
                         <p className="text-gray-500">No steps yet.</p>
                       ) : (
-                        agentAudits.map((step) => (
+                        agentAudits.map((step: AgentAuditLog) => (
                           <div
                             key={step.id}
                             className="rounded-md border border-border px-2 py-1"
@@ -914,7 +890,7 @@ export default function AgentRunsPage() {
                                   type="button"
                                   className="text-[10px] uppercase tracking-wide text-slate-400 hover:text-slate-200"
                                   onClick={() =>
-                                    setExpandedAuditIds((prev) => ({
+                                    setExpandedAuditIds((prev: Record<string, boolean>) => ({
                                       ...prev,
                                       [step.id]: !prev[step.id],
                                     }))
@@ -944,7 +920,7 @@ export default function AgentRunsPage() {
                       {agentLogs.length === 0 ? (
                         <p className="text-gray-500">No logs yet.</p>
                       ) : (
-                        agentLogs.map((log) => (
+                        agentLogs.map((log: AgentBrowserLog) => (
                           <p key={log.id}>
                             [{log.level}] {log.message}
                           </p>
@@ -990,7 +966,16 @@ export default function AgentRunsPage() {
                                     valueLength: number;
                                   }>
                                 | undefined
-                            )?.map((cookie, index) => (
+                            )?.map((cookie: {
+                                name: string;
+                                domain: string;
+                                path: string;
+                                expires: number;
+                                httpOnly: boolean;
+                                secure: boolean;
+                                sameSite: string;
+                                valueLength: number;
+                              }, index: number) => (
                               <div
                                 key={`${cookie.name}-${index}`}
                                 className="mt-1"
@@ -1075,7 +1060,15 @@ export default function AgentRunsPage() {
                                     score: number;
                                   }>
                                 | undefined
-                            )?.map((input, index) => (
+                            )?.map((input: {
+                                tag: string;
+                                id: string | null;
+                                name: string | null;
+                                type: string | null;
+                                placeholder: string | null;
+                                ariaLabel: string | null;
+                                score: number;
+                              }, index: number) => (
                               <div key={`${input.name}-${index}`}>
                                 <span className="text-slate-100">
                                   {input.name ||
@@ -1110,7 +1103,14 @@ export default function AgentRunsPage() {
                                     score: number;
                                   }>
                                 | undefined
-                            )?.map((button, index) => (
+                            )?.map((button: {
+                                tag: string;
+                                id: string | null;
+                                name: string | null;
+                                type: string | null;
+                                text: string | null;
+                                score: number;
+                              }, index: number) => (
                               <div key={`${button.text}-${index}`}>
                                 <span className="text-slate-100">
                                   {button.text ||

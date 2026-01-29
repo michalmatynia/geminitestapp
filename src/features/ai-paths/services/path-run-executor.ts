@@ -62,9 +62,9 @@ const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
 const computeDownstreamNodes = (
   edges: Edge[],
   startNodes: Set<string>
-) => {
+): Set<string> => {
   const adjacency = new Map<string, Set<string>>();
-  edges.forEach((edge) => {
+  edges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
     const set = adjacency.get(edge.from) ?? new Set<string>();
     set.add(edge.to);
@@ -77,7 +77,7 @@ const computeDownstreamNodes = (
     if (!current) continue;
     const next = adjacency.get(current);
     if (!next) continue;
-    next.forEach((nodeId) => {
+    next.forEach((nodeId: string) => {
       if (visited.has(nodeId)) return;
       visited.add(nodeId);
       queue.push(nodeId);
@@ -91,18 +91,18 @@ const resolveTriggerNodeId = (
   edges: Edge[],
   triggerEvent?: string | null,
   explicit?: string | null
-) => {
-  if (explicit && nodes.some((node) => node.id === explicit)) return explicit;
-  const triggerNodes = nodes.filter((node) => node.type === "trigger");
+): string | undefined => {
+  if (explicit && nodes.some((node: AiNode) => node.id === explicit)) return explicit;
+  const triggerNodes = nodes.filter((node: AiNode) => node.type === "trigger");
   if (triggerNodes.length === 0) return undefined;
   const matching = triggerEvent
     ? triggerNodes.filter(
-        (node) => (node.config?.trigger?.event ?? "").trim() === triggerEvent
+        (node: AiNode) => (node.config?.trigger?.event ?? "").trim() === triggerEvent
       )
     : triggerNodes;
   const candidates = matching.length > 0 ? matching : triggerNodes;
-  const connected = candidates.find((node) =>
-    edges.some((edge) => edge.from === node.id || edge.to === node.id)
+  const connected = candidates.find((node: AiNode) =>
+    edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
   );
   return connected?.id ?? candidates[0]?.id;
 };
@@ -111,7 +111,7 @@ const buildSkipSet = (
   run: AiPathRunRecord,
   edges: Edge[],
   nodeStatusMap: Map<string, string>
-) => {
+): Set<string> => {
   const meta = (run.meta ?? {}) as {
     resumeMode?: string;
     retryNodeIds?: string[];
@@ -121,30 +121,30 @@ const buildSkipSet = (
 
   const completed = new Set(
     Array.from(nodeStatusMap.entries())
-      .filter(([, status]) => status === "completed")
-      .map(([nodeId]) => nodeId)
+      .filter(([, status]: [string, string]) => status === "completed")
+      .map(([nodeId]: [string, string]) => nodeId)
   );
   if (mode === "resume") {
     const failedNodes = new Set(
       Array.from(nodeStatusMap.entries())
-        .filter(([, status]) => status === "failed")
-        .map(([nodeId]) => nodeId)
+        .filter(([, status]: [string, string]) => status === "failed")
+        .map(([nodeId]: [string, string]) => nodeId)
     );
     if (failedNodes.size === 0) {
       return completed;
     }
     const affected = computeDownstreamNodes(edges, failedNodes);
-    return new Set(Array.from(completed).filter((nodeId) => !affected.has(nodeId)));
+    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
   }
   if (mode === "retry") {
     const retryNodes = new Set(meta.retryNodeIds ?? []);
     const affected = computeDownstreamNodes(edges, retryNodes);
-    return new Set(Array.from(completed).filter((nodeId) => !affected.has(nodeId)));
+    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
   }
   return new Set<string>();
 };
 
-const fetchEntityByType = async (entityType: string, entityId: string) => {
+const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = entityType.toLowerCase();
   if (normalized === "product") {
@@ -157,7 +157,7 @@ const fetchEntityByType = async (entityType: string, entityId: string) => {
   return null;
 };
 
-export const executePathRun = async (run: AiPathRunRecord) => {
+export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const repo = await getPathRunRepository();
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
@@ -174,8 +174,8 @@ export const executePathRun = async (run: AiPathRunRecord) => {
     return;
   }
 
-  const nodes = normalizeNodes(graph.nodes);
-  const edges = sanitizeEdges(nodes, graph.edges);
+  const nodes = normalizeNodes(graph.nodes as AiNode[]);
+  const edges = sanitizeEdges(nodes, graph.edges as Edge[]);
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,
@@ -186,13 +186,13 @@ export const executePathRun = async (run: AiPathRunRecord) => {
   const runtimeState = parseRuntimeState(run.runtimeState);
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map(
-    nodeRecords.map((record) => [record.nodeId, record.status])
+    nodeRecords.map((record: any) => [record.nodeId, record.status])
   );
   const nodeAttemptMap = new Map(
-    nodeRecords.map((record) => [record.nodeId, record.attempt ?? 0])
+    nodeRecords.map((record: any) => [record.nodeId, record.attempt ?? 0])
   );
   const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
-  const reportAiPathsError = async (error: unknown, meta: Record<string, unknown>, summary?: string) => {
+  const reportAiPathsError = async (error: unknown, meta: Record<string, unknown>, summary?: string): Promise<void> => {
     await ErrorSystem.captureException(error, {
       service: "ai-paths-runtime",
       pathRunId: run.id,
@@ -209,7 +209,7 @@ export const executePathRun = async (run: AiPathRunRecord) => {
       },
     });
   };
-  const toast = () => {};
+  const toast = (): void => {};
 
   try {
     const resultState = await evaluateGraph({
@@ -218,15 +218,15 @@ export const executePathRun = async (run: AiPathRunRecord) => {
       activePathId: run.pathId,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
-      ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
+      ...(run.triggerContext ? { triggerContext: run.triggerContext as Record<string, unknown> } : {}),
       seedOutputs: runtimeState.outputs,
       skipNodeIds: skipNodes,
       fetchEntityByType,
-      reportAiPathsError: (error, meta, summary) => {
+      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
         void reportAiPathsError(error, meta, summary);
       },
       toast,
-      onNodeStart: async ({ node, nodeInputs, prevOutputs }) => {
+      onNodeStart: async ({ node, nodeInputs, prevOutputs }: { node: AiNode; nodeInputs: RuntimePortValues; prevOutputs: RuntimePortValues }) => {
         const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
         nodeAttemptMap.set(node.id, nextAttempt);
         await repo.upsertRunNode(run.id, node.id, {
@@ -240,7 +240,7 @@ export const executePathRun = async (run: AiPathRunRecord) => {
           errorMessage: null,
         });
       },
-      onNodeFinish: async ({ node, nodeInputs, nextOutputs }) => {
+      onNodeFinish: async ({ node, nodeInputs, nextOutputs }: { node: AiNode; nodeInputs: RuntimePortValues; nextOutputs: RuntimePortValues }) => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
@@ -252,7 +252,7 @@ export const executePathRun = async (run: AiPathRunRecord) => {
           errorMessage: null,
         });
       },
-      onNodeError: async ({ node, nodeInputs, prevOutputs, error }) => {
+      onNodeError: async ({ node, nodeInputs, prevOutputs, error }: { node: AiNode; nodeInputs: RuntimePortValues; prevOutputs: RuntimePortValues; error: unknown }) => {
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
@@ -264,7 +264,7 @@ export const executePathRun = async (run: AiPathRunRecord) => {
           errorMessage: error instanceof Error ? error.message : String(error),
         });
       },
-      onIterationEnd: async ({ inputs, outputs }) => {
+      onIterationEnd: async ({ inputs, outputs }: { inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues> }) => {
         await repo.updateRun(run.id, {
           runtimeState: sanitizeRuntimeState({ inputs, outputs }),
         });

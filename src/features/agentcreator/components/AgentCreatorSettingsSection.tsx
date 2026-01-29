@@ -33,7 +33,7 @@ export function AgentCreatorSettingsSection({
   setAgentIgnoreRobotsTxt,
   agentRequireHumanApproval,
   setAgentRequireHumanApproval,
-}: AgentCreatorSettingsSectionProps) {
+}: AgentCreatorSettingsSectionProps): React.ReactElement {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-white">Agent Settings</h3>
@@ -41,7 +41,7 @@ export function AgentCreatorSettingsSection({
         <Label className="flex items-center gap-2 text-sm text-gray-300">
           <Checkbox
             checked={agentModeEnabled}
-            onCheckedChange={(checked) => setAgentModeEnabled(Boolean(checked))}
+            onCheckedChange={(checked: boolean) => setAgentModeEnabled(Boolean(checked))}
           />
           Enable Agent Mode
         </Label>
@@ -67,7 +67,7 @@ export function AgentCreatorSettingsSection({
               <Input
                 type="number"
                 value={agentMaxSteps}
-                onChange={(e) => setAgentMaxSteps(Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentMaxSteps(Number(e.target.value))}
               />
             </div>
           </div>
@@ -75,7 +75,7 @@ export function AgentCreatorSettingsSection({
             <Label className="flex items-center gap-2 text-sm text-gray-300">
               <Checkbox
                 checked={agentRunHeadless}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   setAgentRunHeadless(Boolean(checked))
                 }
               />
@@ -84,7 +84,7 @@ export function AgentCreatorSettingsSection({
             <Label className="flex items-center gap-2 text-sm text-gray-300">
               <Checkbox
                 checked={agentIgnoreRobotsTxt}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   setAgentIgnoreRobotsTxt(Boolean(checked))
                 }
               />
@@ -93,7 +93,7 @@ export function AgentCreatorSettingsSection({
             <Label className="flex items-center gap-2 text-sm text-gray-300">
               <Checkbox
                 checked={agentRequireHumanApproval}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   setAgentRequireHumanApproval(Boolean(checked))
                 }
               />

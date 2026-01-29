@@ -76,7 +76,7 @@ export type BrowseResponse = {
 // Base Fetch Utilities
 // ============================================================================
 
-const resolveApiUrl = (url: string) => {
+const resolveApiUrl = (url: string): string => {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }

@@ -534,15 +534,32 @@ export async function buildAdaptivePlanReview({
       }
     }
     if (shouldReplan && steps.length === 0) {
-      return { shouldReplan: false, ...(parsed.reason && { reason: parsed.reason }), steps: [] };
+      const result: {
+        shouldReplan: boolean;
+        reason?: string;
+        steps: PlanStep[];
+      } = { shouldReplan: false, steps: [] };
+      if (typeof parsed.reason === "string") {
+        result.reason = parsed.reason;
+      }
+      return result;
     }
-    return {
+    const result: {
+      shouldReplan: boolean;
+      reason?: string;
+      steps: PlanStep[];
+      hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+      meta?: PlannerMeta | null;
+    } = {
       shouldReplan,
-      ...(parsed.reason && { reason: parsed.reason }),
       steps,
       hierarchy,
       meta,
     };
+    if (typeof parsed.reason === "string") {
+      result.reason = parsed.reason;
+    }
+    return result;
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Planner review fallback", {
@@ -744,10 +761,25 @@ export async function buildSelfCheckReview({
         steps = fallbackBranch;
       }
     }
-    return {
+    const result: {
+      action: "continue" | "replan" | "wait_human";
+      reason?: string;
+      notes?: string;
+      questions?: string[];
+      evidence?: string[];
+      confidence?: number;
+      missingInfo?: string[];
+      blockers?: string[];
+      hypotheses?: string[];
+      verificationSteps?: string[];
+      toolSwitch?: string;
+      abortSignals?: string[];
+      finishSignals?: string[];
+      steps: PlanStep[];
+      hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+      meta?: PlannerMeta | null;
+    } = {
       action,
-      ...(parsed.reason && { reason: parsed.reason }),
-      ...(parsed.notes && { notes: parsed.notes }),
       questions: normalizeStringList(parsed.questions),
       evidence: normalizeStringList(parsed.evidence),
       ...(typeof parsed.confidence === "number" && {
@@ -765,6 +797,13 @@ export async function buildSelfCheckReview({
       hierarchy,
       meta,
     };
+    if (typeof parsed.reason === "string") {
+      result.reason = parsed.reason;
+    }
+    if (typeof parsed.notes === "string") {
+      result.notes = parsed.notes;
+    }
+    return result;
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Self-check fallback", {
@@ -920,16 +959,34 @@ export async function buildResumePlanReview({
       }
     }
     if (shouldReplan && steps.length === 0) {
-      return { shouldReplan: false, ...(parsed.reason && { reason: parsed.reason }), steps: [] };
+      const result: {
+        shouldReplan: boolean;
+        reason?: string;
+        steps: PlanStep[];
+      } = { shouldReplan: false, steps: [] };
+      if (typeof parsed.reason === "string") {
+        result.reason = parsed.reason;
+      }
+      return result;
     }
-    return {
+    const result: {
+      shouldReplan: boolean;
+      reason?: string;
+      steps: PlanStep[];
+      hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+      meta?: PlannerMeta | null;
+      summary?: string | null;
+    } = {
       shouldReplan,
-      ...(parsed.reason && { reason: parsed.reason }),
       summary: parsed.summary?.trim() || null,
       steps,
       hierarchy,
       meta,
     };
+    if (typeof parsed.reason === "string") {
+      result.reason = parsed.reason;
+    }
+    return result;
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Resume planner fallback", {
@@ -1528,13 +1585,22 @@ export async function buildMidRunAdaptationWithLLM({
         stepsResult = fallbackBranch;
       }
     }
-    return {
+    const result: {
+      shouldAdapt: boolean;
+      reason?: string;
+      steps: PlanStep[];
+      hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+      meta?: PlannerMeta | null;
+    } = {
       shouldAdapt: true,
-      ...(typeof parsed.reason === "string" ? { reason: parsed.reason } : {}),
       steps: stepsResult,
       hierarchy,
       meta,
     };
+    if (typeof parsed.reason === "string") {
+      result.reason = parsed.reason;
+    }
+    return result;
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Mid-run adaptation failed", {

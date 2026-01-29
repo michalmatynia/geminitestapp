@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { themeUpdateSchema } from "@/features/notesapp";
@@ -7,15 +7,15 @@ import type { ThemeUpdateInput } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const theme = await noteService.getThemeById(id);
@@ -36,10 +36,9 @@ async function GET_handler(
  * PATCH /api/notes/themes/[id]
  * Updates a theme.
  */
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, themeUpdateSchema, {
@@ -69,10 +68,9 @@ async function PATCH_handler(
  * DELETE /api/notes/themes/[id]
  * Deletes a theme.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const success = await noteService.deleteTheme(id);
@@ -89,6 +87,6 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].GET" });
-export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].DELETE" });

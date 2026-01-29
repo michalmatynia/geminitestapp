@@ -4,6 +4,7 @@ import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 interface FolderNode {
   name: string;
@@ -91,7 +92,7 @@ async function createFolderStructure(
   }
 }
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, importSchema, {
       logPrefix: "notes.import-folder",

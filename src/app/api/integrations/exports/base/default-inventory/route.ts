@@ -7,12 +7,13 @@ import {
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable().optional(),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const inventoryId = await getExportDefaultInventoryId();
     return NextResponse.json({ inventoryId });
@@ -25,7 +26,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "exports.base.default-inventory.POST",

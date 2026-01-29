@@ -71,7 +71,7 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Rec
   return next;
 };
 
-async function POST_handler(req: Request): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",

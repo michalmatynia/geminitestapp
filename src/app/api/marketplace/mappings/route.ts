@@ -3,6 +3,7 @@ import { getCategoryMappingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type CreateMappingRequest = {
   connectionId: string;
@@ -18,7 +19,7 @@ type CreateMappingRequest = {
  *   - connectionId (required): The integration connection ID
  *   - catalogId (optional): Filter by catalog ID
  */
-async function GET_handler(request: NextRequest) {
+async function GET_handler(request: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get("connectionId");
@@ -45,7 +46,7 @@ async function GET_handler(request: NextRequest) {
  * POST /api/marketplace/mappings
  * Creates a new category mapping.
  */
-async function POST_handler(request: NextRequest) {
+async function POST_handler(request: NextRequest): Promise<Response> {
   try {
     const body = (await request.json()) as CreateMappingRequest;
     const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;

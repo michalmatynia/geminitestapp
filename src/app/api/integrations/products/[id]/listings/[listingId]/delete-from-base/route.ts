@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
@@ -8,15 +8,15 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional(),
 });
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string; listingId: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId, listingId } = await params;
     if (!productId || !listingId) {
@@ -131,4 +131,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST" });
+export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST" });

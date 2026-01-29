@@ -11,6 +11,7 @@ import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,7 @@ const migrationSchema = z.object({
   batchSize: z.coerce.number().int().positive().optional(),
 });
 
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const parsedDirection = migrationDirectionSchema.safeParse(
@@ -43,7 +44,7 @@ async function GET_handler(req: NextRequest) {
   }
 }
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, migrationSchema, {
       logPrefix: "products.migrate.POST",

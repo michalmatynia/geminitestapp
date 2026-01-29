@@ -7,6 +7,7 @@ import {
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ const templateSchema = z.object({
   mappings: z.array(mappingSchema).default([]),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const templates = await listImportTemplates();
     return NextResponse.json(templates);
@@ -35,7 +36,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, templateSchema, {
       logPrefix: "import-templates.POST",

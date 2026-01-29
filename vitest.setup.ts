@@ -33,6 +33,13 @@ vi.mock('next/link', () => ({
   }) => React.createElement('a', { href }, children),
 }));
 
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 /**
  * MSW Server Setup for Vitest
  * Establishes request mocking for all tests

@@ -11,8 +11,7 @@ const retrySchema = z.object({
   nodeId: z.string().trim().min(1),
 });
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<NextResponse | Response> {

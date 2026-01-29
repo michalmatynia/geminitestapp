@@ -1,19 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { notebookUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * PATCH /api/notes/notebooks/[id]
  * Updates a notebook.
  */
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, notebookUpdateSchema, {
@@ -38,10 +38,9 @@ async function PATCH_handler(
  * DELETE /api/notes/notebooks/[id]
  * Deletes a notebook (and its notes/tags/categories).
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     await noteService.deleteNotebook(id);
@@ -55,5 +54,5 @@ async function DELETE_handler(
   }
 }
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].DELETE" });

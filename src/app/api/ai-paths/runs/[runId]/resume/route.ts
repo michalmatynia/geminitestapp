@@ -11,8 +11,7 @@ const resumeSchema = z.object({
   mode: z.enum(["resume", "replay"]).optional(),
 });
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<NextResponse | Response> {

@@ -3,275 +3,326 @@
 > eslint .
 
 
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/ui/notes-advanced.test.tsx
+  125:9  error  'cards' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/3d-assets/list/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/3d-assets/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/agentcreator/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/agentcreator/runs/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/ai-paths/dead-letter/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/ai-paths/jobs/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/ai-paths/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/dashboard/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/permissions/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/settings/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/user-pages/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/auth/users/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/chatbot/context/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/chatbot/jobs/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/chatbot/memory/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/chatbot/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/chatbot/sessions/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/blocks/[id]/edit/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/blocks/create/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/blocks/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/pages/[id]/edit/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/pages/create/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/pages/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/slugs/[id]/edit/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/slugs/create/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/cms/slugs/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/databases/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/databases/preview/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/drafts/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/error.tsx
+  8:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  8:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/files/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/front-manage/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/import/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/add/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/imports/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/jobs/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/connections/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/listing-management/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/listing-templates/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/messages/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/parameter-mapping/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/allegro/shipping-price-management/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/category-mapper/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/marketplaces/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/integrations/tradera/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/not-found.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/error.tsx
+  6:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  6:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/notebooks/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/settings/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/tags/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/notes/themes/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/page.tsx
+  7:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  7:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/[id]/edit/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/builder/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/jobs/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/preferences/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/products/settings/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/ai/page.tsx
+  25:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  25:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/database/page.tsx
+  24:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  24:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  37:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/logging/page.tsx
+  11:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  11:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  35:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/notifications/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/playwright/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/settings/recovery/page.tsx
-   86:96  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  100:5   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  111:33  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  24:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  24:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  74:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/admin/system/logs/page.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(admin)/layout.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/error.tsx
+  7:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  7:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/layout.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/not-found.tsx
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  4:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/page.tsx
    45:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
    45:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
   196:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/enqueue/route.ts
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/update/route.ts
-  52:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  60:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/[id]/route.ts
-   8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/categories/route.ts
-  5:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/route.ts
-   8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  28:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/tags/route.ts
-  5:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/disable/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/setup/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mfa/verify/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/mock-signin/route.ts
-  33:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/route.ts
-  32:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/security/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  48:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/route.ts
-  23:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/verify-credentials/route.ts
-  24:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/[id]/route.ts
-  24:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  95:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/assign/route.ts
-  20:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/catalogs/route.ts
-   29:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  154:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/context/route.ts
-   6:52  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  19:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/[jobId]/route.ts
-  19:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  45:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  99:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/route.ts
-   34:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   56:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  125:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/memory/route.ts
-  9:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/route.ts
-   32:26  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   43:37  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   74:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  117:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/messages/route.ts
-   16:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   62:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  135:71  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  135:76  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  135:82  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  136:72  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  136:77  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  136:83  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/[sessionId]/route.ts
-  10:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  43:71  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  43:76  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  43:82  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/sessions/route.ts
-   41:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   81:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  104:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  154:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/settings/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  51:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/client-errors/route.ts
-  22:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/blocks/[id]/route.ts
-   26:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   50:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   86:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  103:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  103:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  103:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  104:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  104:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  104:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  105:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  105:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  105:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/blocks/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  37:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts
-   32:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   56:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   97:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  114:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  114:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  114:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  115:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  115:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  115:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  116:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  116:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  116:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/route.ts
-  18:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  39:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/slugs/[id]/route.ts
-   26:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   50:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   71:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  111:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  111:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  111:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  112:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  112:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  112:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  113:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  113:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  113:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/slugs/route.ts
-  16:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  33:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/countries/[id]/route.ts
-   46:3   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   70:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  183:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  211:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  211:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  211:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  212:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  212:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  212:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/countries/route.ts
-   53:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  108:3  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  133:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  201:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/currencies/[id]/route.ts
-   47:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  124:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  164:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  164:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  164:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  165:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  165:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  165:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/currencies/route.ts
-   36:80  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-   63:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  111:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/backup/route.ts
-  8:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/backups/route.ts
-  56:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/browse/route.ts
-  153:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  153:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/delete/route.ts
-  15:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/preview/route.ts
-  16:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
-  35:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/schema/route.ts
-  141:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  141:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/upload/route.ts
-  17:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/drafts/[id]/route.ts
-   54:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   83:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  119:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-  144:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  144:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  144:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  145:64  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  145:69  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  145:75  error  Expected params to have a type annotation  @typescript-eslint/typedef
-  146:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
-  146:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
-  146:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/drafts/route.ts
-  53:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  70:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/(frontend)/products/[id]/page.tsx
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  3:16  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/[id]/route.ts
    9:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
   46:67  error  Expected req to have a type annotation     @typescript-eslint/typedef
   46:72  error  Expected _ctx to have a type annotation    @typescript-eslint/typedef
   46:78  error  Expected params to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/preview/route.ts
-  12:1  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/route.ts
-  10:1   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  22:64  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/generate-description/route.ts
-  11:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  22:32  error  Expected item to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts
   14:1   error  Missing return type on function            @typescript-eslint/explicit-function-return-type
@@ -7238,24 +7289,6 @@
   237:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
   237:8   error  Missing return type on function           @typescript-eslint/explicit-module-boundary-types
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/tooltip.tsx
-  15:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  15:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/logger.ts
-   8:58  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  14:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  14:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  17:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  17:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  20:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  20:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-  23:3   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  23:3   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/utils/markdown-utils.ts
-  24:11  error  Expected line to have a type annotation  @typescript-eslint/typedef
-  37:38  error  Expected url to have a type annotation   @typescript-eslint/typedef
-
-✖ 6132 problems (6131 errors, 1 warning)
+✖ 6120 problems (6119 errors, 1 warning)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
 

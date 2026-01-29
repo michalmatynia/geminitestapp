@@ -29,8 +29,7 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   try {

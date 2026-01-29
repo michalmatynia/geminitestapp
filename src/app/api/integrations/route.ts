@@ -4,6 +4,7 @@ import { getIntegrationRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),
@@ -14,7 +15,7 @@ const integrationSchema = z.object({
  * GET /api/integrations
  * Fetches all integrations.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const repo = await getIntegrationRepository();
     const integrations = await repo.listIntegrations();
@@ -32,7 +33,7 @@ async function GET_handler(req: Request) {
  * POST /api/integrations
  * Creates an integration.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, integrationSchema, {
       logPrefix: "integrations.POST",

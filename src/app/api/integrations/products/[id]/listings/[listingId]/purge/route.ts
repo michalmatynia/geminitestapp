@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string; listingId: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId, listingId } = await params;
     if (!productId || !listingId) {
@@ -31,4 +31,4 @@ async function DELETE_handler(
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].purge.DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].purge.DELETE" });

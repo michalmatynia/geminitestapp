@@ -9,7 +9,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-async function POST_handler(req: Request): Promise<Response> {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const session = await auth();
     const userId = session?.user?.id;

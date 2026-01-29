@@ -45,7 +45,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
   }
 }
 
-async function PATCH_handler(req: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
+async function PATCH_handler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =

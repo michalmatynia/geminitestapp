@@ -16,7 +16,7 @@ const chunkText = (text: string, maxChars: number): string[] => {
   return chunks.filter(Boolean);
 };
 
-async function POST_handler(req: Request): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
   try {
     const formData = await req.formData();
     const file = formData.get("file");

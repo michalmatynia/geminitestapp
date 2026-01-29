@@ -17,7 +17,7 @@ const assignSchema = z.object({
  * POST /api/catalogs/assign
  * Bulk assigns catalogs to products.
  */
-async function POST_handler(req: Request): Promise<Response> {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, assignSchema, {
       logPrefix: "catalogs.ASSIGN",

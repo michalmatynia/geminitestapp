@@ -7,6 +7,7 @@ import { getProductRepository } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import type { ProductWithImages } from "@/features/products/server";
 
 const bulkJobSchema = z.object({
@@ -14,7 +15,7 @@ const bulkJobSchema = z.object({
   config: z.record(z.string(), z.any()).optional(),
 });
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, bulkJobSchema, {
       logPrefix: "products.ai-jobs.bulk.POST",

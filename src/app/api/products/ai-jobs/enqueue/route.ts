@@ -6,6 +6,7 @@ import { startProductAiJobQueue, processSingleJob } from "@/features/jobs/server
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),
@@ -13,7 +14,7 @@ const enqueueSchema = z.object({
   payload: z.record(z.string(), z.unknown()).optional(),
 });
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, enqueueSchema, {
       logPrefix: "products.ai-jobs.enqueue.POST",

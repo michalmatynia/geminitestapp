@@ -4,8 +4,9 @@ import { startProductAiJobQueue, getQueueStatus } from "@/features/jobs/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const staleResult = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleResult.count > 0) {
@@ -34,7 +35,7 @@ async function GET_handler(req: NextRequest) {
   }
 }
 
-async function DELETE_handler(req: NextRequest) {
+async function DELETE_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get("scope");

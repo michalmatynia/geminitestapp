@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/product-listings
  * Returns a map of product IDs to their most relevant listing status.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const repo = await getProductListingRepository();
     const listings = await repo.listAllListings();

@@ -1,19 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { decryptSecret } from "@/features/integrations/server";
 import { fetchBaseInventories } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
-) {
+): Promise<Response> {
   try {
     const { id, connectionId } = await params;
     if (!id || !connectionId) {
@@ -66,4 +66,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });

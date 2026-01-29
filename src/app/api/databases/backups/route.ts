@@ -53,7 +53,7 @@ async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[
   return backups;
 }
 
-async function GET_handler(req: Request): Promise<Response> {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const type = (searchParams.get("type") as "postgresql" | "mongodb") || "postgresql";

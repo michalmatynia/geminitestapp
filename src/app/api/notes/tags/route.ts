@@ -6,12 +6,13 @@ import { removeUndefined } from "@/shared/utils";
 import type { TagCreateInput } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/notes/tags
  * Fetches all tags.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");
@@ -33,7 +34,7 @@ async function GET_handler(req: Request) {
  * POST /api/notes/tags
  * Creates a new tag.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, tagCreateSchema, {
       logPrefix: "tags.POST",

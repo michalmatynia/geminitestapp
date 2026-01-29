@@ -7,13 +7,14 @@ import {
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
   warehouseId: z.string().trim().min(1).nullable().optional(),
   inventoryId: z.string().trim().min(1).nullable().optional(),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const url = new URL(req.url);
     const inventoryId = url.searchParams.get("inventoryId")?.trim() || null;
@@ -28,7 +29,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "imports.base.export-warehouse.POST",

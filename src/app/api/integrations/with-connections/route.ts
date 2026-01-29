@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIntegrationsWithConnections } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/with-connections
@@ -9,7 +10,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
  * Used for the product listing dropdown selection.
  * Supports both MongoDB and Prisma based on provider settings.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const integrations = await getIntegrationsWithConnections();
     return NextResponse.json(integrations);

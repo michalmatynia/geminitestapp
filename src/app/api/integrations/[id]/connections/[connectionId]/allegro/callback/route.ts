@@ -4,6 +4,7 @@ import { decryptSecret, encryptSecret } from "@/features/integrations/server";
 import { logSystemEvent } from "@/features/observability/server";
 import { mapErrorToAppError } from "@/shared/errors/error-mapper";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const PROD_TOKEN_URL =
   process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
@@ -31,7 +32,7 @@ const toErrorRedirect = (origin: string, reason: string) => {
 async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
-) {
+): Promise<Response> {
   let integrationId: string | null = null;
   let connectionId: string | null = null;
   const requestUrl = new URL(req.url);
@@ -174,4 +175,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });

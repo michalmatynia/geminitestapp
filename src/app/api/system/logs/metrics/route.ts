@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSystemLogMetrics } from "@/features/observability/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const levelSchema = z.enum(["info", "warn", "error"]);
 
@@ -14,7 +15,7 @@ const metricsSchema = z.object({
   to: z.string().datetime().optional(),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const url = new URL(req.url);
     const parsed = metricsSchema.parse(Object.fromEntries(url.searchParams.entries()));

@@ -6,6 +6,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type CategoryFromDb = {
   id: string;
@@ -24,7 +25,7 @@ type CategoryFromDb = {
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");

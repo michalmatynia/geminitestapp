@@ -3,12 +3,13 @@ import { getProductListingRepository } from "@/features/integrations/server";
 import { getProductRepository } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/integrations/jobs
  * Fetches all product listing jobs with product details
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const listingRepo = await getProductListingRepository();
     const productRepo = await getProductRepository();

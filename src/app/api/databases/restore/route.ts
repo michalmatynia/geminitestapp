@@ -32,7 +32,7 @@ type ExecOutputishError = {
   };
 };
 
-async function POST_handler(req: Request): Promise<Response> {
+async function POST_handler(req: NextRequest): Promise<Response> {
   let stage = "parse";
   let backupName: string | null = null;
   let truncateBeforeRestore = false;

@@ -5,11 +5,12 @@ import { getDiskPathFromPublicPath, getImageFileRepository } from "@/features/fi
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
 
   try {
@@ -43,4 +44,8 @@ async function DELETE_handler(
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "files.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "files.[id].DELETE" }
+);

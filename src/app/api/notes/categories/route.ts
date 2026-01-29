@@ -6,12 +6,13 @@ import { removeUndefined } from "@/shared/utils";
 import type { CategoryCreateInput } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/notes/categories
  * Fetches all categories.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");
@@ -33,7 +34,7 @@ async function GET_handler(req: Request) {
  * POST /api/notes/categories
  * Creates a new category.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, categoryCreateSchema, {
       logPrefix: "categories.POST",

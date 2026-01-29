@@ -3,6 +3,7 @@ import { getExternalCategoryRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/marketplace/categories
@@ -11,7 +12,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
  *   - connectionId (required): The integration connection ID
  *   - tree (optional): If "true", returns categories as a hierarchical tree
  */
-async function GET_handler(request: NextRequest) {
+async function GET_handler(request: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get("connectionId");

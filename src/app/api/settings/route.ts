@@ -9,6 +9,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
@@ -76,7 +77,7 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
@@ -129,7 +130,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   if (shouldLog()) {
     await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }

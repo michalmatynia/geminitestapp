@@ -42,7 +42,7 @@ const getFrontPageSetting = async (): Promise<string | null> => {
   return doc?.value ?? null;
 };
 
-export default async function HomePage() {
+export default async function Home(): Promise<JSX.Element> {
   const frontPageApp = await getFrontPageSetting();
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {

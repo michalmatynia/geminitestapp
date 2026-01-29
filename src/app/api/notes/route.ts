@@ -5,13 +5,14 @@ import { noteCreateSchema } from "@/features/notesapp";
 import type { NoteFilters } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 
 /**
  * GET /api/notes
  * Fetches a list of notes with optional filters.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   const { searchParams } = new URL(req.url);
 
   const filters: NoteFilters = {
@@ -77,7 +78,7 @@ async function GET_handler(req: Request) {
  * POST /api/notes
  * Creates a new note.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, noteCreateSchema, {
       logPrefix: "notes.POST",

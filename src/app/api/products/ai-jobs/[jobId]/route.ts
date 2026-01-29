@@ -5,6 +5,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const actionSchema = z.object({
   action: z.string().trim().min(1),
@@ -13,7 +14,7 @@ const actionSchema = z.object({
 async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
-) {
+): Promise<Response> {
   try {
     const { jobId } = await params;
     if (!jobId) {
@@ -36,7 +37,7 @@ async function GET_handler(
 async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
-) {
+): Promise<Response> {
   try {
     const { jobId } = await params;
     if (!jobId) {
@@ -66,7 +67,7 @@ async function POST_handler(
 async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
-) {
+): Promise<Response> {
   try {
     const { jobId } = await params;
     if (!jobId) {
@@ -83,6 +84,6 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
-export const POST = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
-export const DELETE = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });
+export const GET = apiHandlerWithParams<{ jobId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<{ jobId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<{ jobId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });

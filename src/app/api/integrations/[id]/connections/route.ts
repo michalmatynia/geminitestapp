@@ -6,6 +6,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const createConnectionSchema = z
   .object({
@@ -22,7 +23,7 @@ const createConnectionSchema = z
 async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   let integrationId: string | null = null;
 
   try {
@@ -93,7 +94,7 @@ async function GET_handler(
 async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   let integrationId: string | null = null;
 
   try {
@@ -170,5 +171,5 @@ async function POST_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });

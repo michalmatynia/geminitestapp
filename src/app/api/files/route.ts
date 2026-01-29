@@ -7,7 +7,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import { ErrorSystem } from "@/features/observability/server";
 import type { ImageFile } from "@prisma/client";
 
-async function GET_handler(req: Request): Promise<Response> {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
 

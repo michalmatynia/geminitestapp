@@ -6,12 +6,13 @@ import type { ThemeCreateInput } from "@/shared/types/notes";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/notes/themes
  * Fetches themes for a notebook.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const notebookIdParam = searchParams.get("notebookId");
   try {
@@ -33,7 +34,7 @@ async function GET_handler(req: Request) {
  * POST /api/notes/themes
  * Creates a new theme.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, themeCreateSchema, {
       logPrefix: "themes.POST",

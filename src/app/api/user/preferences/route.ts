@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { auth } from "@/features/auth/server";
 import { isAbortError } from "@/features/chatbot/utils";
 
@@ -30,7 +31,7 @@ const updatePreferencesSchema = z.object({
  * GET /api/user/preferences
  * Get current user preferences
  */
-async function GET_handler() {
+async function GET_handler(): Promise<Response> {
   let userId = DEFAULT_USER_ID;
   try {
     const session = await auth();
@@ -82,7 +83,7 @@ async function GET_handler() {
  * PATCH /api/user/preferences
  * Update user preferences
  */
-async function PATCH_handler(req: NextRequest) {
+async function PATCH_handler(req: NextRequest): Promise<Response> {
   let data: Partial<UserPreferencesData> = {};
   let userId = DEFAULT_USER_ID;
   try {

@@ -3,6 +3,7 @@ import { getCategoryMappingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type BulkMappingRequest = {
   connectionId: string;
@@ -17,7 +18,7 @@ type BulkMappingRequest = {
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
  */
-async function POST_handler(request: NextRequest) {
+async function POST_handler(request: NextRequest): Promise<Response> {
   try {
     const body = (await request.json()) as BulkMappingRequest;
     const { connectionId, catalogId, mappings } = body;

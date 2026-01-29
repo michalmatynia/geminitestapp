@@ -8,6 +8,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const productTagCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -21,7 +22,7 @@ const productTagCreateSchema = z.object({
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");
@@ -77,7 +78,7 @@ async function GET_handler(req: Request) {
  * POST /api/products/tags
  * Creates a new product tag.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productTagCreateSchema, {

@@ -1,20 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/features/products/server";
 import { z } from "zod";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 
 /**
  * GET /api/products/[id]
  * Fetches a single product by its ID.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await params;
     if (!id) {
@@ -44,10 +44,9 @@ async function GET_handler(
  * PUT /api/products/[id]
  * Updates an existing product.
  */
-async function PUT_handler(
-  req: Request,
+async function PUT_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await params;
     if (!id) {
@@ -89,10 +88,9 @@ const patchProductSchema = z.object({
  * PATCH /api/products/[id]
  * Partially updates a product (for quick field edits like price/stock).
  */
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await params;
     if (!id) {
@@ -139,10 +137,9 @@ async function PATCH_handler(
  * DELETE /api/products/[id]
  * Deletes a product.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await params;
     if (!id) {
@@ -166,7 +163,7 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].GET" });
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PUT" });
-export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PUT" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].DELETE" });

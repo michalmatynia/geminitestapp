@@ -26,6 +26,7 @@ import {
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/server";
 import { productCreateSchema } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import type { ProductWithImages } from "@/features/products/server";
 
 export const runtime = "nodejs";
@@ -65,7 +66,7 @@ type MappedItem = {
   image: string | null;
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const body: unknown = await req.json();
     const data = requestSchema.parse(body);

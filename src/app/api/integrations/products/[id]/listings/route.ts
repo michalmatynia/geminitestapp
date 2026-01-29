@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { getProductRepository } from "@/features/products/server";
@@ -7,6 +7,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
@@ -17,10 +18,9 @@ const createListingSchema = z.object({
  * GET /api/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId } = await params;
     if (!productId) {
@@ -42,10 +42,9 @@ async function GET_handler(
  * POST /api/integrations/products/[id]/listings
  * Creates a new listing for a product on a marketplace.
  */
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId } = await params;
     if (!productId) {
@@ -114,5 +113,5 @@ async function POST_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.POST" });

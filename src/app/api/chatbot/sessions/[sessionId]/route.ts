@@ -7,8 +7,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   props: { params: Promise<{ sessionId: string }> }
 ): Promise<Response> {
   try {

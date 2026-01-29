@@ -3,6 +3,7 @@ import { productService } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type Params = { id: string; imageFileId: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -15,7 +16,7 @@ async function getParams(ctx: Ctx): Promise<Params> {
  * DELETE /api/products/[id]/images/[imageFileId]
  * Unlinks an image from a product.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<Response> {
   let productId: string | undefined;
   let imageFileId: string | undefined;
 
@@ -43,4 +44,4 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; imageFileId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; imageFileId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; imageFileId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });

@@ -21,8 +21,7 @@ const catalogUpdateSchema = z.object({
  * PUT /api/catalogs/[id]
  * Updates a catalog.
  */
-async function PUT_handler(
-  req: Request,
+async function PUT_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse | Response> {
   let catalogId = "";
@@ -92,8 +91,7 @@ async function PUT_handler(
  * DELETE /api/catalogs/[id]
  * Deletes a catalog.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse | Response> {
   let catalogId = "";

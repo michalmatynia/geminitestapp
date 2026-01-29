@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import prisma from "@/shared/lib/db/prisma";
@@ -13,6 +13,7 @@ import {
   notFoundError,
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 interface MongoCategory {
   id: string;
@@ -35,10 +36,9 @@ const productCategoryUpdateSchema = z.object({
  * GET /api/products/categories/[id]
  * Fetches a single product category by ID.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   props: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const params = await props.params;
   try {
     if (!params.id) {
@@ -120,10 +120,9 @@ async function GET_handler(
  * PUT /api/products/categories/[id]
  * Updates a product category.
  */
-async function PUT_handler(
-  req: Request,
+async function PUT_handler(req: NextRequest,
   props: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const params = await props.params;
   try {
     if (!params.id) {
@@ -322,7 +321,7 @@ async function PUT_handler(
 async function DELETE_handler(
   _req: Request,
   props: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const params = await props.params;
   try {
     if (!params.id) {
@@ -434,6 +433,6 @@ async function collectCategoryIds(
   return ids;
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].GET" });
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].DELETE" });

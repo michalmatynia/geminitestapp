@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { productService } from "@/features/products/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),
@@ -14,10 +15,9 @@ const duplicateSchema = z.object({
  * POST /api/products/[id]/duplicate
  * Duplicates a product with a new SKU.
  */
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   let productId = "";
   try {
     const { id } = await params;
@@ -47,4 +47,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });

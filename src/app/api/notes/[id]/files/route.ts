@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { uploadNoteFile } from "@/features/files/server";
 import { noteService } from "@/features/notesapp/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -12,10 +13,9 @@ const MAX_SLOT_INDEX = 9;
  * GET /api/notes/[id]/files
  * Get all files for a note
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const files = await noteService.getNoteFiles(id);
@@ -33,10 +33,9 @@ async function GET_handler(
  * POST /api/notes/[id]/files
  * Upload a file to a specific slot
  */
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id: noteId } = await params;
 
   try {
@@ -99,5 +98,5 @@ async function POST_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
-export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });

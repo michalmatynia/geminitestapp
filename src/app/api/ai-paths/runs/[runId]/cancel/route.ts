@@ -4,8 +4,7 @@ import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-ha
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { cancelPathRun } from "@/features/ai-paths/services/path-run-service";
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<NextResponse | Response> {

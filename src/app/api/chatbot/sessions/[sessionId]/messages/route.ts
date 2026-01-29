@@ -13,8 +13,7 @@ const messageSchema = z.object({
   content: z.string().trim().min(1),
 });
 
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
@@ -59,8 +58,7 @@ async function GET_handler(
   }
 }
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();

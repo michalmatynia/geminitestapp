@@ -11,6 +11,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const priceGroupSchema = z
   .object({
@@ -108,7 +109,7 @@ const resolveCurrency = (
  * GET /api/price-groups
  * Fetches all price groups with currency details.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -230,7 +231,7 @@ async function GET_handler(req: Request) {
  * POST /api/price-groups
  * Creates a price group and enforces a single default group.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, priceGroupSchema, {
       logPrefix: "priceGroups.POST",

@@ -13,6 +13,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),
@@ -65,7 +66,7 @@ const extractFirstProductId = (payload: unknown): string | null => {
   return null;
 };
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const productId = await getImportSampleProductId();
     const inventoryId = await getImportSampleInventoryId();
@@ -79,7 +80,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "imports.base.sample-product.POST",

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
@@ -7,6 +7,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const productParameterUpdateSchema = z.object({
   name_en: z.string().min(1).optional(),
@@ -19,10 +20,9 @@ const productParameterUpdateSchema = z.object({
  * PUT /api/products/parameters/[id]
  * Updates a product parameter.
  */
-async function PUT_handler(
-  req: Request,
+async function PUT_handler(req: NextRequest,
   props: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const params = await props.params;
   try {
     if (!params.id) {
@@ -140,10 +140,9 @@ async function PUT_handler(
  * DELETE /api/products/parameters/[id]
  * Deletes a product parameter.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   props: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const params = await props.params;
   try {
     if (!params.id) {
@@ -175,5 +174,5 @@ async function DELETE_handler(
   }
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].DELETE" });

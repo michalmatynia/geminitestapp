@@ -8,6 +8,7 @@ import { normalizeImageRetryPresets } from "@/features/data-import-export";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const transformSchema = z.object({
   forceJpeg: z.boolean().optional(),
@@ -27,7 +28,7 @@ const requestSchema = z.object({
   presets: z.array(presetSchema).min(1),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const presets = await getExportImageRetryPresets();
     return NextResponse.json({ presets });
@@ -40,7 +41,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "exports.base.image-retry-presets.POST",

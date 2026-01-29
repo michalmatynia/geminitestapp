@@ -30,7 +30,7 @@ async function GET_handler(): Promise<NextResponse | Response> {
  * POST /api/cms/slugs
  * Creates a new slug.
  */
-async function POST_handler(req: Request): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, slugSchema, {
       logPrefix: "cms-slugs",

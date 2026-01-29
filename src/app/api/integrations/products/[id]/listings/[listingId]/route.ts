@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const updateListingSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable(),
@@ -14,10 +15,9 @@ const updateListingSchema = z.object({
  * DELETE /api/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string; listingId: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId, listingId } = await params;
     if (!productId || !listingId) {
@@ -54,10 +54,9 @@ async function DELETE_handler(
  * PATCH /api/products/[id]/listings/[listingId]
  * Updates listing metadata (e.g., inventoryId).
  */
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string; listingId: string }> }
-) {
+): Promise<Response> {
   try {
     const { id: productId, listingId } = await params;
     if (!productId || !listingId) {
@@ -88,5 +87,5 @@ async function PATCH_handler(
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].DELETE" });
-export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].PATCH" });

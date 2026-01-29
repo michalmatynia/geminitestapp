@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { noteService } from "@/features/notesapp/server";
 import { parseJsonBody } from "@/features/products/server";
 import { noteUpdateSchema } from "@/features/notesapp";
@@ -7,15 +7,15 @@ import type { NoteUpdateInput } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * GET /api/notes/[id]
  * Fetches a single note by ID.
  */
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const note = await noteService.getById(id);
@@ -38,10 +38,9 @@ async function GET_handler(
  * PATCH /api/notes/[id]
  * Updates a note.
  */
-async function PATCH_handler(
-  req: Request,
+async function PATCH_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, noteUpdateSchema, {
@@ -71,10 +70,9 @@ async function PATCH_handler(
  * DELETE /api/notes/[id]
  * Deletes a note.
  */
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   const { id } = await params;
   try {
     await noteService.delete(id);
@@ -88,6 +86,6 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].GET" });
-export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].DELETE" });

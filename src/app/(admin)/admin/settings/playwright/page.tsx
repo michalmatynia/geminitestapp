@@ -1,5 +1,5 @@
 import { PlaywrightPersonasPage } from "@/features/playwright";
 
-export default function Page() {
+export default function Page(): JSX.Element {
   return <PlaywrightPersonasPage />;
 }

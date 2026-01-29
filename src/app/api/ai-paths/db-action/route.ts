@@ -118,7 +118,7 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
   return null;
 };
 
-async function POST_handler(req: Request): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, actionSchema, {
       logPrefix: "ai-paths.db-action",

@@ -15,7 +15,7 @@ const requeueSchema = z.object({
   limit: z.number().int().min(1).max(1000).optional(),
 });
 
-async function POST_handler(req: Request): Promise<NextResponse | Response> {
+async function POST_handler(req: NextRequest): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, requeueSchema, {
       logPrefix: "ai-paths.runs.dead-letter.requeue",

@@ -112,11 +112,11 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updateBlock(id: string, data: { name?: string | undefined; content?: unknown }): Promise<Block | null> {
     const db = await getMongoDb();
-    const update: Partial<BlockDocument> = removeUndefined({
+    const update = removeUndefined({
       name: data.name,
       content: data.content,
       updatedAt: new Date(),
-    });
+    }) as Partial<BlockDocument>;
 
     const result = await db.collection<BlockDocument>(blocksCollection).findOneAndUpdate(
       buildIdFilter<BlockDocument>(id),
@@ -198,11 +198,11 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updatePage(id: string, data: { name?: string | undefined; components?: PageComponent[] | undefined }): Promise<Page | null> {
     const db = await getMongoDb();
-    const update: Partial<PageDocument> = removeUndefined({
+    const update = removeUndefined({
       name: data.name,
       components: data.components,
       updatedAt: new Date(),
-    });
+    }) as Partial<PageDocument>;
 
     const result = await db.collection<PageDocument>(pagesCollection).findOneAndUpdate(
       buildIdFilter<PageDocument>(id),
@@ -304,11 +304,11 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> {
     const db = await getMongoDb();
-    const update: Partial<SlugDocument> = removeUndefined({
+    const update = removeUndefined({
       slug: data.slug,
       isDefault: data.isDefault,
       updatedAt: new Date(),
-    });
+    }) as Partial<SlugDocument>;
 
     const result = await db.collection<SlugDocument>(slugsCollection).findOneAndUpdate(
       buildIdFilter<SlugDocument>(id),

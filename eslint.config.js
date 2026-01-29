@@ -60,6 +60,12 @@ const commonRestrictedSyntax = [
     message:
       "Use 'isAbortError(error)' or check 'error.name === \"AbortError\"' instead of 'instanceof DOMException' for better cross-environment compatibility.",
   },
+  {
+    selector:
+      "CallExpression[callee.object.name='z'][callee.property.name='unknown']",
+    message:
+      "Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces.",
+  },
 ];
 
 const layerBoundaryConfigs = [

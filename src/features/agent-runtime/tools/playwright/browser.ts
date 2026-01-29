@@ -10,7 +10,7 @@ import { toDataUrl } from "../utils";
 export const launchBrowser = async (
   browserName: string = "chromium",
   headless: boolean = true
-) => {
+): Promise<Browser> => {
   const browserType =
     browserName === "firefox"
       ? firefox
@@ -23,8 +23,8 @@ export const launchBrowser = async (
 export const createBrowserContext = async (
   browser: Browser,
   runDir: string,
-  videoSize = { width: 1280, height: 720 }
-) => {
+  videoSize: { width: number; height: number } = { width: 1280, height: 720 }
+): Promise<BrowserContext> => {
   return browser.newContext({
     viewport: videoSize,
     recordVideo: {
@@ -41,11 +41,11 @@ export const captureSessionContext = async (
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-) => {
+): Promise<void> => {
   if (!page || !context) return;
   try {
     const cookies = await context.cookies();
-    const cookieSummary = cookies.map((cookie) => ({
+    const cookieSummary = cookies.map((cookie: any) => ({
       name: cookie.name,
       domain: cookie.domain,
       path: cookie.path,
@@ -110,7 +110,7 @@ export const captureSnapshot = async (
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-) => {
+): Promise<{ domText: string; domHtml: string; url: string }> => {
   if (!page) {
     return { domText: "", domHtml: "", url: "" };
   }

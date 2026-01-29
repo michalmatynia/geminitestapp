@@ -1412,7 +1412,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
          const locateBySelector = async (selector: string | null): Promise<any> => {
           if (!selector) return null;
           try {
-            return await findFirstVisible(page!.locator(selector));
+            return await findFirstVisible(page.locator(selector));
           } catch {
             return null;
           }

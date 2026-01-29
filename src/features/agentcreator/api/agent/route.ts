@@ -12,7 +12,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(req: NextRequest): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     startAgentQueue();
@@ -65,7 +65,7 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function POST_handler(req: NextRequest): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -273,7 +273,7 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-async function DELETE_handler(req: NextRequest): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -333,12 +333,6 @@ async function DELETE_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "chatbot.agent.GET" });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "chatbot.agent.POST" });
-export const DELETE = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
- { source: "chatbot.agent.DELETE" });
+export const GET = apiHandler(GET_handler, { source: "chatbot.agent.GET" });
+export const POST = apiHandler(POST_handler, { source: "chatbot.agent.POST" });
+export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.agent.DELETE" });

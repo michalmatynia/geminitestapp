@@ -1061,7 +1061,7 @@ export async function evaluatePlanWithLLM({
           metadata: {
             score,
             issues: parsed.issues ?? [],
-            revisedSteps: revisedSteps.map((step) => ({
+            revisedSteps: revisedSteps.map((step: PlanStep) => ({
               title: step.title,
               tool: step.tool,
               phase: step.phase,
@@ -1127,7 +1127,7 @@ export async function verifyPlanWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 expectedObservation: step.expectedObservation,
@@ -1242,7 +1242,7 @@ export async function buildSelfImprovementReviewWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 phase: step.phase,
@@ -1333,7 +1333,7 @@ export async function summarizePlannerMemoryWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 phase: step.phase,
@@ -1358,12 +1358,11 @@ export async function summarizePlannerMemoryWithLLM({
       risks?: string[];
     } | null;
     if (!parsed?.summary) return null;
-    const summary = parsed.summary.trim();
     const decisions = Array.isArray(parsed.keyDecisions)
-      ? parsed.keyDecisions.filter((item) => typeof item === "string")
+      ? parsed.keyDecisions.filter((item: unknown) => typeof item === "string")
       : [];
     const risks = Array.isArray(parsed.risks)
-      ? parsed.risks.filter((item) => typeof item === "string")
+      ? parsed.risks.filter((item: unknown) => typeof item === "string")
       : [];
     const packed = [
       summary,
@@ -1447,7 +1446,7 @@ export async function buildMidRunAdaptationWithLLM({
             content: JSON.stringify({
               prompt,
               memory,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 tool: step.tool,
@@ -1692,7 +1691,7 @@ export async function guardRepetitionWithLLM({
                 status: step.status,
                 phase: step.phase,
               })),
-              candidateSteps: candidateSteps.map((step) => ({
+              candidateSteps: candidateSteps.map((step: PlanStep) => ({
                 title: step.title,
                 tool: step.tool,
                 expectedObservation: step.expectedObservation,
@@ -1802,7 +1801,7 @@ export async function buildCheckpointBriefWithLLM({
               memory,
               activeStepId,
               lastError,
-              steps: steps.map((step) => ({
+              steps: steps.map((step: PlanStep) => ({
                 id: step.id,
                 title: step.title,
                 status: step.status,
@@ -1828,12 +1827,11 @@ export async function buildCheckpointBriefWithLLM({
       risks?: string[];
     } | null;
     if (!parsed?.summary) return null;
-    const summary = parsed.summary.trim();
     const nextActions = Array.isArray(parsed.nextActions)
-      ? parsed.nextActions.filter((item) => typeof item === "string")
+      ? parsed.nextActions.filter((item: unknown) => typeof item === "string")
       : [];
     const risks = Array.isArray(parsed.risks)
-      ? parsed.risks.filter((item) => typeof item === "string")
+      ? parsed.risks.filter((item: unknown) => typeof item === "string")
       : [];
     if ("agentAuditLog" in prisma && runId) {
       await prisma.agentAuditLog.create({

@@ -14,6 +14,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
 import { mapStatusToAppError } from "@/shared/errors/error-mapper";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test

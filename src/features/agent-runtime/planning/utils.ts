@@ -213,11 +213,11 @@ export function buildPlanStepsFromSpecs(
   stepSpecs: Array<{
     title?: string;
     tool?: string;
-    expectedObservation?: string;
-    successCriteria?: string;
-    phase?: string;
-    priority?: number;
-    dependsOn?: number[] | string[];
+    expectedObservation?: string | null;
+    successCriteria?: string | null;
+    phase?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
     goalId?: string | null;
     subgoalId?: string | null;
   }>,
@@ -231,11 +231,11 @@ export function buildPlanStepsFromSpecs(
   const plannedSteps: PlanStep[] = stepSpecs.map((step: {
     title?: string;
     tool?: string;
-    expectedObservation?: string;
-    successCriteria?: string;
-    phase?: string;
-    priority?: number;
-    dependsOn?: number[] | string[];
+    expectedObservation?: string | null;
+    successCriteria?: string | null;
+    phase?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
     goalId?: string | null;
     subgoalId?: string | null;
   }, _index: number) => ({
@@ -247,9 +247,9 @@ export function buildPlanStepsFromSpecs(
     successCriteria: step.successCriteria?.trim() || null,
     goalId: step.goalId ?? null,
     subgoalId: step.subgoalId ?? null,
-    phase: normalizePhase(step.phase),
+    phase: normalizePhase(step.phase ?? undefined),
     priority: typeof step.priority === "number" ? step.priority : null,
-    dependsOn: normalizeDependencies(step.dependsOn, stepSpecs),
+    dependsOn: normalizeDependencies(step.dependsOn ?? undefined, stepSpecs),
     attempts: 0,
     maxAttempts: maxStepAttempts,
   }));
@@ -270,11 +270,11 @@ export function buildBranchStepsFromAlternatives(
       return alt.steps.map((step: {
         title?: string;
         tool?: string;
-        expectedObservation?: string;
-        successCriteria?: string;
-        phase?: string;
-        priority?: number;
-        dependsOn?: number[] | string[];
+        expectedObservation?: string | null;
+        successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
       }) => ({
         ...step,
         phase: step.phase ?? "recover",
@@ -339,22 +339,22 @@ export function normalizeDependencies(
 export function normalizePlanHierarchy(parsed: {
   goals?: Array<{
     title?: string;
-    successCriteria?: string;
-    priority?: number;
-    dependsOn?: number[] | string[];
+    successCriteria?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
     subgoals?: Array<{
       title?: string;
-      successCriteria?: string;
-      priority?: number;
-      dependsOn?: number[] | string[];
+      successCriteria?: string | null;
+      priority?: number | null;
+      dependsOn?: number[] | string[] | null;
       steps?: Array<{
         title?: string;
         tool?: string;
-        expectedObservation?: string;
-        successCriteria?: string;
-        phase?: string;
-        priority?: number;
-        dependsOn?: number[] | string[];
+        expectedObservation?: string | null;
+        successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
       }>;
     }>;
   }>;
@@ -364,22 +364,22 @@ export function normalizePlanHierarchy(parsed: {
   }
   const goals: PlanHierarchy["goals"] = parsed.goals.map((goal: {
     title?: string;
-    successCriteria?: string;
-    priority?: number;
-    dependsOn?: number[] | string[];
+    successCriteria?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
     subgoals?: Array<{
       title?: string;
-      successCriteria?: string;
-      priority?: number;
-      dependsOn?: number[] | string[];
+      successCriteria?: string | null;
+      priority?: number | null;
+      dependsOn?: number[] | string[] | null;
       steps?: Array<{
         title?: string;
         tool?: string;
-        expectedObservation?: string;
-        successCriteria?: string;
-        phase?: string;
-        priority?: number;
-        dependsOn?: number[] | string[];
+        expectedObservation?: string | null;
+        successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
       }>;
     }>;
   }) => {
@@ -393,17 +393,17 @@ export function normalizePlanHierarchy(parsed: {
       dependsOn: Array.isArray(goal.dependsOn) ? goal.dependsOn : null,
       subgoals: subgoals.map((subgoal: {
         title?: string;
-        successCriteria?: string;
-        priority?: number;
-        dependsOn?: number[] | string[];
+        successCriteria?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
         steps?: Array<{
           title?: string;
           tool?: string;
-          expectedObservation?: string;
-          successCriteria?: string;
-          phase?: string;
-          priority?: number;
-          dependsOn?: number[] | string[];
+          expectedObservation?: string | null;
+          successCriteria?: string | null;
+          phase?: string | null;
+          priority?: number | null;
+          dependsOn?: number[] | string[] | null;
         }>;
       }) => {
         const subgoalId = randomUUID();
@@ -420,11 +420,11 @@ export function normalizePlanHierarchy(parsed: {
           steps: steps.map((step: {
             title?: string;
             tool?: string;
-            expectedObservation?: string;
-            successCriteria?: string;
-            phase?: string;
-            priority?: number;
-            dependsOn?: number[] | string[];
+            expectedObservation?: string | null;
+            successCriteria?: string | null;
+            phase?: string | null;
+            priority?: number | null;
+            dependsOn?: number[] | string[] | null;
           }) => ({
             title: step.title?.trim() || "Review the page state.",
             tool: step.tool === "none" ? "none" : "playwright" as const,

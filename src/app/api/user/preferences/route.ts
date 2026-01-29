@@ -31,7 +31,7 @@ const updatePreferencesSchema = z.object({
  * GET /api/user/preferences
  * Get current user preferences
  */
-async function GET_handler(): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let userId = DEFAULT_USER_ID;
   try {
     const session = await auth();

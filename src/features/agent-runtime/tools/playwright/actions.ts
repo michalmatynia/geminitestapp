@@ -1,6 +1,6 @@
-import type { Page } from "playwright";
+import type { Page, Locator } from "playwright";
 
-export const findFirstVisible = async (locator: ReturnType<Page["locator"]>) => {
+export const findFirstVisible = async (locator: Locator): Promise<Locator | null> => {
   const count = await locator.count();
   for (let i = 0; i < count; i += 1) {
     const candidate = locator.nth(i);
@@ -16,7 +16,7 @@ export const dismissConsent = async (
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-) => {
+): Promise<void> => {
   if (!page) return;
   const buttonText = 
     /accept|agree|ok|got it|allow all|accept all|dismiss|close/i;
@@ -57,11 +57,11 @@ export const inferLoginCandidates = async (
   page: Page,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-) => {
+): Promise<any> => {
   if (!page) return null;
   try {
     const candidates = await page.evaluate(() => {
-      const cssPath = (el: Element) => {
+      const cssPath = (el: Element): string | null => {
         if (!(el instanceof Element)) return null;
         if (el.id) {
           return `#${CSS.escape(el.id)}`;
@@ -83,7 +83,7 @@ export const inferLoginCandidates = async (
           const parent = node.parentElement;
           if (parent) {
             const siblings = Array.from(parent.children).filter(
-              (child) => child.tagName === node!.tagName
+              (child: Element) => child.tagName === node!.tagName
             );
             if (siblings.length > 1) {
               const index = siblings.indexOf(node) + 1;
@@ -96,7 +96,7 @@ export const inferLoginCandidates = async (
         return parts.join(" > ");
       };
 
-      const scoreInput = (el: HTMLInputElement) => {
+      const scoreInput = (el: HTMLInputElement): number => {
         const attrs = [
           el.name,
           el.id,
@@ -116,7 +116,7 @@ export const inferLoginCandidates = async (
         return score;
       };
 
-      const describe = (el: Element) => ({
+      const describe = (el: Element): any => ({
         tag: el.tagName.toLowerCase(),
         id: (el as HTMLElement).id || null,
         name: (el as HTMLInputElement).name || null,
@@ -130,20 +130,20 @@ export const inferLoginCandidates = async (
       const inputs = Array.from(
         document.querySelectorAll("input, textarea, select")
       )
-        .filter((el) => (el as HTMLElement).offsetParent !== null)
-        .map((el) => ({
+        .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
+        .map((el: Element) => ({
           ...describe(el),
           score:
             el instanceof HTMLInputElement ? scoreInput(el) : 0,
         }))
-        .sort((a, b) => b.score - a.score)
+        .sort((a: any, b: any) => b.score - a.score)
         .slice(0, 12);
 
       const buttons = Array.from(
         document.querySelectorAll("button, input[type='submit'], input[type='button']")
       )
-        .filter((el) => (el as HTMLElement).offsetParent !== null)
-        .map((el) => ({
+        .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
+        .map((el: Element) => ({
           ...describe(el),
           score: /log in|login|sign in|submit|continue|zaloguj|zaloguj się/i.test(
             (el as HTMLElement).innerText || (el as HTMLInputElement).value || ""
@@ -151,7 +151,7 @@ export const inferLoginCandidates = async (
             ? 5
             : 1,
         }))
-        .sort((a, b) => b.score - a.score)
+        .sort((a: any, b: any) => b.score - a.score)
         .slice(0, 12);
 
       return { inputs, buttons };
@@ -179,7 +179,7 @@ export const ensureLoginFormVisible = async (
   page: Page,
   _runId: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>
-) => {
+): Promise<boolean | undefined> => {
   if (!page) return;
   const passwordSelector =
     'input[type="password"], input[name*="pass" i], input[autocomplete*="current-password" i]';
@@ -231,13 +231,13 @@ export const checkForChallenge = async (
   source: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   stepId?: string | null
-) => {
+): Promise<boolean> => {
   if (!page) return false;
   const html = await page.content();
   const text = await page.evaluate(
     () => document.body?.innerText || document.documentElement?.innerText || ""
   );
-  const detectChallenge = (t: string) =>
+  const detectChallenge = (t: string): boolean =>
       /cloudflare|attention required|cf-browser-verification|challenge-platform|cf-turnstile/i.test(
         t
       );

@@ -216,7 +216,11 @@ export async function validateAndAddAgentLongTermMemory(params: {
   importance?: number | null;
   model?: string | null;
   prompt?: string | null;
-}): Promise<{ skipped: boolean; validation: ReturnType<typeof validateAgentLongTermMemory>; record?: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null; }> {
+}): Promise<{
+  skipped: boolean;
+  validation: Awaited<ReturnType<typeof validateAgentLongTermMemory>>;
+  record?: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null;
+}> {
   const summaryModel = params.summaryModel?.trim();
   let summary = params.summary ?? null;
   if (summaryModel) {

@@ -1,13 +1,13 @@
 import type { Page } from "playwright";
 
-export const extractProductNames = async (page: Page) => {
+export const extractProductNames = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
-    const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+    const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
     const candidates: string[] = [];
     const seen = new Set<string>();
 
-    const pushName = (value: string | null | undefined) => {
+    const pushName = (value: string | null | undefined): void => {
       if (!value) return;
       const cleaned = normalize(value);
       if (cleaned.length < 3 || cleaned.length > 140) return;
@@ -54,7 +54,7 @@ export const extractProductNames = async (page: Page) => {
       "h4",
     ];
 
-    const parseJson = (value: string | null) => {
+    const parseJson = (value: string | null): unknown => {
       if (!value) return null;
       try {
         const parsed: unknown = JSON.parse(value);
@@ -64,7 +64,7 @@ export const extractProductNames = async (page: Page) => {
       }
     };
 
-    const collectFromSchema = (node: unknown) => {
+    const collectFromSchema = (node: unknown): void => {
       if (!node) return;
       if (Array.isArray(node)) {
         node.forEach(collectFromSchema);
@@ -74,11 +74,11 @@ export const extractProductNames = async (page: Page) => {
       const record = node as Record<string, unknown>;
       const typeValue = record["@type"];
       const typeList = Array.isArray(typeValue)
-        ? typeValue.filter((value): value is string => typeof value === "string")
+        ? typeValue.filter((value: unknown): value is string => typeof value === "string")
         : typeof typeValue === "string"
           ? [typeValue]
           : [];
-      const typeNames = typeList.map((value) => value.toLowerCase());
+      const typeNames = typeList.map((value: string) => value.toLowerCase());
       if (
         typeNames.includes("product") ||
         typeNames.includes("productgroup") ||
@@ -89,7 +89,7 @@ export const extractProductNames = async (page: Page) => {
         }
       }
       if (typeNames.includes("itemlist") && Array.isArray(record.itemListElement)) {
-        record.itemListElement.forEach((entry) => {
+        record.itemListElement.forEach((entry: unknown) => {
           if (!entry || typeof entry !== "object") return;
           const itemRecord = entry as Record<string, unknown>;
           const item = itemRecord.item;
@@ -110,7 +110,7 @@ export const extractProductNames = async (page: Page) => {
     };
 
     for (const selector of productSelectors) {
-      document.querySelectorAll(selector).forEach((node) => {
+      document.querySelectorAll(selector).forEach((node: Element) => {
         if (!(node instanceof HTMLElement)) return;
         const element = node;
         for (const nameSelector of nameSelectors) {
@@ -132,20 +132,20 @@ export const extractProductNames = async (page: Page) => {
 
     document
       .querySelectorAll("a[href*='/product' i], a[href*='product' i]")
-      .forEach((link) => {
+      .forEach((link: Element) => {
         if (!(link instanceof HTMLElement)) return;
         const text = link.innerText;
         if (text) pushName(text);
       });
 
-    document.querySelectorAll("h2, h3, h4").forEach((heading) => {
+    document.querySelectorAll("h2, h3, h4").forEach((heading: Element) => {
       if (!(heading instanceof HTMLElement)) return;
       pushName(heading.innerText);
     });
 
     document
       .querySelectorAll("script[type='application/ld+json']")
-      .forEach((script) => {
+      .forEach((script: Element) => {
         const parsed = parseJson(script.textContent);
         if (parsed) {
           collectFromSchema(parsed);
@@ -159,14 +159,14 @@ export const extractProductNames = async (page: Page) => {
 export const extractProductNamesFromSelectors = async (
   page: Page,
   selectors: string[]
-) => {
+): Promise<string[]> => {
   if (!page || selectors.length === 0) return [];
-  return page.evaluate((selectorsParam) => {
-    const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+  return page.evaluate((selectorsParam: string[]) => {
+    const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
     const candidates: string[] = [];
     const seen = new Set<string>();
 
-    const pushName = (value: string | null | undefined) => {
+    const pushName = (value: string | null | undefined): void => {
       if (!value) return;
       const cleaned = normalize(value);
       if (cleaned.length < 3 || cleaned.length > 140) return;
@@ -175,8 +175,8 @@ export const extractProductNamesFromSelectors = async (
       candidates.push(cleaned);
     };
 
-    selectorsParam.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((node) => {
+    selectorsParam.forEach((selector: string) => {
+      document.querySelectorAll(selector).forEach((node: Element) => {
         if (!(node instanceof HTMLElement)) return;
         const element = node;
         const text = element.innerText || element.textContent;
@@ -195,11 +195,11 @@ export const extractProductNamesFromSelectors = async (
   }, selectors);
 };
 
-export const extractEmailsFromDom = async (page: Page) => {
+export const extractEmailsFromDom = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
     const emails = new Set<string>();
-    document.querySelectorAll("a[href^='mailto:']").forEach((link) => {
+    document.querySelectorAll("a[href^='mailto:']").forEach((link: Element) => {
       if (!(link instanceof HTMLAnchorElement)) return;
       const href = link.getAttribute("href") || "";
       const email = href.replace(/^mailto:/i, "").split("?")[0]?.trim();
@@ -207,7 +207,7 @@ export const extractEmailsFromDom = async (page: Page) => {
     });
     document
       .querySelectorAll("[data-email], [data-mail], [data-contact]")
-      .forEach((node) => {
+      .forEach((node: Element) => {
         if (!(node instanceof HTMLElement)) return;
         const element = node;
         const value =
@@ -218,16 +218,16 @@ export const extractEmailsFromDom = async (page: Page) => {
         if (value.includes("@")) {
           value
             .split(/[,\s]+/)
-            .map((item) => item.trim())
+            .map((item: string) => item.trim())
             .filter(Boolean)
-            .forEach((item) => emails.add(item));
+            .forEach((item: string) => emails.add(item));
         }
       });
     return Array.from(emails);
   });
 };
 
-export const waitForProductContent = async (page: Page) => {
+export const waitForProductContent = async (page: Page): Promise<void> => {
   if (!page) return;
   const productSelectors = [
     "[data-product]",
@@ -255,7 +255,7 @@ export const waitForProductContent = async (page: Page) => {
   }
   try {
     await Promise.race(
-      productSelectors.map((selector) =>
+      productSelectors.map((selector: string) =>
         page.waitForSelector(selector, { timeout: 4000 })
       )
     );
@@ -264,7 +264,7 @@ export const waitForProductContent = async (page: Page) => {
   }
 };
 
-export const autoScroll = async (page: Page) => {
+export const autoScroll = async (page: Page): Promise<void> => {
   if (!page) return;
   await page.evaluate(async () => {
     const totalHeight = document.body.scrollHeight;
@@ -273,20 +273,20 @@ export const autoScroll = async (page: Page) => {
     while (current < totalHeight) {
       window.scrollBy(0, distance);
       current += distance;
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, 250));
     }
     window.scrollTo(0, 0);
   });
 };
 
-export const findProductListingUrls = async (page: Page) => {
+export const findProductListingUrls = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
     const keywords =
       /(shop|store|product|collection|catalog|menu|shopall|shop-all|merch)/i;
     const origin = location.origin;
     const urls = new Set<string>();
-    document.querySelectorAll("a[href]").forEach((link) => {
+    document.querySelectorAll("a[href]").forEach((link: Element) => {
       const href = (link as HTMLAnchorElement).href;
       const text = (link as HTMLElement).innerText || "";
       if (!href || !href.startsWith(origin)) return;

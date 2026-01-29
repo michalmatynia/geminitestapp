@@ -1,11 +1,10 @@
 
 > libapp2@0.1.0 lint
-> eslint .
+> eslint . --fix
 
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/planning/llm.ts
   1064:45  error  Expected step to have a type annotation  @typescript-eslint/typedef
-  1130:33  error  Expected step to have a type annotation  @typescript-eslint/typedef
   1245:33  error  Expected step to have a type annotation  @typescript-eslint/typedef
   1336:33  error  Expected step to have a type annotation  @typescript-eslint/typedef
   1363:37  error  Expected item to have a type annotation  @typescript-eslint/typedef
@@ -17,19 +16,18 @@
   1836:30  error  Expected item to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/tools/index.ts
-   303:31  error  Expected msg to have a type annotation                                             @typescript-eslint/typedef
-   307:33  error  Expected err to have a type annotation                                             @typescript-eslint/typedef
-   310:37  error  Expected req to have a type annotation                                             @typescript-eslint/typedef
-   326:32  error  Expected res to have a type annotation                                             @typescript-eslint/typedef
-   856:24  error  Expected url to have a type annotation                                             @typescript-eslint/typedef
-   861:43  error  Expected url to have a type annotation                                             @typescript-eslint/typedef
-  1119:21  error  Expected url to have a type annotation                                             @typescript-eslint/typedef
-  1124:43  error  Expected url to have a type annotation                                             @typescript-eslint/typedef
-  1412:76  error  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
-  1415:43  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-  1470:17  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
-  1473:17  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
-  1500:11  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+   303:31  error  Expected msg to have a type annotation    @typescript-eslint/typedef
+   307:33  error  Expected err to have a type annotation    @typescript-eslint/typedef
+   310:37  error  Expected req to have a type annotation    @typescript-eslint/typedef
+   326:32  error  Expected res to have a type annotation    @typescript-eslint/typedef
+   856:24  error  Expected url to have a type annotation    @typescript-eslint/typedef
+   861:43  error  Expected url to have a type annotation    @typescript-eslint/typedef
+  1119:21  error  Expected url to have a type annotation    @typescript-eslint/typedef
+  1124:43  error  Expected url to have a type annotation    @typescript-eslint/typedef
+  1412:76  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1470:17  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  1473:17  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  1500:11  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/tools/llm/index.ts
   133:7  error  Unsafe assignment of type `any[]` to a variable of type `{ item: string; snippet: string; }[]`  @typescript-eslint/no-unsafe-assignment
@@ -5768,6 +5766,5 @@
   6:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
   6:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
-✖ 5057 problems (5057 errors, 0 warnings)
-  1 error and 0 warnings potentially fixable with the `--fix` option.
+✖ 5055 problems (5055 errors, 0 warnings)
 

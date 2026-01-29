@@ -321,7 +321,7 @@ async function PUT_handler(
  * Deletes a product category and all its children (cascade).
  */
 async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {

@@ -162,17 +162,17 @@ export function normalizeTaskType(value: unknown) {
 
 export function buildSafetyCheckSteps(
   meta?: PlannerMeta,
-  maxStepAttempts = MAX_STEP_ATTEMPTS
+  maxStepAttempts: number = MAX_STEP_ATTEMPTS
 ): PlanStep[] {
   const checks = [
     ...(meta?.safetyChecks ?? []),
     ...(meta?.critique?.safetyChecks ?? []),
   ]
-    .map((check) => check.trim())
+    .map((check: string) => check.trim())
     .filter(Boolean);
   if (checks.length === 0) return [];
   const limited = checks.slice(0, 3);
-  return limited.map((check) => ({
+  return limited.map((check: string) => ({
     id: randomUUID(),
     title: `Safety check: ${check}`,
     status: "pending" as const,
@@ -189,12 +189,12 @@ export function buildSafetyCheckSteps(
 
 export function buildVerificationSteps(
   meta?: PlannerMeta,
-  maxStepAttempts = MAX_STEP_ATTEMPTS
+  maxStepAttempts: number = MAX_STEP_ATTEMPTS
 ): PlanStep[] {
   const signals = meta?.successSignals ?? [];
   if (signals.length === 0) return [];
   const limited = signals.slice(0, 3);
-  return limited.map((signal) => ({
+  return limited.map((signal: string) => ({
     id: randomUUID(),
     title: `Verify: ${signal}`,
     status: "pending" as const,
@@ -222,13 +222,13 @@ export function buildPlanStepsFromSpecs(
     subgoalId?: string | null;
   }>,
   meta?: PlannerMeta | null,
-  includeSafety = false,
-  maxStepAttempts = MAX_STEP_ATTEMPTS
+  includeSafety: boolean = false,
+  maxStepAttempts: number = MAX_STEP_ATTEMPTS
 ): PlanStep[] {
   const preflightSteps = includeSafety
     ? buildSafetyCheckSteps(meta ?? undefined, maxStepAttempts)
     : [];
-  const plannedSteps: PlanStep[] = stepSpecs.map((step, _index) => ({
+  const plannedSteps: PlanStep[] = stepSpecs.map((step, _index: number) => ({
     id: randomUUID(),
     title: step.title?.trim() || "Review the page state.",
     status: "pending" as const,
@@ -454,7 +454,7 @@ export function decideNextAction(
   };
 }
 
-export function buildPlan(prompt: string, maxSteps = MAX_PLAN_STEPS): string[] {
+export function buildPlan(prompt: string, maxSteps: number = MAX_PLAN_STEPS): string[] {
   const normalized = prompt.trim();
   if (!normalized) return [];
   const lower = normalized.toLowerCase();

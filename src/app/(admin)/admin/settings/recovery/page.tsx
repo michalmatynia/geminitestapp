@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Switch, useToast } from "@/shared/ui";
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 
 
 
@@ -83,7 +83,7 @@ function TransientRecoverySettingsForm({
   const updateSetting = useUpdateSetting();
 
   const updateRetry = (key: keyof TransientRecoverySettings["retry"], value: number | boolean) => {
-    setSettings((prev) => ({
+    setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       retry: {
         ...prev.retry,
@@ -97,7 +97,7 @@ function TransientRecoverySettingsForm({
     key: keyof TransientRecoverySettings["circuit"],
     value: number | boolean
   ) => {
-    setSettings((prev) => ({
+    setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       circuit: {
         ...prev.circuit,
@@ -156,8 +156,8 @@ function TransientRecoverySettingsForm({
             <Label className="text-xs text-gray-400">Enabled</Label>
             <Switch
               checked={settings.enabled}
-              onCheckedChange={(checked) => {
-                setSettings((prev) => ({ ...prev, enabled: checked }));
+              onCheckedChange={(checked: boolean) => {
+                setSettings((prev: TransientRecoverySettings) => ({ ...prev, enabled: checked }));
                 setDirty(true);
               }}
             />
@@ -177,7 +177,7 @@ function TransientRecoverySettingsForm({
                 <Label className="text-xs text-gray-400">Enabled</Label>
                 <Switch
                   checked={settings.retry.enabled}
-                  onCheckedChange={(checked) => updateRetry("enabled", checked)}
+                  onCheckedChange={(checked: boolean) => updateRetry("enabled", checked)}
                 />
               </div>
             </div>
@@ -189,7 +189,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={1}
                   value={settings.retry.maxAttempts}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       "maxAttempts",
                       toNumber(event.target.value, settings.retry.maxAttempts, 1)
@@ -204,7 +204,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={0}
                   value={settings.retry.initialDelayMs}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       "initialDelayMs",
                       toNumber(event.target.value, settings.retry.initialDelayMs)
@@ -219,7 +219,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={0}
                   value={settings.retry.maxDelayMs}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       "maxDelayMs",
                       toNumber(event.target.value, settings.retry.maxDelayMs)
@@ -234,7 +234,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={0}
                   value={settings.retry.timeoutMs ?? 0}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       "timeoutMs",
                       toNumber(event.target.value, settings.retry.timeoutMs ?? 0)
@@ -261,7 +261,7 @@ function TransientRecoverySettingsForm({
                 <Label className="text-xs text-gray-400">Enabled</Label>
                 <Switch
                   checked={settings.circuit.enabled}
-                  onCheckedChange={(checked) => updateCircuit("enabled", checked)}
+                  onCheckedChange={(checked: boolean) => updateCircuit("enabled", checked)}
                 />
               </div>
             </div>
@@ -273,7 +273,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={1}
                   value={settings.circuit.failureThreshold}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateCircuit(
                       "failureThreshold",
                       toNumber(
@@ -292,7 +292,7 @@ function TransientRecoverySettingsForm({
                   type="number"
                   min={0}
                   value={settings.circuit.resetTimeoutMs}
-                  onChange={(event) =>
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateCircuit(
                       "resetTimeoutMs",
                       toNumber(

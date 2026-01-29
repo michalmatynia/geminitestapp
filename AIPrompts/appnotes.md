@@ -2,7 +2,7 @@
 Products 
 Changing currency doesn't work again
 
-When I delete the product the list doesn't refresh
+Translation failed: No translations were completed successfully.
 
 ---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework

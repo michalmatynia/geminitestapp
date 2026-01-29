@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAsset3DRepository, deleteAsset3D } from "@/features/viewer3d/server";
 import type { Asset3DUpdateInput } from "@/features/viewer3d/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { notFoundError, badRequestError } from "@/shared/errors/app-error";
 
 async function GET_handler(_req: NextRequest, params: { id: string }) {
@@ -44,16 +45,16 @@ async function DELETE_handler(_req: NextRequest, params: { id: string }) {
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, params),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => GET_handler(req, params),
   { source: "assets3d/[id].GET" }
 );
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => PATCH_handler(req, params),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => PATCH_handler(req, params),
   { source: "assets3d/[id].PATCH" }
 );
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => DELETE_handler(req, params),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => DELETE_handler(req, params),
   { source: "assets3d/[id].DELETE" }
 );

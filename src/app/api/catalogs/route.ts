@@ -9,6 +9,8 @@ import { parseJsonBody } from "@/features/products/server";
 import { badRequestError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { Catalog } from "@/features/products/types";
+import { type Filter, type Document } from "mongodb";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -38,14 +40,14 @@ async function GET_handler(req: Request) {
           .find({}, { projection: { id: 1, code: 1 } })
           .toArray();
         const languageCodeById = new Map<string, string>();
-        mongoLanguages.forEach((language) => {
+        mongoLanguages.forEach((language: { id: string; code: string }) => {
           if (language.id) languageCodeById.set(language.id, language.code);
           if (language.code) languageCodeById.set(language.code, language.code);
         });
 
         const missingIds = new Set<string>();
-        catalogs.forEach((catalog) => {
-          (catalog.languageIds ?? []).forEach((languageId) => {
+        catalogs.forEach((catalog: Catalog) => {
+          (catalog.languageIds ?? []).forEach((languageId: string) => {
             if (!languageCodeById.has(languageId)) {
               missingIds.add(languageId);
             }
@@ -65,10 +67,10 @@ async function GET_handler(req: Request) {
               where: { id: { in: legacyIds } },
               select: { id: true, code: true },
             });
-            legacyLanguages.forEach((language) => {
+            legacyLanguages.forEach((language: { id: string; code: string }) => {
               languageCodeById.set(language.id, language.code);
             });
-          } catch (error) {
+          } catch (error: unknown) {
             void logSystemEvent({
               level: "warn",
               message: "Failed to load legacy languages from Prisma",
@@ -82,10 +84,10 @@ async function GET_handler(req: Request) {
 
         const collection = mongo.collection("catalogs");
         catalogs = await Promise.all(
-          catalogs.map(async (catalog) => {
+          catalogs.map(async (catalog: Catalog) => {
             const nextLanguageIds =
               catalog.languageIds?.map(
-                (languageId) => languageCodeById.get(languageId) ?? languageId
+                (languageId: string) => languageCodeById.get(languageId) ?? languageId
               ) ?? [];
             const nextDefaultLanguageId = catalog.defaultLanguageId
               ? languageCodeById.get(catalog.defaultLanguageId) ??
@@ -95,16 +97,15 @@ async function GET_handler(req: Request) {
             const languageIdsChanged =
               nextLanguageIds.length !== (catalog.languageIds?.length ?? 0) ||
               nextLanguageIds.some(
-                (languageId, index) => languageId !== catalog.languageIds?.[index]
+                (languageId: string, index: number) => languageId !== catalog.languageIds?.[index]
               );
             const defaultChanged =
               nextDefaultLanguageId !== catalog.defaultLanguageId;
 
             if (languageIdsChanged || defaultChanged) {
-              const filter = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
+              const filter: Filter<Document> = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
               await collection.updateOne(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-                filter as unknown as any,
+                filter,
                 {
                   $set: {
                     languageIds: nextLanguageIds,
@@ -122,7 +123,7 @@ async function GET_handler(req: Request) {
             };
           })
         );
-      } catch (error) {
+      } catch (error: unknown) {
         void logSystemEvent({
           level: "warn",
           message: "Failed to normalize catalog language IDs",
@@ -134,7 +135,7 @@ async function GET_handler(req: Request) {
       }
     }
     return NextResponse.json(catalogs);
-  } catch (error) {
+  } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "catalogs.GET",

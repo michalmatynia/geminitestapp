@@ -18,12 +18,12 @@ import {
   toggleContextTarget,
 } from "@/features/ai-paths/lib";
 
-function pruneLargeFields(value: unknown, seen = new Set<object>()): unknown {
+function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== "object") return value;
   if (seen.has(value)) return "[Circular]";
   seen.add(value);
   if (Array.isArray(value)) {
-    return value.map((item) => pruneLargeFields(item, seen));
+    return value.map((item: unknown) => pruneLargeFields(item, seen));
   }
   const result: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value)) {

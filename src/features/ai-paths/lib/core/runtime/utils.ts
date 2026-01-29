@@ -21,7 +21,7 @@ import { aiJobsApi, dbApi } from "../../api";
 export const looksLikeObjectId = (value: unknown) =>
   typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
 
-export function extractImageUrls(value: unknown, seen = new Set<object>()): string[] {
+export function extractImageUrls(value: unknown, seen: Set<object> = new Set<object>()): string[] {
   if (!value) return [];
   if (typeof value === "string") {
     const trimmed = value.trim();

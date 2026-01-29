@@ -22,7 +22,7 @@ async function GET_handler(
     let timer: NodeJS.Timeout | null = null;
 
     const stream = new ReadableStream({
-      async start(controller) {
+      async start(controller: ReadableStreamDefaultController) {
         const sendSnapshot = async () => {
           try {
             const latest = await prisma.agentBrowserSnapshot.findFirst({

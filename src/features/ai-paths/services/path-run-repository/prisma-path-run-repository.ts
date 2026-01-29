@@ -12,7 +12,9 @@ import type {
   AiPathRunListOptions,
   AiPathRunRepository,
   AiPathRunUpdate,
+  AiPathRunNodeUpdate,
 } from "@/features/ai-paths/types/path-run-repository";
+import type { AiNode } from "@/shared/types/ai-paths";
 
 const prismaAny = prisma as unknown as {
   aiPathRun?: {
@@ -177,10 +179,10 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapRun(updated);
   },
 
-  async createRunNodes(runId, nodes) {
+  async createRunNodes(runId: string, nodes: AiNode[]) {
     ensureModels();
     if (!nodes || nodes.length === 0) return;
-    const data = nodes.map((node) => ({
+    const data = nodes.map((node: AiNode) => ({
       runId,
       nodeId: node.id,
       nodeType: node.type,
@@ -191,7 +193,11 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     await prismaAny.aiPathRunNode!.createMany({ data });
   },
 
-  async upsertRunNode(runId, nodeId, data) {
+  async upsertRunNode(
+    runId: string,
+    nodeId: string,
+    data: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
+  ) {
     ensureModels();
     const node = await prismaAny.aiPathRunNode!.upsert({
       where: { runId_nodeId: { runId, nodeId } },

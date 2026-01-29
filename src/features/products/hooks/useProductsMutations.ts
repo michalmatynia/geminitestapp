@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products/types";
+import { delay } from "@/shared/utils";
 
 interface UpdateProductPayload {
   id: string;
@@ -14,7 +15,7 @@ export function useCreateProduct() {
   return useMutation({
     onSuccess: async () => {
       // Small delay to ensure DB consistency before refetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await delay(500);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["products"] }),
         queryClient.invalidateQueries({ queryKey: ["products-count"] }),

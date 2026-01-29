@@ -42,6 +42,7 @@ import {
 
 import { useProductImages } from "@/features/products/hooks/useProductImages";
 import { useProductMetadata } from "@/features/products/hooks/useProductMetadata";
+import { delay } from "@/shared/utils";
 
 interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
@@ -327,7 +328,7 @@ export function ProductFormProvider({
       });
 
       // Small delay to ensure DB consistency before refetch
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await delay(500);
 
       // Invalidate both products list and count queries
       await Promise.all([

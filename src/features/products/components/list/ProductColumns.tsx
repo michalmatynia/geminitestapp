@@ -5,7 +5,7 @@ import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 
 
@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EditableCell } from "@/features/products/components/EditableCell";
 import { ProductImageCell } from "@/features/products/components/cells/ProductImageCell";
 import type { ProductWithImages } from "@/features/products/types";
+import { delay } from "@/shared/utils";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;
@@ -135,7 +136,7 @@ const handleDelete = async (
   const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
   if (res.ok) {
     // Small delay to ensure DB consistency before refetch
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await delay(500);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["products"] }),
       queryClient.invalidateQueries({ queryKey: ["products-count"] }),
@@ -384,7 +385,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             currencyCode?: string;
             priceGroups?: PriceGroupForCalculation[];
-            queryClient?: any;
+            queryClient?: QueryClient;
           }
         | undefined;
 
@@ -471,7 +472,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
     ),
     cell: ({ row, table }) => {
       const product = row.original;
-      const meta = table.options.meta;
+      const meta = table.options.meta as
+        | {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            queryClient?: QueryClient;
+          }
+        | undefined;
 
       const setRefreshTrigger = meta?.setRefreshTrigger;
       if (!setRefreshTrigger) {
@@ -516,7 +522,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             onExportSettingsClick?: (p: ProductWithImages) => void;
             integrationBadgeIds?: Set<string>;
             integrationBadgeStatuses?: Map<string, string>;
-            queryClient?: any;
+            queryClient?: QueryClient;
           }
         | undefined;
 
@@ -573,7 +579,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             onProductEditClick?: (p: ProductWithImages) => void;
-            queryClient?: any;
+            queryClient?: QueryClient;
           }
         | undefined;
 

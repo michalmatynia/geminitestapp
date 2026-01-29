@@ -36,8 +36,8 @@ export const execFileAsync = (
   command: string,
   args: string[]
 ): Promise<{ stdout: string; stderr: string }> =>
-  new Promise((resolve, reject) => {
-    execFile(command, args, (error, stdout, stderr) => {
+  new Promise((resolve: (value: { stdout: string; stderr: string }) => void, reject: (reason?: unknown) => void) => {
+    execFile(command, args, (error: Error | null, stdout: string, stderr: string) => {
       if (error) {
         const wrapped = new Error(error.message);
         (wrapped as { cause?: { stdout: string; stderr: string } }).cause = {

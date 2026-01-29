@@ -195,48 +195,24 @@ const toProductRecord = (product: {
 });
 
 export const prismaProductRepository: ProductRepository = {
-  async getProducts(filters) {
+  async getProducts(filters: ProductFilters) {
     const where = buildProductWhere(filters);
-    const page = filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined;
-    const pageSize = filters.pageSize ? (typeof filters.pageSize === 'string' ? parseInt(filters.pageSize, 10) : filters.pageSize) : undefined;
-    
-    const findManyArgs: Prisma.ProductFindManyArgs = {
+    const page = filters.page ? parseInt(filters.page, 10) : 1;
+    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : 50;
+
+    const products = await prisma.product.findMany({
       where,
       include: {
-        images: { include: { imageFile: true } },
-        catalogs: {
-          include: {
-            catalog: {
-              include: {
-                languages: {
-                  include: { language: true }
-                }
-              }
-            }
-          },
+        images: {
+          include: { imageFile: true },
+          orderBy: { assignedAt: "desc" },
         },
       },
       orderBy: { createdAt: "desc" },
-    };
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
 
-    if (page && pageSize) {
-      findManyArgs.skip = (page - 1) * pageSize;
-      findManyArgs.take = pageSize;
-    } else if (pageSize) {
-      findManyArgs.take = pageSize;
-    }
-
-    type ProductWithRelations = Prisma.ProductGetPayload<{
-      include: {
-        images: { include: { imageFile: true } };
-        catalogs: {
-          include: { catalog: { include: { languages: { select: { languageId: true } } } } };
-        };
-      };
-    }>;
-
-    const products = (await prisma.product.findMany(findManyArgs)) as ProductWithRelations[];
-    
     return products.map((product) => ({
       ...toProductRecord(product),
       images: product.images.map((image) => ({
@@ -245,21 +221,15 @@ export const prismaProductRepository: ProductRepository = {
         assignedAt: image.assignedAt,
         imageFile: toImageFileRecord(image.imageFile),
       })),
-      catalogs: product.catalogs.map((entry) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
-        catalog: toCatalogRecord(entry.catalog),
-      })),
     }));
   },
 
-  async countProducts(filters) {
+  async countProducts(filters: ProductFilters) {
     const where = buildProductWhere(filters);
     return prisma.product.count({ where });
   },
 
-  async getProductById(id) {
+  async getProductById(id: string) {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {

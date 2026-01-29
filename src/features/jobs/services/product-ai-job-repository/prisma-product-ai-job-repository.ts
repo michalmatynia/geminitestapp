@@ -23,7 +23,7 @@ const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({
 });
 
 export const prismaProductAiJobRepository: ProductAiJobRepository = {
-  async createJob(productId, type, payload) {
+  async createJob(productId: string, type: string, payload: unknown) {
     const job = await prisma.productAiJob.create({
       data: {
         productId,
@@ -35,7 +35,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return mapJob(job);
   },
 
-  async findJobs(productId) {
+  async findJobs(productId?: string) {
     const jobs = await prisma.productAiJob.findMany({
       where: productId ? { productId } : {},
       orderBy: { createdAt: "desc" },
@@ -43,7 +43,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return jobs.map(mapJob);
   },
 
-  async findJobById(jobId) {
+  async findJobById(jobId: string) {
     const job = await prisma.productAiJob.findUnique({ where: { id: jobId } });
     return job ? mapJob(job) : null;
   },
@@ -77,7 +77,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return mapJob(updated);
   },
 
-  async updateJob(jobId, data: ProductAiJobUpdate) {
+  async updateJob(jobId: string, data: ProductAiJobUpdate) {
     const job = await prisma.productAiJob.update({
       where: { id: jobId },
       data: data as Prisma.ProductAiJobUpdateInput,
@@ -85,7 +85,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return mapJob(job);
   },
 
-  async deleteJob(jobId) {
+  async deleteJob(jobId: string) {
     await prisma.productAiJob.delete({ where: { id: jobId } });
   },
 

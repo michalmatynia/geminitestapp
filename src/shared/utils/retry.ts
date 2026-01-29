@@ -72,17 +72,17 @@ function withTimeout<T>(
   timeoutMs: number,
   operation: string
 ): Promise<T> {
-  return new Promise((resolve, reject) => {
+  return new Promise<T>((resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => {
     const timer = setTimeout(() => {
       reject(timeoutError(`Operation timed out after ${timeoutMs}ms`, { operation }));
     }, timeoutMs);
 
     promise
-      .then((result) => {
+      .then((result: T) => {
         clearTimeout(timer);
         resolve(result);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         clearTimeout(timer);
         reject(wrapError(error));
       });
@@ -93,7 +93,7 @@ function withTimeout<T>(
  * Delays execution for a specified time.
  */
 function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
 }
 
 /**
@@ -193,7 +193,7 @@ export async function withRetryAll<T>(
   options?: RetryOptions
 ): Promise<Array<{ success: true; result: T } | { success: false; error: unknown }>> {
   return Promise.all(
-    operations.map(async (op) => {
+    operations.map(async (op: () => Promise<T>) => {
       try {
         const result = await withRetry(op, options);
         return { success: true as const, result };

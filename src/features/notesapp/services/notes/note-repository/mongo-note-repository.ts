@@ -6,6 +6,12 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type {
   NoteWithRelations as NoteRecord,
   NoteFilters,
+  NoteCreateInput,
+  NoteUpdateInput,
+  TagCreateInput,
+  TagUpdateInput,
+  CategoryCreateInput,
+  CategoryUpdateInput,
   TagRecord,
   CategoryRecord,
   CategoryWithChildren,
@@ -281,7 +287,7 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   // Note CRUD operations
-  async getAll(filters = {}) {
+  async getAll(filters: NoteFilters = {}) {
     const db = await getMongoDb();
     const resolvedNotebookId =
       filters.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
@@ -329,7 +335,7 @@ export const mongoNoteRepository: NoteRepository = {
     return result;
   },
 
-  async getById(id) {
+  async getById(id: string) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
@@ -366,7 +372,7 @@ export const mongoNoteRepository: NoteRepository = {
     return { ...note, files: noteFiles.map(toNoteFileResponse), relationsTo };
   },
 
-  async create(data) {
+  async create(data: NoteCreateInput) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
 
@@ -455,7 +461,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toNoteResponse(doc as WithId<NoteDocument>);
   },
 
-  async update(id, data) {
+  async update(id: string, data: NoteUpdateInput) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const currentDoc = await collection.findOne({ $or: [{ id }, { _id: id }] });
@@ -570,7 +576,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toNoteResponse(result);
   },
 
-  async delete(id) {
+  async delete(id: string) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
@@ -592,14 +598,14 @@ export const mongoNoteRepository: NoteRepository = {
     return docs.map(toTagResponse);
   },
 
-  async getTagById(id) {
+  async getTagById(id: string) {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
     return doc ? toTagResponse(doc) : null;
   },
 
-  async createTag(data) {
+  async createTag(data: TagCreateInput) {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
 
@@ -622,7 +628,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toTagResponse(doc as WithId<TagDocument>);
   },
 
-  async updateTag(id, data) {
+  async updateTag(id: string, data: TagUpdateInput) {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
 
@@ -644,7 +650,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toTagResponse(result);
   },
 
-  async deleteTag(id) {
+  async deleteTag(id: string) {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
     const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
@@ -672,7 +678,7 @@ export const mongoNoteRepository: NoteRepository = {
     return docs.map(toCategoryResponse);
   },
 
-  async getCategoryById(id) {
+  async getCategoryById(id: string) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
@@ -700,7 +706,7 @@ export const mongoNoteRepository: NoteRepository = {
     return buildTree(categories, notes);
   },
 
-  async createCategory(data) {
+  async createCategory(data: CategoryCreateInput) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
 
@@ -726,7 +732,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toCategoryResponse(doc as WithId<CategoryDocument>);
   },
 
-  async updateCategory(id, data) {
+  async updateCategory(id: string, data: CategoryUpdateInput) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
 
@@ -751,7 +757,7 @@ export const mongoNoteRepository: NoteRepository = {
     return toCategoryResponse(result);
   },
 
-  async deleteCategory(id, recursive) {
+  async deleteCategory(id: string, recursive?: boolean) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);

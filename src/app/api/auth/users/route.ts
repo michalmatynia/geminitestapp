@@ -42,7 +42,7 @@ async function GET_handler(req: Request) {
         .limit(500)
         .toArray();
 
-      const users: AuthUserSummary[] = docs.map((doc) => ({
+      const users: AuthUserSummary[] = docs.map((doc: MongoUserDoc) => ({
         id: doc._id.toString(),
         email: doc.email ?? null,
         name: doc.name ?? null,
@@ -79,7 +79,6 @@ async function GET_handler(req: Request) {
       orderBy: { email: "asc" },
     })) as PrismaUserSummary[];
 
-    // am I here
     const payload: AuthUserSummary[] = users.map((user: PrismaUserSummary) => ({
       id: user.id,
       email: user.email ?? null,

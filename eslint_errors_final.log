@@ -1,0 +1,18 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/planning/utils.ts
+  225:3  warning  Expected a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/shaders/DitheringEffect.tsx
+  78:26  warning  Expected a type annotation              @typescript-eslint/typedef
+  78:85  warning  Expected ref to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/shaders/OrderedDitheringEffect.tsx
+  112:3  warning  Expected a type annotation              @typescript-eslint/typedef
+  120:3  warning  Expected ref to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/shaders/PixelationEffect.tsx
+  51:27  warning  Expected a type annotation              @typescript-eslint/typedef
+  51:86  warning  Expected ref to have a type annotation  @typescript-eslint/typedef
+
+✖ 7 problems (0 errors, 7 warnings)
+

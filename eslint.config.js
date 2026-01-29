@@ -242,7 +242,7 @@ const eslintConfig = [
         "warn",
         {
           "parameter": true,
-          "arrowParameter": true,
+          "arrowParameter": false,
           "variableDeclaration": false
         }
       ],
@@ -277,6 +277,7 @@ const eslintConfig = [
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/unbound-method": "off",
+      "@typescript-eslint/typedef": "off",
     },
   },
   {

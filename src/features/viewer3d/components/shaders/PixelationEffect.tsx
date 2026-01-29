@@ -48,7 +48,7 @@ export interface PixelationPassProps {
 }
 
 export const PixelationPass = forwardRef<PixelationEffectImpl, PixelationPassProps>(
-  function PixelationPass({ pixelSize = 6.0, blendFunction = BlendFunction.NORMAL }, ref) {
+  function PixelationPass({ pixelSize = 6.0, blendFunction = BlendFunction.NORMAL }: PixelationPassProps, ref: React.Ref<PixelationEffectImpl>) {
     const effect = useMemo(
       () => new PixelationEffectImpl({ pixelSize, blendFunction }),
       [pixelSize, blendFunction]

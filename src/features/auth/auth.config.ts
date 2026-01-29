@@ -1,4 +1,5 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
 const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
@@ -43,7 +44,7 @@ export const authConfig = {
   ...(secret ? { secret } : {}),
   session: { strategy: "jwt" },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request: { nextUrl } }: { auth: Session | null; request: { nextUrl: URL } }) {
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
@@ -83,7 +84,7 @@ export const authConfig = {
       }
       return true;
     },
-    session({ session, token }) {
+    session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.sub ?? session.user.id;
         session.user.role = (token as { role?: string }).role ?? null;

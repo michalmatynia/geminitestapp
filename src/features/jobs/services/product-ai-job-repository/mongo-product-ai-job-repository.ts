@@ -40,7 +40,7 @@ const toRecord = (doc: JobDocument): ProductAiJobRecord => ({
 });
 
 export const mongoProductAiJobRepository: ProductAiJobRepository = {
-  async createJob(productId, type, payload) {
+  async createJob(productId: string, type: string, payload: unknown) {
     const db = await getMongoDb();
     const now = new Date();
     const id = randomUUID();
@@ -58,7 +58,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return toRecord(document);
   },
 
-  async findJobs(productId) {
+  async findJobs(productId?: string) {
     const db = await getMongoDb();
     const filter = productId ? { productId } : {};
     const docs = await db
@@ -69,7 +69,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return docs.map(toRecord);
   },
 
-  async findJobById(jobId) {
+  async findJobById(jobId: string) {
     const db = await getMongoDb();
     const doc = await db
       .collection<JobDocument>(JOBS_COLLECTION)
@@ -107,7 +107,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return toRecord(result);
   },
 
-  async updateJob(jobId, data: ProductAiJobUpdate) {
+  async updateJob(jobId: string, data: ProductAiJobUpdate) {
     const db = await getMongoDb();
     const now = new Date();
     const idString = typeof jobId === "string" ? jobId : String(jobId);
@@ -188,7 +188,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return toRecord(result);
   },
 
-  async deleteJob(jobId) {
+  async deleteJob(jobId: string) {
     const db = await getMongoDb();
     await db
       .collection<JobDocument>(JOBS_COLLECTION)

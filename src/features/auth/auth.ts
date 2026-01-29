@@ -37,7 +37,7 @@ const credentialsProvider = Credentials({
     recoveryCode: { label: "Recovery code", type: "text" },
     challengeId: { label: "Challenge", type: "text" },
   },
-  async authorize(credentials, request) {
+  async authorize(credentials: Record<string, unknown> | null, request: Request) {
     try {
       const email = credentials?.email?.toString() ?? "";
       const password = credentials?.password?.toString() ?? "";

@@ -116,8 +116,8 @@ export const OrderedDitheringPass = forwardRef<
     pixelSizeRatio = 1,
     grayscaleOnly = false,
     blendFunction = BlendFunction.NORMAL,
-  },
-  ref
+  }: OrderedDitheringPassProps,
+  ref: React.Ref<OrderedDitheringEffectImpl>
 ) {
   const effect = useMemo(
     () =>

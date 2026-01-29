@@ -75,7 +75,7 @@ export interface DitheringPassProps {
 }
 
 export const DitheringPass = forwardRef<DitheringEffectImpl, DitheringPassProps>(
-  function DitheringPass({ intensity = 1.0, blendFunction = BlendFunction.NORMAL }, ref) {
+  function DitheringPass({ intensity = 1.0, blendFunction = BlendFunction.NORMAL }: DitheringPassProps, ref: React.Ref<DitheringEffectImpl>) {
     const effect = useMemo(
       () => new DitheringEffectImpl({ intensity, blendFunction }),
       [intensity, blendFunction]

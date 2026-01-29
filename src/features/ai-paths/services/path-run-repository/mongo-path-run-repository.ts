@@ -7,13 +7,15 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from "@/shared/types/ai-paths";
-import type {
-  AiPathRunCreateInput,
+import {
   AiPathRunEventCreateInput,
   AiPathRunListOptions,
+  AiPathRunCreateInput,
   AiPathRunRepository,
   AiPathRunUpdate,
-} from "@/features/ai-paths/types/path-run-repository";
+  AiPathRunNodeUpdate,
+} from "../../types/path-run-repository";
+import type { AiNode } from "@/shared/types/ai-paths";
 
 const RUNS_COLLECTION = "ai_path_runs";
 const NODES_COLLECTION = "ai_path_run_nodes";
@@ -230,11 +232,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return toRunRecord(result);
   },
 
-  async createRunNodes(runId, nodes) {
+  async createRunNodes(runId: string, nodes: AiNode[]) {
     if (!nodes || nodes.length === 0) return;
     const db = await getMongoDb();
     const now = new Date();
-    const docs: NodeDocument[] = nodes.map((node) => ({
+    const docs: NodeDocument[] = nodes.map((node: AiNode) => ({
       _id: randomUUID(),
       runId,
       nodeId: node.id,
@@ -250,7 +252,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await db.collection<NodeDocument>(NODES_COLLECTION).insertMany(docs);
   },
 
-  async upsertRunNode(runId, nodeId, data) {
+  async upsertRunNode(
+    runId: string,
+    nodeId: string,
+    data: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
+  ) {
     const db = await getMongoDb();
     const now = new Date();
     const updateData = {

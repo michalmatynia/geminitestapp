@@ -71,14 +71,14 @@ const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
         select: { id: true, code: true, name: true, symbol: true },
       });
       return new Map(
-        currencies.map((currency) => [currency.id, currency as CurrencyRecord])
+        currencies.map((currency: { id: string; code: string; name: string | null; symbol: string | null }) => [currency.id, currency as CurrencyRecord])
       );
     } catch {
       // Ignore and fall back to defaults.
     }
   }
   return new Map(
-    fallbackCurrencies.map((currency) => [currency.id, currency])
+    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [currency.id, currency])
   );
 };
 

@@ -43,7 +43,7 @@ async function GET_handler(req: Request) {
         .find({ catalogId })
         .sort({ name_en: 1 })
         .toArray();
-      const normalized = parameters.map((param) => {
+      const normalized = parameters.map((param: any) => {
         const { _id, ...rest } = param as unknown as {
           _id?: { toString?: () => string };
         } & Record<string, unknown>;

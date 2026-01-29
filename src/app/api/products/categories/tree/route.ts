@@ -46,7 +46,7 @@ async function GET_handler(req: Request) {
         .find({ catalogId })
         .sort({ name: 1 })
         .toArray();
-      categories = docs.map((doc) => {
+      categories = docs.map((doc: any) => {
         const { _id, ...rest } = doc as unknown as {
           _id?: { toString?: () => string };
         } & CategoryFromDb;

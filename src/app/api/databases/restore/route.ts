@@ -214,12 +214,12 @@ async function POST_handler(req: Request) {
             AND tablename != '_prisma_migrations'
         `
       )
-        .map((row) => row.tablename)
+        .map((row: { tablename: string }) => row.tablename)
         .filter(Boolean);
 
       if (tables.length > 0) {
         const quotedTables = tables
-          .map((name) => `"${name.replace(/"/g, '""')}"`)
+          .map((name: string) => `"${name.replace(/"/g, '""')}"`)
           .join(", ");
 
         await prisma.$executeRawUnsafe(

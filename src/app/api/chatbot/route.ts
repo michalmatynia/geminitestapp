@@ -91,8 +91,8 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
 
     const data = (await res.json()) as unknown as { models?: Array<{ name?: string }> };
     const models = (data.models || [])
-      .map((model) => model.name)
-      .filter((name): name is string => Boolean(name));
+      .map((model: { name?: string }) => model.name)
+      .filter((name: string | undefined): name is string => Boolean(name));
 
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][models] Loaded", {
@@ -189,8 +189,8 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
 
         await Promise.all(
           files
-            .filter((file): file is File => file instanceof File)
-            .map(async (file) => {
+            .filter((file: FormDataEntryValue): file is File => file instanceof File)
+            .map(async (file: File) => {
               const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
               const targetPath = path.join(
                 requestDir,
@@ -210,14 +210,14 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
       if (imageFiles.length > 0 && messages.length > 0) {
         const lastIndex = [...messages]
           .reverse()
-          .findIndex((msg) => msg.role === "user");
+          .findIndex((msg: ChatMessage) => msg.role === "user");
         const targetIndex =
           lastIndex === -1
             ? messages.length - 1
             : messages.length - 1 - lastIndex;
 
         const base64Images = await Promise.all(
-          imageFiles.map(async (file) => {
+          imageFiles.map(async (file: File) => {
             const buffer = await file.arrayBuffer();
             return Buffer.from(buffer).toString("base64");
           })
@@ -236,13 +236,13 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
       if (otherFiles.length > 0 && messages.length > 0) {
         const lastUserIndex = [...messages]
           .reverse()
-          .findIndex((msg) => msg.role === "user");
+          .findIndex((msg: ChatMessage) => msg.role === "user");
         const targetIndex =
           lastUserIndex === -1
             ? messages.length - 1
             : messages.length - 1 - lastUserIndex;
 
-        const fileList = otherFiles.map((file) => file.name).join(", ");
+        const fileList = otherFiles.map((file: File) => file.name).join(", ");
         const targetMessage = messages[targetIndex];
         const existing = targetMessage?.content?.trim() || "";
 
@@ -310,13 +310,13 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][chat] Request summary", {
         messageCount: messages.length,
-        roles: messages.map((message) => message.role),
-        hasImages: messages.some((message) => Boolean(message.images?.length)),
+        roles: messages.map((message: ChatMessage) => message.role),
+        hasImages: messages.some((message: ChatMessage) => Boolean(message.images?.length)),
         model: requestedModel || OLLAMA_MODEL,
         contentType,
         userContentChars: messages
-          .filter((message) => message.role === "user")
-          .reduce((sum, message) => sum + message.content.length, 0),
+          .filter((message: ChatMessage) => message.role === "user")
+          .reduce((sum: number, message: ChatMessage) => sum + message.content.length, 0),
         durationMs: Date.now() - requestStart,
         requestId: ctx.requestId,
       });
@@ -404,7 +404,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
   } finally {
     if (tempFiles.length > 0) {
       await Promise.all(
-        tempFiles.map(async (filepath) => {
+        tempFiles.map(async (filepath: string) => {
           try {
             await fs.unlink(filepath);
           } catch {
@@ -416,7 +416,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
 
     if (tempDirs.length > 0) {
       await Promise.all(
-        tempDirs.map(async (dirpath) => {
+        tempDirs.map(async (dirpath: string) => {
           try {
             await fs.rm(dirpath, { recursive: true, force: true });
           } catch {

@@ -44,7 +44,7 @@ async function GET_handler(req: Request) {
         .find({ catalogId })
         .sort({ name: 1 })
         .toArray();
-      const normalized = categories.map((cat) => {
+      const normalized = categories.map((cat: any) => {
         const { _id, ...rest } = cat as unknown as {
           _id?: { toString?: () => string };
         } & Record<string, unknown>;

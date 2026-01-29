@@ -179,13 +179,13 @@ async function POST_handler(req: Request) {
           .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
       );
 
-      const listItems = allBaseIds.map((id) => ({
+      const listItems = allBaseIds.map((id: string) => ({
         id,
         exists: existingIds.has(id),
       }));
 
       const filteredItems = data.uniqueOnly
-        ? listItems.filter((item) => !item.exists)
+        ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
         : listItems;
 
       const pagedItems = data.limit
@@ -197,14 +197,14 @@ async function POST_handler(req: Request) {
           products: [],
           total: listItems.length,
           filtered: filteredItems.length,
-          existing: listItems.filter((i) => i.exists).length,
+          existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
         });
       }
 
       const products = await fetchBaseProductDetails(
         token,
         data.inventoryId,
-        pagedItems.map((i) => i.id)
+        pagedItems.map((i: { id: string; exists: boolean }) => i.id)
       );
 
       const toStringId = (value: unknown): string | null => {
@@ -216,7 +216,7 @@ async function POST_handler(req: Request) {
       };
 
       const mappedList = products
-        .map((record) => {
+        .map((record: any) => {
           const mapped = mapBaseProduct(record);
           const images = extractBaseImageUrls(record);
           const baseProductId =
@@ -253,22 +253,22 @@ async function POST_handler(req: Request) {
             image: images[0] ?? null,
           };
         })
-        .filter((item) => item.baseProductId);
+        .filter((item: any) => item.baseProductId);
 
-      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
+      const skuDuplicateCount = mappedList.filter((item: any) => item.skuExists).length;
 
       return NextResponse.json({
         products: mappedList,
         total: listItems.length,
         filtered: mappedList.length, // Actual number of items being shown (after limit applied)
         available: filteredItems.length, // Total available after uniqueOnly filter
-        existing: listItems.filter((item) => item.exists).length,
+        existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
         skuDuplicates: skuDuplicateCount, // New stat
       });
     }
 
     const selectedIds = (data.selectedIds ?? [])
-      .map((id) => id.trim())
+      .map((id: string) => id.trim())
       .filter(Boolean);
     const normalizedSelectedIds = Array.from(new Set(selectedIds));
     const idsToFetch = data.limit

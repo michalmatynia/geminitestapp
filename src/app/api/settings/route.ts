@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { WithId } from "mongodb";
 
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -15,7 +16,6 @@ const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 type SettingRecord = { key: string; value: string };
 
 type SettingDocument = {
-  _id: string;
   key: string;
   value: string;
   createdAt: Date;
@@ -54,8 +54,8 @@ const listMongoSettings = async (): Promise<SettingRecord[]> => {
     .find({})
     .toArray();
   return docs
-    .map((doc) => ({ key: doc.key ?? doc._id, value: doc.value }))
-    .filter((doc) => typeof doc.key === "string" && typeof doc.value === "string");
+    .map((doc: WithId<SettingDocument>) => ({ key: doc.key ?? String(doc._id), value: doc.value }))
+    .filter((doc: SettingRecord) => typeof doc.key === "string" && typeof doc.value === "string");
 };
 
 const upsertMongoSetting = async (
@@ -66,7 +66,7 @@ const upsertMongoSetting = async (
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
-    { _id: key },
+    { _id: key as any },
     {
       $set: { key, value, updatedAt: now },
       $setOnInsert: { createdAt: now },
@@ -92,14 +92,14 @@ async function GET_handler(req: Request) {
     const mongoSettings = await listMongoSettings();
     const settingsMap = new Map<string, SettingRecord>();
     if (provider === "mongodb") {
-      mongoSettings.forEach((setting) => {
+      mongoSettings.forEach((setting: SettingRecord) => {
         settingsMap.set(setting.key, setting);
       });
     } else {
-      prismaSettings.forEach((setting) => {
+      prismaSettings.forEach((setting: SettingRecord) => {
         settingsMap.set(setting.key, setting);
       });
-      mongoSettings.forEach((setting) => {
+      mongoSettings.forEach((setting: SettingRecord) => {
         const shouldOverride =
           isProductSettingKey(setting.key) || !settingsMap.has(setting.key);
         if (shouldOverride) {
@@ -112,7 +112,7 @@ async function GET_handler(req: Request) {
       await ErrorSystem.logInfo("[settings] fetched", {
         service: "api/settings",
         count: settings.length,
-        keys: settings.map((setting) => setting.key),
+        keys: settings.map((setting: SettingRecord) => setting.key),
       });
     }
     return NextResponse.json(settings);

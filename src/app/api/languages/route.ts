@@ -57,7 +57,7 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
   const countriesCollection = db.collection("countries");
 
   for (const language of defaultLanguages) {
-    const matchingMappings = countryMappings.filter((mapping) =>
+    const matchingMappings = countryMappings.filter((mapping: (typeof countryMappings)[number]) =>
       mapping.languageCodes.includes(language.code)
     );
 
@@ -225,8 +225,8 @@ async function POST_handler(req: Request) {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry) => entry.id));
-    const validIds = uniqueIds.filter((countryId) =>
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const validIds = uniqueIds.filter((countryId: string) =>
       existingIds.has(countryId)
     );
 
@@ -238,7 +238,7 @@ async function POST_handler(req: Request) {
         ...(validIds.length ? {
           countries: {
             createMany: {
-              data: validIds.map((countryId) => ({ countryId })),
+              data: validIds.map((countryId: string) => ({ countryId })),
             },
           },
         } : {}),

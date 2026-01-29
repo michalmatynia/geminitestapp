@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { WithId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import {
@@ -52,7 +53,7 @@ const seedMongoInternationalization = async (
 ) => {
   const now = new Date();
   await db.collection<CurrencyDoc>(CURRENCIES_COLLECTION).bulkWrite(
-    defaultCurrencies.map((currency) => ({
+    defaultCurrencies.map((currency: (typeof defaultCurrencies)[number]) => ({
       updateOne: {
         filter: { id: currency.code },
         update: {
@@ -81,7 +82,7 @@ const seedMongoInternationalization = async (
   }
 
   await db.collection<CountryDoc>(COUNTRIES_COLLECTION).bulkWrite(
-    defaultCountries.map((country) => ({
+    defaultCountries.map((country: (typeof defaultCountries)[number]) => ({
       updateOne: {
         filter: { id: country.code },
         update: {
@@ -109,7 +110,7 @@ const normalizeCountryResponse = (
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])
-    .map((currencyId) => {
+    .map((currencyId: string) => {
       const currency = currencyMap.get(currencyId);
       if (!currency) return null;
       return {
@@ -147,7 +148,7 @@ async function GET_handler(req: Request) {
         .sort({ name: 1 })
         .toArray();
       const currencyIds = Array.from(
-        new Set(countries.flatMap((country) => country.currencyIds ?? []))
+        new Set(countries.flatMap((country: WithId<CountryDoc>) => country.currencyIds ?? []))
       );
       const currencies = currencyIds.length
         ? await db
@@ -156,9 +157,9 @@ async function GET_handler(req: Request) {
             .toArray()
         : [];
       const currencyMap = new Map(
-        currencies.map((currency) => [currency.id, currency])
+        currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
       );
-      const normalized = countries.map((country) =>
+      const normalized = countries.map((country: WithId<CountryDoc>) =>
         normalizeCountryResponse(country, currencyMap)
       );
       return NextResponse.json(normalized);
@@ -233,14 +234,14 @@ async function POST_handler(req: Request) {
             .toArray()
         : [];
       const validCurrencyIds = new Set(
-        currencyDocs.map((currency) => currency.id)
+        currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
       );
       const now = new Date();
       const country: CountryDoc = {
         id: countryData.code,
         code: countryData.code,
         name: countryData.name,
-        currencyIds: requestedCurrencyIds.filter((id) =>
+        currencyIds: requestedCurrencyIds.filter((id: string) =>
           validCurrencyIds.has(id)
         ),
         createdAt: now,
@@ -248,7 +249,7 @@ async function POST_handler(req: Request) {
       };
       await db.collection<CountryDoc>(COUNTRIES_COLLECTION).insertOne(country);
       const currencyMap = new Map(
-        currencyDocs.map((currency) => [currency.id, currency])
+        currencyDocs.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
       );
       return NextResponse.json(
         normalizeCountryResponse(country, currencyMap)
@@ -266,7 +267,7 @@ async function POST_handler(req: Request) {
         ...(currencyIds?.length ? {
           currencies: {
             createMany: {
-              data: currencyIds.map((currencyId) => ({ currencyId })),
+              data: currencyIds.map((currencyId: string) => ({ currencyId })),
             },
           },
         } : {}),

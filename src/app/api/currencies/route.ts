@@ -36,7 +36,7 @@ const CURRENCIES_COLLECTION = "currencies";
 const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
   const now = new Date();
   await db.collection<CurrencyDoc>(CURRENCIES_COLLECTION).bulkWrite(
-    defaultCurrencies.map((currency) => ({
+    defaultCurrencies.map((currency: (typeof defaultCurrencies)[number]) => ({
       updateOne: {
         filter: { id: currency.code },
         update: {

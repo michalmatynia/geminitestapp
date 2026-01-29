@@ -45,7 +45,7 @@ function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderVa
 
   const providerDescription = useMemo(
     () =>
-      providerOptions.find((option) => option.value === provider)?.description ??
+      providerOptions.find((option: (typeof providerOptions)[number]) => option.value === provider)?.description ??
       "",
     [provider]
   );
@@ -101,14 +101,14 @@ function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderVa
             id="app-db-provider"
             className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
             value={provider}
-            onChange={(event) => {
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
               const value = event.target.value === "mongodb" ? "mongodb" : "prisma";
               setProvider(value);
               setDirty(true);
             }}
             disabled={settingsQuery.isPending}
           >
-            {providerOptions.map((option) => (
+            {providerOptions.map((option: (typeof providerOptions)[number]) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

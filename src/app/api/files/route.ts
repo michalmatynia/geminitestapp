@@ -25,7 +25,7 @@ async function GET_handler(req: Request) {
       productName ? { search: productName } : {}
     );
     const filteredProducts = productId
-      ? products.filter((product) => product.id === productId)
+      ? products.filter((product: ProductWithImages) => product.id === productId)
       : products;
 
     const imageFileToProducts = new Map<
@@ -50,10 +50,10 @@ async function GET_handler(req: Request) {
         : null;
 
     const result = files
-      .filter((file) =>
+      .filter((file: any) =>
         allowedImageFileIds ? allowedImageFileIds.has(file.id) : true
       )
-      .map((file) => ({
+      .map((file: any) => ({
         ...file,
         products: imageFileToProducts.get(file.id) ?? [],
       }));

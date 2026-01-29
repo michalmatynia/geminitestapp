@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { WithId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
@@ -46,7 +47,7 @@ const normalizeCountryResponse = (
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])
-    .map((currencyId) => {
+    .map((currencyId: string) => {
       const currency = currencyMap.get(currencyId);
       if (!currency) return null;
       return {
@@ -94,7 +95,7 @@ async function PUT_handler(
         }
       }
       let nextCurrencyIds = existing.currencyIds ?? [];
-      let currencyDocs: CurrencyDoc[] = [];
+      let currencyDocs: (CurrencyDoc | WithId<CurrencyDoc>)[] = [];
       if (currencyIds) {
         const requestedCurrencyIds = Array.from(new Set(currencyIds));
         currencyDocs = requestedCurrencyIds.length
@@ -104,9 +105,9 @@ async function PUT_handler(
               .toArray()
           : [];
         const validCurrencyIds = new Set(
-          currencyDocs.map((currency) => currency.id)
+          currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)
         );
-        nextCurrencyIds = requestedCurrencyIds.filter((currencyId) =>
+        nextCurrencyIds = requestedCurrencyIds.filter((currencyId: string) =>
           validCurrencyIds.has(currencyId)
         );
       } else if (nextCurrencyIds.length) {
@@ -130,7 +131,7 @@ async function PUT_handler(
         { returnDocument: "after" }
       );
       const currencyMap = new Map(
-        currencyDocs.map((currency) => [currency.id, currency])
+        currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => [currency.id, currency])
       );
       return NextResponse.json(
         updated ? normalizeCountryResponse(updated, currencyMap) : null
@@ -149,7 +150,7 @@ async function PUT_handler(
         await tx.countryCurrency.deleteMany({ where: { countryId: id } });
         if (currencyIds.length > 0) {
           await tx.countryCurrency.createMany({
-            data: currencyIds.map((currencyId) => ({ countryId: id, currencyId })),
+            data: currencyIds.map((currencyId: string) => ({ countryId: id, currencyId })),
           });
         }
       }

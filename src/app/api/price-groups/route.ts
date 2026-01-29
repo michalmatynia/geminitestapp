@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { WithId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -68,14 +69,14 @@ const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
         select: { id: true, code: true, name: true, symbol: true },
       });
       return new Map(
-        currencies.map((currency) => [currency.id, currency as CurrencyRecord])
+        currencies.map((currency: { id: string; code: string; name: string | null; symbol: string | null }) => [currency.id, currency as CurrencyRecord])
       );
     } catch {
       // Fall through to fallback currencies.
     }
   }
   return new Map(
-    fallbackCurrencies.map((currency) => [currency.id, currency])
+    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [currency.id, currency])
   );
 };
 
@@ -120,7 +121,7 @@ async function GET_handler(req: Request) {
       const db = await getMongoDb();
       const currencyMap = await buildCurrencyMap();
       const currencyByCode = new Map(
-        Array.from(currencyMap.values()).map((currency) => [
+        Array.from(currencyMap.values()).map((currency: CurrencyRecord) => [
           currency.code,
           currency,
         ])
@@ -160,9 +161,9 @@ async function GET_handler(req: Request) {
         .sort({ name: 1 })
         .toArray();
       const groupMap = new Map(
-        groups.map((group) => [group.id, group])
+        groups.map((group: WithId<PriceGroupDoc>) => [group.id, group])
       );
-      const normalized = groups.map((group) => ({
+      const normalized = groups.map((group: WithId<PriceGroupDoc>) => ({
         ...group,
         currency: resolveCurrency(
           currencyMap,

@@ -31,7 +31,7 @@ const extractProductRecord = (payload: unknown, productId: string): Record<strin
   const products = (payload as { products?: unknown })?.products;
   if (Array.isArray(products)) {
     return (
-      (products.find((entry) => {
+      (products.find((entry: unknown) => {
         if (!entry || typeof entry !== "object") return false;
         const record = entry as Record<string, unknown>;
         return (
@@ -56,10 +56,10 @@ const extractProductRecord = (payload: unknown, productId: string): Record<strin
 const collectKeysFromObject = (value: unknown, keys: Set<string>) => {
   if (!value || typeof value !== "object") return;
   if (Array.isArray(value)) {
-    value.forEach((entry) => collectKeysFromObject(entry, keys));
+    value.forEach((entry: unknown) => collectKeysFromObject(entry, keys));
     return;
   }
-  Object.keys(value as Record<string, unknown>).forEach((key) => {
+  Object.keys(value as Record<string, unknown>).forEach((key: string) => {
     if (key) keys.add(key);
   });
 };
@@ -74,14 +74,14 @@ const collectPrefixedKeys = (
   if (!value || typeof value !== "object") return;
   if (depth > maxDepth) return;
   if (Array.isArray(value)) {
-    value.forEach((entry, index) => {
+    value.forEach((entry: unknown, index: number) => {
       const nextPrefix = `${prefix}.${index}`;
       keys.add(nextPrefix);
       collectPrefixedKeys(entry, nextPrefix, keys, depth + 1, maxDepth);
     });
     return;
   }
-  Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
+  Object.entries(value as Record<string, unknown>).forEach(([key, entry]: [string, unknown]) => {
     const nextPrefix = `${prefix}.${key}`;
     keys.add(nextPrefix);
     collectPrefixedKeys(entry, nextPrefix, keys, depth + 1, maxDepth);
@@ -113,7 +113,7 @@ const toPreviewValue = (value: unknown): string | null => {
   if (Array.isArray(value)) {
     const joined = value
       .slice(0, 4)
-      .map((entry) => toPreviewValue(entry))
+      .map((entry: unknown) => toPreviewValue(entry))
       .filter(Boolean)
       .join(", ");
     return joined ? (value.length > 4 ? `${joined}, ...` : joined) : null;

@@ -66,7 +66,7 @@ async function PATCH_handler(req: Request, context: { params: Promise<{ id: stri
     const updates = parsed.data;
     const now = new Date();
     const allowedIps = updates.allowedIps
-      ? updates.allowedIps.map((ip) => ip.trim()).filter(Boolean)
+      ? updates.allowedIps.map((ip: string) => ip.trim()).filter(Boolean)
       : undefined;
 
     const profile = await updateAuthSecurityProfile(id, {

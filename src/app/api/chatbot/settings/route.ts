@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS_KEY = "default";
 
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
-  settings: z.record(z.string(), z["unknown"]()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 async function GET_handler(req: Request) {

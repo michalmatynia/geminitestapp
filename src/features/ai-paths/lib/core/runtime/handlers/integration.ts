@@ -186,7 +186,7 @@ export const handlePoll: NodeHandler = async ({
   deferPoll,
   executed,
   reportAiPathsError,
-}) => {
+}): Promise<any> => {
   if (deferPoll) {
     const existingStatus =
       typeof prevOutputs.status === "string" ? prevOutputs.status : null;
@@ -242,13 +242,13 @@ export const handlePoll: NodeHandler = async ({
         resultPath: pollConfig.resultPath ?? "result",
       });
       return {
-        result: response.result,
-        status: response.status,
+        result: (response as any).result,
+        status: (response as any).status,
         jobId,
         bundle: {
-          ...(response.bundle ?? {}),
+          ...((response as any).bundle ?? {}),
           jobId,
-          status: response.status,
+          status: (response as any).status,
         },
       };
     } catch (error) {
@@ -307,7 +307,7 @@ export const handleHttp: NodeHandler = async ({
   nodeInputs,
   executed,
   reportAiPathsError,
-}) => {
+}): Promise<any> => {
   if (executed.http.has(node.id)) return {}; // Http should run only once usually in the loop or should it?
   // Logic says: if (httpExecuted.has(node.id)) break;
   // But wait, the loop runs multiple times for propagation. If HTTP node runs once, its outputs are set.
@@ -665,10 +665,10 @@ export const handleDatabase: NodeHandler = async ({
         action,
         collection,
         filter,
-        projection,
-        sort,
-        limit,
-        idType,
+        ...(projection !== undefined ? { projection } : {}),
+        ...(sort !== undefined ? { sort } : {}),
+        ...(limit !== undefined ? { limit } : {}),
+        ...(idType !== undefined ? { idType } : {}),
       });
       if (!readResult.ok) {
         toast("Database read failed.", { variant: "error" });
@@ -935,7 +935,7 @@ export const handleDatabase: NodeHandler = async ({
         collection,
         filter: resolvedFilter,
         update: updateDoc,
-        idType,
+        ...(idType !== undefined ? { idType } : {}),
       });
       executed.updater.add(node.id);
       if (!updateResult.ok) {
@@ -983,7 +983,7 @@ export const handleDatabase: NodeHandler = async ({
         action,
         collection,
         filter,
-        idType,
+        ...(idType !== undefined ? { idType } : {}),
       });
       executed.updater.add(node.id);
       if (!deleteResult.ok) {

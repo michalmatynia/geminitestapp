@@ -66,7 +66,7 @@ export function buildCheckpointState(payload: {
   summaryCheckpoint?: number | null;
   settings?: AgentPlanSettings | null;
   preferences?: AgentPlanPreferences | null;
-}) {
+}): AgentCheckpoint {
   return {
     steps: payload.steps,
     activeStepId: payload.activeStepId,
@@ -106,7 +106,7 @@ export async function persistCheckpoint(payload: {
   summaryCheckpoint?: number | null;
   settings?: AgentPlanSettings | null;
   preferences?: AgentPlanPreferences | null;
-}) {
+}): Promise<void> {
   await prisma.chatbotAgentRun.update({
     where: { id: payload.runId },
     data: {

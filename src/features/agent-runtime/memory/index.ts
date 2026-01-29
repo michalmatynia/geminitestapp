@@ -33,7 +33,7 @@ export async function addAgentMemory(params: {
   scope: MemoryScope;
   content: string;
   metadata?: Record<string, unknown>;
-}): Promise<Prisma.AgentMemoryItemGetPayload<{}> | null> {
+}): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>> | null> {
   if (!("agentMemoryItem" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Memory table not initialized.");
@@ -65,7 +65,7 @@ export async function addAgentMemory(params: {
 export async function listAgentMemory(params: {
   runId?: string | null;
   scope?: MemoryScope;
-}): Promise<Prisma.AgentMemoryItemGetPayload<{}>[]> {
+}): Promise<Prisma.AgentMemoryItemGetPayload<Record<string, never>>[]> {
   if (!("agentMemoryItem" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Memory table not initialized.");
@@ -100,7 +100,7 @@ export async function addAgentLongTermMemory(params: {
   tags?: string[];
   metadata?: Record<string, unknown>;
   importance?: number | null;
-}) {
+}): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null> {
   if (!("agentLongTermMemory" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
@@ -140,7 +140,7 @@ export async function validateAgentLongTermMemory(params: {
   content: string;
   summary?: string | null;
   metadata?: Record<string, unknown>;
-}) {
+}): Promise<{ valid: boolean; issues: string[]; reason: string | null; model: string | null; }> {
   const model = params.model?.trim() || DEFAULT_MEMORY_VALIDATION_MODEL;
   const prompt = params.prompt ?? "";
   if (!model) {
@@ -216,7 +216,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
   importance?: number | null;
   model?: string | null;
   prompt?: string | null;
-}) {
+}): Promise<{ skipped: boolean; validation: ReturnType<typeof validateAgentLongTermMemory>; record?: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>> | null; }> {
   const summaryModel = params.summaryModel?.trim();
   let summary = params.summary ?? null;
   if (summaryModel) {
@@ -246,7 +246,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
         }),
       });
       if (response.ok) {
-        const payload: unknown = await response.json();
+        const payload: unknown = await response.ok ? await response.json() : null;
         const content = extractMessageContent(payload);
         const parsed = parseJsonObject(content) as {
           summary?: unknown;
@@ -285,7 +285,7 @@ export async function listAgentLongTermMemory(params: {
   memoryKey: string;
   limit?: number;
   tags?: string[];
-}) {
+}): Promise<Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>[]> {
   if (!("agentLongTermMemory" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
@@ -305,7 +305,7 @@ export async function listAgentLongTermMemory(params: {
       orderBy: { updatedAt: "desc" },
       take: params.limit ?? 5,
     });
-    const ids = items.map((item) => item.id);
+    const ids = items.map((item: Prisma.AgentLongTermMemoryGetPayload<Record<string, never>>) => item.id);
     if (ids.length > 0) {
       await prisma.agentLongTermMemory.updateMany({
         where: { id: { in: ids } },

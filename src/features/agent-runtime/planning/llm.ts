@@ -41,8 +41,8 @@ type PlanStepSpecInput = {
   subgoalId?: string | null;
 };
 
-const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
-  steps.map((step) => {
+const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[] =>
+  steps.map((step: PlanStepSpecInput) => {
     const {
       expectedObservation,
       successCriteria,
@@ -60,6 +60,32 @@ const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
       ...(dependsOn != null && { dependsOn }),
     };
   });
+
+type BuildPlanWithLLMResult = {
+  steps: PlanStep[];
+  decision: AgentDecision;
+  source: "llm" | "heuristic";
+  branchSteps?: PlanStep[];
+  meta?: PlannerMeta;
+  hierarchy?: {
+    goals: Array<{
+      id: string;
+      title: string;
+      successCriteria?: string | null;
+      subgoals: Array<{
+        id: string;
+        title: string;
+        successCriteria?: string | null;
+        steps: Array<{
+          title: string;
+          tool?: "playwright" | "none";
+          expectedObservation?: string | null;
+          successCriteria?: string | null;
+        }>;
+      }>;
+    }>;
+  } | null;
+};
 
 export async function buildPlanWithLLM({
   prompt,
@@ -98,31 +124,7 @@ export async function buildPlanWithLLM({
   } | null;
   maxSteps?: number;
   maxStepAttempts?: number;
-}): Promise<{
-  steps: PlanStep[];
-  decision: AgentDecision;
-  source: "llm" | "heuristic";
-  branchSteps?: PlanStep[];
-  meta?: PlannerMeta;
-  hierarchy?: {
-    goals: Array<{
-      id: string;
-      title: string;
-      successCriteria?: string | null;
-      subgoals: Array<{
-        id: string;
-        title: string;
-        successCriteria?: string | null;
-        steps: Array<{
-          title: string;
-          tool?: "playwright" | "none";
-          expectedObservation?: string | null;
-          successCriteria?: string | null;
-        }>;
-      }>;
-    }>;
-  } | null;
-}> {
+}): Promise<BuildPlanWithLLMResult> {
   const maxSteps = Math.min(Math.max(maxStepsParam ?? MAX_PLAN_STEPS, 1), 20);
   const maxStepAttempts = clampInt(
     maxStepAttemptsParam ?? MAX_STEP_ATTEMPTS,
@@ -135,7 +137,7 @@ export async function buildPlanWithLLM({
       ? guardModel.trim()
       : model;
   const fallbackPlanTitles = buildPlan(prompt, maxSteps);
-  const fallbackSteps = fallbackPlanTitles.map((title) => ({
+  const fallbackSteps = fallbackPlanTitles.map((title: string) => ({
     id: randomUUID(),
     title,
     status: "pending" as const,
@@ -959,7 +961,7 @@ export async function evaluatePlanWithLLM({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}) {
+}): Promise<{ score: number; revisedSteps: PlanStep[] } | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -1100,7 +1102,12 @@ export async function verifyPlanWithLLM({
     uiInventory?: unknown;
   } | null;
   runId?: string;
-}) {
+}): Promise<{
+  verdict?: "pass" | "partial" | "fail";
+  evidence?: string[];
+  missing?: string[];
+  followUp?: string;
+} | null> {
   if (steps.length === 0) return null;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -1209,7 +1216,14 @@ export async function buildSelfImprovementReviewWithLLM({
     uiInventory?: unknown;
   } | null;
   runId?: string;
-}) {
+}): Promise<{
+  summary: string;
+  mistakes: string[];
+  improvements: string[];
+  guardrails: string[];
+  toolAdjustments: string[];
+  confidence: number | undefined;
+} | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -1300,7 +1314,7 @@ export async function summarizePlannerMemoryWithLLM({
     uiInventory?: unknown;
   } | null;
   runId?: string;
-}) {
+}): Promise<string | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -1408,7 +1422,13 @@ export async function buildMidRunAdaptationWithLLM({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}) {
+}): Promise<{
+  shouldAdapt: boolean;
+  reason?: string;
+  steps: PlanStep[];
+  hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+  meta?: PlannerMeta | null;
+}> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -1544,7 +1564,7 @@ export async function dedupePlanStepsWithLLM({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}) {
+}): Promise<PlanStep[]> {
   if (steps.length < 2) return steps;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -1647,7 +1667,7 @@ export async function guardRepetitionWithLLM({
   candidateSteps: PlanStep[];
   runId?: string;
   maxSteps: number;
-}) {
+}): Promise<PlanStep[]> {
   if (candidateSteps.length < 2) return candidateSteps;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -1761,7 +1781,7 @@ export async function buildCheckpointBriefWithLLM({
     uiInventory?: unknown;
   } | null;
   runId?: string;
-}) {
+}): Promise<{ summary: string; nextActions: string[]; risks: string[] } | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -1861,7 +1881,10 @@ export async function optimizePlanWithLLM({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}) {
+}): Promise<{
+  reason: string | null;
+  optimizedSteps: PlanStep[];
+} | null> {
   if (steps.length < 2) return null;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -1980,7 +2003,7 @@ export async function enrichPlanHierarchyWithLLM({
   hierarchy: ReturnType<typeof normalizePlanHierarchy>;
   meta?: PlannerMeta | null;
   runId?: string;
-}) {
+}): Promise<ReturnType<typeof normalizePlanHierarchy> | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -2082,7 +2105,7 @@ export async function expandHierarchyFromStepsWithLLM({
   }>;
   meta?: PlannerMeta | null;
   runId?: string;
-}) {
+}): Promise<ReturnType<typeof normalizePlanHierarchy> | null> {
   if (!steps.length) return null;
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {

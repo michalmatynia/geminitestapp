@@ -4,16 +4,10 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type Params = { id: string };
-type Ctx = { params: Promise<Params> } | { params: Params };
-
-async function getId(ctx: Ctx): Promise<string> {
-  const p = await Promise.resolve(ctx.params);
-  return p.id;
-}
 
 const pageUpdateSchema = z.object({
   name: z.string().trim().min(1),
@@ -30,9 +24,9 @@ const pageUpdateSchema = z.object({
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
     const cmsRepository = await getCmsRepository();
     const page = await cmsRepository.getPageById(id);
 
@@ -54,9 +48,9 @@ async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
 
     const parsed = await parseJsonBody(req, pageUpdateSchema, {
       logPrefix: "cms-pages",
@@ -95,9 +89,9 @@ async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
   try {
-    const id = await getId(ctx);
+    const { id } = params;
     const cmsRepository = await getCmsRepository();
     
     await cmsRepository.deletePage(id);

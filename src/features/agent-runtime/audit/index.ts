@@ -23,7 +23,7 @@ function toPrismaJson(
   // - throw on BigInt unless we handle it
   const jsonString = JSON.stringify(value, (_key: string, v: unknown) => {
     if (typeof v === "bigint") return v.toString();
-    return v as unknown; // ✅ avoids returning `any`
+    return v; // ✅ avoids returning `any`
   });
   // If value was something unstringifiable, JSON.stringify could return undefined
   if (!jsonString) return undefined;

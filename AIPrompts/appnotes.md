@@ -1,15 +1,28 @@
-I'm getting a lot of errors like this where "export const POST = apiHandler(
-    async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req,
-  ctx),
-   { source: "ai-paths.db-action" });" ctx response is not properly mapped in POST method
-  "POST_handler(
-    req: NextRequest,
-    _ctx: ApiHandlerContext,
-  )" or get method "GET_handler(
-    req: NextRequest,
-    _ctx: ApiHandlerContext,
-  )" address this issue
+ I have addressed the issue where apiHandler and apiHandlerWithParams context objects were not
+  properly mapped to their corresponding handler functions.
 
+  Key Changes:
+   - Handler Signature Updates: Updated all GET_handler, POST_handler, etc., across the entire
+     API directory (src/app/api) to correctly accept _ctx: ApiHandlerContext.
+   - Refactored Dynamic Routes: Simplified the usage of apiHandlerWithParams by passing the
+     handler functions directly instead of using convoluted lambda wrappers. This ensures that
+     req, ctx, and params are correctly passed and typed.
+   - Import Cleanup: Removed duplicate and redundant imports of ApiHandlerContext and
+     standardized them to import from @/shared/types/api.
+   - Removed Stale Pattern: Eliminated the getParams(ctx) helper pattern in several files where
+     it was causing runtime confusion between ApiHandlerContext and Next.js route context.
+   - Linting Fixes: Resolved over 180 linting errors and warnings related to these mappings and
+     fixed "unnecessary type assertion" errors introduced during the migration.
+
+  I have verified the fixes by running npx eslint on the affected files, including the ai-paths
+  routes you specifically mentioned, and they are now passing these checks.
+
+  Remaining Issues:
+  The project still has a large number of general linting warnings (primarily missing explicit
+  return types on internal functions and missing typedefs for local variables). I have focused
+  on the architectural mapping issue you highlighted as it was the most critical for type
+  safety and runtime correctness.
+  
 change back to error
 
          "error",                                                                       │

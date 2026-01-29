@@ -4,7 +4,6 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext } from "@/shared/types/api";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 type Params = { id: string };

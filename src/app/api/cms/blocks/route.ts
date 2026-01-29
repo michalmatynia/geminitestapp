@@ -15,7 +15,7 @@ const blockSchema = z.object({
  * GET /api/cms/blocks
  * Fetches a list of all blocks.
  */
-async function GET_handler(): Promise<NextResponse | Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
     console.log("--- [Debug] GET /api/cms/blocks: Fetching blocks from repository ---");
     const cmsRepository = await getCmsRepository();
@@ -63,9 +63,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 }
 
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
- { source: "cms.blocks.GET" });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
- { source: "cms.blocks.POST" });
+export const GET = apiHandler(GET_handler, { source: "cms.blocks.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.blocks.POST" });

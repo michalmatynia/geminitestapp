@@ -48,7 +48,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       logPrefix: "cms-blocks",
     });
     if (!parsed.ok) {
-      return parsed.response as Response;
+      return parsed.response;
     }
     const { name, content } = parsed.data;
 

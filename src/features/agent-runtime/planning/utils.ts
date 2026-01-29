@@ -62,7 +62,7 @@ export function normalizePlannerMeta(parsed: {
   summary?: string;
   constraints?: string[];
   successSignals?: string[];
-}) {
+}): PlannerMeta {
   const critique = normalizeCritique(parsed.critique ?? parsed.selfCritique);
   const safetyChecks = normalizeStringList(parsed.safetyChecks);
   const questions = normalizeStringList(parsed.questions);
@@ -94,7 +94,7 @@ export function normalizePlannerMeta(parsed: {
   } satisfies PlannerMeta;
 }
 
-export function normalizeCritique(value?: PlannerCritique | null) {
+export function normalizeCritique(value?: PlannerCritique | null): PlannerCritique | null {
   if (!value) return null;
   const assumptions = normalizeStringList(value.assumptions);
   const risks = normalizeStringList(value.risks);
@@ -117,15 +117,15 @@ export function normalizeCritique(value?: PlannerCritique | null) {
   } satisfies PlannerCritique;
 }
 
-export function normalizeStringList(value: unknown) {
+export function normalizeStringList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim())
+    .filter((item: unknown): item is string => typeof item === "string")
+    .map((item: string) => item.trim())
     .filter(Boolean);
 }
 
-function uniqStrings(values: string[]) {
+function uniqStrings(values: string[]): string[] {
   const result: string[] = [];
   for (const value of values) {
     if (!result.includes(value)) {
@@ -135,10 +135,10 @@ function uniqStrings(values: string[]) {
   return result;
 }
 
-export function normalizeAlternatives(value: unknown) {
+export function normalizeAlternatives(value: unknown): PlannerAlternative[] | null {
   if (!Array.isArray(value)) return null;
   const alternatives = value
-    .map((entry) => {
+    .map((entry: unknown) => {
       if (!entry || typeof entry !== "object") return null;
       const typed = entry as PlannerAlternative;
       const title = typeof typed.title === "string" ? typed.title.trim() : "";
@@ -155,7 +155,7 @@ export function normalizeAlternatives(value: unknown) {
   return alternatives.length ? alternatives : null;
 }
 
-export function normalizeTaskType(value: unknown) {
+export function normalizeTaskType(value: unknown): PlannerMeta["taskType"] | undefined {
   if (value === "web_task" || value === "extract_info") return value;
   return undefined;
 }
@@ -228,7 +228,17 @@ export function buildPlanStepsFromSpecs(
   const preflightSteps = includeSafety
     ? buildSafetyCheckSteps(meta ?? undefined, maxStepAttempts)
     : [];
-  const plannedSteps: PlanStep[] = stepSpecs.map((step, _index: number) => ({
+  const plannedSteps: PlanStep[] = stepSpecs.map((step: {
+    title?: string;
+    tool?: string;
+    expectedObservation?: string;
+    successCriteria?: string;
+    phase?: string;
+    priority?: number;
+    dependsOn?: number[] | string[];
+    goalId?: string | null;
+    subgoalId?: string | null;
+  }, _index: number) => ({
     id: randomUUID(),
     title: step.title?.trim() || "Review the page state.",
     status: "pending" as const,
@@ -253,11 +263,19 @@ export function buildBranchStepsFromAlternatives(
   alternatives: PlannerAlternative[] | undefined,
   maxStepAttempts: number,
   maxSteps: number
-) {
+): PlanStep[] {
   if (!alternatives?.length) return [];
-  const specs = alternatives.flatMap((alt) => {
+  const specs = alternatives.flatMap((alt: PlannerAlternative) => {
     if (alt.steps?.length) {
-      return alt.steps.map((step) => ({
+      return alt.steps.map((step: {
+        title?: string;
+        tool?: string;
+        expectedObservation?: string;
+        successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+      }) => ({
         ...step,
         phase: step.phase ?? "recover",
       }));
@@ -280,7 +298,7 @@ export function buildBranchStepsFromAlternatives(
   );
 }
 
-export function normalizePhase(value?: string) {
+export function normalizePhase(value?: string): PlanStep["phase"] | null {
   if (!value) return null;
   const normalized = value.toLowerCase();
   if (normalized === "observe") return "observe";
@@ -293,27 +311,27 @@ export function normalizePhase(value?: string) {
 export function normalizeDependencies(
   value: number[] | string[] | undefined,
   stepSpecs: Array<{ title?: string }>
-) {
+): string[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   if (typeof value[0] === "number") {
     return (value as number[])
       .filter(
-        (idx) => Number.isInteger(idx) && idx >= 0 && idx < stepSpecs.length
+        (idx: number) => Number.isInteger(idx) && idx >= 0 && idx < stepSpecs.length
       )
-      .map((idx) => `step-${idx}`);
+      .map((idx: number) => `step-${idx}`);
   }
   if (typeof value[0] === "string") {
     const names = value as string[];
     return names
-      .map((name) => name.trim())
+      .map((name: string) => name.trim())
       .filter(Boolean)
-      .map((name) => {
+      .map((name: string) => {
         const found = stepSpecs.findIndex(
-          (spec) => spec.title?.trim().toLowerCase() === name.toLowerCase()
+          (spec: { title?: string }) => spec.title?.trim().toLowerCase() === name.toLowerCase()
         );
         return found >= 0 ? `step-${found}` : null;
       })
-      .filter(Boolean) as string[];
+      .filter((idx: string | null): idx is string => idx !== null);
   }
   return null;
 }
@@ -367,7 +385,7 @@ export function normalizePlanHierarchy(parsed: {
             : null,
           steps: steps.map((step) => ({
             title: step.title?.trim() || "Review the page state.",
-            tool: step.tool === "none" ? "none" : "playwright",
+            tool: step.tool === "none" ? "none" : "playwright" as const,
             expectedObservation: step.expectedObservation?.trim() || null,
             successCriteria: step.successCriteria?.trim() || null,
             phase: step.phase ?? null,
@@ -381,7 +399,17 @@ export function normalizePlanHierarchy(parsed: {
   return { goals };
 }
 
-export function flattenPlanHierarchy(hierarchy: PlanHierarchy) {
+export function flattenPlanHierarchy(hierarchy: PlanHierarchy): Array<{
+  title: string;
+  tool?: "playwright" | "none";
+  expectedObservation?: string | null;
+  successCriteria?: string | null;
+  phase?: string | null;
+  priority?: number | null;
+  dependsOn?: number[] | string[] | null;
+  goalId?: string | null;
+  subgoalId?: string | null;
+}> {
   const steps: Array<{
     title: string;
     tool?: "playwright" | "none";
@@ -479,7 +507,7 @@ export function buildPlan(prompt: string, maxSteps: number = MAX_PLAN_STEPS): st
   } else {
     const sentences = normalized
       .split(/[.!?]\s+/)
-      .map((sentence) => sentence.trim())
+      .map((sentence: string) => sentence.trim())
       .filter(Boolean);
     for (const sentence of sentences) {
       steps.push(sentence);
@@ -529,7 +557,7 @@ export function shouldEvaluateReplan(
   stepIndex: number,
   steps: PlanStep[],
   replanEverySteps: number
-) {
+): boolean {
   if (steps.length < 3) return false;
   const nextIndex = stepIndex + 1;
   if (nextIndex >= steps.length) return false;
@@ -539,7 +567,7 @@ export function shouldEvaluateReplan(
 export function appendTaskTypeToPrompt(
   prompt: string,
   taskType: PlannerMeta["taskType"] | null
-) {
+): string {
   if (!taskType) return prompt;
   return `${prompt}\n\nTask type: ${taskType}`;
 }
@@ -548,7 +576,7 @@ export function isExtractionStep(
   step: PlanStep,
   prompt: string,
   taskType: PlannerMeta["taskType"] | null
-) {
+): boolean {
   if (taskType === "extract_info") return true;
   const combined =
     `${step.title} ${step.expectedObservation ?? ""} ${prompt}`.toLowerCase();

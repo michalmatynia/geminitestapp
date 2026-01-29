@@ -5,6 +5,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { productService } from "@/features/products/server";
 import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +53,9 @@ export default async function HomePage() {
     }
   }
 
-  const defaultSlug = await prisma.slug.findFirst({
-    where: { isDefault: true },
-  });
+  const cmsRepository = await getCmsRepository();
+  const slugs = await cmsRepository.getSlugs();
+  const defaultSlug = slugs.find(s => s.isDefault);
 
   type MaybeImages = {
     images?: (ProductWithImages["images"][number] | null)[] | null;

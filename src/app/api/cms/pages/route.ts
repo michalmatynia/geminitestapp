@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import { ErrorSystem } from "@/features/observability/server";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 const pageCreateSchema = z.object({
   name: z.string().trim().min(1),
@@ -17,18 +17,8 @@ const pageCreateSchema = z.object({
  */
 async function GET_handler() {
   try {
-    const pages = await prisma.page.findMany({
-      include: {
-        slugs: {
-          include: {
-            slug: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const cmsRepository = await getCmsRepository();
+    const pages = await cmsRepository.getPages();
     return NextResponse.json(pages);
   } catch (_error) {
     await ErrorSystem.captureException(_error, {
@@ -55,18 +45,16 @@ async function POST_handler(req: Request) {
       return parsed.response;
     }
     const { name, slugIds } = parsed.data;
-    const newPage = await prisma.page.create({
-      data: {
-        name,
-        slugs: {
-          create: slugIds.map((slugId) => ({
-            slug: {
-              connect: { id: slugId },
-            },
-          })),
-        },
-      },
-    });
+    
+    const cmsRepository = await getCmsRepository();
+    const newPage = await cmsRepository.createPage({ name });
+    
+    if (slugIds.length > 0) {
+      for (const slugId of slugIds) {
+        await cmsRepository.addSlugToPage(newPage.id, slugId);
+      }
+    }
+    
     return NextResponse.json(newPage);
   } catch (_error) {
     await ErrorSystem.captureException(_error, {

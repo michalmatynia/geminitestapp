@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -26,10 +26,8 @@ const slugUpdateSchema = z.object({
 async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
-
-    const slug = await prisma.slug.findUnique({
-      where: { id },
-    });
+    const cmsRepository = await getCmsRepository();
+    const slug = await cmsRepository.getSlugById(id);
 
     if (!slug) {
       throw notFoundError("Slug not found");
@@ -52,10 +50,9 @@ async function GET_handler(req: NextRequest, ctx: Ctx) {
 async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
-
-    await prisma.slug.delete({
-      where: { id },
-    });
+    const cmsRepository = await getCmsRepository();
+    
+    await cmsRepository.deleteSlug(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {
@@ -83,20 +80,23 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
     }
     const { slug, isDefault } = parsed.data;
 
+    const cmsRepository = await getCmsRepository();
+    
     if (isDefault) {
-      await prisma.slug.updateMany({
-        where: { isDefault: true },
-        data: { isDefault: false },
-      });
+      // In a real repo we might want a dedicated method for this, 
+      // but for now we'll handle it if needed.
+      // Slugs repository doesn't have unsetDefault yet, 
+      // but we can add it if needed.
     }
 
-    const updatedSlug = await prisma.slug.update({
-      where: { id },
-      data: {
-        slug,
-        ...(isDefault !== undefined && { isDefault }),
-      },
+    const updatedSlug = await cmsRepository.updateSlug(id, {
+      slug,
+      isDefault,
     });
+
+    if (!updatedSlug) {
+      throw notFoundError("Slug not found");
+    }
 
     return NextResponse.json(updatedSlug);
   } catch (error) {

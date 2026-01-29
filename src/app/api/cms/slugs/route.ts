@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 const slugSchema = z.object({
   slug: z.string().trim().min(1),
@@ -15,11 +15,8 @@ const slugSchema = z.object({
  */
 async function GET_handler() {
   try {
-    const slugs = await prisma.slug.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const cmsRepository = await getCmsRepository();
+    const slugs = await cmsRepository.getSlugs();
     return NextResponse.json(slugs);
   } catch (_error) {
     return createErrorResponse(_error, {
@@ -42,9 +39,8 @@ async function POST_handler(req: Request) {
       return parsed.response;
     }
     const { slug } = parsed.data;
-    const newSlug = await prisma.slug.create({
-      data: { slug },
-    });
+    const cmsRepository = await getCmsRepository();
+    const newSlug = await cmsRepository.createSlug({ slug });
     return NextResponse.json(newSlug);
   } catch (error) {
     return createErrorResponse(error, {

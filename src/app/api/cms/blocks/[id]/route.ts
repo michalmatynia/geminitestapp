@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
-import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 type Params = { id: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -27,10 +26,8 @@ const blockUpdateSchema = z.object({
 async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
-
-    const block = await prisma.block.findUnique({
-      where: { id },
-    });
+    const cmsRepository = await getCmsRepository();
+    const block = await cmsRepository.getBlockById(id);
 
     if (!block) {
       throw notFoundError("Block not found");
@@ -62,13 +59,15 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
     }
     const { name, content } = parsed.data;
 
-    const updatedBlock = await prisma.block.update({
-      where: { id },
-      data: {
-        name,
-        content: content as Prisma.InputJsonValue,
-      },
+    const cmsRepository = await getCmsRepository();
+    const updatedBlock = await cmsRepository.updateBlock(id, {
+      name,
+      content,
     });
+
+    if (!updatedBlock) {
+      throw notFoundError("Block not found");
+    }
 
     return NextResponse.json(updatedBlock);
   } catch (error) {
@@ -87,10 +86,9 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
 async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
-
-    await prisma.block.delete({
-      where: { id },
-    });
+    const cmsRepository = await getCmsRepository();
+    
+    await cmsRepository.deleteBlock(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {

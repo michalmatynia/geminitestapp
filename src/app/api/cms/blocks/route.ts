@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
-import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 const blockSchema = z.object({
   name: z.string().trim().min(1),
@@ -17,12 +16,9 @@ const blockSchema = z.object({
  */
 async function GET_handler() {
   try {
-    console.log("--- [Debug] GET /api/cms/blocks: Fetching blocks from DB ---");
-    const blocks = await prisma.block.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    console.log("--- [Debug] GET /api/cms/blocks: Fetching blocks from repository ---");
+    const cmsRepository = await getCmsRepository();
+    const blocks = await cmsRepository.getBlocks();
     console.log("--- [Debug] GET /api/cms/blocks: Blocks fetched ---", blocks);
     return NextResponse.json(blocks);
   } catch (error) {
@@ -48,12 +44,13 @@ async function POST_handler(req: Request) {
     }
     console.log("Received request to create block:", parsed.data);
     const { name, content } = parsed.data;
-    const newBlock = await prisma.block.create({
-      data: {
-        name,
-        content: content as Prisma.InputJsonValue,
-      },
+    
+    const cmsRepository = await getCmsRepository();
+    const newBlock = await cmsRepository.createBlock({
+      name,
+      content,
     });
+    
     console.log("Successfully created block:", newBlock);
     return NextResponse.json(newBlock);
   } catch (error) {

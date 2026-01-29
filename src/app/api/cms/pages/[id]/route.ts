@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/server";
-import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -33,22 +32,8 @@ const pageUpdateSchema = z.object({
 async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
-
-    const page = await prisma.page.findUnique({
-      where: { id },
-      include: {
-        slugs: {
-          include: {
-            slug: true,
-          },
-        },
-        components: {
-          orderBy: {
-            order: "asc",
-          },
-        },
-      },
-    });
+    const cmsRepository = await getCmsRepository();
+    const page = await cmsRepository.getPageById(id);
 
     if (!page) {
       throw notFoundError("Page not found");
@@ -80,28 +65,20 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
     }
     const { name, slugIds, components } = parsed.data;
 
-    const updatedPage = await prisma.page.update({
-      where: { id },
-      data: {
-        name,
-        slugs: {
-          deleteMany: {},
-          create: slugIds.map((slugId) => ({
-            slug: {
-              connect: { id: slugId },
-            },
-          })),
-        },
-        components: {
-          deleteMany: {},
-          create: components.map((component, index) => ({
-            type: component.type,
-            content: component.content as Prisma.InputJsonValue,
-            order: index,
-          })),
-        },
-      },
+    const cmsRepository = await getCmsRepository();
+    
+    // Update basic info and components
+    const updatedPage = await cmsRepository.updatePage(id, {
+      name,
+      components,
     });
+
+    if (!updatedPage) {
+      throw notFoundError("Page not found");
+    }
+
+    // Update slugs
+    await cmsRepository.replacePageSlugs(id, slugIds);
 
     return NextResponse.json(updatedPage);
   } catch (error) {
@@ -120,10 +97,9 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
 async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
-
-    await prisma.page.delete({
-      where: { id },
-    });
+    const cmsRepository = await getCmsRepository();
+    
+    await cmsRepository.deletePage(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {

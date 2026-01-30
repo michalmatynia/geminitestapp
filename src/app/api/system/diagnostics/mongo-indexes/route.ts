@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { IndexSpecification } from "mongodb";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -7,7 +8,7 @@ import { AI_PATHS_MONGO_INDEXES } from "@/features/ai-paths/services/path-run-re
 
 type IndexInfo = {
   name?: string;
-  key: Record<string, unknown>;
+  key: IndexSpecification;
 };
 
 type CollectionIndexStatus = {
@@ -19,7 +20,7 @@ type CollectionIndexStatus = {
   error?: string;
 };
 
-const serializeKey = (key: Record<string, unknown>) => JSON.stringify(key);
+const serializeKey = (key: IndexSpecification) => JSON.stringify(key);
 
 const buildExpectedByCollection = () =>
   AI_PATHS_MONGO_INDEXES.reduce<Record<string, IndexInfo[]>>((acc, index) => {
@@ -45,7 +46,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
         .toArray();
       existing = existingIndexes.map((index) => ({
         name: index.name,
-        key: index.key as Record<string, unknown>,
+        key: index.key as IndexSpecification,
       }));
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : "Failed to load indexes";
@@ -84,7 +85,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const db = await getMongoDb();
   const expectedByCollection = buildExpectedByCollection();
-  const created: Array<{ collection: string; key: Record<string, unknown> }> = [];
+  const created: Array<{ collection: string; key: IndexSpecification }> = [];
 
   for (const [collectionName, expected] of Object.entries(expectedByCollection)) {
     for (const index of expected) {

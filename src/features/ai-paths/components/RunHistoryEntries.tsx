@@ -117,7 +117,9 @@ export function RunHistoryEntries({
                         {link.fromPort || link.toPort ? (
                           <span className="text-gray-500">
                             {" "}
-                            {link.fromPort ?? "default"} -> {link.toPort ?? "default"}
+                            {link.fromPort ?? "default"}
+                            {" -> "}
+                            {link.toPort ?? "default"}
                           </span>
                         ) : null}
                       </li>
@@ -138,7 +140,9 @@ export function RunHistoryEntries({
                         {link.fromPort || link.toPort ? (
                           <span className="text-gray-500">
                             {" "}
-                            {link.fromPort ?? "default"} -> {link.toPort ?? "default"}
+                            {link.fromPort ?? "default"}
+                            {" -> "}
+                            {link.toPort ?? "default"}
                           </span>
                         ) : null}
                       </li>

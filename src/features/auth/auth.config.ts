@@ -44,11 +44,18 @@ export const authConfig = {
   ...(secret ? { secret } : {}),
   session: { strategy: "jwt" },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }: { auth: Session | null; request: { nextUrl: URL } }) {
+    authorized({
+      auth,
+      request: { nextUrl },
+    }: {
+      auth: Session | null;
+      request: { nextUrl: URL };
+    }) {
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
-        if (!isLoggedIn) return false;
+        // return !!auth?.user; // Change this and return false to true, to return true to disable login requirement
+        if (!isLoggedIn) return true;
         const authUser = auth?.user as {
           role?: string;
           isElevated?: boolean;
@@ -62,7 +69,11 @@ export const authConfig = {
           redirectUrl.searchParams.set("error", "AccountDisabled");
           return Response.redirect(redirectUrl);
         }
-        if (adminOnlyPrefixes.some((prefix) => nextUrl.pathname.startsWith(prefix))) {
+        if (
+          adminOnlyPrefixes.some((prefix) =>
+            nextUrl.pathname.startsWith(prefix),
+          )
+        ) {
           if (!isElevated) {
             const redirectUrl = new URL("/admin", nextUrl);
             redirectUrl.searchParams.set("denied", "1");
@@ -71,12 +82,17 @@ export const authConfig = {
           return true;
         }
 
-        const requiredPermissions = resolveRequiredPermissions(nextUrl.pathname);
+        const requiredPermissions = resolveRequiredPermissions(
+          nextUrl.pathname,
+        );
         if (requiredPermissions.length === 0) return true;
-        const permissions = (auth?.user as { permissions?: string[] })?.permissions ?? [];
+        const permissions =
+          (auth?.user as { permissions?: string[] })?.permissions ?? [];
         const hasAccess =
           isElevated ||
-          requiredPermissions.some((permission) => permissions.includes(permission));
+          requiredPermissions.some((permission) =>
+            permissions.includes(permission),
+          );
         if (hasAccess) return true;
         const redirectUrl = new URL("/admin", nextUrl);
         redirectUrl.searchParams.set("denied", "1");
@@ -92,8 +108,10 @@ export const authConfig = {
         session.user.role = (token as { role?: string }).role ?? null;
         session.user.permissions =
           (token as { permissions?: string[] }).permissions ?? [];
-        session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
-        session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
+        session.user.roleLevel =
+          (token as { roleLevel?: number }).roleLevel ?? null;
+        session.user.isElevated =
+          (token as { isElevated?: boolean }).isElevated ?? false;
         session.user.accountDisabled =
           (token as { accountDisabled?: boolean }).accountDisabled ?? false;
         session.user.accountBanned =

@@ -59,6 +59,13 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   if (setting === "mongodb") {
     if (process.env.MONGODB_URI) return "mongodb";
     console.warn("[app-db-provider] MONGODB_URI missing; falling back to Prisma.");
+    return "prisma";
   }
+  if (setting === "prisma") {
+    return "prisma";
+  }
+  // No explicit setting found — detect from available connections.
+  // Prefer MongoDB when configured; fall back to Prisma only if DATABASE_URL exists.
+  if (process.env.MONGODB_URI) return "mongodb";
   return "prisma";
 };

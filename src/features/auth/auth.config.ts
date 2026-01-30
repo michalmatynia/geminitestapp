@@ -54,8 +54,7 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
-        // return !!auth?.user; // Change this and return false to true, to return true to disable login requirement
-        if (!isLoggedIn) return true;
+        if (!isLoggedIn) return false;
         const authUser = auth?.user as {
           role?: string;
           isElevated?: boolean;

@@ -32,11 +32,15 @@ const canUsePrismaSettings = () =>
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
-  const setting = await prisma.setting.findUnique({
-    where: { key },
-    select: { value: true },
-  });
-  return setting?.value ?? null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key },
+      select: { value: true },
+    });
+    return setting?.value ?? null;
+  } catch {
+    return null;
+  }
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
@@ -51,9 +55,9 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 const readSettingValue = async (key: string): Promise<string | null> => {
   const provider = await getAppDbProvider();
   if (provider === "mongodb") {
-    return (await readMongoSetting(key)) ?? (await readPrismaSetting(key));
+    return readMongoSetting(key);
   }
-  return (await readPrismaSetting(key)) ?? (await readMongoSetting(key));
+  return readPrismaSetting(key);
 };
 
 const toPositiveNumber = (value: unknown, fallback: number, minValue = 0): number => {

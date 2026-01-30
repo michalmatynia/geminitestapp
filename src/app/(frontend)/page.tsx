@@ -25,22 +25,27 @@ const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
 const getFrontPageSetting = async (): Promise<string | null> => {
+  if (process.env.MONGODB_URI) {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<SettingDocument>("settings")
+      .findOne({ _id: FRONT_PAGE_SETTING_KEY });
+    if (doc?.value) return doc.value;
+  }
+
   if (canUsePrismaSettings()) {
-    const setting = await prisma.setting.findUnique({
-      where: { key: FRONT_PAGE_SETTING_KEY },
-      select: { value: true },
-    });
-    if (setting?.value) {
-      return setting.value;
+    try {
+      const setting = await prisma.setting.findUnique({
+        where: { key: FRONT_PAGE_SETTING_KEY },
+        select: { value: true },
+      });
+      if (setting?.value) return setting.value;
+    } catch {
+      // Prisma unavailable — ignore.
     }
   }
 
-  if (!process.env.MONGODB_URI) return null;
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<SettingDocument>("settings")
-    .findOne({ _id: FRONT_PAGE_SETTING_KEY });
-  return doc?.value ?? null;
+  return null;
 };
 
 export default async function Home(): Promise<JSX.Element> {

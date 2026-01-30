@@ -1,14 +1,9 @@
 "use client";
 import React, { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
+import { Button, Input, useToast } from "@/shared/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-
-
-
-
-
 
 import { logClientError } from "@/features/observability";
 import { useUpdateSetting, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
@@ -17,7 +12,13 @@ import { evaluateGraph, dbApi, aiJobsApi, entityApi, runsApi } from "@/features/
 import { CanvasBoard } from "./canvas-board";
 import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
-import { RunHistoryEntries } from "./RunHistoryEntries";
+import { ClusterPresetsPanel, type ClusterPresetDraft } from "./cluster-presets-panel";
+import { GraphModelDebugPanel } from "./graph-model-debug-panel";
+import { PresetsDialog } from "./presets-dialog";
+import { RunDetailDialog } from "./run-detail-dialog";
+import { RunHistoryPanel, type RunHistoryFilter } from "./run-history-panel";
+import { SimulationDialog } from "./simulation-dialog";
+import { buildHistoryNodeOptions } from "./run-history-utils";
 import type {
   AiNode,
   AiPathRunEventRecord,
@@ -96,6 +97,12 @@ type AiPathsSettingsProps = {
 };
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
+const DEFAULT_PRESET_DRAFT: ClusterPresetDraft = {
+  name: "",
+  description: "",
+  bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
+  template: "Write a summary for {{context.entity.title}}",
+};
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): JSX.Element {
   const { toast } = useToast();
@@ -196,7 +203,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   >({});
   const [runDetailOpen, setRunDetailOpen] = useState(false);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
-  const [runFilter, setRunFilter] = useState<"all" | "active" | "failed" | "dead">("all");
+  const [runFilter, setRunFilter] = useState<RunHistoryFilter>("all");
   const [runDetail, setRunDetail] = useState<{
     run: AiPathRunRecord;
     nodes: AiPathRunNodeRecord[];
@@ -220,12 +227,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const [dbQueryPresets, setDbQueryPresets] = useState<DbQueryPreset[]>([]);
   const [dbNodePresets, setDbNodePresets] = useState<DbNodePreset[]>([]);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
-  const [presetDraft, setPresetDraft] = useState({
-    name: "",
-    description: "",
-    bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
-    template: "Write a summary for {{context.entity.title}}",
-  });
+  const [presetDraft, setPresetDraft] = useState<ClusterPresetDraft>(DEFAULT_PRESET_DRAFT);
 
   useEffect(() => {
     if (!runDetailOpen || !runDetail?.run?.id) {
@@ -351,39 +353,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return { counts, total, completed, progress };
   }, [runDetail]);
 
-  const buildHistoryNodeOptions = (
-    history?: Record<string, RuntimeHistoryEntry[]>,
-    runNodes?: AiPathRunNodeRecord[] | null,
-    graphNodes?: AiNode[] | null
-  ): Array<{ id: string; label: string }> => {
-    const options: Array<{ id: string; label: string }> = [];
-    const seen = new Set<string>();
-    const add = (id?: string | null, title?: string | null, type?: string | null): void => {
-      if (!id || seen.has(id)) return;
-      seen.add(id);
-      const base = title && title.trim() ? title.trim() : id;
-      const label = type ? `${base} (${type})` : base;
-      options.push({ id, label });
-    };
-    if (Array.isArray(graphNodes)) {
-      graphNodes.forEach((node: AiNode) => add(node.id, node.title ?? null, node.type ?? null));
-    }
-    if (Array.isArray(runNodes)) {
-      runNodes.forEach((node: AiPathRunNodeRecord) =>
-        add(node.nodeId, node.nodeTitle ?? null, node.nodeType ?? null)
-      );
-    }
-    if (history) {
-      Object.keys(history).forEach((id: string) => add(id, id, null));
-    }
-    return options;
-  };
-
   const runDetailHistory = (runDetail?.run?.runtimeState?.history ?? undefined) as
     | Record<string, RuntimeHistoryEntry[]>
     | undefined;
   const runDetailHistoryOptions = useMemo(
-    () => buildHistoryNodeOptions(runDetailHistory, runDetail?.nodes ?? null, runDetail?.run?.graph?.nodes ?? null),
+    () =>
+      buildHistoryNodeOptions(
+        runDetailHistory,
+        runDetail?.nodes ?? null,
+        runDetail?.run?.graph?.nodes ?? null
+      ),
     [runDetailHistory, runDetail?.nodes, runDetail?.run?.graph?.nodes]
   );
 
@@ -2512,21 +2491,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return runsQuery.data.data.runs ?? [];
   }, [runsQuery.data]);
 
-  const filteredRunList = useMemo((): AiPathRunRecord[] => {
-    if (runFilter === "all") return runList;
-    if (runFilter === "active") {
-      return runList.filter(
-        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
-      );
-    }
-    if (runFilter === "failed") {
-      return runList.filter(
-        (run: AiPathRunRecord): boolean => run.status === "failed" || run.status === "paused"
-      );
-    }
-    return runList.filter((run: AiPathRunRecord): boolean => run.status === "dead_lettered");
-  }, [runFilter, runList]);
-
   const handleOpenRunDetail = async (runId: string): Promise<void> => {
     setRunDetailOpen(true);
     setRunDetailLoading(true);
@@ -2940,6 +2904,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       template: templateNode.config?.template?.template ?? "",
     });
     toast("Preset draft loaded from selection.", { variant: "success" });
+  };
+
+  const handleResetPresetDraft = (): void => {
+    setEditingPresetId(null);
+    setPresetDraft(DEFAULT_PRESET_DRAFT);
   };
 
 
@@ -3660,412 +3629,75 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
               />
-              <div className="rounded-lg border border-border bg-card/60 p-4">
-            <div className="mb-3 flex items-center justify-between text-sm font-semibold text-white">
-              <span>Cluster Presets</span>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                  onClick={() => handlePresetFromSelection()}
-                >
-                  From Selection
-                </Button>
-                {editingPresetId && (
-                  <Button
-                    type="button"
-                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                    onClick={() => {
-                      setEditingPresetId(null);
-                      setPresetDraft({
-                        name: "",
-                        description: "",
-                        bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
-                        template: "Write a summary for {{context.entity.title}}",
-                      });
-                    }}
-                  >
-                    New
-                  </Button>
-                )}
-              </div>
+              <ClusterPresetsPanel
+                presetDraft={presetDraft}
+                setPresetDraft={setPresetDraft}
+                editingPresetId={editingPresetId}
+                onResetPresetDraft={handleResetPresetDraft}
+                onPresetFromSelection={handlePresetFromSelection}
+                onSavePreset={() => void handleSavePreset()}
+                clusterPresets={clusterPresets}
+                onLoadPreset={handleLoadPreset}
+                onApplyPreset={handleApplyPreset}
+                onDeletePreset={(presetId: string) => void handleDeletePreset(presetId)}
+                onExportPresets={handleExportPresets}
+              />
+              <GraphModelDebugPanel payload={lastGraphModelPayload} />
+              <RunHistoryPanel
+                runs={runList}
+                isRefreshing={runsQuery.isFetching}
+                onRefresh={() => { void runsQuery.refetch(); }}
+                runFilter={runFilter}
+                setRunFilter={setRunFilter}
+                expandedRunHistory={expandedRunHistory}
+                setExpandedRunHistory={setExpandedRunHistory}
+                runHistorySelection={runHistorySelection}
+                setRunHistorySelection={setRunHistorySelection}
+                onOpenRunDetail={(runId: string) => { void handleOpenRunDetail(runId); }}
+                onResumeRun={(runId: string, mode: "resume" | "replay") => void handleResumeRun(runId, mode)}
+                onCancelRun={(runId: string) => void handleCancelRun(runId)}
+                onRequeueDeadLetter={(runId: string) => void handleRequeueDeadLetter(runId)}
+              />
             </div>
-            <div className="space-y-3 text-xs text-gray-300">
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white"
-                  value={presetDraft.name}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, name: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">Description</Label>
-                <Textarea
-                  className="mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-                  value={presetDraft.description}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, description: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">
-                  Bundle Ports (one per line)
-                </Label>
-                <Textarea
-                  className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-                  value={presetDraft.bundlePorts}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, bundlePorts: event.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">Template</Label>
-                <Textarea
-                  className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
-                  value={presetDraft.template}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, template: event.target.value }))
-                  }
-                />
-              </div>
-              <Button
-                className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
-                type="button"
-                onClick={() => void handleSavePreset()}
-              >
-                {editingPresetId ? "Update Preset" : "Save Preset"}
-              </Button>
-            </div>
-            <div className="mt-4 space-y-2 text-xs text-gray-400">
-              <div className="text-[11px] uppercase text-gray-500">Library</div>
-              {clusterPresets.length === 0 && (
-                <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-500">
-                  No presets yet. Save a bundle + template pair to reuse across apps.
-                </div>
-              )}
-              {clusterPresets.map((preset: ClusterPreset) => (
-                <div
-                  key={preset.id}
-                  className="rounded-md border border-border bg-card/50 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-xs font-semibold text-white">{preset.name}</div>
-                      {preset.description && (
-                        <div className="text-[11px] text-gray-500">
-                          {preset.description}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                        onClick={() => handleLoadPreset(preset)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        className="rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
-                        onClick={() => handleApplyPreset(preset)}
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        type="button"
-                        className="rounded-md border border-rose-500/40 px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
-                        onClick={() => void handleDeletePreset(preset.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-[10px] text-gray-500">
-                    Updated: {new Date(preset.updatedAt).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
-                onClick={handleExportPresets}
-              >
-                Export / Import
-              </Button>
-            </div>
+            <CanvasBoard
+              viewportRef={viewportRef}
+              canvasRef={canvasRef}
+              nodes={nodes}
+              edges={edges}
+              runtimeState={runtimeState}
+              edgePaths={edgePaths}
+              view={view}
+              panState={panState}
+              lastDrop={lastDrop}
+              connecting={connecting}
+              connectingPos={connectingPos}
+              connectingFromNode={connectingFromNode}
+              selectedNodeId={selectedNodeId}
+              draggingNodeId={dragState?.nodeId ?? null}
+              selectedEdgeId={selectedEdgeId}
+              onSelectEdgeId={handleSelectEdge}
+              onRemoveEdge={handleRemoveEdge}
+              onSelectNode={handleSelectNode}
+              onOpenNodeConfig={() => setConfigOpen(true)}
+              onFireTrigger={handleFireTrigger}
+              onPointerDownNode={handlePointerDown}
+              onPointerMoveNode={handlePointerMove}
+              onPointerUpNode={handlePointerUp}
+              onStartConnection={handleStartConnection}
+              onCompleteConnection={handleCompleteConnection}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onPanStart={handlePanStart}
+              onPanMove={handlePanMove}
+              onPanEnd={handlePanEnd}
+              onZoomTo={zoomTo}
+              onFitToNodes={fitToNodes}
+              onResetView={resetView}
+            />
           </div>
-          <div className="rounded-lg border border-border bg-card/60 p-4">
-            <div className="mb-2 text-sm font-semibold text-white">Graph Model Debug</div>
-            {lastGraphModelPayload ? (
-              <pre className="max-h-60 overflow-auto rounded-md border border-border bg-card/70 p-3 text-[11px] text-gray-300 whitespace-pre-wrap">
-                {JSON.stringify(lastGraphModelPayload, null, 2)}
-              </pre>
-            ) : (
-              <div className="text-[11px] text-gray-500">
-                Run a model node to capture the latest payload.
-              </div>
-            )}
-          </div>
-          <div className="rounded-lg border border-border bg-card/60 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-white">Run History</span>
-              <Button
-                type="button"
-                className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                onClick={() => void runsQuery.refetch()}
-                disabled={runsQuery.isFetching}
-              >
-                {runsQuery.isFetching ? "Refreshing..." : "Refresh"}
-              </Button>
-            </div>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {[
-                { id: "all", label: "All" },
-                { id: "active", label: "Active" },
-                { id: "failed", label: "Failed" },
-                { id: "dead", label: "Dead-letter" },
-              ].map((filter: { id: string; label: string }): React.JSX.Element => (
-                <Button
-                  key={filter.id}
-                  type="button"
-                  className={`rounded-md border px-2 py-1 text-[10px] ${
-                    runFilter === filter.id
-                      ? "border-emerald-500/50 text-emerald-200"
-                      : "text-gray-300 hover:bg-muted/60"
-                  }`}
-                  onClick={() => setRunFilter(filter.id as typeof runFilter)}
-                >
-                  {filter.label}
-                </Button>
-              ))}
-            </div>
-            {filteredRunList.length === 0 ? (
-              <div className="text-[11px] text-gray-500">No runs yet.</div>
-            ) : (
-              <div className="space-y-2 text-xs text-gray-300">
-                {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
-                  const statusClass =
-                    run.status === "completed"
-                      ? "text-emerald-200"
-                      : run.status === "failed"
-                        ? "text-rose-200"
-                        : run.status === "dead_lettered"
-                          ? "text-rose-300"
-                        : run.status === "running"
-                          ? "text-sky-200"
-                          : run.status === "queued"
-                            ? "text-amber-200"
-                            : "text-gray-300";
-                  const runHistory = (run.runtimeState?.history ?? undefined) as
-                    | Record<string, RuntimeHistoryEntry[]>
-                    | undefined;
-                  const runHistoryOptions = buildHistoryNodeOptions(
-                    runHistory,
-                    null,
-                    run.graph?.nodes ?? null
-                  );
-                  const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
-                  const selectedHistoryNodeId = runHistoryOptions.some(
-                    (option) => option.id === rawSelectedHistoryNodeId
-                  )
-                    ? rawSelectedHistoryNodeId
-                    : runHistoryOptions[0]?.id ?? null;
-                  const historyOpen = Boolean(expandedRunHistory[run.id]);
-                  const historyEntries =
-                    selectedHistoryNodeId && runHistory
-                      ? runHistory[selectedHistoryNodeId] ?? []
-                      : [];
-                  return (
-                    <div
-                      key={run.id}
-                      className="rounded-md border border-border/60 bg-card/70 p-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className={`text-[10px] uppercase ${statusClass}`}>
-                            {run.status}
-                          </div>
-                          <div className="text-[11px] text-gray-400">
-                            {new Date(run.createdAt).toLocaleString()}
-                          </div>
-                          {typeof run.retryCount === "number" && typeof run.maxAttempts === "number" && (
-                            <div className="text-[10px] text-gray-500">
-                              Retries: {run.retryCount}/{run.maxAttempts}
-                            </div>
-                          )}
-                          {run.nextRetryAt && (
-                            <div className="text-[10px] text-amber-200">
-                              Retry at {new Date(run.nextRetryAt).toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                            onClick={() => void handleOpenRunDetail(run.id)}
-                          >
-                            Details
-                          </Button>
-                          <Button
-                            type="button"
-                            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                            onClick={() => {
-                              setExpandedRunHistory((prev) => ({
-                                ...prev,
-                                [run.id]: !prev[run.id],
-                              }));
-                              if (!runHistorySelection[run.id] && runHistoryOptions[0]?.id) {
-                                setRunHistorySelection((prev) => ({
-                                  ...prev,
-                                  [run.id]: runHistoryOptions[0].id,
-                                }));
-                              }
-                            }}
-                          >
-                            {historyOpen ? "Hide history" : "History"}
-                          </Button>
-                          {(run.status === "failed" || run.status === "paused") && (
-                            <Button
-                              type="button"
-                              className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
-                              onClick={() => void handleResumeRun(run.id, "resume")}
-                            >
-                              Resume
-                            </Button>
-                          )}
-                          <Button
-                            type="button"
-                            className="rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10"
-                            onClick={() => void handleResumeRun(run.id, "replay")}
-                          >
-                            Replay
-                          </Button>
-                          {(run.status === "queued" || run.status === "running") && (
-                            <Button
-                              type="button"
-                              className="rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
-                              onClick={() => void handleCancelRun(run.id)}
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                          {run.status === "dead_lettered" && (
-                            <Button
-                              type="button"
-                              className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
-                              onClick={() => void handleRequeueDeadLetter(run.id)}
-                            >
-                              Requeue
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      {run.errorMessage && (
-                        <div className="mt-2 text-[10px] text-rose-300">
-                          {run.errorMessage}
-                        </div>
-                      )}
-                      {historyOpen && (
-                        <div className="mt-2 rounded-md border border-border/70 bg-black/20 p-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Label className="text-[10px] uppercase text-gray-500">History</Label>
-                            {runHistory ? (
-                              runHistoryOptions.length > 1 ? (
-                                <Select
-                                  value={selectedHistoryNodeId ?? undefined}
-                                  onValueChange={(value) =>
-                                    setRunHistorySelection((prev) => ({
-                                      ...prev,
-                                      [run.id]: value,
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
-                                    <SelectValue placeholder="Select node" />
-                                  </SelectTrigger>
-                                  <SelectContent className="border-border bg-gray-900 text-white">
-                                    {runHistoryOptions.map((option) => (
-                                      <SelectItem key={option.id} value={option.id}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <div className="text-[11px] text-gray-400">
-                                  {runHistoryOptions[0]?.label ?? "No nodes"}
-                                </div>
-                              )
-                            ) : null}
-                          </div>
-                          {runHistory && selectedHistoryNodeId ? (
-                            <div className="mt-3">
-                              <RunHistoryEntries
-                                entries={historyEntries}
-                                emptyMessage="No history for this node."
-                              />
-                            </div>
-                          ) : (
-                            <div className="mt-2 text-[11px] text-gray-500">
-                              No history recorded for this run.
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-        <CanvasBoard
-          viewportRef={viewportRef}
-          canvasRef={canvasRef}
-          nodes={nodes}
-          edges={edges}
-          runtimeState={runtimeState}
-          edgePaths={edgePaths}
-          view={view}
-          panState={panState}
-          lastDrop={lastDrop}
-          connecting={connecting}
-          connectingPos={connectingPos}
-          connectingFromNode={connectingFromNode}
-          selectedNodeId={selectedNodeId}
-          draggingNodeId={dragState?.nodeId ?? null}
-          selectedEdgeId={selectedEdgeId}
-          onSelectEdgeId={handleSelectEdge}
-          onRemoveEdge={handleRemoveEdge}
-          onSelectNode={handleSelectNode}
-          onOpenNodeConfig={() => setConfigOpen(true)}
-          onFireTrigger={handleFireTrigger}
-          onPointerDownNode={handlePointerDown}
-          onPointerMoveNode={handlePointerMove}
-          onPointerUpNode={handlePointerUp}
-          onStartConnection={handleStartConnection}
-          onCompleteConnection={handleCompleteConnection}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onPanStart={handlePanStart}
-          onPanMove={handlePanMove}
-          onPanEnd={handlePanEnd}
-          onZoomTo={zoomTo}
-          onFitToNodes={fitToNodes}
-          onResetView={resetView}
-        />
-        </div>
         </div>
       )}
 
-      
       {activeTab === "paths" && (
         <PathsTabPanel
           paths={paths}
@@ -4126,289 +3758,44 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
       />
-      <Dialog
+      <RunDetailDialog
         open={runDetailOpen}
         onOpenChange={(open: boolean): void => {
           setRunDetailOpen(open);
           if (open) setRunStreamPaused(false);
           if (!open) setRunDetail(null);
         }}
-      >
-        <DialogContent className="max-w-3xl border border-border bg-card text-white">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Run Details</DialogTitle>
-            <DialogDescription className="text-sm text-gray-400">
-              Persistent AI Path runtime snapshot.
-            </DialogDescription>
-          </DialogHeader>
-          {runDetailLoading ? (
-            <div className="text-sm text-gray-400">Loading...</div>
-          ) : runDetail ? (
-            <div className="space-y-4 text-xs text-gray-300">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Status</span>
-                  <div className="text-sm">{runDetail.run.status}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Stream</span>
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span>{runStreamStatus}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setRunStreamPaused((prev) => !prev)}
-                    >
-                      {runStreamPaused ? "Resume stream" : "Pause stream"}
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Run ID</span>
-                  <div className="font-mono text-[11px]">{runDetail.run.id}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Created</span>
-                  <div>{new Date(runDetail.run.createdAt).toLocaleString()}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Started</span>
-                  <div>
-                    {runDetail.run.startedAt
-                      ? new Date(runDetail.run.startedAt).toLocaleString()
-                      : "—"}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase text-gray-500">Finished</span>
-                  <div>
-                    {runDetail.run.finishedAt
-                      ? new Date(runDetail.run.finishedAt).toLocaleString()
-                      : "—"}
-                  </div>
-                </div>
-              </div>
-              {runNodeSummary ? (
-                <div className="rounded-md border border-border/70 bg-black/20 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-                    <span>
-                      Nodes: {runNodeSummary.completed}/{runNodeSummary.total} completed
-                    </span>
-                    <span>{runNodeSummary.progress}%</span>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/40">
-                    <div
-                      className="h-full rounded-full bg-emerald-400/70 transition-all"
-                      style={{ width: `${runNodeSummary.progress}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                    {Object.entries(runNodeSummary.counts).map(([status, count]) => (
-                      <span key={status}>
-                        {status}: {count}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">Run</Label>
-                <Textarea
-                  className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                  readOnly
-                  value={JSON.stringify(runDetail.run, null, 2)}
-                />
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-gray-500">Nodes</Label>
-                <Textarea
-                  className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                  readOnly
-                  value={JSON.stringify(runDetail.nodes, null, 2)}
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-[10px] uppercase text-gray-500">Events</Label>
-                  {runEventsOverflow ? (
-                    <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
-                      Truncated{runEventsBatchLimit ? ` (limit ${runEventsBatchLimit})` : ""}
-                    </span>
-                  ) : null}
-                </div>
-                <Textarea
-                  className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                  readOnly
-                  value={JSON.stringify(runDetail.events, null, 2)}
-                />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Label className="text-[10px] uppercase text-gray-500">History</Label>
-                  {runDetailHistoryOptions.length > 1 ? (
-                    <Select
-                      value={runDetailSelectedHistoryNodeId ?? undefined}
-                      onValueChange={(value) => setRunHistoryNodeId(value)}
-                    >
-                      <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
-                        <SelectValue placeholder="Select node" />
-                      </SelectTrigger>
-                      <SelectContent className="border-border bg-gray-900 text-white">
-                        {runDetailHistoryOptions.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="text-[11px] text-gray-400">
-                      {runDetailHistoryOptions[0]?.label ?? "No nodes"}
-                    </div>
-                  )}
-                </div>
-                {runDetailHistoryOptions.length > 0 ? (
-                  <div className="mt-3">
-                    <RunHistoryEntries
-                      entries={runDetailSelectedHistoryEntries}
-                      emptyMessage="No history for this node."
-                    />
-                  </div>
-                ) : (
-                  <div className="mt-2 text-[11px] text-gray-500">
-                    No history recorded for this run.
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-400">No run selected.</div>
-          )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={presetsModalOpen} onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}>
-        <DialogContent className="max-w-2xl border border-border bg-card text-white">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Export / Import Presets</DialogTitle>
-            <DialogDescription className="text-sm text-gray-400">
-              Share Cluster Presets as JSON across projects.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              className="min-h-[240px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-              value={presetsJson}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setPresetsJson(event.target.value)}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                className="rounded-md border text-xs text-white hover:bg-muted/60"
-                onClick={() => setPresetsJson(JSON.stringify(clusterPresets, null, 2))}
-              >
-                Load Export
-              </Button>
-              <Button
-                type="button"
-                className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
-                onClick={() => void handleImportPresets("merge")}
-              >
-                Import (Merge)
-              </Button>
-              <Button
-                type="button"
-                className="rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
-                onClick={() => void handleImportPresets("replace")}
-              >
-                Replace Existing
-              </Button>
-              <Button
-                type="button"
-                className="rounded-md border text-xs text-white hover:bg-muted/60"
-                onClick={() => {
-                  const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
-                  navigator.clipboard
-                    .writeText(value)
-                    .then(() => toast("Presets copied to clipboard.", { variant: "success" }))
-                    .catch((error: Error) => {
-                      reportAiPathsError(error, { action: "copyPresets" }, "Failed to copy presets:");
-                      toast("Failed to copy presets.", { variant: "error" });
-                    });
-                }}
-              >
-                Copy JSON
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        runDetailLoading={runDetailLoading}
+        runDetail={runDetail}
+        runStreamStatus={runStreamStatus}
+        runStreamPaused={runStreamPaused}
+        onToggleStreamPause={() => setRunStreamPaused((prev) => !prev)}
+        runNodeSummary={runNodeSummary}
+        runEventsOverflow={runEventsOverflow}
+        runEventsBatchLimit={runEventsBatchLimit}
+        historyOptions={runDetailHistoryOptions}
+        selectedHistoryNodeId={runDetailSelectedHistoryNodeId}
+        onSelectHistoryNode={(value: string) => setRunHistoryNodeId(value)}
+        historyEntries={runDetailSelectedHistoryEntries}
+      />
+      <PresetsDialog
+        open={presetsModalOpen}
+        onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}
+        presetsJson={presetsJson}
+        setPresetsJson={setPresetsJson}
+        clusterPresets={clusterPresets}
+        onImportPresets={(mode: "merge" | "replace") => void handleImportPresets(mode)}
+        toast={toast}
+        reportAiPathsError={reportAiPathsError}
+      />
 
-      {simulationOpenNodeId ? (
-        <Dialog
-          open={Boolean(simulationOpenNodeId)}
-          onOpenChange={(open: boolean): void => {
-            if (!open) setSimulationOpenNodeId(null);
-          }}
-        >
-          <DialogContent className="max-w-md border border-border bg-card text-white">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Simulation Modal</DialogTitle>
-              <DialogDescription className="text-sm text-gray-400">
-                Set an Entity ID and simulate the connected trigger action.
-              </DialogDescription>
-            </DialogHeader>
-                          {(() => {
-                            const simulationNode = nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId);
-                            if (!simulationNode) return null;
-                            const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
-                            const simulationEntityValue =
-                              simulationConfig.entityId?.trim()
-                                ? simulationConfig.entityId
-                                : simulationConfig.productId ?? "";
-                            return (
-                              <div className="space-y-4">
-                                <div>
-                                  <Label className="text-xs text-gray-400">Entity ID</Label>
-                                  <Input
-                                    className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                                    value={simulationEntityValue}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                      const value = event.target.value;
-                                      setNodes((prev: AiNode[]): AiNode[] =>
-                                        prev.map((node: AiNode): AiNode =>
-                                          node.id === simulationNode.id
-                                            ? {
-                                                ...node,
-                                                config: {
-                                                  ...node.config,
-                                                  simulation: {
-                                                    productId: value,
-                                                    entityId: value,
-                                                    entityType: simulationConfig.entityType ?? "product",
-                                                  },
-                                                },
-                                              }
-                                            : node
-                                        )
-                                      );
-                                    }}
-                                  />
-                                  <p className="mt-2 text-[11px] text-gray-500">
-                                    Current entity type: {simulationConfig.entityType ?? "product"}
-                                  </p>
-                                </div>
-                                <Button
-                                  className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
-                                  type="button"
-                                  onClick={() => handleRunSimulation(simulationNode)}
-                                >
-                                  Simulate Trigger
-                                </Button>
-                              </div>
-                            );
-                          })()}          </DialogContent>
-        </Dialog>
-      ) : null}
+      <SimulationDialog
+        openNodeId={simulationOpenNodeId}
+        onClose={() => setSimulationOpenNodeId(null)}
+        nodes={nodes}
+        setNodes={setNodes}
+        onRunSimulation={handleRunSimulation}
+      />
     </div>
   );
 }

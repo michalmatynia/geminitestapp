@@ -13,6 +13,9 @@ I cannot hightlight text in Product list, the finger pointer is too spread, also
 
 unify Refresh button so that it's one component everywhere
 
+Collapsible Menu on the left in the Admin should be remembered if I left it collapsed or not
+Disconnecting the wire should clear the information in the connection socket (but not from the history of node input output)
+
 ---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework
 Jobs system for the whole Path
@@ -26,11 +29,11 @@ Action logger
   b. Add per‑node retry controls in the Run Details modal. <-
 
   3. Streaming + progress tracking (node-by-node status, live logs, timestamps)
-  4. Deterministic execution + caching (hash inputs, memoize node outputs)  <- here now
+  4. Deterministic execution + caching (hash inputs, memoize node outputs)  <- done
   5. Multi-tenant safety (per-user isolation, permissions, rate limits)
   6. Visual runtime timeline (per-run trace + logs shown in UI)
 
-There is an error in the prompt node, when I first connected the EntityID input before any run was made, the result was shown in the output as prompt, it should not be the result there but be whatever is in the prompt field. If the prompt is empty, the prompt output should also be empty.
+There is an error in the prompt node, when I first connected the EntityID output to Result input in the Prompt Node before any run was made, the result was shown in the output as prompt, it should not be the result there but be whatever is in the prompt field. If the prompt is empty, the prompt output should also be empty.
 
 * Each node should have an input output history, everything that goes in or out is to be recorder on a per node basis with timestap, which path executed it, which node did the information come from and which node did the information go to or whether a node failed or delayed passing the information.
 

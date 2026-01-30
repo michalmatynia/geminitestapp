@@ -42,6 +42,7 @@ export type EvaluateGraphOptions = {
   nodes: AiNode[];
   edges: Edge[];
   activePathId: string | null;
+  activePathName?: string | null;
   triggerNodeId?: string;
   triggerEvent?: string;
   triggerContext?: Record<string, unknown> | null;
@@ -143,6 +144,7 @@ export async function evaluateGraph({
   nodes,
   edges,
   activePathId,
+  activePathName,
   triggerNodeId,
   triggerEvent,
   triggerContext,
@@ -206,9 +208,10 @@ export async function evaluateGraph({
       : undefined) ??
     null;
   const resolvedPathName =
-    triggerSource && typeof triggerSource === "object"
+    activePathName ??
+    (triggerSource && typeof triggerSource === "object"
       ? ((triggerSource as Record<string, unknown>).pathName as string | undefined)
-      : undefined;
+      : undefined);
 
   const buildInputLinks = (
     nodeId: string,

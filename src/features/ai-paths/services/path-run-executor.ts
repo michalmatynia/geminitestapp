@@ -4,6 +4,7 @@ import type {
   AiNode,
   AiPathRunRecord,
   Edge,
+  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
 } from "@/shared/types/ai-paths";
@@ -184,6 +185,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
 
   const runtimeState = parseRuntimeState(run.runtimeState);
+  const historyLimit = Number.parseInt(process.env.AI_PATHS_HISTORY_LIMIT ?? "", 10);
+  const resolvedHistoryLimit =
+    Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map(
     nodeRecords.map((record: any) => [record.nodeId, record.status])
@@ -216,11 +220,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       nodes,
       edges,
       activePathId: run.pathId ?? null,
+      activePathName: run.pathName ?? null,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext as Record<string, unknown> } : {}),
       seedOutputs: runtimeState.outputs,
       seedHashes: runtimeState.hashes ?? undefined,
+      seedHistory: runtimeState.history ?? undefined,
+      recordHistory: true,
+      historyLimit: resolvedHistoryLimit,
       skipNodeIds: skipNodes,
       fetchEntityByType,
       reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
@@ -346,13 +354,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         inputs,
         outputs,
         hashes,
+        history,
       }: {
         inputs: Record<string, RuntimePortValues>;
         outputs: Record<string, RuntimePortValues>;
         hashes?: Record<string, string>;
+        history?: Record<string, RuntimeHistoryEntry[]>;
       }) => {
         await repo.updateRun(run.id, {
-          runtimeState: sanitizeRuntimeState({ inputs, outputs, hashes }),
+          runtimeState: sanitizeRuntimeState({ inputs, outputs, hashes, history }),
         });
       },
     });

@@ -396,6 +396,7 @@ export default function ProductFormGeneral() {
         nodes,
         edges,
         activePathId: selectedConfig.id ?? "path",
+        activePathName: selectedConfig.name ?? undefined,
         triggerNodeId: triggerNode.id,
         triggerEvent,
         triggerContext,

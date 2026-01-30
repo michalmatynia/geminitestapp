@@ -1,7 +1,7 @@
 "use client";
 import React, { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 
@@ -17,6 +17,7 @@ import { evaluateGraph, dbApi, aiJobsApi, entityApi, runsApi } from "@/features/
 import { CanvasBoard } from "./canvas-board";
 import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
+import { RunHistoryEntries } from "./RunHistoryEntries";
 import type {
   AiNode,
   AiPathRunEventRecord,
@@ -35,6 +36,7 @@ import type {
   PathDebugSnapshot,
   PathMeta,
   RuntimePortValues,
+  RuntimeHistoryEntry,
   RuntimeState,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
@@ -200,6 +202,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     nodes: AiPathRunNodeRecord[];
     events: AiPathRunEventRecord[];
   } | null>(null);
+  const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
+  const [expandedRunHistory, setExpandedRunHistory] = useState<Record<string, boolean>>({});
+  const [runHistorySelection, setRunHistorySelection] = useState<Record<string, string>>({});
   const [runStreamStatus, setRunStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
   const [runStreamPaused, setRunStreamPaused] = useState(false);
   const [runEventsOverflow, setRunEventsOverflow] = useState(false);
@@ -345,6 +350,64 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { counts, total, completed, progress };
   }, [runDetail]);
+
+  const buildHistoryNodeOptions = (
+    history?: Record<string, RuntimeHistoryEntry[]>,
+    runNodes?: AiPathRunNodeRecord[] | null,
+    graphNodes?: AiNode[] | null
+  ): Array<{ id: string; label: string }> => {
+    const options: Array<{ id: string; label: string }> = [];
+    const seen = new Set<string>();
+    const add = (id?: string | null, title?: string | null, type?: string | null): void => {
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const base = title && title.trim() ? title.trim() : id;
+      const label = type ? `${base} (${type})` : base;
+      options.push({ id, label });
+    };
+    if (Array.isArray(graphNodes)) {
+      graphNodes.forEach((node: AiNode) => add(node.id, node.title ?? null, node.type ?? null));
+    }
+    if (Array.isArray(runNodes)) {
+      runNodes.forEach((node: AiPathRunNodeRecord) =>
+        add(node.nodeId, node.nodeTitle ?? null, node.nodeType ?? null)
+      );
+    }
+    if (history) {
+      Object.keys(history).forEach((id: string) => add(id, id, null));
+    }
+    return options;
+  };
+
+  const runDetailHistory = (runDetail?.run?.runtimeState?.history ?? undefined) as
+    | Record<string, RuntimeHistoryEntry[]>
+    | undefined;
+  const runDetailHistoryOptions = useMemo(
+    () => buildHistoryNodeOptions(runDetailHistory, runDetail?.nodes ?? null, runDetail?.run?.graph?.nodes ?? null),
+    [runDetailHistory, runDetail?.nodes, runDetail?.run?.graph?.nodes]
+  );
+
+  useEffect(() => {
+    if (!runDetail?.run?.id) {
+      setRunHistoryNodeId(null);
+      return;
+    }
+    if (runDetailHistoryOptions.length === 0) {
+      setRunHistoryNodeId(null);
+      return;
+    }
+    if (runHistoryNodeId && runDetailHistoryOptions.some((option) => option.id === runHistoryNodeId)) {
+      return;
+    }
+    setRunHistoryNodeId(runDetailHistoryOptions[0].id);
+  }, [runDetail?.run?.id, runDetailHistoryOptions, runHistoryNodeId]);
+
+  const runDetailSelectedHistoryNodeId =
+    runHistoryNodeId ?? runDetailHistoryOptions[0]?.id ?? null;
+  const runDetailSelectedHistoryEntries =
+    runDetailSelectedHistoryNodeId && runDetailHistory
+      ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
+      : [];
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
@@ -2118,6 +2181,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodes,
       edges,
       activePathId,
+      activePathName: pathName,
       triggerNodeId: triggerNode.id,
       triggerEvent,
       triggerContext,
@@ -2229,6 +2293,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         nodes,
         edges,
         activePathId,
+        activePathName: pathName,
         ...(triggerNodeId ? { triggerNodeId } : {}),
         triggerContext: triggerContextRef.current,
         deferPoll: true,
@@ -3797,6 +3862,25 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           : run.status === "queued"
                             ? "text-amber-200"
                             : "text-gray-300";
+                  const runHistory = (run.runtimeState?.history ?? undefined) as
+                    | Record<string, RuntimeHistoryEntry[]>
+                    | undefined;
+                  const runHistoryOptions = buildHistoryNodeOptions(
+                    runHistory,
+                    null,
+                    run.graph?.nodes ?? null
+                  );
+                  const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
+                  const selectedHistoryNodeId = runHistoryOptions.some(
+                    (option) => option.id === rawSelectedHistoryNodeId
+                  )
+                    ? rawSelectedHistoryNodeId
+                    : runHistoryOptions[0]?.id ?? null;
+                  const historyOpen = Boolean(expandedRunHistory[run.id]);
+                  const historyEntries =
+                    selectedHistoryNodeId && runHistory
+                      ? runHistory[selectedHistoryNodeId] ?? []
+                      : [];
                   return (
                     <div
                       key={run.id}
@@ -3828,6 +3912,24 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                             onClick={() => void handleOpenRunDetail(run.id)}
                           >
                             Details
+                          </Button>
+                          <Button
+                            type="button"
+                            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                            onClick={() => {
+                              setExpandedRunHistory((prev) => ({
+                                ...prev,
+                                [run.id]: !prev[run.id],
+                              }));
+                              if (!runHistorySelection[run.id] && runHistoryOptions[0]?.id) {
+                                setRunHistorySelection((prev) => ({
+                                  ...prev,
+                                  [run.id]: runHistoryOptions[0].id,
+                                }));
+                              }
+                            }}
+                          >
+                            {historyOpen ? "Hide history" : "History"}
                           </Button>
                           {(run.status === "failed" || run.status === "paused") && (
                             <Button
@@ -3868,6 +3970,53 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       {run.errorMessage && (
                         <div className="mt-2 text-[10px] text-rose-300">
                           {run.errorMessage}
+                        </div>
+                      )}
+                      {historyOpen && (
+                        <div className="mt-2 rounded-md border border-border/70 bg-black/20 p-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-[10px] uppercase text-gray-500">History</Label>
+                            {runHistory ? (
+                              runHistoryOptions.length > 1 ? (
+                                <Select
+                                  value={selectedHistoryNodeId ?? undefined}
+                                  onValueChange={(value) =>
+                                    setRunHistorySelection((prev) => ({
+                                      ...prev,
+                                      [run.id]: value,
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
+                                    <SelectValue placeholder="Select node" />
+                                  </SelectTrigger>
+                                  <SelectContent className="border-border bg-gray-900 text-white">
+                                    {runHistoryOptions.map((option) => (
+                                      <SelectItem key={option.id} value={option.id}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <div className="text-[11px] text-gray-400">
+                                  {runHistoryOptions[0]?.label ?? "No nodes"}
+                                </div>
+                              )
+                            ) : null}
+                          </div>
+                          {runHistory && selectedHistoryNodeId ? (
+                            <div className="mt-3">
+                              <RunHistoryEntries
+                                entries={historyEntries}
+                                emptyMessage="No history for this node."
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[11px] text-gray-500">
+                              No history recorded for this run.
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -4092,6 +4241,44 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   readOnly
                   value={JSON.stringify(runDetail.events, null, 2)}
                 />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Label className="text-[10px] uppercase text-gray-500">History</Label>
+                  {runDetailHistoryOptions.length > 1 ? (
+                    <Select
+                      value={runDetailSelectedHistoryNodeId ?? undefined}
+                      onValueChange={(value) => setRunHistoryNodeId(value)}
+                    >
+                      <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
+                        <SelectValue placeholder="Select node" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900 text-white">
+                        {runDetailHistoryOptions.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-[11px] text-gray-400">
+                      {runDetailHistoryOptions[0]?.label ?? "No nodes"}
+                    </div>
+                  )}
+                </div>
+                {runDetailHistoryOptions.length > 0 ? (
+                  <div className="mt-3">
+                    <RunHistoryEntries
+                      entries={runDetailSelectedHistoryEntries}
+                      emptyMessage="No history for this node."
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2 text-[11px] text-gray-500">
+                    No history recorded for this run.
+                  </div>
+                )}
               </div>
             </div>
           ) : (

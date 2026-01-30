@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { AiNode, Edge } from "@/shared/types/ai-paths";
+import type { AiNode, Edge, AiPathRunRecord } from "@/shared/types/ai-paths";
 import { normalizeNodes, sanitizeEdges } from "@/features/ai-paths/lib";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 
@@ -20,7 +20,7 @@ type EnqueueRunInput = {
   meta?: Record<string, unknown> | null;
 };
 
-export const enqueuePathRun = async (input: EnqueueRunInput): Promise<any> => {
+export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   const repo = await getPathRunRepository();
   const nodes = normalizeNodes(input.nodes ?? []);
   const edges = sanitizeEdges(nodes, input.edges ?? []);
@@ -54,7 +54,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<any> => {
 export const resumePathRun = async (
   runId: string,
   mode: "resume" | "replay" = "resume"
-): Promise<any> => {
+): Promise<AiPathRunRecord> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");
@@ -79,12 +79,12 @@ export const resumePathRun = async (
   return updated;
 };
 
-export const retryPathRunNode = async (runId: string, nodeId: string): Promise<any> => {
+export const retryPathRunNode = async (runId: string, nodeId: string): Promise<AiPathRunRecord> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");
   const nodeInfo =
-    (run.graph as any)?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
+    run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
   await repo.upsertRunNode(runId, nodeId, {
     nodeType: nodeInfo?.type ?? "unknown",
     nodeTitle: nodeInfo?.title ?? null,
@@ -117,7 +117,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<a
   return updated;
 };
 
-export const cancelPathRun = async (runId: string): Promise<any> => {
+export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => {
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) throw new Error("Run not found");

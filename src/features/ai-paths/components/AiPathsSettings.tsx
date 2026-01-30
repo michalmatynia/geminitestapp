@@ -267,7 +267,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const updateSettingMutation = useUpdateSetting();
   const updateSettingsBulkMutation = useUpdateSettingsBulk();
   const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
+    mutationFn: async (payload: Record<string, unknown>): Promise<boolean> => {
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -278,16 +278,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       return true;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["user-preferences"] });
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       console.warn("[AI Paths] Failed to persist preferences.", error);
     },
   });
   const settingsQuery = useQuery({
     queryKey: ["settings"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Array<{ key: string; value: string }>> => {
       const res = await fetch("/api/settings");
       if (!res.ok) {
         throw new Error("Failed to load AI Paths settings.");
@@ -298,7 +298,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   });
   const preferencesQuery = useQuery({
     queryKey: ["user-preferences"],
-    queryFn: async () => {
+    queryFn: async (): Promise<{
+      aiPathsActivePathId?: string | null;
+      aiPathsExpandedGroups?: string[] | null;
+      aiPathsPaletteCollapsed?: boolean | null;
+      aiPathsPathIndex?: PathMeta[] | null;
+      aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
+    }> => {
       const res = await fetch("/api/user/preferences");
       if (!res.ok) {
         throw new Error("Failed to load user preferences.");
@@ -314,7 +320,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     enabled: false,
   });
   const enqueueAiJobMutation = useMutation({
-    mutationFn: async (payload: { productId: string; type: string; payload: unknown }) => {
+    mutationFn: async (payload: { productId: string; type: string; payload: unknown }): Promise<unknown> => {
       const result = await aiJobsApi.enqueue(payload);
       if (!result.ok) {
         throw new Error(result.error || "Failed to enqueue AI job.");
@@ -333,7 +339,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodeId: string;
       entityType: string;
       entityId: string;
-    }) => {
+    }): Promise<{ nodeId: string; entityType: string; entityId: string; sample: Record<string, unknown> }> => {
       if (!entityId.trim()) {
         throw new Error("Enter an entity ID to load a sample.");
       }
@@ -366,8 +372,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       return { nodeId, entityType, entityId, sample };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample }) => {
-      setParserSamples((prev) => ({
+    onSuccess: ({ nodeId, entityType, entityId, sample }): void => {
+      setParserSamples((prev: Record<string, ParserSampleState>) => ({
         ...prev,
         [nodeId]: {
           entityType,
@@ -380,7 +386,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         },
       }));
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       toast(error instanceof Error ? error.message : "Failed to fetch sample.", { variant: "error" });
     },
   });
@@ -395,7 +401,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodeId: string;
       entityType: string;
       entityId: string;
-    }) => {
+    }): Promise<{ nodeId: string; entityType: string; entityId: string; sample: unknown }> => {
       if (entityType === "custom") {
         throw new Error("Use pasted JSON for custom samples.");
       }
@@ -447,8 +453,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       return { nodeId, entityType, entityId: fetchedId, sample };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample }) => {
-      setUpdaterSamples((prev) => ({
+    onSuccess: ({ nodeId, entityType, entityId, sample }): void => {
+      setUpdaterSamples((prev: Record<string, UpdaterSampleState>) => ({
         ...prev,
         [nodeId]: {
           entityType,
@@ -460,7 +466,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }));
       toast("Sample fetched.", { variant: "success" });
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       toast(error instanceof Error ? error.message : "Failed to fetch sample.", { variant: "error" });
     },
   });
@@ -476,50 +482,50 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const persistLastError = useCallback(
     async (
       payload: { message: string; time: string; pathId?: string | null } | null
-    ) => {
+    ): Promise<void> => {
       try {
         await updateSettingMutation.mutateAsync({
           key: AI_PATHS_LAST_ERROR_KEY,
           value: payload ? JSON.stringify(payload) : "",
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.warn("[AI Paths] Failed to persist last error.", error);
       }
     },
     [updateSettingMutation]
   );
 
-  const saveClusterPresets = async (nextPresets: ClusterPreset[]) => {
+  const saveClusterPresets = async (nextPresets: ClusterPreset[]): Promise<void> => {
     try {
       await updateSettingMutation.mutateAsync({
         key: CLUSTER_PRESETS_KEY,
         value: JSON.stringify(nextPresets),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       reportAiPathsError(error, { action: "saveClusterPresets" }, "Failed to save presets:");
       toast("Failed to save cluster presets.", { variant: "error" });
     }
   };
 
-  const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]) => {
+  const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]): Promise<void> => {
     try {
       await updateSettingMutation.mutateAsync({
         key: DB_QUERY_PRESETS_KEY,
         value: JSON.stringify(nextPresets),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       reportAiPathsError(error, { action: "saveDbQueryPresets" }, "Failed to save query presets:");
       toast("Failed to save query presets.", { variant: "error" });
     }
   };
 
-  const saveDbNodePresets = async (nextPresets: DbNodePreset[]) => {
+  const saveDbNodePresets = async (nextPresets: DbNodePreset[]): Promise<void> => {
     try {
       await updateSettingMutation.mutateAsync({
         key: DB_NODE_PRESETS_KEY,
         value: JSON.stringify(nextPresets),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       reportAiPathsError(error, { action: "saveDbNodePresets" }, "Failed to save database presets:");
       toast("Failed to save database presets.", { variant: "error" });
     }
@@ -567,8 +573,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     };
   };
 
-  const togglePaletteGroup = (title: string) => {
-    setExpandedPaletteGroups((prev) => {
+  const togglePaletteGroup = (title: string): void => {
+    setExpandedPaletteGroups((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(title)) {
         next.delete(title);
@@ -584,7 +590,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       error: unknown,
       context: Record<string, unknown>,
       fallbackMessage?: string
-    ) => {
+    ): void => {
       const rawMessage = error instanceof Error ? error.message : safeStringify(error);
       const summary = (fallbackMessage ?? rawMessage).replace(/:$/, "");
       const logMessage = `[AI Paths] ${summary}`;
@@ -847,7 +853,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           preferredPathConfigs &&
           Object.keys(preferredPathConfigs).length > 0 &&
           (settingsMetas.length === 0 ||
-            Object.keys(preferredPathConfigs).some((id) => {
+            Object.keys(preferredPathConfigs).some((id: string): boolean => {
               if (!settingsConfigs[id]) return true;
               const prefUpdated =
                 typeof preferredPathConfigs[id]?.updatedAt === "string"

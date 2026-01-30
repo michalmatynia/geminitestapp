@@ -23,9 +23,9 @@ async function POST_handler(
     });
     if (!parsed.ok) return parsed.response;
 
-    const runId = params.runId;
+    const runId: string = params.runId;
     const mode = parsed.data.mode ?? "resume";
-    const run = await resumePathRun(runId, mode);
+    const run: unknown = await resumePathRun(runId, mode);
     startAiPathRunQueue();
     return NextResponse.json({ run });
   } catch (error) {

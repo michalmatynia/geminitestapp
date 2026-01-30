@@ -2,13 +2,10 @@ Cloud image storage (or maybe from fastcomet ? ) path conversion
 Front page GSAP builder
 App manager
 Mock data for store management, so Bas64 file storage maybe ? 
-
-
 ---
 enable requiring explicit type annotations
 Require typedef and module boundaries and one more need to be set to true
 
-sdds
 Products 
 Changing currency doesn't work again
 

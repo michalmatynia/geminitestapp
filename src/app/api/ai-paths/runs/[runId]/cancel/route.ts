@@ -11,8 +11,8 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   try {
-    const runId = params.runId;
-    const run = await cancelPathRun(runId);
+    const runId: string = params.runId;
+    const run: unknown = await cancelPathRun(runId);
     return NextResponse.json({ run });
   } catch (error) {
     return createErrorResponse(error, {

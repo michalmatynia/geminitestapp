@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useToast, Button, Input, SectionHeader, SectionPanel } from "@/shared/ui";
+import { useToast, Button, Input, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, ModalShell } from "@/shared/ui";
+import Image from "next/image";
 import Link from "next/link";
 import {
   AgentAuditLog,
@@ -9,13 +10,6 @@ import {
   AgentSnapshot,
 } from "@/shared/types/chatbot";
 import { AiPathRunRecord } from "@/shared/types/ai-paths";
-
-// import { AgentRun } from "@/features/agent-runtime/types/agent";
-
-// import { getAgentRunsApi, getAgentSnapshotsApi, getAgentBrowserLogsApi, getAgentAuditLogsApi } from "@/features/agent-runtime/api/client"; // Commented out unused imports
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { AppModal } from "@/shared/ui/app-modal";
-import { ModalShell } from "@/shared/ui";
 
 
 export default function AgentRunsPage(): React.ReactElement {
@@ -73,7 +67,7 @@ export default function AgentRunsPage(): React.ReactElement {
     const source = new EventSource(
       `/api/agentcreator/agent/${selectedAgentRunId}/stream`
     );
-    source.onmessage = (event: MessageEvent) => {
+    source.onmessage = (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as {
           snapshot?: AgentSnapshot | null;
@@ -86,7 +80,7 @@ export default function AgentRunsPage(): React.ReactElement {
         setAgentStreamStatus("error");
       }
     };
-    source.onerror = () => {
+    source.onerror = (): void => {
       setAgentStreamStatus("error");
       source.close();
     };
@@ -150,7 +144,7 @@ export default function AgentRunsPage(): React.ReactElement {
       void loadAudits();
     }, 5000);
 
-    return () => {
+    return (): void => {
       isMounted = false;
       source.close();
       clearInterval(logTimer);
@@ -160,7 +154,7 @@ export default function AgentRunsPage(): React.ReactElement {
   const filteredRuns = useMemo(() => {
     const term = query.trim().toLowerCase();
     const sorted = [...agentRuns].sort(
-      (a: AiPathRunRecord, b: AiPathRunRecord) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: AiPathRunRecord, b: AiPathRunRecord): number => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     if (!term) return sorted;
     return sorted.filter((run: AiPathRunRecord) =>
@@ -171,7 +165,7 @@ export default function AgentRunsPage(): React.ReactElement {
     );
   }, [agentRuns, query]);
 
-  const deleteAgentRun = async (runId: string, force = false): Promise<void> => {
+  const deleteAgentRun = async (runId: string, force: boolean = false): Promise<void> => {
     setDeletingId(runId);
     try {
       const confirmed = window.confirm(
@@ -275,7 +269,7 @@ export default function AgentRunsPage(): React.ReactElement {
     [agentAudits]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
-  const latestLoginCandidates = (loginCandidateLogs.at(-1)?.metadata ?? null) as Record<string, unknown> | null;
+  const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
   const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
   const latestPlanHierarchy =
     (
@@ -532,7 +526,7 @@ export default function AgentRunsPage(): React.ReactElement {
                       {agentSnapshot?.screenshotPath ||
                       agentSnapshot?.screenshotData ? (
                         <div className="relative">
-                          <img
+                          <Image
                             src={
                               agentSnapshot.screenshotPath
                                 ? `/api/agentcreator/agent/${selectedAgentRunId}/assets/${agentSnapshot.screenshotPath}`
@@ -540,6 +534,9 @@ export default function AgentRunsPage(): React.ReactElement {
                             }
                             alt="Agent preview"
                             className="h-auto w-full"
+                            width={agentSnapshot.viewportWidth ?? 1280}
+                            height={agentSnapshot.viewportHeight ?? 720}
+                            unoptimized
                           />
                           {agentSnapshot.mouseX !== null &&
                           agentSnapshot.mouseY !== null &&

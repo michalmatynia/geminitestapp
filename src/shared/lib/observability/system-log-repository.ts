@@ -8,7 +8,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import type { SystemLogLevel, SystemLogMetrics, SystemLogRecord } from "@/shared/types/system-logs";
 
-const toMongoId = (id: string) => {
+const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
@@ -217,17 +217,17 @@ const getMongoSystemLogMetrics = async (filter: Filter<MongoSystemLogDoc>): Prom
 
   const total = first.totals[0]?.count ?? 0;
   const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
-  for (const row of first.levels) {
+  for (const row of first.levels as { _id: string; count: number }[]) {
     const key = row._id as SystemLogLevel;
     if (key && key in levels) {
       levels[key] = row.count;
     }
   }
-  const topSources = first.sources.map((row) => ({
+  const topSources = first.sources.map((row: { _id: string; count: number }) => ({
     source: String(row._id ?? ""),
     count: row.count,
   }));
-  const topPaths = first.paths.map((row) => ({
+  const topPaths = first.paths.map((row: { _id: string; count: number }) => ({
     path: String(row._id ?? ""),
     count: row.count,
   }));

@@ -13,12 +13,12 @@ import {
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
 
-const sanitizeValue = (value: unknown) => {
+const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
   try {
     const seen = new WeakSet();
     const json = JSON.stringify(
       value,
-      (_key, val: unknown) => {
+      (_key: string, val: unknown): any => {
         if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
         if (typeof val === "object" && val !== null) {
           if (seen.has(val)) return "[Circular]";
@@ -48,7 +48,7 @@ const sanitizeValue = (value: unknown) => {
   }
 };
 
-export const normalizeErrorInfo = (error: unknown) => {
+export const normalizeErrorInfo = (error: unknown): { message: string; stack?: string | undefined | null; name?: string; raw?: Record<string, unknown> | null } => {
   if (error instanceof Error) {
     return {
       message: error.message,
@@ -62,7 +62,7 @@ export const normalizeErrorInfo = (error: unknown) => {
   return { message: "Unknown error", raw: sanitizeValue(error) };
 };
 
-const extractRequestInfo = (request?: Request) => {
+const extractRequestInfo = (request?: Request): { path?: string; method?: string; requestId?: string } => {
   if (!request) return {};
   try {
     const url = new URL(request.url);
@@ -82,7 +82,7 @@ export const buildErrorFingerprint = (input: {
   path?: string | null;
   statusCode?: number | null;
   errorInfo?: { message?: string; stack?: string | undefined | null; name?: string } | null;
-}) => {
+}): string => {
   const hash = createHash("sha256");
   hash.update(input.message ?? "");
   hash.update(String(input.source ?? ""));
@@ -95,7 +95,7 @@ export const buildErrorFingerprint = (input: {
     const normalizedStack = stack
       .split("\n")
       .slice(0, 6)
-      .map((line) => line.replace(/\s+at\s+/g, " at ").trim())
+      .map((line: string) => line.replace(/\s+at\s+/g, " at ").trim())
       .join("\n");
     hash.update(normalizedStack);
   }
@@ -108,7 +108,7 @@ export const getErrorFingerprint = (input: {
   request?: Request;
   statusCode?: number | null;
   error?: unknown;
-}) => {
+}): string => {
   const requestInfo = extractRequestInfo(input.request);
   const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
   return buildErrorFingerprint({
@@ -133,7 +133,7 @@ export type SystemLogInput = {
   critical?: boolean;
 };
 
-export async function logSystemEvent(input: SystemLogInput) {
+export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   try {
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
@@ -180,6 +180,6 @@ export async function logSystemEvent(input: SystemLogInput) {
   }
 }
 
-export async function logSystemError(input: Omit<SystemLogInput, "level">) {
+export async function logSystemError(input: Omit<SystemLogInput, "level">): Promise<void> {
   await logSystemEvent({ ...input, level: "error" });
 }

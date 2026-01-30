@@ -13,7 +13,7 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 
 type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };
 
-const toMongoId = (id: string) => {
+const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
@@ -27,7 +27,7 @@ const CACHE_TTL_MS = 30000;
 
 let cached: CacheState | null = null;
 
-const canUsePrismaSettings = () =>
+const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
@@ -84,10 +84,10 @@ const normalizeSettings = (
     ),
     initialDelayMs: toPositiveNumber(input?.retry?.initialDelayMs, base.retry.initialDelayMs),
     maxDelayMs: toPositiveNumber(input?.retry?.maxDelayMs, base.retry.maxDelayMs),
-    timeoutMs: (() => {
-      const raw = input?.retry?.timeoutMs;
+    timeoutMs: ((): number | null => {
+      const raw: unknown = input?.retry?.timeoutMs;
       if (raw === null) return null;
-      const parsed = toPositiveNumber(raw, base.retry.timeoutMs ?? 0);
+      const parsed: number = toPositiveNumber(raw, base.retry.timeoutMs ?? 0);
       return parsed > 0 ? parsed : null;
     })(),
   };

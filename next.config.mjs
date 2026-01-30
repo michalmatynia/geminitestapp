@@ -19,6 +19,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'upload.cdn.baselinker.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'milkbardesigners.com',
+        port: '',
+        pathname: '/milkbardesigners.com/**',
+      },
     ],
   },
   async redirects() {

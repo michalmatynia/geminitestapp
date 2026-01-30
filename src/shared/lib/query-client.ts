@@ -17,11 +17,11 @@ const queryConfig: QueryClientConfig = {
   },
 };
 
-export const createQueryClient = () => new QueryClient(queryConfig);
+export const createQueryClient = (): QueryClient => new QueryClient(queryConfig);
 
 let clientSingleton: QueryClient | undefined;
 
-export function getQueryClient() {
+export function getQueryClient(): QueryClient {
   if (typeof window === "undefined") {
     // Server: always create a new client
     return createQueryClient();

@@ -7,7 +7,7 @@ import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 
-const toMongoId = (id: string) => {
+const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
@@ -80,7 +80,7 @@ const resolvePreferencesProvider = async (): Promise<"mongodb" | "prisma"> => {
   return "prisma";
 };
 
-const defaultPreferences = (userId: string) => ({
+const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "createdAt" | "updatedAt"> => ({
   userId,
   productListNameLocale: "name_en",
   productListCatalogFilter: "all",

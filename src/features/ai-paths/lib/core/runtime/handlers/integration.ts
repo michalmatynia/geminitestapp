@@ -1,4 +1,3 @@
-import { DEFAULT_DB_QUERY } from "../../constants";
 import {
   coerceInput,
   getValueAtMappingPath,
@@ -7,7 +6,19 @@ import {
   renderTemplate,
   safeStringify,
 } from "../../utils";
-import type { DbSchemaConfig } from "@/shared/types/ai-paths";
+import { DEFAULT_DB_QUERY } from "../../constants";
+import type {
+  DbSchemaConfig,
+  DatabaseConfig,
+  DbQueryConfig,
+  HttpConfig,
+  PollConfig,
+  UpdaterMapping,
+  RuntimePortValues,
+  DatabaseAction,
+  DatabaseActionCategory,
+  DatabaseOperation
+} from "@/shared/types/ai-paths";
 import {
   buildDbQueryPayload,
   buildFallbackEntity,
@@ -18,50 +29,69 @@ import {
   pollGraphJob,
   resolveEntityIdFromInputs,
 } from "../utils";
-import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { dbApi, entityApi } from "../../../api";
+import { dbApi, entityApi, ApiResponse } from "../../../api";
 
-export const handleTrigger: NodeHandler = ({
+interface PromptCandidate {
+  edge: Edge;
+  fromNode: AiNode | undefined;
+}
+
+interface DbQueryResult {
+  items?: unknown[];
+  item?: unknown;
+  count?: number;
+}
+
+interface DbActionResult {
+  items?: unknown[];
+  item?: unknown;
+  values?: unknown[];
+  count?: number;
+  modifiedCount?: number;
+  matchedCount?: number;
+}
+
+export const handleTrigger: NodeHandler = ({ 
   node,
   nodeInputs,
   triggerNodeId,
   triggerEvent,
   simulationEntityType,
-  simulationEntityId: _simulationEntityId,
   triggerContext,
   activePathId,
   resolvedEntity,
   fallbackEntityId,
   now,
-}): any => {
+}: NodeHandlerContext): RuntimePortValues => {
   if (triggerNodeId && node.id !== triggerNodeId) {
     return {};
   }
-  const eventName =
+  const eventName: string =
     triggerEvent ?? node.config?.trigger?.event ?? "path_generate_description";
   const simulation = coerceInput(nodeInputs.simulation) as
     | { entityId?: string; entityType?: string; productId?: string }
     | undefined;
-  const simulationInputId =
+  const simulationInputId: string | null =
     simulation?.entityId ?? simulation?.productId ?? null;
-  const simulationInputType =
+  const simulationInputType: string | null =
     simulation?.entityType ?? simulationEntityType ?? null;
-  const resolvedEntityId = simulationInputId ?? null;
-  const resolvedEntityType = simulationInputType ?? null;
-  const triggerExtras = triggerContext ?? {};
-  const triggerEntityId =
+  const resolvedEntityId: string | null = simulationInputId ?? null;
+  const resolvedEntityType: string | null = simulationInputType ?? null;
+  const triggerExtras: Record<string, unknown> = (triggerContext as Record<string, unknown>) ?? {};
+  const triggerEntityId: string | null =
     typeof triggerExtras.entityId === "string"
-      ? triggerExtras.entityId
+      ? (triggerExtras.entityId)
       : typeof triggerExtras.productId === "string"
-        ? triggerExtras.productId
+        ? (triggerExtras.productId)
         : null;
-  const triggerEntityType =
+  const triggerEntityType: string | null =
     typeof triggerExtras.entityType === "string"
-      ? triggerExtras.entityType
+      ? (triggerExtras.entityType)
       : null;
-  const effectiveEntityId = resolvedEntityId ?? triggerEntityId ?? null;
-  const effectiveEntityType = resolvedEntityType ?? triggerEntityType ?? null;
+  const effectiveEntityId: string | null = resolvedEntityId ?? triggerEntityId ?? null;
+  const effectiveEntityType: string | null = resolvedEntityType ?? triggerEntityType ?? null;
   const resolvedContext: Record<string, unknown> = {
     entityType: resolvedEntityType ?? triggerEntityType,
     entityId: resolvedEntityId ?? triggerEntityId,
@@ -109,7 +139,7 @@ export const handleTrigger: NodeHandler = ({
   };
 };
 
-export const handleNotification: NodeHandler = ({
+export const handleNotification: NodeHandler = ({ 
   node,
   nodeInputs,
   prevOutputs,
@@ -118,37 +148,37 @@ export const handleNotification: NodeHandler = ({
   nodes,
   executed,
   toast,
-}): any => {
+}: NodeHandlerContext): RuntimePortValues => {
   if (executed.notification.has(node.id)) return prevOutputs;
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
-    if (typeof value === "string") return value.trim().length > 0;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "object") return Object.keys(value as object).length > 0;
+    if (typeof value === "string") return (value).trim().length > 0;
+    if (Array.isArray(value)) return (value as unknown[]).length > 0;
+    if (typeof value === "object") return Object.keys(value).length > 0;
     return true;
   };
-  const promptCandidates = edges
-    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
-    .map((edge: Edge) => ({
+  const promptCandidates: PromptCandidate[] = edges
+    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === "prompt")
+    .map((edge: Edge): PromptCandidate => ({
       edge,
-      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
+      fromNode: nodes.find((item: AiNode): boolean => item.id === edge.from),
     }))
-    .filter((entry: any) => entry.fromNode?.type === "prompt");
-  const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
+    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === "prompt");
+  const promptSourceNode: AiNode | null = promptCandidates[0]?.fromNode ?? null;
   let derivedPromptMessage: string | null = null;
   if (promptSourceNode) {
-    const upstreamEdges = edges.filter(
-      (edge: Edge) => edge.to === promptSourceNode.id,
+    const upstreamEdges: Edge[] = edges.filter(
+      (edge: Edge): boolean => edge.to === promptSourceNode.id,
     );
-    const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
+    const promptSourceInputs: RuntimePortValues = (allInputs[promptSourceNode.id] ?? {});
     if (upstreamEdges.length > 0) {
-      const hasInputValue =
-        Object.values(promptSourceInputs).some(hasMeaningfulValue);
+      const hasInputValue: boolean =
+        Object.values(promptSourceInputs as Record<string, unknown>).some(hasMeaningfulValue);
       if (!hasInputValue) {
         return prevOutputs;
       }
     }
-    const derivedPrompt = buildPromptOutput(
+    const derivedPrompt: { promptOutput: string; imagesValue: unknown } = buildPromptOutput(
       promptSourceNode.config?.prompt,
       promptSourceInputs,
     );
@@ -156,7 +186,7 @@ export const handleNotification: NodeHandler = ({
       derivedPromptMessage = derivedPrompt.promptOutput;
     }
   }
-  const messageSource =
+  const messageSource: unknown =
     derivedPromptMessage ??
     coerceInput(nodeInputs.result) ??
     coerceInput(nodeInputs.prompt) ??
@@ -170,8 +200,8 @@ export const handleNotification: NodeHandler = ({
   if (messageSource === undefined) {
     return prevOutputs;
   }
-  const message = safeStringify(messageSource); // Was formatRuntimeValue, but safeStringify might be better for generic
-  const trimmed = message.trim();
+  const message: string = safeStringify(messageSource); // Was formatRuntimeValue, but safeStringify might be better for generic
+  const trimmed: string = message.trim();
   if (!trimmed) {
     return prevOutputs;
   }
@@ -180,29 +210,29 @@ export const handleNotification: NodeHandler = ({
   return prevOutputs;
 };
 
-export const handlePoll: NodeHandler = async ({
+export const handlePoll: NodeHandler = async ({ 
   node,
   nodeInputs,
   prevOutputs,
   deferPoll,
   executed,
   reportAiPathsError,
-}): Promise<any> => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (deferPoll) {
-    const existingStatus =
-      typeof prevOutputs.status === "string" ? prevOutputs.status : null;
+    const existingStatus: string | null =
+      typeof prevOutputs.status === "string" ? (prevOutputs.status) : null;
     if (existingStatus === "completed" || existingStatus === "failed") {
       return prevOutputs;
     }
-    const rawJobId = coerceInput(nodeInputs.jobId);
-    const jobId =
+    const rawJobId: unknown = coerceInput(nodeInputs.jobId);
+    const jobId: string =
       typeof rawJobId === "string" || typeof rawJobId === "number"
         ? String(rawJobId).trim()
         : "";
     if (!jobId) {
       return prevOutputs;
     }
-    const existingResult =
+    const existingResult: unknown =
       prevOutputs.result !== undefined ? prevOutputs.result : null;
     executed.poll.add(node.id);
     return {
@@ -216,24 +246,22 @@ export const handlePoll: NodeHandler = async ({
       },
     };
   }
-  const pollConfig = node.config?.poll ?? {
+  const pollConfig: PollConfig = node.config?.poll ?? {
     intervalMs: 2000,
     maxAttempts: 30,
     mode: "job",
   };
-  const pollMode = pollConfig.mode ?? "job";
-  const rawJobId = coerceInput(nodeInputs.jobId);
-  const jobId =
+  const pollMode: "job" | "database" = pollConfig.mode ?? "job";
+  const rawJobId: unknown = coerceInput(nodeInputs.jobId);
+  const jobId: string =
     typeof rawJobId === "string" || typeof rawJobId === "number"
       ? String(rawJobId).trim()
       : "";
   if (pollMode === "database") {
-    const queryConfig = {
-      ...DEFAULT_DB_QUERY,
-      ...(pollConfig.dbQuery ?? {}),
-    };
+    const queryConfig: DbQueryConfig =
+      { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
     try {
-      const response = await pollDatabaseQuery(nodeInputs, {
+      const response: { result: unknown; status: string; bundle: Record<string, unknown> } = await pollDatabaseQuery(nodeInputs, {
         intervalMs: pollConfig.intervalMs ?? 2000,
         maxAttempts: pollConfig.maxAttempts ?? 30,
         dbQuery: queryConfig,
@@ -243,16 +271,16 @@ export const handlePoll: NodeHandler = async ({
         resultPath: pollConfig.resultPath ?? "result",
       });
       return {
-        result: (response as any).result,
-        status: (response as any).status,
+        result: response.result,
+        status: response.status,
         jobId,
         bundle: {
-          ...((response as any).bundle ?? {}),
+          ...(response.bundle ?? {}),
           jobId,
-          status: (response as any).status,
+          status: response.status,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       reportAiPathsError(
         error,
         { action: "pollDatabase", nodeId: node.id },
@@ -274,7 +302,7 @@ export const handlePoll: NodeHandler = async ({
     return prevOutputs;
   }
   try {
-    const result = await pollGraphJob(jobId, {
+    const result: unknown = await pollGraphJob(jobId, {
       intervalMs: pollConfig.intervalMs,
       maxAttempts: pollConfig.maxAttempts,
     });
@@ -284,7 +312,7 @@ export const handlePoll: NodeHandler = async ({
       jobId,
       bundle: { jobId, status: "completed", result },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     reportAiPathsError(
       error,
       { action: "pollJob", jobId, nodeId: node.id },
@@ -303,43 +331,15 @@ export const handlePoll: NodeHandler = async ({
   }
 };
 
-export const handleHttp: NodeHandler = async ({
+export const handleHttp: NodeHandler = async ({ 
   node,
   nodeInputs,
   executed,
   reportAiPathsError,
-}): Promise<any> => {
-  if (executed.http.has(node.id)) return {}; // Http should run only once usually in the loop or should it?
-  // Logic says: if (httpExecuted.has(node.id)) break;
-  // But wait, the loop runs multiple times for propagation. If HTTP node runs once, its outputs are set.
-  // Next iterations should keep the outputs.
-  // My return here `return {}` would clear outputs if I am not careful.
-  // NodeHandler should return `prevOutputs` if it doesn't want to change anything.
-  // Wait, `httpExecuted` check in original code:
-  /*
-    case "http": {
-      if (httpExecuted.has(node.id)) break;
-      // ... logic ...
-      httpExecuted.add(node.id);
-    }
-  */
-  // So if executed, it breaks, meaning nextOutputs remains prevOutputs.
-  // So I should return prevOutputs (which I need to access from context).
-  // But wait, `NodeHandler` receives `prevOutputs`.
-  // So if I return `prevOutputs`, it's correct.
-  // However, I need to check `executed.http.has(node.id)`.
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  if (executed.http.has(node.id)) return {};
 
-  // Correction: I need to return prevOutputs.
-  // I'll update the logic below.
-
-  // Actually, I can check executed set at start of function.
-  // If executed, return prevOutputs.
-
-  // Let's implement that.
-
-  // Same for other "once" nodes like notification, updater.
-
-  const httpConfig = node.config?.http ?? {
+  const httpConfig: HttpConfig = node.config?.http ?? {
     url: "",
     method: "GET",
     headers: "{}",
@@ -347,7 +347,7 @@ export const handleHttp: NodeHandler = async ({
     responseMode: "json",
     responsePath: "",
   };
-  const resolvedUrl = renderTemplate(
+  const resolvedUrl: string = renderTemplate(
     httpConfig.url ?? "",
     nodeInputs as Record<string, unknown>,
     "",
@@ -363,7 +363,7 @@ export const handleHttp: NodeHandler = async ({
     headers = httpConfig.headers
       ? (JSON.parse(httpConfig.headers) as Record<string, string>)
       : {};
-  } catch (error) {
+  } catch (error: unknown) {
     reportAiPathsError(
       error,
       { action: "parseHeaders", nodeId: node.id },
@@ -372,7 +372,7 @@ export const handleHttp: NodeHandler = async ({
   }
   let body: BodyInit | undefined = undefined;
   if (httpConfig.method !== "GET" && httpConfig.method !== "DELETE") {
-    const renderedBody = httpConfig.bodyTemplate
+    const renderedBody: string = httpConfig.bodyTemplate
       ? renderTemplate(
           httpConfig.bodyTemplate,
           nodeInputs as Record<string, unknown>,
@@ -380,11 +380,11 @@ export const handleHttp: NodeHandler = async ({
         )
       : "";
     if (renderedBody) {
-      const trimmed = renderedBody.trim();
-      if (
-        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-        (trimmed.startsWith("[") && trimmed.endsWith("]"))
-      ) {
+      const trimmed: string = renderedBody.trim();
+            if (
+              (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+              (trimmed.startsWith("[") && trimmed.endsWith("]"))
+            ) {
         body = trimmed;
         if (!headers["Content-Type"]) {
           headers["Content-Type"] = "application/json";
@@ -405,7 +405,7 @@ export const handleHttp: NodeHandler = async ({
     fetchInit.body = body;
   }
   try {
-    const res = await fetch(resolvedUrl, fetchInit);
+    const res: Response = await fetch(resolvedUrl, fetchInit);
     let data: unknown = null;
     if (httpConfig.responseMode === "status") {
       data = res.status;
@@ -418,9 +418,9 @@ export const handleHttp: NodeHandler = async ({
         data = await res.text();
       }
     }
-    let resolvedValue = data;
+    let resolvedValue: unknown = data;
     if (httpConfig.responsePath) {
-      const pathValue = getValueAtMappingPath(data, httpConfig.responsePath);
+      const pathValue: unknown = getValueAtMappingPath(data, httpConfig.responsePath);
       resolvedValue = pathValue === undefined ? data : pathValue;
     }
     executed.http.add(node.id);
@@ -433,7 +433,7 @@ export const handleHttp: NodeHandler = async ({
         data: resolvedValue,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     reportAiPathsError(
       error,
       { action: "httpFetch", url: resolvedUrl, nodeId: node.id },
@@ -451,7 +451,7 @@ export const handleHttp: NodeHandler = async ({
   }
 };
 
-export const handleDatabase: NodeHandler = async ({
+export const handleDatabase: NodeHandler = async ({ 
   node,
   nodeInputs,
   executed,
@@ -461,63 +461,63 @@ export const handleDatabase: NodeHandler = async ({
   simulationEntityId,
   triggerContext,
   fallbackEntityId,
-}) => {
-  const resolveDatabaseInputs = (inputs: Record<string, unknown>) => {
-    const next = { ...inputs };
-    const pickString = (value: unknown) =>
-      typeof value === "string" && value.trim().length > 0
-        ? value.trim()
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  const resolveDatabaseInputs = (inputs: Record<string, unknown>): Record<string, unknown> => {
+    const next: Record<string, unknown> = { ...inputs };
+    const pickString = (value: unknown): string | undefined =>
+      typeof value === "string" && (value).trim().length > 0
+        ? (value).trim()
         : undefined;
     const pickFromContext = (
       ctx: Record<string, unknown> | null | undefined,
-    ) => {
+    ): void => {
       if (!ctx || typeof ctx !== "object") return;
-      const entityId =
+      const entityId: string | undefined =
         pickString(ctx.entityId) ??
         pickString(ctx.productId) ??
         pickString(ctx.id) ??
         pickString(ctx._id);
-      const productId =
+      const productId: string | undefined =
         pickString(ctx.productId) ??
         pickString(ctx.entityId) ??
         pickString(ctx.id) ??
         pickString(ctx._id);
-      const entityType = pickString(ctx.entityType);
+      const entityType: string | undefined = pickString(ctx.entityType);
       if (next.entityId === undefined && entityId) next.entityId = entityId;
       if (next.productId === undefined && productId) next.productId = productId;
       if (next.entityType === undefined && entityType)
         next.entityType = entityType;
     };
-    const applyFromObject = (record: Record<string, unknown>) => {
-      const entityId =
+    const applyFromObject = (record: Record<string, unknown>): void => {
+      const entityId: string | undefined =
         pickString(record.entityId) ??
         pickString(record.productId) ??
         pickString(record.id) ??
         pickString(record._id);
-      const productId =
+      const productId: string | undefined =
         pickString(record.productId) ??
         pickString(record.entityId) ??
         pickString(record.id) ??
         pickString(record._id);
-      const entityType = pickString(record.entityType);
+      const entityType: string | undefined = pickString(record.entityType);
       if (next.entityId === undefined && entityId) next.entityId = entityId;
       if (next.productId === undefined && productId) next.productId = productId;
       if (next.entityType === undefined && entityType)
         next.entityType = entityType;
     };
-    const contextValue = coerceInput(inputs.context);
+    const contextValue: unknown = coerceInput(inputs.context);
     if (contextValue && typeof contextValue === "object") {
       applyFromObject(contextValue as Record<string, unknown>);
     }
-    const metaValue = coerceInput(inputs.meta);
+    const metaValue: unknown = coerceInput(inputs.meta);
     if (metaValue && typeof metaValue === "object") {
       applyFromObject(metaValue as Record<string, unknown>);
     }
-    const bundleValue = coerceInput(inputs.bundle);
+    const bundleValue: unknown = coerceInput(inputs.bundle);
     if (bundleValue && typeof bundleValue === "object") {
       applyFromObject(bundleValue as Record<string, unknown>);
     }
-    pickFromContext(triggerContext);
+    pickFromContext(triggerContext as Record<string, unknown>);
     if (next.entityId === undefined && fallbackEntityId) {
       next.entityId = fallbackEntityId;
     }
@@ -529,11 +529,11 @@ export const handleDatabase: NodeHandler = async ({
     }
     return next;
   };
-  const resolvedInputs = resolveDatabaseInputs(
+  const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
     nodeInputs as Record<string, unknown>,
   );
-  const defaultQuery = DEFAULT_DB_QUERY;
-  const dbConfig = node.config?.database ?? {
+  const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
+  const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
     operation: "query",
     entityType: "product",
     idField: "entityId",
@@ -544,35 +544,35 @@ export const handleDatabase: NodeHandler = async ({
     writeSourcePath: "",
     dryRun: false,
   };
-  const operation = dbConfig.operation ?? "query";
-  const queryConfig = { ...defaultQuery, ...(dbConfig.query ?? {}) };
-  const dryRun = dbConfig.dryRun ?? false;
-  const writeSourcePath = dbConfig.writeSourcePath?.trim() ?? "";
-  const aiPrompt = dbConfig.aiPrompt ?? "";
-  const useMongoActions = Boolean(
+  const operation: DatabaseOperation = dbConfig.operation ?? "query";
+  const queryConfig: DbQueryConfig = { ...defaultQuery, ...(dbConfig.query ?? {}) };
+  const dryRun: boolean = dbConfig.dryRun ?? false;
+  const writeSourcePath: string = dbConfig.writeSourcePath?.trim() ?? "";
+  const aiPrompt: string = dbConfig.aiPrompt ?? "";
+  const useMongoActions: boolean = Boolean(
     dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action,
   );
 
   if (useMongoActions) {
-    const actionCategory = dbConfig.actionCategory ?? "read";
-    const action = dbConfig.action ?? "find";
-    const inputValue =
+    const actionCategory: DatabaseActionCategory = dbConfig.actionCategory ?? "read";
+    const action: DatabaseAction = dbConfig.action ?? "find";
+    const inputValue: unknown =
       coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
-    const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
-    const filter = queryPayload.query ?? {};
+    const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
+    const filter = (queryPayload.query) ?? {};
     const projection = queryPayload.projection;
     const sort = queryPayload.sort;
     const limit = queryPayload.limit;
     const idType = queryPayload.idType;
     const collection = queryPayload.collection;
-    const distinctField = dbConfig.distinctField?.trim() || undefined;
-    const updateTemplate = dbConfig.updateTemplate?.trim() ?? "";
+    const distinctField: string | undefined = dbConfig.distinctField?.trim() || undefined;
+    const updateTemplate: string = dbConfig.updateTemplate?.trim() ?? "";
 
-    const parseJsonTemplate = (template: string) =>
+    const parseJsonTemplate = (template: string): unknown =>
       parseJsonSafe(
         renderJsonTemplate(
           template,
-          resolvedInputs as Record<string, unknown>,
+          resolvedInputs,
           inputValue ?? "",
         ),
       );
@@ -587,7 +587,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       if (action === "aggregate") {
-        const parsedPipeline = parseJsonTemplate(
+        const parsedPipeline: unknown = parseJsonTemplate(
           queryConfig.queryTemplate ?? "[]",
         );
         if (!Array.isArray(parsedPipeline)) {
@@ -612,10 +612,7 @@ export const handleDatabase: NodeHandler = async ({
             aiPrompt,
           };
         }
-        const aggResult = await dbApi.action<{
-          items?: unknown[];
-          count?: number;
-        }>({
+        const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
           action,
           collection,
           pipeline: parsedPipeline,
@@ -657,12 +654,7 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      const readResult = await dbApi.action<{
-        items?: unknown[];
-        item?: unknown;
-        values?: unknown[];
-        count?: number;
-      }>({
+      const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
         action,
         collection,
         filter,
@@ -675,10 +667,11 @@ export const handleDatabase: NodeHandler = async ({
         toast("Database read failed.", { variant: "error" });
         return { result: null, bundle: { error: "Read failed" }, aiPrompt };
       }
-      const data = readResult.data;
-      const result = data.item ?? data.items ?? data.values ?? data.count ?? [];
-      const count =
-        data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0);
+      const data: DbActionResult = readResult.data;
+      const result: unknown = data.item ?? data.items ?? data.values ?? data.count ?? [];
+      const count: number =
+        data.count ??
+        (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
       return {
         result,
         bundle: {
@@ -691,8 +684,8 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (actionCategory === "create") {
-      const payloadTemplate = queryConfig.queryTemplate?.trim() ?? "";
-      const parsedPayload = payloadTemplate
+      const payloadTemplate: string = queryConfig.queryTemplate?.trim() ?? "";
+      const parsedPayload: unknown = payloadTemplate
         ? parseJsonTemplate(payloadTemplate)
         : null;
       if (
@@ -700,24 +693,26 @@ export const handleDatabase: NodeHandler = async ({
         (!parsedPayload ||
           (typeof parsedPayload !== "object" && !Array.isArray(parsedPayload)))
       ) {
-        toast("Insert template must be valid JSON.", { variant: "error" });
+        toast("Insert template must be valid JSON.", {
+          variant: "error",
+        });
         return {
           result: null,
           bundle: { error: "Invalid insert template" },
           aiPrompt,
         };
       }
-      const payloadFromTemplate =
+      const payloadFromTemplate: unknown =
         parsedPayload && typeof parsedPayload === "object"
           ? parsedPayload
           : null;
-      const rawPayload =
+      const rawPayload: unknown =
         payloadFromTemplate ??
         coerceInput(resolvedInputs[dbConfig.writeSource ?? "bundle"]);
-      const coercePayloadObject = (value: unknown) => {
+      const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
         if (!value) return null;
         if (typeof value === "string") {
-          const parsed = parseJsonSafe(value);
+          const parsed: unknown = parseJsonSafe(value);
           if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
             return parsed as Record<string, unknown>;
           }
@@ -728,11 +723,11 @@ export const handleDatabase: NodeHandler = async ({
         }
         return null;
       };
-      const payloadObject = coercePayloadObject(rawPayload);
-      const payloadArray = Array.isArray(rawPayload)
+      const payloadObject: Record<string, unknown> | null = coercePayloadObject(rawPayload);
+      const payloadArray: unknown[] | null = Array.isArray(rawPayload)
         ? (rawPayload as unknown[])
         : null;
-      const payload = payloadArray ?? payloadObject;
+      const payload: unknown[] | Record<string, unknown> | null = payloadArray ?? payloadObject;
       if (!payload) {
         toast("Insert requires a JSON payload.", { variant: "error" });
         return { result: null, bundle: { error: "Missing payload" }, aiPrompt };
@@ -742,24 +737,24 @@ export const handleDatabase: NodeHandler = async ({
         return { result: null, bundle: { error: "Invalid payload" }, aiPrompt };
       }
       if (executed.updater.has(node.id)) {
-        return { result: payload, bundle: payload, aiPrompt };
+        return { result: payload, bundle: payload as RuntimePortValues, aiPrompt };
       }
       if (dryRun) {
         executed.updater.add(node.id);
         return {
           result: payload,
-          bundle: { dryRun: true, action, collection, payload },
+          bundle: { dryRun: true, action, collection, payload } as RuntimePortValues,
           aiPrompt,
         };
       }
-      const insertResult = await dbApi.action({
+      const insertResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,
         ...(action === "insertOne" && payloadObject
           ? { document: payloadObject }
           : {}),
         ...(action === "insertMany"
-          ? { documents: Array.isArray(payload) ? payload : [payload] }
+          ? { documents: Array.isArray(payload) ? (payload) : [payload] }
           : {}),
       });
       executed.updater.add(node.id);
@@ -781,9 +776,9 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (actionCategory === "update") {
-      let resolvedFilter = filter;
+      let resolvedFilter: Record<string, unknown> = filter;
       if (queryConfig.queryTemplate?.trim()) {
-        const parsedFilter = parseJsonTemplate(queryConfig.queryTemplate);
+        const parsedFilter: unknown = parseJsonTemplate(queryConfig.queryTemplate);
         if (
           parsedFilter &&
           typeof parsedFilter === "object" &&
@@ -792,7 +787,7 @@ export const handleDatabase: NodeHandler = async ({
           resolvedFilter = parsedFilter as Record<string, unknown>;
         }
       }
-      const debugPayload = {
+      const debugPayload: Record<string, unknown> = {
         mode: "mongo",
         actionCategory,
         action,
@@ -804,34 +799,35 @@ export const handleDatabase: NodeHandler = async ({
         productId: resolvedInputs.productId,
         entityType: resolvedInputs.entityType,
       };
-      const buildUpdatesFromMappings = () => {
-        const fallbackTarget =
+      const buildUpdatesFromMappings = (): { updates: Record<string, unknown>; primaryTarget: string } => {
+        const fallbackTarget: string =
           dbConfig.mappings?.[0]?.targetPath ?? "content_en";
-        const mappings =
+        const mappings: UpdaterMapping[] =
           dbConfig.mappings && dbConfig.mappings.length > 0
             ? dbConfig.mappings
-            : [
+            :
+              [
                 {
                   targetPath: fallbackTarget,
                   sourcePort: resolvedInputs.result ? "result" : "content_en",
                 },
               ];
-        const trimStrings = dbConfig.trimStrings ?? false;
-        const skipEmpty = dbConfig.skipEmpty ?? false;
-        const isEmptyValue = (value: unknown) =>
+        const trimStrings: boolean = dbConfig.trimStrings ?? false;
+        const skipEmpty: boolean = dbConfig.skipEmpty ?? false;
+        const isEmptyValue = (value: unknown): boolean =>
           value === undefined ||
           value === null ||
-          (typeof value === "string" && value.trim() === "") ||
-          (Array.isArray(value) && value.length === 0);
+          (typeof value === "string" && (value).trim() === "") ||
+          (Array.isArray(value) && (value as unknown[]).length === 0);
         const updates: Record<string, unknown> = {};
-        mappings.forEach((mapping) => {
-          const sourcePort = mapping.sourcePort;
+        mappings.forEach((mapping: UpdaterMapping): void => {
+          const sourcePort: string = mapping.sourcePort;
           if (!sourcePort) return;
-          const sourceValue = resolvedInputs[sourcePort];
+          const sourceValue: unknown = resolvedInputs[sourcePort];
           if (sourceValue === undefined) return;
-          let value = coerceInput(sourceValue);
+          let value: unknown = coerceInput(sourceValue);
           if (value && typeof value === "object" && mapping.sourcePath) {
-            const resolved = getValueAtMappingPath(value, mapping.sourcePath);
+            const resolved: unknown = getValueAtMappingPath(value, mapping.sourcePath);
             if (resolved !== undefined) {
               value = resolved;
             }
@@ -842,14 +838,14 @@ export const handleDatabase: NodeHandler = async ({
             typeof value === "object" &&
             !mapping.sourcePath
           ) {
-            const resultValue = (value as Record<string, unknown>).result;
-            const descriptionValue = (value as Record<string, unknown>)
+            const resultValue: unknown = (value as Record<string, unknown>).result;
+            const descriptionValue: unknown = (value as Record<string, unknown>)
               .description;
-            const contentValue = (value as Record<string, unknown>).content_en;
+            const contentValue: unknown = (value as Record<string, unknown>).content_en;
             value = resultValue ?? descriptionValue ?? contentValue ?? value;
           }
           if (typeof value === "string" && trimStrings) {
-            value = value.trim();
+            value = (value).trim();
           }
           if (skipEmpty && isEmptyValue(value)) {
             return;
@@ -861,11 +857,11 @@ export const handleDatabase: NodeHandler = async ({
         return {
           updates,
           primaryTarget:
-            mappings.find((m) => m.targetPath)?.targetPath ?? fallbackTarget,
+            mappings.find((m: UpdaterMapping): boolean => !!m.targetPath)?.targetPath ?? fallbackTarget,
         };
       };
 
-      const parsedUpdate = updateTemplate
+      const parsedUpdate: unknown = updateTemplate
         ? parseJsonTemplate(updateTemplate)
         : null;
       if (
@@ -882,7 +878,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       const { updates, primaryTarget } = buildUpdatesFromMappings();
-      const updateDoc = parsedUpdate ?? updates;
+      const updateDoc: unknown = parsedUpdate ?? updates;
       if (
         !updateDoc ||
         (typeof updateDoc !== "object" && !Array.isArray(updateDoc))
@@ -926,12 +922,12 @@ export const handleDatabase: NodeHandler = async ({
             collection,
             filter: resolvedFilter,
             update: updateDoc,
-          },
+          } as RuntimePortValues,
           debugPayload,
           aiPrompt,
         };
       }
-      const updateResult = await dbApi.action({
+      const updateResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,
         filter: resolvedFilter,
@@ -954,7 +950,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       toast("Update completed.", { variant: "success" });
-      const primaryValue = updates[primaryTarget];
+      const primaryValue: unknown = updates[primaryTarget];
       return {
         content_en:
           primaryTarget === "content_en"
@@ -976,11 +972,11 @@ export const handleDatabase: NodeHandler = async ({
         executed.updater.add(node.id);
         return {
           result: { dryRun: true, action, collection, filter },
-          bundle: { dryRun: true },
+          bundle: { dryRun: true } as RuntimePortValues,
           aiPrompt,
         };
       }
-      const deleteResult = await dbApi.action({
+      const deleteResult: ApiResponse<unknown> = await dbApi.action({
         action,
         collection,
         filter,
@@ -1006,34 +1002,34 @@ export const handleDatabase: NodeHandler = async ({
   }
 
   if (operation === "query") {
-    const inputQuery = coerceInput(resolvedInputs.query);
-    const callbackInput = coerceInput(resolvedInputs.queryCallback);
-    const aiQueryInput = coerceInput(resolvedInputs.aiQuery);
-    const resolvedEntityId = resolveEntityIdFromInputs(
-      resolvedInputs,
+    const inputQuery: unknown = coerceInput(nodeInputs.query);
+    const callbackInput: unknown = coerceInput(nodeInputs.queryCallback);
+    const aiQueryInput: unknown = coerceInput(nodeInputs.aiQuery);
+    const resolvedEntityId: string | null = resolveEntityIdFromInputs(
+      resolvedInputs as RuntimePortValues,
       undefined,
       simulationEntityType,
       simulationEntityId,
     );
-    const inputValue = coerceInput(resolvedInputs.value);
-    const entityIdInput = coerceInput(resolvedInputs.entityId);
-    const productIdInput = coerceInput(resolvedInputs.productId);
-    const parseQueryInput = (value: unknown) => {
+    const inputValue: unknown = coerceInput(resolvedInputs.value);
+    const entityIdInput: unknown = coerceInput(resolvedInputs.entityId);
+    const productIdInput: unknown = coerceInput(resolvedInputs.productId);
+    const parseQueryInput = (value: unknown): Record<string, unknown> | null => {
       if (!value) return null;
       if (typeof value === "object" && !Array.isArray(value)) {
         return value as Record<string, unknown>;
       }
       if (typeof value === "string") {
-        const parsed = parseJsonSafe(value);
+        const parsed: unknown = parseJsonSafe(value);
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
           return parsed as Record<string, unknown>;
         }
       }
       return null;
     };
-    const callbackTemplate =
-      typeof callbackInput === "string" && callbackInput.trim()
-        ? callbackInput
+    const callbackTemplate: string | null =
+      typeof callbackInput === "string" && (callbackInput).trim()
+        ? (callbackInput)
         : null;
     let query: Record<string, unknown> = {};
 
@@ -1043,8 +1039,8 @@ export const handleDatabase: NodeHandler = async ({
 
       if (typeof aiQueryInput === "string") {
         // Try to extract JSON from AI response (may have markdown code blocks)
-        const jsonMatch = aiQueryInput.match(/```(?:json)?\s*([\s\S]*?)```/);
-        const jsonStr = jsonMatch ? jsonMatch[1]!.trim() : aiQueryInput.trim();
+        const jsonMatch: RegExpMatchArray | null = (aiQueryInput).match(/```(?:json)?\s*([\s\S]*?)```/);
+        const jsonStr: string = jsonMatch ? jsonMatch[1]!.trim() : (aiQueryInput).trim();
         parsedAiQuery = parseJsonSafe(jsonStr) as Record<
           string,
           unknown
@@ -1088,10 +1084,10 @@ export const handleDatabase: NodeHandler = async ({
       if (inlineQuery) {
         query = inlineQuery;
       } else if (callbackTemplate) {
-        const parsed = parseJsonSafe(
+        const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
             callbackTemplate,
-            resolvedInputs as Record<string, unknown>,
+            resolvedInputs,
             inputValue ?? "",
           ),
         );
@@ -1099,7 +1095,7 @@ export const handleDatabase: NodeHandler = async ({
           query = parsed as Record<string, unknown>;
         }
       } else if (queryConfig.mode === "preset") {
-        const presetValue =
+        const presetValue: unknown =
           queryConfig.preset === "by_productId"
             ? (productIdInput ?? inputValue)
             : queryConfig.preset === "by_entityId"
@@ -1109,7 +1105,7 @@ export const handleDatabase: NodeHandler = async ({
                 entityIdInput ??
                 productIdInput);
         if (presetValue !== undefined) {
-          let field =
+          let field: string =
             queryConfig.preset === "by_productId"
               ? "productId"
               : queryConfig.preset === "by_entityId"
@@ -1120,7 +1116,7 @@ export const handleDatabase: NodeHandler = async ({
           if (
             queryConfig.preset === "by_id" &&
             field === "_id" &&
-            !looksLikeObjectId(presetValue)
+            !looksLikeObjectId(presetValue as string)
           ) {
             field = "id";
           }
@@ -1141,10 +1137,10 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
       } else {
-        const parsed = parseJsonSafe(
+        const parsed: unknown = parseJsonSafe(
           renderJsonTemplate(
             queryConfig.queryTemplate ?? "{}",
-            resolvedInputs as Record<string, unknown>,
+            resolvedInputs,
             inputValue ?? "",
           ),
         );
@@ -1153,10 +1149,10 @@ export const handleDatabase: NodeHandler = async ({
         }
       }
     }
-    const projection = parseJsonSafe(queryConfig.projection ?? "") as
+    const projection: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.projection ?? "") as
       | Record<string, unknown>
       | undefined;
-    const sort = parseJsonSafe(queryConfig.sort ?? "") as
+    const sort: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.sort ?? "") as
       | Record<string, unknown>
       | undefined;
     if (dryRun) {
@@ -1171,15 +1167,11 @@ export const handleDatabase: NodeHandler = async ({
           limit: queryConfig.limit,
           single: queryConfig.single,
           idType: queryConfig.idType,
-        },
+        } as RuntimePortValues,
         aiPrompt,
       };
     }
-    const queryResult = await dbApi.query<{
-      items?: unknown[];
-      item?: unknown;
-      count?: number;
-    }>({
+    const queryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({ 
       provider: queryConfig.provider,
       collection: queryConfig.collection,
       query,
@@ -1206,7 +1198,7 @@ export const handleDatabase: NodeHandler = async ({
         aiPrompt,
       };
     }
-    const result = queryConfig.single
+    const result: unknown = queryConfig.single
       ? (queryResult.data.item ?? null)
       : (queryResult.data.items ?? []);
     return {
@@ -1214,7 +1206,7 @@ export const handleDatabase: NodeHandler = async ({
       bundle: {
         count:
           queryResult.data.count ??
-          (Array.isArray(result) ? result.length : result ? 1 : 0),
+          (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0),
         query,
         collection: queryConfig.collection,
       },
@@ -1223,8 +1215,8 @@ export const handleDatabase: NodeHandler = async ({
   }
 
   if (operation === "update") {
-    const fallbackTarget = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
-    const mappings =
+    const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
+    const mappings: UpdaterMapping[] =
       dbConfig.mappings && dbConfig.mappings.length > 0
         ? dbConfig.mappings
         : [
@@ -1233,20 +1225,20 @@ export const handleDatabase: NodeHandler = async ({
               sourcePort: resolvedInputs.result ? "result" : "content_en",
             },
           ];
-    const trimStrings = dbConfig.trimStrings ?? false;
-    const skipEmpty = dbConfig.skipEmpty ?? false;
-    const isEmptyValue = (value: unknown) =>
+    const trimStrings: boolean = dbConfig.trimStrings ?? false;
+    const skipEmpty: boolean = dbConfig.skipEmpty ?? false;
+    const isEmptyValue = (value: unknown): boolean =>
       value === undefined ||
       value === null ||
-      (typeof value === "string" && value.trim() === "") ||
-      (Array.isArray(value) && value.length === 0);
+      (typeof value === "string" && (value).trim() === "") ||
+      (Array.isArray(value) && (value as unknown[]).length === 0);
     const updates: Record<string, unknown> = {};
-    mappings.forEach((mapping) => {
+    mappings.forEach((mapping: UpdaterMapping) => {
       const sourcePort = mapping.sourcePort;
       if (!sourcePort) return;
       const sourceValue = resolvedInputs[sourcePort];
       if (sourceValue === undefined) return;
-      let value = coerceInput(sourceValue);
+      let value: unknown = coerceInput(sourceValue);
       if (value && typeof value === "object" && mapping.sourcePath) {
         const resolved = getValueAtMappingPath(value, mapping.sourcePath);
         if (resolved !== undefined) {
@@ -1259,13 +1251,13 @@ export const handleDatabase: NodeHandler = async ({
         typeof value === "object" &&
         !mapping.sourcePath
       ) {
-        const resultValue = (value as Record<string, unknown>).result;
-        const descriptionValue = (value as Record<string, unknown>).description;
-        const contentValue = (value as Record<string, unknown>).content_en;
+        const resultValue: unknown = (value as Record<string, unknown>).result;
+        const descriptionValue: unknown = (value as Record<string, unknown>).description;
+        const contentValue: unknown = (value as Record<string, unknown>).content_en;
         value = resultValue ?? descriptionValue ?? contentValue ?? value;
       }
       if (typeof value === "string" && trimStrings) {
-        value = value.trim();
+        value = (value).trim();
       }
       if (skipEmpty && isEmptyValue(value)) {
         return;
@@ -1278,7 +1270,7 @@ export const handleDatabase: NodeHandler = async ({
     const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
     const idField = dbConfig.idField ?? "entityId";
     const entityId = resolveEntityIdFromInputs(
-      resolvedInputs,
+      resolvedInputs as RuntimePortValues,
       idField,
       simulationEntityType,
       simulationEntityId,
@@ -1297,8 +1289,8 @@ export const handleDatabase: NodeHandler = async ({
     let updateResult: unknown = updates;
 
     if (updateStrategy === "many") {
-      const queryPayload = buildDbQueryPayload(nodeInputs, queryConfig);
-      const query = queryPayload.query ?? {};
+      const queryPayload = buildDbQueryPayload(resolvedInputs as RuntimePortValues, queryConfig);
+      const query = (queryPayload.query) ?? {};
       const hasQuery =
         query && typeof query === "object" && Object.keys(query).length > 0;
 
@@ -1348,10 +1340,7 @@ export const handleDatabase: NodeHandler = async ({
           };
           executed.updater.add(node.id);
         } else {
-          const dbUpdateResult = await dbApi.update<{
-            modifiedCount?: number;
-            matchedCount?: number;
-          }>({
+          const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({ 
             provider: queryPayload.provider,
             collection: queryPayload.collection,
             query,
@@ -1375,8 +1364,8 @@ export const handleDatabase: NodeHandler = async ({
             });
           } else {
             updateResult = dbUpdateResult.data;
-            const modified = dbUpdateResult.data?.modifiedCount ?? 0;
-            const matched = dbUpdateResult.data?.matchedCount ?? 0;
+            const modified: number = dbUpdateResult.data?.modifiedCount ?? 0;
+            const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
             const countLabel = modified || matched;
             toast(
               `Updated ${countLabel} document${countLabel === 1 ? "" : "s"} in ${queryPayload.collection}.`,
@@ -1432,7 +1421,7 @@ export const handleDatabase: NodeHandler = async ({
             executed.updater.add(node.id);
             const suffix = entityId ? ` ${entityId}` : "";
             toast(`Updated ${entityType}${suffix}`, { variant: "success" });
-          } catch (error) {
+          } catch (error: unknown) {
             reportAiPathsError(
               error,
               { action: "updateEntity", entityType, entityId, nodeId: node.id },
@@ -1446,20 +1435,16 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     const primaryTarget =
-      mappings.find((mapping) => mapping.targetPath)?.targetPath ??
+      mappings.find((mapping: UpdaterMapping) => mapping.targetPath)?.targetPath ??
       fallbackTarget;
     const primaryValue = updates[primaryTarget];
     return {
       content_en:
         primaryTarget === "content_en"
           ? ((primaryValue as string | undefined) ??
-            (nodeInputs.result
-              ? safeStringify(coerceInput(nodeInputs.result)) // using safeStringify instead of formatRuntimeValue for consistency with imports
-              : nodeInputs.content_en) ??
+            (nodeInputs.content_en as string | undefined) ??
             "")
-          : ((nodeInputs.result
-              ? safeStringify(coerceInput(nodeInputs.result))
-              : nodeInputs.content_en) ?? ""),
+          : (nodeInputs.content_en as string | undefined),
       bundle: updates,
       result: updateResult,
       debugPayload,
@@ -1472,16 +1457,11 @@ export const handleDatabase: NodeHandler = async ({
     const writeSource = dbConfig.writeSource ?? "bundle";
     const rawPayload = coerceInput(nodeInputs[writeSource]);
     const callbackInput = coerceInput(nodeInputs.queryCallback);
-    // I need coercePayloadObject from runtime/utils
-    // I need to import it. I'll add it to imports.
-    // For now I'll use a local helper or assume I added it.
-    // Wait, I missed importing coercePayloadObject in the file header.
-    // I'll fix imports after this.
-    // Assuming it's available as imported.
-    const coercePayloadObject = (value: unknown) => {
+    
+    const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
       if (!value) return null;
       if (typeof value === "string") {
-        const parsed = parseJsonSafe(value);
+        const parsed: unknown = parseJsonSafe(value);
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
           return parsed as Record<string, unknown>;
         }
@@ -1542,7 +1522,7 @@ export const handleDatabase: NodeHandler = async ({
         executed.updater.add(node.id);
       } else {
         if (entityType === "product") {
-          const productResult = await entityApi.createProduct(
+          const productResult: ApiResponse<unknown> = await entityApi.createProduct(
             buildFormData(payload),
           );
           executed.updater.add(node.id);
@@ -1558,7 +1538,7 @@ export const handleDatabase: NodeHandler = async ({
             toast(`Inserted ${entityType}`, { variant: "success" });
           }
         } else if (entityType === "note") {
-          const noteResult = await entityApi.createNote(payload);
+          const noteResult: ApiResponse<unknown> = await entityApi.createNote(payload);
           executed.updater.add(node.id);
           if (!noteResult.ok) {
             reportAiPathsError(
@@ -1625,7 +1605,7 @@ export const handleDatabase: NodeHandler = async ({
         executed.updater.add(node.id);
       } else {
         if (entityType === "product") {
-          const productDeleteResult = await entityApi.deleteProduct(entityId);
+          const productDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteProduct(entityId);
           executed.updater.add(node.id);
           if (!productDeleteResult.ok) {
             reportAiPathsError(
@@ -1639,7 +1619,7 @@ export const handleDatabase: NodeHandler = async ({
             toast(`Deleted ${entityType} ${entityId}`, { variant: "success" });
           }
         } else if (entityType === "note") {
-          const noteDeleteResult = await entityApi.deleteNote(entityId);
+          const noteDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteNote(entityId);
           executed.updater.add(node.id);
           if (!noteDeleteResult.ok) {
             reportAiPathsError(
@@ -1731,21 +1711,21 @@ function filterCollections(
   if (!selectedCollections || selectedCollections.length === 0) {
     return schema;
   }
-  const selectedSet = new Set(selectedCollections.map((c) => c.toLowerCase()));
+  const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
   return {
     ...schema,
-    collections: schema.collections.filter((c) =>
+    collections: schema.collections.filter((c: CollectionSchema): boolean =>
       selectedSet.has(c.name.toLowerCase()),
     ),
   };
 }
 
-export const handleDbSchema: NodeHandler = async ({
+export const handleDbSchema: NodeHandler = async ({ 
   node,
   prevOutputs,
   executed,
   reportAiPathsError,
-}) => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.schema?.has(node.id)) return prevOutputs;
 
   const defaultConfig: DbSchemaConfig = {
@@ -1774,17 +1754,17 @@ export const handleDbSchema: NodeHandler = async ({
     };
   }
 
-  const fullSchema = schemaResult.data;
+  const fullSchema = schemaResult.data as SchemaResponse;
 
   // Filter collections if mode is "selected"
   const schema =
     config.mode === "selected"
-      ? filterCollections(fullSchema, config.collections)
+      ? filterCollections(fullSchema, config.collections ?? [])
       : fullSchema;
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
-    schema.collections = schema.collections.map((c) => {
+    schema.collections = schema.collections.map((c: CollectionSchema): CollectionSchema => {
       const result: CollectionSchema = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],

@@ -254,10 +254,13 @@ describe("Products API", () => {
       formData.append("weight", "1000");
       formData.append("length", "30");
 
-      const req = new NextRequest("http://localhost/api/products", {
+      const req = {
+        headers: new Headers(),
+        formData: () => Promise.resolve(formData),
+        url: "http://localhost/api/products",
         method: "POST",
-        body: formData,
-      });
+      } as unknown as NextRequest;
+      
       const res = await POST(req);
       const product = (await res.json()) as Product;
 
@@ -287,13 +290,17 @@ describe("Products API", () => {
   describe("PUT /api/products/[id]", () => {
     it("should return 404 when updating a non-existent product", async () => {
       const formData = new FormData();
-      formData.append("name", "Updated Product");
+      formData.append("name_en", "Updated Product");
       formData.append("price", "150");
       formData.append("sku", "SKU123");
-      const req = new NextRequest("http://localhost/api/products/non-existent-id", {
+      
+      const req = {
+        headers: new Headers(),
+        formData: () => Promise.resolve(formData),
+        url: "http://localhost/api/products/non-existent-id",
         method: "PUT",
-        body: formData,
-      });
+      } as unknown as NextRequest;
+
       const res = await PUT(req, {
         params: Promise.resolve({ id: "non-existent-id" }),
       });
@@ -317,10 +324,12 @@ describe("Products API", () => {
       formData.append("sku", "SKU456");
       formData.append("imageFileIds", imageFile.id);
 
-      const req = new NextRequest(`http://localhost/api/products/${product.id}`, {
+      const req = {
+        headers: new Headers(),
+        formData: async () => formData,
+        url: `http://localhost/api/products/${product.id}`,
         method: "PUT",
-        body: formData,
-      });
+      } as unknown as NextRequest;
 
       const res = await PUT(req, {
         params: Promise.resolve({ id: product.id }),
@@ -352,10 +361,13 @@ describe("Products API", () => {
       formData.append("weight", "1500");
       formData.append("length", "40");
 
-      const req = new NextRequest(`http://localhost/api/products/${product.id}`, {
+      const req = {
+        headers: new Headers(),
+        formData: async () => formData,
+        url: `http://localhost/api/products/${product.id}`,
         method: "PUT",
-        body: formData,
-      });
+      } as unknown as NextRequest;
+
       const res = await PUT(req, {
         params: Promise.resolve({ id: product.id }),
       });
@@ -492,7 +504,7 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      expect(res.status).toEqual(400);
+      expect(res.status).toEqual(409);
     });
 
     it("should duplicate a product without images and with a new SKU", async () => {

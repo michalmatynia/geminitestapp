@@ -60,20 +60,20 @@ export function DatabaseQueryInputControls({
   onToggleValidator,
   onRunQuery,
   onQueryChange,
-}: DatabaseQueryInputControlsProps) {
+}: DatabaseQueryInputControlsProps): React.JSX.Element {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex gap-2 items-center">
           <Select
             value={actionCategory}
-            onValueChange={(value: DatabaseActionCategory) => onActionCategoryChange(value)}
+            onValueChange={(value: DatabaseActionCategory): void => onActionCategoryChange(value)}
           >
             <SelectTrigger className="h-7 w-[140px] border-border bg-card/70 text-xs text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900">
-              {actionCategoryOptions.map((option) => (
+              {actionCategoryOptions.map((option: { value: DatabaseActionCategory; label: string }): React.JSX.Element => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -82,13 +82,13 @@ export function DatabaseQueryInputControls({
           </Select>
           <Select
             value={action}
-            onValueChange={(value: DatabaseAction) => onActionChange(value)}
+            onValueChange={(value: DatabaseAction): void => onActionChange(value)}
           >
             <SelectTrigger className="h-7 w-[170px] border-border bg-card/70 text-xs text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900 max-h-72">
-              {actionOptions.map((option) => (
+              {actionOptions.map((option: { value: DatabaseAction; label: string }): React.JSX.Element => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -107,7 +107,7 @@ export function DatabaseQueryInputControls({
                 : "border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
             }`}
             onClick={onFormatClick}
-            onContextMenu={onFormatContextMenu}
+            onContextMenu={(event: React.MouseEvent<HTMLButtonElement>): void => onFormatContextMenu(event)}
           >
             {!queryFormatterEnabled
               ? "Format"
@@ -160,7 +160,7 @@ export function DatabaseQueryInputControls({
           <Textarea
             className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
             value={filterTemplateValue ?? ""}
-            onChange={(event) => onFilterChange?.(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onFilterChange?.(event.target.value)}
             placeholder={(filterTemplateValue ?? "").trim() === "" ? filterPlaceholder : undefined}
           />
         </div>
@@ -177,7 +177,7 @@ export function DatabaseQueryInputControls({
             ref={queryTemplateRef}
             className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={queryTemplateValue}
-            onChange={(event) => onQueryChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
             placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
           />
         </div>
@@ -186,7 +186,7 @@ export function DatabaseQueryInputControls({
           ref={queryTemplateRef}
           className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={queryTemplateValue}
-          onChange={(event) => onQueryChange(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
           placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
         />
       )}

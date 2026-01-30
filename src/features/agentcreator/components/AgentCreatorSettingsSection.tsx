@@ -63,8 +63,9 @@ export function AgentCreatorSettingsSection({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Max Steps</Label>
+              <Label htmlFor="agent-max-steps">Max Steps</Label>
               <Input
+                id="agent-max-steps"
                 type="number"
                 value={agentMaxSteps}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentMaxSteps(Number(e.target.value))}

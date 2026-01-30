@@ -10,12 +10,12 @@ import {
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
-export const parseModelSize = (normalized: string) => {
-  const mixMatch = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
+export const parseModelSize = (normalized: string): number | null => {
+  const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
   if (mixMatch) {
     return Number(mixMatch[1]) * Number(mixMatch[2]);
   }
-  const sizeMatch = normalized.match(/(\d+(?:\.\d+)?)b/);
+  const sizeMatch: RegExpMatchArray | null = normalized.match(/(\d+(?:\.\d+)?)b/);
   if (sizeMatch) return Number(sizeMatch[1]);
   if (normalized.includes("xxl")) return 34;
   if (normalized.includes("xlarge") || normalized.includes("xl")) return 13;
@@ -27,8 +27,8 @@ export const parseModelSize = (normalized: string) => {
 };
 
 export const buildModelProfile = (name: string): ModelProfile => {
-  const normalized = name.toLowerCase();
-  const isEmbedding = [
+  const normalized: string = name.toLowerCase();
+  const isEmbedding: boolean = [
     "embed",
     "embedding",
     "text-embedding",
@@ -36,11 +36,11 @@ export const buildModelProfile = (name: string): ModelProfile => {
     "bge",
     "e5",
     "gte",
-  ].some((tag) => normalized.includes(tag));
-  const isRerank = ["rerank", "reranker", "cross-encoder"].some((tag) =>
+  ].some((tag: string): boolean => normalized.includes(tag));
+  const isRerank: boolean = ["rerank", "reranker", "cross-encoder"].some((tag: string): boolean =>
     normalized.includes(tag)
   );
-  const isVision = [
+  const isVision: boolean = [
     "vision",
     "llava",
     "bakllava",
@@ -48,20 +48,20 @@ export const buildModelProfile = (name: string): ModelProfile => {
     "moondream",
     "qwen-vl",
     "cogvlm",
-  ].some((tag) => normalized.includes(tag));
-  const isCode = [
+  ].some((tag: string): boolean => normalized.includes(tag));
+  const isCode: boolean = [
     "code",
     "coder",
     "codestral",
     "codeqwen",
     "starcoder",
     "codegen",
-  ].some((tag) => normalized.includes(tag));
-  const isInstruct = ["instruct", "assistant"].some((tag) =>
+  ].some((tag: string): boolean => normalized.includes(tag));
+  const isInstruct: boolean = ["instruct", "assistant"].some((tag: string): boolean =>
     normalized.includes(tag)
   );
-  const isChat = normalized.includes("chat");
-  const isReasoning =
+  const isChat: boolean = normalized.includes("chat");
+  const isReasoning: boolean = 
     normalized.includes("reasoner") ||
     /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
   return {
@@ -78,10 +78,10 @@ export const buildModelProfile = (name: string): ModelProfile => {
   };
 };
 
-export const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule) => {
+export const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule): number => {
   if (profile.isEmbedding || profile.isRerank) return Number.NEGATIVE_INFINITY;
-  const size = profile.size ?? 7;
-  let score = 0;
+  const size: number = profile.size ?? 7;
+  let score: number = 0;
   if (profile.isInstruct || profile.isChat) score += 1;
   if (profile.isReasoning) score += rule.preferReasoning ? 1.2 : 0.3;
   if (profile.isVision) score -= 1.5;
@@ -103,14 +103,14 @@ export const pickBestModel = (
   rule: ModelTaskRule
 ): string | null => {
   let bestName: string | null = null;
-  let bestScore = Number.NEGATIVE_INFINITY;
-  let bestSize = -1;
+  let bestScore: number = Number.NEGATIVE_INFINITY;
+  let bestSize: number = -1;
 
   for (const profile of profiles) {
-    const score = scoreModelForTask(profile, rule);
+    const score: number = scoreModelForTask(profile, rule);
     if (!Number.isFinite(score)) continue;
 
-    const size = profile.size ?? 0;
+    const size: number = profile.size ?? 0;
 
     if (
       bestName === null ||
@@ -126,7 +126,7 @@ export const pickBestModel = (
   return bestName;
 };
 
-export const safeLocalStorageGet = (key: string) => {
+export const safeLocalStorageGet = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
   } catch {
@@ -134,7 +134,7 @@ export const safeLocalStorageGet = (key: string) => {
   }
 };
 
-export const safeLocalStorageSet = (key: string, value: string) => {
+export const safeLocalStorageSet = (key: string, value: string): void => {
   try {
     window.localStorage.setItem(key, value);
   } catch {
@@ -142,7 +142,7 @@ export const safeLocalStorageSet = (key: string, value: string) => {
   }
 };
 
-export const safeLocalStorageRemove = (key: string) => {
+export const safeLocalStorageRemove = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
   } catch {
@@ -150,24 +150,28 @@ export const safeLocalStorageRemove = (key: string) => {
   }
 };
 
-export const readCachedMessages = (sessionId: string) => {
+export const readCachedMessages = (sessionId: string): ChatMessage[] => {
   try {
-    const raw = window.localStorage.getItem(`chatbotSessionCache:${sessionId}`);
+    const raw: string | null = window.localStorage.getItem(`chatbotSessionCache:${sessionId}`);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as ChatMessage[];
+    const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (message) => message && typeof message.content === "string"
+    return (parsed as unknown[]).filter(
+      (message: unknown): message is ChatMessage => 
+        !!message && 
+        typeof message === "object" && 
+        "content" in message && 
+        typeof (message as { content: unknown }).content === "string"
     );
   } catch {
     return [];
   }
 };
 
-export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) => {
+export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]): void => {
   try {
-    const safeMessages = messages.filter(
-      (message) =>
+    const safeMessages: ChatMessage[] = messages.filter(
+      (message: ChatMessage): boolean =>
         message.role !== "system" && message.content.trim().length > 0
     );
     window.localStorage.setItem(
@@ -179,16 +183,16 @@ export const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) 
   }
 };
 
-export const resolveIgnoreRobots = (planState?: Record<string, unknown> | null) => {
+export const resolveIgnoreRobots = (planState?: Record<string, unknown> | null): boolean => {
   if (!planState || typeof planState !== "object") return false;
-  const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
+  const prefs: { ignoreRobotsTxt?: boolean } | undefined = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
     .preferences;
   return Boolean(prefs?.ignoreRobotsTxt);
 };
 
-export const resolveApprovalStepId = (planState?: Record<string, unknown> | null) => {
+export const resolveApprovalStepId = (planState?: Record<string, unknown> | null): string | null => {
   if (!planState || typeof planState !== "object") return null;
-  const approval = (planState as { approvalRequestedStepId?: string | null })
+  const approval: string | null | undefined = (planState as { approvalRequestedStepId?: string | null })
     .approvalRequestedStepId;
   return typeof approval === "string" ? approval : null;
 };
@@ -196,58 +200,58 @@ export const resolveApprovalStepId = (planState?: Record<string, unknown> | null
 export const buildAgentResultMessage = (
   audits: AgentAuditLog[],
   status: string | null
-) => {
-  const taskType = audits
-    .map((audit) => audit.metadata)
+): string | null => {
+  const taskType: unknown = audits
+    .map((audit: AgentAuditLog): unknown => audit.metadata)
     .find(
-      (metadata) =>
-        metadata &&
+      (metadata: unknown): boolean =>
+        !!metadata &&
         typeof (metadata as { plannerMeta?: { taskType?: string } }).plannerMeta
           ?.taskType === "string"
     );
-  const resolvedTaskType = 
+  const resolvedTaskType: string | null = 
     (taskType as { plannerMeta?: { taskType?: string } })?.plannerMeta
       ?.taskType ?? null;
-  const extractionAudit = audits.find(
-    (audit) =>
+  const extractionAudit: AgentAuditLog | undefined = audits.find(
+    (audit: AgentAuditLog): boolean =>
       Array.isArray(audit.metadata?.items) ||
       Array.isArray(audit.metadata?.names)
   );
   if (extractionAudit) {
-    const extractionItems = Array.isArray(extractionAudit.metadata?.items) 
-      ? extractionAudit.metadata.items 
+    const extractionItems: unknown[] = Array.isArray(extractionAudit.metadata?.items) 
+      ? (extractionAudit.metadata.items as unknown[])
       : Array.isArray(extractionAudit.metadata?.names)
-        ? extractionAudit.metadata.names
+        ? (extractionAudit.metadata.names as unknown[])
         : [];
-    const items = extractionItems
-      .filter((name) => typeof name === "string")
-      .map((name) => name.trim())
+    const items: string[] = extractionItems
+      .filter((name: unknown): name is string => typeof name === "string")
+      .map((name: string): string => name.trim())
       .filter(Boolean);
     if (items.length > 0) {
-      const url = 
+      const url: string | null = 
         typeof extractionAudit.metadata?.url === "string"
           ? extractionAudit.metadata.url
           : null;
-      const extractionType = 
+      const extractionType: string | null = 
         typeof extractionAudit.metadata?.extractionType === "string"
           ? extractionAudit.metadata.extractionType
           : null;
-      const label = 
+      const label: string = 
         extractionType === "emails"
           ? "Extracted emails"
           : extractionType === "product_names"
             ? "Extracted product names"
             : "Extracted information";
-      const intro = url ? `${label} found on ${url}:` : `${label}:`;
-      return `${intro}\n${items.map((name) => `- ${name}`).join("\n")}`;
+      const intro: string = url ? `${label} found on ${url}:` : `${label}:`;
+      return `${intro}\n${items.map((name: string): string => `- ${name}`).join("\n")}`;
     }
   }
-  const emptyAudit = audits.find(
-    (audit) =>
+  const emptyAudit: AgentAuditLog | undefined = audits.find(
+    (audit: AgentAuditLog): boolean =>
       audit.message === "No product names extracted."
   );
   if (emptyAudit) {
-    const url = 
+    const url: string | null = 
       typeof emptyAudit.metadata?.url === "string"
         ? emptyAudit.metadata.url
         : null;
@@ -271,22 +275,22 @@ export const buildAgentResultMessage = (
   return null;
 };
 
-export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]) => {
-  const resumeAudit = audits.find(
-    (audit) =>
+export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]): string | null => {
+  const resumeAudit: AgentAuditLog | undefined = audits.find(
+    (audit: AgentAuditLog): boolean =>
       audit.message === "Resume summary prepared."
   );
-  const autoResumeAudit = audits.find(
-    (audit) => audit.message === "Auto-resume queued for stuck run."
+  const autoResumeAudit: AgentAuditLog | undefined = audits.find(
+    (audit: AgentAuditLog): boolean => audit.message === "Auto-resume queued for stuck run."
   );
   if (!resumeAudit) {
     if (!autoResumeAudit) return null;
-    const timestamp = autoResumeAudit.createdAt
+    const timestamp: string | null = autoResumeAudit.createdAt
       ? new Date(autoResumeAudit.createdAt).toLocaleString()
       : null;
     return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ""}.`;
   }
-  const summary = 
+  const summary: string = 
     typeof resumeAudit.metadata?.summary === "string"
       ? resumeAudit.metadata.summary.trim()
       : "";
@@ -299,19 +303,19 @@ export const buildToolTimeline = (
   audits: AgentAuditLog[]
 ): TimelineEntry[] => {
   const auditEntries: TimelineEntry[] = audits
-    .filter((audit) =>
+    .filter((audit: AgentAuditLog): boolean =>
       /tool|playwright|snapshot|selector|extraction|login|search|navigation/i.test(
         audit.message
       )
     )
-    .map((audit) => ({
+    .map((audit: AgentAuditLog): TimelineEntry => ({
       id: `audit-${audit.id}`,
       source: "audit" as const,
       level: null,
       message: audit.message,
       createdAt: audit.createdAt,
     }));
-  const logEntries: TimelineEntry[] = logs.map((log) => ({
+  const logEntries: TimelineEntry[] = logs.map((log: AgentBrowserLog): TimelineEntry => ({
     id: `browser-${log.id}`,
     source: "browser" as const,
     level: log.level,
@@ -319,52 +323,70 @@ export const buildToolTimeline = (
     createdAt: log.createdAt,
   }));
   return [...auditEntries, ...logEntries].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a: TimelineEntry, b: TimelineEntry): number => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 };
 
-export const formatDependencies = (dependsOn?: string[] | null) => {
+export const formatDependencies = (dependsOn?: string[] | null): string | null => {
   if (!dependsOn || dependsOn.length === 0) return null;
-  const readable = dependsOn.map((item) => {
-    const match = item.match(/^step-(\d+)$/);
+  const readable: string[] = dependsOn.map((item: string): string => {
+    const match: RegExpMatchArray | null = item.match(/^step-(\d+)$/);
     if (!match) return item;
-    const index = Number(match[1]);
+    const index: number = Number(match[1]);
     if (!Number.isFinite(index)) return item;
     return `#${index + 1}`;
   });
   return readable.join(", ");
 };
 
-export const getSelfCheckAudits = (audits: AgentAuditLog[]) =>
+export const getSelfCheckAudits = (audits: AgentAuditLog[]): AgentAuditLog[] =>
   audits.filter(
-    (audit) =>
+    (audit: AgentAuditLog): boolean =>
       audit.message === "Self-check completed."
   );
 
-export const getAuditList = (value: unknown) =>
+export const getAuditList = (value: unknown): string[] =>
   Array.isArray(value)
     ? value
-        .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
+        .filter((item: unknown): item is string => typeof item === "string")
+        .map((item: string): string => item.trim())
         .filter(Boolean)
     : [];
 
-export const formatAdaptiveReason = (reason?: string | null) => {
+export const formatAdaptiveReason = (reason?: string | null): string => {
   if (!reason) return "unspecified";
-  const trimmed = reason.trim();
+  const trimmed: string = reason.trim();
   if (!trimmed) return "unspecified";
   if (trimmed.includes(" ")) return trimmed;
   return trimmed.replace(/-/g, " ");
 };
 
-export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
-  const candidates = audits
-    .map((audit) => {
-      const metadata = audit.metadata as {
+export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): { 
+  id: string;
+  createdAt: string;
+  reason: string | null;
+  label: string;
+} | null => {
+  const candidates: Array<{ 
+    id: string;
+    createdAt: string;
+    reason: string | null;
+    label: string;
+  }> = audits
+    .map((audit: AgentAuditLog): {
+      id: string;
+      createdAt: string;
+      reason: string | null;
+      label: string;
+    } | null => {
+      const metadata: {
+        type?: string;
+        reason?: string | null;
+      } | null = audit.metadata as {
         type?: string;
         reason?: string | null;
       } | null;
-      const type = metadata?.type;
+      const type: string | undefined = metadata?.type;
       if (
         type !== "plan-replan" &&
         type !== "plan-adapt" &&
@@ -372,7 +394,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
       ) {
         return null;
       }
-      const label = 
+      const label: string = 
         type === "plan-adapt"
           ? "mid-run adaptation"
           : type === "self-check-replan"
@@ -385,16 +407,36 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
         label,
       };
     })
-    .filter(Boolean) as Array<{ 
+    .filter((item: {
       id: string;
       createdAt: string;
       reason: string | null;
       label: string;
-    }>;
+    } | null): item is {
+      id: string;
+      createdAt: string;
+      reason: string | null;
+      label: string;
+    } => !!item);
   if (candidates.length === 0) return null;
-  return candidates.reduce((latest, current) => {
-    const latestTime = Date.parse(latest.createdAt);
-    const currentTime = Date.parse(current.createdAt);
+  return candidates.reduce((latest: {
+    id: string;
+    createdAt: string;
+    reason: string | null;
+    label: string;
+  }, current: {
+    id: string;
+    createdAt: string;
+    reason: string | null;
+    label: string;
+  }): {
+    id: string;
+    createdAt: string;
+    reason: string | null;
+    label: string;
+  } => {
+    const latestTime: number = Date.parse(latest.createdAt);
+    const currentTime: number = Date.parse(current.createdAt);
     return currentTime > latestTime ? current : latest;
   }, candidates[0]!);
 };
@@ -403,10 +445,10 @@ export const getLatestAuditByType = (
   audits: AgentAuditLog[],
   type: string
 ): AgentAuditLog | null => {
-  const filtered = audits.filter((audit) => audit.metadata?.type === type);
+  const filtered: AgentAuditLog[] = audits.filter((audit: AgentAuditLog): boolean => audit.metadata?.type === type);
   return filtered.length ? filtered[filtered.length - 1]! : null;
 };
 
-export const isAbortError = (error: unknown) =>
+export const isAbortError = (error: unknown): boolean =>
   (error instanceof Error && error.name === "AbortError") ||
   (typeof error === "object" && error !== null && (error as { name?: string }).name === "AbortError");

@@ -239,6 +239,18 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           startedAt: new Date(),
           errorMessage: null,
         });
+        await repo.createRunEvent({
+          runId: run.id,
+          level: "info",
+          message: `Node ${node.title ?? node.id} started.`,
+          metadata: {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: "running",
+            attempt: nextAttempt,
+          },
+        });
       },
       onNodeFinish: async ({ node, nodeInputs, nextOutputs }: { node: AiNode; nodeInputs: RuntimePortValues; nextOutputs: RuntimePortValues }) => {
         await repo.upsertRunNode(run.id, node.id, {
@@ -251,6 +263,18 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           finishedAt: new Date(),
           errorMessage: null,
         });
+        await repo.createRunEvent({
+          runId: run.id,
+          level: "info",
+          message: `Node ${node.title ?? node.id} completed.`,
+          metadata: {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: "completed",
+            attempt: nodeAttemptMap.get(node.id) ?? 0,
+          },
+        });
       },
       onNodeError: async ({ node, nodeInputs, prevOutputs, error }: { node: AiNode; nodeInputs: RuntimePortValues; prevOutputs: RuntimePortValues; error: unknown }) => {
         await repo.upsertRunNode(run.id, node.id, {
@@ -262,6 +286,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           outputs: toJsonSafe(prevOutputs) as RuntimePortValues,
           finishedAt: new Date(),
           errorMessage: error instanceof Error ? error.message : String(error),
+        });
+        await repo.createRunEvent({
+          runId: run.id,
+          level: "error",
+          message: `Node ${node.title ?? node.id} failed.`,
+          metadata: {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: "failed",
+            attempt: nodeAttemptMap.get(node.id) ?? 0,
+            error: error instanceof Error ? error.message : String(error),
+          },
         });
       },
       onIterationEnd: async ({ inputs, outputs }: { inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues> }) => {

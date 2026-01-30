@@ -12,6 +12,7 @@ import { startAiPathRunQueue } from "@/features/jobs/server";
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),
   pathId: z.string().trim().optional().nullable(),
+  query: z.string().trim().optional(),
   mode: z.enum(["resume", "replay"]).optional(),
   limit: z.number().int().min(1).max(1000).optional(),
 });
@@ -26,6 +27,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const runIds = Array.isArray(parsed.data.runIds) ? parsed.data.runIds : [];
     const pathId = parsed.data.pathId?.trim() || undefined;
     const mode = parsed.data.mode ?? "resume";
+    const query = parsed.data.query?.trim() || undefined;
     const limit = parsed.data.limit ?? undefined;
 
     const repo = await getPathRunRepository();
@@ -34,6 +36,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (targetRunIds.length === 0) {
       const { runs } = await repo.listRuns({
         ...(pathId ? { pathId } : {}),
+        ...(query ? { query } : {}),
         status: "dead_lettered",
         ...(limit ? { limit } : {}),
       });

@@ -50,7 +50,7 @@ export function CanvasSidebar({
   onDeleteSelectedNode,
   onRemoveEdge,
   onClearWires,
-}: CanvasSidebarProps) {
+}: CanvasSidebarProps): React.JSX.Element {
   return (
     <div className="space-y-4">
       <div
@@ -92,8 +92,8 @@ export function CanvasSidebar({
               },
               { title: "Description", types: ["description_updater"], icon: "✍️" },
               { title: "Viewers", types: ["viewer", "notification"], icon: "👁" },
-            ].map((group) => {
-              const items = palette.filter((node) => group.types.includes(node.type));
+            ].map((group: { title: string; types: string[]; icon: string }): React.JSX.Element | null => {
+              const items = palette.filter((node: NodeDefinition) => group.types.includes(node.type));
               if (items.length === 0) return null;
               const isExpanded = expandedPaletteGroups.has(group.title);
               return (
@@ -123,11 +123,11 @@ export function CanvasSidebar({
                   </button>
                   {isExpanded && (
                     <div className="space-y-2 px-3 pb-3">
-                      {items.map((node) => (
+                      {items.map((node: NodeDefinition) => (
                         <div
                           key={node.title}
                           draggable
-                          onDragStart={(event) => onDragStart(event, node)}
+                          onDragStart={(event: React.DragEvent<HTMLDivElement>) => onDragStart(event, node)}
                           className="cursor-grab rounded-lg border bg-card/60 backdrop-blur p-3 text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
                           <div className="flex items-center justify-between">
@@ -162,7 +162,7 @@ export function CanvasSidebar({
                   <Button
                     className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
-                    onClick={(event) => onFireTrigger(selectedNode, event)}
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTrigger(selectedNode, event)}
                   >
                     Fire Trigger
                   </Button>
@@ -170,7 +170,7 @@ export function CanvasSidebar({
                     <Button
                       className="w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10"
                       type="button"
-                      onClick={(event) => onFireTriggerPersistent(selectedNode, event)}
+                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTriggerPersistent(selectedNode, event)}
                     >
                       Queue Persistent Run
                     </Button>
@@ -191,7 +191,7 @@ export function CanvasSidebar({
                 <Input
                   className="mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white"
                   value={selectedNode.title}
-                  onChange={(event) => onUpdateSelectedNode({ title: event.target.value })}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => onUpdateSelectedNode({ title: event.target.value })}
                 />
               </div>
               <div>
@@ -199,42 +199,42 @@ export function CanvasSidebar({
                 <Textarea
                   className="mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white"
                   value={selectedNode.description}
-                  onChange={(event) =>
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                     onUpdateSelectedNode({ description: event.target.value })
                   }
                 />
               </div>
               <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
                 Inputs:{" "}
-                {selectedNode.inputs.map((port) => formatPortLabel(port)).join(", ") ||
+                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(", ") ||
                   "None"}{" "}
                 <br />
                 Outputs:{" "}
-                {selectedNode.outputs.map((port) => formatPortLabel(port)).join(", ") ||
+                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(", ") ||
                   "None"}
               </div>
-              {selectedNode.type === "prompt" && (() => {
-                const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+              {selectedNode.type === "prompt" && ((): React.JSX.Element | null => {
+                const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
-                  .map((edge) => edge.toPort)
-                  .filter((port): port is string => Boolean(port));
+                  .map((edge: Edge) => edge.toPort)
+                  .filter((port: string | undefined): port is string => Boolean(port));
                 const bundleKeys = new Set<string>();
-                incomingEdges.forEach((edge) => {
+                incomingEdges.forEach((edge: Edge) => {
                   if (edge.toPort !== "bundle") return;
-                  const fromNode = nodes.find((node) => node.id === edge.from);
+                  const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
                   if (!fromNode) return;
                   if (fromNode.type === "parser") {
                     const mappings =
                       fromNode.config?.parser?.mappings ??
                       createParserMappings(fromNode.outputs);
-                    Object.keys(mappings).forEach((key) => {
+                    Object.keys(mappings).forEach((key: string) => {
                       const trimmed = key.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                     return;
                   }
                   if (fromNode.type === "bundle") {
-                    fromNode.inputs.forEach((port) => {
+                    fromNode.inputs.forEach((port: string) => {
                       const trimmed = port.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -242,20 +242,20 @@ export function CanvasSidebar({
                   if (fromNode.type === "mapper") {
                     const mapperOutputs =
                       fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                    mapperOutputs.forEach((output) => {
+                    mapperOutputs.forEach((output: string) => {
                       const trimmed = output.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                   }
                 });
-                const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
+                const directPlaceholders = inputPorts.filter((port: string) => port !== "bundle");
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
                   <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {Array.from(bundleKeys).map((key) => (
+                        {Array.from(bundleKeys).map((key: string) => (
                           <span
                             key={key}
                             className="rounded-full border px-2 py-0.5 text-[10px] text-gray-200"
@@ -269,7 +269,7 @@ export function CanvasSidebar({
                       <div className="mt-2 text-[11px] text-gray-500">
                         Direct inputs:{" "}
                         {directPlaceholders
-                          .map((port) => formatPlaceholderLabel(port))
+                          .map((port: string) => formatPlaceholderLabel(port))
                           .join(", ")}
                       </div>
                     )}
@@ -302,10 +302,10 @@ export function CanvasSidebar({
         <div className="mb-3 text-sm font-semibold text-white">Connections</div>
         <div className="space-y-2 text-xs text-gray-400">
           <div>Active wires: {edges.length}</div>
-          {selectedEdgeId ? (() => {
-            const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
-            const fromNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.from) : null;
-            const toNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.to) : null;
+          {selectedEdgeId ? ((): React.JSX.Element | null => {
+            const selectedEdge = edges.find((edge: Edge) => edge.id === selectedEdgeId);
+            const fromNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.from) : null;
+            const toNode = selectedEdge ? nodes.find((n: AiNode) => n.id === selectedEdge.to) : null;
             return selectedEdge ? (
               <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
                 <div className="text-xs font-medium text-blue-300">Selected Wire</div>
@@ -379,9 +379,9 @@ export function CanvasSidebar({
         </div>
         {edges.length > 0 && (
           <div className="mt-3 space-y-2 text-[11px] text-gray-500">
-            {edges.map((edge) => {
-              const fromNode = nodes.find((node) => node.id === edge.from);
-              const toNode = nodes.find((node) => node.id === edge.to);
+            {edges.map((edge: Edge): React.JSX.Element => {
+              const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
+              const toNode = nodes.find((node: AiNode) => node.id === edge.to);
               const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? "?"} → ${toNode?.title ?? edge.to}.${edge.toPort ?? "?"}`;
               const isSelected = edge.id === selectedEdgeId;
               return (

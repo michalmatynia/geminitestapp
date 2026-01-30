@@ -41,8 +41,8 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
     );
   }
   if (typeof value === "object") {
-    if (seen.has(value as object)) return [];
-    seen.add(value as object);
+    if (seen.has(value)) return [];
+    seen.add(value);
     const record = value as Record<string, unknown>;
     const candidates = [
       "url",
@@ -385,7 +385,7 @@ export const pollDatabaseQuery = async (
                 ? entry
                 : typeof entry === "object"
                   ? JSON.stringify(entry)
-                  : String(entry)
+                  : safeStringify(entry)
           )
           .includes(targetStr);
       }

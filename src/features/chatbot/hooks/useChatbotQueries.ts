@@ -14,10 +14,10 @@ import type { ChatbotSessionListItem } from "../types";
 /**
  * Query hook for fetching all chatbot sessions
  */
-export function useChatbotSessions(options?: { enabled?: boolean }) {
+export function useChatbotSessions(options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: chatbotQueryKeys.sessions(),
-    queryFn: async () => {
+    queryFn: async (): Promise<ChatbotSessionListItem[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>();
       return data.sessions ?? [];
     },
@@ -28,10 +28,10 @@ export function useChatbotSessions(options?: { enabled?: boolean }) {
 /**
  * Query hook for fetching session IDs only (lightweight)
  */
-export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }) {
+export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: [...chatbotQueryKeys.sessions(), "ids", query ?? "all"],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
         scope: "ids",
         ...(query ? { query } : {}),
@@ -45,7 +45,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
 /**
  * Query hook for fetching a single chatbot session with messages
  */
-export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }) {
+export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : ["chatbot", "session", "none"],
     queryFn: async () => {
@@ -59,10 +59,10 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
 /**
  * Query hook for fetching chatbot settings
  */
-export function useChatbotSettings(key?: string, options?: { enabled?: boolean }) {
+export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: chatbotQueryKeys.settings(key),
-    queryFn: () => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
+    queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     enabled: (options?.enabled ?? true) && !!key,
   });
 }
@@ -70,10 +70,10 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching available models from the chatbot API
  */
-export function useChatbotModels(options?: { enabled?: boolean }) {
+export function useChatbotModels(options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: chatbotQueryKeys.models(),
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       const res = await fetch("/api/chatbot");
       if (!res.ok) {
         throw new Error("Failed to fetch models");
@@ -89,10 +89,10 @@ export function useChatbotModels(options?: { enabled?: boolean }) {
 /**
  * Query hook for fetching Ollama models from a custom base URL
  */
-export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }) {
+export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: [...chatbotQueryKeys.models(), "ollama", baseUrl],
-    queryFn: () => fetchOllamaModels(baseUrl),
+    queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
     enabled: (options?.enabled ?? true) && !!baseUrl,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -101,10 +101,10 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching chatbot memory/context
  */
-export function useChatbotMemory(query?: string, options?: { enabled?: boolean }) {
+export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): typeof useQuery {
   return useQuery({
     queryKey: chatbotQueryKeys.memory(query),
-    queryFn: () => fetchChatbotMemory(query ?? ""),
+    queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ""),
     enabled: options?.enabled ?? true,
   });
 }

@@ -40,3 +40,5 @@ export interface Slug {
   createdAt?: string;
   isDefault?: boolean;
 }
+
+export * from "./page-builder";

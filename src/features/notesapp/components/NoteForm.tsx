@@ -4,7 +4,7 @@ import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, RelatedNote, TagRecord, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
 
 
@@ -52,7 +52,7 @@ export function NoteForm({
   notebookId,
   folderTheme,
   formRef,
-}: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }) {
+}: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }): React.JSX.Element {
   // Content & undo/redo
   const {
     state: content,
@@ -105,7 +105,7 @@ export function NoteForm({
     removeFile,
   } = useNoteFileAttachments(note?.files);
 
-  const setLightboxImage = (imgSrc: string | null) => {
+  const setLightboxImage = (imgSrc: string | null): void => {
     if (imgSrc) {
       openLightbox(imgSrc);
     } else {
@@ -125,7 +125,7 @@ export function NoteForm({
     handleCreateTag,
     handleRemoveTag,
   } = useNoteTags(
-    note?.tags.map((t) => t.tagId) || [],
+    note?.tags.map((t: { tagId: string; tag: TagRecord }): string => t.tagId) || [],
     availableTags,
     notebookId,
     note?.notebookId,
@@ -139,13 +139,13 @@ export function NoteForm({
   const [selectedRelatedNotes, setSelectedRelatedNotes] = useState< 
     Array<{ id: string; title: string; color: string | null; content: string }>
   >(
-    note?.relations?.map((rel) => ({
+    note?.relations?.map((rel: RelatedNote): { id: string; title: string; color: string | null; content: string } => ({
       id: rel.id,
       title: rel.title,
       color: rel.color ?? null,
       content: "",
     })) ||
-      note?.relationsFrom?.map((rel) => ({
+      note?.relationsFrom?.map((rel: NoteRelationWithTarget): { id: string; title: string; color: string | null; content: string } => ({
         id: rel.targetNote.id,
         title: rel.targetNote.title,
         color: rel.targetNote.color ?? null,
@@ -159,8 +159,8 @@ export function NoteForm({
   const [isRelatedLoading, setIsRelatedLoading] = useState(false);
   const relatedSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [fontFamily, setFontFamily] = useState("inherit");
+  const [textColor, _setTextColor] = useState("#ffffff");
+  const [fontFamily, _setFontFamily] = useState("inherit");
   const [showPreview, setShowPreview] = useState(false);
   const [editorWidth, setEditorWidth] = useState<number | null>(null);
   const [isDraggingSplitter, setIsDraggingSplitter] = useState(false);
@@ -169,7 +169,7 @@ export function NoteForm({
   const { settings } = useNoteSettings();
 
   // Sync undo history when note changes
-  useEffect(() => {
+  useEffect((): void => {
     if (note?.id) {
       resetHistory(note.content);
     }
@@ -177,15 +177,15 @@ export function NoteForm({
 
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = folderTheme ?? FALLBACK_THEME;
-  const hasCustomColor = color !== "#ffffff";
-  const contentBackground = hasCustomColor
+  const hasCustomColor: boolean = color !== "#ffffff";
+  const contentBackground: string = hasCustomColor
     ? color
     : effectiveTheme.backgroundColor;
-  const contentTextColor = hasCustomColor
+  const contentTextColor: string = hasCustomColor
     ? getReadableTextColor(contentBackground)
     : effectiveTheme.textColor;
   
-  const previewTypographyStyle: React.CSSProperties = useMemo(() => ({
+  const previewTypographyStyle: React.CSSProperties = useMemo((): React.CSSProperties => ({
     color: contentTextColor,
     ["--tw-prose-body" as never]: contentTextColor,
     ["--tw-prose-headings" as never]: effectiveTheme.markdownHeadingColor ?? contentTextColor,
@@ -204,7 +204,7 @@ export function NoteForm({
 
   const flattenFolderTree = useCallback((
     folders: CategoryWithChildren[],
-    level = 0
+    level: number = 0
   ): Array<{ id: string; name: string; level: number }> => {
     const result: Array<{ id: string; name: string; level: number }> = [];
     for (const folder of folders) {
@@ -216,68 +216,68 @@ export function NoteForm({
     return result;
   }, []);
 
-  const flatFolders = useMemo(
-    () => flattenFolderTree(folderTree),
+  const flatFolders: { id: string; name: string; level: number }[] = useMemo(
+    (): { id: string; name: string; level: number }[] => flattenFolderTree(folderTree),
     [folderTree, flattenFolderTree]
   );
 
-  const applyWrap = (prefix: string, suffix: string, placeholder: string) => {
-    const textarea = contentRef.current;
+  const applyWrap = (prefix: string, suffix: string, placeholder: string): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = content.slice(start, end) || placeholder;
-    const nextValue =
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const selected: string = content.slice(start, end) || placeholder;
+    const nextValue: string =
       content.slice(0, start) + prefix + selected + suffix + content.slice(end);
     setContent(nextValue);
-    requestAnimationFrame(() => {
-      const cursor = start + prefix.length + selected.length + suffix.length;
+    requestAnimationFrame((): void => {
+      const cursor: number = start + prefix.length + selected.length + suffix.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
   };
 
-  const insertAtCursor = (value: string) => {
-    const textarea = contentRef.current;
+  const insertAtCursor = (value: string): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const nextValue = content.slice(0, start) + value + content.slice(end);
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const nextValue: string = content.slice(0, start) + value + content.slice(end);
     setContent(nextValue);
-    requestAnimationFrame(() => {
-      const cursor = start + value.length;
+    requestAnimationFrame((): void => {
+      const cursor: number = start + value.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
   };
 
-  const applyLinePrefix = (prefix: string) => {
-    const textarea = contentRef.current;
+  const applyLinePrefix = (prefix: string): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const blockStart = content.lastIndexOf("\n", start - 1) + 1;
-    const blockEndIndex = content.indexOf("\n", end);
-    const blockEnd = blockEndIndex === -1 ? content.length : blockEndIndex;
-    const block = content.slice(blockStart, blockEnd);
-    const updated = block
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const blockStart: number = content.lastIndexOf("\n", start - 1) + 1;
+    const blockEndIndex: number = content.indexOf("\n", end);
+    const blockEnd: number = blockEndIndex === -1 ? content.length : blockEndIndex;
+    const block: string = content.slice(blockStart, blockEnd);
+    const updated: string = block
       .split(/\r?\n/)
-      .map((line) => (line.trim().length ? `${prefix}${line}` : line))
+      .map((line: string): string => (line.trim().length ? `${prefix}${line}` : line))
       .join("\n");
-    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    const nextValue: string = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
-    requestAnimationFrame(() => {
+    requestAnimationFrame((): void => {
       textarea.focus();
       textarea.setSelectionRange(blockStart, blockStart + updated.length);
     });
   };
 
-  const applySpanStyle = (colorValue: string, fontValue: string) => {
-    const textarea = contentRef.current;
+  const applySpanStyle = (colorValue: string, fontValue: string): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = content.slice(start, end);
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const selected: string = content.slice(start, end);
     const styleParts: string[] = [];
     if (colorValue) {
       styleParts.push(`color: ${colorValue}`);
@@ -285,15 +285,15 @@ export function NoteForm({
     if (fontValue && fontValue !== "inherit") {
       styleParts.push(`font-family: ${fontValue}`);
     }
-    const styleAttribute = styleParts.length > 0 ? ` style=\"${styleParts.join("; ")}\"` : "";
-    const openingTag = `<span${styleAttribute}>`;
-    const closingTag = "</span>";
-    const wrapped = `${openingTag}${selected}${closingTag}`;
-    const nextValue =
+    const styleAttribute: string = styleParts.length > 0 ? ` style=\" ${styleParts.join("; ")}\"` : "";
+    const openingTag: string = `<span${styleAttribute}>`;
+    const closingTag: string = "</span>";
+    const wrapped: string = `${openingTag}${selected}${closingTag}`;
+    const nextValue: string =
       content.slice(0, start) + wrapped + content.slice(end);
     setContent(nextValue);
-    requestAnimationFrame(() => {
-      const cursor = selected.length > 0 
+    requestAnimationFrame((): void => {
+      const cursor: number = selected.length > 0 
         ? start + wrapped.length 
         : start + openingTag.length;
       textarea.focus();
@@ -301,62 +301,62 @@ export function NoteForm({
     });
   };
 
-  const applyBulletList = () => {
-    const textarea = contentRef.current;
+  const applyBulletList = (): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
 
     if (start === end) {
-      const insert = "- ";
-      const nextValue = content.slice(0, start) + insert + content.slice(end);
+      const insert: string = "- ";
+      const nextValue: string = content.slice(0, start) + insert + content.slice(end);
       setContent(nextValue);
-      requestAnimationFrame(() => {
-        const cursor = start + insert.length;
+      requestAnimationFrame((): void => {
+        const cursor: number = start + insert.length;
         textarea.focus();
         textarea.setSelectionRange(cursor, cursor);
       });
       return;
     }
 
-    const blockStart = content.lastIndexOf("\n", start - 1) + 1;
-    const blockEndIndex = content.indexOf("\n", end);
-    const blockEnd = blockEndIndex === -1 ? content.length : blockEndIndex;
-    const block = content.slice(blockStart, blockEnd);
-    const updated = block
+    const blockStart: number = content.lastIndexOf("\n", start - 1) + 1;
+    const blockEndIndex: number = content.indexOf("\n", end);
+    const blockEnd: number = blockEndIndex === -1 ? content.length : blockEndIndex;
+    const block: string = content.slice(blockStart, blockEnd);
+    const updated: string = block
       .split(/\r?\n/)
-      .map((line) => (line.trim().startsWith("- ") ? line : `- ${line}`))
+      .map((line: string): string => (line.trim().startsWith("- ") ? line : `- ${line}`))
       .join("\n");
-    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    const nextValue: string = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
-    requestAnimationFrame(() => {
+    requestAnimationFrame((): void => {
       textarea.focus();
       textarea.setSelectionRange(blockStart, blockStart + updated.length);
     });
   };
 
-  const applyChecklist = () => {
-    const textarea = contentRef.current;
+  const applyChecklist = (): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const blockStart = content.lastIndexOf("\n", start - 1) + 1;
-    const blockEndIndex = content.indexOf("\n", end);
-    const blockEnd = blockEndIndex === -1 ? content.length : blockEndIndex;
-    const block = content.slice(blockStart, blockEnd);
-    const updated = block
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const blockStart: number = content.lastIndexOf("\n", start - 1) + 1;
+    const blockEndIndex: number = content.indexOf("\n", end);
+    const blockEnd: number = blockEndIndex === -1 ? content.length : blockEndIndex;
+    const block: string = content.slice(blockStart, blockEnd);
+    const updated: string = block
       .split(/\r?\n/)
-      .map((line) => (line.trim().startsWith("- [") ? line : `- [ ] ${line}`))
+      .map((line: string): string => (line.trim().startsWith("- [") ? line : `- [ ] ${line}`))
       .join("\n");
-    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    const nextValue: string = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
-    requestAnimationFrame(() => {
+    requestAnimationFrame((): void => {
       textarea.focus();
       textarea.setSelectionRange(blockStart, blockStart + updated.length);
     });
   };
 
-  const handleFileUpload = async (slotIndex: number, file: File) => {
+  const handleFileUpload = async (slotIndex: number, file: File): Promise<void> => {
     if (!note?.id) {
       toast("Please save the note first before uploading files");
       return;
@@ -370,21 +370,21 @@ export function NoteForm({
     addUploadingSlot(slotIndex);
 
     try {
-      const formData = new FormData();
+      const formData: FormData = new FormData();
       formData.append("file", file);
       formData.append("slotIndex", slotIndex.toString());
 
-      const response = await fetch(`/api/notes/${note.id}/files`, {
+      const response: Response = await fetch(`/api/notes/${note.id}/files`, {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        const newFile = (await response.json()) as NoteFileRecord;
-        setNoteFiles((prev) => [...prev.filter((f) => f.slotIndex !== slotIndex), newFile].sort((a, b) => a.slotIndex - b.slotIndex));
+        const newFile: NoteFileRecord = (await response.json()) as NoteFileRecord;
+        setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
         toast("File uploaded successfully");
       } else {
-        const error = (await response.json()) as { error?: string };
+        const error: { error?: string } = (await response.json()) as { error?: string };
         toast(error.error || "Failed to upload file");
       }
     } catch (error) {
@@ -395,16 +395,16 @@ export function NoteForm({
     }
   };
 
-  const handleFileDelete = async (slotIndex: number) => {
+  const handleFileDelete = async (slotIndex: number): Promise<void> => {
     if (!note?.id) return;
 
     try {
-      const response = await fetch(`/api/notes/${note.id}/files/${slotIndex}`, {
+      const response: Response = await fetch(`/api/notes/${note.id}/files/${slotIndex}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        removeFile(noteFiles.find((f) => f.slotIndex === slotIndex)?.id || "");
+        removeFile(noteFiles.find((f: NoteFileRecord): boolean => f.slotIndex === slotIndex)?.id || "");
         toast("File deleted successfully");
       } else {
         toast("Failed to delete file");
@@ -415,10 +415,10 @@ export function NoteForm({
     }
   };
 
-  const handleMultiFileUpload = async (files: FileList | File[]) => {
-    const queue = Array.from(files);
+  const handleMultiFileUpload = async (files: FileList | File[]): Promise<void> => {
+    const queue: File[] = Array.from(files);
     for (const file of queue) {
-      const nextSlot = getNextAvailableSlot();
+      const nextSlot: number | null = getNextAvailableSlot();
       if (nextSlot === null) {
         toast("All file slots are full. Delete a file to upload more.");
         return;
@@ -427,31 +427,31 @@ export function NoteForm({
     }
   };
 
-  const isImageFile = (mimetype: string) => mimetype.startsWith("image/");
+  const isImageFile = (mimetype: string): boolean => mimetype.startsWith("image/");
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const insertFileReference = (file: NoteFileRecord) => {
-    const textarea = contentRef.current;
+  const insertFileReference = (file: NoteFileRecord): void => {
+    const textarea: HTMLTextAreaElement | null = contentRef.current;
     if (!textarea) return;
 
-    const isImage = isImageFile(file.mimetype);
-    const altText = file.filename.replace(/^slot-\d+-\d+-/, "");
-    const reference = isImage
+    const isImage: boolean = isImageFile(file.mimetype);
+    const altText: string = file.filename.replace(/^slot-\d+-\d+-/, "");
+    const reference: string = isImage
       ? `![${altText}](${file.filepath})`
       : `[${altText}](${file.filepath})`;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const nextValue = content.slice(0, start) + reference + content.slice(end);
+    const start: number = textarea.selectionStart;
+    const end: number = textarea.selectionEnd;
+    const nextValue: string = content.slice(0, start) + reference + content.slice(end);
     setContent(nextValue);
 
-    requestAnimationFrame(() => {
-      const cursor = start + reference.length;
+    requestAnimationFrame((): void => {
+      const cursor: number = start + reference.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
@@ -460,21 +460,21 @@ export function NoteForm({
   };
 
   const getNextAvailableSlot = (): number | null => {
-    const usedSlots = new Set(noteFiles.map((f) => f.slotIndex));
-    for (let i = 0; i < MAX_SLOTS; i++) {
+    const usedSlots: Set<number> = new Set(noteFiles.map((f: NoteFileRecord): number => f.slotIndex));
+    for (let i: number = 0; i < MAX_SLOTS; i++) {
       if (!usedSlots.has(i)) return i;
     }
     return null;
   };
 
-  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const uploadPastedImage = async (file: File) => {
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => {
+    const uploadPastedImage = async (file: File): Promise<void> => {
       if (!note?.id) {
         toast("Please save the note first before pasting images");
         return;
       }
 
-      const nextSlot = getNextAvailableSlot();
+      const nextSlot: number | null = getNextAvailableSlot();
       if (nextSlot === null) {
         toast("All file slots are full. Delete a file to paste a new image.");
         return;
@@ -488,41 +488,41 @@ export function NoteForm({
       setIsPasting(true);
       addUploadingSlot(nextSlot);
 
-      const textarea = contentRef.current;
-      const cursorPosition = textarea?.selectionStart ?? content.length;
+      const textarea: HTMLTextAreaElement | null = contentRef.current;
+      const cursorPosition: number = textarea?.selectionStart ?? content.length;
 
       try {
-        const formData = new FormData();
-        const timestamp = Date.now();
-        const extension = file.type.split("/")[1] || "png";
-        const renamedFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+        const formData: FormData = new FormData();
+        const timestamp: number = Date.now();
+        const extension: string = file.type.split("/")[1] || "png";
+        const renamedFile: File = new File([file], `pasted-image-${timestamp}.${extension}`, {
           type: file.type,
         });
         formData.append("file", renamedFile);
         formData.append("slotIndex", nextSlot.toString());
 
-        const response = await fetch(`/api/notes/${note.id}/files`, {
+        const response: Response = await fetch(`/api/notes/${note.id}/files`, {
           method: "POST",
           body: formData,
         });
 
         if (response.ok) {
-          const newFile = (await response.json()) as NoteFileRecord;
-          setNoteFiles((prev) =>
-            [...prev.filter((f) => f.slotIndex !== nextSlot), newFile].sort(
-              (a, b) => a.slotIndex - b.slotIndex
+          const newFile: NoteFileRecord = (await response.json()) as NoteFileRecord;
+          setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] =>
+            [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== nextSlot), newFile].sort(
+              (a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex
             )
           );
 
-          const altText = renamedFile.name;
-          const reference = `![${altText}](${newFile.filepath})`;
-          const nextValue =
+          const altText: string = renamedFile.name;
+          const reference: string = `![${altText}](${newFile.filepath})`;
+          const nextValue: string =
             content.slice(0, cursorPosition) + reference + content.slice(cursorPosition);
           setContent(nextValue);
 
           toast("Image pasted and uploaded");
         } else {
-          const error = (await response.json()) as { error?: string };
+          const error: { error?: string } = (await response.json()) as { error?: string };
           toast(error.error || "Failed to upload pasted image");
         }
       } catch (error) {
@@ -534,23 +534,23 @@ export function NoteForm({
       }
     };
 
-    const pastedText = e.clipboardData?.getData("text/plain");
+    const pastedText: string | undefined = e.clipboardData?.getData("text/plain");
     if (pastedText) {
       if (settings.autoformatOnPaste) {
         e.preventDefault();
-        const formattedText = autoformatMarkdown(pastedText);
-        const textarea = contentRef.current;
-        const selectionStart = textarea?.selectionStart ?? content.length;
-        const selectionEnd = textarea?.selectionEnd ?? content.length;
-        const newContent =
+        const formattedText: string = autoformatMarkdown(pastedText);
+        const textarea: HTMLTextAreaElement | null = contentRef.current;
+        const selectionStart: number = textarea?.selectionStart ?? content.length;
+        const selectionEnd: number = textarea?.selectionEnd ?? content.length;
+        const newContent: string =
           content.slice(0, selectionStart) +
           formattedText +
           content.slice(selectionEnd);
         setContent(newContent);
         // Set cursor position after the inserted text
-        setTimeout(() => {
+        setTimeout((): void => {
           if (textarea) {
-            const newPosition = selectionStart + formattedText.length;
+            const newPosition: number = selectionStart + formattedText.length;
             textarea.selectionStart = newPosition;
             textarea.selectionEnd = newPosition;
             textarea.focus();
@@ -560,23 +560,23 @@ export function NoteForm({
       return;
     }
 
-    const items = e.clipboardData?.items;
+    const items: DataTransferItemList | undefined = e.clipboardData?.items;
     if (!items) return;
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    for (let i: number = 0; i < items.length; i++) {
+      const item: DataTransferItem | null = items[i] ?? null;
       if (item && item.type.startsWith("image/")) {
         e.preventDefault();
-        const file = item.getAsFile();
+        const file: File | null = item.getAsFile();
         if (!file) return;
         await uploadPastedImage(file);
         return;
       }
     }
 
-    const pastedFiles = e.clipboardData?.files;
+    const pastedFiles: FileList | undefined = e.clipboardData?.files;
     if (pastedFiles && pastedFiles.length > 0) {
-      const file = pastedFiles[0];
+      const file: File | null = pastedFiles[0] ?? null;
       if (file && file.type.startsWith("image/")) {
         e.preventDefault();
         await uploadPastedImage(file);
@@ -585,11 +585,11 @@ export function NoteForm({
     }
   };
 
-  useEffect(() => {
+  useEffect((): void => {
     setNoteFiles(note?.files || []);
   }, [note?.files, setNoteFiles]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!note) {
       setSelectedRelatedNotes([]);
       setRelatedNoteQuery("");
@@ -597,43 +597,43 @@ export function NoteForm({
       setRelatedNoteResults([]);
       return;
     }
-    const combinedRelations =
-      note.relations?.map((rel) => ({
+    const combinedRelations: Array<{ id: string; title: string; color: string | null; content: string }> =
+      note.relations?.map((rel: RelatedNote): { id: string; title: string; color: string | null; content: string } => ({
         id: rel.id,
         title: rel.title,
         color: rel.color ?? null,
         content: "",
       })) ||
       [
-        ...(note.relationsFrom ?? []).map((rel) => ({
+        ...(note.relationsFrom ?? []).map((rel: NoteRelationWithTarget): { id: string; title: string; color: string | null; content: string } => ({
           id: rel.targetNote.id,
           title: rel.targetNote.title,
           color: rel.targetNote.color ?? null,
           content: "",
         })),
-        ...(note.relationsTo ?? []).map((rel) => ({
+        ...(note.relationsTo ?? []).map((rel: NoteRelationWithSource): { id: string; title: string; color: string | null; content: string } => ({
           id: rel.sourceNote.id,
           title: rel.sourceNote.title,
           color: rel.sourceNote.color ?? null,
           content: "",
         })),
       ].filter(
-        (item, index, array) =>
-          array.findIndex((entry) => entry.id === item.id) === index
+        (item: { id: string; title: string; color: string | null; content: string }, index: number, array: Array<{ id: string; title: string; color: string | null; content: string }>): boolean =>
+          array.findIndex((entry: { id: string }): boolean => entry.id === item.id) === index
       );
     setSelectedRelatedNotes(combinedRelations);
     setRelatedNoteQuery("");
     setIsRelatedDropdownOpen(false);
     setRelatedNoteResults([]);
 
-    const hydrateRelatedNotes = async () => {
-      const relatedIds = combinedRelations.map((rel) => rel.id);
+    const hydrateRelatedNotes = async (): Promise<void> => {
+      const relatedIds: string[] = combinedRelations.map((rel: { id: string }): string => rel.id);
       if (relatedIds.length === 0) return;
       try {
-        const details = await Promise.all(
-          relatedIds.map(async (relId) => {
+        const details: (NoteWithRelations | null)[] = await Promise.all(
+          relatedIds.map(async (relId: string): Promise<NoteWithRelations | null> => {
             try {
-              const response = await fetch(`/api/notes/${relId}`, {
+              const response: Response = await fetch(`/api/notes/${relId}`, {
                 cache: "no-store",
               });
               if (!response.ok) return null;
@@ -643,9 +643,9 @@ export function NoteForm({
             }
           })
         );
-        setSelectedRelatedNotes((prev) =>
-          prev.map((item) => {
-            const found = details.find((detail) => detail?.id === item.id);
+        setSelectedRelatedNotes((prev: Array<{ id: string; title: string; color: string | null; content: string }>): Array<{ id: string; title: string; color: string | null; content: string }> =>
+          prev.map((item: { id: string; title: string; color: string | null; content: string }): { id: string; title: string; color: string | null; content: string } => {
+            const found: NoteWithRelations | null | undefined = details.find((detail: NoteWithRelations | null): boolean => detail?.id === item.id);
             if (!found) return item;
             return {
               ...item,
@@ -663,7 +663,7 @@ export function NoteForm({
     void hydrateRelatedNotes();
   }, [note]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!relatedNoteQuery) {
       setRelatedNoteResults([]);
       setIsRelatedLoading(false);
@@ -678,24 +678,24 @@ export function NoteForm({
       clearTimeout(relatedSearchTimerRef.current);
     }
 
-    const timer = setTimeout(() => {
-      let isActive = true;
-      const fetchResults = async () => {
+    const timer: ReturnType<typeof setTimeout> = setTimeout((): void => {
+      let isActive: boolean = true;
+      const fetchResults = async (): Promise<void> => {
         setIsRelatedLoading(true);
         try {
-          const params = new URLSearchParams({
+          const params: URLSearchParams = new URLSearchParams({
             search: relatedNoteQuery,
             searchScope: "title",
           });
-          const resolvedNotebookId = notebookId ?? note?.notebookId ?? null;
+          const resolvedNotebookId: string | null = notebookId ?? note?.notebookId ?? null;
           if (resolvedNotebookId) {
             params.append("notebookId", resolvedNotebookId);
           }
-          const response = await fetch(`/api/notes?${params.toString()}`, {
+          const response: Response = await fetch(`/api/notes?${params.toString()}`, {
             cache: "no-store",
           });
           if (!response.ok) return;
-          const data = (await response.json()) as NoteWithRelations[];
+          const data: NoteWithRelations[] = (await response.json()) as NoteWithRelations[];
           if (isActive) {
             setRelatedNoteResults(data);
           }
@@ -709,27 +709,27 @@ export function NoteForm({
       };
 
       void fetchResults();
-      return () => {
+      return (): void => {
         isActive = false;
       };
     }, 250);
 
     relatedSearchTimerRef.current = timer;
 
-    return () => {
+    return (): void => {
       clearTimeout(timer);
     };
   }, [relatedNoteQuery, notebookId, note?.notebookId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!title || !content) return;
 
     try {
-      const url = note ? `/api/notes/${note.id}` : "/api/notes";
-      const method = note ? "PATCH" : "POST";
+      const url: string = note ? `/api/notes/${note.id}` : "/api/notes";
+      const method: string = note ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const response: Response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -742,7 +742,7 @@ export function NoteForm({
           isArchived,
           isFavorite,
           tagIds: selectedTagIds,
-          relatedNoteIds: selectedRelatedNotes.map((rel) => rel.id),
+          relatedNoteIds: selectedRelatedNotes.map((rel: { id: string }): string => rel.id),
           categoryIds: selectedFolderId ? [selectedFolderId] : [],
           notebookId: notebookId ?? note?.notebookId ?? null,
         }),
@@ -762,7 +762,7 @@ export function NoteForm({
           <form
             id={note ? "note-edit-form" : undefined}
             ref={formRef}
-            onSubmit={(e) => { void handleSubmit(e); }}
+            onSubmit={(e: React.FormEvent): void => { void handleSubmit(e); }}
             className="space-y-4"
           >      
 
@@ -774,7 +774,7 @@ export function NoteForm({
           type="text"
           placeholder="Enter note title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
           className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none"
           required
         />
@@ -791,9 +791,9 @@ export function NoteForm({
           canRedo={canRedo}
           noteFiles={noteFiles}
           textColor={textColor}
-          setTextColor={setTextColor}
+          setTextColor={_setTextColor}
           fontFamily={fontFamily}
-          setFontFamily={setFontFamily}
+          setFontFamily={_setFontFamily}
           showPreview={showPreview}
           setShowPreview={setShowPreview}
           onApplyWrap={applyWrap}
@@ -807,8 +807,8 @@ export function NoteForm({
                       onEditorModeChange={handleEditorModeChange}
                       isEditorModeLocked={isEditorModeLocked}
                       isMigrating={isMigrating}
-                      onMigrateToWysiwyg={() => { void handleMigrateToWysiwyg(content); }}
-                      onMigrateToMarkdown={() => { void handleMigrateToMarkdown(content); }}
+                      onMigrateToWysiwyg={(): void => { void handleMigrateToWysiwyg(content); }}
+                      onMigrateToMarkdown={(): void => { void handleMigrateToMarkdown(content); }}
                     />        {editorMode === "markdown" || editorMode === "code" ? (
           <MarkdownEditor
             content={content}
@@ -824,7 +824,7 @@ export function NoteForm({
             contentBackground={contentBackground}
             contentTextColor={contentTextColor}
             previewTypographyStyle={previewTypographyStyle}
-            onPaste={handlePaste}
+            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void handlePaste(e); }}
             setLightboxImage={setLightboxImage}
             isCodeMode={editorMode === "code"}
           />
@@ -844,9 +844,9 @@ export function NoteForm({
         maxSlots={MAX_SLOTS}
         uploadingSlots={uploadingSlots}
         getNextAvailableSlot={getNextAvailableSlot}
-        onFileUpload={handleFileUpload}
-        onMultiFileUpload={handleMultiFileUpload}
-        onFileDelete={handleFileDelete}
+        onFileUpload={(slotIndex: number, file: File): void => { void handleFileUpload(slotIndex, file); }}
+        onMultiFileUpload={(files: FileList | File[]): void => { void handleMultiFileUpload(files); }}
+        onFileDelete={(slotIndex: number): void => { void handleFileDelete(slotIndex); }}
         onInsertFileReference={insertFileReference}
         formatFileSize={formatFileSize}
         isImageFile={isImageFile}
@@ -895,18 +895,18 @@ export function NoteForm({
       {lightboxImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-          onClick={() => closeLightbox()}
+          onClick={(): void => closeLightbox()}
         >
           <Button
             type="button"
             className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            onClick={() => closeLightbox()}
+            onClick={(): void => closeLightbox()}
           >
             <X size={24} />
           </Button>
           <div
             className="relative h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent): void => e.stopPropagation()}
           >
             <Image
               src={lightboxImage}

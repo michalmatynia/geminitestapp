@@ -123,6 +123,8 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   createdAt: doc.createdAt,
 });
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {
     const db = await getMongoDb();
@@ -201,6 +203,18 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     }
     if (options.status) {
       filter.status = options.status;
+    }
+    const query = options.query?.trim();
+    if (query) {
+      const regex = new RegExp(escapeRegex(query), "i");
+      filter.$or = [
+        { id: { $regex: regex } },
+        { _id: { $regex: regex } },
+        { pathId: { $regex: regex } },
+        { pathName: { $regex: regex } },
+        { entityId: { $regex: regex } },
+        { errorMessage: { $regex: regex } },
+      ];
     }
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
@@ -301,13 +315,30 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return toEventRecord(document);
   },
 
-  async listRunEvents(runId: string) {
+  async listRunEvents(
+    runId: string,
+    options: { since?: Date | string | null; limit?: number } = {}
+  ) {
     const db = await getMongoDb();
-    const docs = await db
+    const filter: Record<string, unknown> = { runId };
+    const sinceValue = options.since
+      ? options.since instanceof Date
+        ? options.since
+        : new Date(options.since)
+      : null;
+    const since =
+      sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
+    if (since) {
+      filter.createdAt = { $gt: since };
+    }
+    const cursor = db
       .collection<EventDocument>(EVENTS_COLLECTION)
-      .find({ runId })
-      .sort({ createdAt: 1 })
-      .toArray();
+      .find(filter)
+      .sort({ createdAt: 1 });
+    if (typeof options.limit === "number") {
+      cursor.limit(options.limit);
+    }
+    const docs = await cursor.toArray();
     return docs.map(toEventRecord);
   },
 

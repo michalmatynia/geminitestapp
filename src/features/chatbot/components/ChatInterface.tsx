@@ -21,10 +21,10 @@ export function ChatInterface({
   isSending,
   onSend,
   renderFormattedMessage,
-}: ChatInterfaceProps) {
+}: ChatInterfaceProps): React.JSX.Element {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useEffect((): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -37,7 +37,7 @@ export function ChatInterface({
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg, index) => (
+            {messages.map((msg: ChatMessage, index: number): React.JSX.Element => (
               <div
                 key={index}
                 className={`flex ${
@@ -64,7 +64,7 @@ export function ChatInterface({
           <Input
             className="flex-1 rounded-md border bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setInput(e.target.value)}
             placeholder="Type your message..."
             disabled={isSending}
           />

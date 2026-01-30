@@ -59,17 +59,20 @@ test.describe('Products Management', () => {
 
     // Select a catalog to enable languages
     const catalogSelect = page.getByLabel('Filter by catalog');
-    await catalogSelect.click();
+    await expect(catalogSelect).toBeVisible({ timeout: 15000 });
+    await catalogSelect.click({ force: true });
+    await page.waitForTimeout(500);
     
-    const options = page.getByRole('option');
-    if (await options.count() > 2) {
-      await options.nth(2).click();
-    } else {
-      await page.keyboard.press('Escape');
-    }
+    // Use keyboard to select an option (Skip All and Unassigned)
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(1000);
 
-    // Check language tabs for Name
-    await expect(page.getByRole('tab', { name: /Name/i }).first()).toBeVisible();
+    // Check language tabs for Name - they appear when a catalog is selected
+    // They are within localized-input-group, usually labeled like "English Name" or "EN Name"
+    await expect(page.getByRole('tab', { name: /Name/i }).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should filter products by search', async ({ page }) => {

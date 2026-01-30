@@ -10,11 +10,12 @@ import {
   pollGraphJob,
   resolveJobProductId,
 } from "../utils";
-import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { RuntimePortValues } from "@/shared/types/ai-paths";
+import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
 import { aiJobsApi, aiGenerationApi } from "../../../api";
 
-export const handleTemplate: NodeHandler = ({ node, nodeInputs }): any => {
+export const handleTemplate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const templateConfig = node.config?.template ?? { template: "" };
   const data = { ...nodeInputs };
   const currentValue = coerceInput(nodeInputs.value) ?? "";
@@ -30,7 +31,7 @@ export const handleTemplate: NodeHandler = ({ node, nodeInputs }): any => {
   return { prompt: prompt || "Prompt: (no template)" };
 };
 
-export const handlePrompt: NodeHandler = ({ node, nodeInputs }): any => {
+export const handlePrompt: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const { promptOutput, imagesValue } = buildPromptOutput(
     node.config?.prompt,
     nodeInputs
@@ -39,6 +40,12 @@ export const handlePrompt: NodeHandler = ({ node, nodeInputs }): any => {
     ? { prompt: promptOutput, images: imagesValue }
     : { prompt: promptOutput };
 };
+
+interface PromptCandidate {
+  edge: Edge;
+  fromNode: AiNode | undefined;
+  value: unknown;
+}
 
 export const handleModel: NodeHandler = async ({ 
   node,
@@ -55,21 +62,21 @@ export const handleModel: NodeHandler = async ({
   executed,
   toast,
   reportAiPathsError,
-}): Promise<any> => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (skipAiJobs) {
     return prevOutputs;
   }
   const promptInputs = coerceInputArray(nodeInputs.prompt);
   const promptCandidates = edges
     .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
-    .map((edge: Edge) => ({
+    .map((edge: Edge): PromptCandidate => ({
       edge,
       fromNode: nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "prompt"],
     }))
-    .filter((entry: any) => entry.fromNode?.type === "prompt");
+    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === "prompt");
   const promptEdge = promptCandidates.find(
-    (entry: any) =>
+    (entry: PromptCandidate): boolean =>
       entry.value !== undefined &&
       entry.value !== null &&
       (typeof entry.value !== "string" || entry.value.trim() !== "")
@@ -79,7 +86,7 @@ export const handleModel: NodeHandler = async ({
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "object") return Object.keys(value as object).length > 0;
+    if (typeof value === "object") return Object.keys(value).length > 0;
     return true;
   };
   if (promptSourceNode) {
@@ -108,7 +115,7 @@ export const handleModel: NodeHandler = async ({
     promptEdge?.value ??
     [...promptInputs]
       .reverse()
-      .find((value: unknown) => {
+      .find((value: unknown): boolean => {
         if (value === undefined || value === null) return false;
         if (typeof value === "string") return Boolean(value.trim());
         return true;
@@ -124,12 +131,12 @@ export const handleModel: NodeHandler = async ({
     vision: node.inputs.includes("images"),
   };
   const hasResultConsumers = edges.some(
-    (edge: Edge) =>
+    (edge: Edge): boolean =>
       edge.from === node.id &&
       (edge.fromPort === "result" ||
         (edge.fromPort === undefined && edge.toPort === "result"))
   );
-  const hasPollConsumer = edges.some((edge: Edge) => {
+  const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== node.id) return false;
     if (edge.fromPort && edge.fromPort !== "jobId") return false;
     const targetNode = nodes.find((item: AiNode) => item.id === edge.to);
@@ -151,14 +158,14 @@ export const handleModel: NodeHandler = async ({
     return prevOutputs;
   }
   const imageEdge = edges
-    .filter((edge: Edge) => edge.to === node.id && edge.toPort === "images")
-    .map((edge: Edge) => ({
+    .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === "images")
+    .map((edge: Edge): PromptCandidate => ({
       edge,
       fromNode: nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "images"],
     }))
     .find(
-      (entry: any) =>
+      (entry: PromptCandidate): boolean =>
         entry.fromNode?.type === "prompt" &&
         entry.value !== undefined &&
         entry.value !== null
@@ -240,7 +247,7 @@ export const handleAiDescription: NodeHandler = async ({
   nodeInputs,
   executed,
   reportAiPathsError,
-}): Promise<any> => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.ai.has(node.id)) return {};
   const entityJson = coerceInput(nodeInputs.entityJson) as
     | Record<string, unknown>
@@ -293,7 +300,7 @@ export const handleDescriptionUpdater: NodeHandler = async ({
   nodeInputs,
   executed,
   reportAiPathsError,
-}): Promise<any> => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.updater.has(node.id)) return {};
   const productId = nodeInputs.productId as string | undefined;
   const description = nodeInputs.description_en as string | undefined;

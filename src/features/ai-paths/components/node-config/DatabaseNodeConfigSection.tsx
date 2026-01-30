@@ -20,11 +20,25 @@ import type {
   DbQueryPreset,
   Edge,
   NodeConfig,
+  PathDebugEntry,
   PathDebugSnapshot,
   RuntimeState,
   UpdaterMapping,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
+
+type ActionResult = {
+  item?: unknown;
+  items?: unknown[];
+  values?: unknown[];
+  result?: unknown;
+  insertedCount?: number;
+  deletedCount?: number;
+  matchedCount?: number;
+  modifiedCount?: number;
+  count?: number;
+  value?: unknown;
+};
 import {
   DB_COLLECTION_OPTIONS,
   createParserMappings,
@@ -101,7 +115,7 @@ export function DatabaseNodeConfigSection({
   setDbNodePresets: _setDbNodePresets,
   saveDbNodePresets: _saveDbNodePresets,
   toast,
-}: DatabaseNodeConfigSectionProps) {
+}: DatabaseNodeConfigSectionProps): React.JSX.Element | null {
   const [queryValidatorEnabled, setQueryValidatorEnabled] = React.useState(false);
   const [queryFormatterEnabled, setQueryFormatterEnabled] = React.useState(true);
   const [selectedQueryPresetId, setSelectedQueryPresetId] = React.useState<string>("");
@@ -120,22 +134,22 @@ export function DatabaseNodeConfigSection({
   const lastInjectedResponseRef = React.useRef<string>("");
   const lastAutoFetchedRef = React.useRef<string>("");
   const incomingEdges = React.useMemo(
-    () => edges.filter((edge) => edge.to === selectedNode.id),
+    (): Edge[] => edges.filter((edge: Edge) => edge.to === selectedNode.id),
     [edges, selectedNode.id]
   );
   const schemaConnection = React.useMemo(() => {
     if (selectedNode.type !== "database") {
       return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
     }
-    const schemaEdge = edges.find((edge) => {
+    const schemaEdge = edges.find((edge: Edge) => {
       if (edge.to !== selectedNode.id) return false;
-      const fromNode = nodes.find((node) => node.id === edge.from);
+      const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
       return fromNode?.type === "db_schema";
     });
     if (!schemaEdge) {
       return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
     }
-    const schemaNode = nodes.find((node) => node.id === schemaEdge.from);
+    const schemaNode = nodes.find((node: AiNode) => node.id === schemaEdge.from);
     return {
       hasSchemaConnection: Boolean(schemaNode?.type === "db_schema"),
       schemaConfig: (schemaNode?.config?.db_schema ?? null) as SchemaConfig | null,
@@ -144,7 +158,7 @@ export function DatabaseNodeConfigSection({
 
   const schemaQuery = useQuery({
     queryKey: ["db-schema"],
-    queryFn: async () => {
+    queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema();
       if (!result.ok) {
         throw new Error(result.error || "Failed to fetch schema.");
@@ -154,23 +168,23 @@ export function DatabaseNodeConfigSection({
     enabled: schemaConnection.hasSchemaConnection && selectedNode.type === "database",
   });
 
-  const fetchedDbSchema = React.useMemo(() => {
+  const fetchedDbSchema = React.useMemo((): SchemaData | null => {
     if (!schemaConnection.hasSchemaConnection || !schemaQuery.data) return null;
     const schemaConfig = schemaConnection.schemaConfig;
     let collections = schemaQuery.data.collections;
     if (schemaConfig?.mode === "selected" && schemaConfig.collections?.length) {
       const selectedCollections = new Set(schemaConfig.collections);
-      collections = collections.filter((c) => selectedCollections.has(c.name));
+      collections = collections.filter((c: { name: string }) => selectedCollections.has(c.name));
     }
     if (schemaConfig?.includeFields === false) {
-      collections = collections.map((c) => ({ ...c, fields: [] }));
+      collections = collections.map((c: { name: string; fields: unknown[] }) => ({ ...c, fields: [] }));
     }
     return { ...schemaQuery.data, collections };
   }, [schemaConnection.hasSchemaConnection, schemaConnection.schemaConfig, schemaQuery.data]);
   const schemaLoading = schemaQuery.isFetching;
 
   const dbActionMutation = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
+    mutationFn: async (payload: Record<string, unknown>): Promise<unknown> => {
       const result = await dbApi.action<Record<string, unknown>>(payload as Parameters<typeof dbApi.action>[0]);
       if (!result.ok) {
         throw new Error(result.error || "Query failed");
@@ -266,7 +280,7 @@ export function DatabaseNodeConfigSection({
 
   React.useEffect(() => {
     if (!selectedQueryPresetId) return;
-    const preset = dbQueryPresets.find((item) => item.id === selectedQueryPresetId);
+    const preset = dbQueryPresets.find((item: DbQueryPreset) => item.id === selectedQueryPresetId);
     if (preset) {
       setQueryPresetName(preset.name);
     }
@@ -327,14 +341,14 @@ export function DatabaseNodeConfigSection({
                   trimStrings: persistedDatabase?.trimStrings ?? false,
                   aiPrompt: persistedDatabase?.aiPrompt ?? "",
                 };
-                const deriveCategoryFromOperation = (op: string) => {
+                const deriveCategoryFromOperation = (op: string): DatabaseActionCategory => {
                   if (op === "insert") return "create";
                   if (op === "update") return "update";
                   if (op === "delete") return "delete";
                   return "read";
                 };
                 const queryConfig = databaseConfig.query ?? defaultQuery;
-                const deriveActionFromCategory = (category: string, single: boolean) => {
+                const deriveActionFromCategory = (category: string, single: boolean): DatabaseAction => {
                   switch (category) {
                     case "create":
                       return "insertOne";
@@ -368,30 +382,30 @@ export function DatabaseNodeConfigSection({
                 const incomingPorts = Array.from(
                   new Set(
                     incomingEdges
-                      .map((edge) => edge.toPort)
-                      .filter((port): port is string => Boolean(port))
+                      .map((edge: Edge) => edge.toPort)
+                      .filter((port: string | undefined): port is string => Boolean(port))
                   )
                 );
                 const availablePorts = incomingPorts.length
                   ? incomingPorts
                   : selectedNode.inputs;
                 const bundleKeys = new Set<string>();
-                incomingEdges.forEach((edge) => {
+                incomingEdges.forEach((edge: Edge) => {
                   if (edge.toPort !== "bundle") return;
-                  const fromNode = nodes.find((node) => node.id === edge.from);
+                  const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
                   if (!fromNode) return;
                   if (fromNode.type === "parser") {
                     const mappings =
                       fromNode.config?.parser?.mappings ??
                       createParserMappings(fromNode.outputs);
-                    Object.keys(mappings).forEach((key) => {
+                    Object.keys(mappings).forEach((key: string) => {
                       const trimmed = key.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                     return;
                   }
                   if (fromNode.type === "bundle") {
-                    fromNode.inputs.forEach((port) => {
+                    fromNode.inputs.forEach((port: string) => {
                       const trimmed = port.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -399,7 +413,7 @@ export function DatabaseNodeConfigSection({
                   if (fromNode.type === "mapper") {
                     const mapperOutputs =
                       fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                    mapperOutputs.forEach((output) => {
+                    mapperOutputs.forEach((output: string) => {
                       const trimmed = output.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -414,7 +428,7 @@ export function DatabaseNodeConfigSection({
                 // Build connected placeholders from actual inputs
                 const connectedPlaceholders: string[] = [];
                 const placeholderSet = new Set<string>();
-                const addPlaceholder = (placeholder: string) => {
+                const addPlaceholder = (placeholder: string): void => {
                   const trimmed = placeholder.trim();
                   if (!trimmed || placeholderSet.has(trimmed)) return;
                   placeholderSet.add(trimmed);
@@ -423,7 +437,7 @@ export function DatabaseNodeConfigSection({
                 // Check if db_schema node is connected
                 const hasSchemaConnection = schemaConnection.hasSchemaConnection;
                 // Add direct port connections
-                incomingPorts.forEach((port) => {
+                incomingPorts.forEach((port: string) => {
                   if (port === "bundle") {
                     // Bundle keys are handled separately below
                     return;
@@ -435,14 +449,14 @@ export function DatabaseNodeConfigSection({
                   addPlaceholder(`{{${port}}}`);
                 });
                 // Add bundle keys as {{bundle.keyName}}
-                bundleKeys.forEach((key) => {
+                bundleKeys.forEach((key: string) => {
                   addPlaceholder(`{{bundle.${key}}}`);
                 });
                 // Also add context keys if context is connected
                 if (incomingPorts.includes("context")) {
-                  incomingEdges.forEach((edge) => {
+                  incomingEdges.forEach((edge: Edge) => {
                     if (edge.toPort !== "context") return;
-                    const fromNode = nodes.find((node) => node.id === edge.from);
+                    const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
                     if (!fromNode) return;
                     if (fromNode.type === "context") {
                       addPlaceholder("{{context.entityId}}");
@@ -456,7 +470,7 @@ export function DatabaseNodeConfigSection({
                   addPlaceholder("{{meta.trigger}}");
                 }
                 // Add placeholders derived from mappings only when they map to a connected port
-                mappings.forEach((mapping) => {
+                mappings.forEach((mapping: UpdaterMapping) => {
                   const sourcePort = mapping.sourcePort?.trim();
                   const sourcePath = mapping.sourcePath?.trim();
                   if (!sourcePort || !incomingPorts.includes(sourcePort)) return;
@@ -486,30 +500,30 @@ export function DatabaseNodeConfigSection({
                   ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
                   : [];
                 const targetPaths = sampleEntries
-                  .filter((entry) => {
+                  .filter((entry: { type: string }) => {
                     if (sampleState.includeContainers) return true;
                     return entry.type === "value" || entry.type === "array";
                   })
-                  .map((entry) => entry.path);
-                const targetPathOptions = targetPaths.map((path) => ({
+                  .map((entry: { path: string }) => entry.path);
+                const targetPathOptions = targetPaths.map((path: string) => ({
                   label: path,
                   value: path,
                 }));
                 const uniqueTargetPathOptions = Array.from(
-                  new Map(targetPathOptions.map((option) => [option.value, option])).values()
+                  new Map(targetPathOptions.map((option: { value: string }) => [option.value, option])).values()
                 );
-                const findMatchingTargetPath = (port: string) => {
+                const findMatchingTargetPath = (port: string): string => {
                   const normalized = port.toLowerCase();
-                  const endsWith = targetPaths.find((path) =>
+                  const endsWith = targetPaths.find((path: string) =>
                     path.toLowerCase().endsWith(normalized)
                   );
                   if (endsWith) return endsWith;
-                  const includes = targetPaths.find((path) =>
+                  const includes = targetPaths.find((path: string) =>
                     path.toLowerCase().includes(normalized)
                   );
                   return includes ?? port;
                 };
-                const updateMappings = (nextMappings: UpdaterMapping[]) => {
+                const updateMappings = (nextMappings: UpdaterMapping[]): void => {
                   updateSelectedNodeConfig({
                     database: {
                       ...databaseConfig,
@@ -517,13 +531,13 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const updateMapping = (index: number, patch: Partial<UpdaterMapping>) => {
-                  const nextMappings = mappings.map((mapping, idx) =>
+                const updateMapping = (index: number, patch: Partial<UpdaterMapping>): void => {
+                  const nextMappings = mappings.map((mapping: UpdaterMapping, idx: number) =>
                     idx === index ? { ...mapping, ...patch } : mapping
                   );
                   updateMappings(nextMappings);
                 };
-                const addMapping = () => {
+                const addMapping = (): void => {
                   updateMappings([
                     ...mappings,
                     {
@@ -533,17 +547,17 @@ export function DatabaseNodeConfigSection({
                     },
                   ]);
                 };
-                const removeMapping = (index: number) => {
+                const removeMapping = (index: number): void => {
                   if (mappings.length <= 1) return;
-                  updateMappings(mappings.filter((_, idx) => idx !== index));
+                  updateMappings(mappings.filter((_: UpdaterMapping, idx: number) => idx !== index));
                 };
-                const mapInputsToTargets = () => {
+                const mapInputsToTargets = (): void => {
                   const nextMappings: UpdaterMapping[] = [];
-                  availablePorts.forEach((port) => {
+                  availablePorts.forEach((port: string) => {
                     if (port === databaseConfig.idField) return;
                     if (port === "bundle") {
                       if (bundleKeys.size === 0) return;
-                      Array.from(bundleKeys).forEach((key) => {
+                      Array.from(bundleKeys).forEach((key: string) => {
                         nextMappings.push({
                           targetPath: key,
                           sourcePort: "bundle",
@@ -598,7 +612,7 @@ export function DatabaseNodeConfigSection({
                     description: "Creates new document from bundle payload.",
                   },
                 ];
-                const applyDatabasePreset = (presetId: string) => {
+                const applyDatabasePreset = (presetId: string): void => {
                   if (presetId === "custom") {
                     updateSelectedNodeConfig({
                       database: {
@@ -714,25 +728,25 @@ export function DatabaseNodeConfigSection({
                 };
                 const writeSource = databaseConfig.writeSource ?? "bundle";
                 const collectionOption = DB_COLLECTION_OPTIONS.some(
-                  (option) => option.value === queryConfig.collection
+                  (option: { value: string }) => option.value === queryConfig.collection
                 )
                   ? queryConfig.collection
                   : "custom";
-                const normalizePresetValue = (value?: string) => (value ?? "").trim();
+                const normalizePresetValue = (value?: string): string => (value ?? "").trim();
                 const resolvedSortPresetId = SORT_PRESETS.some(
-                  (preset) => preset.id === queryConfig.sortPresetId
+                  (preset: { id: string }) => preset.id === queryConfig.sortPresetId
                 )
                   ? queryConfig.sortPresetId
                   : undefined;
                 const resolvedProjectionPresetId = PROJECTION_PRESETS.some(
-                  (preset) => preset.id === queryConfig.projectionPresetId
+                  (preset: { id: string }) => preset.id === queryConfig.projectionPresetId
                 )
                   ? queryConfig.projectionPresetId
                   : undefined;
                 const sortPresetId =
                   resolvedSortPresetId ??
                   SORT_PRESETS.find(
-                    (preset) =>
+                    (preset: { value: string }) =>
                       normalizePresetValue(preset.value) ===
                       normalizePresetValue(queryConfig.sort)
                   )?.id ??
@@ -740,7 +754,7 @@ export function DatabaseNodeConfigSection({
                 const projectionPresetId =
                   resolvedProjectionPresetId ??
                   PROJECTION_PRESETS.find(
-                    (preset) =>
+                    (preset: { value: string }) =>
                       normalizePresetValue(preset.value) ===
                       normalizePresetValue(queryConfig.projection)
                   )?.id ??
@@ -755,7 +769,7 @@ export function DatabaseNodeConfigSection({
                 const updateQueryConfig = (
                   patch: Partial<DbQueryConfig>,
                   options?: { syncPreset?: boolean }
-                ) => {
+                ): void => {
                   const nextQuery = { ...queryConfig, ...patch };
                   if (options?.syncPreset && nextQuery.mode === "preset") {
                     nextQuery.queryTemplate = buildPresetQueryTemplate(nextQuery);
@@ -770,7 +784,7 @@ export function DatabaseNodeConfigSection({
                 const handleSaveQueryPreset = async (
                   overrideName?: string,
                   options?: { forceNew?: boolean }
-                ) => {
+                ): Promise<void> => {
                   const name = (overrideName ?? queryPresetName).trim();
                   const filterTemplate = queryTemplateValue.trim();
                   const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
@@ -792,7 +806,7 @@ export function DatabaseNodeConfigSection({
                   const existingIndex = options?.forceNew
                     ? -1
                     : nextPresets.findIndex(
-                        (preset) => preset.id === selectedQueryPresetId
+                        (preset: DbQueryPreset) => preset.id === selectedQueryPresetId
                       );
                   if (existingIndex >= 0) {
                     const existingPreset = nextPresets[existingIndex]!;
@@ -819,17 +833,17 @@ export function DatabaseNodeConfigSection({
                   await saveDbQueryPresets(nextPresets);
                   toast("Query preset saved.", { variant: "success" });
                 };
-                const handleRenameQueryPreset = async (presetId: string, nextName: string) => {
+                const handleRenameQueryPreset = async (presetId: string, nextName: string): Promise<void> => {
                   const trimmed = nextName.trim();
                   if (!trimmed) {
                     toast("Query preset name is required.", { variant: "error" });
                     return;
                   }
-                  const target = dbQueryPresets.find((preset) => preset.id === presetId);
+                  const target = dbQueryPresets.find((preset: DbQueryPreset) => preset.id === presetId);
                   if (!target) return;
                   if (target.name.trim() === trimmed) return;
                   const now = new Date().toISOString();
-                  const nextPresets = dbQueryPresets.map((preset) =>
+                  const nextPresets = dbQueryPresets.map((preset: DbQueryPreset) =>
                     preset.id === presetId
                       ? { ...preset, name: trimmed, updatedAt: now }
                       : preset
@@ -841,15 +855,15 @@ export function DatabaseNodeConfigSection({
                   }
                   toast("Query preset renamed.", { variant: "success" });
                 };
-                const handleDeleteQueryPresetById = async (presetId: string) => {
-                  const target = dbQueryPresets.find((preset) => preset.id === presetId);
+                const handleDeleteQueryPresetById = async (presetId: string): Promise<void> => {
+                  const target = dbQueryPresets.find((preset: DbQueryPreset) => preset.id === presetId);
                   if (!target) return;
                   const confirmed = window.confirm(
                     `Delete query preset \"${target.name}\"?`
                   );
                   if (!confirmed) return;
                   const nextPresets = dbQueryPresets.filter(
-                    (preset) => preset.id !== presetId
+                    (preset: DbQueryPreset) => preset.id !== presetId
                   );
                   setDbQueryPresets(nextPresets);
                   await saveDbQueryPresets(nextPresets);
@@ -859,11 +873,11 @@ export function DatabaseNodeConfigSection({
                   }
                   toast("Query preset deleted.", { variant: "success" });
                 };
-                const closeSaveQueryPresetModal = () => {
+                const closeSaveQueryPresetModal = (): void => {
                   setSaveQueryPresetModalOpen(false);
                   setNewQueryPresetName("");
                 };
-                const handleSaveQueryPresetFromModal = async () => {
+                const handleSaveQueryPresetFromModal = async (): Promise<void> => {
                   const name = newQueryPresetName.trim();
                   const filterTemplate = queryTemplateValue.trim();
                   const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
@@ -882,7 +896,7 @@ export function DatabaseNodeConfigSection({
                   await handleSaveQueryPreset(name, { forceNew: true });
                   closeSaveQueryPresetModal();
                 };
-                const openSaveQueryPresetModal = () => {
+                const openSaveQueryPresetModal = (): void => {
                   setNewQueryPresetName("");
                   setSaveQueryPresetModalOpen(true);
                 };
@@ -949,7 +963,7 @@ export function DatabaseNodeConfigSection({
                 const applyActionConfig = (
                   nextCategory: DatabaseActionCategory,
                   nextAction: DatabaseAction
-                ) => {
+                ): void => {
                   const nextOperation =
                     nextCategory === "create"
                       ? "insert"
@@ -996,16 +1010,16 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const handleActionCategoryChange = (value: DatabaseActionCategory) => {
+                const handleActionCategoryChange = (value: DatabaseActionCategory): void => {
                   const defaultAction =
                     actionOptionsByCategory[value]?.[0]
                       ?.value ?? "find";
                   applyActionConfig(value, defaultAction as DatabaseAction);
                 };
-                const handleActionChange = (value: DatabaseAction) => {
+                const handleActionChange = (value: DatabaseAction): void => {
                   applyActionConfig(actionCategory, value);
                 };
-                const handleFormatClick = () => {
+                const handleFormatClick = (): void => {
                   if (queryFormatterEnabled) {
                     const formatted = formatAndFixMongoQuery(activeQueryValue);
                     if (isUpdateAction) {
@@ -1049,12 +1063,12 @@ export function DatabaseNodeConfigSection({
                     toast("Formatter enabled.", { variant: "success" });
                   }
                 };
-                const handleFormatContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+                const handleFormatContextMenu = (event: React.MouseEvent<HTMLButtonElement>): void => {
                   event.preventDefault();
-                  setQueryFormatterEnabled((prev) => !prev);
+                  setQueryFormatterEnabled((prev: boolean) => !prev);
                 };
-                const handleToggleValidator = () => setQueryValidatorEnabled((prev) => !prev);
-                const handleRunQuery = async () => {
+                const handleToggleValidator = (): void => setQueryValidatorEnabled((prev: boolean) => !prev);
+                const handleRunQuery = async (): Promise<void> => {
                   if (!["read", "aggregate", "update", "create", "delete"].includes(actionCategory)) {
                     toast("Run is available for read, aggregate, create, update, and delete actions only.", { variant: "error" });
                     return;
@@ -1072,7 +1086,7 @@ export function DatabaseNodeConfigSection({
                       runtimeOutputs.jobId;
                     const currentValue = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
                     const collectionName = queryConfig.collection ?? "products";
-                    const serializePreview = (value: unknown) => {
+                    const serializePreview = (value: unknown): string => {
                       try {
                         const raw = JSON.stringify(value, null, 2);
                         return raw.length > 600 ? `${raw.slice(0, 600)}...` : raw;
@@ -1080,7 +1094,7 @@ export function DatabaseNodeConfigSection({
                         return String(value);
                       }
                     };
-                    const confirmWriteAction = (summary: string) => {
+                    const confirmWriteAction = (summary: string): boolean => {
                       if (testQueryDryRun) return true;
                       return window.confirm(`${summary}\n\nProceed?`);
                     };
@@ -1137,15 +1151,15 @@ export function DatabaseNodeConfigSection({
                         setTestQueryLoading(false);
                         return;
                       }
-                      const data = await dbActionMutation.mutateAsync({
+                      const data = (await dbActionMutation.mutateAsync({
                         action,
                         collection: collectionName,
                         document: action === "insertOne" ? (payloadValue as Record<string, unknown>) : undefined,
                         documents: action === "insertMany" ? (payloadValue as unknown[]) : undefined,
-                      });
+                      })) as ActionResult;
                       setTestQueryResult(JSON.stringify(data, null, 2));
                       const insertedCount =
-                        (data as { insertedCount?: number }).insertedCount ??
+                        data.insertedCount ??
                         (Array.isArray(payloadValue) ? payloadValue.length : 1);
                       toast(`Inserted ${insertedCount} document${insertedCount === 1 ? "" : "s"}.`, { variant: "success" });
                       setTestQueryLoading(false);
@@ -1202,16 +1216,16 @@ export function DatabaseNodeConfigSection({
                         setTestQueryLoading(false);
                         return;
                       }
-                      const data = await dbActionMutation.mutateAsync({
+                      const data = (await dbActionMutation.mutateAsync({
                         action,
                         collection: collectionName,
                         filter: filterValue,
                         idType: queryConfig.idType ?? "string",
-                      });
+                      })) as ActionResult;
                       setTestQueryResult(JSON.stringify(data, null, 2));
                       const deletedCount =
-                        (data as { deletedCount?: number }).deletedCount ??
-                        ((data as { value?: unknown }).value ? 1 : 0);
+                        data.deletedCount ??
+                        (data.value ? 1 : 0);
                       toast(`Deleted ${deletedCount} document${deletedCount === 1 ? "" : "s"}.`, { variant: "success" });
                       setTestQueryLoading(false);
                       return;
@@ -1297,16 +1311,16 @@ export function DatabaseNodeConfigSection({
                         setTestQueryLoading(false);
                         return;
                       }
-                      const data = await dbActionMutation.mutateAsync({
+                      const data = (await dbActionMutation.mutateAsync({
                         action,
                         collection: collectionName,
                         filter: filterValue,
                         update: updateValue,
                         idType: queryConfig.idType ?? "string",
-                      });
+                      })) as ActionResult;
                       setTestQueryResult(JSON.stringify(data, null, 2));
-                      const matched = (data as { matchedCount?: number }).matchedCount ?? 0;
-                      const modified = (data as { modifiedCount?: number }).modifiedCount;
+                      const matched = data.matchedCount ?? 0;
+                      const modified = data.modifiedCount;
                       const count = modified ?? matched;
                       toast(`Update processed ${count} document${count === 1 ? "" : "s"}.`, { variant: "success" });
                       setTestQueryLoading(false);
@@ -1363,7 +1377,7 @@ export function DatabaseNodeConfigSection({
                         : undefined;
                     const sort =
                       parsedSort && typeof parsedSort === "object" ? parsedSort : undefined;
-                    const data = await dbActionMutation.mutateAsync({
+                    const data = (await dbActionMutation.mutateAsync({
                       action,
                       collection: queryConfig.collection ?? "products",
                       filter: actionCategory === "aggregate" ? undefined : parsedValue,
@@ -1373,12 +1387,12 @@ export function DatabaseNodeConfigSection({
                       limit: queryConfig.limit ?? 20,
                       idType: queryConfig.idType ?? "string",
                       distinctField: databaseConfig.distinctField?.trim() || undefined,
-                    });
+                    })) as ActionResult;
                     const resultData =
                       data.item ?? data.items ?? data.values ?? data.result ?? data;
                     setTestQueryResult(JSON.stringify(resultData, null, 2));
                     const count =
-                      (data as { count?: number }).count ??
+                      data.count ??
                       (Array.isArray(resultData) ? resultData.length : 1);
                     toast(`Query returned ${count} result(s)`, { variant: "success" });
                   } catch (err) {
@@ -1389,7 +1403,7 @@ export function DatabaseNodeConfigSection({
                     setTestQueryLoading(false);
                   }
                 };
-                const handleQueryChange = (value: string) => {
+                const handleQueryChange = (value: string): void => {
                   if (isUpdateAction) {
                     updateSelectedNodeConfig({
                       database: {
@@ -1443,7 +1457,7 @@ export function DatabaseNodeConfigSection({
                     });
                   }
                 };
-                const handleFilterChange = (value: string) => {
+                const handleFilterChange = (value: string): void => {
                   const currentPresetId = databaseConfig.presetId ?? "custom";
                   const currentAiQueryId = selectedAiQueryId;
 
@@ -1490,14 +1504,14 @@ export function DatabaseNodeConfigSection({
                     filterPlaceholder={queryPlaceholder}
                     onFilterChange={handleFilterChange}
                     runDry={testQueryDryRun}
-                    onToggleRunDry={() => setTestQueryDryRun((prev) => !prev)}
+                    onToggleRunDry={() => setTestQueryDryRun((prev: boolean) => !prev)}
                     queryValidation={queryValidation}
                     queryFormatterEnabled={queryFormatterEnabled}
                     queryValidatorEnabled={queryValidatorEnabled}
                     testQueryLoading={testQueryLoading}
                     queryTemplateRef={queryTemplateRef}
-                    onActionCategoryChange={(value) => handleActionCategoryChange(value)}
-                    onActionChange={(value) => handleActionChange(value)}
+                    onActionCategoryChange={(value: DatabaseActionCategory) => handleActionCategoryChange(value)}
+                    onActionChange={(value: DatabaseAction) => handleActionChange(value)}
                     onFormatClick={handleFormatClick}
                     onFormatContextMenu={handleFormatContextMenu}
                     onToggleValidator={handleToggleValidator}
@@ -1509,7 +1523,7 @@ export function DatabaseNodeConfigSection({
                   | { debugPayload?: unknown }
                   | undefined)?.debugPayload;
                 const persistedDebugEntry = pathDebugSnapshot?.entries?.find(
-                  (entry) => entry.nodeId === selectedNode.id
+                  (entry: PathDebugEntry) => entry.nodeId === selectedNode.id
                 );
                 const debugPayload = liveDebugPayload ?? persistedDebugEntry?.debug;
                 const debugRunAt =
@@ -1574,7 +1588,7 @@ export function DatabaseNodeConfigSection({
                         <Label className="text-xs text-gray-400">Collection</Label>
                         <Select
                           value={collectionOption}
-                          onValueChange={(value) => {
+                          onValueChange={(value: string) => {
                             updateQueryConfig({
                               collection: value === "custom" ? queryConfig.collection : value,
                             });
@@ -1584,7 +1598,7 @@ export function DatabaseNodeConfigSection({
                             <SelectValue placeholder="Select collection" />
                           </SelectTrigger>
                           <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                            {DB_COLLECTION_OPTIONS.map((option) => (
+                            {DB_COLLECTION_OPTIONS.map((option: { value: string; label: string }) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
                               </SelectItem>
@@ -1596,7 +1610,7 @@ export function DatabaseNodeConfigSection({
                           <Input
                             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.collection}
-                            onChange={(event) =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                               updateQueryConfig({ collection: event.target.value })
                             }
                             placeholder="collection_name"
@@ -1612,7 +1626,7 @@ export function DatabaseNodeConfigSection({
                           step="1"
                           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                           value={queryConfig.limit}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                             updateQueryConfig({
                               limit: toNumber(event.target.value, queryConfig.limit),
                             })
@@ -1626,9 +1640,9 @@ export function DatabaseNodeConfigSection({
                           <Label className="text-xs text-gray-400">Sort preset</Label>
                           <Select
                             value={sortPresetId}
-                            onValueChange={(value) => {
+                            onValueChange={(value: string) => {
                               if (value === "custom") return;
-                              const preset = SORT_PRESETS.find((item) => item.id === value);
+                              const preset = SORT_PRESETS.find((item: { id: string }) => item.id === value);
                               if (!preset) return;
                               updateQueryConfig({
                                 sort: preset.value,
@@ -1641,7 +1655,7 @@ export function DatabaseNodeConfigSection({
                             </SelectTrigger>
                             <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
-                              {SORT_PRESETS.map((preset) => (
+                              {SORT_PRESETS.map((preset: { id: string; label: string }) => (
                                 <SelectItem key={preset.id} value={preset.id}>
                                   {preset.label}
                                 </SelectItem>
@@ -1652,7 +1666,7 @@ export function DatabaseNodeConfigSection({
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.sort}
-                            onChange={(event) =>
+                            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                               updateQueryConfig({
                                 sort: event.target.value,
                                 sortPresetId: "custom",
@@ -1669,9 +1683,9 @@ export function DatabaseNodeConfigSection({
                           <Label className="text-xs text-gray-400">Projection preset</Label>
                           <Select
                             value={projectionPresetId}
-                            onValueChange={(value) => {
+                            onValueChange={(value: string) => {
                               if (value === "custom") return;
-                              const preset = PROJECTION_PRESETS.find((item) => item.id === value);
+                              const preset = PROJECTION_PRESETS.find((item: { id: string }) => item.id === value);
                               if (!preset) return;
                               updateQueryConfig({
                                 projection: preset.value,
@@ -1684,7 +1698,7 @@ export function DatabaseNodeConfigSection({
                             </SelectTrigger>
                             <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
-                              {PROJECTION_PRESETS.map((preset) => (
+                              {PROJECTION_PRESETS.map((preset: { id: string; label: string }) => (
                                 <SelectItem key={preset.id} value={preset.id}>
                                   {preset.label}
                                 </SelectItem>
@@ -1697,7 +1711,7 @@ export function DatabaseNodeConfigSection({
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.projection}
-                            onChange={(event) =>
+                            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                               updateQueryConfig({
                                 projection: event.target.value,
                                 projectionPresetId: "custom",
@@ -1717,9 +1731,9 @@ export function DatabaseNodeConfigSection({
                         <Label className="text-xs text-gray-400">Projection preset</Label>
                         <Select
                           value={projectionPresetId}
-                          onValueChange={(value) => {
+                          onValueChange={(value: string) => {
                             if (value === "custom") return;
-                            const preset = PROJECTION_PRESETS.find((item) => item.id === value);
+                            const preset = PROJECTION_PRESETS.find((item: { id: string }) => item.id === value);
                             if (!preset) return;
                             updateQueryConfig({
                               projection: preset.value,
@@ -1732,7 +1746,7 @@ export function DatabaseNodeConfigSection({
                           </SelectTrigger>
                           <SelectContent className="border-border bg-gray-900">
                             <SelectItem value="custom">Custom</SelectItem>
-                            {PROJECTION_PRESETS.map((preset) => (
+                            {PROJECTION_PRESETS.map((preset: { id: string; label: string }) => (
                               <SelectItem key={preset.id} value={preset.id}>
                                 {preset.label}
                               </SelectItem>
@@ -1745,7 +1759,7 @@ export function DatabaseNodeConfigSection({
                         <Textarea
                           className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                           value={queryConfig.projection}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                             updateQueryConfig({
                               projection: event.target.value,
                               projectionPresetId: "custom",
@@ -1764,7 +1778,7 @@ export function DatabaseNodeConfigSection({
                         <Input
                           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                           value={databaseConfig.distinctField ?? ""}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                             updateSelectedNodeConfig({
                               database: {
                                 ...databaseConfig,
@@ -1806,7 +1820,7 @@ export function DatabaseNodeConfigSection({
                   <>
                   <Tabs
                     value={databaseTab}
-                    onValueChange={(value) => setDatabaseTab(value as "settings" | "constructor" | "presets")}
+                    onValueChange={(value: string) => setDatabaseTab(value as "settings" | "constructor" | "presets")}
                     className="space-y-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1933,7 +1947,7 @@ export function DatabaseNodeConfigSection({
               </Tabs>
               <DatabaseSaveQueryPresetDialog
                 open={saveQueryPresetModalOpen}
-                onOpenChange={(open) => {
+                onOpenChange={(open: boolean) => {
                   if (!open) {
                     closeSaveQueryPresetModal();
                     return;

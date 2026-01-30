@@ -20,6 +20,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   try {
     const url = new URL(req.url);
     const pathId = url.searchParams.get("pathId")?.trim() || undefined;
+    const query = url.searchParams.get("query")?.trim() || undefined;
     const statusParam = url.searchParams.get("status")?.trim() || "";
     const status = RUN_STATUSES.includes(statusParam as AiPathRunStatus)
       ? (statusParam as AiPathRunStatus)
@@ -35,6 +36,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const repo = await getPathRunRepository();
     const result = await repo.listRuns({
       ...(pathId ? { pathId } : {}),
+      ...(query ? { query } : {}),
       ...(status ? { status } : {}),
       ...(limit !== undefined ? { limit } : {}),
       ...(offset !== undefined ? { offset } : {}),

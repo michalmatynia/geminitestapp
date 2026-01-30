@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 
 
@@ -28,35 +28,35 @@ const defaultTheme: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = {
   relatedNoteTextColor: "#e5e7eb", // gray-200
 };
 
-export function AdminNotesThemesPage() {
+export function AdminNotesThemesPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
-  const [form, setForm] = useState(defaultTheme);
+  const [form, setForm] = useState<Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">>(defaultTheme);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingForm, setEditingForm] = useState(defaultTheme);
-  const notebooksQuery = useNotebooks();
-  const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
-  const createTheme = useCreateNoteTheme();
-  const updateTheme = useUpdateNoteTheme();
-  const deleteTheme = useDeleteNoteTheme();
+  const [editingForm, setEditingForm] = useState<Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">>(defaultTheme);
+  const notebooksQuery: ReturnType<typeof useNotebooks> = useNotebooks();
+  const themesQuery: ReturnType<typeof useNoteThemes> = useNoteThemes(selectedNotebookId ?? undefined);
+  const createTheme: ReturnType<typeof useCreateNoteTheme> = useCreateNoteTheme();
+  const updateTheme: ReturnType<typeof useUpdateNoteTheme> = useUpdateNoteTheme();
+  const deleteTheme: ReturnType<typeof useDeleteNoteTheme> = useDeleteNoteTheme();
 
-  const themes = themesQuery.data ?? [];
-  const loading = themesQuery.isPending;
-  const isSaving = createTheme.isPending;
-  const isUpdating = updateTheme.isPending;
+  const themes: ThemeRecord[] = themesQuery.data ?? [];
+  const loading: boolean = themesQuery.isPending;
+  const isSaving: boolean = createTheme.isPending;
+  const isUpdating: boolean = updateTheme.isPending;
 
   // Query handles theme loading
 
-  useEffect(() => {
+  useEffect((): void => {
     if (selectedNotebookId) return;
-    const firstId = notebooksQuery.data?.[0]?.id;
+    const firstId: string | undefined = notebooksQuery.data?.[0]?.id;
     if (firstId) {
       updateSettings({ selectedNotebookId: firstId });
     }
   }, [selectedNotebookId, updateSettings, notebooksQuery.data]);
 
-  const handleCreate = async () => {
+  const handleCreate = async (): Promise<void> => {
     if (!form.name.trim()) {
       toast("Theme name is required", { variant: "error" });
       return;
@@ -81,24 +81,24 @@ export function AdminNotesThemesPage() {
       });
       setForm(defaultTheme);
       toast("Theme created", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create theme:", error);
       toast("Failed to create theme", { variant: "error" });
     }
   };
 
-  const handleDelete = async (themeId: string) => {
+  const handleDelete = async (themeId: string): Promise<void> => {
     if (!confirm("Delete this theme?")) return;
     try {
       await deleteTheme.mutateAsync(themeId);
       toast("Theme deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete theme:", error);
       toast("Failed to delete theme", { variant: "error" });
     }
   };
 
-  const handleEditStart = (theme: ThemeRecord) => {
+  const handleEditStart = (theme: ThemeRecord): void => {
     setEditingId(theme.id);
     setEditingForm({
       name: theme.name,
@@ -116,12 +116,12 @@ export function AdminNotesThemesPage() {
     });
   };
 
-  const handleEditCancel = () => {
+  const handleEditCancel = (): void => {
     setEditingId(null);
     setEditingForm(defaultTheme);
   };
 
-  const handleUpdate = async (themeId: string) => {
+  const handleUpdate = async (themeId: string): Promise<void> => {
     if (!editingForm.name.trim()) {
       toast("Theme name is required", { variant: "error" });
       return;
@@ -133,7 +133,7 @@ export function AdminNotesThemesPage() {
       });
       toast("Theme updated", { variant: "success" });
       handleEditCancel();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to update theme:", error);
       toast("Failed to update theme", { variant: "error" });
     }
@@ -158,7 +158,7 @@ export function AdminNotesThemesPage() {
               <Input
                 type="text"
                 value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, name: event.target.value }))}
                 className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
                 placeholder="Enter theme name"
               />
@@ -170,8 +170,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.textColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, textColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, textColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -183,8 +183,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.backgroundColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, backgroundColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, backgroundColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -196,8 +196,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.markdownHeadingColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, markdownHeadingColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, markdownHeadingColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -209,8 +209,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.markdownLinkColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, markdownLinkColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, markdownLinkColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -222,8 +222,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.markdownCodeBackground}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, markdownCodeBackground: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, markdownCodeBackground: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -235,8 +235,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.markdownCodeText}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, markdownCodeText: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, markdownCodeText: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -250,8 +250,8 @@ export function AdminNotesThemesPage() {
                 min={0}
                 max={8}
                 value={form.relatedNoteBorderWidth}
-                onChange={(event) =>
-                  setForm((prev) => ({
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                     ...prev,
                     relatedNoteBorderWidth: Number(event.target.value),
                   }))
@@ -266,8 +266,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.relatedNoteBorderColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, relatedNoteBorderColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, relatedNoteBorderColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
@@ -279,8 +279,8 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.relatedNoteBackgroundColor}
-                onChange={(event) =>
-                  setForm((prev) => ({
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                     ...prev,
                     relatedNoteBackgroundColor: event.target.value,
                   }))
@@ -295,15 +295,15 @@ export function AdminNotesThemesPage() {
               <Input
                 type="color"
                 value={form.relatedNoteTextColor}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, relatedNoteTextColor: event.target.value }))
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, relatedNoteTextColor: event.target.value }))
                 }
                 className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
           </div>
           <div className="mt-4">
-            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
+            <Button onClick={(): void => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -315,7 +315,7 @@ export function AdminNotesThemesPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void themesQuery.refetch(); }}>
+              <Button variant="outline" onClick={(): void => { void themesQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
@@ -326,9 +326,9 @@ export function AdminNotesThemesPage() {
             <p className="text-sm text-gray-400">No themes created yet.</p>
           ) : (
             <div className="space-y-4">
-              {themes.map((theme) => {
-                const isEditing = editingId === theme.id;
-                const values = isEditing ? editingForm : theme;
+              {themes.map((theme: ThemeRecord): React.JSX.Element => {
+                const isEditing: boolean = editingId === theme.id;
+                const values: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = isEditing ? editingForm : theme;
                 return (
                   <div
                     key={theme.id}
@@ -345,7 +345,7 @@ export function AdminNotesThemesPage() {
                         {isEditing ? (
                           <>
                             <Button
-                              onClick={() => { void handleUpdate(theme.id); }}
+                              onClick={(): void => { void handleUpdate(theme.id); }}
                               disabled={isUpdating}
                               size="sm"
                             >
@@ -356,12 +356,12 @@ export function AdminNotesThemesPage() {
                             </Button>
                           </>
                         ) : (
-                          <Button onClick={() => handleEditStart(theme)} variant="outline" size="sm">
+                          <Button onClick={(): void => handleEditStart(theme)} variant="outline" size="sm">
                             Edit
                           </Button>
                         )}
                         <Button
-                          onClick={() => { void handleDelete(theme.id); }}
+                          onClick={(): void => { void handleDelete(theme.id); }}
                           variant="outline"
                           size="sm"
                           className="border-red-500/40 text-red-300 hover:text-red-200"
@@ -377,9 +377,9 @@ export function AdminNotesThemesPage() {
                           type="text"
                           value={values.name}
                           disabled={!isEditing}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({ ...prev, name: event.target.value }))
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, name: event.target.value }))
                           }
                           className="w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60"
                         />
@@ -390,9 +390,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.textColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({ ...prev, textColor: event.target.value }))
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, textColor: event.target.value }))
                           }
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
@@ -403,9 +403,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.backgroundColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               backgroundColor: event.target.value,
                             }))
@@ -419,9 +419,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownHeadingColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownHeadingColor: event.target.value,
                             }))
@@ -435,9 +435,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownLinkColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownLinkColor: event.target.value,
                             }))
@@ -451,9 +451,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeBackground}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownCodeBackground: event.target.value,
                             }))
@@ -467,9 +467,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeText}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownCodeText: event.target.value,
                             }))
@@ -487,9 +487,9 @@ export function AdminNotesThemesPage() {
                           max={8}
                           disabled={!isEditing}
                           value={values.relatedNoteBorderWidth}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBorderWidth: Number(event.target.value),
                             }))
@@ -505,9 +505,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBorderColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBorderColor: event.target.value,
                             }))
@@ -523,9 +523,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBackgroundColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBackgroundColor: event.target.value,
                             }))
@@ -541,9 +541,9 @@ export function AdminNotesThemesPage() {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteTextColor}
-                          onChange={(event) =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             isEditing &&
-                            setEditingForm((prev) => ({
+                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteTextColor: event.target.value,
                             }))

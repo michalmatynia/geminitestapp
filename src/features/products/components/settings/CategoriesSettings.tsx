@@ -54,12 +54,12 @@ function CategoryNode({
   onDragEnd,
   onDrop,
   allCategories,
-}: CategoryNodeProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const hasChildren = category.children.length > 0;
-  const isExpanded = expandedIds.has(category.id);
+}: CategoryNodeProps): React.JSX.Element {
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const hasChildren: boolean = category.children.length > 0;
+  const isExpanded: boolean = expandedIds.has(category.id);
 
-  const canDropHere = useMemo(() => {
+  const canDropHere: boolean = useMemo((): boolean => {
     if (!draggedId) return true;
     if (draggedId === category.id) return false;
 
@@ -70,7 +70,7 @@ function CategoryNode({
     ): ProductCategoryWithChildren | null => {
       for (const cat of cats) {
         if (cat.id === id) return cat;
-        const found = findCategory(cat.children, id);
+        const found: ProductCategoryWithChildren | null = findCategory(cat.children, id);
         if (found) return found;
       }
       return null;
@@ -81,10 +81,10 @@ function CategoryNode({
       targetId: string
     ): boolean => {
       if (cat.id === targetId) return true;
-      return cat.children.some((child) => isDescendant(child, targetId));
+      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
     };
 
-    const draggedCategory = findCategory(allCategories, draggedId);
+    const draggedCategory: ProductCategoryWithChildren | null = findCategory(allCategories, draggedId);
     if (!draggedCategory) return true;
 
     return !isDescendant(draggedCategory, category.id);
@@ -94,35 +94,35 @@ function CategoryNode({
     <div>
       <div
         draggable
-        onDragStart={(e) => {
+        onDragStart={(e: React.DragEvent): void => {
           e.stopPropagation();
           e.dataTransfer.setData("categoryId", category.id);
           e.dataTransfer.effectAllowed = "move";
           onDragStart(category.id);
-          const target = e.currentTarget as HTMLElement;
+          const target: HTMLElement = e.currentTarget as HTMLElement;
           target.style.opacity = "0.5";
         }}
-        onDragEnd={(e) => {
-          const target = e.currentTarget as HTMLElement;
+        onDragEnd={(e: React.DragEvent): void => {
+          const target: HTMLElement = e.currentTarget as HTMLElement;
           target.style.opacity = "1";
           onDragEnd();
         }}
-        onDragOver={(e) => {
+        onDragOver={(e: React.DragEvent): void => {
           e.preventDefault();
           e.stopPropagation();
           if (canDropHere) {
             setIsDragOver(true);
           }
         }}
-        onDragLeave={(e) => {
+        onDragLeave={(e: React.DragEvent): void => {
           e.stopPropagation();
           setIsDragOver(false);
         }}
-        onDrop={(e) => {
+        onDrop={(e: React.DragEvent): void => {
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          const droppedId = e.dataTransfer.getData("categoryId") || draggedId;
+          const droppedId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
           if (droppedId && canDropHere) {
             onDrop(droppedId, category.id);
           }
@@ -136,7 +136,7 @@ function CategoryNode({
       >
         {hasChildren ? (
           <Button
-            onClick={() => onToggleExpand(category.id)}
+            onClick={(): void => onToggleExpand(category.id)}
             className="p-0.5 hover:bg-gray-700 rounded"
           >
             {isExpanded ? (
@@ -155,7 +155,7 @@ function CategoryNode({
 
         <div className="flex items-center gap-1">
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onCreateChild(category.id);
             }}
@@ -165,7 +165,7 @@ function CategoryNode({
             <FolderPlus className="size-3" />
           </Button>
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onEdit(category);
             }}
@@ -175,7 +175,7 @@ function CategoryNode({
             Edit
           </Button>
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onDelete(category);
             }}
@@ -189,7 +189,7 @@ function CategoryNode({
 
       {isExpanded && hasChildren && (
         <div>
-          {category.children.map((child) => (
+          {category.children.map((child: ProductCategoryWithChildren): React.JSX.Element => (
             <CategoryNode
               key={child.id}
               category={child}
@@ -219,11 +219,11 @@ export function CategoriesSettings({
   selectedCatalogId,
   onCatalogChange,
   onRefresh,
-}: CategoriesSettingsProps) {
+}: CategoriesSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
   const [formData, setFormData] = useState({
@@ -233,18 +233,18 @@ export function CategoriesSettings({
     parentId: null as string | null,
     catalogId: "",
   });
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
   const [modalCategories, setModalCategories] = useState<ProductCategoryWithChildren[]>([]);
-  const [modalLoadingCategories, setModalLoadingCategories] = useState(false);
+  const [modalLoadingCategories, setModalLoadingCategories] = useState<boolean>(false);
 
   // Reset expanded state when catalog changes
-  useEffect(() => {
+  useEffect((): void => {
     setExpandedIds(new Set());
   }, [selectedCatalogId]);
 
   // Expand all categories on initial load
-  useEffect(() => {
+  useEffect((): void => {
     if (categories.length > 0 && expandedIds.size === 0) {
       const collectIds = (cats: ProductCategoryWithChildren[]): string[] => {
         const ids: string[] = [];
@@ -260,9 +260,9 @@ export function CategoriesSettings({
     }
   }, [categories, expandedIds.size]);
 
-  const handleToggleExpand = useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
+  const handleToggleExpand = useCallback((id: string): void => {
+    setExpandedIds((prev: Set<string>): Set<string> => {
+      const next: Set<string> = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
       } else {
@@ -272,7 +272,7 @@ export function CategoriesSettings({
     });
   }, []);
 
-  const handleOpenCreateModal = (parentId: string | null = null) => {
+  const handleOpenCreateModal = (parentId: string | null = null): void => {
     if (!selectedCatalogId) {
       toast("Please select a catalog first", { variant: "error" });
       return;
@@ -289,7 +289,7 @@ export function CategoriesSettings({
     setShowModal(true);
   };
 
-  const handleOpenEditModal = (category: ProductCategoryWithChildren) => {
+  const handleOpenEditModal = (category: ProductCategoryWithChildren): void => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
@@ -302,40 +302,40 @@ export function CategoriesSettings({
     setShowModal(true);
   };
 
-  const handleDelete = async (category: ProductCategoryWithChildren) => {
-    const hasChildren = category.children.length > 0;
-    const message = hasChildren
+  const handleDelete = async (category: ProductCategoryWithChildren): Promise<void> => {
+    const hasChildren: boolean = category.children.length > 0;
+    const message: string = hasChildren
       ? `Delete category "${category.name}" and all its subcategories? This cannot be undone.`
       : `Delete category "${category.name}"? This cannot be undone.`;
 
     if (!window.confirm(message)) return;
 
     try {
-      const res = await fetch(`/api/products/categories/${category.id}`, {
+      const res: Response = await fetch(`/api/products/categories/${category.id}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
+        const data: { error?: string } = (await res.json()) as { error?: string };
         throw new Error(data.error || "Failed to delete category");
       }
 
       toast("Category deleted successfully", { variant: "success" });
       onRefresh();
     } catch (error) {
-      const message =
+      const message: string =
         error instanceof Error ? error.message : "Failed to delete category";
       toast(message, { variant: "error" });
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!formData.name.trim()) {
       toast("Category name is required", { variant: "error" });
       return;
     }
 
-    const targetCatalogId = formData.catalogId || selectedCatalogId;
+    const targetCatalogId: string | null = formData.catalogId || selectedCatalogId;
     if (!targetCatalogId && !editingCategory) {
       toast("Please select a catalog first", { variant: "error" });
       return;
@@ -343,11 +343,11 @@ export function CategoriesSettings({
 
     setSaving(true);
     try {
-      const endpoint = editingCategory
+      const endpoint: string = editingCategory
         ? `/api/products/categories/${editingCategory.id}`
         : "/api/products/categories";
 
-      const payload = editingCategory
+      const payload: { name: string; description: string | null; color: string; parentId: string | null; catalogId: string | null } = editingCategory
         ? {
             name: formData.name.trim(),
             description: formData.description.trim() || null,
@@ -363,14 +363,14 @@ export function CategoriesSettings({
             catalogId: targetCatalogId,
           };
 
-      const res = await fetch(endpoint, {
+      const res: Response = await fetch(endpoint, {
         method: editingCategory ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
+        const data: { error?: string } = (await res.json()) as { error?: string };
         throw new Error(data.error || "Failed to save category");
       }
 
@@ -383,7 +383,7 @@ export function CategoriesSettings({
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      const message =
+      const message: string =
         error instanceof Error ? error.message : "Failed to save category";
       toast(message, { variant: "error" });
     } finally {
@@ -391,40 +391,40 @@ export function CategoriesSettings({
     }
   };
 
-  const handleDrop = async (draggedCatId: string, targetId: string | null) => {
+  const handleDrop = async (draggedCatId: string, targetId: string | null): Promise<void> => {
     if (draggedCatId === targetId) return;
 
     try {
-      const res = await fetch(`/api/products/categories/${draggedCatId}`, {
+      const res: Response = await fetch(`/api/products/categories/${draggedCatId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ parentId: targetId }),
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
+        const data: { error?: string } = (await res.json()) as { error?: string };
         throw new Error(data.error || "Failed to move category");
       }
 
       toast("Category moved successfully", { variant: "success" });
       onRefresh();
     } catch (error) {
-      const message =
+      const message: string =
         error instanceof Error ? error.message : "Failed to move category";
       toast(message, { variant: "error" });
     }
   };
 
-  const handleRootDrop = (e: React.DragEvent) => {
+  const handleRootDrop = (e: React.DragEvent): void => {
     e.preventDefault();
-    const catId = e.dataTransfer.getData("categoryId") || draggedId;
+    const catId: string = e.dataTransfer.getData("categoryId") || (draggedId ?? "");
     if (catId) {
       void handleDrop(catId, null);
     }
   };
 
-  const selectedCatalog = catalogs.find((c) => c.id === selectedCatalogId);
-  const modalCatalog = catalogs.find((c) => c.id === modalCatalogId);
+  const selectedCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === selectedCatalogId);
+  const modalCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === modalCatalogId);
 
   const findCategory = useCallback(
     (
@@ -444,7 +444,7 @@ export function CategoriesSettings({
     []
   );
 
-  const collectDescendantIds = useCallback((cat: ProductCategoryWithChildren) => {
+  const collectDescendantIds = useCallback((cat: ProductCategoryWithChildren): string[] => {
     const ids: string[] = [];
     for (const child of cat.children) {
       ids.push(child.id, ...collectDescendantIds(child));
@@ -452,10 +452,10 @@ export function CategoriesSettings({
     return ids;
   }, []);
 
-  const categoryOptions = useMemo(() => {
+  const categoryOptions: { id: string; name: string; level: number }[] = useMemo((): { id: string; name: string; level: number }[] => {
     const flatten = (
       cats: ProductCategoryWithChildren[],
-      level = 0
+      level: number = 0
     ): { id: string; name: string; level: number }[] => {
       const items: { id: string; name: string; level: number }[] = [];
       for (const cat of cats) {
@@ -469,36 +469,36 @@ export function CategoriesSettings({
     return flatten(modalCategories);
   }, [modalCategories]);
 
-  const excludedParentIds = useMemo(() => {
+  const excludedParentIds: Set<string> = useMemo((): Set<string> => {
     if (!editingCategory) return new Set<string>();
     if (modalCatalogId && editingCategory.catalogId !== modalCatalogId) {
       return new Set<string>();
     }
-    const current = findCategory(modalCategories, editingCategory.id);
+    const current: ProductCategoryWithChildren | null = findCategory(modalCategories, editingCategory.id);
     if (!current) return new Set<string>();
     return new Set([editingCategory.id, ...collectDescendantIds(current)]);
   }, [editingCategory, modalCatalogId, modalCategories, findCategory, collectDescendantIds]);
 
-  const parentOptions = useMemo(
-    () => categoryOptions.filter((opt) => !excludedParentIds.has(opt.id)),
+  const parentOptions: { id: string; name: string; level: number }[] = useMemo(
+    (): { id: string; name: string; level: number }[] => categoryOptions.filter((opt: { id: string }): boolean => !excludedParentIds.has(opt.id)),
     [categoryOptions, excludedParentIds]
   );
 
   const loadModalCategories = useCallback(
-    async (catalogId: string) => {
+    async (catalogId: string): Promise<void> => {
       setModalLoadingCategories(true);
       try {
-        const res = await fetch(
+        const res: Response = await fetch(
           `/api/products/categories/tree?catalogId=${catalogId}`
         );
         if (!res.ok) {
-          const error = (await res.json()) as { error?: string };
+          const error: { error?: string } = (await res.json()) as { error?: string };
           throw new Error(error.error || "Failed to load categories.");
         }
-        const data = (await res.json()) as ProductCategoryWithChildren[];
+        const data: ProductCategoryWithChildren[] = (await res.json()) as ProductCategoryWithChildren[];
         setModalCategories(data);
       } catch (error) {
-        const message =
+        const message: string =
           error instanceof Error ? error.message : "Failed to load categories.";
         toast(message, { variant: "error" });
         setModalCategories([]);
@@ -509,7 +509,7 @@ export function CategoriesSettings({
     [toast]
   );
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!showModal || !modalCatalogId) return;
     if (modalCatalogId === selectedCatalogId) {
       setModalCategories(categories);
@@ -518,12 +518,12 @@ export function CategoriesSettings({
     void loadModalCategories(modalCatalogId);
   }, [showModal, modalCatalogId, selectedCatalogId, categories, loadModalCategories]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!showModal) return;
     if (!formData.parentId) return;
-    const stillValid = parentOptions.some((opt) => opt.id === formData.parentId);
+    const stillValid: boolean = parentOptions.some((opt: { id: string }): boolean => opt.id === formData.parentId);
     if (!stillValid) {
-      setFormData((prev) => ({ ...prev, parentId: null }));
+      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, parentId: null }));
     }
   }, [showModal, parentOptions, formData.parentId]);
 
@@ -544,7 +544,7 @@ export function CategoriesSettings({
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>
-              {catalogs.map((catalog) => (
+              {catalogs.map((catalog: Catalog): React.JSX.Element => (
                 <SelectItem key={catalog.id} value={catalog.id}>
                   {catalog.name}
                   {catalog.isDefault && " (Default)"}
@@ -560,7 +560,7 @@ export function CategoriesSettings({
         <>
           <div className="flex justify-start">
             <Button
-              onClick={() => handleOpenCreateModal(null)}
+              onClick={(): void => handleOpenCreateModal(null)}
               className="bg-white text-gray-900 hover:bg-gray-200"
             >
               <Plus className="size-4 mr-2" />
@@ -584,7 +584,7 @@ export function CategoriesSettings({
             ) : (
               <div
                 className="space-y-0.5 rounded-md border border-border bg-gray-900 p-2"
-                onDragOver={(e) => {
+                onDragOver={(e: React.DragEvent): void => {
                   e.preventDefault();
                 }}
                 onDrop={handleRootDrop}
@@ -592,23 +592,23 @@ export function CategoriesSettings({
                 {/* Root drop zone */}
                 <div
                   className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2"
-                  onDragOver={(e) => {
+                  onDragOver={(e: React.DragEvent): void => {
                     e.preventDefault();
-                    e.currentTarget.classList.add("bg-emerald-600/20", "border-emerald-500");
+                    (e.currentTarget as HTMLElement).classList.add("bg-emerald-600/20", "border-emerald-500");
                   }}
-                  onDragLeave={(e) => {
-                    e.currentTarget.classList.remove("bg-emerald-600/20", "border-emerald-500");
+                  onDragLeave={(e: React.DragEvent): void => {
+                    (e.currentTarget as HTMLElement).classList.remove("bg-emerald-600/20", "border-emerald-500");
                   }}
-                  onDrop={(e) => {
+                  onDrop={(e: React.DragEvent): void => {
                     e.preventDefault();
-                    e.currentTarget.classList.remove("bg-emerald-600/20", "border-emerald-500");
+                    (e.currentTarget as HTMLElement).classList.remove("bg-emerald-600/20", "border-emerald-500");
                     handleRootDrop(e);
                   }}
                 >
                   <span>Drop here to move to root level</span>
                 </div>
 
-                {categories.map((category) => (
+                {categories.map((category: ProductCategoryWithChildren): React.JSX.Element => (
                   <CategoryNode
                     key={category.id}
                     category={category}
@@ -616,12 +616,12 @@ export function CategoriesSettings({
                     expandedIds={expandedIds}
                     onToggleExpand={handleToggleExpand}
                     onEdit={handleOpenEditModal}
-                    onDelete={(cat) => void handleDelete(cat)}
+                    onDelete={(cat: ProductCategoryWithChildren): void => void handleDelete(cat)}
                     onCreateChild={handleOpenCreateModal}
                     draggedId={draggedId}
                     onDragStart={setDraggedId}
-                    onDragEnd={() => setDraggedId(null)}
-                    onDrop={(e, targetId) => void handleDrop(e, targetId)}
+                    onDragEnd={(): void => setDraggedId(null)}
+                    onDrop={(e: string, targetId: string | null): void => void handleDrop(e, targetId)}
                     allCategories={categories}
                   />
                 ))}
@@ -641,7 +641,7 @@ export function CategoriesSettings({
       {showModal && (
         <AppModal
           open={showModal}
-          onOpenChange={(open) => !open && setShowModal(false)}
+          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
           title={editingCategory ? "Edit Category" : "Create Category"}
         >
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
@@ -652,7 +652,7 @@ export function CategoriesSettings({
               <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={(): void => setShowModal(false)}
               >
                 Close
               </Button>
@@ -664,8 +664,8 @@ export function CategoriesSettings({
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Category name"
                 />
@@ -677,8 +677,8 @@ export function CategoriesSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   rows={3}
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
                       ...prev,
                       description: e.target.value,
                     }))
@@ -692,9 +692,9 @@ export function CategoriesSettings({
                 <select
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
-                  onChange={(e) => {
-                    const nextCatalogId = e.target.value;
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
+                    const nextCatalogId: string = e.target.value;
+                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
                       ...prev,
                       catalogId: nextCatalogId,
                       parentId:
@@ -703,7 +703,7 @@ export function CategoriesSettings({
                     setModalCatalogId(nextCatalogId);
                   }}
                 >
-                  {catalogs.map((catalog) => (
+                  {catalogs.map((catalog: Catalog): React.JSX.Element => (
                     <option key={catalog.id} value={catalog.id}>
                       {catalog.name}
                       {catalog.isDefault ? " (Default)" : ""}
@@ -717,8 +717,8 @@ export function CategoriesSettings({
                 <select
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.parentId ?? ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
                       ...prev,
                       parentId: e.target.value ? e.target.value : null,
                     }))
@@ -726,7 +726,7 @@ export function CategoriesSettings({
                   disabled={modalLoadingCategories}
                 >
                   <option value="">No parent (root)</option>
-                  {parentOptions.map((option) => (
+                  {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
                     <option key={option.id} value={option.id}>
                       {"|-- ".repeat(option.level)}
                       {option.name}
@@ -753,16 +753,16 @@ export function CategoriesSettings({
                     type="color"
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
                     type="text"
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#10b981"
                   />
@@ -773,14 +773,14 @@ export function CategoriesSettings({
                 <Button
                   className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={(): void => setShowModal(false)}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
-                  onClick={() => void handleSave()}
+                  onClick={(): void => { void handleSave(); }}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save"}

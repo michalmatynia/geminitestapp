@@ -57,15 +57,14 @@ async function PUT_handler(
       throw badRequestError("Product id is required");
     }
     let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch (error) {
-      throw badRequestError("Invalid form data payload", {
-        productId: id,
-        error,
-      });
-    }
-    const product = await productService.updateProduct(id, formData);
+                try {
+                  formData = await req.formData();
+                } catch (error) {
+                  throw badRequestError("Invalid form data payload", {
+                    productId: id,
+                    error,
+                  });
+                }    const product = await productService.updateProduct(id, formData);
     if (!product) {
       throw notFoundError("Product not found", { productId: id });
     }

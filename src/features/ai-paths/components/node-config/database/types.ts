@@ -1,10 +1,14 @@
+export type FieldSchema = { name: string; type: string };
+
+export type CollectionSchema = {
+  name: string;
+  fields: FieldSchema[];
+  relations?: string[];
+};
+
 export type SchemaData = {
   provider: string;
-  collections: Array<{
-    name: string;
-    fields: Array<{ name: string; type: string }>;
-    relations?: string[];
-  }>;
+  collections: CollectionSchema[];
 };
 
 export type AiQuery = {

@@ -29,7 +29,7 @@ export function DatabaseSettingsTab({
   databaseConfig,
   writeSource,
   updateSelectedNodeConfig,
-}: DatabaseSettingsTabProps) {
+}: DatabaseSettingsTabProps): React.JSX.Element {
   return (
     <div className="space-y-4">
       {queryEditor}
@@ -40,7 +40,7 @@ export function DatabaseSettingsTab({
             <Label className="text-xs text-gray-400">Write Mode</Label>
             <Select
               value={databaseConfig.mode ?? "replace"}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: {
                     ...databaseConfig,
@@ -67,7 +67,7 @@ export function DatabaseSettingsTab({
             <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
               value={databaseConfig.entityType ?? "products"}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
                 })
@@ -77,7 +77,7 @@ export function DatabaseSettingsTab({
                 <SelectValue placeholder="Collection type" />
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== "custom").map((option: { value: string; label: string }): React.JSX.Element => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -89,7 +89,7 @@ export function DatabaseSettingsTab({
             <Label className="text-xs text-gray-400">Payload Source</Label>
             <Select
               value={writeSource}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, writeSource: value },
                 })
@@ -99,7 +99,7 @@ export function DatabaseSettingsTab({
                 <SelectValue placeholder="Select payload input" />
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900">
-                {availablePorts.map((port) => (
+                {availablePorts.map((port: string): React.JSX.Element => (
                   <SelectItem key={port} value={port}>
                     {formatPortLabel(port)}
                   </SelectItem>
@@ -115,7 +115,7 @@ export function DatabaseSettingsTab({
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={databaseConfig.writeSourcePath ?? ""}
-              onChange={(event) =>
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateSelectedNodeConfig({
                   database: {
                     ...databaseConfig,
@@ -128,7 +128,7 @@ export function DatabaseSettingsTab({
             {writeSource === "bundle" && bundleKeys.size > 0 && (
               <Select
                 value={databaseConfig.writeSourcePath ?? ""}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updateSelectedNodeConfig({
                     database: {
                       ...databaseConfig,
@@ -141,7 +141,7 @@ export function DatabaseSettingsTab({
                   <SelectValue placeholder="Pick bundle key" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                  {Array.from(bundleKeys).map((key) => (
+                  {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
                     <SelectItem key={key} value={key}>
                       {formatPortLabel(key)}
                     </SelectItem>
@@ -162,7 +162,7 @@ export function DatabaseSettingsTab({
             <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
               value={databaseConfig.entityType ?? "products"}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
                 })
@@ -172,7 +172,7 @@ export function DatabaseSettingsTab({
                 <SelectValue placeholder="Collection type" />
               </SelectTrigger>
               <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-                {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== "custom").map((option: { value: string; label: string }): React.JSX.Element => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

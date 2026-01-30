@@ -16,13 +16,13 @@ import type { ChatMessage, ChatbotSettingsPayload } from "@/shared/types/chatbot
 /**
  * Mutation hook for creating a new chatbot session
  */
-export function useCreateChatbotSession() {
+export function useCreateChatbotSession(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createChatbotSession,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
+    onSuccess: (): Promise<void> => {
+      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
     },
   });
 }
@@ -30,15 +30,15 @@ export function useCreateChatbotSession() {
 /**
  * Mutation hook for updating a session title
  */
-export function useUpdateSessionTitle() {
+export function useUpdateSessionTitle(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
       updateChatbotSessionTitle(sessionId, title),
-    onSuccess: (_, { sessionId }) => {
+    onSuccess: (_data: unknown, { sessionId }: { sessionId: string }): Promise<void> => {
       void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
+      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
   });
 }
@@ -46,12 +46,12 @@ export function useUpdateSessionTitle() {
 /**
  * Mutation hook for deleting a single session
  */
-export function useDeleteChatbotSession() {
+export function useDeleteChatbotSession(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: deleteChatbotSession,
-    onSuccess: (_, sessionId) => {
+    onSuccess: (_data: unknown, sessionId: string): void => {
       void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
       queryClient.removeQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
@@ -61,16 +61,17 @@ export function useDeleteChatbotSession() {
 /**
  * Mutation hook for deleting multiple sessions
  */
-export function useDeleteChatbotSessions() {
+export function useDeleteChatbotSessions(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: deleteChatbotSessions,
-    onSuccess: (_, sessionIds) => {
+    onSuccess: (_data: unknown, sessionIds: string[]): Promise<void> => {
       void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
-      sessionIds.forEach((id) => {
+      sessionIds.forEach((id: string): void => {
         queryClient.removeQueries({ queryKey: chatbotQueryKeys.session(id) });
       });
+      return Promise.resolve();
     },
   });
 }
@@ -78,7 +79,7 @@ export function useDeleteChatbotSessions() {
 /**
  * Mutation hook for persisting a message to a session
  */
-export function usePersistSessionMessage() {
+export function usePersistSessionMessage(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -91,8 +92,8 @@ export function usePersistSessionMessage() {
       role: ChatMessage["role"];
       content: string;
     }) => persistSessionMessage(sessionId, role, content),
-    onSuccess: (_, { sessionId }) => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
+    onSuccess: (_data: unknown, { sessionId }: { sessionId: string }): Promise<void> => {
+      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
   });
 }
@@ -100,7 +101,7 @@ export function usePersistSessionMessage() {
 /**
  * Mutation hook for sending a chat message
  */
-export function useSendChatMessage() {
+export function useSendChatMessage(): typeof useMutation {
   return useMutation({
     mutationFn: sendChatbotMessage,
   });
@@ -109,14 +110,14 @@ export function useSendChatMessage() {
 /**
  * Mutation hook for saving chatbot settings
  */
-export function useSaveChatbotSettings() {
+export function useSaveChatbotSettings(): typeof useMutation {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ key, settings }: { key: string; settings: ChatbotSettingsPayload }) =>
       saveChatbotSettings(key, settings),
-    onSuccess: (_, { key }) => {
-      void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings(key) });
+    onSuccess: (_data: unknown, { key }: { key: string }): Promise<void> => {
+      return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings(key) });
     },
   });
 }

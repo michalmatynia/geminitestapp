@@ -18,7 +18,7 @@ export function MapperNodeConfigSection({
   selectedNode,
   updateSelectedNode,
   updateSelectedNodeConfig,
-}: MapperNodeConfigSectionProps) {
+}: MapperNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "mapper") return null;
 
   const mapperConfig = selectedNode.config?.mapper ?? {
@@ -42,11 +42,11 @@ export function MapperNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={outputs.join("\n")}
-          onChange={(event) => {
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             const list = parsePathList(event.target.value);
             const nextOutputs = list.length ? list : ["value"];
             const nextMappings = createParserMappings(nextOutputs);
-            nextOutputs.forEach((output) => {
+            nextOutputs.forEach((output: string) => {
               if (mapperConfig.mappings?.[output]) {
                 nextMappings[output] = mapperConfig.mappings[output];
               }
@@ -67,7 +67,7 @@ export function MapperNodeConfigSection({
           Outputs must match downstream input ports exactly.
         </p>
       </div>
-      {outputs.map((output) => (
+      {outputs.map((output: string): React.JSX.Element => (
         <div key={output}>
           <Label className="text-xs text-gray-400">
             {formatPortLabel(output)} Mapping Path
@@ -75,7 +75,7 @@ export function MapperNodeConfigSection({
           <Input
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={mapperConfig.mappings?.[output] ?? ""}
-            onChange={(event) => {
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               const nextMappings = {
                 ...mapperConfig.mappings,
                 [output]: event.target.value,

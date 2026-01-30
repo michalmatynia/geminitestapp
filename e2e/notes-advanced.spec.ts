@@ -39,19 +39,8 @@ test.describe("Notes Advanced E2E", () => {
     await page.route(/\/api\/notes\/themes.*/, (route) => route.fulfill({ json: themes }));
     await page.route("**/api/settings", (route) => route.fulfill({ json: [] }));
     
-    await page.route(/\/api\/notes(\?.*)?$/, async (route) => {
-        if (route.request().method() === "GET") {
-            return route.fulfill({ json: notes });
-        }
-        if (route.request().method() === "POST") {
-            const body = JSON.parse(route.request().postData() || "{}");
-            const newNote = { ...body, id: `note-${Date.now()}`, createdAt: now, updatedAt: now, tags: [], categories: [], relationsFrom: [], relationsTo: [] };
-            notes.push(newNote);
-            return route.fulfill({ status: 201, json: newNote });
-        }
-    });
-
-    await page.route(/\/api\/notes\/[^/?]+$/, async (route) => {
+    // Note by ID mock
+    await page.route(/\/api\/notes\/note-[^/?]+$/, async (route) => {
         const id = route.request().url().split("/").pop();
         if (route.request().method() === "GET") {
             const note = notes.find(n => n.id === id);
@@ -68,6 +57,33 @@ test.describe("Notes Advanced E2E", () => {
         if (route.request().method() === "DELETE") {
             notes = notes.filter(n => n.id !== id);
             return route.fulfill({ json: { success: true } });
+        }
+    });
+
+    // Notes list and create mock with filtering
+    await page.route(/\/api\/notes(\?.*)?$/, async (route) => {
+        if (route.request().method() === "GET") {
+            const url = new URL(route.request().url());
+            const search = url.searchParams.get("search")?.toLowerCase();
+            const scope = url.searchParams.get("searchScope") || "both";
+            
+            let filteredNotes = [...notes];
+            if (search) {
+                filteredNotes = filteredNotes.filter(n => {
+                    const inTitle = n.title.toLowerCase().includes(search);
+                    const inContent = n.content.toLowerCase().includes(search);
+                    if (scope === "title") return inTitle;
+                    if (scope === "content") return inContent;
+                    return inTitle || inContent;
+                });
+            }
+            return route.fulfill({ json: filteredNotes });
+        }
+        if (route.request().method() === "POST") {
+            const body = JSON.parse(route.request().postData() || "{}");
+            const newNote = { ...body, id: `note-${Date.now()}`, createdAt: now, updatedAt: now, tags: [], categories: [], relationsFrom: [], relationsTo: [] };
+            notes.push(newNote);
+            return route.fulfill({ status: 201, json: newNote });
         }
     });
   });
@@ -112,7 +128,8 @@ test.describe("Notes Advanced E2E", () => {
     await page.getByRole("button", { name: "Edit" }).click();
     
     page.on("dialog", dialog => dialog.accept());
-    await page.getByRole("button", { name: "Delete" }).click();
+    // Use exact match to avoid multiple elements
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
     
     await expect(page.getByText("No notes found")).toBeVisible();
   });

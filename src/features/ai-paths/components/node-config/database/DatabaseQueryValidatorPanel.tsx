@@ -29,7 +29,7 @@ export function DatabaseQueryValidatorPanel({
   edges,
   updateSelectedNodeConfig,
   toast,
-}: DatabaseQueryValidatorPanelProps) {
+}: DatabaseQueryValidatorPanelProps): React.JSX.Element {
   return (
     <div
       className={`rounded-md border px-3 py-2 text-[11px] ${
@@ -54,17 +54,17 @@ export function DatabaseQueryValidatorPanel({
       )}
       {queryValidation.hints && queryValidation.hints.length > 0 && (
         <div className="mt-2 space-y-1 text-[11px] text-rose-100/90">
-          {queryValidation.hints.map((hint) => (
+          {queryValidation.hints.map((hint: string): React.JSX.Element => (
             <div key={hint}>- {hint}</div>
           ))}
         </div>
       )}
       {queryValidation.status === "error" && (() => {
         const aiPromptEdges = edges.filter(
-          (edge) => edge.from === selectedNode.id && edge.fromPort === "aiPrompt"
+          (edge: Edge): boolean => edge.from === selectedNode.id && edge.fromPort === "aiPrompt"
         );
         const aiNode = aiPromptEdges.length > 0
-          ? nodes.find((n) => n.id === aiPromptEdges[0]?.to && n.type === "model")
+          ? nodes.find((n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === "model")
           : null;
 
         if (!aiNode) return null;
@@ -73,7 +73,7 @@ export function DatabaseQueryValidatorPanel({
           <Button
             type="button"
             className="mt-3 w-full rounded-md border border-purple-700 bg-purple-500/10 px-3 py-2 text-[11px] text-purple-200 hover:bg-purple-500/20"
-            onClick={() => {
+            onClick={(): void => {
               const providerName = queryConfig.provider === "auto" ? "MongoDB (auto-detect)" : queryConfig.provider;
               const correctionPrompt = `Fix this invalid ${providerName} query for a ${operation} operation on the "${queryConfig.collection}" collection.
 
@@ -85,7 +85,7 @@ ${queryTemplateValue}
 Validation Errors:
 ${queryValidation.message}
 
-${queryValidation.hints && queryValidation.hints.length > 0 ? `Suggestions:\n${queryValidation.hints.map(h => `- ${h}`).join('\n')}` : ''}
+${queryValidation.hints && queryValidation.hints.length > 0 ? `Suggestions:\n${queryValidation.hints.map((h: string): string => `- ${h}`).join('\n')}` : ''}
 
 Please return ONLY the corrected query as valid JSON, without any explanation or markdown formatting.`;
 

@@ -194,12 +194,12 @@ export const setValueAtMappingPath = (
             if (Array.isArray(parent)) {
               (parent)[Number(parentKey)] = nextArray;
             } else {
-              (parent as Record<string, unknown>)[String(parentKey)] = nextArray;
+              (parent)[String(parentKey)] = nextArray;
             }
           }
           current = nextArray;
         }
-        (current as unknown[])[token] = value;
+        (current)[token] = value;
       } else {
         (current as Record<string, unknown>)[token] = value;
       }
@@ -213,12 +213,12 @@ export const setValueAtMappingPath = (
           if (Array.isArray(parent)) {
             (parent)[Number(parentKey)] = nextArray;
           } else {
-            (parent as Record<string, unknown>)[String(parentKey)] = nextArray;
+            (parent)[String(parentKey)] = nextArray;
           }
         }
         current = nextArray;
       }
-      const curArr = current as unknown[];
+      const curArr = current;
       if (curArr[token] == null || typeof curArr[token] !== "object") {
         curArr[token] = typeof nextToken === "number" ? [] : {};
       }
@@ -262,7 +262,7 @@ export const deletePath = (obj: Record<string, unknown>, path: string): void => 
 };
 
 export const omitByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
-  const clone = cloneValue(obj) as Record<string, unknown>;
+  const clone = cloneValue(obj);
   paths.forEach((path: string) => deletePath(clone, path));
   return clone;
 };

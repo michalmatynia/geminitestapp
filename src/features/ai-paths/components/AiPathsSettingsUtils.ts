@@ -34,7 +34,7 @@ export const DEFAULT_DB_QUERY: DbQueryConfig = {
 
 export const toJsonSafe = (value: unknown): unknown => {
   const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown) => {
+  const replacer = (_key: string, val: unknown): unknown => {
     if (typeof val === "bigint") return val.toString();
     if (val instanceof Date) return val.toISOString();
     if (val instanceof Set) return Array.from(val.values()) as unknown[];
@@ -56,7 +56,7 @@ export const toJsonSafe = (value: unknown): unknown => {
 
 export const safeJsonStringify = (value: unknown): string => {
   const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown) => {
+  const replacer = (_key: string, val: unknown): unknown => {
     if (typeof val === "bigint") return val.toString();
     if (val instanceof Date) return val.toISOString();
     if (val instanceof Set) return Array.from(val.values()) as unknown[];
@@ -95,15 +95,15 @@ export const buildPersistedRuntimeState = (
   state: RuntimeState,
   graphNodes: AiNode[]
 ): string => {
-  const nodeIds = new Set(graphNodes.map((node) => node.id));
+  const nodeIds = new Set(graphNodes.map((node: AiNode) => node.id));
   const inputs: Record<string, RuntimePortValues> = {};
   const outputs: Record<string, RuntimePortValues> = {};
-  Object.entries(state.inputs ?? {}).forEach(([key, value]) => {
+  Object.entries(state.inputs ?? {}).forEach(([key, value]: [string, RuntimePortValues]) => {
     if (nodeIds.has(key)) {
       inputs[key] = value;
     }
   });
-  Object.entries(state.outputs ?? {}).forEach(([key, value]) => {
+  Object.entries(state.outputs ?? {}).forEach(([key, value]: [string, RuntimePortValues]) => {
     if (nodeIds.has(key)) {
       outputs[key] = value;
     }
@@ -120,18 +120,18 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => ({
   ),
 });
 
-export const sanitizePathConfigs = (configs: Record<string, PathConfig>) =>
+export const sanitizePathConfigs = (configs: Record<string, PathConfig>): Record<string, PathConfig> =>
   Object.fromEntries(
-    Object.entries(configs).map(([key, value]) => [key, sanitizePathConfig(value)])
+    Object.entries(configs).map(([key, value]: [string, PathConfig]) => [key, sanitizePathConfig(value)])
   );
 
-export const serializePathConfigs = (configs: Record<string, PathConfig>) =>
+export const serializePathConfigs = (configs: Record<string, PathConfig>): string =>
   JSON.stringify(sanitizePathConfigs(configs));
 
 export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
   queryConfig: DbQueryConfig
-) => {
+): Record<string, unknown> => {
   const inputQuery = coerceInput(nodeInputs.query);
   const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
   const entityIdInput = coerceInput(nodeInputs.entityId);
@@ -246,7 +246,7 @@ export const pollDatabaseQuery = async (
       };
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
     }
   }
   return {
@@ -259,7 +259,7 @@ export const pollDatabaseQuery = async (
 export const pollGraphJob = async (
   jobId: string,
   options?: { intervalMs?: number; maxAttempts?: number }
-) => {
+): Promise<string> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -287,7 +287,7 @@ export const pollGraphJob = async (
       throw new Error("AI job was canceled.");
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
     }
   }
   throw new Error("AI job timed out.");

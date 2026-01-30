@@ -49,19 +49,19 @@ export function ParserNodeConfigSection({
   updateSelectedNodeConfig: _updateSelectedNodeConfig,
   handleFetchParserSample,
   toast,
-}: ParserNodeConfigSectionProps) {
+}: ParserNodeConfigSectionProps): React.JSX.Element | null {
   const [parserDraftMappings, setParserDraftMappings] = React.useState<Record<string, string>>({});
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
+  React.useEffect((): void | (() => void) => {
     if (selectedNode.type !== "parser") return;
     const nextMappings =
       selectedNode.config?.parser?.mappings ??
       createParserMappings(selectedNode.outputs ?? []);
     setParserDraftNodeId(selectedNode.id);
     setParserDraftMappings(nextMappings);
-    return () => {
+    return (): void => {
       if (parserDraftTimerRef.current) {
         window.clearTimeout(parserDraftTimerRef.current);
         parserDraftTimerRef.current = null;
@@ -98,7 +98,7 @@ export function ParserNodeConfigSection({
     },
   ];
   const activePreset =
-    presetOptions.find((preset) => preset.id === presetId) ?? null;
+    presetOptions.find((preset: { id: string }) => preset.id === presetId) ?? null;
   const sampleState =
     parserSamples[selectedNode.id] ?? {
       entityType: "product",
@@ -111,8 +111,8 @@ export function ParserNodeConfigSection({
       includeContainers: false,
     };
   const simulationOptions = nodes
-    .filter((node) => node.type === "simulation")
-    .map((node) => {
+    .filter((node: AiNode): boolean => node.type === "simulation")
+    .map((node: AiNode) => {
       const simConfig = node.config?.simulation;
       const entityId =
         simConfig?.entityId?.trim() || simConfig?.productId?.trim() || "";
@@ -124,7 +124,7 @@ export function ParserNodeConfigSection({
         entityType,
       };
     })
-    .filter((option) => option.entityId);
+    .filter((option: { entityId: string }) => option.entityId);
   const parsedSample = safeParseJson(sampleState.json);
   const sampleValue = parsedSample.value;
   const sampleMappings = sampleValue
@@ -141,12 +141,12 @@ export function ParserNodeConfigSection({
     ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
     : [];
   const samplePaths = sampleEntries
-    .filter((entry) => {
+    .filter((entry: { type: string }) => {
       if (sampleState.includeContainers) return true;
       return entry.type === "value" || entry.type === "array";
     })
-    .map((entry) => entry.path);
-  const samplePathOptions = samplePaths.map((path) => {
+    .map((entry: { path: string }) => entry.path);
+  const samplePathOptions = samplePaths.map((path: string) => {
     const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
     return { label: `Sample: ${path}`, value };
   });
@@ -172,7 +172,7 @@ export function ParserNodeConfigSection({
     : PARSER_PATH_OPTIONS;
   const uniqueSuggestedPathOptions = Array.from(
     new Map(
-      suggestedPathOptions.map((option) => [option.value, option])
+      suggestedPathOptions.map((option: { value: string; label: string }) => [option.value, option])
     ).values()
   );
   const entries = Object.entries(draftMappings);
@@ -180,13 +180,13 @@ export function ParserNodeConfigSection({
     nextMappings: Record<string, string>,
     nextMode: "individual" | "bundle" = outputMode,
     nextPresetId: string = presetId
-  ) => {
+  ): void => {
     setParserDraftNodeId(selectedNode.id);
     setParserDraftMappings(nextMappings);
     if (parserDraftTimerRef.current) {
       window.clearTimeout(parserDraftTimerRef.current);
     }
-    parserDraftTimerRef.current = window.setTimeout(() => {
+    parserDraftTimerRef.current = window.setTimeout((): void => {
       commitMappings(nextMappings, nextMode, nextPresetId);
     }, 500);
   };
@@ -194,7 +194,7 @@ export function ParserNodeConfigSection({
     nextMappings: Record<string, string>,
     nextMode: "individual" | "bundle" = outputMode,
     nextPresetId: string = presetId
-  ) => {
+  ): void => {
     setParserDraftNodeId(selectedNode.id);
     setParserDraftMappings(nextMappings);
     if (parserDraftTimerRef.current) {
@@ -207,12 +207,12 @@ export function ParserNodeConfigSection({
     nextMappings: Record<string, string>,
     nextMode: "individual" | "bundle" = outputMode,
     nextPresetId: string = presetId
-  ) => {
+  ): void => {
     const keys = Object.keys(nextMappings)
-      .map((key) => key.trim())
+      .map((key: string) => key.trim())
       .filter(Boolean);
     const hasImagesOutput = keys.some(
-      (key) => key.toLowerCase() === "images"
+      (key: string) => key.toLowerCase() === "images"
     );
     const nextOutputs =
       nextMode === "bundle"
@@ -230,7 +230,7 @@ export function ParserNodeConfigSection({
       },
     });
   };
-  const addMapping = (baseKey: string, defaultPath: string) => {
+  const addMapping = (baseKey: string, defaultPath: string): void => {
     let nextKey = baseKey;
     let counter = 1;
     while (draftMappings[nextKey]) {
@@ -239,41 +239,41 @@ export function ParserNodeConfigSection({
     }
     commitMappingsImmediate({ ...draftMappings, [nextKey]: defaultPath });
   };
-  const updateMappingKey = (index: number, value: string) => {
-    const nextEntries = entries.map((entry, idx) => {
+  const updateMappingKey = (index: number, value: string): void => {
+    const nextEntries = entries.map((entry: [string, string], idx: number): [string, string] => {
       if (idx !== index) return entry;
       const nextKey = value.trim() || entry[0];
       return [nextKey, entry[1]] as [string, string];
     });
     const nextMappings: Record<string, string> = {};
-    (nextEntries).forEach(([key, path]) => {
+    (nextEntries).forEach(([key, path]: [string, string]) => {
       if (!key || !key.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsDebounced(nextMappings);
   };
-  const updateMappingPath = (index: number, value: string) => {
-    const nextEntries = entries.map((entry, idx) =>
+  const updateMappingPath = (index: number, value: string): void => {
+    const nextEntries = entries.map((entry: [string, string], idx: number): [string, string] =>
       idx === index ? [entry[0], value] : entry
     );
     const nextMappings: Record<string, string> = {};
-    (nextEntries as [string, string][]).forEach(([key, path]) => {
+    nextEntries.forEach(([key, path]: [string, string]) => {
       if (!key || !key.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsDebounced(nextMappings);
   };
-  const removeMapping = (index: number) => {
+  const removeMapping = (index: number): void => {
     if (entries.length <= 1) return;
-    const nextEntries = entries.filter((_, idx) => idx !== index);
+    const nextEntries = entries.filter((_: [string, string], idx: number) => idx !== index);
     const nextMappings: Record<string, string> = {};
-    (nextEntries).forEach(([key, path]) => {
+    nextEntries.forEach(([key, path]: [string, string]) => {
       if (!key || !key.trim()) return;
       nextMappings[key.trim()] = path;
     });
     commitMappingsImmediate(nextMappings);
   };
-  const applyPreset = (mode: "replace" | "merge") => {
+  const applyPreset = (mode: "replace" | "merge"): void => {
     if (!activePreset || activePreset.id === "custom") return;
     if (mode === "replace") {
       commitMappingsImmediate(
@@ -284,14 +284,14 @@ export function ParserNodeConfigSection({
       return;
     }
     const merged: Record<string, string> = { ...draftMappings };
-    Object.entries(activePreset.mappings as Record<string, string>).forEach(([key, value]) => {
+    Object.entries(activePreset.mappings as Record<string, string>).forEach(([key, value]: [string, string]) => {
       if (!(key in merged)) {
         merged[key] = value;
       }
     });
     commitMappingsImmediate(merged, outputMode, activePreset.id);
   };
-  const applySampleMappings = (mode: "replace" | "merge") => {
+  const applySampleMappings = (mode: "replace" | "merge"): void => {
     const keys = Object.keys(sampleMappings);
     if (keys.length === 0) return;
     if (mode === "replace") {
@@ -299,14 +299,14 @@ export function ParserNodeConfigSection({
       return;
     }
     const merged: Record<string, string> = { ...draftMappings };
-    keys.forEach((key) => {
+    keys.forEach((key: string) => {
       if (!(key in merged)) {
         merged[key] = sampleMappings[key] ?? "";
       }
     });
     commitMappingsImmediate(merged, outputMode, "custom");
   };
-  const handleDetectImages = () => {
+  const handleDetectImages = (): void => {
     if (!sampleValue) {
       toast("Provide sample JSON to detect image fields.", { variant: "error" });
       return;
@@ -320,11 +320,11 @@ export function ParserNodeConfigSection({
       return;
     }
     if (imageEntryIndex >= 0) {
-      const nextEntries = entries.map((entry, idx) =>
+      const nextEntries = entries.map((entry: [string, string], idx: number): [string, string] =>
         idx === imageEntryIndex ? [entry[0], detected] : entry
       );
       const nextMappings: Record<string, string> = {};
-      (nextEntries as [string, string][]).forEach(([key, path]) => {
+      nextEntries.forEach(([key, path]: [string, string]) => {
         if (!key || !key.trim()) return;
         nextMappings[key.trim()] = path;
       });
@@ -335,7 +335,7 @@ export function ParserNodeConfigSection({
     commitMappingsImmediate({ ...draftMappings, images: detected });
     toast(`Image field detected: ${detected}`, { variant: "success" });
   };
-  const imageEntryIndex = entries.findIndex(([key]) =>
+  const imageEntryIndex = entries.findIndex(([key]: [string, string]) =>
     key.toLowerCase().includes("image")
   );
   return (
@@ -348,7 +348,7 @@ export function ParserNodeConfigSection({
         <Label className="text-xs text-gray-400">Preset</Label>
         <Select
           value={presetId}
-          onValueChange={(value) =>
+          onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
         >
@@ -356,7 +356,7 @@ export function ParserNodeConfigSection({
             <SelectValue placeholder="Select preset" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900">
-            {presetOptions.map((preset) => (
+            {presetOptions.map((preset: { id: string; label: string }) => (
               <SelectItem key={preset.id} value={preset.id}>
                 {preset.label}
               </SelectItem>
@@ -391,8 +391,8 @@ export function ParserNodeConfigSection({
         <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
           <Select
             value={sampleState.entityType}
-            onValueChange={(value) =>
-              setParserSamples((prev) => ({
+            onValueChange={(value: string) =>
+              setParserSamples((prev: Record<string, ParserSampleState>) => ({
                 ...prev,
                 [selectedNode.id]: {
                   ...sampleState,
@@ -414,8 +414,8 @@ export function ParserNodeConfigSection({
             <Input
               className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={sampleState.entityId}
-              onChange={(event) =>
-                setParserSamples((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setParserSamples((prev: Record<string, ParserSampleState>) => ({
                   ...prev,
                   [selectedNode.id]: {
                     ...sampleState,
@@ -429,12 +429,12 @@ export function ParserNodeConfigSection({
             {simulationOptions.length > 0 && (
               <Select
                 value={sampleState.simulationId ?? ""}
-                onValueChange={(value) => {
+                onValueChange={(value: string) => {
                   const option = simulationOptions.find(
-                    (item) => item.id === value
+                    (item: { id: string }) => item.id === value
                   );
                   if (!option) return;
-                  setParserSamples((prev) => ({
+                  setParserSamples((prev: Record<string, ParserSampleState>) => ({
                     ...prev,
                     [selectedNode.id]: {
                       ...sampleState,
@@ -449,7 +449,7 @@ export function ParserNodeConfigSection({
                   <SelectValue placeholder="Use simulation ID" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                  {simulationOptions.map((option) => (
+                  {simulationOptions.map((option: { id: string; label: string }) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.label}
                     </SelectItem>
@@ -476,8 +476,8 @@ export function ParserNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={sampleState.json}
-          onChange={(event) =>
-            setParserSamples((prev) => ({
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setParserSamples((prev: Record<string, ParserSampleState>) => ({
               ...prev,
               [selectedNode.id]: {
                 ...sampleState,
@@ -490,8 +490,8 @@ export function ParserNodeConfigSection({
         <div className="mt-2 flex flex-wrap gap-2">
           <Select
             value={sampleState.mappingMode}
-            onValueChange={(value) =>
-              setParserSamples((prev) => ({
+            onValueChange={(value: string) =>
+              setParserSamples((prev: Record<string, ParserSampleState>) => ({
                 ...prev,
                 [selectedNode.id]: {
                   ...sampleState,
@@ -510,8 +510,8 @@ export function ParserNodeConfigSection({
           </Select>
           <Select
             value={String(sampleState.depth)}
-            onValueChange={(value) =>
-              setParserSamples((prev) => ({
+            onValueChange={(value: string) =>
+              setParserSamples((prev: Record<string, ParserSampleState>) => ({
                 ...prev,
                 [selectedNode.id]: {
                   ...sampleState,
@@ -524,7 +524,7 @@ export function ParserNodeConfigSection({
               <SelectValue placeholder="Depth" />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900">
-              {[1, 2, 3, 4].map((depth) => (
+              {[1, 2, 3, 4].map((depth: number) => (
                 <SelectItem key={depth} value={String(depth)}>
                   Depth {depth}
                 </SelectItem>
@@ -539,7 +539,7 @@ export function ParserNodeConfigSection({
                 : "text-gray-300 hover:bg-muted/60"
             }`}
             onClick={() =>
-              setParserSamples((prev) => ({
+              setParserSamples((prev: Record<string, ParserSampleState>) => ({
                 ...prev,
                 [selectedNode.id]: {
                   ...sampleState,
@@ -553,8 +553,8 @@ export function ParserNodeConfigSection({
           {sampleState.mappingMode === "flatten" && (
             <Select
               value={sampleState.keyStyle}
-              onValueChange={(value) =>
-                setParserSamples((prev) => ({
+              onValueChange={(value: string) =>
+                setParserSamples((prev: Record<string, ParserSampleState>) => ({
                   ...prev,
                   [selectedNode.id]: {
                     ...sampleState,
@@ -611,7 +611,7 @@ export function ParserNodeConfigSection({
         <Label className="text-xs text-gray-400">Output Mode</Label>
         <Select
           value={outputMode}
-          onValueChange={(value) =>
+          onValueChange={(value: string) =>
             commitMappingsImmediate(
               draftMappings,
               value as "individual" | "bundle"
@@ -671,7 +671,7 @@ export function ParserNodeConfigSection({
       </div>
 
       <div className="space-y-3">
-        {entries.map(([key, path], index) => (
+        {entries.map(([key, path]: [string, string], index: number) => (
           <div
             key={`${key}-${index}`}
             className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start"
@@ -679,7 +679,7 @@ export function ParserNodeConfigSection({
             <Input
               className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={key}
-              onChange={(event) =>
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updateMappingKey(index, event.target.value)
               }
               placeholder="output key"
@@ -688,17 +688,17 @@ export function ParserNodeConfigSection({
               <Input
                 className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={path}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   updateMappingPath(index, event.target.value)
                 }
                 placeholder="$.path.to.value"
               />
-              <Select onValueChange={(value) => updateMappingPath(index, value)}>
+              <Select onValueChange={(value: string) => updateMappingPath(index, value)}>
                 <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
                   <SelectValue placeholder="Pick a suggested path" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                {uniqueSuggestedPathOptions.map((option) => (
+                {uniqueSuggestedPathOptions.map((option: { value: string; label: string }) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

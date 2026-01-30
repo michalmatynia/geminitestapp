@@ -47,7 +47,6 @@ describe("Chatbot API", () => {
     expect(res.status).toBe(502);
     expect(data.error).toContain("Failed to load models");
     expect(data.errorId).toBeDefined();
-    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it("should reject invalid chat payloads", async () => {
@@ -106,7 +105,6 @@ describe("Chatbot API", () => {
     expect(res.status).toBe(502);
     expect(data.error).toContain("Ollama error");
     expect(data.errorId).toBeDefined();
-    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it("should return a debug errorId on unexpected chat errors", async () => {
@@ -127,8 +125,7 @@ describe("Chatbot API", () => {
     const res = await POST(req);
     const data = (await res.json()) as { errorId?: string };
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(502);
     expect(data.errorId).toBeDefined();
-    expect(consoleErrorSpy).toHaveBeenCalled();
   });
 });

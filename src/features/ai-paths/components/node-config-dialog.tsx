@@ -102,7 +102,7 @@ export function NodeConfigDialog({
   setDbNodePresets,
   saveDbNodePresets,
   toast,
-}: NodeConfigDialogProps) {
+}: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
 
   return (

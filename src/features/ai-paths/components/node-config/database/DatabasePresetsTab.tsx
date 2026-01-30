@@ -21,23 +21,23 @@ export function DatabasePresetsTab({
   onApplyBuiltInPreset,
   onRenameQueryPreset,
   onDeleteQueryPreset,
-}: DatabasePresetsTabProps) {
+}: DatabasePresetsTabProps): React.JSX.Element {
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
   const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
   const activePreset = viewPresetId
-    ? dbQueryPresets.find((preset) => preset.id === viewPresetId) ?? null
+    ? dbQueryPresets.find((preset: DbQueryPreset): boolean => preset.id === viewPresetId) ?? null
     : null;
 
-  React.useEffect(() => {
-    setQueryNameDrafts((prev) => {
+  React.useEffect((): void => {
+    setQueryNameDrafts((prev: Record<string, string>): Record<string, string> => {
       const next = { ...prev };
-      dbQueryPresets.forEach((preset) => {
+      dbQueryPresets.forEach((preset: DbQueryPreset): void => {
         if (!next[preset.id]) {
           next[preset.id] = preset.name;
         }
       });
-      Object.keys(next).forEach((key) => {
-        if (!dbQueryPresets.some((preset) => preset.id === key)) {
+      Object.keys(next).forEach((key: string): void => {
+        if (!dbQueryPresets.some((preset: DbQueryPreset): boolean => preset.id === key)) {
           delete next[key];
         }
       });
@@ -45,7 +45,7 @@ export function DatabasePresetsTab({
     });
   }, [dbQueryPresets]);
 
-  const handleRename = async (presetId: string, nextName: string) => {
+  const handleRename = async (presetId: string, nextName: string): Promise<void> => {
     const trimmed = nextName.trim();
     if (!trimmed) return;
     await onRenameQueryPreset(presetId, trimmed);
@@ -59,13 +59,13 @@ export function DatabasePresetsTab({
           <div className="flex items-center justify-between">
             <Label className="text-xs text-gray-400">Built-in Presets</Label>
             <span className="text-[10px] text-gray-500">
-              {builtInPresets.filter((p) => p.id !== "custom").length} presets
+              {builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== "custom").length} presets
             </span>
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {builtInPresets
-              .filter((preset) => preset.id !== "custom")
-              .map((preset) => (
+              .filter((p: DatabasePresetOption): boolean => p.id !== "custom")
+              .map((preset: DatabasePresetOption): React.JSX.Element => (
                 <div
                   key={preset.id}
                   className="rounded-md border border-border bg-card/60 p-2"
@@ -77,7 +77,7 @@ export function DatabasePresetsTab({
                         <Button
                           type="button"
                           className="h-6 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
-                          onClick={() => onApplyBuiltInPreset(preset.id)}
+                          onClick={(): void => onApplyBuiltInPreset(preset.id)}
                         >
                           Apply
                         </Button>
@@ -103,7 +103,7 @@ export function DatabasePresetsTab({
           <div className="mt-3 text-xs text-gray-500">No query presets saved.</div>
         ) : (
           <div className="mt-3 space-y-2">
-            {dbQueryPresets.map((preset) => {
+            {dbQueryPresets.map((preset: DbQueryPreset): React.JSX.Element => {
               const draftName = queryNameDrafts[preset.id] ?? preset.name;
               const nameChanged = draftName.trim() !== preset.name.trim();
               return (
@@ -115,13 +115,13 @@ export function DatabasePresetsTab({
                     <Input
                       className="h-7 flex-1 rounded-md border border-border bg-card/70 text-xs text-white"
                       value={draftName}
-                      onChange={(event) =>
-                        setQueryNameDrafts((prev) => ({
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setQueryNameDrafts((prev: Record<string, string>): Record<string, string> => ({
                           ...prev,
                           [preset.id]: event.target.value,
                         }))
                       }
-                      onKeyDown={(event) => {
+                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
                         if (event.key === "Enter") {
                           void handleRename(preset.id, draftName);
                         }
@@ -130,7 +130,7 @@ export function DatabasePresetsTab({
                     <Button
                       type="button"
                       className="h-7 rounded-md border border-sky-500/40 px-2 text-[10px] text-sky-200 hover:bg-sky-500/10"
-                      onClick={() => setViewPresetId(preset.id)}
+                      onClick={(): void => setViewPresetId(preset.id)}
                       title="View preset"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -139,14 +139,14 @@ export function DatabasePresetsTab({
                       type="button"
                       className="h-7 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                       disabled={!nameChanged}
-                      onClick={() => void handleRename(preset.id, draftName)}
+                      onClick={(): void => void handleRename(preset.id, draftName)}
                     >
                       Rename
                     </Button>
                     <Button
                       type="button"
                       className="h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10"
-                      onClick={() => void onDeleteQueryPreset(preset.id)}
+                      onClick={(): void => void onDeleteQueryPreset(preset.id)}
                     >
                       Delete
                     </Button>
@@ -160,7 +160,7 @@ export function DatabasePresetsTab({
 
       <Dialog
         open={Boolean(activePreset)}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean): void => {
           if (!open) {
             setViewPresetId(null);
           }

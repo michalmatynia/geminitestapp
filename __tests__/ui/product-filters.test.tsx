@@ -23,10 +23,10 @@ describe("ProductFilters Component", () => {
     
     expect(screen.getByPlaceholderText("Search by name...")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search by SKU...")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Min Price")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Max Price")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Start Date")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("End Date")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/min price/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/max price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
   });
 
   it("calls setSearch when name input changes", () => {

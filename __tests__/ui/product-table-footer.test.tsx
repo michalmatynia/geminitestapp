@@ -24,7 +24,9 @@ describe("ProductTableFooter Component", () => {
         <ProductTableFooter {...mockProps} />
       </ToastProvider>
     );
-    expect(screen.getByText("0 of 100 row(s) selected.")).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === "0 of 100 row(s) selected.";
+    })).toBeInTheDocument();
   });
 
   it("disables delete button when no selection", () => {
@@ -33,7 +35,7 @@ describe("ProductTableFooter Component", () => {
         <ProductTableFooter {...mockProps} />
       </ToastProvider>
     );
-    const deleteButton = screen.getByText("Delete Selected");
+    const deleteButton = screen.getByRole("button", { name: /Delete Selected/i });
     expect(deleteButton).toBeDisabled();
   });
 
@@ -48,7 +50,7 @@ describe("ProductTableFooter Component", () => {
         <ProductTableFooter {...mockProps} table={tableWithSelection} />
       </ToastProvider>
     );
-    const deleteButton = screen.getByText("Delete Selected");
+    const deleteButton = screen.getByRole("button", { name: /Delete Selected/i });
     expect(deleteButton).not.toBeDisabled();
   });
 });

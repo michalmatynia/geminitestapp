@@ -1,27 +1,27 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Chatbot UI", () => {
-  test("shows the chatbot page and tool dropdown", async ({ page }) => {
+  test("shows the chatbot page and tabs", async ({ page }) => {
     await page.goto("/admin/chatbot");
 
-    await expect(page.getByRole("heading", { name: "Chatbot" })).toBeVisible();
-    await expect(page.getByPlaceholder("Ask the assistant...")).toBeVisible();
-
-    const toolSelect = page.getByRole("button", { name: "Select tool" });
-    await toolSelect.click();
-    await expect(page.getByRole("option", { name: "Web search" })).toBeVisible();
-    await expect(page.getByRole("option", { name: "Global context" })).toBeVisible();
-    await expect(page.getByRole("option", { name: "Local context" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Chat" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Settings" })).toBeVisible();
+    await expect(page.getByPlaceholder("Type your message...")).toBeVisible();
   });
 
-  test("toggles tools and reveals local context section", async ({ page }) => {
+  test("toggles tools in settings tab", async ({ page }) => {
     await page.goto("/admin/chatbot");
 
-    await expect(page.getByText("Conversation context")).toHaveCount(0);
-    await page.getByRole("button", { name: "Select tool" }).click();
-    await page.getByRole("option", { name: "Local context" }).click();
-
-    await expect(page.getByText("Local context")).toBeVisible();
-    await expect(page.getByText("Conversation context")).toBeVisible();
+    await page.getByRole("tab", { name: "Settings" }).click();
+    
+    await expect(page.getByText("General Settings")).toBeVisible();
+    
+    const localContextCheckbox = page.getByLabel("Use Local Context");
+    await expect(localContextCheckbox).toBeVisible();
+    
+    // Check if it can be toggled
+    const isChecked = await localContextCheckbox.isChecked();
+    await localContextCheckbox.click();
+    expect(await localContextCheckbox.isChecked()).toBe(!isChecked);
   });
 });

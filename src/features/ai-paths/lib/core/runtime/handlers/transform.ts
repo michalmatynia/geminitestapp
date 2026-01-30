@@ -7,7 +7,7 @@ import {
   setValueAtMappingPath,
 } from "../../utils";
 import { buildFallbackEntity, resolveContextPayload } from "../utils";
-import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 import type { RuntimePortValues } from "@/shared/types/ai-paths";
 
 export const handleContext: NodeHandler = async ({
@@ -17,7 +17,7 @@ export const handleContext: NodeHandler = async ({
   now,
   simulationEntityId,
   simulationEntityType,
-}) => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   const rawContext = coerceInput(nodeInputs.context);
   const inputContext =
     rawContext && typeof rawContext === "object"
@@ -48,7 +48,7 @@ export const handleParser: NodeHandler = ({
   nodeInputs,
   resolvedEntity,
   fallbackEntityId,
-}) => {
+}: NodeHandlerContext): RuntimePortValues => {
   const contextInput = coerceInput(nodeInputs.context);
   const contextEntity =
     contextInput && typeof contextInput === "object"
@@ -62,12 +62,11 @@ export const handleParser: NodeHandler = ({
           | Record<string, unknown>
           | undefined)
       : undefined;
-  const source = (
+  const source =
     (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
     contextEntity ??
     (resolvedEntity ?? undefined) ??
-    (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined)
-  ) as Record<string, unknown> | undefined;
+    (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined);
 
   if (!source) {
     return {};
@@ -75,14 +74,14 @@ export const handleParser: NodeHandler = ({
   const parserConfig = node.config?.parser;
   const mappings = parserConfig?.mappings ?? {};
   const outputMode = parserConfig?.outputMode ?? "individual";
-  const hasMappings = Object.keys(mappings).some((key) => key.trim());
-  const isEmptyValue = (value: unknown) =>
+  const hasMappings = Object.keys(mappings).some((key: string): boolean => !!key.trim());
+  const isEmptyValue = (value: unknown): boolean =>
     value === undefined ||
     value === null ||
     (typeof value === "string" && value.trim() === "") ||
     (Array.isArray(value) && value.length === 0);
   
-  const fallbackForKey = (key: string) => {
+  const fallbackForKey = (key: string): unknown => {
     const normalized = key.trim().toLowerCase();
     if (normalized === "title" || normalized === "name") {
       return (
@@ -128,7 +127,7 @@ export const handleParser: NodeHandler = ({
   };
 
   const parsed: RuntimePortValues = {};
-  Object.keys(mappings).forEach((output) => {
+  Object.keys(mappings).forEach((output: string): void => {
     const key = output.trim();
     if (!key) return;
     const mapping = mappings[output]?.trim() ?? "";
@@ -148,7 +147,7 @@ export const handleParser: NodeHandler = ({
         typeof source === "object" && source !== null ? source : {};
       return { bundle: fullBundle };
     }
-    const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc, output) => {
+    const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
       if (output !== "bundle" && parsed[output] !== undefined) {
         acc[output] = parsed[output];
       }
@@ -160,7 +159,7 @@ export const handleParser: NodeHandler = ({
   }
 };
 
-export const handleMapper: NodeHandler = ({ node, nodeInputs }) => {
+export const handleMapper: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const contextValue = coerceInput(nodeInputs.context) as
     | Record<string, unknown>
     | undefined;
@@ -172,7 +171,7 @@ export const handleMapper: NodeHandler = ({ node, nodeInputs }) => {
     mappings: {},
   };
   const mapped: RuntimePortValues = {};
-  mapperConfig.outputs.forEach((output) => {
+  mapperConfig.outputs.forEach((output: string): void => {
     const mapping = mapperConfig.mappings?.[output]?.trim() ?? "";
     const value = mapping
       ? getValueAtMappingPath(contextValue, mapping)
@@ -184,7 +183,7 @@ export const handleMapper: NodeHandler = ({ node, nodeInputs }) => {
   return mapped;
 };
 
-export const handleMutator: NodeHandler = ({ node, nodeInputs }) => {
+export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const contextValue = coerceInput(nodeInputs.context) as
     | Record<string, unknown>
     | undefined;
@@ -210,7 +209,7 @@ export const handleMutator: NodeHandler = ({ node, nodeInputs }) => {
   return { context: updated };
 };
 
-export const handleValidator: NodeHandler = ({ node, nodeInputs }) => {
+export const handleValidator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const contextValue = coerceInput(nodeInputs.context) as
     | Record<string, unknown>
     | undefined;
@@ -221,10 +220,10 @@ export const handleValidator: NodeHandler = ({ node, nodeInputs }) => {
     requiredPaths: ["entity.id"],
     mode: "all",
   };
-  const required = (validatorConfig.requiredPaths ?? []).map((path) =>
+  const required = (validatorConfig.requiredPaths ?? []).map((path: string): string | null =>
     normalizeMappingPath(path, contextValue)
   );
-  const missing = required.filter((path) => {
+  const missing = required.filter((path: string | null): boolean => {
     if (!path) return false;
     const value = getValueAtMappingPath(contextValue, path);
     if (value === undefined || value === null) return true;
@@ -238,6 +237,6 @@ export const handleValidator: NodeHandler = ({ node, nodeInputs }) => {
   return {
     context: contextValue,
     valid,
-    errors: missing,
+    errors: missing as string[],
   };
 };

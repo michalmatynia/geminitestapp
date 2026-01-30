@@ -1,7 +1,0 @@
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/planning/llm.ts
-  1844:13  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-  1851:14  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-
-✖ 2 problems (2 errors, 0 warnings)
-

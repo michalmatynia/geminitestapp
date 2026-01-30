@@ -19,20 +19,115 @@ import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../utils/constan
 import * as chatbotApi from "../api";
 import { useAgentCreatorSettings } from "@/features/agentcreator";
 
-export const useChatbotLogic = () => {
+export interface UseChatbotLogicReturn {
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  sendMessage: () => Promise<void>;
+  attachments: File[];
+  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
+  isSending: boolean;
+  setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
+  modelOptions: string[];
+  setModelOptions: React.Dispatch<React.SetStateAction<string[]>>;
+  model: string;
+  setModel: React.Dispatch<React.SetStateAction<string>>;
+  modelLoading: boolean;
+  setModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  webSearchEnabled: boolean;
+  setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  useGlobalContext: boolean;
+  setUseGlobalContext: React.Dispatch<React.SetStateAction<boolean>>;
+  useLocalContext: boolean;
+  setUseLocalContext: React.Dispatch<React.SetStateAction<boolean>>;
+  agentModeEnabled: boolean;
+  setAgentModeEnabled: (enabled: boolean) => void;
+  searchProvider: string;
+  setSearchProvider: React.Dispatch<React.SetStateAction<string>>;
+  playwrightPersonaId: string | null;
+  setPlaywrightPersonaId: (id: string | null) => void;
+  agentBrowser: string;
+  setAgentBrowser: (browser: string) => void;
+  agentRunHeadless: boolean;
+  setAgentRunHeadless: (headless: boolean) => void;
+  agentIgnoreRobotsTxt: boolean;
+  setAgentIgnoreRobotsTxt: (ignore: boolean) => void;
+  agentRequireHumanApproval: boolean;
+  setAgentRequireHumanApproval: (require: boolean) => void;
+  agentMemoryValidationModel: string;
+  setAgentMemoryValidationModel: (model: string) => void;
+  agentPlannerModel: string;
+  setAgentPlannerModel: (model: string) => void;
+  agentSelfCheckModel: string;
+  setAgentSelfCheckModel: (model: string) => void;
+  agentExtractionValidationModel: string;
+  setAgentExtractionValidationModel: (model: string) => void;
+  agentLoopGuardModel: string;
+  setAgentLoopGuardModel: (model: string) => void;
+  agentApprovalGateModel: string;
+  setAgentApprovalGateModel: (model: string) => void;
+  agentMemorySummarizationModel: string;
+  setAgentMemorySummarizationModel: (model: string) => void;
+  agentSelectorInferenceModel: string;
+  setAgentSelectorInferenceModel: (model: string) => void;
+  agentOutputNormalizationModel: string;
+  setAgentOutputNormalizationModel: (model: string) => void;
+  agentMaxSteps: number;
+  setAgentMaxSteps: (steps: number) => void;
+  agentMaxStepAttempts: number;
+  setAgentMaxStepAttempts: (attempts: number) => void;
+  agentMaxReplanCalls: number;
+  setAgentMaxReplanCalls: (calls: number) => void;
+  agentReplanEverySteps: number;
+  setAgentReplanEverySteps: (steps: number) => void;
+  agentMaxSelfChecks: number;
+  setAgentMaxSelfChecks: (checks: number) => void;
+  agentLoopGuardThreshold: number;
+  setAgentLoopGuardThreshold: (threshold: number) => void;
+  agentLoopBackoffBaseMs: number;
+  setAgentLoopBackoffBaseMs: (ms: number) => void;
+  agentLoopBackoffMaxMs: number;
+  setAgentLoopBackoffMaxMs: (ms: number) => void;
+  latestAgentRunId: string | null;
+  setLatestAgentRunId: React.Dispatch<React.SetStateAction<string | null>>;
+  debugState: ChatbotDebugState;
+  setDebugState: React.Dispatch<React.SetStateAction<ChatbotDebugState>>;
+  globalContext: string;
+  setGlobalContext: React.Dispatch<React.SetStateAction<string>>;
+  localContext: string;
+  setLocalContext: React.Dispatch<React.SetStateAction<string>>;
+  localContextMode: "override" | "append";
+  setLocalContextMode: React.Dispatch<React.SetStateAction<"override" | "append">>;
+  settingsDirty: boolean;
+  setSettingsDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  settingsSaving: boolean;
+  setSettingsSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  sessionId: string | null;
+  loadChatbotSettings: () => Promise<void>;
+  saveChatbotSettings: () => Promise<void>;
+  sessions: ChatSession[];
+  currentSessionId: string | null;
+  sessionsLoading: boolean;
+  createNewSession: () => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
+  selectSession: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState<string>("");
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [isSending, setIsSending] = useState(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
-  const [model, setModel] = useState("");
-  const [modelLoading, setModelLoading] = useState(true);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [useGlobalContext, setUseGlobalContext] = useState(false);
-  const [useLocalContext, setUseLocalContext] = useState(false);
-  const [searchProvider, setSearchProvider] = useState("serpapi");
+  const [model, setModel] = useState<string>("");
+  const [modelLoading, setModelLoading] = useState<boolean>(true);
+  const [webSearchEnabled, setWebSearchEnabled] = useState<boolean>(false);
+  const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
+  const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
+  const [searchProvider, setSearchProvider] = useState<string>("serpapi");
   const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
   const {
     agentModeEnabled,
@@ -82,22 +177,22 @@ export const useChatbotLogic = () => {
   } = useAgentCreatorSettings();
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({});
-  const [globalContext, setGlobalContext] = useState("");
-  const [localContext, setLocalContext] = useState("");
+  const [globalContext, setGlobalContext] = useState<string>("");
+  const [localContext, setLocalContext] = useState<string>("");
   const [localContextMode, setLocalContextMode] = useState<
     "override" | "append"
   >("override");
-  const [settingsDirty, setSettingsDirty] = useState(false);
-  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsDirty, setSettingsDirty] = useState<boolean>(false);
+  const [settingsSaving, setSettingsSaving] = useState<boolean>(false);
   const [settingsSnapshot, setSettingsSnapshot] = useState<ChatbotSettingsPayload | null>(null);
-  const settingsLoadedRef = useRef(false);
+  const settingsLoadedRef = useRef<boolean>(false);
 
   // Session management
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsLoading, setSessionsLoading] = useState<boolean>(true);
 
-  const sessionId = useMemo(() => {
+  const sessionId = useMemo((): string | null => {
     return currentSessionId || searchParams.get("session") || null;
   }, [currentSessionId, searchParams]);
 
@@ -166,7 +261,7 @@ export const useChatbotLogic = () => {
     ]
   );
 
-  const fetchSessions = useCallback(async () => {
+  const fetchSessions = useCallback(async (): Promise<void> => {
     setSessionsLoading(true);
     try {
       const data = await chatbotApi.fetchChatbotSessions();
@@ -176,7 +271,7 @@ export const useChatbotLogic = () => {
       if (!currentSessionId && data.sessions && data.sessions.length > 0) {
         setCurrentSessionId(data.sessions[0]?.id ?? null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch sessions:", error);
       toast("Failed to load chat sessions", { variant: "error" });
     } finally {
@@ -184,16 +279,16 @@ export const useChatbotLogic = () => {
     }
   }, [currentSessionId, toast]);
 
-  const loadSessionMessages = useCallback(async (id: string) => {
+  const loadSessionMessages = useCallback(async (id: string): Promise<void> => {
     try {
       const session = await chatbotApi.fetchChatbotSession(id);
       setMessages(session?.messages || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to load session messages:", error);
     }
   }, []);
 
-  const createNewSession = useCallback(async () => {
+  const createNewSession = useCallback(async (): Promise<void> => {
     try {
       const data = await chatbotApi.createChatbotSession({
         title: `Chat ${new Date().toLocaleString()}`,
@@ -202,32 +297,32 @@ export const useChatbotLogic = () => {
       await fetchSessions();
       setCurrentSessionId(data.sessionId);
       setMessages([]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create session:", error);
       toast("Failed to create new chat session", { variant: "error" });
     }
   }, [model, webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
 
-  const deleteSession = useCallback(async (id: string) => {
+  const deleteSession = useCallback(async (id: string): Promise<void> => {
     try {
       await chatbotApi.deleteChatbotSession(id);
       await fetchSessions();
       if (currentSessionId === id) {
         setCurrentSessionId(sessions[0]?.id || null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete session:", error);
       toast("Failed to delete chat session", { variant: "error" });
     }
   }, [currentSessionId, sessions, fetchSessions, toast]);
 
   // Fetch sessions on mount
-  useEffect(() => {
+  useEffect((): void => {
     void fetchSessions();
   }, [fetchSessions]);
 
   // Load session messages when session changes
-  useEffect(() => {
+  useEffect((): void => {
     if (sessionId) {
       void loadSessionMessages(sessionId);
     } else {
@@ -235,8 +330,8 @@ export const useChatbotLogic = () => {
     }
   }, [sessionId, loadSessionMessages]);
 
-  useEffect(() => {
-    const fetchModels = async () => {
+  useEffect((): void => {
+    const fetchModels = async (): Promise<void> => {
       setModelLoading(true);
       try {
         const ollamaBaseUrl = process.env.NEXT_PUBLIC_OLLAMA_BASE_URL || "http://localhost:11434";
@@ -247,7 +342,7 @@ export const useChatbotLogic = () => {
         if (models.length > 0 && !model) {
           setModel(models[0]!);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching Ollama models:", error);
         toast("Failed to load models from Ollama server", { variant: "error" });
       } finally {
@@ -258,7 +353,7 @@ export const useChatbotLogic = () => {
     void fetchModels();
   }, [model, toast]);
 
-  const loadChatbotSettings = useCallback(async () => {
+  const loadChatbotSettings = useCallback(async (): Promise<void> => {
     try {
       const data = await chatbotApi.fetchChatbotSettings(
         CHATBOT_SETTINGS_KEY,
@@ -308,7 +403,7 @@ export const useChatbotLogic = () => {
 
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
-    } catch (_error) {
+    } catch (_error: unknown) {
       // Fallback to local storage or defaults
     }
   }, [
@@ -344,13 +439,13 @@ export const useChatbotLogic = () => {
     setAgentLoopBackoffMaxMs,
   ]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (settingsLoadedRef.current) return;
     settingsLoadedRef.current = true;
     void loadChatbotSettings();
   }, [loadChatbotSettings]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!settingsSnapshot) {
       setSettingsSnapshot(currentSettings);
       return;
@@ -360,7 +455,7 @@ export const useChatbotLogic = () => {
     setSettingsDirty(snapshotJson !== currentJson);
   }, [currentSettings, settingsSnapshot]);
 
-  const saveChatbotSettings = async () => {
+  const saveChatbotSettings = async (): Promise<void> => {
     if (settingsSaving) return;
     setSettingsSaving(true);
     try {
@@ -375,7 +470,7 @@ export const useChatbotLogic = () => {
       setSettingsDirty(false);
       setSettingsSnapshot(payload);
       toast("Chatbot settings saved.", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to save settings.";
       toast(message, { variant: "error" });
@@ -384,7 +479,7 @@ export const useChatbotLogic = () => {
     }
   };
 
-  const sendMessage = useCallback(async () => {
+  const sendMessage = useCallback(async (): Promise<void> => {
     if (!input.trim() || isSending) return;
 
     const userMessage: ChatMessage = {
@@ -392,7 +487,7 @@ export const useChatbotLogic = () => {
       content: input.trim(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, userMessage]);
     setInput("");
     setIsSending(true);
 
@@ -408,9 +503,9 @@ export const useChatbotLogic = () => {
           role: "assistant",
           content: data.message,
         };
-        setMessages((prev) => [...prev, assistantMessage]);
+        setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error sending message:", error);
       toast("Failed to send message", { variant: "error" });
     } finally {

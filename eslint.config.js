@@ -177,6 +177,9 @@ const configFiles = [
   "fix-api-handlers-v4.js",
   "fix-api-imports.js",
   "fix_simple.cjs",
+  "parse_eslint.cjs",
+  "parse_eslint.js",
+  "summarize_eslint.cjs",
 ];
 
 const disableTypeCheckedForConfigFiles = compat

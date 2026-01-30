@@ -4,9 +4,10 @@ import {
   coerceInputArray,
   safeStringify,
 } from "../../utils";
-import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import type { RuntimePortValues } from "@/shared/types/ai-paths";
+import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 
-export const handleConstant: NodeHandler = ({ node }) => {
+export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): RuntimePortValues => {
   const constantConfig = node.config?.constant ?? {
     valueType: "string",
     value: "",
@@ -27,7 +28,7 @@ export const handleConstant: NodeHandler = ({ node }) => {
   return { value };
 };
 
-export const handleMath: NodeHandler = ({ node, nodeInputs }) => {
+export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const inputValue = coerceInput(nodeInputs.value);
   const numeric = Number(inputValue);
   const mathConfig = node.config?.math ?? { operation: "add", operand: 0 };
@@ -64,7 +65,7 @@ export const handleMath: NodeHandler = ({ node, nodeInputs }) => {
   return { value: result };
 };
 
-export const handleCompare: NodeHandler = ({ node, nodeInputs }) => {
+export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const compareConfig = node.config?.compare ?? {
     operator: "eq",
     compareTo: "",
@@ -122,7 +123,7 @@ export const handleCompare: NodeHandler = ({ node, nodeInputs }) => {
   };
 };
 
-export const handleRouter: NodeHandler = ({ node, nodeInputs }) => {
+export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const config = node.config?.router ?? {
     mode: "valid",
     matchMode: "truthy",
@@ -161,10 +162,10 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }) => {
       }
     });
   }
-  return next;
+  return next as RuntimePortValues;
 };
 
-export const handleGate: NodeHandler = ({ node, nodeInputs }): any => {
+export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const contextValue = coerceInput(nodeInputs.context) as
     | Record<string, unknown>
     | undefined;
@@ -186,7 +187,7 @@ export const handleGate: NodeHandler = ({ node, nodeInputs }): any => {
   };
 };
 
-export const handleBundle: NodeHandler = ({ node, nodeInputs }): any => {
+export const handleBundle: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const config = node.config?.bundle ?? { includePorts: [] };
   const includePorts = config.includePorts?.length
     ? config.includePorts
@@ -204,7 +205,7 @@ export const handleDelay: NodeHandler = async ({
   node,
   nodeInputs,
   executed,
-}): Promise<any> => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (!executed.delay.has(node.id)) {
     const delayMs = node.config?.delay?.ms ?? 300;
     await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, delayMs)));
@@ -219,7 +220,7 @@ export const handleDelay: NodeHandler = async ({
   return delayed;
 };
 
-export const handleViewer: NodeHandler = ({ node, nodeInputs: _nodeInputs, prevOutputs }): any => {
+export const handleViewer: NodeHandler = ({ node, prevOutputs }: NodeHandlerContext): RuntimePortValues => {
   // Viewer mainly displays data in UI, runtime behavior is pass-through or sync
   // Assuming it might pass through inputs to outputs if connected, but standard viewer has no outputs.
   // We check if it has outputs configured (custom viewer?)

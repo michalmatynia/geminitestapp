@@ -6,22 +6,20 @@ describe('MSW Handlers', () => {
   describe('Products API', () => {
     it('should fetch all products', async () => {
       const response = await fetch('/api/products');
-      const data = (await response.json()) as { data: Record<string, unknown>[]; total: number };
+      const data = (await response.json()) as Record<string, unknown>[];
 
       expect(response.status).toBe(200);
-      expect(data.data).toBeDefined();
-      expect(data.total).toBe(2);
-      expect(Array.isArray(data.data)).toBe(true);
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(2);
     });
 
     it('should fetch all products', async () => {
       const response = await fetch('/api/products');
-      const data = (await response.json()) as { data: Record<string, unknown>[]; total: number };
+      const data = (await response.json()) as Record<string, unknown>[];
 
       expect(response.status).toBe(200);
-      expect(data.data).toBeDefined();
-      expect(data.total).toBe(2);
-      expect(Array.isArray(data.data)).toBe(true);
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(2);
     });
 
     it('should fetch a single product by id', async () => {
@@ -93,11 +91,11 @@ describe('MSW Handlers', () => {
   describe('Catalogs API', () => {
     it('should fetch all catalogs', async () => {
       const response = await fetch('/api/catalogs');
-      const data = (await response.json()) as { data: any[]; total: number };
+      const data = (await response.json()) as any[];
 
       expect(response.status).toBe(200);
-      expect(data.data).toBeDefined();
-      expect(data.total).toBe(2);
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(2);
     });
 
     it('should fetch a single catalog', async () => {
@@ -113,11 +111,10 @@ describe('MSW Handlers', () => {
   describe('Settings API', () => {
     it('should fetch all settings', async () => {
       const response = await fetch('/api/settings');
-      const data = (await response.json()) as { data: any[] };
+      const data = (await response.json()) as any[];
 
       expect(response.status).toBe(200);
-      expect(data.data).toBeDefined();
-      expect(Array.isArray(data.data)).toBe(true);
+      expect(Array.isArray(data)).toBe(true);
     });
 
     it('should fetch a single setting', async () => {
@@ -146,17 +143,14 @@ describe('MSW Handlers', () => {
       // Override the products handler for this specific test
       server.use(
         http.get('/api/products', () => {
-          return HttpResponse.json({
-            data: [{ id: 'test', name_en: 'Test Override' }],
-            total: 1,
-          });
+          return HttpResponse.json([{ id: 'test', name_en: 'Test Override' }]);
         })
       );
 
       const response = await fetch('/api/products');
-      const data = (await response.json()) as { data: Record<string, unknown>[] };
+      const data = (await response.json()) as Record<string, unknown>[];
 
-      expect((data.data[0] as Record<string, unknown>).name_en).toBe('Test Override');
+      expect((data[0] as Record<string, unknown>).name_en).toBe('Test Override');
     });
   });
 });

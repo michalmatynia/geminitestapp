@@ -2,10 +2,12 @@
 
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast } from "@/shared/ui";
 import type { PriceGroupForCalculation } from "@/shared/ui";
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
 import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import React from "react";
 
 
 
@@ -28,11 +30,11 @@ type ToastFn = ReturnType<typeof useToast>["toast"];
  * Calculates the price for a product in the specified currency.
  * Uses price group relationships to convert between currencies.
  */
-function normalizeCurrencyCode(code?: string | null) {
+function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? "").trim().toUpperCase();
 }
 
-function getGroupCurrencyCode(group: PriceGroupForCalculation) {
+function getGroupCurrencyCode(group: PriceGroupForCalculation): string {
   return normalizeCurrencyCode(group.currency?.code || group.currencyCode || group.groupId);
 }
 
@@ -50,12 +52,12 @@ function calculatePriceForCurrency(
     };
   }
 
-  const normalizedTarget = normalizeCurrencyCode(targetCurrencyCode);
+  const normalizedTarget: string = normalizeCurrencyCode(targetCurrencyCode);
 
-  const defaultGroup =
+  const defaultGroup: PriceGroupForCalculation | undefined =
     (defaultPriceGroupId
-      ? priceGroups.find((g) => g.id === defaultPriceGroupId)
-      : undefined) ?? priceGroups.find((g) => g.isDefault) ?? priceGroups[0];
+      ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === defaultPriceGroupId)
+      : undefined) ?? priceGroups.find((g: PriceGroupForCalculation): boolean => !!g.isDefault) ?? priceGroups[0];
 
   if (!defaultGroup) {
     return {
@@ -65,21 +67,21 @@ function calculatePriceForCurrency(
     };
   }
 
-  const baseCurrencyCode = getGroupCurrencyCode(defaultGroup);
+  const baseCurrencyCode: string = getGroupCurrencyCode(defaultGroup);
 
   if (baseCurrencyCode && baseCurrencyCode === normalizedTarget) {
     return { price: basePrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
 
-  const findGroupById = (id?: string | null) =>
-    id ? priceGroups.find((g) => g.id === id || g.groupId === id) : undefined;
+  const findGroupById = (id?: string | null): PriceGroupForCalculation | undefined =>
+    id ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id) : undefined;
 
   const resolvePriceForGroup = (
     group: PriceGroupForCalculation | undefined,
-    visited = new Set<string>()
+    visited: Set<string> = new Set<string>()
   ): number | null => {
     if (!group) return null;
-    const key = group.id || group.groupId;
+    const key: string | undefined = group.id || group.groupId;
     if (key) {
       if (visited.has(key)) return null;
       visited.add(key);
@@ -90,23 +92,23 @@ function calculatePriceForCurrency(
     }
 
     if (group.type === "dependent" && group.sourceGroupId) {
-      const source = findGroupById(group.sourceGroupId);
-      const sourcePrice = resolvePriceForGroup(source, visited);
+      const source: PriceGroupForCalculation | undefined = findGroupById(group.sourceGroupId);
+      const sourcePrice: number | null = resolvePriceForGroup(source, visited);
       if (sourcePrice === null) return null;
-      const multiplier = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
-      const addToPrice = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
+      const multiplier: number = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
+      const addToPrice: number = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
       return sourcePrice * multiplier + addToPrice;
     }
 
     return null;
   };
 
-  const targetGroup = priceGroups.find((group) => {
-    const groupCode = getGroupCurrencyCode(group);
+  const targetGroup: PriceGroupForCalculation | undefined = priceGroups.find((group: PriceGroupForCalculation): boolean => {
+    const groupCode: string = getGroupCurrencyCode(group);
     return groupCode === normalizedTarget || normalizeCurrencyCode(group.groupId) === normalizedTarget;
   });
 
-  const resolved = resolvePriceForGroup(targetGroup);
+  const resolved: number | null = resolvePriceForGroup(targetGroup);
   if (resolved !== null) {
     return { price: resolved, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
@@ -128,12 +130,12 @@ interface ColumnActionsProps {
 const handleDelete = async (
   id: string,
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
-  queryClient: ReturnType<typeof useQueryClient>,
+  queryClient: QueryClient,
   notify?: ToastFn
-) => {
+): Promise<void> => {
   if (!window.confirm("Are you sure you want to delete this product?")) return;
 
-  const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+  const res: Response = await fetch(`/api/products/${id}`, { method: "DELETE" });
   if (res.ok) {
     // Small delay to ensure DB consistency before refetch
     await delay(500);
@@ -141,7 +143,7 @@ const handleDelete = async (
       queryClient.invalidateQueries({ queryKey: ["products"] }),
       queryClient.invalidateQueries({ queryKey: ["products-count"] }),
     ]);
-    setRefreshTrigger((prev) => prev + 1);
+    setRefreshTrigger((prev: number): number => prev + 1);
     return;
   }
 
@@ -158,18 +160,18 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
   setRefreshTrigger,
   onProductEditClick,
-}) => {
-  const product = row.original;
+}: ColumnActionsProps) => {
+  const product: ProductWithImages = row.original;
   const router = useRouter();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const queryClient: QueryClient = useQueryClient();
 
-  const handleDuplicate = async () => {
-    const sku = window.prompt("Enter a new unique SKU for the duplicate:");
+  const handleDuplicate = async (): Promise<void> => {
+    const sku: string | null = window.prompt("Enter a new unique SKU for the duplicate:");
     if (sku === null) return;
 
-    const trimmedSku = sku.trim().toUpperCase();
-    const skuPattern = /^[A-Z0-9]+$/;
+    const trimmedSku: string = sku.trim().toUpperCase();
+    const skuPattern: RegExp = /^[A-Z0-9]+$/;
 
     if (!trimmedSku) {
       toast("SKU is required.", { variant: "error" });
@@ -182,17 +184,17 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       return;
     }
 
-    const res = await fetch(`/api/products/${product.id}/duplicate`, {
+    const res: Response = await fetch(`/api/products/${product.id}/duplicate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sku: trimmedSku }),
     });
 
     if (res.ok) {
-      const duplicated = (await res.json()) as { id?: string };
+      const duplicated: { id?: string } = (await res.json()) as { id?: string };
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-      setRefreshTrigger((prev) => prev + 1);
+      setRefreshTrigger((prev: number): number => prev + 1);
 
       if (duplicated.id) {
         toast("Product duplicated.", { variant: "success" });
@@ -201,7 +203,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       return;
     }
 
-    const error = (await res.json()) as { error?: string };
+    const error: { error?: string } = (await res.json()) as { error?: string };
     toast(error.error || "Failed to duplicate product.", { variant: "error" });
   };
 
@@ -220,7 +222,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onSelect={(event) => {
+            onSelect={(event: Event): void => {
               event.preventDefault();
               onProductEditClick?.(product);
             }}
@@ -229,7 +231,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onSelect={(event) => {
+            onSelect={(event: Event): void => {
               event.preventDefault();
               void handleDuplicate();
             }}
@@ -239,7 +241,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
-            onSelect={(event) => {
+            onSelect={(event: Event): void => {
               event.preventDefault();
               void handleDelete(product.id, setRefreshTrigger, queryClient, toast);
             }}
@@ -255,20 +257,20 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 export const columns: ColumnDef<ProductWithImages>[] = [
   {
     id: "select",
-    header: ({ table }) => (
+    header: ({ table }: { table: Table<ProductWithImages> }): React.JSX.Element => (
       <Checkbox
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
-        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(!!checked)}
+        onCheckedChange={(checked: boolean | "indeterminate"): void => table.toggleAllPageRowsSelected(!!checked)}
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(checked) => row.toggleSelected(!!checked)}
+        onCheckedChange={(checked: boolean | "indeterminate"): void => row.toggleSelected(!!checked)}
         aria-label="Select row"
       />
     ),
@@ -279,18 +281,18 @@ export const columns: ColumnDef<ProductWithImages>[] = [
   {
     accessorKey: "images",
     header: "Image",
-    cell: ({ row }) => {
-      const product = row.original;
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
+      const product: ProductWithImages = row.original;
       
-      const firstFileImage = product.images?.find(
-        (img) => img.imageFile?.filepath
-      )?.imageFile.filepath;
+      const firstFileImage: string | undefined = product.images?.find(
+        (img: { imageFile?: { filepath: string } }) => img.imageFile?.filepath
+      )?.imageFile?.filepath;
 
-      const firstLinkImage = product.imageLinks?.find(
-        (link) => link && link.trim().length > 0
+      const firstLinkImage: string | undefined = product.imageLinks?.find(
+        (link: string) => link && link.trim().length > 0
       );
 
-      const imageUrl = firstFileImage || firstLinkImage;
+      const imageUrl: string | undefined = firstFileImage || firstLinkImage;
 
       return (
         <ProductImageCell
@@ -303,16 +305,19 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     accessorKey: "name_en",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+    header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
+      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
         Name
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
-    cell: ({ row, table }) => {
-      const product = row.original;
+    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+      const product: ProductWithImages = row.original;
 
-      const meta = table.options.meta as
+      const meta: {
+            productNameKey?: ProductNameKey;
+            onProductNameClick?: (p: ProductWithImages) => void;
+          } | undefined = table.options.meta as
         | {
             productNameKey?: ProductNameKey;
             onProductNameClick?: (p: ProductWithImages) => void;
@@ -320,15 +325,15 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | undefined;
 
       const nameKey: ProductNameKey = meta?.productNameKey ?? "name_en";
-      const nameValue =
+      const nameValue: string | undefined =
         product[nameKey] ??
         product.name_en ??
         product.name_pl ??
         product.name_de;
 
-      const handleNameClick = meta?.onProductNameClick;
+      const handleNameClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductNameClick;
 
-      const isImported = !!product.baseProductId;
+      const isImported: boolean = !!product.baseProductId;
 
       return (
         <div>
@@ -336,7 +341,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             <Button
               variant="ghost"
               className="h-auto w-full cursor-pointer justify-start p-0 text-left text-sm font-normal text-white/90 transition-colors hover:bg-transparent hover:text-white/70 whitespace-normal break-words"
-              onClick={() => handleNameClick(product)}
+              onClick={(): void => handleNameClick(product)}
               type="button"
             >
               {nameValue || "—"}
@@ -365,22 +370,27 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     accessorKey: "price",
-    header: ({ column, table }) => {
-      const meta = table.options.meta as
+    header: ({ column, table }: { column: Column<ProductWithImages, unknown>; table: Table<ProductWithImages> }): React.JSX.Element => {
+      const meta: { currencyCode?: string } | undefined = table.options.meta as
         | { currencyCode?: string }
         | undefined;
-      const currencyCode = meta?.currencyCode || "";
+      const currencyCode: string = meta?.currencyCode || "";
 
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
           Price {currencyCode && <span className="ml-1 text-xs text-muted-foreground">({currencyCode})</span>}
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
       );
     },
-    cell: ({ row, table }) => {
-      const product = row.original;
-      const meta = table.options.meta as
+    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+      const product: ProductWithImages = row.original;
+      const meta: {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            currencyCode?: string;
+            priceGroups?: PriceGroupForCalculation[];
+            queryClient?: QueryClient;
+          } | undefined = table.options.meta as
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             currencyCode?: string;
@@ -389,9 +399,9 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           }
         | undefined;
 
-      const setRefreshTrigger = meta?.setRefreshTrigger;
-      const currencyCode = meta?.currencyCode || "";
-      const priceGroups = meta?.priceGroups || [];
+      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
+      const currencyCode: string = meta?.currencyCode || "";
+      const priceGroups: PriceGroupForCalculation[] = meta?.priceGroups || [];
 
       // Calculate price for the selected currency
       const {
@@ -406,8 +416,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       );
 
       // Show currency indicator if different from selected
-      const showCurrencyIndicator = actualCurrency && actualCurrency !== currencyCode;
-      const hasConvertedPrice =
+      const showCurrencyIndicator: string | boolean = actualCurrency && actualCurrency !== currencyCode;
+      const hasConvertedPrice: boolean | null =
         displayPrice !== null &&
         product.price !== null &&
         baseCurrencyCode &&
@@ -444,12 +454,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             value={product.price}
             productId={product.id}
             field="price"
-            onUpdate={() => {
+            onUpdate={(): void => {
               if (meta?.queryClient) {
                 void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
                 void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
               }
-              setRefreshTrigger((prev) => prev + 1);
+              setRefreshTrigger((prev: number): number => prev + 1);
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
@@ -464,22 +474,25 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     accessorKey: "stock",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+    header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
+      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
         Stock
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
-    cell: ({ row, table }) => {
-      const product = row.original;
-      const meta = table.options.meta as
+    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element => {
+      const product: ProductWithImages = row.original;
+      const meta: {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            queryClient?: QueryClient;
+          } | undefined = table.options.meta as
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             queryClient?: QueryClient;
           }
         | undefined;
 
-      const setRefreshTrigger = meta?.setRefreshTrigger;
+      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
       if (!setRefreshTrigger) {
         return <div>{product.stock !== null ? product.stock : "-"}</div>;
       }
@@ -489,12 +502,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           value={product.stock}
           productId={product.id}
           field="stock"
-          onUpdate={() => {
+          onUpdate={(): void => {
             if (meta?.queryClient) {
               void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
               void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
             }
-            setRefreshTrigger((prev) => prev + 1);
+            setRefreshTrigger((prev: number): number => prev + 1);
           }}
         />
       );
@@ -503,8 +516,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     accessorKey: "createdAt",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+    header: ({ column }: { column: Column<ProductWithImages, unknown> }): React.JSX.Element => (
+      <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
         Created At
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
@@ -514,9 +527,15 @@ export const columns: ColumnDef<ProductWithImages>[] = [
   {
     id: "integrations",
     header: "",
-    cell: ({ row, table }) => {
-      const product = row.original;
-      const meta = table.options.meta as
+    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element | null => {
+      const product: ProductWithImages = row.original;
+      const meta: {
+            onIntegrationsClick?: (p: ProductWithImages) => void;
+            onExportSettingsClick?: (p: ProductWithImages) => void;
+            integrationBadgeIds?: Set<string>;
+            integrationBadgeStatuses?: Map<string, string>;
+            queryClient?: QueryClient;
+          } | undefined = table.options.meta as
         | {
             onIntegrationsClick?: (p: ProductWithImages) => void;
             onExportSettingsClick?: (p: ProductWithImages) => void;
@@ -526,19 +545,19 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           }
         | undefined;
 
-      const handleClick = meta?.onIntegrationsClick;
-      const handleExportClick = meta?.onExportSettingsClick;
+      const handleClick: ((p: ProductWithImages) => void) | undefined = meta?.onIntegrationsClick;
+      const handleExportClick: ((p: ProductWithImages) => void) | undefined = meta?.onExportSettingsClick;
       if (!handleClick) return null;
-      const showMarketplaceBadge =
+      const showMarketplaceBadge: boolean =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
-      const status = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
+      const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
       const statusClasses: Record<string, string> = {
         active: "text-emerald-300 ring-1 ring-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15",
         pending: "text-amber-300 ring-1 ring-amber-500/25 bg-amber-500/10 hover:bg-amber-500/15",
         failed: "text-rose-300 ring-1 ring-rose-500/25 bg-rose-500/10 hover:bg-rose-500/15",
         removed: "text-gray-400 ring-1 ring-gray-500/20 bg-gray-500/10 hover:bg-gray-500/15",
       };
-      const badgeClass =
+      const badgeClass: string =
         statusClasses[status] ??
         "text-slate-300 ring-1 ring-slate-500/20 bg-slate-500/10 hover:bg-slate-500/15";
 
@@ -546,7 +565,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         <div className="inline-flex items-center gap-1">
           <Button
             type="button"
-            onClick={() => handleClick(product)}
+            onClick={(): void => handleClick(product)}
             variant="ghost"
             size="icon"
             className="size-8 cursor-pointer rounded-full text-muted-foreground hover:bg-transparent hover:text-foreground"
@@ -557,7 +576,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           {showMarketplaceBadge && (
             <Button
               type="button"
-              onClick={() => handleExportClick?.(product)}
+              onClick={(): void => handleExportClick?.(product)}
               variant="ghost"
               size="icon"
               className={`size-7 cursor-pointer rounded-full ${badgeClass}`}
@@ -574,8 +593,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     id: "actions",
-    cell: ({ row, table }) => {
-      const meta = table.options.meta as
+    cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element | null => {
+      const meta: {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            onProductEditClick?: (p: ProductWithImages) => void;
+            queryClient?: QueryClient;
+          } | undefined = table.options.meta as
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             onProductEditClick?: (p: ProductWithImages) => void;
@@ -583,8 +606,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           }
         | undefined;
 
-      const setRefreshTrigger = meta?.setRefreshTrigger;
-      const onProductEditClick = meta?.onProductEditClick;
+      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
+      const onProductEditClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductEditClick;
 
       if (!setRefreshTrigger) return null;
 

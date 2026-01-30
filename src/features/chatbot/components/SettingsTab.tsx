@@ -42,19 +42,19 @@ export function SettingsTab({
   saveChatbotSettings,
   settingsDirty,
   settingsSaving,
-}: SettingsTabProps) {
+}: SettingsTabProps): React.JSX.Element {
   const { toast } = useToast();
   const [personas, setPersonas] = React.useState<PlaywrightPersona[]>([]);
-  const [personasLoading, setPersonasLoading] = React.useState(true);
+  const [personasLoading, setPersonasLoading] = React.useState<boolean>(true);
 
-  React.useEffect(() => {
-    let active = true;
-    const loadPersonas = async () => {
+  React.useEffect((): (() => void) => {
+    let active: boolean = true;
+    const loadPersonas = async (): Promise<void> => {
       try {
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);
-      } catch (error) {
+      } catch (error: unknown) {
         if (!active) return;
         const message =
           error instanceof Error ? error.message : "Failed to load personas.";
@@ -64,22 +64,22 @@ export function SettingsTab({
       }
     };
     void loadPersonas();
-    return () => {
+    return (): void => {
       active = false;
     };
   }, [toast]);
 
-  const handlePersonaChange = (value: string) => {
+  const handlePersonaChange = (value: string): void => {
     const nextId = value === "custom" ? null : value;
     setPlaywrightPersonaId(nextId);
-    const persona = personas.find((item) => item.id === nextId);
+    const persona = personas.find((item: PlaywrightPersona): boolean => item.id === nextId);
     if (persona) {
       setAgentRunHeadless(persona.settings.headless);
     }
   };
 
   const selectedPersona =
-    personas.find((item) => item.id === playwrightPersonaId) ?? null;
+    personas.find((item: PlaywrightPersona): boolean => item.id === playwrightPersonaId) ?? null;
 
   return (
     <div className="space-y-6 p-4">
@@ -88,12 +88,12 @@ export function SettingsTab({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Model</Label>
-            <Select value={model} onValueChange={setModel}>
+            <Select value={model} onValueChange={(value: string): void => setModel(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
-                {modelOptions.map((opt) => (
+                {modelOptions.map((opt: string): React.JSX.Element => (
                   <SelectItem key={opt} value={opt}>
                     {opt}
                   </SelectItem>
@@ -103,7 +103,7 @@ export function SettingsTab({
           </div>
           <div className="space-y-2">
             <Label>Search Provider</Label>
-            <Select value={searchProvider} onValueChange={setSearchProvider}>
+            <Select value={searchProvider} onValueChange={(value: string): void => setSearchProvider(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -118,19 +118,19 @@ export function SettingsTab({
         <div className="flex items-center gap-4">
           <Label className="flex items-center gap-2 text-sm text-gray-300">
             <Checkbox
-              checked={webSearchEnabled} onCheckedChange={(checked) => setWebSearchEnabled(Boolean(checked))}
+              checked={webSearchEnabled} onCheckedChange={(checked: boolean): void => setWebSearchEnabled(Boolean(checked))}
             />
             Enable Web Search
           </Label>
           <Label className="flex items-center gap-2 text-sm text-gray-300">
             <Checkbox
-              checked={useGlobalContext} onCheckedChange={(checked) => setUseGlobalContext(Boolean(checked))}
+              checked={useGlobalContext} onCheckedChange={(checked: boolean): void => setUseGlobalContext(Boolean(checked))}
             />
             Use Global Context
           </Label>
           <Label className="flex items-center gap-2 text-sm text-gray-300">
             <Checkbox
-              checked={useLocalContext} onCheckedChange={(checked) => setUseLocalContext(Boolean(checked))}
+              checked={useLocalContext} onCheckedChange={(checked: boolean): void => setUseLocalContext(Boolean(checked))}
             />
             Use Local Context
           </Label>
@@ -187,7 +187,7 @@ export function SettingsTab({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="custom">Custom</SelectItem>
-                    {personas.map((persona) => (
+                    {personas.map((persona: PlaywrightPersona): React.JSX.Element => (
                       <SelectItem key={persona.id} value={persona.id}>
                         {persona.name}
                       </SelectItem>
@@ -227,7 +227,7 @@ export function SettingsTab({
 
       <div className="flex justify-end">
         <Button
-          onClick={() => void saveChatbotSettings()}
+          onClick={(): void => void saveChatbotSettings()}
           disabled={!settingsDirty}
         >
           {settingsSaving ? "Saving..." : "Save Settings"}

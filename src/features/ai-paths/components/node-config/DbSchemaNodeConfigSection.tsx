@@ -27,7 +27,7 @@ type DbSchemaNodeConfigSectionProps = {
 export function DbSchemaNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: DbSchemaNodeConfigSectionProps) {
+}: DbSchemaNodeConfigSectionProps): React.JSX.Element | null {
   // Data Browser state
   const [browseCollection, setBrowseCollection] = React.useState<string | null>(null);
   const [browseSkip, setBrowseSkip] = React.useState(0);
@@ -38,7 +38,7 @@ export function DbSchemaNodeConfigSection({
 
   const schemaQuery = useQuery({
     queryKey: ["db-schema"],
-    queryFn: async () => {
+    queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema();
       if (!result.ok) {
         throw new Error(result.error || "Failed to fetch schema.");
@@ -50,9 +50,9 @@ export function DbSchemaNodeConfigSection({
 
   const browseQueryResult = useQuery({
     queryKey: ["db-browse", browseCollection, browseSkip, browseQuery],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ documents: Record<string, unknown>[]; total: number }> => {
       if (!browseCollection) {
-        return { documents: [], total: 0 } as { documents: Record<string, unknown>[]; total: number };
+        return { documents: [], total: 0 };
       }
       const result = await dbApi.browse(browseCollection, {
         limit: browseLimit,
@@ -88,17 +88,17 @@ export function DbSchemaNodeConfigSection({
     ...(selectedNode.config?.db_schema ?? {}),
   };
 
-  const updateSchemaConfig = (patch: Partial<typeof schemaConfig>) => {
+  const updateSchemaConfig = (patch: Partial<typeof schemaConfig>): void => {
     const nextConfig = { ...schemaConfig, ...patch };
     updateSelectedNodeConfig({
       db_schema: nextConfig,
     });
   };
 
-  const toggleCollection = (collName: string) => {
+  const toggleCollection = (collName: string): void => {
     const current = schemaConfig.collections ?? [];
     const next = current.includes(collName)
-      ? current.filter((c) => c !== collName)
+      ? current.filter((c: string): boolean => c !== collName)
       : [...current, collName];
     updateSchemaConfig({ collections: next });
   };
@@ -126,7 +126,7 @@ export function DbSchemaNodeConfigSection({
               <Label className="text-xs text-gray-400">Collection Mode</Label>
               <Select
                 value={schemaConfig.mode}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   updateSchemaConfig({ mode: value as "all" | "selected" })
                 }
               >
@@ -146,7 +146,7 @@ export function DbSchemaNodeConfigSection({
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
                 <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2">
-                  {fetchedDbSchema.collections.map((coll) => {
+                  {fetchedDbSchema.collections.map((coll: { name: string; fields: Array<{ name: string; type: string }> }) => {
                     const isSelected = schemaConfig.collections?.includes(coll.name);
                     return (
                       <button
@@ -209,7 +209,7 @@ export function DbSchemaNodeConfigSection({
               <Label className="text-xs text-gray-400">Output Format</Label>
               <Select
                 value={schemaConfig.formatAs}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   updateSchemaConfig({ formatAs: value as "json" | "text" })
                 }
               >
@@ -229,15 +229,15 @@ export function DbSchemaNodeConfigSection({
               <div className="max-h-[150px] overflow-y-auto text-[11px] text-gray-300">
                 {(schemaConfig.mode === "all"
                   ? fetchedDbSchema.collections
-                  : fetchedDbSchema.collections.filter((c) =>
+                  : fetchedDbSchema.collections.filter((c: { name: string }) =>
                       schemaConfig.collections?.includes(c.name)
                     )
-                ).map((coll) => (
+                ).map((coll: { name: string; fields?: Array<{ name: string; type: string }> }) => (
                   <div key={coll.name} className="mb-2">
                     <div className="font-medium text-purple-300">{coll.name}</div>
                     {schemaConfig.includeFields && coll.fields && (
                       <div className="ml-2 text-[10px] text-gray-500">
-                        {coll.fields.slice(0, 5).map((f) => f.name).join(", ")}
+                        {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(", ")}
                         {coll.fields.length > 5 && ` +${coll.fields.length - 5} more`}
                       </div>
                     )}
@@ -260,7 +260,7 @@ export function DbSchemaNodeConfigSection({
                 <div className="flex gap-2">
                   <Select
                     value={browseCollection ?? ""}
-                    onValueChange={(value) => {
+                    onValueChange={(value: string) => {
                       setBrowseCollection(value || null);
                       setBrowseSkip(0);
                       setBrowseSearch("");
@@ -272,7 +272,7 @@ export function DbSchemaNodeConfigSection({
                       <SelectValue placeholder="Select collection to browse" />
                     </SelectTrigger>
                     <SelectContent>
-                      {fetchedDbSchema.collections.map((coll) => (
+                      {fetchedDbSchema.collections.map((coll: { name: string }) => (
                         <SelectItem key={coll.name} value={coll.name}>
                           {coll.name}
                         </SelectItem>
@@ -305,8 +305,8 @@ export function DbSchemaNodeConfigSection({
                       className="flex-1 border-border bg-card/70 text-sm text-white"
                       placeholder="Search documents..."
                       value={browseSearch}
-                      onChange={(e) => setBrowseSearch(e.target.value)}
-                      onKeyDown={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrowseSearch(e.target.value)}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === "Enter") {
                           setBrowseSkip(0);
                           setBrowseQuery(browseSearch.trim());
@@ -337,7 +337,7 @@ export function DbSchemaNodeConfigSection({
                     </div>
                   ) : browseDocuments.length > 0 ? (
                     <div className="max-h-[300px] space-y-2 overflow-y-auto">
-                                                          {browseDocuments.map((doc, idx) => {
+                                                          {browseDocuments.map((doc: Record<string, unknown>, idx: number) => {
                                                             const rawId = doc._id ?? doc.id;
                                                             let docId: string;
                                                             if (typeof rawId === "string") {
@@ -348,8 +348,8 @@ export function DbSchemaNodeConfigSection({
                                                               rawId &&
                                                               typeof rawId === "object" &&
                                                               "toString" in rawId &&
-                                                              typeof rawId.toString === "function" &&
-                                                              rawId.toString !== Object.prototype.toString
+                                                              typeof (rawId as { toString: unknown }).toString === "function" &&
+                                                              (rawId as { toString: unknown }).toString !== Object.prototype.toString
                                                             ) {
                                                               docId = (rawId as { toString(): string }).toString();
                                                             } else {
@@ -413,7 +413,7 @@ export function DbSchemaNodeConfigSection({
                         type="button"
                         disabled={browseSkip === 0}
                       className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                      onClick={() => {
+                      onClick={(): void => {
                         const newSkip = Math.max(0, browseSkip - browseLimit);
                         setBrowseSkip(newSkip);
                       }}
@@ -427,7 +427,7 @@ export function DbSchemaNodeConfigSection({
                         type="button"
                         disabled={browseSkip + browseLimit >= browseTotal}
                       className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                      onClick={() => {
+                      onClick={(): void => {
                         const newSkip = browseSkip + browseLimit;
                         setBrowseSkip(newSkip);
                       }}
@@ -448,7 +448,7 @@ export function DbSchemaNodeConfigSection({
             <Button
               type="button"
               className="w-full rounded-md border border-purple-700 text-xs text-purple-200 hover:bg-purple-500/10"
-              onClick={() => {
+              onClick={(): void => {
                 void schemaQuery.refetch();
               }}
             >

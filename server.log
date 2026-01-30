@@ -1,0 +1,31 @@
+> Ready on http://localhost:3000
+(node:44446) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ GET / 200 in 2.8s (compile: 855ms, render: 1907ms)
+ GET / 200 in 815ms (compile: 2ms, render: 813ms)
+ GET /admin/system/logs 200 in 1096ms (compile: 990ms, render: 106ms)
+[AUTH-API] GET request http://localhost:3000/api/auth/session
+[2026-01-30T13:50:47.064Z] [INFO] [auth] [AUTH] Starting configuration... { service: 'auth' }
+ GET /api/system/logs/metrics? 200 in 1166ms (compile: 538ms, render: 628ms)
+[AUTH] Provider determined: mongodb
+[AUTH] Adapter configured for mongodb.
+[33m[auth][warn][debug-enabled][0m Read more: https://warnings.authjs.dev
+ GET /api/auth/session 200 in 1270ms (compile: 1215ms, render: 54ms)
+[AUTH-API] GET request http://localhost:3000/api/auth/session
+ GET /api/auth/session 200 in 5ms (compile: 3ms, render: 2ms)
+ GET /api/settings 200 in 1605ms (compile: 794ms, render: 810ms)
+ GET /api/system/logs?page=1&pageSize=50 200 in 1630ms (compile: 714ms, render: 916ms)
+ GET /api/settings 200 in 136ms (compile: 1343µs, render: 135ms)
+ GET /api/settings 200 in 98ms (compile: 1379µs, render: 97ms)
+ GET /api/settings 200 in 92ms (compile: 1152µs, render: 91ms)
+ GET /api/settings 200 in 92ms (compile: 1332µs, render: 91ms)
+ GET /admin/system/logs 200 in 41ms (compile: 1105µs, render: 40ms)
+[AUTH-API] GET request http://localhost:3000/api/auth/session
+ GET /api/auth/session 200 in 7ms (compile: 2ms, render: 5ms)
+[AUTH-API] GET request http://localhost:3000/api/auth/session
+ GET /api/auth/session 200 in 3ms (compile: 1084µs, render: 1948µs)
+ GET /api/settings 200 in 96ms (compile: 1218µs, render: 95ms)
+ GET /api/system/logs/metrics? 200 in 440ms (compile: 1028µs, render: 439ms)
+ GET /api/settings 200 in 429ms (compile: 23ms, render: 406ms)
+ GET /api/system/logs?page=1&pageSize=50 200 in 470ms (compile: 967µs, render: 469ms)
+ HEAD / 200 in 915ms (compile: 1329µs, render: 914ms)

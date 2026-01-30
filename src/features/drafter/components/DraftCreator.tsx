@@ -1,6 +1,6 @@
 "use client";
 import { Button, Input, Label, Textarea, Switch, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 
 
@@ -25,6 +25,7 @@ import {
   Award,
   Box,
   Sparkles,
+  type LucideIcon,
 } from "lucide-react";
 
 interface DraftCreatorProps {
@@ -34,44 +35,44 @@ interface DraftCreatorProps {
   formRef?: React.RefObject<HTMLFormElement | null>;
 }
 
-export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, formRef }: DraftCreatorProps) {
-  const [loading, setLoading] = useState(false);
+export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, formRef }: DraftCreatorProps): React.JSX.Element {
+  const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Form fields
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [sku, setSku] = useState("");
+  const [name, setName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [sku, setSku] = useState<string>("");
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
-  const [ean, setEan] = useState("");
-  const [gtin, setGtin] = useState("");
-  const [asin, setAsin] = useState("");
-  const [nameEn, setNameEn] = useState("");
-  const [namePl, setNamePl] = useState("");
-  const [nameDe, setNameDe] = useState("");
-  const [descEn, setDescEn] = useState("");
-  const [descPl, setDescPl] = useState("");
-  const [descDe, setDescDe] = useState("");
-  const [weight, setWeight] = useState("");
-  const [sizeLength, setSizeLength] = useState("");
-  const [sizeWidth, setSizeWidth] = useState("");
-  const [length, setLength] = useState("");
-  const [price, setPrice] = useState("");
-  const [supplierName, setSupplierName] = useState("");
-  const [supplierLink, setSupplierLink] = useState("");
-  const [priceComment, setPriceComment] = useState("");
-  const [stock, setStock] = useState("");
-  const [baseProductId, setBaseProductId] = useState("");
-  const [active, setActive] = useState(true);
+  const [ean, setEan] = useState<string>("");
+  const [gtin, setGtin] = useState<string>("");
+  const [asin, setAsin] = useState<string>("");
+  const [nameEn, setNameEn] = useState<string>("");
+  const [namePl, setNamePl] = useState<string>("");
+  const [nameDe, setNameDe] = useState<string>("");
+  const [descEn, setDescEn] = useState<string>("");
+  const [descPl, setDescPl] = useState<string>("");
+  const [descDe, setDescDe] = useState<string>("");
+  const [weight, setWeight] = useState<string>("");
+  const [sizeLength, setSizeLength] = useState<string>("");
+  const [sizeWidth, setSizeWidth] = useState<string>("");
+  const [length, setLength] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+  const [supplierName, setSupplierName] = useState<string>("");
+  const [supplierLink, setSupplierLink] = useState<string>("");
+  const [priceComment, setPriceComment] = useState<string>("");
+  const [stock, setStock] = useState<string>("");
+  const [baseProductId, setBaseProductId] = useState<string>("");
+  const [active, setActive] = useState<boolean>(true);
   const [icon, setIcon] = useState<string | null>(null);
-  const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill(""));
+  const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill("") as string[]);
 
   // Metadata
   const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [tags, setTags] = useState<ProductTag[]>([]);
   const [parameters, setParameters] = useState<ProductParameter[]>([]);
-  const [parametersLoading, setParametersLoading] = useState(false);
+  const [parametersLoading, setParametersLoading] = useState<boolean>(false);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -79,13 +80,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
   // Load metadata
-  useEffect(() => {
-    const loadMetadata = async () => {
+  useEffect((): void => {
+    const loadMetadata = async (): Promise<void> => {
       try {
-        const catalogsRes = await fetch("/api/catalogs");
+        const catalogsRes: Response = await fetch("/api/catalogs");
 
         if (catalogsRes.ok) {
-          const catalogsData = (await catalogsRes.json()) as CatalogRecord[];
+          const catalogsData: CatalogRecord[] = (await catalogsRes.json()) as CatalogRecord[];
           setCatalogs(catalogsData);
         }
       } catch (error) {
@@ -97,19 +98,19 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   }, []);
 
   // Load categories when catalogs are selected
-  useEffect(() => {
+  useEffect((): void => {
     if (selectedCatalogIds.length === 0) {
       setCategories([]);
       return;
     }
 
-    const loadCategories = async () => {
+    const loadCategories = async (): Promise<void> => {
       try {
-        const categoryPromises = selectedCatalogIds.map((catalogId) =>
-          fetch(`/api/products/categories?catalogId=${catalogId}`).then((res) => res.json())
+        const categoryPromises: Promise<ProductCategory[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductCategory[]> =>
+          fetch(`/api/products/categories?catalogId=${catalogId}`).then((res: Response): Promise<ProductCategory[]> => res.json() as Promise<ProductCategory[]>)
         );
-        const categoryArrays = await Promise.all(categoryPromises);
-        const allCategories = categoryArrays.flat() as ProductCategory[];
+        const categoryArrays: ProductCategory[][] = await Promise.all(categoryPromises);
+        const allCategories: ProductCategory[] = categoryArrays.flat();
         setCategories(allCategories);
       } catch (error) {
         console.error("Failed to load categories:", error);
@@ -120,19 +121,19 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   }, [selectedCatalogIds]);
 
   // Load tags when catalogs are selected
-  useEffect(() => {
+  useEffect((): void => {
     if (selectedCatalogIds.length === 0) {
       setTags([]);
       return;
     }
 
-    const loadTags = async () => {
+    const loadTags = async (): Promise<void> => {
       try {
-        const tagPromises = selectedCatalogIds.map((catalogId) =>
-          fetch(`/api/products/tags?catalogId=${catalogId}`).then((res) => res.json())
+        const tagPromises: Promise<ProductTag[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductTag[]> =>
+          fetch(`/api/products/tags?catalogId=${catalogId}`).then((res: Response): Promise<ProductTag[]> => res.json() as Promise<ProductTag[]>)
         );
-        const tagArrays = await Promise.all(tagPromises);
-        const allTags = tagArrays.flat() as ProductTag[];
+        const tagArrays: ProductTag[][] = await Promise.all(tagPromises);
+        const allTags: ProductTag[] = tagArrays.flat();
         setTags(allTags);
       } catch (error) {
         console.error("Failed to load tags:", error);
@@ -143,21 +144,21 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   }, [selectedCatalogIds]);
 
   // Load parameters when catalogs are selected
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (selectedCatalogIds.length === 0) {
       setParameters([]);
       return;
     }
 
-    let cancelled = false;
-    const loadParameters = async () => {
+    let cancelled: boolean = false;
+    const loadParameters = async (): Promise<void> => {
       setParametersLoading(true);
       try {
-        const parameterPromises = selectedCatalogIds.map((catalogId) =>
-          fetch(`/api/products/parameters?catalogId=${catalogId}`).then((res) => res.json())
+        const parameterPromises: Promise<ProductParameter[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductParameter[]> =>
+          fetch(`/api/products/parameters?catalogId=${catalogId}`).then((res: Response): Promise<ProductParameter[]> => res.json() as Promise<ProductParameter[]>)
         );
-        const parameterArrays = await Promise.all(parameterPromises);
-        const allParameters = parameterArrays.flat() as ProductParameter[];
+        const parameterArrays: ProductParameter[][] = await Promise.all(parameterPromises);
+        const allParameters: ProductParameter[] = parameterArrays.flat();
         if (!cancelled) {
           setParameters(allParameters);
         }
@@ -174,13 +175,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     };
 
     void loadParameters();
-    return () => {
+    return (): void => {
       cancelled = true;
     };
   }, [selectedCatalogIds]);
 
   // Load existing draft
-  useEffect(() => {
+  useEffect((): void => {
     if (!draftId) {
       // Reset form for new draft
       setName("");
@@ -207,7 +208,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
       setBaseProductId("");
       setActive(true);
       setIcon(null);
-      setImageLinks(Array(15).fill(""));
+      setImageLinks(Array(15).fill("") as string[]);
       setSelectedCatalogIds([]);
       setSelectedCategoryIds([]);
       setSelectedTagIds([]);
@@ -215,13 +216,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
       return;
     }
 
-    const loadDraft = async () => {
+    const loadDraft = async (): Promise<void> => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/drafts/${draftId}`);
+        const res: Response = await fetch(`/api/drafts/${draftId}`);
         if (!res.ok) throw new Error("Failed to load draft");
 
-        const draft = (await res.json()) as ProductDraft;
+        const draft: ProductDraft = (await res.json()) as ProductDraft;
         setName(draft.name);
         setDescription(draft.description || "");
         setSku(draft.sku || "");
@@ -250,7 +251,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         setBaseProductId(draft.baseProductId || "");
         setActive(draft.active ?? true);
         setIcon(draft.icon || null);
-        const links = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
+        const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
         setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryIds(draft.categoryIds || []);
@@ -267,7 +268,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     void loadDraft();
   }, [draftId, toast]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!name.trim()) {
       toast("Draft name is required", { variant: "error" });
       return;
@@ -300,21 +301,21 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         categoryIds: selectedCategoryIds,
         tagIds: selectedTagIds,
         parameters: parameterValues
-          .map((entry) => ({
+          .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
             parameterId: entry.parameterId?.trim(),
             value: typeof entry.value === "string" ? entry.value.trim() : "",
           }))
-          .filter((entry) => entry.parameterId),
+          .filter((entry: { parameterId: string | undefined; value: string }): entry is { parameterId: string; value: string } => !!entry.parameterId),
         active,
         icon,
-        imageLinks: imageLinks.filter((link) => link.trim()),
+        imageLinks: imageLinks.filter((link: string): boolean => !!link.trim()),
         baseProductId: baseProductId.trim() || null,
       };
 
-      const url = draftId ? `/api/drafts/${draftId}` : "/api/drafts";
-      const method = draftId ? "PUT" : "POST";
+      const url: string = draftId ? `/api/drafts/${draftId}` : "/api/drafts";
+      const method: string = draftId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res: Response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -332,60 +333,60 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     }
   };
 
-  const toggleCatalog = (catalogId: string) => {
-    setSelectedCatalogIds((prev) =>
-      prev.includes(catalogId) ? prev.filter((id) => id !== catalogId) : [...prev, catalogId]
+  const toggleCatalog = (catalogId: string): void => {
+    setSelectedCatalogIds((prev: string[]): string[] =>
+      prev.includes(catalogId) ? prev.filter((id: string): boolean => id !== catalogId) : [...prev, catalogId]
     );
   };
 
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategoryIds((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
+  const toggleCategory = (categoryId: string): void => {
+    setSelectedCategoryIds((prev: string[]): string[] =>
+      prev.includes(categoryId) ? prev.filter((id: string): boolean => id !== categoryId) : [...prev, categoryId]
     );
   };
 
-  const toggleTag = (tagId: string) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+  const toggleTag = (tagId: string): void => {
+    setSelectedTagIds((prev: string[]): string[] =>
+      prev.includes(tagId) ? prev.filter((id: string): boolean => id !== tagId) : [...prev, tagId]
     );
   };
 
-  const addParameterValue = () => {
-    setParameterValues((prev) => [...prev, { parameterId: "", value: "" }]);
+  const addParameterValue = (): void => {
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: "", value: "" }]);
   };
 
-  const updateParameterId = (index: number, parameterId: string) => {
-    setParameterValues((prev) => {
-      const next = [...prev];
+  const updateParameterId = (index: number, parameterId: string): void => {
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+      const next: ProductParameterValue[] = [...prev];
       if (!next[index]) return prev;
       next[index] = { ...next[index], parameterId };
       return next;
     });
   };
 
-  const updateParameterValue = (index: number, value: string) => {
-    setParameterValues((prev) => {
-      const next = [...prev];
+  const updateParameterValue = (index: number, value: string): void => {
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+      const next: ProductParameterValue[] = [...prev];
       if (!next[index]) return prev;
       next[index] = { ...next[index], value };
       return next;
     });
   };
 
-  const removeParameterValue = (index: number) => {
-    setParameterValues((prev) => prev.filter((_, i) => i !== index));
+  const removeParameterValue = (index: number): void => {
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_: ProductParameterValue, i: number): boolean => i !== index));
   };
 
-  const selectedParameterIds = useMemo(
-    () => parameterValues.map((entry) => entry.parameterId).filter(Boolean),
+  const selectedParameterIds: (string | undefined)[] = useMemo(
+    (): (string | undefined)[] => parameterValues.map((entry: ProductParameterValue): string | undefined => entry.parameterId).filter(Boolean),
     [parameterValues]
   );
 
-  const getParameterLabel = (parameter: ProductParameter) =>
+  const getParameterLabel = (parameter: ProductParameter): string =>
     parameter.name_en || parameter.name_pl || parameter.name_de || "Unnamed parameter";
 
   // Available icons
-  const availableIcons = [
+  const availableIcons: { id: string; icon: LucideIcon; label: string }[] = [
     { id: "package", icon: Package, label: "Package" },
     { id: "shopping-cart", icon: ShoppingCart, label: "Shopping Cart" },
     { id: "tag", icon: Tag, label: "Tag" },
@@ -411,7 +412,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   return (
     <form
       ref={formRef}
-      onSubmit={(e) => {
+      onSubmit={(e: React.FormEvent): void => {
         e.preventDefault();
         void handleSave();
       }}
@@ -435,7 +436,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
               placeholder="e.g., Standard Product Template"
             />
           </div>
@@ -445,7 +446,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
               placeholder="Describe what this draft is for..."
               rows={2}
             />
@@ -461,19 +462,19 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                   Show quick create button in products list
                 </p>
               </div>
-              <Switch id="active" checked={active} onCheckedChange={setActive} />
+              <Switch id="active" checked={active} onCheckedChange={(val: boolean): void => setActive(val)} />
             </div>
 
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="grid grid-cols-6 gap-2">
-                {availableIcons.map((item) => {
-                  const IconComponent = item.icon;
+                {availableIcons.map((item: { id: string; icon: LucideIcon; label: string }): React.JSX.Element => {
+                  const IconComponent: LucideIcon = item.icon;
                   return (
                     <Button
                       key={item.id}
                       type="button"
-                      onClick={() => setIcon(icon === item.id ? null : item.id)}
+                      onClick={(): void => setIcon(icon === item.id ? null : item.id)}
                       className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
                         icon === item.id
                           ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
@@ -500,7 +501,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Input
                 id="sku"
                 value={sku}
-                onChange={(e) => setSku(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
                 placeholder="Product SKU"
               />
             </div>
@@ -509,7 +510,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <div className="flex gap-2">
                 <Select
                   value={identifierType}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string): void =>
                     setIdentifierType(value as "ean" | "gtin" | "asin")
                   }
                 >
@@ -526,7 +527,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                   <Input
                     id="ean"
                     value={ean}
-                    onChange={(e) => setEan(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
                     placeholder="Enter EAN"
                   />
                 )}
@@ -534,7 +535,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                   <Input
                     id="gtin"
                     value={gtin}
-                    onChange={(e) => setGtin(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
                     placeholder="Enter GTIN"
                   />
                 )}
@@ -542,7 +543,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                   <Input
                     id="asin"
                     value={asin}
-                    onChange={(e) => setAsin(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
                     placeholder="Enter ASIN"
                   />
                 )}
@@ -558,7 +559,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 type="number"
                 step="0.01"
                 value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
                 placeholder="0.00"
               />
             </div>
@@ -569,7 +570,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 type="number"
                 step="0.01"
                 value={sizeLength}
-                onChange={(e) => setSizeLength(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeLength(e.target.value)}
                 placeholder="0.00"
               />
             </div>
@@ -580,7 +581,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 type="number"
                 step="0.01"
                 value={sizeWidth}
-                onChange={(e) => setSizeWidth(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeWidth(e.target.value)}
                 placeholder="0.00"
               />
             </div>
@@ -591,7 +592,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 type="number"
                 step="0.01"
                 value={length}
-                onChange={(e) => setLength(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
                 placeholder="0.00"
               />
             </div>
@@ -603,7 +604,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Input
                 id="nameEn"
                 value={nameEn}
-                onChange={(e) => setNameEn(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
                 placeholder="Product name"
               />
             </div>
@@ -612,7 +613,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Input
                 id="namePl"
                 value={namePl}
-                onChange={(e) => setNamePl(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
                 placeholder="Nazwa produktu"
               />
             </div>
@@ -621,7 +622,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Input
                 id="nameDe"
                 value={nameDe}
-                onChange={(e) => setNameDe(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
                 placeholder="Produktname"
               />
             </div>
@@ -633,7 +634,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Textarea
                 id="descEn"
                 value={descEn}
-                onChange={(e) => setDescEn(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescEn(e.target.value)}
                 placeholder="Product description"
                 rows={3}
               />
@@ -643,7 +644,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Textarea
                 id="descPl"
                 value={descPl}
-                onChange={(e) => setDescPl(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescPl(e.target.value)}
                 placeholder="Opis produktu"
                 rows={3}
               />
@@ -653,7 +654,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               <Textarea
                 id="descDe"
                 value={descDe}
-                onChange={(e) => setDescDe(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescDe(e.target.value)}
                 placeholder="Produktbeschreibung"
                 rows={3}
               />
@@ -673,7 +674,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 type="number"
                 step="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
                 placeholder="0.00"
               />
             </div>
@@ -683,7 +684,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 id="stock"
                 type="number"
                 value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
                 placeholder="0"
               />
             </div>
@@ -694,7 +695,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Input
               id="supplierName"
               value={supplierName}
-              onChange={(e) => setSupplierName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierName(e.target.value)}
               placeholder="Supplier name"
             />
           </div>
@@ -704,7 +705,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Input
               id="supplierLink"
               value={supplierLink}
-              onChange={(e) => setSupplierLink(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierLink(e.target.value)}
               placeholder="https://..."
             />
           </div>
@@ -714,7 +715,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Input
               id="priceComment"
               value={priceComment}
-              onChange={(e) => setPriceComment(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPriceComment(e.target.value)}
               placeholder="Additional price information"
             />
           </div>
@@ -724,11 +725,11 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Catalogs</h3>
           <div className="flex flex-wrap gap-2">
-            {catalogs.map((catalog) => (
+            {catalogs.map((catalog: CatalogRecord): React.JSX.Element => (
               <Button
                 key={catalog.id}
                 type="button"
-                onClick={() => toggleCatalog(catalog.id)}
+                onClick={(): void => toggleCatalog(catalog.id)}
                 className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                   selectedCatalogIds.includes(catalog.id)
                     ? "bg-blue-600 text-white"
@@ -746,11 +747,11 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
           <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
             <h3 className="text-sm font-semibold text-white">Categories</h3>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
+              {categories.map((category: ProductCategory): React.JSX.Element => (
                 <Button
                   key={category.id}
                   type="button"
-                  onClick={() => toggleCategory(category.id)}
+                  onClick={(): void => toggleCategory(category.id)}
                   className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                     selectedCategoryIds.includes(category.id)
                       ? "bg-emerald-600 text-white"
@@ -769,11 +770,11 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
           <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
             <h3 className="text-sm font-semibold text-white">Tags</h3>
             <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
+              {tags.map((tag: ProductTag): React.JSX.Element => (
                 <Button
                   key={tag.id}
                   type="button"
-                  onClick={() => toggleTag(tag.id)}
+                  onClick={(): void => toggleTag(tag.id)}
                   className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                     selectedTagIds.includes(tag.id)
                       ? "bg-purple-600 text-white"
@@ -802,7 +803,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Default Image Links (up to 15)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {imageLinks.map((link, index) => (
+            {imageLinks.map((link: string, index: number): React.JSX.Element => (
               <div key={index} className="space-y-1">
                 <Label htmlFor={`image-${index}`} className="text-xs text-gray-400">
                   Image {index + 1}
@@ -810,8 +811,8 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 <Input
                   id={`image-${index}`}
                   value={link}
-                  onChange={(e) => {
-                    const newLinks = [...imageLinks];
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                    const newLinks: string[] = [...imageLinks];
                     newLinks[index] = e.target.value;
                     setImageLinks(newLinks);
                   }}
@@ -831,7 +832,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <Input
               id="baseProductId"
               value={baseProductId}
-              onChange={(e) => setBaseProductId(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBaseProductId(e.target.value)}
               placeholder="Imported from Base.com"
             />
             <p className="text-xs text-gray-400">
@@ -873,9 +874,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {parameterValues.map((entry, index) => {
-                    const availableOptions = parameters.filter(
-                      (parameter) =>
+                  {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
+                    const availableOptions: ProductParameter[] = parameters.filter(
+                      (parameter: ProductParameter): boolean =>
                         !selectedParameterIds.includes(parameter.id) ||
                         parameter.id === entry.parameterId
                     );
@@ -887,13 +888,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                         <div className="w-full md:w-64">
                           <Select
                             value={entry.parameterId}
-                            onValueChange={(value) => updateParameterId(index, value)}
+                            onValueChange={(value: string): void => updateParameterId(index, value)}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select parameter" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableOptions.map((parameter) => (
+                              {availableOptions.map((parameter: ProductParameter): React.JSX.Element => (
                                 <SelectItem key={parameter.id} value={parameter.id}>
                                   {getParameterLabel(parameter)}
                                 </SelectItem>
@@ -904,7 +905,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                         <div className="flex-1">
                           <Input
                             value={entry.value}
-                            onChange={(event) =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                               updateParameterValue(index, event.target.value)
                             }
                             placeholder="Value"
@@ -914,7 +915,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                         <Button
                           type="button"
                           variant="ghost"
-                          onClick={() => removeParameterValue(index)}
+                          onClick={(): void => removeParameterValue(index)}
                         >
                           Remove
                         </Button>

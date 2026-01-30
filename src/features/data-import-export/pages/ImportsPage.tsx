@@ -1,6 +1,6 @@
 "use client";
 import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, Checkbox, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { GripVertical, Trash2 } from "lucide-react";
 
@@ -30,6 +30,7 @@ import type {
   WarehouseDebugRaw,
   WarehouseOption,
   ImageRetryPreset,
+  ExportParameterDoc,
 } from "@/features/data-import-export/types/imports";
 
 
@@ -39,7 +40,7 @@ import {
 } from "@/features/data-import-export/utils/image-retry-presets";
 
 
-export default function ImportsPage() {
+export default function ImportsPage(): React.JSX.Element {
   const { toast } = useToast();
   // Token is now handled by the backend via integration
   const [inventories, setInventories] = useState<InventoryOption[]>([]);
@@ -172,7 +173,7 @@ export default function ImportsPage() {
     ? loadingImportTemplates
     : loadingExportTemplates;
   const exportParameterValues = EXPORT_PARAMETER_DOCS.reduce<Record<string, string>>(
-    (acc, entry) => {
+    (acc: Record<string, string>, entry: ExportParameterDoc): Record<string, string> => {
       acc[entry.key] = entry.description;
       return acc;
     },

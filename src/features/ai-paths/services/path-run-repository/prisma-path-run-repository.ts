@@ -146,9 +146,21 @@ export const prismaPathRunRepository: AiPathRunRepository = {
 
   async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     ensureModels();
+    const query = options.query?.trim();
     const where = {
       ...(options.pathId ? { pathId: options.pathId } : {}),
       ...(options.status ? { status: options.status } : {}),
+      ...(query
+        ? {
+            OR: [
+              { id: { contains: query, mode: "insensitive" } },
+              { pathId: { contains: query, mode: "insensitive" } },
+              { pathName: { contains: query, mode: "insensitive" } },
+              { entityId: { contains: query, mode: "insensitive" } },
+              { errorMessage: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     };
     const [runs, total] = await Promise.all([
       prismaAny.aiPathRun!.findMany({
@@ -242,11 +254,25 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return mapEvent(event);
   },
 
-  async listRunEvents(runId: string): Promise<AiPathRunEventRecord[]> {
+  async listRunEvents(
+    runId: string,
+    options: { since?: Date | string | null; limit?: number } = {}
+  ): Promise<AiPathRunEventRecord[]> {
     ensureModels();
+    const sinceValue = options.since
+      ? options.since instanceof Date
+        ? options.since
+        : new Date(options.since)
+      : null;
+    const since =
+      sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
     const events = await prismaAny.aiPathRunEvent!.findMany({
-      where: { runId },
+      where: {
+        runId,
+        ...(since ? { createdAt: { gt: since } } : {}),
+      },
       orderBy: { createdAt: "asc" },
+      ...(typeof options.limit === "number" ? { take: options.limit } : {}),
     });
     return (events as unknown[]).map(mapEvent);
   },

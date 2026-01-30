@@ -184,10 +184,7 @@ export const handlers = [
 
   // Catalogs endpoints
   http.get('/api/catalogs', () => {
-    return HttpResponse.json({
-      data: mockCatalogs,
-      total: mockCatalogs.length,
-    });
+    return HttpResponse.json(mockCatalogs);
   }),
 
   http.get('/api/catalogs/:id', ({ params }) => {
@@ -291,6 +288,54 @@ export const handlers = [
         })),
     }));
     return HttpResponse.json(tree);
+  }),
+
+  // Price groups
+  http.get('/api/price-groups', () => {
+    return HttpResponse.json([
+      {
+        id: 'pg-1',
+        groupId: 'default',
+        name: 'Default Price Group',
+        currencyId: 'curr-1',
+        currency: { id: 'curr-1', code: 'USD', name: 'US Dollar' },
+        isDefault: true,
+      }
+    ]);
+  }),
+
+  // Languages
+  http.get('/api/languages', () => {
+    return HttpResponse.json([
+      { id: 'lang-1', code: 'EN', name: 'English' },
+      { id: 'lang-2', code: 'PL', name: 'Polish' },
+    ]);
+  }),
+
+  // Currencies
+  http.get('/api/currencies', () => {
+    return HttpResponse.json([
+      { id: 'curr-1', code: 'USD', name: 'US Dollar' },
+      { id: 'curr-2', code: 'PLN', name: 'Polish Zloty' },
+    ]);
+  }),
+
+  // User preferences
+  http.get('/api/user/preferences', () => {
+    return HttpResponse.json({
+      productListNameLocale: 'name_en',
+      productListCurrencyCode: 'USD',
+    });
+  }),
+
+  // Drafts
+  http.get('/api/drafts', () => {
+    return HttpResponse.json([]);
+  }),
+
+  // Product listings integrations
+  http.get('/api/integrations/product-listings', () => {
+    return HttpResponse.json([]);
   }),
 
   // Health check

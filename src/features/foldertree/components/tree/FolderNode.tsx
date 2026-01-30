@@ -202,6 +202,7 @@ export const FolderNode = React.memo(function FolderNode({
           <Button
             onClick={() => onToggleExpand(folder.id)}
             className="p-0.5 hover:bg-gray-700 rounded"
+            aria-label={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
           >
             {isExpanded ? (
               <ChevronDown className="size-4" />

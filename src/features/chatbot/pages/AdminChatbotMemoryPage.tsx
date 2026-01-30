@@ -11,23 +11,23 @@ import Link from "next/link";
 import type { ChatbotMemoryItem } from "../types";
 import * as chatbotApi from "../api";
 
-const formatDate = (value?: string | null) => {
+const formatDate = (value?: string | null): string => {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 };
 
-export default function AgentMemoryPage() {
+export default function AgentMemoryPage(): React.JSX.Element {
   const [items, setItems] = useState<ChatbotMemoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [memoryKey, setMemoryKey] = useState("");
-  const [tag, setTag] = useState("");
-  const [query, setQuery] = useState("");
-  const [limit, setLimit] = useState(50);
+  const [memoryKey, setMemoryKey] = useState<string>("");
+  const [tag, setTag] = useState<string>("");
+  const [query, setQuery] = useState<string>("");
+  const [limit, setLimit] = useState<number>(50);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  const queryString = useMemo(() => {
+  const queryString = useMemo((): string => {
     const params = new URLSearchParams();
     if (memoryKey.trim()) params.set("memoryKey", memoryKey.trim());
     if (tag.trim()) params.set("tag", tag.trim());
@@ -36,9 +36,9 @@ export default function AgentMemoryPage() {
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
+  useEffect((): void => {
+    let isMounted: boolean = true;
+    const load = async (): Promise<void> => {
       setLoading(true);
       setError(null);
       try {
@@ -46,7 +46,7 @@ export default function AgentMemoryPage() {
         if (isMounted) {
           setItems(data);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to load memory.";
         if (isMounted) {
           setError(message);
@@ -58,7 +58,7 @@ export default function AgentMemoryPage() {
       }
     };
     void load();
-    return () => {
+    return (): void => {
       isMounted = false;
     };
   }, [queryString]);
@@ -81,7 +81,7 @@ export default function AgentMemoryPage() {
               <Label className="text-xs text-gray-400">Memory key</Label>
               <Input
                 value={memoryKey}
-                onChange={(event) => setMemoryKey(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setMemoryKey(event.target.value)}
                 placeholder="run-id or tenant key"
                 className="mt-1"
               />
@@ -90,7 +90,7 @@ export default function AgentMemoryPage() {
               <Label className="text-xs text-gray-400">Tag</Label>
               <Input
                 value={tag}
-                onChange={(event) => setTag(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTag(event.target.value)}
                 placeholder="problem-solution"
                 className="mt-1"
               />
@@ -99,7 +99,7 @@ export default function AgentMemoryPage() {
               <Label className="text-xs text-gray-400">Search</Label>
               <Input
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
                 placeholder="query text"
                 className="mt-1"
               />
@@ -111,7 +111,7 @@ export default function AgentMemoryPage() {
                 min={1}
                 max={100}
                 value={limit}
-                onChange={(event) => setLimit(Number(event.target.value))}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setLimit(Number(event.target.value))}
                 className="mt-1"
               />
             </div>
@@ -126,7 +126,7 @@ export default function AgentMemoryPage() {
             <p className="text-gray-400">No memory entries found.</p>
           ) : (
             <div className="space-y-3">
-              {items.map((item) => (
+              {items.map((item: ChatbotMemoryItem): React.JSX.Element => (
                 <div
                   key={item.id}
                   className="rounded-md border border-border bg-card p-3"
@@ -140,7 +140,7 @@ export default function AgentMemoryPage() {
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-400">
                     {item.tags?.length ? (
-                      item.tags.map((tagValue) => (
+                      item.tags.map((tagValue: string): React.JSX.Element => (
                         <span
                           key={`${item.id}-${tagValue}`}
                           className="rounded-full border border-border bg-gray-900 px-2 py-[1px]"
@@ -162,8 +162,8 @@ export default function AgentMemoryPage() {
                     <Button
                       type="button"
                       className="text-[11px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
-                      onClick={() =>
-                        setExpanded((prev) => ({
+                      onClick={(): void =>
+                        setExpanded((prev: Record<string, boolean>): Record<string, boolean> => ({
                           ...prev,
                           [item.id]: !prev[item.id],
                         }))

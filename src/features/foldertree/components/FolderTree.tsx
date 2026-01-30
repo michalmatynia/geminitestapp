@@ -368,6 +368,7 @@ function FolderTreeBase({
               onClick={() => onCreateFolder(null)}
               size="sm"
               className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
+              aria-label="Add folder"
             >
               <Plus className="size-4" />
             </Button>

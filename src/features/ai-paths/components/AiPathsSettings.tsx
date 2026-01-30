@@ -19,6 +19,8 @@ import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
 import type {
   AiNode,
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
   AiPathRunRecord,
   ClusterPreset,
   DbQueryConfig,
@@ -29,6 +31,7 @@ import type {
   NodeDefinition,
   ParserSampleState,
   PathConfig,
+  PathDebugEntry,
   PathDebugSnapshot,
   PathMeta,
   RuntimePortValues,
@@ -194,9 +197,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const [runFilter, setRunFilter] = useState<"all" | "active" | "failed" | "dead">("all");
   const [runDetail, setRunDetail] = useState<{
     run: AiPathRunRecord;
-    nodes: unknown[];
-    events: unknown[];
+    nodes: AiPathRunNodeRecord[];
+    events: AiPathRunEventRecord[];
   } | null>(null);
+  const [runStreamStatus, setRunStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
+  const [runStreamPaused, setRunStreamPaused] = useState(false);
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [sendingToAi, setSendingToAi] = useState(false);
   const [lastError, setLastError] = useState<{
@@ -214,6 +219,109 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
     template: "Write a summary for {{context.entity.title}}",
   });
+
+  useEffect(() => {
+    if (!runDetailOpen || !runDetail?.run?.id) {
+      setRunStreamStatus("stopped");
+      return;
+    }
+    if (runStreamPaused) {
+      setRunStreamStatus("paused");
+      return;
+    }
+
+    const runId = runDetail.run.id;
+    const params = new URLSearchParams();
+    const latestEventTimestamp = runDetail.events?.length
+      ? new Date(
+          Math.max(
+            ...runDetail.events.map((event) =>
+              new Date(event.createdAt).getTime()
+            )
+          )
+        ).toISOString()
+      : null;
+    if (latestEventTimestamp) {
+      params.set("since", latestEventTimestamp);
+    }
+    const url = params.toString()
+      ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
+      : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
+    const source = new EventSource(url);
+    setRunStreamStatus("connecting");
+
+    const mergeEvents = (incoming: AiPathRunEventRecord[]) => {
+      setRunDetail((prev) => {
+        if (!prev) return prev;
+        const existingIds = new Set(prev.events.map((event) => event.id));
+        const merged = [...prev.events];
+        incoming.forEach((event) => {
+          if (!existingIds.has(event.id)) {
+            merged.push(event);
+          }
+        });
+        merged.sort((a, b) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return aTime - bTime;
+        });
+        return { ...prev, events: merged };
+      });
+    };
+
+    source.addEventListener("ready", () => {
+      setRunStreamStatus("live");
+    });
+    source.addEventListener("run", (event) => {
+      try {
+        const payload = JSON.parse(event.data) as AiPathRunRecord;
+        setRunDetail((prev) => (prev ? { ...prev, run: payload } : prev));
+      } catch {
+        // ignore parse errors
+      }
+    });
+    source.addEventListener("nodes", (event) => {
+      try {
+        const payload = JSON.parse(event.data) as AiPathRunNodeRecord[];
+        setRunDetail((prev) => (prev ? { ...prev, nodes: payload } : prev));
+      } catch {
+        // ignore parse errors
+      }
+    });
+    source.addEventListener("events", (event) => {
+      try {
+        const payload = JSON.parse(event.data) as AiPathRunEventRecord[];
+        mergeEvents(payload);
+      } catch {
+        // ignore parse errors
+      }
+    });
+    source.addEventListener("done", () => {
+      setRunStreamStatus("stopped");
+      source.close();
+    });
+    source.addEventListener("error", () => {
+      setRunStreamStatus("stopped");
+    });
+
+    return () => {
+      source.close();
+      setRunStreamStatus("stopped");
+    };
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused]);
+
+  const runNodeSummary = useMemo(() => {
+    if (!runDetail) return null;
+    const counts: Record<string, number> = {};
+    runDetail.nodes.forEach((node) => {
+      const status = (node as AiPathRunNodeRecord).status ?? "unknown";
+      counts[status] = (counts[status] ?? 0) + 1;
+    });
+    const total = runDetail.nodes.length;
+    const completed = counts.completed ?? 0;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { counts, total, completed, progress };
+  }, [runDetail]);
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
@@ -372,7 +480,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       return { nodeId, entityType, entityId, sample };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample }): void => {
+    onSuccess: ({ nodeId, entityType, entityId, sample }: { nodeId: string; entityType: string; entityId: string; sample: unknown }): void => {
       setParserSamples((prev: Record<string, ParserSampleState>) => ({
         ...prev,
         [nodeId]: {
@@ -453,7 +561,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       return { nodeId, entityType, entityId: fetchedId, sample };
     },
-    onSuccess: ({ nodeId, entityType, entityId, sample }): void => {
+    onSuccess: ({ nodeId, entityType, entityId, sample }: { nodeId: string; entityType: string; entityId: string; sample: unknown }): void => {
       setUpdaterSamples((prev: Record<string, UpdaterSampleState>) => ({
         ...prev,
         [nodeId]: {
@@ -626,7 +734,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const modelsQuery = useQuery<{ models?: string[] }>({
     queryKey: ["ai-paths-models"],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ models?: string[] }> => {
       const res = await fetch("/api/chatbot");
       if (!res.ok) {
         throw new Error("Failed to load models.");
@@ -636,12 +744,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     staleTime: 1000 * 60 * 5,
   });
 
-  const modelOptions = useMemo(() => {
+  const modelOptions = useMemo((): string[] => {
     const apiModels = modelsQuery.data?.models;
     const savedModels = nodes
-      .filter((node) => node.type === "model")
-      .map((node) => node.config?.model?.modelId)
-      .filter((modelId): modelId is string => Boolean(modelId && modelId.trim()));
+      .filter((node: AiNode): boolean => node.type === "model")
+      .map((node: AiNode): string | undefined => node.config?.model?.modelId)
+      .filter((modelId: string | undefined): modelId is string => Boolean(modelId && modelId.trim()));
     return Array.from(
       new Set([
         ...DEFAULT_MODELS,
@@ -675,14 +783,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const runsQuery = useQuery({
     queryKey: ["ai-paths-runs", activePathId],
-    queryFn: async () => runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) }),
+    queryFn: async (): Promise<{ ok: boolean; data: { runs: AiPathRunRecord[] } }> => runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) }),
     enabled: Boolean(activePathId),
-    refetchInterval: (data: unknown) => {
-      const d = data as { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined;
+    refetchInterval: (data: unknown): number | false => {
+      const d: { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined = data as { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined;
       if (!d || !d.ok) return false;
-      const runs = d.data?.runs ?? [];
-      const hasActive = runs.some(
-        (run) => run.status === "queued" || run.status === "running"
+      const runs: AiPathRunRecord[] = d.data?.runs ?? [];
+      const hasActive: boolean = runs.some(
+        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
       );
       return hasActive ? 5000 : false;
     },
@@ -694,7 +802,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     loadAttemptRef.current = loadNonce;
     loadInFlightRef.current = true;
     setLoading(true);
-    const loadConfig = async () => {
+    const loadConfig = async (): Promise<void> => {
       try {
         const settingsResult = await settingsQuery.refetch();
         if (settingsResult.error || !settingsResult.data) {
@@ -749,9 +857,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         } catch (error) {
           console.warn("[AI Paths] Failed to load user preferences.", error);
         }
-        const map = new Map(data.map((item) => [item.key, item.value]));
+        const map = new Map(data.map((item: { key: string; value: string }): [string, string] => [item.key, item.value]));
         const debugSnapshots: Record<string, PathDebugSnapshot> = {};
-        map.forEach((value, key) => {
+        map.forEach((value: string, key: string) => {
           if (!key.startsWith(PATH_DEBUG_PREFIX)) return;
           const pathId = key.slice(PATH_DEBUG_PREFIX.length);
           if (!pathId) return;
@@ -804,7 +912,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           try {
             const parsed = JSON.parse(queryPresetsRaw) as DbQueryPreset[];
             if (Array.isArray(parsed)) {
-              const normalized = parsed.map((item) => normalizeDbQueryPreset(item));
+              const normalized = parsed.map((item: DbQueryPreset): DbQueryPreset => normalizeDbQueryPreset(item));
               setDbQueryPresets(normalized);
             }
           } catch (error) {
@@ -815,7 +923,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           try {
             const parsed = JSON.parse(dbNodePresetsRaw) as DbNodePreset[];
             if (Array.isArray(parsed)) {
-              const normalized = parsed.map((item) => normalizeDbNodePreset(item));
+              const normalized = parsed.map((item: DbNodePreset): DbNodePreset => normalizeDbNodePreset(item));
               setDbNodePresets(normalized);
             }
           } catch (error) {
@@ -830,7 +938,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         }
 
         if (settingsMetas.length > 0) {
-          settingsMetas.forEach((meta) => {
+          settingsMetas.forEach((meta: PathMeta) => {
             const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
             if (configRaw) {
               try {
@@ -872,7 +980,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           Object.assign(configs, settingsConfigs);
           metas = settingsMetas;
         } else if (shouldPreferPrefs && preferredPathConfigs && Object.keys(preferredPathConfigs).length > 0) {
-          Object.entries(preferredPathConfigs).forEach(([id, config]) => {
+          Object.entries(preferredPathConfigs).forEach(([id, config]: [string, PathConfig]) => {
             const fallback = createDefaultPathConfig(id);
             configs[id] = {
               ...fallback,
@@ -890,11 +998,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           });
           metas =
             preferredPathIndex && preferredPathIndex.length > 0
-              ? preferredPathIndex.filter((meta) => configs[meta.id])
-              : Object.values(configs).map(createPathMeta);
+              ? preferredPathIndex.filter((meta: PathMeta): boolean => !!configs[meta.id])
+              : Object.values(configs).map((c: PathConfig): PathMeta => createPathMeta(c));
           if (metas.length > 0) {
             try {
-              const settingsPayloads = metas.map((meta) => ({
+              const settingsPayloads = metas.map((meta: PathMeta): { key: string; value: string } => ({
                 key: `${PATH_CONFIG_PREFIX}${meta.id}`,
                 value: JSON.stringify(sanitizePathConfig(configs[meta.id]!)),
               }));
@@ -999,7 +1107,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     persistLastError,
   ]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!prefsLoaded) return;
     const payload = {
       aiPathsActivePathId: activePathId,
@@ -1009,27 +1117,27 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const payloadKey = JSON.stringify(payload);
     if (payloadKey === lastPrefsPayloadRef.current) return;
     lastPrefsPayloadRef.current = payloadKey;
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout((): void => {
       updatePreferencesMutation.mutate(payload);
     }, 200);
-    return () => clearTimeout(timeout);
+    return (): void => clearTimeout(timeout);
   }, [activePathId, expandedPaletteGroups, paletteCollapsed, prefsLoaded, updatePreferencesMutation]);
 
-  useEffect(() => {
-    const handlePointerUp = () => {
+  useEffect((): void | (() => void) => {
+    const handlePointerUp = (): void => {
       setConnecting(null);
       setConnectingPos(null);
     };
     window.addEventListener("pointerup", handlePointerUp);
-    return () => window.removeEventListener("pointerup", handlePointerUp);
+    return (): void => window.removeEventListener("pointerup", handlePointerUp);
   }, []);
 
-  useEffect(() => {
+  useEffect((): void => {
     runtimeStateRef.current = runtimeState;
   }, [runtimeState]);
 
-  const clearRuntimeForNode = React.useCallback((nodeId: string) => {
-    setRuntimeState((prev) => {
+  const clearRuntimeForNode = React.useCallback((nodeId: string): void => {
+    setRuntimeState((prev: RuntimeState): RuntimeState => {
       const nextInputs = { ...prev.inputs };
       const nextOutputs = { ...prev.outputs };
       delete nextInputs[nodeId];
@@ -1038,16 +1146,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   }, []);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!lastDrop) return;
     if (lastDropTimerRef.current) {
       window.clearTimeout(lastDropTimerRef.current);
     }
-    lastDropTimerRef.current = window.setTimeout(() => {
+    lastDropTimerRef.current = window.setTimeout((): void => {
       setLastDrop(null);
       lastDropTimerRef.current = null;
     }, 1600);
-    return () => {
+    return (): void => {
       if (lastDropTimerRef.current) {
         window.clearTimeout(lastDropTimerRef.current);
         lastDropTimerRef.current = null;
@@ -1056,16 +1164,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   }, [lastDrop]);
 
   // Cleanup RAF on unmount
-  useEffect(() => {
-    return () => {
+  useEffect((): () => void => {
+    return (): void => {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
     };
   }, []);
 
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
+  useEffect((): void | (() => void) => {
+    const handlePointerDown = (event: PointerEvent): void => {
       const target = event.target as HTMLElement | null;
       if (target?.closest("[data-port]")) return;
       if (target?.closest("path")) return;
@@ -1075,12 +1183,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setSelectedEdgeId(null);
     };
     window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
+    return (): void => window.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
   const handleRemoveEdge = useCallback(
-    (edgeId: string) => {
-      setEdges((prev) => prev.filter((edge) => edge.id !== edgeId));
+    (edgeId: string): void => {
+      setEdges((prev: Edge[]): Edge[] => prev.filter((edge: Edge): boolean => edge.id !== edgeId));
       if (selectedEdgeId === edgeId) {
         setSelectedEdgeId(null);
       }
@@ -1088,7 +1196,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     [selectedEdgeId]
   );
 
-  const isTypingTarget = (target: EventTarget | null) => {
+  const isTypingTarget = (target: EventTarget | null): boolean => {
     const element = target as HTMLElement | null;
     if (!element) return false;
     if (element.isContentEditable) return true;
@@ -1097,21 +1205,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return Boolean(element.closest("input, textarea, select, [contenteditable=\"true\"]"));
   };
 
-  const handleDeleteSelectedNode = useCallback(() => {
+  const handleDeleteSelectedNode = useCallback((): void => {
     if (!selectedNodeId) return;
-    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const targetNode = nodes.find((node: AiNode): boolean => node.id === selectedNodeId);
     const label = targetNode?.title || "this node";
     const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
     if (!confirmed) return;
-    setNodes((prev) => prev.filter((node) => node.id !== selectedNodeId));
-    setEdges((prev) =>
-      prev.filter((edge) => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
+    setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== selectedNodeId));
+    setEdges((prev: Edge[]): Edge[] =>
+      prev.filter((edge: Edge): boolean => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
     );
     setSelectedNodeId(null);
   }, [nodes, selectedNodeId]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useEffect((): void | (() => void) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         setConnecting(null);
         setConnectingPos(null);
@@ -1131,21 +1239,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return (): void => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedEdgeId, selectedNodeId, handleRemoveEdge, handleDeleteSelectedNode]);
 
-  useEffect(() => {
-    setEdges((prev) => sanitizeEdges(nodes, prev));
+  useEffect((): void => {
+    setEdges((prev: Edge[]): Edge[] => sanitizeEdges(nodes, prev));
   }, [nodes]);
 
-  const setViewClamped = (next: { x: number; y: number; scale: number }) => {
+  const setViewClamped = (next: { x: number; y: number; scale: number }): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     const clampedScale = clampScale(next.scale);
     const clamped = clampTranslate(next.x, next.y, clampedScale, viewport);
     setView({ x: clamped.x, y: clamped.y, scale: clampedScale });
   };
 
-  const zoomTo = (targetScale: number) => {
+  const zoomTo = (targetScale: number): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport) {
       setViewClamped({ ...view, scale: targetScale });
@@ -1162,7 +1270,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setView({ x: clamped.x, y: clamped.y, scale: nextScale });
   };
 
-  const fitToNodesWith = (items: AiNode[]) => {
+  const fitToNodesWith = (items: AiNode[]): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport || items.length === 0) {
       resetView();
@@ -1170,7 +1278,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
     const padding = 120;
     const bounds = items.reduce(
-      (acc, node) => {
+      (acc: { minX: number; minY: number; maxX: number; maxY: number }, node: AiNode) => {
         const x1 = node.position.x;
         const y1 = node.position.y;
         const x2 = node.position.x + NODE_WIDTH;
@@ -1202,17 +1310,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setView({ x: clamped.x, y: clamped.y, scale: nextScale });
   };
 
-  const fitToNodes = () => {
+  const fitToNodes = (): void => {
     fitToNodesWith(nodes);
   };
 
-  const resetView = () => {
+  const resetView = (): void => {
     setViewClamped({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
   };
 
 
 
-  const ensureNodeVisible = (node: AiNode) => {
+  const ensureNodeVisible = (node: AiNode): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport) return;
     const nodeLeft = node.position.x * view.scale + view.x;
@@ -1236,11 +1344,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   };
 
   const selectedNode = useMemo(
-    () => nodes.find((node) => node.id === selectedNodeId) ?? null,
+    (): AiNode | null => nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null,
     [nodes, selectedNodeId]
   );
   const connectingFromNode = useMemo(
-    () => (connecting ? nodes.find((node) => node.id === connecting.fromNodeId) ?? null : null),
+    (): AiNode | null => (connecting ? nodes.find((node: AiNode): boolean => node.id === connecting.fromNodeId) ?? null : null),
     [connecting, nodes]
   );
 
@@ -1248,7 +1356,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     node: AiNode,
     portName: string | undefined,
     side: "input" | "output"
-  ) => {
+  ): { x: number; y: number } => {
     const ports = side === "input" ? node.inputs : node.outputs;
     const index = portName ? ports.indexOf(portName) : -1;
     const safeIndex = index >= 0 ? index : Math.max(0, Math.floor(ports.length / 2));
@@ -1260,24 +1368,24 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   // Create a stable key based only on edge-relevant node data (position, ports)
   // This prevents edge recalculation when only config/title changes occur
   const nodePositionsKey = useMemo(
-    () =>
+    (): string =>
       nodes
         .map(
-          (n) =>
+          (n: AiNode): string =>
             `${n.id}:${n.position.x}:${n.position.y}:${n.inputs.length}:${n.outputs.length}`
         )
         .join("|"),
     [nodes]
   );
 
-  const edgePaths = useMemo(() => {
-    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-    const midpoint = (a: { x: number; y: number }, b: { x: number; y: number }) => ({
+  const edgePaths = useMemo((): { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[] => {
+    const nodeMap = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
+    const midpoint = (a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } => ({
       x: (a.x + b.x) / 2,
       y: (a.y + b.y) / 2,
     });
     return edges
-      .map((edge) => {
+      .map((edge: Edge): { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } } | null => {
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;
@@ -1323,13 +1431,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const handlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
-  ) => {
+  ): void => {
     event.stopPropagation();
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
-    const node = nodes.find((item) => item.id === nodeId);
+    const node = nodes.find((item: AiNode): boolean => item.id === nodeId);
     if (!node) return;
     const canvasX = (event.clientX - viewport.left - view.x) / view.scale;
     const canvasY = (event.clientY - viewport.top - view.y) / view.scale;
@@ -1343,7 +1451,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const handlePointerMove = (
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
-  ) => {
+  ): void => {
     if (!dragState || dragState.nodeId !== nodeId) return;
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
@@ -1359,11 +1467,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     // RAF throttling: batch position updates to animation frames
     pendingDragRef.current = { nodeId, x: nextX, y: nextY };
     if (rafIdRef.current === null) {
-      rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = requestAnimationFrame((): void => {
         if (pendingDragRef.current) {
           const { nodeId: id, x, y } = pendingDragRef.current;
-          setNodes((prev) =>
-            prev.map((node) =>
+          setNodes((prev: AiNode[]): AiNode[] =>
+            prev.map((node: AiNode): AiNode =>
               node.id === id ? { ...node, position: { x, y } } : node
             )
           );
@@ -1376,7 +1484,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const handlePointerUp = (
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
-  ) => {
+  ): void => {
     if (dragState?.nodeId !== nodeId) return;
     event.currentTarget.releasePointerCapture(event.pointerId);
 
@@ -1387,8 +1495,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
     if (pendingDragRef.current) {
       const { nodeId: id, x, y } = pendingDragRef.current;
-      setNodes((prev) =>
-        prev.map((node) =>
+      setNodes((prev: AiNode[]): AiNode[] =>
+        prev.map((node: AiNode): AiNode =>
           node.id === id ? { ...node, position: { x, y } } : node
         )
       );
@@ -1401,14 +1509,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const handleDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     node: NodeDefinition
-  ) => {
+  ): void => {
     event.dataTransfer.effectAllowed = "copy";
     const payload = JSON.stringify(node);
     event.dataTransfer.setData("application/x-ai-node", payload);
     event.dataTransfer.setData("text/plain", payload);
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
     event.stopPropagation();
     const viewport = viewportRef.current?.getBoundingClientRect();
@@ -1449,18 +1557,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       ...(config ? { config } : {}),
     };
     setSelectedNodeId(newNode.id);
-    setNodes((prev) => [...prev, newNode]);
+    setNodes((prev: AiNode[]): AiNode[] => [...prev, newNode]);
     ensureNodeVisible(newNode);
     setLastDrop({ x: nextX, y: nextY });
     toast(`Node added: ${payload.title}`, { variant: "success" });
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "copy";
   };
 
-  const handleClearWires = async () => {
+  const handleClearWires = async (): Promise<void> => {
     if (!activePathId) return;
     const updatedAt = new Date().toISOString();
     const config: PathConfig = {
@@ -1498,7 +1606,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     event: React.PointerEvent<HTMLButtonElement>,
     node: AiNode,
     port: string
-  ) => {
+  ): void => {
     event.stopPropagation();
     const start = getPortPosition(node, port, "output");
     setConnecting({ fromNodeId: node.id, fromPort: port, start });
@@ -1509,7 +1617,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     event: React.PointerEvent<HTMLButtonElement>,
     node: AiNode,
     port: string
-  ) => {
+  ): void => {
     event.stopPropagation();
     if (!connecting) return;
     if (connecting.fromNodeId === node.id && connecting.fromPort === port) {
@@ -1518,7 +1626,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       return;
     }
 
-    const fromNode = nodes.find((n) => n.id === connecting.fromNodeId);
+    const fromNode = nodes.find((n: AiNode): boolean => n.id === connecting.fromNodeId);
     if (!fromNode) {
       setConnecting(null);
       setConnectingPos(null);
@@ -1539,7 +1647,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       return;
     }
 
-    setEdges((prev) => [
+    setEdges((prev: Edge[]): Edge[] => [
       ...prev,
       {
         id: `edge-${Math.random().toString(36).slice(2, 8)}`,
@@ -1554,7 +1662,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setConnectingPos(null);
   };
 
-  const handlePanStart = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePanStart = (event: React.PointerEvent<HTMLDivElement>): void => {
     const canvasEl = canvasRef.current;
     const targetEl = event.target as Element | null;
     if (targetEl?.closest("path")) return;
@@ -1580,7 +1688,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   };
 
-  const handlePanMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePanMove = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (connecting) {
       const viewport = viewportRef.current?.getBoundingClientRect();
       if (!viewport) return;
@@ -1597,7 +1705,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setView({ x: clamped.x, y: clamped.y, scale: view.scale });
   };
 
-  const handlePanEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePanEnd = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (panState) {
       event.currentTarget.releasePointerCapture(event.pointerId);
       setPanState(null);
@@ -1608,26 +1716,26 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const updateSelectedNode = (patch: Partial<AiNode>) => {
+  const updateSelectedNode = (patch: Partial<AiNode>): void => {
     if (!selectedNodeId) return;
     const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
-    setNodes((prev) => {
-      const next = prev.map((node) =>
+    setNodes((prev: AiNode[]): AiNode[] => {
+      const next = prev.map((node: AiNode): AiNode =>
         node.id === selectedNodeId ? { ...node, ...patch } : node
       );
       if (shouldSanitizeEdges) {
-        setEdges((current) => sanitizeEdges(next, current));
+        setEdges((current: Edge[]): Edge[] => sanitizeEdges(next, current));
       }
       return next;
     });
   };
 
-  const updateSelectedNodeConfig = (patch: NodeConfig) => {
+  const updateSelectedNodeConfig = (patch: NodeConfig): void => {
     if (!selectedNodeId) return;
-    setNodes((prev) => {
-      const currentNode = prev.find((node) => node.id === selectedNodeId);
+    setNodes((prev: AiNode[]): AiNode[] => {
+      const currentNode = prev.find((node: AiNode): boolean => node.id === selectedNodeId);
       if (!currentNode) return prev;
-      const next = prev.map((node) => {
+      const next = prev.map((node: AiNode): AiNode => {
         if (node.id !== selectedNodeId) return node;
         // Deep merge for nested config objects to prevent stale closure issues
         const currentConfig = node.config ?? {};
@@ -1657,11 +1765,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   };
 
-  const fetchProductById = useCallback(async (productId: string) => {
+  const fetchProductById = useCallback(async (productId: string): Promise<Record<string, unknown> | null> => {
     try {
       return await queryClient.fetchQuery({
         queryKey: ["products", productId],
-        queryFn: async () => {
+        queryFn: async (): Promise<Record<string, unknown> | null> => {
           const result = await entityApi.getProduct(productId);
           return result.ok ? result.data : null;
         },
@@ -1673,11 +1781,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   }, [queryClient, reportAiPathsError]);
 
-  const fetchNoteById = useCallback(async (noteId: string) => {
+  const fetchNoteById = useCallback(async (noteId: string): Promise<Record<string, unknown> | null> => {
     try {
       return await queryClient.fetchQuery({
         queryKey: ["notes", noteId],
-        queryFn: async () => {
+        queryFn: async (): Promise<Record<string, unknown> | null> => {
           const result = await entityApi.getNote(noteId);
           return result.ok ? result.data : null;
         },
@@ -1689,7 +1797,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   }, [queryClient, reportAiPathsError]);
 
-  const fetchEntityByType = useCallback(async (entityType: string, entityId: string) => {
+  const fetchEntityByType = useCallback(async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
     if (!entityType || !entityId) return null;
     const normalized = entityType.toLowerCase();
     if (normalized === "product") {
@@ -1732,7 +1840,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     nodeId: string,
     entityType: string,
     entityId: string
-  ) => {
+  ): Promise<void> => {
     await fetchParserSampleMutation.mutateAsync({ nodeId, entityType, entityId });
   };
 
@@ -1740,13 +1848,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     nodeId: string,
     entityType: string,
     entityId: string
-  ) => {
+  ): Promise<void> => {
     await fetchUpdaterSampleMutation.mutateAsync({ nodeId, entityType, entityId });
   };
 
-  const getDomSelector = (element: Element | null) => {
+  const getDomSelector = (element: Element | null): string | null => {
     if (!element) return null;
-    const selectorEscape = (val: string) => {
+    const selectorEscape = (val: string): string => {
       if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
         return CSS.escape(val);
       }
@@ -1777,7 +1885,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               const parent = current.parentElement;
               if (!parent) break;
               const siblings = Array.from(parent.children).filter(
-                (child) => child.tagName === (current as Element).tagName
+                (child: Element): boolean => child.tagName === (current as Element).tagName
               );
               const index = siblings.indexOf(current) + 1;
               segments.unshift(`${tagName}:nth-of-type(${index})`);
@@ -1791,7 +1899,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
   };
 
-  const getTargetInfo = (event?: React.MouseEvent) => {
+  const getTargetInfo = (event?: React.MouseEvent): Record<string, unknown> | null => {
     const target = event?.target as Element | null;
     if (!target) return null;
     const element =
@@ -1834,8 +1942,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   ): PathDebugSnapshot | null => {
     if (!pathId) return null;
     const entries = nodes
-      .filter((node) => node.type === "database")
-      .map((node) => {
+      .filter((node: AiNode): boolean => node.type === "database")
+      .map((node: AiNode): PathDebugEntry | null => {
         const output = state.outputs[node.id] as
           | { debugPayload?: unknown }
           | undefined;
@@ -1847,7 +1955,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           debug: debugPayload,
         };
       })
-      .filter((entry) => entry !== null) as PathDebugSnapshot["entries"];
+      .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => entry !== null);
     if (entries.length === 0) return null;
     return { pathId, runAt, entries };
   }, [nodes]);
@@ -1856,7 +1964,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     pathId: string | null,
     runAt: string,
     state: RuntimeState
-  ) => {
+  ): Promise<void> => {
     if (!pathId) return;
     const snapshot = buildDebugSnapshot(pathId, runAt, state);
     if (!snapshot) return;
@@ -1867,7 +1975,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         key: `${PATH_DEBUG_PREFIX}${pathId}`,
         value: payload,
       });
-      setPathDebugSnapshots((prev) => ({
+      setPathDebugSnapshots((prev: Record<string, PathDebugSnapshot>) => ({
         ...prev,
         [pathId]: snapshot,
       }));
@@ -1880,7 +1988,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     triggerNode: AiNode,
     triggerEvent: string,
     event?: React.MouseEvent
-  ) => {
+  ): Record<string, unknown> => {
     const timestamp = new Date().toISOString();
     const nativeEvent = event?.nativeEvent;
     const pointer = nativeEvent
@@ -1964,7 +2072,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     };
   };
 
-  const runGraphForTrigger = async (triggerNode: AiNode, event?: React.MouseEvent) => {
+  const runGraphForTrigger = async (triggerNode: AiNode, event?: React.MouseEvent): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
     lastTriggerNodeIdRef.current = triggerNode.id;
     const triggerContext = buildTriggerContext(triggerNode, triggerEvent, event);
@@ -1986,7 +2094,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setLastRunAt(runAt);
     void persistDebugSnapshot(activePathId ?? null, runAt, result);
     if (activePathId) {
-      setPathConfigs((prev) => ({
+      setPathConfigs((prev: Record<string, PathConfig>) => ({
         ...prev,
         [activePathId]: {
           ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
@@ -2004,7 +2112,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       jobId?: string;
       nodeInputs: RuntimePortValues;
     }
-  ) => {
+  ): Promise<void> => {
     const fallbackJobId = options.jobId;
     const pollKey = `${node.id}:${options.jobId ?? "db"}`;
     if (pollInFlightRef.current.has(pollKey)) return;
@@ -2057,8 +2165,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       };
       if (resolvedJobId) {
         nodes
-          .filter((item) => item.type === "model")
-          .forEach((modelNode) => {
+          .filter((item: AiNode): boolean => item.type === "model")
+          .forEach((modelNode: AiNode) => {
             const modelOutput = updatedOutputs[modelNode.id] as
               | { jobId?: string; status?: string; result?: unknown; debugPayload?: unknown }
               | undefined;
@@ -2071,7 +2179,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             };
           });
       }
-      setRuntimeState((prev) => ({
+      setRuntimeState((prev: RuntimeState): RuntimeState => ({
         ...prev,
         outputs: updatedOutputs,
       }));
@@ -2095,7 +2203,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setLastRunAt(runAt);
       void persistDebugSnapshot(activePathId ?? null, runAt, downstreamState);
       if (activePathId) {
-        setPathConfigs((prev) => ({
+        setPathConfigs((prev: Record<string, PathConfig>) => ({
           ...prev,
           [activePathId]: {
             ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
@@ -2110,7 +2218,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         { action: "pollJob", nodeId: node.id, jobId: fallbackJobId },
         "AI job polling failed:"
       );
-      setRuntimeState((prev) => ({
+      setRuntimeState((prev: RuntimeState): RuntimeState => ({
         ...prev,
         outputs: {
           ...prev.outputs,
@@ -2131,10 +2239,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   }, [nodes, edges, activePathId, fetchEntityByType, reportAiPathsError, toast, persistDebugSnapshot, buildActivePathConfig]);
 
-  const startPendingPolls = useCallback((state: RuntimeState) => {
+  const startPendingPolls = useCallback((state: RuntimeState): void => {
     nodes
-      .filter((node) => node.type === "poll")
-      .forEach((node) => {
+      .filter((node: AiNode): boolean => node.type === "poll")
+      .forEach((node: AiNode) => {
         const pollConfig = node.config?.poll;
         const output = state.outputs[node.id] as
           | { status?: string; jobId?: string }
@@ -2153,7 +2261,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       });
   }, [nodes, runPollUpdate]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!runtimeState || nodes.length === 0) return;
     startPendingPolls(runtimeState);
   }, [nodes, runtimeState, startPendingPolls]);
@@ -2162,7 +2270,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     eventName: string,
     entityId: string,
     entityType?: string
-  ) => {
+  ): void => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
       new CustomEvent("ai-path-trigger", {
@@ -2179,7 +2287,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const handleRunSimulation = (
     simulationNode: AiNode,
     triggerEvent?: string
-  ) => {
+  ): void => {
     const entityId =
       simulationNode.config?.simulation?.entityId?.trim() ||
       simulationNode.config?.simulation?.productId?.trim();
@@ -2192,13 +2300,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     if (!triggerEvent) {
       const connectedTriggerIds = edges
         .filter(
-          (edge) =>
+          (edge: Edge): boolean =>
             edge.from === simulationNode.id &&
             (!edge.fromPort || edge.fromPort === "simulation")
         )
-        .map((edge) => edge.to);
+        .map((edge: Edge): string => edge.to);
       const triggerNode = nodes.find(
-        (node) => node.type === "trigger" && connectedTriggerIds.includes(node.id)
+        (node: AiNode): boolean => node.type === "trigger" && connectedTriggerIds.includes(node.id)
       );
       if (triggerNode) {
         eventName = triggerNode.config?.trigger?.event ?? eventName;
@@ -2211,42 +2319,42 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   };
 
-  const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent) => {
+  const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const connectedSimulationIds = edges
-      .filter((edge) => edge.to === triggerNode.id)
+      .filter((edge: Edge): boolean => edge.to === triggerNode.id)
       .filter(
-        (edge) =>
+        (edge: Edge): boolean =>
           (!edge.toPort || edge.toPort === "simulation") &&
           (!edge.fromPort || edge.fromPort === "simulation")
       )
-      .map((edge) => edge.from);
+      .map((edge: Edge): string => edge.from);
     const simulationNodes = nodes.filter(
-      (node) => node.type === "simulation" && connectedSimulationIds.includes(node.id)
+      (node: AiNode): boolean => node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
       toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
       return;
     }
-    simulationNodes.forEach((node) => handleRunSimulation(node, triggerEvent));
+    simulationNodes.forEach((node: AiNode) => handleRunSimulation(node, triggerEvent));
     void runGraphForTrigger(triggerNode, event);
   };
 
   const handleFireTriggerPersistent = async (
     triggerNode: AiNode,
     event?: React.MouseEvent
-  ) => {
+  ): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const connectedSimulationIds = edges
-      .filter((edge) => edge.to === triggerNode.id)
+      .filter((edge: Edge): boolean => edge.to === triggerNode.id)
       .filter(
-        (edge) =>
+        (edge: Edge): boolean =>
           (!edge.toPort || edge.toPort === "simulation") &&
           (!edge.fromPort || edge.fromPort === "simulation")
       )
-      .map((edge) => edge.from);
+      .map((edge: Edge): string => edge.from);
     const simulationNodes = nodes.filter(
-      (node) => node.type === "simulation" && connectedSimulationIds.includes(node.id)
+      (node: AiNode): boolean => node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
       toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
@@ -2290,27 +2398,27 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     toast("Persistent run queued.", { variant: "success" });
   };
 
-  const runList = useMemo(() => {
+  const runList = useMemo((): AiPathRunRecord[] => {
     if (!runsQuery.data || !runsQuery.data.ok) return [] as AiPathRunRecord[];
-    return (runsQuery.data.data.runs as AiPathRunRecord[]) ?? [];
+    return runsQuery.data.data.runs ?? [];
   }, [runsQuery.data]);
 
-  const filteredRunList = useMemo(() => {
+  const filteredRunList = useMemo((): AiPathRunRecord[] => {
     if (runFilter === "all") return runList;
     if (runFilter === "active") {
       return runList.filter(
-        (run) => run.status === "queued" || run.status === "running"
+        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
       );
     }
     if (runFilter === "failed") {
       return runList.filter(
-        (run) => run.status === "failed" || run.status === "paused"
+        (run: AiPathRunRecord): boolean => run.status === "failed" || run.status === "paused"
       );
     }
-    return runList.filter((run) => run.status === "dead_lettered");
+    return runList.filter((run: AiPathRunRecord): boolean => run.status === "dead_lettered");
   }, [runFilter, runList]);
 
-  const handleOpenRunDetail = async (runId: string) => {
+  const handleOpenRunDetail = async (runId: string): Promise<void> => {
     setRunDetailOpen(true);
     setRunDetailLoading(true);
     try {
@@ -2320,8 +2428,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
       const data = response.data as {
         run: AiPathRunRecord;
-        nodes: unknown[];
-        events: unknown[];
+        nodes: AiPathRunNodeRecord[];
+        events: AiPathRunEventRecord[];
       };
       setRunDetail(data);
     } catch (error) {
@@ -2335,7 +2443,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleResumeRun = async (runId: string, mode: "resume" | "replay") => {
+  const handleResumeRun = async (runId: string, mode: "resume" | "replay"): Promise<void> => {
     const response = await runsApi.resume(runId, mode);
     if (!response.ok) {
       toast(response.error || "Failed to resume run.", { variant: "error" });
@@ -2347,7 +2455,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     void runsQuery.refetch();
   };
 
-  const handleCancelRun = async (runId: string) => {
+  const handleCancelRun = async (runId: string): Promise<void> => {
     const response = await runsApi.cancel(runId);
     if (!response.ok) {
       toast(response.error || "Failed to cancel run.", { variant: "error" });
@@ -2357,7 +2465,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     void runsQuery.refetch();
   };
 
-  const handleRequeueDeadLetter = async (runId: string) => {
+  const handleRequeueDeadLetter = async (runId: string): Promise<void> => {
     const response = await runsApi.resume(runId, "replay");
     if (!response.ok) {
       toast(response.error || "Failed to requeue run.", { variant: "error" });
@@ -2367,9 +2475,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     void runsQuery.refetch();
   };
 
-  const handleSendToAi = async (sourceNodeId: string, prompt: string) => {
+  const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
     // Find the source node to determine its type
-    const sourceNode = nodes.find((n) => n.id === sourceNodeId);
+    const sourceNode = nodes.find((n: AiNode): boolean => n.id === sourceNodeId);
     if (!sourceNode) {
       toast("Source node not found.", { variant: "error" });
       return;
@@ -2381,14 +2489,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
     // First try to find edge with preferred port
     let aiEdge = edges.find(
-      (edge) => edge.from === sourceNodeId && edge.fromPort === preferredPort
+      (edge: Edge): boolean => edge.from === sourceNodeId && edge.fromPort === preferredPort
     );
 
     // If not found, find any edge that connects to a model node
     if (!aiEdge) {
-      aiEdge = edges.find((edge) => {
+      aiEdge = edges.find((edge: Edge): boolean => {
         if (edge.from !== sourceNodeId) return false;
-        const targetNode = nodes.find((n) => n.id === edge.to);
+        const targetNode = nodes.find((n: AiNode): boolean => n.id === edge.to);
         return targetNode?.type === "model";
       });
     }
@@ -2397,7 +2505,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       toast("No AI Model connected.", { variant: "error" });
       return;
     }
-    const aiNode = nodes.find((n) => n.id === aiEdge.to && n.type === "model");
+    const aiNode = nodes.find((n: AiNode): boolean => n.id === aiEdge.to && n.type === "model");
     if (!aiNode) {
       toast("Connected node is not an AI Model.", { variant: "error" });
       return;
@@ -2424,15 +2532,15 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           nodeTitle: aiNode.title,
         },
       };
-      const enqueueData = await enqueueAiJobMutation.mutateAsync({
+      const enqueueData = (await enqueueAiJobMutation.mutateAsync({
         productId: activePathId ?? "direct",
         type: "graph_model",
         payload,
-      });
+      })) as { jobId: string };
       toast("AI job queued. Waiting for result...", { variant: "success" });
       const result = await pollGraphJob(enqueueData.jobId);
       // Update runtime state with the result
-      setRuntimeState((prev) => {
+      setRuntimeState((prev: RuntimeState): RuntimeState => {
         const sourceInputs = prev.inputs[sourceNodeId] ?? {};
         const sourceOutputs = prev.outputs[sourceNodeId] ?? {};
         const aiOutputs = prev.outputs[aiNode.id] ?? {};
@@ -2480,19 +2588,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleSelectEdge = (edgeId: string | null) => {
+  const handleSelectEdge = (edgeId: string | null): void => {
     setSelectedEdgeId(edgeId);
     if (edgeId) {
       setSelectedNodeId(null);
     }
   };
 
-  const handleSelectNode = (nodeId: string) => {
+  const handleSelectNode = (nodeId: string): void => {
     setSelectedEdgeId(null);
     setSelectedNodeId(nodeId);
   };
 
-  const getCanvasCenterPosition = () => {
+  const getCanvasCenterPosition = (): { x: number; y: number } => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport) return { x: VIEW_MARGIN, y: VIEW_MARGIN };
     const centerX = (viewport.width / 2 - view.x) / view.scale;
@@ -2508,7 +2616,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return { x: nextX, y: nextY };
   };
 
-  const handleSavePreset = async () => {
+  const handleSavePreset = async (): Promise<void> => {
     const name = presetDraft.name.trim();
     if (!name) {
       toast("Preset name is required.", { variant: "error" });
@@ -2519,7 +2627,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const template = presetDraft.template.trim();
     const nextPresets = [...clusterPresets];
     if (editingPresetId) {
-      const index = nextPresets.findIndex((preset) => preset.id === editingPresetId);
+      const index = nextPresets.findIndex((preset: ClusterPreset): boolean => preset.id === editingPresetId);
       const existing = nextPresets[index];
       if (index >= 0 && existing) {
         nextPresets[index] = {
@@ -2548,7 +2656,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     toast("Cluster preset saved.", { variant: "success" });
   };
 
-  const handleLoadPreset = (preset: ClusterPreset) => {
+  const handleLoadPreset = (preset: ClusterPreset): void => {
     setEditingPresetId(preset.id);
     setPresetDraft({
       name: preset.name,
@@ -2558,12 +2666,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   };
 
-  const handleDeletePreset = async (presetId: string) => {
-    const target = clusterPresets.find((preset) => preset.id === presetId);
+  const handleDeletePreset = async (presetId: string): Promise<void> => {
+    const target = clusterPresets.find((preset: ClusterPreset): boolean => preset.id === presetId);
     if (!target) return;
     const confirmed = window.confirm(`Delete preset "${target.name}"?`);
     if (!confirmed) return;
-    const nextPresets = clusterPresets.filter((preset) => preset.id !== presetId);
+    const nextPresets = clusterPresets.filter((preset: ClusterPreset): boolean => preset.id !== presetId);
     setClusterPresets(nextPresets);
     await saveClusterPresets(nextPresets);
     if (editingPresetId === presetId) {
@@ -2577,7 +2685,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleApplyPreset = (preset: ClusterPreset) => {
+  const handleApplyPreset = (preset: ClusterPreset): void => {
     const base = getCanvasCenterPosition();
     const bundleNode: AiNode = {
       id: `node-${Math.random().toString(36).slice(2, 8)}`,
@@ -2614,20 +2722,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       fromPort: "bundle",
       toPort: "bundle",
     };
-    setNodes((prev) => [...prev, bundleNode, templateNode]);
-    setEdges((prev) => [...prev, edge]);
+    setNodes((prev: AiNode[]): AiNode[] => [...prev, bundleNode, templateNode]);
+    setEdges((prev: Edge[]): Edge[] => [...prev, edge]);
     setSelectedNodeId(templateNode.id);
     ensureNodeVisible(templateNode);
     toast(`Preset applied: ${preset.name}`, { variant: "success" });
   };
 
-  const handleExportPresets = () => {
+  const handleExportPresets = (): void => {
     const payload = JSON.stringify(clusterPresets, null, 2);
     setPresetsJson(payload);
     setPresetsModalOpen(true);
   };
 
-  const handleImportPresets = async (mode: "merge" | "replace") => {
+  const handleImportPresets = async (mode: "merge" | "replace"): Promise<void> => {
     if (!presetsJson.trim()) {
       toast("Paste presets JSON to import.", { variant: "error" });
       return;
@@ -2647,10 +2755,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         toast("Invalid presets JSON. Expected an array.", { variant: "error" });
         return;
       }
-      const normalized = list.map((item: unknown) => normalizePreset(item as Partial<ClusterPreset>));
+      const normalized = list.map((item: unknown): ClusterPreset => normalizePreset(item as Partial<ClusterPreset>));
       let nextPresets = mode === "replace" ? [] : [...clusterPresets];
-      const existingIds = new Set(nextPresets.map((preset) => preset.id));
-      const merged = normalized.map((preset) => {
+      const existingIds = new Set(nextPresets.map((preset: ClusterPreset): string => preset.id));
+      const merged = normalized.map((preset: ClusterPreset): ClusterPreset => {
         if (existingIds.has(preset.id)) {
           return { ...preset, id: createPresetId(), updatedAt: new Date().toISOString() };
         }
@@ -2666,27 +2774,27 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handlePresetFromSelection = () => {
+  const handlePresetFromSelection = (): void => {
     const selectedTemplate = selectedNode?.type === "template" ? selectedNode : null;
     const selectedBundle = selectedNode?.type === "bundle" ? selectedNode : null;
 
-    const findBundleForTemplate = (template: AiNode) => {
+    const findBundleForTemplate = (template: AiNode): AiNode[] => {
       const bundleEdges = edges.filter(
-        (edge) => edge.to === template.id && edge.toPort === "bundle"
+        (edge: Edge): boolean => edge.to === template.id && edge.toPort === "bundle"
       );
       const bundleNodes = bundleEdges
-        .map((edge) => nodes.find((node) => node.id === edge.from))
-        .filter((node): node is AiNode => Boolean(node && node.type === "bundle"));
+        .map((edge: Edge): AiNode | undefined => nodes.find((node: AiNode): boolean => node.id === edge.from))
+        .filter((node: AiNode | undefined): node is AiNode => Boolean(node && node.type === "bundle"));
       return bundleNodes;
     };
 
-    const findTemplateForBundle = (bundle: AiNode) => {
+    const findTemplateForBundle = (bundle: AiNode): AiNode[] => {
       const templateEdges = edges.filter(
-        (edge) => edge.from === bundle.id && edge.fromPort === "bundle"
+        (edge: Edge): boolean => edge.from === bundle.id && edge.fromPort === "bundle"
       );
       const templateNodes = templateEdges
-        .map((edge) => nodes.find((node) => node.id === edge.to))
-        .filter((node): node is AiNode => Boolean(node && node.type === "template"));
+        .map((edge: Edge): AiNode | undefined => nodes.find((node: AiNode): boolean => node.id === edge.to))
+        .filter((node: AiNode | undefined): node is AiNode => Boolean(node && node.type === "template"));
       return templateNodes;
     };
 
@@ -2727,11 +2835,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
 
 
-  const updateActivePathMeta = (name: string) => {
+  const updateActivePathMeta = (name: string): void => {
     if (!activePathId) return;
     const updatedAt = new Date().toISOString();
-    setPaths((prev) =>
-      prev.map((path) =>
+    setPaths((prev: PathMeta[]): PathMeta[] =>
+      prev.map((path: PathMeta): PathMeta =>
         path.id === activePathId ? { ...path, name, updatedAt } : path
       )
     );
@@ -2742,7 +2850,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     nextPaths: PathMeta[],
     configId: string,
     config: PathConfig
-  ) => {
+  ): Promise<void> => {
     const sanitizedConfig = sanitizePathConfig(config);
     const payloadKey = JSON.stringify({
       index: nextPaths,
@@ -2760,7 +2868,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     lastSettingsPayloadRef.current = payloadKey;
   }, [updateSettingsBulkMutation]);
 
-  const buildPathSnapshot = useCallback(() =>
+  const buildPathSnapshot = useCallback((): string =>
     JSON.stringify({
       activePathId,
       name: pathName,
@@ -2781,14 +2889,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     updaterSamples,
   ]);
 
-  const persistPathConfig = useCallback(async (options?: { silent?: boolean }) => {
+  const persistPathConfig = useCallback(async (options?: { silent?: boolean }): Promise<void> => {
     if (!activePathId) return;
     const silent = options?.silent ?? false;
     if (!silent) setSaving(true);
     try {
       const updatedAt = new Date().toISOString();
       const config = buildActivePathConfig(updatedAt);
-      const nextPaths = paths.map((path) =>
+      const nextPaths = paths.map((path: PathMeta): PathMeta =>
         path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
       );
       const nextConfigs = { ...pathConfigs, [activePathId]: config };
@@ -2837,7 +2945,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     toast,
   ]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     const ok = await persistPathConfig();
     if (ok) {
       setAutoSaveStatus("saved");
@@ -2847,12 +2955,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  useEffect(() => {
+  useEffect((): void => {
     if (loading || !activePathId) return;
     lastSavedSnapshotRef.current = buildPathSnapshot();
   }, [activePathId, loading, buildPathSnapshot]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (loading || !activePathId) return;
     if (saving || autoSaveInFlightRef.current) return;
     const snapshot = buildPathSnapshot();
@@ -2864,12 +2972,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     if (autoSaveTimerRef.current) {
       window.clearTimeout(autoSaveTimerRef.current);
     }
-    autoSaveTimerRef.current = window.setTimeout(() => {
+    autoSaveTimerRef.current = window.setTimeout((): void => {
       if (autoSaveInFlightRef.current) return;
       autoSaveInFlightRef.current = true;
       setAutoSaveStatus("saving");
       void persistPathConfig({ silent: true })
-        .then((ok) => {
+        .then((ok: boolean) => {
           if (ok) {
             setAutoSaveStatus("saved");
             setAutoSaveAt(new Date().toISOString());
@@ -2881,7 +2989,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           autoSaveInFlightRef.current = false;
         });
     }, AUTO_SAVE_DEBOUNCE_MS);
-    return () => {
+    return (): void => {
       if (autoSaveTimerRef.current) {
         window.clearTimeout(autoSaveTimerRef.current);
         autoSaveTimerRef.current = null;
@@ -2903,22 +3011,22 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   ]);
 
   // Keep refs in sync with state (for beforeunload handler which can't use stale closures)
-  useEffect(() => { currentNodesRef.current = nodes; }, [nodes]);
-  useEffect(() => { currentEdgesRef.current = edges; }, [edges]);
-  useEffect(() => { currentPathsRef.current = paths; }, [paths]);
-  useEffect(() => { currentPathConfigsRef.current = pathConfigs; }, [pathConfigs]);
-  useEffect(() => { currentActivePathIdRef.current = activePathId; }, [activePathId]);
-  useEffect(() => { currentPathNameRef.current = pathName; }, [pathName]);
-  useEffect(() => { currentPathDescriptionRef.current = pathDescription; }, [pathDescription]);
-  useEffect(() => { currentActiveTriggerRef.current = activeTrigger; }, [activeTrigger]);
-  useEffect(() => { currentParserSamplesRef.current = parserSamples; }, [parserSamples]);
-  useEffect(() => { currentUpdaterSamplesRef.current = updaterSamples; }, [updaterSamples]);
-  useEffect(() => { currentRuntimeStateRef.current = runtimeState; }, [runtimeState]);
-  useEffect(() => { currentLastRunAtRef.current = lastRunAt; }, [lastRunAt]);
+  useEffect((): void => { currentNodesRef.current = nodes; }, [nodes]);
+  useEffect((): void => { currentEdgesRef.current = edges; }, [edges]);
+  useEffect((): void => { currentPathsRef.current = paths; }, [paths]);
+  useEffect((): void => { currentPathConfigsRef.current = pathConfigs; }, [pathConfigs]);
+  useEffect((): void => { currentActivePathIdRef.current = activePathId; }, [activePathId]);
+  useEffect((): void => { currentPathNameRef.current = pathName; }, [pathName]);
+  useEffect((): void => { currentPathDescriptionRef.current = pathDescription; }, [pathDescription]);
+  useEffect((): void => { currentActiveTriggerRef.current = activeTrigger; }, [activeTrigger]);
+  useEffect((): void => { currentParserSamplesRef.current = parserSamples; }, [parserSamples]);
+  useEffect((): void => { currentUpdaterSamplesRef.current = updaterSamples; }, [updaterSamples]);
+  useEffect((): void => { currentRuntimeStateRef.current = runtimeState; }, [runtimeState]);
+  useEffect((): void => { currentLastRunAtRef.current = lastRunAt; }, [lastRunAt]);
 
   // Save immediately when page is about to unload or tab loses focus
-  useEffect(() => {
-    const flushPendingSaveAsync = () => {
+  useEffect((): void | (() => void) => {
+    const flushPendingSaveAsync = (): void => {
       if (!currentActivePathIdRef.current || loading) return;
       // Clear any pending debounced save
       if (autoSaveTimerRef.current) {
@@ -2938,7 +3046,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
     // Synchronous save using sendBeacon for beforeunload (async won't complete)
     // Uses refs to get the LATEST state values, not stale closure values
-    const flushPendingSaveSync = () => {
+    const flushPendingSaveSync = (): void => {
       const pathId = currentActivePathIdRef.current;
       if (!pathId) return;
       // Clear any pending debounced save
@@ -2965,7 +3073,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         lastRunAt: currentLastRunAtRef.current,
       };
       const currentPaths = currentPathsRef.current;
-      const nextPaths = currentPaths.map((path) =>
+      const nextPaths = currentPaths.map((path: PathMeta): PathMeta =>
         path.id === pathId ? { ...path, name: currentPathNameRef.current, updatedAt } : path
       );
       const nextConfigs = { ...currentPathConfigsRef.current, [pathId]: config };
@@ -3022,18 +3130,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
 
-    const handleBeforeUnload = () => {
+    const handleBeforeUnload = (): void => {
       flushPendingSaveSync();
     };
 
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = (): void => {
       if (document.visibilityState === "hidden") {
         flushPendingSaveAsync();
       }
     };
 
     // Intercept clicks on links to save before Next.js client-side navigation
-    const handleLinkClick = (event: MouseEvent) => {
+    const handleLinkClick = (event: MouseEvent): void => {
       const target = event.target as HTMLElement;
       const anchor = target.closest("a");
       if (anchor && anchor.href && !anchor.href.startsWith("javascript:")) {
@@ -3046,14 +3154,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     document.addEventListener("visibilitychange", handleVisibilityChange);
     document.addEventListener("click", handleLinkClick, true); // Use capture phase
 
-    return () => {
+    return (): void => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("click", handleLinkClick, true);
     };
   }, [loading, buildPathSnapshot, persistPathConfig]);
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     if (!activePathId) return;
     const resetConfig = createDefaultPathConfig(activePathId);
     const normalizedNodes = normalizeNodes(resetConfig.nodes);
@@ -3065,11 +3173,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
-    setPathConfigs((prev) => ({ ...prev, [activePathId]: resetConfig }));
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({ ...prev, [activePathId]: resetConfig }));
     updateActivePathMeta(resetConfig.name);
   };
 
-  const handleCreatePath = () => {
+  const handleCreatePath = (): void => {
     const id = createPathId();
     const now = new Date().toISOString();
     const name = `New Path ${paths.length + 1}`;
@@ -3093,8 +3201,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       createdAt: now,
       updatedAt: now,
     };
-    setPaths((prev) => [...prev, meta]);
-    setPathConfigs((prev) => ({ ...prev, [id]: config }));
+    setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({ ...prev, [id]: config }));
     setActivePathId(id);
     setNodes([]);
     setEdges([]);
@@ -3108,7 +3216,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setSelectedNodeId(null);
   };
 
-  const handleCreateAiDescriptionPath = () => {
+  const handleCreateAiDescriptionPath = (): void => {
     const id = createPathId();
     const config = createAiDescriptionPath(id);
     const now = new Date().toISOString();
@@ -3118,8 +3226,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       createdAt: now,
       updatedAt: now,
     };
-    setPaths((prev) => [...prev, meta]);
-    setPathConfigs((prev) => ({ ...prev, [id]: config }));
+    setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({ ...prev, [id]: config }));
     setActivePathId(id);
     const normalizedNodes = normalizeNodes(config.nodes);
     setNodes(normalizedNodes);
@@ -3135,10 +3243,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     toast("AI Description Path created.", { variant: "success" });
   };
 
-  const handleDeletePath = async (pathId?: string) => {
+  const handleDeletePath = async (pathId?: string): Promise<void> => {
     const targetId = pathId ?? activePathId;
     if (!targetId) return;
-    const nextPaths = paths.filter((path) => path.id !== targetId);
+    const nextPaths = paths.filter((path: PathMeta): boolean => path.id !== targetId);
     if (nextPaths.length === 0) {
       const fallbackId = "default";
       const fallback = createDefaultPathConfig(fallbackId);
@@ -3205,7 +3313,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleSwitchPath = (value: string) => {
+  const handleSwitchPath = (value: string): void => {
     if (!value) return;
     const config = pathConfigs[value] ?? createDefaultPathConfig(value);
     setActivePathId(value);
@@ -3222,7 +3330,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
   };
 
-  const savePathIndex = async (nextPaths: PathMeta[]) => {
+  const savePathIndex = async (nextPaths: PathMeta[]): Promise<void> => {
     try {
       const safeConfigs = serializePathConfigs(pathConfigs);
       await updatePreferencesMutation.mutateAsync({
@@ -3244,7 +3352,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleCopyDocsWiring = async () => {
+  const handleCopyDocsWiring = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(docsWiringSnippet);
       toast("Wiring copied to clipboard.", { variant: "success" });
@@ -3254,7 +3362,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleCopyDocsDescription = async () => {
+  const handleCopyDocsDescription = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(docsDescriptionSnippet);
       toast("AI Description wiring copied.", { variant: "success" });
@@ -3264,7 +3372,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const handleCopyDocsJobs = async () => {
+  const handleCopyDocsJobs = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(docsJobsSnippet);
       toast("AI job wiring copied.", { variant: "success" });
@@ -3361,7 +3469,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                             onClick={() => {
                               setLastError(null);
                               void persistLastError(null);
-                              setLoadNonce((prev) => prev + 1);
+                              setLoadNonce((prev: number) => prev + 1);
                             }}
                           >
                             Retry
@@ -3403,7 +3511,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   <Input
                     className="h-9 w-[260px] rounded-md border border-border bg-card/60 px-3 text-sm text-white"
                     value={pathName}
-                    onChange={(event) => {
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       const value = event.target.value;
                       setPathName(value);
                       updateActivePathMeta(value);
@@ -3425,7 +3533,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               <CanvasSidebar
                 palette={palette}
                 paletteCollapsed={paletteCollapsed}
-                onTogglePaletteCollapsed={() => setPaletteCollapsed((prev) => !prev)}
+                onTogglePaletteCollapsed={() => setPaletteCollapsed((prev: boolean) => !prev)}
                 expandedPaletteGroups={expandedPaletteGroups}
                 onTogglePaletteGroup={togglePaletteGroup}
                 onDragStart={handleDragStart}
@@ -3435,7 +3543,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 selectedEdgeId={selectedEdgeId}
                 onSelectEdge={handleSelectEdge}
                 onFireTrigger={handleFireTrigger}
-                onFireTriggerPersistent={(node, event) => { void handleFireTriggerPersistent(node, event); }}
+                onFireTriggerPersistent={(node: AiNode, event?: React.MouseEvent<HTMLButtonElement>): void => { void handleFireTriggerPersistent(node, event); }}
                 onOpenSimulation={setSimulationOpenNodeId}
                 onUpdateSelectedNode={updateSelectedNode}
                 onOpenNodeConfig={() => setConfigOpen(true)}
@@ -3479,8 +3587,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white"
                   value={presetDraft.name}
-                  onChange={(event) =>
-                    setPresetDraft((prev) => ({ ...prev, name: event.target.value }))
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, name: event.target.value }))
                   }
                 />
               </div>
@@ -3489,8 +3597,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <Textarea
                   className="mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.description}
-                  onChange={(event) =>
-                    setPresetDraft((prev) => ({ ...prev, description: event.target.value }))
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, description: event.target.value }))
                   }
                 />
               </div>
@@ -3501,8 +3609,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <Textarea
                   className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.bundlePorts}
-                  onChange={(event) =>
-                    setPresetDraft((prev) => ({ ...prev, bundlePorts: event.target.value }))
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, bundlePorts: event.target.value }))
                   }
                 />
               </div>
@@ -3511,8 +3619,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <Textarea
                   className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.template}
-                  onChange={(event) =>
-                    setPresetDraft((prev) => ({ ...prev, template: event.target.value }))
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setPresetDraft((prev: { name: string; description: string; bundlePorts: string; template: string }) => ({ ...prev, template: event.target.value }))
                   }
                 />
               </div>
@@ -3531,7 +3639,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   No presets yet. Save a bundle + template pair to reuse across apps.
                 </div>
               )}
-              {clusterPresets.map((preset) => (
+              {clusterPresets.map((preset: ClusterPreset) => (
                 <div
                   key={preset.id}
                   className="rounded-md border border-border bg-card/50 p-3"
@@ -3613,7 +3721,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 { id: "active", label: "Active" },
                 { id: "failed", label: "Failed" },
                 { id: "dead", label: "Dead-letter" },
-              ].map((filter) => (
+              ].map((filter: { id: string; label: string }): React.JSX.Element => (
                 <Button
                   key={filter.id}
                   type="button"
@@ -3632,7 +3740,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               <div className="text-[11px] text-gray-500">No runs yet.</div>
             ) : (
               <div className="space-y-2 text-xs text-gray-300">
-                {filteredRunList.slice(0, 6).map((run) => {
+                {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
                   const statusClass =
                     run.status === "completed"
                       ? "text-emerald-200"
@@ -3771,11 +3879,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           onCreatePath={() => { void handleCreatePath(); }}
           onCreateAiDescriptionPath={() => { void handleCreateAiDescriptionPath(); }}
           onSaveList={() => { void savePathIndex(paths); }}
-          onEditPath={(pathId) => {
+          onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");
           }}
-          onDeletePath={(pathId) => {
+          onDeletePath={(pathId: string): void => {
             void handleDeletePath(pathId);
           }}
         />
@@ -3827,8 +3935,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       />
       <Dialog
         open={runDetailOpen}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean): void => {
           setRunDetailOpen(open);
+          if (open) setRunStreamPaused(false);
           if (!open) setRunDetail(null);
         }}
       >
@@ -3847,6 +3956,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <div>
                   <span className="text-[10px] uppercase text-gray-500">Status</span>
                   <div className="text-sm">{runDetail.run.status}</div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Stream</span>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span>{runStreamStatus}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRunStreamPaused((prev) => !prev)}
+                    >
+                      {runStreamPaused ? "Resume stream" : "Pause stream"}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-gray-500">Run ID</span>
@@ -3873,6 +3995,29 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   </div>
                 </div>
               </div>
+              {runNodeSummary ? (
+                <div className="rounded-md border border-border/70 bg-black/20 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
+                    <span>
+                      Nodes: {runNodeSummary.completed}/{runNodeSummary.total} completed
+                    </span>
+                    <span>{runNodeSummary.progress}%</span>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/40">
+                    <div
+                      className="h-full rounded-full bg-emerald-400/70 transition-all"
+                      style={{ width: `${runNodeSummary.progress}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                    {Object.entries(runNodeSummary.counts).map(([status, count]) => (
+                      <span key={status}>
+                        {status}: {count}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Run</Label>
                 <Textarea
@@ -3903,7 +4048,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           )}
         </DialogContent>
       </Dialog>
-      <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
+      <Dialog open={presetsModalOpen} onOpenChange={(open: boolean): void => setPresetsModalOpen(open)}>
         <DialogContent className="max-w-2xl border border-border bg-card text-white">
           <DialogHeader>
             <DialogTitle className="text-lg">Export / Import Presets</DialogTitle>
@@ -3915,7 +4060,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             <Textarea
               className="min-h-[240px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={presetsJson}
-              onChange={(event) => setPresetsJson(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setPresetsJson(event.target.value)}
             />
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -3947,7 +4092,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   navigator.clipboard
                     .writeText(value)
                     .then(() => toast("Presets copied to clipboard.", { variant: "success" }))
-                    .catch((error) => {
+                    .catch((error: Error) => {
                       reportAiPathsError(error, { action: "copyPresets" }, "Failed to copy presets:");
                       toast("Failed to copy presets.", { variant: "error" });
                     });
@@ -3963,7 +4108,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       {simulationOpenNodeId ? (
         <Dialog
           open={Boolean(simulationOpenNodeId)}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean): void => {
             if (!open) setSimulationOpenNodeId(null);
           }}
         >
@@ -3974,57 +4119,56 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 Set an Entity ID and simulate the connected trigger action.
               </DialogDescription>
             </DialogHeader>
-            {(() => {
-              const simulationNode = nodes.find((node) => node.id === simulationOpenNodeId);
-              if (!simulationNode) return null;
-              const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
-              const simulationEntityValue =
-                simulationConfig.entityId?.trim()
-                  ? simulationConfig.entityId
-                  : simulationConfig.productId ?? "";
-              return (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-xs text-gray-400">Entity ID</Label>
-                    <Input
-                      className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                      value={simulationEntityValue}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setNodes((prev) =>
-                          prev.map((node) =>
-                            node.id === simulationNode.id
-                              ? {
-                                  ...node,
-                                  config: {
-                                    ...node.config,
-                                    simulation: {
-                                      productId: value,
-                                      entityId: value,
-                                      entityType: simulationConfig.entityType ?? "product",
-                                    },
-                                  },
-                                }
-                              : node
-                          )
-                        );
-                      }}
-                    />
-                    <p className="mt-2 text-[11px] text-gray-500">
-                      Current entity type: {simulationConfig.entityType ?? "product"}
-                    </p>
-                  </div>
-                  <Button
-                    className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
-                    type="button"
-                    onClick={() => handleRunSimulation(simulationNode)}
-                  >
-                    Simulate Trigger
-                  </Button>
-                </div>
-              );
-            })()}
-          </DialogContent>
+                          {(() => {
+                            const simulationNode = nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId);
+                            if (!simulationNode) return null;
+                            const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
+                            const simulationEntityValue =
+                              simulationConfig.entityId?.trim()
+                                ? simulationConfig.entityId
+                                : simulationConfig.productId ?? "";
+                            return (
+                              <div className="space-y-4">
+                                <div>
+                                  <Label className="text-xs text-gray-400">Entity ID</Label>
+                                  <Input
+                                    className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                                    value={simulationEntityValue}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                      const value = event.target.value;
+                                      setNodes((prev: AiNode[]): AiNode[] =>
+                                        prev.map((node: AiNode): AiNode =>
+                                          node.id === simulationNode.id
+                                            ? {
+                                                ...node,
+                                                config: {
+                                                  ...node.config,
+                                                  simulation: {
+                                                    productId: value,
+                                                    entityId: value,
+                                                    entityType: simulationConfig.entityType ?? "product",
+                                                  },
+                                                },
+                                              }
+                                            : node
+                                        )
+                                      );
+                                    }}
+                                  />
+                                  <p className="mt-2 text-[11px] text-gray-500">
+                                    Current entity type: {simulationConfig.entityType ?? "product"}
+                                  </p>
+                                </div>
+                                <Button
+                                  className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
+                                  type="button"
+                                  onClick={() => handleRunSimulation(simulationNode)}
+                                >
+                                  Simulate Trigger
+                                </Button>
+                              </div>
+                            );
+                          })()}          </DialogContent>
         </Dialog>
       ) : null}
     </div>

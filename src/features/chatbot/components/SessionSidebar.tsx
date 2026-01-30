@@ -9,8 +9,8 @@ interface SessionSidebarProps {
   sessions: ChatSession[];
   currentSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
-  onNewSession: () => void;
-  onDeleteSession: (sessionId: string) => void;
+  onNewSession: () => Promise<void>;
+  onDeleteSession: (sessionId: string) => Promise<void>;
 }
 
 export function SessionSidebar({
@@ -19,7 +19,7 @@ export function SessionSidebar({
   onSelectSession,
   onNewSession,
   onDeleteSession,
-}: SessionSidebarProps) {
+}: SessionSidebarProps): React.JSX.Element {
   return (
     <div className="flex h-full flex-col bg-gray-900 border-r border-border">
       <div className="p-4 border-b border-border">
@@ -39,7 +39,7 @@ export function SessionSidebar({
           </div>
         ) : (
           <div className="space-y-1">
-            {sessions.map((session) => (
+            {sessions.map((session: ChatSession): React.JSX.Element => (
               <div
                 key={session.id}
                 className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
@@ -47,7 +47,7 @@ export function SessionSidebar({
                     ? "bg-gray-800 text-white"
                     : "text-gray-400 hover:bg-muted/50/50 hover:text-white"
                 }`}
-                onClick={() => onSelectSession(session.id)}
+                onClick={(): void => onSelectSession(session.id)}
               >
                 <MessageSquare className="size-4 flex-shrink-0" />
                 <div className="flex-1 overflow-hidden">
@@ -59,7 +59,7 @@ export function SessionSidebar({
                   </div>
                 </div>
                 <Button
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent): void => {
                     e.stopPropagation();
                     onDeleteSession(session.id);
                   }}

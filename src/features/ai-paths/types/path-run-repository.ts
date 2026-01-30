@@ -49,9 +49,15 @@ export type AiPathRunEventCreateInput = {
   metadata?: Record<string, unknown> | null;
 };
 
+export type AiPathRunEventListOptions = {
+  since?: Date | string | null;
+  limit?: number;
+};
+
 export type AiPathRunListOptions = {
   pathId?: string;
   status?: AiPathRunStatus;
+  query?: string;
   limit?: number;
   offset?: number;
 };
@@ -75,6 +81,6 @@ export type AiPathRunRepository = {
   ): Promise<AiPathRunNodeRecord>;
   listRunNodes(runId: string): Promise<AiPathRunNodeRecord[]>;
   createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord>;
-  listRunEvents(runId: string): Promise<AiPathRunEventRecord[]>;
+  listRunEvents(runId: string, options?: AiPathRunEventListOptions): Promise<AiPathRunEventRecord[]>;
   markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }>;
 };

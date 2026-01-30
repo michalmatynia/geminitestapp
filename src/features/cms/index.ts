@@ -10,3 +10,4 @@ export { default as PagesPage } from "./pages/pages/PagesPage";
 export { default as CreateSlugPage } from "./pages/slugs/CreateSlugPage";
 export { default as EditSlugPage } from "./pages/slugs/EditSlugPage";
 export { default as SlugsPage } from "./pages/slugs/SlugsPage";
+export { default as PageBuilderPage } from "./pages/builder/PageBuilderPage";

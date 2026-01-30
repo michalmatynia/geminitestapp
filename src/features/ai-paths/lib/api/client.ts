@@ -20,26 +20,26 @@ export type ApiResponse<T> = {
 export type DbActionPayload = {
   action: string;
   collection: string;
-  filter?: unknown | undefined;
-  pipeline?: unknown[] | undefined;
-  document?: unknown | undefined;
-  documents?: unknown[] | undefined;
-  update?: unknown | undefined;
-  projection?: unknown | undefined;
-  sort?: unknown | undefined;
-  limit?: number | undefined;
-  idType?: string | undefined;
+  filter?: unknown;
+  pipeline?: unknown[];
+  document?: unknown;
+  documents?: unknown[];
+  update?: unknown;
+  projection?: unknown;
+  sort?: unknown;
+  limit?: number;
+  idType?: string;
 };
 
 export type DbQueryPayload = {
   provider: string;
   collection: string;
   query: unknown;
-  projection?: unknown | undefined;
-  sort?: unknown | undefined;
-  limit?: number | undefined;
-  single?: boolean | undefined;
-  idType?: string | undefined;
+  projection?: unknown;
+  sort?: unknown;
+  limit?: number;
+  single?: boolean;
+  idType?: string;
 };
 
 export type DbUpdatePayload = {
@@ -47,8 +47,8 @@ export type DbUpdatePayload = {
   collection: string;
   query: unknown;
   updates: unknown;
-  single?: boolean | undefined;
-  idType?: string | undefined;
+  single?: boolean;
+  idType?: string;
 };
 
 export type EntityUpdatePayload = {
@@ -423,12 +423,14 @@ export const runsApi = {
   async list(options?: {
     pathId?: string;
     status?: string;
+    query?: string;
     limit?: number;
     offset?: number;
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
     const params = new URLSearchParams();
     if (options?.pathId) params.set("pathId", options.pathId);
     if (options?.status) params.set("status", options.status);
+    if (options?.query) params.set("query", options.query);
     if (typeof options?.limit === "number") params.set("limit", String(options.limit));
     if (typeof options?.offset === "number") params.set("offset", String(options.offset));
     const query = params.toString();
@@ -466,6 +468,7 @@ export const runsApi = {
   async requeueDeadLetter(payload: {
     runIds?: string[];
     pathId?: string | null;
+    query?: string | null;
     mode?: "resume" | "replay";
     limit?: number | null;
   }): Promise<ApiResponse<{

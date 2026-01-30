@@ -11,13 +11,13 @@ import { SettingsTab } from "../components/SettingsTab";
 import { DebugPanel } from "../components/DebugPanel";
 import { SessionSidebar } from "../components/SessionSidebar";
 
-function ChatbotPageInner() {
+function ChatbotPageInner(): React.JSX.Element | null {
   const logic = useChatbotLogic();
   const searchParams = useSearchParams();
-  const [mounted, setMounted] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState("chat");
+  const [mounted, setMounted] = React.useState<boolean>(false);
+  const [activeTab, setActiveTab] = React.useState<string>("chat");
 
-  React.useEffect(() => {
+  React.useEffect((): void => {
     setMounted(true);
     const tab = searchParams.get("tab");
     if (tab === "settings") {
@@ -34,9 +34,9 @@ function ChatbotPageInner() {
     debugState,
   } = logic;
 
-  const renderInline = (text: string) => {
+  const renderInline = (text: string): React.ReactNode[] => {
     const parts = text.split("**");
-    return parts.map((part, index) =>
+    return parts.map((part: string, index: number): React.ReactNode =>
       index % 2 === 1 ? (
         <strong key={index}>{part}</strong>
       ) : (
@@ -45,16 +45,16 @@ function ChatbotPageInner() {
     );
   };
 
-  const renderFormattedMessage = (content: string) => {
+  const renderFormattedMessage = (content: string): React.JSX.Element => {
     const lines = content.split("\n");
     const blocks: React.ReactNode[] = [];
     let listItems: string[] = [];
 
-    const flushList = (key: string) => {
+    const flushList = (key: string): void => {
       if (listItems.length === 0) return;
       blocks.push(
         <ul key={key} className="list-disc space-y-1 pl-5">
-          {listItems.map((item, index) => (
+          {listItems.map((item: string, index: number): React.JSX.Element => (
             <li key={`${key}-item-${index}`}>{renderInline(item)}</li>
           ))}
         </ul>
@@ -62,8 +62,8 @@ function ChatbotPageInner() {
       listItems = [];
     };
 
-    lines.forEach((line, index) => {
-      const trimmed = line.trim();
+    lines.forEach((line: string, index: number): void => {
+      const trimmed: string = line.trim();
       if (!trimmed) {
         flushList(`list-${index}`);
         blocks.push(<div key={`spacer-${index}`} className="h-2" />);
@@ -117,7 +117,7 @@ function ChatbotPageInner() {
     return <div className="space-y-2">{blocks}</div>;
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent): void => {
     e.preventDefault();
     void sendMessage();
   };
@@ -135,8 +135,8 @@ function ChatbotPageInner() {
             sessions={logic.sessions}
             currentSessionId={logic.currentSessionId}
             onSelectSession={logic.selectSession}
-            onNewSession={() => void logic.createNewSession()}
-            onDeleteSession={(id) => void logic.deleteSession(id)}
+            onNewSession={(): Promise<void> => void logic.createNewSession()}
+            onDeleteSession={(id: string): Promise<void> => void logic.deleteSession(id)}
           />
         </SectionPanel>
 
@@ -181,7 +181,7 @@ function ChatbotPageInner() {
   );
 }
 
-export default function ChatbotPage() {
+export default function ChatbotPage(): React.JSX.Element {
   return (
     <Suspense fallback={<div className="p-8 text-white">Loading...</div>}>
       <ChatbotPageInner />

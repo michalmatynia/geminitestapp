@@ -70,7 +70,7 @@ describe("Admin Products List UI", () => {
         return HttpResponse.json({ count: mockProducts.length });
       }),
       http.get("/api/catalogs", () => {
-        return HttpResponse.json({ data: [], total: 0 });
+        return HttpResponse.json([]);
       })
     );
   });
@@ -121,10 +121,14 @@ describe("Admin Products List UI", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText("Create product"));
+    await user.click(screen.getByLabelText("Create new product"));
 
-    await screen.findByRole("heading", { name: "Product" });
-    const skuInput = screen.getByLabelText<HTMLInputElement>(/SKU/i);
+    await screen.findAllByRole("heading", { name: /Create Product/i });
+    
+    // Find the input with id="sku" specifically
+    const skuInput = document.getElementById("sku") as HTMLInputElement;
+    expect(skuInput).toBeInTheDocument();
+    
     await waitFor(() => {
       expect(skuInput.value).toBe("ABC123");
     });

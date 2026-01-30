@@ -93,12 +93,12 @@ export function CanvasBoard({
   onZoomTo,
   onFitToNodes,
   onResetView,
-}: CanvasBoardProps) {
-  const triggerConnected = React.useMemo(() => {
-    const triggerIds = nodes.filter((node) => node.type === "trigger").map((node) => node.id);
+}: CanvasBoardProps): React.JSX.Element {
+  const triggerConnected = React.useMemo((): Set<string> => {
+    const triggerIds = nodes.filter((node: AiNode) => node.type === "trigger").map((node: AiNode) => node.id);
     if (triggerIds.length === 0) return new Set<string>();
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge) => {
+    edges.forEach((edge: Edge) => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -109,13 +109,13 @@ export function CanvasBoard({
     });
     const visited = new Set<string>();
     const queue = [...triggerIds];
-    triggerIds.forEach((id) => visited.add(id));
+    triggerIds.forEach((id: string) => visited.add(id));
     while (queue.length) {
       const current = queue.shift();
       if (!current) continue;
       const neighbors = adjacency.get(current);
       if (!neighbors) continue;
-      neighbors.forEach((neighbor) => {
+      neighbors.forEach((neighbor: string) => {
         if (visited.has(neighbor)) return;
         visited.add(neighbor);
         queue.push(neighbor);
@@ -124,7 +124,7 @@ export function CanvasBoard({
     return visited;
   }, [nodes, edges]);
   const edgeMetaMap = React.useMemo(
-    () => new Map(edges.map((edge) => [edge.id, edge])),
+    (): Map<string, Edge> => new Map(edges.map((edge: Edge) => [edge.id, edge])),
     [edges]
   );
 
@@ -216,14 +216,14 @@ export function CanvasBoard({
           height={CANVAS_HEIGHT}
           style={{ pointerEvents: "auto" }}
         >
-          {edgePaths.map((edge) => {
+          {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
             // Check if this is a schema connection (db_schema -> database)
-            const fromNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.from) : null;
-            const toNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.to) : null;
+            const fromNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.from) : null;
+            const toNode = edgeMeta ? nodes.find((n: AiNode) => n.id === edgeMeta.to) : null;
             const isSchemaConnection =
               fromNode?.type === "db_schema" && toNode?.type === "database";
             const isActivePath =
@@ -254,11 +254,11 @@ export function CanvasBoard({
                   strokeWidth="14"
                   fill="none"
                   style={{ pointerEvents: "stroke" }}
-                  onContextMenu={(event) => {
+                  onContextMenu={(event: React.MouseEvent<SVGPathElement>) => {
                     event.preventDefault();
                     onRemoveEdge(edge.id);
                   }}
-                  onClick={(event) => {
+                  onClick={(event: React.MouseEvent<SVGPathElement>) => {
                     event.preventDefault();
                     event.stopPropagation();
                     onSelectEdgeId(edge.id);
@@ -286,7 +286,7 @@ export function CanvasBoard({
               </g>
             );
           })}
-          {connecting && connectingPos ? (() => {
+          {connecting && connectingPos ? ((): React.JSX.Element => {
             const fromX = connecting.start.x;
             const fromY = connecting.start.y;
             const toX = connectingPos.x;
@@ -305,7 +305,7 @@ export function CanvasBoard({
           })() : null}
         </svg>
 
-        {nodes.map((node) => {
+        {nodes.map((node: AiNode) => {
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
           const modelStatus =
@@ -358,11 +358,11 @@ export function CanvasBoard({
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
               }}
-              onPointerDown={(event) => onPointerDownNode(event, node.id)}
-              onPointerMove={(event) => onPointerMoveNode(event, node.id)}
-              onPointerUp={(event) => onPointerUpNode(event, node.id)}
+              onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => onPointerDownNode(event, node.id)}
+              onPointerMove={(event: React.PointerEvent<HTMLDivElement>) => onPointerMoveNode(event, node.id)}
+              onPointerUp={(event: React.PointerEvent<HTMLDivElement>) => onPointerUpNode(event, node.id)}
               onClick={() => onSelectNode(node.id)}
-              onDoubleClick={(event) => {
+              onDoubleClick={(event: React.MouseEvent<HTMLDivElement>) => {
                 event.stopPropagation();
                 onSelectNode(node.id);
                 onOpenNodeConfig(node.id);
@@ -373,7 +373,7 @@ export function CanvasBoard({
                   style.border
                 } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
               >
-                {node.inputs.map((input, index) => (
+                {node.inputs.map((input: string, index: number) => (
                   <div
                     key={`input-${node.id}-${input}`}
                     className="absolute flex items-center"
@@ -382,7 +382,7 @@ export function CanvasBoard({
                       top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
                     }}
                   >
-                    {(() => {
+                    {(() : React.JSX.Element => {
                       const isConnecting = Boolean(connecting && connectingFromNode);
                       const isConnectable = isConnecting
                         ? validateConnection(
@@ -408,10 +408,10 @@ export function CanvasBoard({
                               width: PORT_SIZE + 2,
                               height: PORT_SIZE + 2,
                             }}
-                            onPointerDown={(event) =>
+                            onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
                               onCompleteConnection(event, node, input)
                             }
-                            onPointerUp={(event) =>
+                            onPointerUp={(event: React.PointerEvent<HTMLButtonElement>) =>
                               onCompleteConnection(event, node, input)
                             }
                             aria-label={`Connect to ${formatPortLabel(input)}`}
@@ -433,7 +433,7 @@ export function CanvasBoard({
                     })()}
                   </div>
                 ))}
-                {node.outputs.map((output, index) => (
+                {node.outputs.map((output: string, index: number) => (
                   <div
                     key={`output-${node.id}-${output}`}
                     className="absolute flex items-center"
@@ -453,7 +453,7 @@ export function CanvasBoard({
                         width: PORT_SIZE + 2,
                         height: PORT_SIZE + 2,
                       }}
-                      onPointerDown={(event) => onStartConnection(event, node, output)}
+                      onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => onStartConnection(event, node, output)}
                       aria-label={`Start connection from ${formatPortLabel(output)}`}
                       title={`Output: ${formatPortLabel(output)}`}
                     />
@@ -488,8 +488,8 @@ export function CanvasBoard({
                   <Button
                     className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => onFireTrigger(node, event)}
+                    onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => event.stopPropagation()}
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => onFireTrigger(node, event)}
                   >
                     Fire Trigger
                   </Button>

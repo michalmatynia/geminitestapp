@@ -50,26 +50,28 @@ describe("ProductListHeader Component", () => {
     render(<ProductListHeader {...mockProps} />);
 
     expect(screen.getByText("Products")).toBeInTheDocument();
-    expect(screen.getByLabelText("Create product")).toBeInTheDocument();
+    expect(screen.getByLabelText("Create new product")).toBeInTheDocument();
   });
 
   it("calls onCreateProduct when create button is clicked", () => {
     render(<ProductListHeader {...mockProps} />);
-    fireEvent.click(screen.getByLabelText("Create product"));
+    fireEvent.click(screen.getByLabelText("Create new product"));
     expect(mockProps.onCreateProduct).toHaveBeenCalled();
   });
 
   it("renders pagination info correctly", () => {
     render(<ProductListHeader {...mockProps} />);
-    expect(screen.getByText("1 / 5")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("/")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
   });
 
   it("calls setPage when Prev/Next buttons are clicked", () => {
     render(<ProductListHeader {...mockProps} page={2} />);
-    fireEvent.click(screen.getByText("Prev"));
+    fireEvent.click(screen.getByLabelText("Previous page"));
     expect(mockProps.setPage).toHaveBeenCalledWith(1);
 
-    fireEvent.click(screen.getByText("Next"));
+    fireEvent.click(screen.getByLabelText("Next page"));
     expect(mockProps.setPage).toHaveBeenCalledWith(3);
   });
 });

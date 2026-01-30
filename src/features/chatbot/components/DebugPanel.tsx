@@ -17,7 +17,7 @@ interface DebugPanelProps {
 export function DebugPanel({
   debugState,
   agentRunLogs,
-}: Omit<DebugPanelProps, "_agentRunAudits">) {
+}: Omit<DebugPanelProps, "_agentRunAudits">): React.JSX.Element {
   return (
     <div className="h-full overflow-y-auto bg-card p-4 text-xs text-gray-300">
       <h3 className="mb-2 font-semibold text-white">Debug Information</h3>
@@ -37,7 +37,7 @@ export function DebugPanel({
         <div>
           <h4 className="mb-1 font-medium text-gray-400">Agent Logs</h4>
           <div className="max-h-60 overflow-y-auto rounded bg-gray-900 p-2">
-            {agentRunLogs.map((log) => (
+            {agentRunLogs.map((log: LogEntry): React.JSX.Element => (
               <div key={log.id} className="mb-1 border-b border-border pb-1">
                 <span className="text-gray-500">
                   [{new Date(log.createdAt).toLocaleTimeString()}]

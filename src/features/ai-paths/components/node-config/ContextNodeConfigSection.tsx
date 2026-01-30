@@ -52,7 +52,7 @@ export function ContextNodeConfigSection({
   runtimeState,
   updateSelectedNodeConfig,
   toast,
-}: ContextNodeConfigSectionProps) {
+}: ContextNodeConfigSectionProps): React.JSX.Element | null {
   const [hideLargeFields, setHideLargeFields] = React.useState(true);
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
@@ -110,7 +110,12 @@ export function ContextNodeConfigSection({
     changed: string[];
     same: string[];
   }>(
-    (acc, key) => {
+    (acc: {
+      added: string[];
+      removed: string[];
+      changed: string[];
+      same: string[];
+    }, key: string) => {
       const inInput = key in diffInputs;
       const inOutput = key in diffOutputs;
       if (!inInput && inOutput) {
@@ -136,22 +141,22 @@ export function ContextNodeConfigSection({
   );
   const diffLines = [
     ...diff.added.map(
-      (key) => `+ ${key}: ${formatRuntimeValue(diffOutputs[key])}`
+      (key: string) => `+ ${key}: ${formatRuntimeValue(diffOutputs[key])}`
     ),
     ...diff.removed.map(
-      (key) => `- ${key}: ${formatRuntimeValue(diffInputs[key])}`
+      (key: string) => `- ${key}: ${formatRuntimeValue(diffInputs[key])}`
     ),
     ...diff.changed.map(
-      (key) =>
+      (key: string) =>
         `~ ${key}: ${formatRuntimeValue(diffInputs[key])} -> ${formatRuntimeValue(
           diffOutputs[key]
         )}`
     ),
     ...(!diffOnlyChanges
-      ? diff.same.map((key) => `= ${key}`)
+      ? diff.same.map((key: string) => `= ${key}`)
       : []),
   ];
-  const copyPayload = async (payload: unknown, label: string) => {
+  const copyPayload = async (payload: unknown, label: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(stringifyPayload(payload));
       toast(`${label} copied.`, { variant: "success" });
@@ -160,7 +165,7 @@ export function ContextNodeConfigSection({
       console.warn("Failed to copy payload", error);
     }
   };
-  const copyDiff = async () => {
+  const copyDiff = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(diffLines.join("\n"));
       toast("Diff copied.", { variant: "success" });
@@ -222,7 +227,7 @@ export function ContextNodeConfigSection({
               ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
               : "border text-gray-200 hover:bg-card/70"
           }`}
-          onClick={() => setHideLargeFields((prev) => !prev)}
+          onClick={() => setHideLargeFields((prev: boolean) => !prev)}
         >
           {hideLargeFields ? "Hide large fields" : "Show large fields"}
         </Button>
@@ -233,7 +238,7 @@ export function ContextNodeConfigSection({
               ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
               : "border text-gray-200 hover:bg-card/70"
           }`}
-          onClick={() => setShowDiff((prev) => !prev)}
+          onClick={() => setShowDiff((prev: boolean) => !prev)}
         >
           {showDiff ? "Diff on" : "Diff off"}
         </Button>
@@ -245,7 +250,7 @@ export function ContextNodeConfigSection({
                 ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
                 : "border text-gray-200 hover:bg-card/70"
             }`}
-            onClick={() => setDiffOnlyChanges((prev) => !prev)}
+            onClick={() => setDiffOnlyChanges((prev: boolean) => !prev)}
           >
             {diffOnlyChanges ? "Changes only" : "Show all"}
           </Button>
@@ -333,7 +338,7 @@ export function ContextNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={contextConfig.role}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             updateSelectedNodeConfig({
               context: { ...contextConfig, role: event.target.value },
             })
@@ -346,7 +351,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Context Scope Presets</Label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(["light", "medium", "full"] as const).map((preset) => (
+          {(["light", "medium", "full"] as const).map((preset: "light" | "medium" | "full") => (
             <Button
               key={preset}
               type="button"
@@ -386,7 +391,7 @@ export function ContextNodeConfigSection({
           <Label className="text-xs text-gray-400">Collection Type</Label>
         <Select
             value={contextConfig.entityType ?? "auto"}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: { ...contextConfig, entityType: value },
               })
@@ -408,7 +413,7 @@ export function ContextNodeConfigSection({
           <Label className="text-xs text-gray-400">Scope Target</Label>
           <Select
             value={contextConfig.scopeTarget ?? "entity"}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
@@ -434,7 +439,7 @@ export function ContextNodeConfigSection({
           <Label className="text-xs text-gray-400">Entity ID Source</Label>
           <Select
             value={contextConfig.entityIdSource ?? "simulation"}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
@@ -457,7 +462,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Target Fields</Label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {presetSet.suggested?.map((field) => {
+          {presetSet.suggested?.map((field: string) => {
             const active = contextConfig.includePaths?.includes(field);
             return (
               <button
@@ -505,7 +510,7 @@ export function ContextNodeConfigSection({
           <Input
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={contextConfig.entityId ?? ""}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateSelectedNodeConfig({
                 context: { ...contextConfig, entityId: event.target.value },
               })
@@ -517,7 +522,7 @@ export function ContextNodeConfigSection({
           <Label className="text-xs text-gray-400">Data Scope</Label>
           <Select
             value={contextConfig.scopeMode ?? "full"}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: {
                   ...contextConfig,
@@ -555,7 +560,7 @@ export function ContextNodeConfigSection({
                 ? (contextConfig.includePaths ?? []).join("\n")
                 : (contextConfig.excludePaths ?? []).join("\n")
             }
-            onChange={(event) => {
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
               const list = parsePathList(event.target.value);
               updateSelectedNodeConfig({
                 context: {

@@ -151,7 +151,9 @@ test.describe("Notes page", () => {
         return route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify([]),
+          body: JSON.stringify([
+            { key: "noteSettings:selectedNotebookId", value: "notebook-1" }
+          ]),
         });
       }
       return route.fulfill({
@@ -161,7 +163,7 @@ test.describe("Notes page", () => {
       });
     });
 
-    await page.route("**/api/notes/tags", async (route) => {
+    await page.route("**/api/notes/tags**", async (route) => {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -169,7 +171,7 @@ test.describe("Notes page", () => {
       });
     });
 
-    await page.route("**/api/notes/notebooks", async (route) => {
+    await page.route("**/api/notes/notebooks**", async (route) => {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -177,7 +179,7 @@ test.describe("Notes page", () => {
       });
     });
 
-    await page.route("**/api/notes/categories/tree", async (route) => {
+    await page.route("**/api/notes/categories/tree**", async (route) => {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -185,9 +187,17 @@ test.describe("Notes page", () => {
       });
     });
 
-    await page.route("**/api/notes", async (route) => {
+    await page.route("**/api/notes*", async (route) => {
       const request = route.request();
       const url = new URL(request.url());
+      
+      // Skip other specific routes
+      if (url.pathname.includes("/api/notes/")) {
+        const subpath = url.pathname.split("/api/notes/")[1];
+        if (["tags", "notebooks", "categories", "themes"].some(p => subpath?.startsWith(p))) {
+           return route.fallback();
+        }
+      }
 
       if (request.method() === "POST") {
         const body = JSON.parse(request.postData() || "{}") as {
@@ -262,19 +272,23 @@ test.describe("Notes page", () => {
 
     await page.goto("/admin/notes");
 
-    await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
-    await expect(page.getByText("Alpha")).toBeVisible();
-    await expect(page.getByText("Beta")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Notes", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Alpha" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Beta" })).toBeVisible();
 
     await page.getByPlaceholder("Search in All Notes...").fill("Alpha");
-    await expect(page.getByText("Alpha")).toBeVisible();
-    await expect(page.getByText("Beta")).toBeHidden();
+    await expect(page.getByRole("heading", { name: "Alpha" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Beta" })).toBeHidden();
+
+    // Clear search BEFORE creating
+    await page.getByPlaceholder("Search in All Notes...").fill("");
+    await expect(page.getByRole("heading", { name: "Beta" })).toBeVisible();
 
     await page.getByRole("button", { name: "Create note" }).click();
     await page.getByPlaceholder("Enter note title").fill("Gamma");
     await page.getByPlaceholder("Enter note content").fill("Third note");
     await page.getByRole("button", { name: "Create" }).click();
 
-    await expect(page.getByText("Gamma")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Gamma" })).toBeVisible();
   });
 });

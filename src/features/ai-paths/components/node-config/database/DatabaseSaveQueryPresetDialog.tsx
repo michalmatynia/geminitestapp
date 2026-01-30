@@ -25,9 +25,9 @@ export function DatabaseSaveQueryPresetDialog({
   queryTemplateValue,
   onCancel,
   onSave,
-}: DatabaseSaveQueryPresetDialogProps) {
+}: DatabaseSaveQueryPresetDialogProps): React.JSX.Element {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open: boolean): void => onOpenChange(open)}>
       <DialogContent className="max-w-md border border-border bg-card text-white">
         <DialogHeader>
           <DialogTitle className="text-lg">Save Query Preset</DialogTitle>
@@ -41,7 +41,7 @@ export function DatabaseSaveQueryPresetDialog({
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={newQueryPresetName}
-              onChange={(event) => setNewQueryPresetName(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setNewQueryPresetName(event.target.value)}
               placeholder="My query preset"
             />
           </div>
@@ -58,14 +58,14 @@ export function DatabaseSaveQueryPresetDialog({
           <Button
             type="button"
             className="rounded-md border text-xs text-white hover:bg-muted/60"
-            onClick={onCancel}
+            onClick={(): void => onCancel()}
           >
             Cancel
           </Button>
           <Button
             type="button"
             className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
-            onClick={onSave}
+            onClick={(): void => onSave()}
           >
             Save preset
           </Button>

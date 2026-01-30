@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
 import React from "react";
 
 
@@ -33,6 +33,8 @@ import { MutatorNodeConfigSection } from "./node-config/dialog/MutatorNodeConfig
 import { PollNodeConfigSection } from "./node-config/dialog/PollNodeConfigSection";
 import { PromptNodeConfigSection } from "./node-config/dialog/PromptNodeConfigSection";
 import { RouterNodeConfigSection } from "./node-config/dialog/RouterNodeConfigSection";
+import { NodeHistoryTab } from "./node-config/dialog/NodeHistoryTab";
+import { RuntimeNodeConfigSection } from "./node-config/dialog/RuntimeNodeConfigSection";
 import { SimulationNodeConfigSection } from "./node-config/dialog/SimulationNodeConfigSection";
 import { TemplateNodeConfigSection } from "./node-config/dialog/TemplateNodeConfigSection";
 import { TriggerNodeConfigSection } from "./node-config/dialog/TriggerNodeConfigSection";
@@ -123,143 +125,159 @@ export function NodeConfigDialog({
             </Button>
           </div>
         </DialogHeader>
-
-        <TriggerNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <SimulationNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          handleRunSimulation={handleRunSimulation}
-        />
-        <ContextNodeConfigSection
-          selectedNode={selectedNode}
-          runtimeState={runtimeState}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          toast={toast}
-        />
-        <ParserNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={nodes}
-          runtimeState={runtimeState}
-          parserSamples={parserSamples}
-          setParserSamples={setParserSamples}
-          parserSampleLoading={parserSampleLoading}
-          updateSelectedNode={updateSelectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          handleFetchParserSample={handleFetchParserSample}
-          toast={toast}
-        />
-        <MapperNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNode={updateSelectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <MutatorNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <ValidatorNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <ConstantNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <MathNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <TemplateNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <BundleNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <GateNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <CompareNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <RouterNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <DelayNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <PollNodeConfigSection
-          selectedNode={selectedNode}
-          edges={edges}
-          runtimeState={runtimeState}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <HttpNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <PromptNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={nodes}
-          edges={edges}
-          runtimeState={runtimeState}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          {...(onSendToAi && { onSendToAi })}
-          {...(sendingToAi !== undefined && { sendingToAi })}
-        />
-        <ModelNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={nodes}
-          edges={edges}
-          modelOptions={modelOptions}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <DatabaseNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={nodes}
-          edges={edges}
-          runtimeState={runtimeState}
-          pathDebugSnapshot={pathDebugSnapshot ?? null}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          {...(onSendToAi && { onSendToAi })}
-          {...(sendingToAi !== undefined && { sendingToAi })}
-          updaterSamples={updaterSamples}
-          setUpdaterSamples={setUpdaterSamples}
-          updaterSampleLoading={updaterSampleLoading}
-          handleFetchUpdaterSample={handleFetchUpdaterSample}
-          dbQueryPresets={dbQueryPresets}
-          setDbQueryPresets={setDbQueryPresets}
-          saveDbQueryPresets={saveDbQueryPresets}
-          dbNodePresets={dbNodePresets}
-          setDbNodePresets={setDbNodePresets}
-          saveDbNodePresets={saveDbNodePresets}
-          toast={toast}
-        />
-        <DbSchemaNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <ViewerNodeConfigSection
-          selectedNode={selectedNode}
-          nodes={nodes}
-          edges={edges}
-          runtimeState={runtimeState}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-          {...(clearRuntimeForNode && { clearRuntimeForNode })}
-        />
-        <AiDescriptionNodeConfigSection
-          selectedNode={selectedNode}
-          updateSelectedNodeConfig={updateSelectedNodeConfig}
-        />
-        <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
+        <Tabs defaultValue="settings" className="mt-2">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <TriggerNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <SimulationNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                handleRunSimulation={handleRunSimulation}
+              />
+              <ContextNodeConfigSection
+                selectedNode={selectedNode}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                toast={toast}
+              />
+              <ParserNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                runtimeState={runtimeState}
+                parserSamples={parserSamples}
+                setParserSamples={setParserSamples}
+                parserSampleLoading={parserSampleLoading}
+                updateSelectedNode={updateSelectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                handleFetchParserSample={handleFetchParserSample}
+                toast={toast}
+              />
+              <MapperNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNode={updateSelectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <MutatorNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <ValidatorNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <ConstantNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <MathNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <TemplateNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <BundleNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <GateNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <CompareNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <RouterNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <DelayNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <PollNodeConfigSection
+                selectedNode={selectedNode}
+                edges={edges}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <HttpNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <PromptNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                edges={edges}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                {...(onSendToAi && { onSendToAi })}
+                {...(sendingToAi !== undefined && { sendingToAi })}
+              />
+              <ModelNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                edges={edges}
+                modelOptions={modelOptions}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <DatabaseNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                edges={edges}
+                runtimeState={runtimeState}
+                pathDebugSnapshot={pathDebugSnapshot ?? null}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                {...(onSendToAi && { onSendToAi })}
+                {...(sendingToAi !== undefined && { sendingToAi })}
+                updaterSamples={updaterSamples}
+                setUpdaterSamples={setUpdaterSamples}
+                updaterSampleLoading={updaterSampleLoading}
+                handleFetchUpdaterSample={handleFetchUpdaterSample}
+                dbQueryPresets={dbQueryPresets}
+                setDbQueryPresets={setDbQueryPresets}
+                saveDbQueryPresets={saveDbQueryPresets}
+                dbNodePresets={dbNodePresets}
+                setDbNodePresets={setDbNodePresets}
+                saveDbNodePresets={saveDbNodePresets}
+                toast={toast}
+              />
+              <DbSchemaNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <ViewerNodeConfigSection
+                selectedNode={selectedNode}
+                nodes={nodes}
+                edges={edges}
+                runtimeState={runtimeState}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+                {...(clearRuntimeForNode && { clearRuntimeForNode })}
+              />
+              <RuntimeNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <AiDescriptionNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <UnsupportedNodeConfigNotice selectedNode={selectedNode} />
+            </div>
+          </TabsContent>
+          <TabsContent value="history">
+            <NodeHistoryTab selectedNode={selectedNode} runtimeState={runtimeState} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

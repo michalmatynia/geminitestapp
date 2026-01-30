@@ -1,4 +1,4 @@
-import { Button } from "@/shared/ui";
+import { Button, Tooltip } from "@/shared/ui";
 import React from "react";
 
 import type { AiNode, Edge, RuntimeState } from "@/features/ai-paths/lib";
@@ -8,6 +8,7 @@ import {
   NODE_WIDTH,
   PORT_SIZE,
   getPortOffsetY,
+  formatRuntimeValue,
   typeStyles,
   validateConnection,
 } from "@/features/ai-paths/lib";
@@ -94,6 +95,136 @@ export function CanvasBoard({
   onFitToNodes,
   onResetView,
 }: CanvasBoardProps): React.JSX.Element {
+  const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
+  const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
+
+  const buildConnectorKey = (
+    direction: "input" | "output",
+    nodeId: string,
+    port: string
+  ) => `${direction}:${nodeId}:${port}`;
+
+  const formatConnectorValue = (value: unknown) => {
+    if (value === undefined) return "No data yet.";
+    if (value === null) return "null";
+    const formatted = typeof value === "string" ? value : formatRuntimeValue(value);
+    if (formatted.length > 1200) return `${formatted.slice(0, 1200)}…`;
+    return formatted;
+  };
+
+  const stringifyForDiff = (value: unknown) => {
+    if (value === undefined) return "";
+    if (value === null) return "null";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return "[Complex Object]";
+    }
+  };
+
+  const buildDiffLines = (prev: string, next: string, limit = 120) => {
+    const prevLines = prev.split("\n");
+    const nextLines = next.split("\n");
+    const max = Math.max(prevLines.length, nextLines.length);
+    const lines: Array<{ type: "add" | "remove" | "same"; text: string }> = [];
+    let truncated = false;
+    for (let index = 0; index < max; index += 1) {
+      const prevLine = prevLines[index];
+      const nextLine = nextLines[index];
+      if (prevLine === nextLine) {
+        if (prevLine !== undefined) {
+          lines.push({ type: "same", text: prevLine });
+        }
+      } else {
+        if (prevLine !== undefined) {
+          lines.push({ type: "remove", text: prevLine });
+        }
+        if (nextLine !== undefined) {
+          lines.push({ type: "add", text: nextLine });
+        }
+      }
+      if (lines.length >= limit) {
+        truncated = true;
+        break;
+      }
+    }
+    return { lines, truncated };
+  };
+
+  const getPortValue = (
+    direction: "input" | "output",
+    nodeId: string,
+    port: string
+  ) => {
+    const source = direction === "input" ? runtimeState.inputs : runtimeState.outputs;
+    const nodeValues = source?.[nodeId] ?? {};
+    return (nodeValues as Record<string, unknown>)[port];
+  };
+
+  const renderConnectorTooltip = (
+    direction: "input" | "output",
+    nodeId: string,
+    port: string
+  ) => {
+    const value = getPortValue(direction, nodeId, port);
+    const label = direction === "input" ? "Input" : "Output";
+    const history = Array.isArray(value) ? value : null;
+    const currentValue = history ? history[history.length - 1] : value;
+    const isHistory = Array.isArray(value) && value.length > 1;
+    const diff =
+      history && history.length > 1
+        ? buildDiffLines(
+            stringifyForDiff(history[history.length - 2]),
+            stringifyForDiff(history[history.length - 1])
+          )
+        : null;
+    return (
+      <div className="space-y-1">
+        <div className="text-[11px] text-gray-400">
+          {label}: {formatPortLabel(port)}
+        </div>
+        {Array.isArray(value) ? (
+          <div className="text-[10px] text-amber-200">
+            {isHistory ? `History (${value.length})` : "Single value"}
+          </div>
+        ) : null}
+        <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+          {formatConnectorValue(currentValue)}
+        </pre>
+        {diff ? (
+          <div className="mt-2">
+            <div className="text-[10px] text-gray-400">Diff (last two passes)</div>
+            <div className="mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
+              {diff.lines.map((line, index) => {
+                const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
+                const colorClass =
+                  line.type === "add"
+                    ? "text-emerald-300"
+                    : line.type === "remove"
+                      ? "text-rose-300"
+                      : "text-gray-300";
+                return (
+                  <div
+                    key={`${line.type}-${index}`}
+                    className={`whitespace-pre ${colorClass}`}
+                  >
+                    {prefix}
+                    {line.text}
+                  </div>
+                );
+              })}
+              {diff.truncated ? (
+                <div className="mt-1 text-gray-500">Diff truncated…</div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   const triggerConnected = React.useMemo((): Set<string> => {
     const triggerIds = nodes.filter((node: AiNode) => node.type === "trigger").map((node: AiNode) => node.id);
     if (triggerIds.length === 0) return new Set<string>();
@@ -381,6 +512,12 @@ export function CanvasBoard({
                       left: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
                     }}
+                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("input", node.id, input))}
+                    onMouseLeave={() =>
+                      setHoveredConnectorKey((prev) =>
+                        prev === buildConnectorKey("input", node.id, input) ? null : prev
+                      )
+                    }
                   >
                     {(() : React.JSX.Element => {
                       const isConnecting = Boolean(connecting && connectingFromNode);
@@ -392,31 +529,51 @@ export function CanvasBoard({
                             input
                           ).valid
                         : false;
+                      const connectorKey = buildConnectorKey("input", node.id, input);
+                      const isPinned = pinnedConnectorKey === connectorKey;
+                      const isHovered = hoveredConnectorKey === connectorKey;
+                      const isTooltipOpen = isPinned || isHovered;
                       return (
                         <>
-                          <button
-                            type="button"
-                            data-port="input"
-                            className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
-                              isConnecting
-                                ? isConnectable
-                                  ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
-                                  : "border-border/60 bg-card/20 opacity-40 shadow-none"
-                                : "border-sky-400/60"
-                            }`}
-                            style={{
-                              width: PORT_SIZE + 2,
-                              height: PORT_SIZE + 2,
-                            }}
-                            onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
-                              onCompleteConnection(event, node, input)
-                            }
-                            onPointerUp={(event: React.PointerEvent<HTMLButtonElement>) =>
-                              onCompleteConnection(event, node, input)
-                            }
-                            aria-label={`Connect to ${formatPortLabel(input)}`}
-                            title={`Input: ${formatPortLabel(input)}`}
-                          />
+                          <Tooltip
+                            content={renderConnectorTooltip("input", node.id, input)}
+                            side="right"
+                            maxWidth="360px"
+                            open={isTooltipOpen}
+                            disableHover
+                          >
+                            <button
+                              type="button"
+                              data-port="input"
+                              className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
+                                isConnecting
+                                  ? isConnectable
+                                    ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
+                                    : "border-border/60 bg-card/20 opacity-40 shadow-none"
+                                  : isPinned
+                                    ? "border-amber-300/80 ring-2 ring-amber-300/70"
+                                    : "border-sky-400/60"
+                              }`}
+                              style={{
+                                width: PORT_SIZE + 2,
+                                height: PORT_SIZE + 2,
+                              }}
+                              onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
+                                onCompleteConnection(event, node, input)
+                              }
+                              onPointerUp={(event: React.PointerEvent<HTMLButtonElement>) =>
+                                onCompleteConnection(event, node, input)
+                              }
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                setPinnedConnectorKey((prev) =>
+                                  prev === connectorKey ? null : connectorKey
+                                );
+                              }}
+                              aria-label={`Connect to ${formatPortLabel(input)}`}
+                              title={`Input: ${formatPortLabel(input)}`}
+                            />
+                          </Tooltip>
                           <span
                             className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
                               isConnecting
@@ -441,22 +598,54 @@ export function CanvasBoard({
                       right: -(PORT_SIZE / 2) - 4,
                       top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
                     }}
+                    onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("output", node.id, output))}
+                    onMouseLeave={() =>
+                      setHoveredConnectorKey((prev) =>
+                        prev === buildConnectorKey("output", node.id, output) ? null : prev
+                      )
+                    }
                   >
+                    {((): React.JSX.Element => {
+                      const connectorKey = buildConnectorKey("output", node.id, output);
+                      const isPinned = pinnedConnectorKey === connectorKey;
+                      const isHovered = hoveredConnectorKey === connectorKey;
+                      const isTooltipOpen = isPinned || isHovered;
+                      return (
+                        <>
                     <span className="mr-1.5 rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-medium text-amber-300">
                       {formatPortLabel(output)}
                     </span>
-                    <button
-                      type="button"
-                      data-port="output"
-                      className="cursor-pointer rounded-full border border-amber-400/60 bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200"
-                      style={{
-                        width: PORT_SIZE + 2,
-                        height: PORT_SIZE + 2,
-                      }}
-                      onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => onStartConnection(event, node, output)}
-                      aria-label={`Start connection from ${formatPortLabel(output)}`}
-                      title={`Output: ${formatPortLabel(output)}`}
-                    />
+                    <Tooltip
+                      content={renderConnectorTooltip("output", node.id, output)}
+                      side="left"
+                      maxWidth="360px"
+                      open={isTooltipOpen}
+                      disableHover
+                    >
+                      <button
+                        type="button"
+                        data-port="output"
+                        className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
+                          isPinned ? "border-amber-300/80 ring-2 ring-amber-300/70" : "border-amber-400/60"
+                        }`}
+                        style={{
+                          width: PORT_SIZE + 2,
+                          height: PORT_SIZE + 2,
+                        }}
+                        onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => onStartConnection(event, node, output)}
+                        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                          event.stopPropagation();
+                          setPinnedConnectorKey((prev) =>
+                            prev === connectorKey ? null : connectorKey
+                          );
+                        }}
+                        aria-label={`Start connection from ${formatPortLabel(output)}`}
+                        title={`Output: ${formatPortLabel(output)}`}
+                      />
+                    </Tooltip>
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
                 <div className="flex items-center justify-between">

@@ -202,6 +202,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   } | null>(null);
   const [runStreamStatus, setRunStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
   const [runStreamPaused, setRunStreamPaused] = useState(false);
+  const [runEventsOverflow, setRunEventsOverflow] = useState(false);
+  const [runEventsBatchLimit, setRunEventsBatchLimit] = useState<number | null>(null);
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [sendingToAi, setSendingToAi] = useState(false);
   const [lastError, setLastError] = useState<{
@@ -233,13 +235,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const runId = runDetail.run.id;
     const params = new URLSearchParams();
     const latestEventTimestamp = runDetail.events?.length
-      ? new Date(
-          Math.max(
-            ...runDetail.events.map((event) =>
-              new Date(event.createdAt).getTime()
-            )
-          )
-        ).toISOString()
+      ? runDetail.events.reduce<string | null>((max, event) => {
+          const time = new Date(event.createdAt).getTime();
+          if (!Number.isFinite(time)) return max;
+          if (!max) return new Date(time).toISOString();
+          return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
+        }, null)
       : null;
     if (latestEventTimestamp) {
       params.set("since", latestEventTimestamp);
@@ -290,8 +291,25 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
     source.addEventListener("events", (event) => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunEventRecord[];
-        mergeEvents(payload);
+        const payload = JSON.parse(event.data) as
+          | AiPathRunEventRecord[]
+          | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
+        if (Array.isArray(payload)) {
+          mergeEvents(payload);
+          setRunEventsOverflow(false);
+          setRunEventsBatchLimit(null);
+          return;
+        }
+        const events = Array.isArray(payload.events) ? payload.events : [];
+        mergeEvents(events);
+        if (typeof payload.limit === "number") {
+          setRunEventsBatchLimit(payload.limit);
+        }
+        if (payload.overflow) {
+          setRunEventsOverflow(true);
+        } else {
+          setRunEventsOverflow(false);
+        }
       } catch {
         // ignore parse errors
       }
@@ -309,6 +327,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setRunStreamStatus("stopped");
     };
   }, [runDetailOpen, runDetail?.run?.id, runStreamPaused]);
+
+  useEffect(() => {
+    setRunEventsOverflow(false);
+    setRunEventsBatchLimit(null);
+  }, [runDetail?.run?.id]);
 
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
@@ -1140,9 +1163,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setRuntimeState((prev: RuntimeState): RuntimeState => {
       const nextInputs = { ...prev.inputs };
       const nextOutputs = { ...prev.outputs };
+      const nextHashes = prev.hashes ? { ...prev.hashes } : undefined;
+      const nextHistory = prev.history ? { ...prev.history } : undefined;
       delete nextInputs[nodeId];
       delete nextOutputs[nodeId];
-      return { ...prev, inputs: nextInputs, outputs: nextOutputs };
+      if (nextHashes) {
+        delete nextHashes[nodeId];
+      }
+      if (nextHistory) {
+        delete nextHistory[nodeId];
+      }
+      return {
+        ...prev,
+        inputs: nextInputs,
+        outputs: nextOutputs,
+        hashes: nextHashes,
+        history: nextHistory,
+      };
     });
   }, []);
 
@@ -2085,6 +2122,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       triggerEvent,
       triggerContext,
       deferPoll: true,
+      recordHistory: true,
+      historyLimit: 50,
+      seedHistory: runtimeStateRef.current.history ?? undefined,
       fetchEntityByType,
       reportAiPathsError,
       toast,
@@ -2194,6 +2234,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         deferPoll: true,
         skipAiJobs: true,
         seedOutputs: seededOutputs,
+        seedHashes: runtimeStateRef.current.hashes ?? undefined,
+        seedHistory: runtimeStateRef.current.history ?? undefined,
+        recordHistory: true,
+        historyLimit: 50,
         fetchEntityByType,
         reportAiPathsError,
         toast,
@@ -4035,7 +4079,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 />
               </div>
               <div>
-                <Label className="text-[10px] uppercase text-gray-500">Events</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-[10px] uppercase text-gray-500">Events</Label>
+                  {runEventsOverflow ? (
+                    <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                      Truncated{runEventsBatchLimit ? ` (limit ${runEventsBatchLimit})` : ""}
+                    </span>
+                  ) : null}
+                </div>
                 <Textarea
                   className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
                   readOnly

@@ -326,7 +326,7 @@ describe("Products API", () => {
 
       const req = {
         headers: new Headers(),
-        formData: async () => formData,
+        formData: () => Promise.resolve(formData),
         url: `http://localhost/api/products/${product.id}`,
         method: "PUT",
       } as unknown as NextRequest;
@@ -363,7 +363,7 @@ describe("Products API", () => {
 
       const req = {
         headers: new Headers(),
-        formData: async () => formData,
+        formData: () => Promise.resolve(formData),
         url: `http://localhost/api/products/${product.id}`,
         method: "PUT",
       } as unknown as NextRequest;

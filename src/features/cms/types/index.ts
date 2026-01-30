@@ -1,3 +1,5 @@
+export type PageStatus = "draft" | "published" | "scheduled";
+
 export interface Block {
   id: string;
   name: string;
@@ -21,15 +23,31 @@ export interface PageSlugLink {
   };
 }
 
+export interface PageSeoData {
+  seoTitle?: string;
+  seoDescription?: string;
+  seoOgImage?: string;
+  seoCanonical?: string;
+  robotsMeta?: string;
+}
+
 export interface PageSummary {
   id: string;
   name: string;
+  status: PageStatus;
   slugs: PageSlugLink[];
 }
 
 export interface Page {
   id: string;
   name: string;
+  status: PageStatus;
+  publishedAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoOgImage?: string;
+  seoCanonical?: string;
+  robotsMeta?: string;
   components: PageComponent[];
   slugs?: PageSlugLink[];
 }

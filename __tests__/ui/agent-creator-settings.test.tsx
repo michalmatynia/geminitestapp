@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
 
@@ -50,13 +50,11 @@ describe("AgentCreatorSettingsSection", () => {
     expect(defaultProps.setAgentModeEnabled).toHaveBeenCalledWith(true);
   });
 
-  it("calls setAgentMaxSteps when input changes", async () => {
-    const user = userEvent.setup();
+  it("calls setAgentMaxSteps when input changes", () => {
     render(<AgentCreatorSettingsSection {...defaultProps} agentModeEnabled={true} />);
     
     const input = screen.getByLabelText(/max steps/i);
-    await user.clear(input);
-    await user.type(input, "15");
+    fireEvent.change(input, { target: { value: "15" } });
     
     expect(defaultProps.setAgentMaxSteps).toHaveBeenCalledWith(15);
   });

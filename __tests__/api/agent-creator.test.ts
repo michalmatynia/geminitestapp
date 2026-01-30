@@ -24,6 +24,7 @@ vi.mock("@/features/agent-runtime/server", () => ({
 
 vi.mock("@/shared/lib/api/api-handler", () => ({
   apiHandler: (handler: any) => handler,
+  apiHandlerWithParams: (handler: any) => handler,
 }));
 
 describe("Agent Creator API", () => {

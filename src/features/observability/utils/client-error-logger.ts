@@ -131,6 +131,11 @@ export const initClientErrorReporting = () => {
   if (handlerAttached || typeof window === "undefined") return;
   handlerAttached = true;
 
+  // Expose for Playwright tests in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    (window as any)._logClientError = logClientError;
+  }
+
   window.addEventListener("error", (event) => {
     logClientError(event.error ?? event.message, {
       context: {

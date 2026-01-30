@@ -1,7 +1,10 @@
-import { appendInputValue, cloneValue } from "../utils";
+import { appendInputValue, cloneValue, hashRuntimeValue } from "../utils";
+import { CACHEABLE_NODE_TYPE_SET } from "../constants";
 import type {
   AiNode,
   Edge,
+  RuntimeHistoryEntry,
+  RuntimeHistoryLink,
   RuntimePortValues,
   RuntimeState,
 } from "@/shared/types/ai-paths";
@@ -45,6 +48,10 @@ export type EvaluateGraphOptions = {
   deferPoll?: boolean;
   skipAiJobs?: boolean;
   seedOutputs?: Record<string, RuntimePortValues>;
+  seedHashes?: Record<string, string>;
+  seedHistory?: Record<string, RuntimeHistoryEntry[]>;
+  recordHistory?: boolean;
+  historyLimit?: number;
   skipNodeIds?: Set<string> | string[];
   onNodeStart?: (payload: {
     node: AiNode;
@@ -59,6 +66,7 @@ export type EvaluateGraphOptions = {
     nextOutputs: RuntimePortValues;
     changed: boolean;
     iteration: number;
+    cached?: boolean;
   }) => void | Promise<void>;
   onNodeError?: (payload: {
     node: AiNode;
@@ -71,6 +79,8 @@ export type EvaluateGraphOptions = {
     iteration: number;
     inputs: Record<string, RuntimePortValues>;
     outputs: Record<string, RuntimePortValues>;
+    hashes?: Record<string, string>;
+    history?: Record<string, RuntimeHistoryEntry[]>;
   }) => void | Promise<void>;
   fetchEntityByType: (
     entityType: string,
@@ -83,6 +93,23 @@ export type EvaluateGraphOptions = {
   ) => void;
   toast: ToastFn;
 };
+
+const CACHE_VERSION = 1;
+
+const buildNodeInputHash = (
+  node: AiNode,
+  nodeInputs: RuntimePortValues
+): string =>
+  hashRuntimeValue({
+    v: CACHE_VERSION,
+    id: node.id,
+    type: node.type,
+    title: node.title ?? null,
+    config: node.config ?? null,
+    inputs: nodeInputs,
+    inputPorts: node.inputs ?? [],
+    outputPorts: node.outputs ?? [],
+  });
 
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
@@ -122,6 +149,10 @@ export async function evaluateGraph({
   deferPoll,
   skipAiJobs,
   seedOutputs,
+  seedHashes,
+  seedHistory,
+  recordHistory,
+  historyLimit,
   skipNodeIds,
   onNodeStart,
   onNodeFinish,
@@ -137,9 +168,103 @@ export async function evaluateGraph({
       )
     : {};
   let inputs: Record<string, RuntimePortValues> = {};
+  const inputHashes = new Map<string, string>(
+    seedHashes ? Object.entries(seedHashes) : []
+  );
+  const historyMax = Math.max(1, historyLimit ?? 50);
+  const history = new Map<string, RuntimeHistoryEntry[]>(
+    seedHistory
+      ? Object.entries(seedHistory).map(([key, value]: [string, RuntimeHistoryEntry[]]) => [
+          key,
+          Array.isArray(value) ? value.slice() : [],
+        ])
+      : []
+  );
   const now = new Date().toISOString();
   const entityCache = new Map<string, Record<string, unknown> | null>();
   const activeNodeIds = new Set<string>();
+  const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
+  const incomingEdgesByNode = new Map<string, Edge[]>();
+  const outgoingEdgesByNode = new Map<string, Edge[]>();
+  edges.forEach((edge: Edge) => {
+    if (!edge.from || !edge.to) return;
+    const incoming = incomingEdgesByNode.get(edge.to) ?? [];
+    incoming.push(edge);
+    incomingEdgesByNode.set(edge.to, incoming);
+    const outgoing = outgoingEdgesByNode.get(edge.from) ?? [];
+    outgoing.push(edge);
+    outgoingEdgesByNode.set(edge.from, outgoing);
+  });
+  const triggerSource =
+    triggerContext && typeof triggerContext === "object"
+      ? (triggerContext as Record<string, unknown>).source
+      : null;
+  const resolvedPathId =
+    activePathId ??
+    (triggerSource && typeof triggerSource === "object"
+      ? ((triggerSource as Record<string, unknown>).pathId as string | undefined)
+      : undefined) ??
+    null;
+  const resolvedPathName =
+    triggerSource && typeof triggerSource === "object"
+      ? ((triggerSource as Record<string, unknown>).pathName as string | undefined)
+      : undefined;
+
+  const buildInputLinks = (
+    nodeId: string,
+    nodeInputs: RuntimePortValues
+  ): RuntimeHistoryLink[] => {
+    const incoming = incomingEdgesByNode.get(nodeId) ?? [];
+    const hasInputs = Object.keys(nodeInputs).length > 0;
+    return incoming
+      .map((edge: Edge): RuntimeHistoryLink | null => {
+        const toPort = edge.toPort ?? null;
+        const isPresent = toPort ? nodeInputs[toPort] !== undefined : hasInputs;
+        if (!isPresent) return null;
+        const fromNode = nodeById.get(edge.from);
+        return {
+          nodeId: edge.from,
+          nodeType: fromNode?.type ?? null,
+          nodeTitle: fromNode?.title ?? null,
+          fromPort: edge.fromPort ?? null,
+          toPort,
+        };
+      })
+      .filter((link: RuntimeHistoryLink | null): link is RuntimeHistoryLink => Boolean(link));
+  };
+
+  const buildOutputLinks = (
+    nodeId: string,
+    nodeOutputs: RuntimePortValues
+  ): RuntimeHistoryLink[] => {
+    const outgoing = outgoingEdgesByNode.get(nodeId) ?? [];
+    const hasOutputs = Object.keys(nodeOutputs).length > 0;
+    return outgoing
+      .map((edge: Edge): RuntimeHistoryLink | null => {
+        const fromPort = edge.fromPort ?? null;
+        const isPresent = fromPort ? nodeOutputs[fromPort] !== undefined : hasOutputs;
+        if (!isPresent) return null;
+        const toNode = nodeById.get(edge.to);
+        return {
+          nodeId: edge.to,
+          nodeType: toNode?.type ?? null,
+          nodeTitle: toNode?.title ?? null,
+          fromPort,
+          toPort: edge.toPort ?? null,
+        };
+      })
+      .filter((link: RuntimeHistoryLink | null): link is RuntimeHistoryLink => Boolean(link));
+  };
+
+  const pushHistoryEntry = (nodeId: string, entry: RuntimeHistoryEntry): void => {
+    if (!recordHistory) return;
+    const existing = history.get(nodeId) ?? [];
+    existing.push(entry);
+    if (existing.length > historyMax) {
+      existing.splice(0, existing.length - historyMax);
+    }
+    history.set(nodeId, existing);
+  };
 
   if (triggerNodeId) {
     const adjacency = new Map<string, Set<string>>();
@@ -295,6 +420,56 @@ export async function evaluateGraph({
         continue;
       }
 
+      const cacheMode = node.config?.runtime?.cache?.mode ?? "auto";
+      const isCacheable =
+        cacheMode === "force"
+          ? true
+          : cacheMode === "disabled"
+            ? false
+            : CACHEABLE_NODE_TYPE_SET.has(node.type);
+      if (!isCacheable && inputHashes.has(node.id)) {
+        inputHashes.delete(node.id);
+      }
+      const inputHash = isCacheable ? buildNodeInputHash(node, nodeInputs) : null;
+      const hasCachedOutput =
+        isCacheable &&
+        inputHash !== null &&
+        inputHashes.get(node.id) === inputHash &&
+        outputs[node.id] !== undefined;
+
+      if (hasCachedOutput) {
+        if (recordHistory) {
+          const entry: RuntimeHistoryEntry = {
+            timestamp: new Date().toISOString(),
+            pathId: resolvedPathId ?? null,
+            pathName: resolvedPathName ?? null,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: "cached",
+            iteration,
+            inputs: cloneValue(nodeInputs),
+            outputs: cloneValue(prevOutputs),
+            inputsFrom: buildInputLinks(node.id, nodeInputs),
+            outputsTo: buildOutputLinks(node.id, prevOutputs),
+            delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+          };
+          pushHistoryEntry(node.id, entry);
+        }
+        if (onNodeFinish) {
+          await onNodeFinish({
+            node,
+            nodeInputs,
+            prevOutputs,
+            nextOutputs: prevOutputs,
+            changed: false,
+            iteration,
+            cached: true,
+          });
+        }
+        continue;
+      }
+
       const handler = HANDLERS[node.type];
       if (handler) {
         if (onNodeStart) {
@@ -327,6 +502,25 @@ export async function evaluateGraph({
           });
           nextOutputs = result;
         } catch (error) {
+          if (recordHistory) {
+            const entry: RuntimeHistoryEntry = {
+              timestamp: new Date().toISOString(),
+              pathId: resolvedPathId ?? null,
+              pathName: resolvedPathName ?? null,
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: "failed",
+              iteration,
+              inputs: cloneValue(nodeInputs),
+              outputs: cloneValue(prevOutputs),
+              error: error instanceof Error ? error.message : String(error),
+              inputsFrom: buildInputLinks(node.id, nodeInputs),
+              outputsTo: buildOutputLinks(node.id, prevOutputs),
+              delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+            };
+            pushHistoryEntry(node.id, entry);
+          }
           if (onNodeError) {
             await onNodeError({ node, nodeInputs, prevOutputs, error, iteration });
           }
@@ -339,6 +533,27 @@ export async function evaluateGraph({
         }
       }
 
+      if (recordHistory) {
+        const entry: RuntimeHistoryEntry = {
+          timestamp: new Date().toISOString(),
+          pathId: resolvedPathId ?? null,
+          pathName: resolvedPathName ?? null,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          status: node.type === "delay" ? "delayed" : "completed",
+          iteration,
+          inputs: cloneValue(nodeInputs),
+          outputs: cloneValue(nextOutputs),
+          inputsFrom: buildInputLinks(node.id, nodeInputs),
+          outputsTo: buildOutputLinks(node.id, nextOutputs),
+          delayMs: node.type === "delay" ? (node.config?.delay?.ms ?? 300) : null,
+        };
+        pushHistoryEntry(node.id, entry);
+      }
+      if (isCacheable && inputHash) {
+        inputHashes.set(node.id, inputHash);
+      }
       const didChange = JSON.stringify(prevOutputs) !== JSON.stringify(nextOutputs);
       if (didChange) {
         outputs[node.id] = nextOutputs;
@@ -358,10 +573,22 @@ export async function evaluateGraph({
 
     inputs = nextInputs;
     if (onIterationEnd) {
-      await onIterationEnd({ iteration, inputs, outputs });
+      await onIterationEnd({
+        iteration,
+        inputs,
+        outputs,
+        hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+        history:
+          recordHistory && history.size ? Object.fromEntries(history) : undefined,
+      });
     }
     if (!changed) break;
   }
 
-  return { inputs, outputs };
+  return {
+    inputs,
+    outputs,
+    hashes: inputHashes.size ? Object.fromEntries(inputHashes) : undefined,
+    history: recordHistory && history.size ? Object.fromEntries(history) : undefined,
+  };
 }

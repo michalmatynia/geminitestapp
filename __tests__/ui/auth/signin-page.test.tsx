@@ -6,7 +6,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SignInPage from "@/features/auth/pages/public/SignInPage";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
 import { useSettingsMap } from "@/shared/hooks/useSettings";
 
@@ -45,7 +44,7 @@ describe("SignInPage", () => {
     } as any);
   });
 
-  it("renders correctly", async () => {
+  it("renders correctly", () => {
     render(<SignInPage />);
     expect(screen.getByRole("heading", { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();

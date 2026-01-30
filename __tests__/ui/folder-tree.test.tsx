@@ -140,8 +140,7 @@ describe("FolderTree Component", () => {
     expect(onUndo).toHaveBeenCalled();
   });
 
-  it("shows history entries when undoHistory is provided", async () => {
-    const user = userEvent.setup();
+  it("shows history entries when undoHistory is provided", () => {
     const undoHistory = [{ label: "Created folder 'Test'" }];
     render(<FolderTree {...defaultProps} undoHistory={undoHistory} />);
     

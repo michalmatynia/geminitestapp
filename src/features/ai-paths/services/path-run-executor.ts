@@ -220,6 +220,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext as Record<string, unknown> } : {}),
       seedOutputs: runtimeState.outputs,
+      seedHashes: runtimeState.hashes ?? undefined,
       skipNodeIds: skipNodes,
       fetchEntityByType,
       reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
@@ -252,7 +253,47 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           },
         });
       },
-      onNodeFinish: async ({ node, nodeInputs, nextOutputs }: { node: AiNode; nodeInputs: RuntimePortValues; nextOutputs: RuntimePortValues }) => {
+      onNodeFinish: async ({
+        node,
+        nodeInputs,
+        nextOutputs,
+        cached,
+        iteration,
+      }: {
+        node: AiNode;
+        nodeInputs: RuntimePortValues;
+        nextOutputs: RuntimePortValues;
+        cached?: boolean;
+        iteration: number;
+      }) => {
+        if (cached) {
+          if (iteration === 0) {
+            await repo.upsertRunNode(run.id, node.id, {
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: "completed",
+              attempt: nodeAttemptMap.get(node.id) ?? 0,
+              inputs: toJsonSafe(nodeInputs) as RuntimePortValues,
+              outputs: toJsonSafe(nextOutputs) as RuntimePortValues,
+              finishedAt: new Date(),
+              errorMessage: null,
+            });
+            await repo.createRunEvent({
+              runId: run.id,
+              level: "info",
+              message: `Node ${node.title ?? node.id} reused cached outputs.`,
+              metadata: {
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: "completed",
+                cached: true,
+                attempt: nodeAttemptMap.get(node.id) ?? 0,
+              },
+            });
+          }
+          return;
+        }
         await repo.upsertRunNode(run.id, node.id, {
           nodeType: node.type,
           nodeTitle: node.title ?? null,
@@ -301,9 +342,17 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           },
         });
       },
-      onIterationEnd: async ({ inputs, outputs }: { inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues> }) => {
+      onIterationEnd: async ({
+        inputs,
+        outputs,
+        hashes,
+      }: {
+        inputs: Record<string, RuntimePortValues>;
+        outputs: Record<string, RuntimePortValues>;
+        hashes?: Record<string, string>;
+      }) => {
         await repo.updateRun(run.id, {
-          runtimeState: sanitizeRuntimeState({ inputs, outputs }),
+          runtimeState: sanitizeRuntimeState({ inputs, outputs, hashes }),
         });
       },
     });

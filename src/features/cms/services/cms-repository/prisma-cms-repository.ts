@@ -2,7 +2,7 @@ import "server-only";
 
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
-import type { CmsRepository } from "../../types/services/cms-repository";
+import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
 import type { Block, Page, Slug, PageComponent } from "../../types";
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
@@ -101,9 +101,26 @@ export const prismaCmsRepository: CmsRepository = {
     return page as unknown as Page;
   },
 
-  async updatePage(id: string, data: { name?: string | undefined; components?: PageComponent[] | undefined }): Promise<Page | null> {
-    const cleanData = removeUndefined({ name: data.name });
-    
+  async getPageBySlug(slugValue: string): Promise<Page | null> {
+    const slug = await prisma.slug.findUnique({ where: { slug: slugValue } });
+    if (!slug) return null;
+    const pageSlug = await prisma.pageSlug.findFirst({ where: { slugId: slug.id } });
+    if (!pageSlug) return null;
+    return this.getPageById(pageSlug.pageId);
+  },
+
+  async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
+    const cleanData = removeUndefined({
+      name: data.name,
+      status: data.status,
+      publishedAt: data.publishedAt !== undefined ? (data.publishedAt ? new Date(data.publishedAt) : null) : undefined,
+      seoTitle: data.seoTitle,
+      seoDescription: data.seoDescription,
+      seoOgImage: data.seoOgImage,
+      seoCanonical: data.seoCanonical,
+      robotsMeta: data.robotsMeta,
+    });
+
     if (Object.keys(cleanData).length > 0) {
       await prisma.page.update({
         where: { id },

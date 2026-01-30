@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useCallback, useMemo } from "react";
-import { Settings, Trash2 } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui";
+import { Settings, Trash2, Globe, FileText } from "lucide-react";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label } from "@/shared/ui";
 import type { SettingsField } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "../../types/animation";
+import type { PageStatus } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
@@ -211,11 +212,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           </p>
         </div>
       ) : !hasSelection ? (
-        <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-gray-500">
-            Select a section or block from the tree to edit its settings.
-          </p>
-        </div>
+        <PageSettingsTab />
       ) : (
         <Tabs defaultValue="settings" className="flex flex-1 flex-col overflow-hidden">
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
@@ -327,5 +324,155 @@ export function ComponentSettingsPanel(): React.ReactNode {
         </Tabs>
       )}
     </aside>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page-level settings (status + SEO) — shown when no node is selected
+// ---------------------------------------------------------------------------
+
+const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
+  { label: "Draft", value: "draft" },
+  { label: "Published", value: "published" },
+];
+
+function PageSettingsTab(): React.ReactNode {
+  const { state, dispatch } = usePageBuilder();
+  const page = state.currentPage;
+  if (!page) return null;
+
+  const handleStatusChange = (status: PageStatus): void => {
+    dispatch({ type: "SET_PAGE_STATUS", status });
+  };
+
+  const handleSeoChange = (key: string, value: string): void => {
+    dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
+  };
+
+  return (
+    <Tabs defaultValue="page" className="flex flex-1 flex-col overflow-hidden">
+      <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
+        <TabsTrigger value="page" className="flex-1 text-xs">Page</TabsTrigger>
+        <TabsTrigger value="seo" className="flex-1 text-xs">SEO</TabsTrigger>
+      </TabsList>
+
+      {/* ---- Page tab ---- */}
+      <TabsContent value="page" className="flex-1 overflow-y-auto p-4 mt-0">
+        <div className="space-y-4">
+          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+            <FileText className="mr-1.5 inline size-3" />
+            {page.name}
+          </div>
+
+          {/* Status */}
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Status</Label>
+            <div className="flex gap-2">
+              {STATUS_OPTIONS.map((opt: { label: string; value: PageStatus }) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={(): void => handleStatusChange(opt.value)}
+                  className={`flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition ${
+                    page.status === opt.value
+                      ? opt.value === "published"
+                        ? "border-green-500 bg-green-500/10 text-green-400"
+                        : "border-blue-500 bg-blue-500/10 text-blue-400"
+                      : "border-border/40 bg-gray-800/30 text-gray-400 hover:border-border/60"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {page.publishedAt && page.status === "published" && (
+              <p className="text-[10px] text-gray-500">
+                Published: {new Date(page.publishedAt).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Select a section or block from the tree to edit its settings.
+          </p>
+        </div>
+      </TabsContent>
+
+      {/* ---- SEO tab ---- */}
+      <TabsContent value="seo" className="flex-1 overflow-y-auto p-4 mt-0">
+        <div className="space-y-4">
+          <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+            <Globe className="mr-1.5 inline size-3" />
+            Search Engine Optimization
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="seo-title" className="text-xs text-gray-400">Page title</Label>
+            <Input
+              id="seo-title"
+              value={page.seoTitle ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoTitle", e.target.value)}
+              placeholder={page.name}
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="seo-desc" className="text-xs text-gray-400">Meta description</Label>
+            <Input
+              id="seo-desc"
+              value={page.seoDescription ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoDescription", e.target.value)}
+              placeholder="Page description for search engines"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="seo-canonical" className="text-xs text-gray-400">Canonical URL</Label>
+            <Input
+              id="seo-canonical"
+              value={page.seoCanonical ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoCanonical", e.target.value)}
+              placeholder="https://example.com/page"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="seo-og" className="text-xs text-gray-400">OG Image URL</Label>
+            <Input
+              id="seo-og"
+              value={page.seoOgImage ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("seoOgImage", e.target.value)}
+              placeholder="https://example.com/image.png"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="seo-robots" className="text-xs text-gray-400">Robots meta</Label>
+            <Input
+              id="seo-robots"
+              value={page.robotsMeta ?? "index,follow"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange("robotsMeta", e.target.value)}
+              placeholder="index,follow"
+              className="h-8 text-xs"
+            />
+          </div>
+
+          {/* SEO Preview */}
+          <div className="space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Search preview</p>
+            <p className="text-sm font-medium text-blue-400 truncate">
+              {page.seoTitle || page.name}
+            </p>
+            <p className="text-xs text-gray-400 line-clamp-2">
+              {page.seoDescription || "No description set"}
+            </p>
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }

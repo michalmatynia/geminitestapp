@@ -1,8 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Menu from '@/features/admin/components/Menu';
 import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
-import { ReactNode } from 'react';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -45,7 +44,7 @@ describe('Menu Component', () => {
     expect(screen.getByText('Drafts')).toBeInTheDocument();
   });
 
-  it('navigates to create page and collapses menu when Create Page is clicked', async () => {
+  it('navigates to create page and collapses menu when Create Page is clicked', () => {
     renderMenu();
     const cmsTrigger = screen.getByText('CMS');
     fireEvent.click(cmsTrigger);

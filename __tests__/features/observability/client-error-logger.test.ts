@@ -44,7 +44,7 @@ describe('client-error-logger', () => {
     expect(url).toBe('/api/client-errors');
   });
 
-  it('includes extra context and base context in payload', async () => {
+  it('includes extra context and base context in payload', () => {
     setClientErrorBaseContext({ appVersion: '1.0.0' });
     
     // Switch to fetch by making sendBeacon fail

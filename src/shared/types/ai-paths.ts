@@ -254,6 +254,14 @@ export type DbSchemaConfig = {
   formatAs: "json" | "text";
 };
 
+export type NodeCacheMode = "auto" | "force" | "disabled";
+
+export type NodeRuntimeConfig = {
+  cache?: {
+    mode?: NodeCacheMode;
+  };
+};
+
 export type NodeConfig = {
   trigger?: TriggerConfig;
   simulation?: SimulationConfig;
@@ -279,6 +287,7 @@ export type NodeConfig = {
   prompt?: PromptConfig;
   model?: ModelConfig;
   database?: DatabaseConfig;
+  runtime?: NodeRuntimeConfig;
 };
 
 export type NodeDefinition = {
@@ -305,9 +314,37 @@ export type Edge = {
 };
 
 export type RuntimePortValues = Record<string, unknown>;
+export type RuntimeHistoryStatus = "completed" | "failed" | "delayed" | "cached";
+
+export type RuntimeHistoryLink = {
+  nodeId: string;
+  nodeType?: string | null;
+  nodeTitle?: string | null;
+  fromPort?: string | null;
+  toPort?: string | null;
+};
+
+export type RuntimeHistoryEntry = {
+  timestamp: string;
+  pathId?: string | null;
+  pathName?: string | null;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle?: string | null;
+  status: RuntimeHistoryStatus;
+  iteration?: number;
+  inputs?: RuntimePortValues | null;
+  outputs?: RuntimePortValues | null;
+  error?: string | null;
+  delayMs?: number | null;
+  inputsFrom?: RuntimeHistoryLink[];
+  outputsTo?: RuntimeHistoryLink[];
+};
 export type RuntimeState = {
   inputs: Record<string, RuntimePortValues>;
   outputs: Record<string, RuntimePortValues>;
+  hashes?: Record<string, string>;
+  history?: Record<string, RuntimeHistoryEntry[]>;
 };
 
 export type AiPathRunStatus =

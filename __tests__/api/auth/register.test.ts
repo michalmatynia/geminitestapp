@@ -42,7 +42,7 @@ describe("Auth Register API", () => {
   });
 
   it("registers a new user successfully with Prisma", async () => {
-    const authServer = await import("@/features/auth/server");
+    await import("@/features/auth/server");
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.user.create).mockResolvedValue({
       id: "u1",

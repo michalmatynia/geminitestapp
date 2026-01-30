@@ -10,6 +10,21 @@ export const VIEW_MARGIN = 40;
 export const PORT_GAP = 18;
 export const PORT_SIZE = 10;
 export const DEFAULT_CONTEXT_ROLE = "entity";
+export const CACHEABLE_NODE_TYPES: NodeType[] = [
+  "constant",
+  "math",
+  "compare",
+  "router",
+  "gate",
+  "bundle",
+  "template",
+  "prompt",
+  "mapper",
+  "mutator",
+  "validator",
+  "viewer",
+];
+export const CACHEABLE_NODE_TYPE_SET = new Set<NodeType>(CACHEABLE_NODE_TYPES);
 export const TRIGGER_INPUT_PORTS = ["simulation"];
 export const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
 export const CONTEXT_INPUT_PORTS = ["context"];

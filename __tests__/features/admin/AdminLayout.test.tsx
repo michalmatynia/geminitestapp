@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { ReactNode } from 'react';
@@ -46,7 +46,7 @@ describe('AdminLayout', () => {
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
-  it('can collapse and expand the sidebar', async () => {
+  it('can collapse and expand the sidebar', () => {
     render(
       <AdminLayout>
         <div>Content</div>

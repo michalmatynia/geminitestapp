@@ -11,6 +11,9 @@ type TooltipProps = {
   contentClassName?: string;
   side?: "top" | "bottom" | "left" | "right";
   maxWidth?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  disableHover?: boolean;
 };
 
 export function Tooltip({
@@ -20,8 +23,22 @@ export function Tooltip({
   contentClassName,
   side = "top",
   maxWidth = "400px",
+  open,
+  onOpenChange,
+  disableHover = false,
 }: TooltipProps): JSX.Element {
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = typeof open === "boolean";
+  const isVisible = isControlled ? open : internalOpen;
+
+  const setVisible = (next: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+    if (onOpenChange) {
+      onOpenChange(next);
+    }
+  };
 
   const sideStyles = {
     top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
@@ -33,8 +50,12 @@ export function Tooltip({
   return (
     <div
       className={cn("relative inline-block", className)}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
+      onMouseEnter={() => {
+        if (!disableHover) setVisible(true);
+      }}
+      onMouseLeave={() => {
+        if (!disableHover) setVisible(false);
+      }}
     >
       {children}
       {isVisible && content && (

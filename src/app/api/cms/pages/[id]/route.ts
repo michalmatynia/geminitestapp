@@ -11,6 +11,13 @@ type Params = { id: string };
 
 const pageUpdateSchema = z.object({
   name: z.string().trim().min(1),
+  status: z.enum(["draft", "published", "scheduled"]).optional(),
+  publishedAt: z.string().nullable().optional(),
+  seoTitle: z.string().nullable().optional(),
+  seoDescription: z.string().nullable().optional(),
+  seoOgImage: z.string().nullable().optional(),
+  seoCanonical: z.string().nullable().optional(),
+  robotsMeta: z.string().nullable().optional(),
   slugIds: z.array(z.string().trim().min(1)),
   components: z.array(
     z.object({
@@ -58,13 +65,20 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     if (!parsed.ok) {
       return parsed.response;
     }
-    const { name, slugIds, components } = parsed.data;
+    const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, slugIds, components } = parsed.data;
 
     const cmsRepository = await getCmsRepository();
-    
-    // Update basic info and components
+
+    // Update basic info, status, SEO, and components
     const updatedPage = await cmsRepository.updatePage(id, {
       name,
+      status,
+      publishedAt,
+      seoTitle,
+      seoDescription,
+      seoOgImage,
+      seoCanonical,
+      robotsMeta,
       components,
     });
 

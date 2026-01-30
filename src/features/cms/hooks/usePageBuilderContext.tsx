@@ -8,6 +8,7 @@ import type {
   BlockInstance,
   PageZone,
 } from "../types/page-builder";
+import type { PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
 
 // ---------------------------------------------------------------------------
@@ -68,13 +69,31 @@ function pageBuilderReducer(
     case "SET_PAGES":
       return { ...state, pages: action.pages };
 
-    case "SET_CURRENT_PAGE":
+    case "SET_CURRENT_PAGE": {
+      // Reconstruct SectionInstance[] from the page's saved components
+      const reconstructedSections: SectionInstance[] = (action.page.components ?? []).map(
+        (comp: PageComponent, idx: number): SectionInstance => {
+          const content = comp.content as {
+            zone?: PageZone;
+            settings?: Record<string, unknown>;
+            blocks?: BlockInstance[];
+          };
+          return {
+            id: `loaded-${idx}-${uid()}`,
+            type: comp.type,
+            zone: (content.zone as PageZone) ?? "template",
+            settings: content.settings ?? {},
+            blocks: content.blocks ?? [],
+          };
+        }
+      );
       return {
         ...state,
         currentPage: action.page,
-        sections: [],
+        sections: reconstructedSections,
         selectedNodeId: null,
       };
+    }
 
     case "SELECT_NODE":
       return { ...state, selectedNodeId: action.nodeId };
@@ -491,6 +510,29 @@ function pageBuilderReducer(
       // Rebuild flat array
       const rebuilt = zOrder.flatMap((z: PageZone) => grouped[z]);
       return { ...state, sections: rebuilt };
+    }
+
+    case "SET_PAGE_STATUS": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          status: action.status,
+          publishedAt: action.status === "published" ? new Date().toISOString() : state.currentPage.publishedAt,
+        },
+      };
+    }
+
+    case "UPDATE_SEO": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          ...action.seo,
+        },
+      };
     }
 
     case "TOGGLE_LEFT_PANEL":

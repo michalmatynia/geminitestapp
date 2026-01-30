@@ -21,6 +21,44 @@ const RUNS_COLLECTION = "ai_path_runs";
 const NODES_COLLECTION = "ai_path_run_nodes";
 const EVENTS_COLLECTION = "ai_path_run_events";
 
+type MongoIndexSpec = {
+  collection: string;
+  key: Record<string, 1 | -1>;
+};
+
+export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
+  { collection: RUNS_COLLECTION, key: { id: 1 } },
+  { collection: RUNS_COLLECTION, key: { pathId: 1 } },
+  { collection: RUNS_COLLECTION, key: { status: 1, createdAt: -1 } },
+  { collection: RUNS_COLLECTION, key: { status: 1, nextRetryAt: 1, createdAt: 1 } },
+  { collection: NODES_COLLECTION, key: { runId: 1 } },
+  { collection: NODES_COLLECTION, key: { runId: 1, nodeId: 1 } },
+  { collection: NODES_COLLECTION, key: { runId: 1, createdAt: 1 } },
+  { collection: EVENTS_COLLECTION, key: { runId: 1, createdAt: 1 } },
+];
+
+let indexesReady = false;
+let indexesPromise: Promise<void> | null = null;
+
+const ensureIndexes = async () => {
+  if (indexesReady) return;
+  if (!indexesPromise) {
+    indexesPromise = (async () => {
+      const db = await getMongoDb();
+      await Promise.all(
+        AI_PATHS_MONGO_INDEXES.map((index) =>
+          db.collection(index.collection).createIndex(index.key)
+        )
+      );
+      indexesReady = true;
+    })().catch((error) => {
+      indexesPromise = null;
+      throw error;
+    });
+  }
+  await indexesPromise;
+};
+
 type RunDocument = {
   _id: string;
   id?: string;
@@ -127,6 +165,7 @@ const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$
 
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
     const id = randomUUID();
@@ -159,6 +198,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async updateRun(runId: string, data: AiPathRunUpdate) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
     const updateData = { ...data, updatedAt: now } as Record<string, unknown>;
@@ -188,6 +228,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async findRunById(runId: string) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const doc = await db
       .collection<RunDocument>(RUNS_COLLECTION)
@@ -196,6 +237,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async listRuns(options: AiPathRunListOptions = {}) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const filter: Record<string, unknown> = {};
     if (options.pathId) {
@@ -234,6 +276,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async claimNextQueuedRun() {
+    await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
     const result = await db
@@ -248,6 +291,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async createRunNodes(runId: string, nodes: AiNode[]) {
+    await ensureIndexes();
     if (!nodes || nodes.length === 0) return;
     const db = await getMongoDb();
     const now = new Date();
@@ -272,6 +316,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     nodeId: string,
     data: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
   ) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
     const updateData = {
@@ -292,6 +337,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async listRunNodes(runId: string) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const docs = await db
       .collection<NodeDocument>(NODES_COLLECTION)
@@ -302,6 +348,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async createRunEvent(input: AiPathRunEventCreateInput) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const document: EventDocument = {
       _id: randomUUID(),
@@ -319,6 +366,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     runId: string,
     options: { since?: Date | string | null; limit?: number } = {}
   ) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const filter: Record<string, unknown> = { runId };
     const sinceValue = options.since
@@ -343,6 +391,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   },
 
   async markStaleRunningRuns(maxAgeMs: number) {
+    await ensureIndexes();
     const db = await getMongoDb();
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await db

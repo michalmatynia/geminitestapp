@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
-import type { CmsRepository } from "../../types/services/cms-repository";
+import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
 import type { Block, Page, Slug, PageComponent } from "../../types";
 
 const blocksCollection = "cms_blocks";
@@ -22,6 +22,13 @@ interface BlockDocument {
 interface PageDocument {
   id: string;
   name: string;
+  status: string;
+  publishedAt?: Date | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoOgImage?: string | null;
+  seoCanonical?: string | null;
+  robotsMeta?: string | null;
   components: PageComponent[];
   createdAt: Date;
   updatedAt: Date;
@@ -158,6 +165,13 @@ export const mongoCmsRepository: CmsRepository = {
       return {
         id: pageId,
         name: doc.name,
+        status: doc.status || "draft",
+        publishedAt: doc.publishedAt?.toISOString(),
+        seoTitle: doc.seoTitle ?? undefined,
+        seoDescription: doc.seoDescription ?? undefined,
+        seoOgImage: doc.seoOgImage ?? undefined,
+        seoCanonical: doc.seoCanonical ?? undefined,
+        robotsMeta: doc.robotsMeta ?? "index,follow",
         components: doc.components || [],
         slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
       } as Page;
@@ -168,7 +182,7 @@ export const mongoCmsRepository: CmsRepository = {
     const db = await getMongoDb();
     const doc = await db.collection<PageDocument>(pagesCollection).findOne(buildIdFilter<PageDocument>(id));
     if (!doc) return null;
-    
+
     const pageId = doc.id;
     const slugLinks = await db.collection<PageSlugDocument>("cms_page_slugs").find({ pageId }).toArray();
     const slugIds = slugLinks.map(link => link.slugId);
@@ -177,9 +191,25 @@ export const mongoCmsRepository: CmsRepository = {
     return {
       id: pageId,
       name: doc.name,
+      status: doc.status || "draft",
+      publishedAt: doc.publishedAt?.toISOString(),
+      seoTitle: doc.seoTitle ?? undefined,
+      seoDescription: doc.seoDescription ?? undefined,
+      seoOgImage: doc.seoOgImage ?? undefined,
+      seoCanonical: doc.seoCanonical ?? undefined,
+      robotsMeta: doc.robotsMeta ?? "index,follow",
       components: doc.components || [],
       slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
     } as Page;
+  },
+
+  async getPageBySlug(slugValue: string): Promise<Page | null> {
+    const db = await getMongoDb();
+    const slugDoc = await db.collection<SlugDocument>(slugsCollection).findOne({ slug: slugValue });
+    if (!slugDoc) return null;
+    const pageSlug = await db.collection<PageSlugDocument>("cms_page_slugs").findOne({ slugId: slugDoc.id });
+    if (!pageSlug) return null;
+    return this.getPageById(pageSlug.pageId);
   },
 
   async createPage(data: { name: string }): Promise<Page> {
@@ -188,18 +218,26 @@ export const mongoCmsRepository: CmsRepository = {
     const doc: PageDocument = {
       id,
       name: data.name,
+      status: "draft",
       components: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     await db.collection<PageDocument>(pagesCollection).insertOne(doc);
-    return { id, name: doc.name, components: [] } as Page;
+    return { id, name: doc.name, status: "draft", components: [] } as Page;
   },
 
-  async updatePage(id: string, data: { name?: string | undefined; components?: PageComponent[] | undefined }): Promise<Page | null> {
+  async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
     const db = await getMongoDb();
     const update = removeUndefined({
       name: data.name,
+      status: data.status,
+      publishedAt: data.publishedAt !== undefined ? (data.publishedAt ? new Date(data.publishedAt) : null) : undefined,
+      seoTitle: data.seoTitle,
+      seoDescription: data.seoDescription,
+      seoOgImage: data.seoOgImage,
+      seoCanonical: data.seoCanonical,
+      robotsMeta: data.robotsMeta,
       components: data.components,
       updatedAt: new Date(),
     }) as Partial<PageDocument>;

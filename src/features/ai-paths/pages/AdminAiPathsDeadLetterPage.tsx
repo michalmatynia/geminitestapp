@@ -65,6 +65,8 @@ export function AdminAiPathsDeadLetterPage() {
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
   const [streamStatus, setStreamStatus] = useState<"connecting" | "live" | "stopped" | "paused">("stopped");
   const [streamPaused, setStreamPaused] = useState(false);
+  const [eventsOverflow, setEventsOverflow] = useState(false);
+  const [eventsBatchLimit, setEventsBatchLimit] = useState<number | null>(null);
 
   const normalizedPathId = pathId.trim();
   const normalizedQuery = debouncedSearchQuery.trim();
@@ -122,6 +124,8 @@ export function AdminAiPathsDeadLetterPage() {
 
   useEffect(() => {
     setExpandedNodeIds(new Set());
+    setEventsOverflow(false);
+    setEventsBatchLimit(null);
   }, [detail?.run?.id]);
 
   useEffect(() => {
@@ -136,15 +140,7 @@ export function AdminAiPathsDeadLetterPage() {
 
     const runId = detail.run.id;
     const params = new URLSearchParams();
-    const latestEventTimestamp = detail.events?.length
-      ? new Date(
-          Math.max(
-            ...detail.events.map((event) =>
-              new Date(event.createdAt).getTime()
-            )
-          )
-        ).toISOString()
-      : null;
+    const latestEventTimestamp = getLatestEventTimestamp(detail.events);
     if (latestEventTimestamp) {
       params.set("since", latestEventTimestamp);
     }
@@ -194,8 +190,25 @@ export function AdminAiPathsDeadLetterPage() {
     });
     source.addEventListener("events", (event) => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunEventRecord[];
-        mergeEvents(payload);
+        const payload = JSON.parse(event.data) as
+          | AiPathRunEventRecord[]
+          | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
+        if (Array.isArray(payload)) {
+          mergeEvents(payload);
+          setEventsOverflow(false);
+          setEventsBatchLimit(null);
+          return;
+        }
+        const events = Array.isArray(payload.events) ? payload.events : [];
+        mergeEvents(events);
+        if (typeof payload.limit === "number") {
+          setEventsBatchLimit(payload.limit);
+        }
+        if (payload.overflow) {
+          setEventsOverflow(true);
+        } else {
+          setEventsOverflow(false);
+        }
       } catch {
         // ignore parse errors
       }
@@ -358,6 +371,17 @@ export function AdminAiPathsDeadLetterPage() {
     const end = Math.min(offset + pageSize, total);
     return `${start}-${end} of ${total}`;
   }, [offset, pageSize, total]);
+
+  const getLatestEventTimestamp = (events: AiPathRunEventRecord[]) => {
+    let max = 0;
+    events.forEach((event) => {
+      const time = new Date(event.createdAt).getTime();
+      if (Number.isFinite(time) && time > max) {
+        max = time;
+      }
+    });
+    return max > 0 ? new Date(max).toISOString() : null;
+  };
 
   const toggleNodeExpanded = (nodeId: string) => {
     setExpandedNodeIds((prev) => {
@@ -977,7 +1001,14 @@ export function AdminAiPathsDeadLetterPage() {
 
               <div className="rounded-md border border-border/70 bg-black/20">
                 <div className="flex items-center justify-between px-4 pt-4 text-xs text-gray-400">
-                  <span>Events</span>
+                  <div className="flex items-center gap-2">
+                    <span>Events</span>
+                    {eventsOverflow ? (
+                      <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                        Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ""}
+                      </span>
+                    ) : null}
+                  </div>
                   <span className="text-[11px] text-gray-500">{detail.events.length} total</span>
                 </div>
                 <div className="max-h-60 overflow-auto p-4 text-xs text-gray-200">

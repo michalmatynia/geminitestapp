@@ -1,4 +1,16 @@
-import type { Block, Page, Slug, PageComponent } from "@/features/cms/types";
+import type { Block, Page, Slug, PageComponent, PageStatus } from "@/features/cms/types";
+
+export interface PageUpdateData {
+  name?: string | undefined;
+  status?: PageStatus | undefined;
+  publishedAt?: string | null | undefined;
+  seoTitle?: string | null | undefined;
+  seoDescription?: string | null | undefined;
+  seoOgImage?: string | null | undefined;
+  seoCanonical?: string | null | undefined;
+  robotsMeta?: string | null | undefined;
+  components?: PageComponent[] | undefined;
+}
 
 export type CmsRepository = {
   // Blocks
@@ -12,8 +24,9 @@ export type CmsRepository = {
   // Pages
   getPages(): Promise<Page[]>;
   getPageById(id: string): Promise<Page | null>;
+  getPageBySlug(slug: string): Promise<Page | null>;
   createPage(data: { name: string }): Promise<Page>;
-  updatePage(id: string, data: { name?: string | undefined; components?: PageComponent[] | undefined }): Promise<Page | null>;
+  updatePage(id: string, data: PageUpdateData): Promise<Page | null>;
   deletePage(id: string): Promise<Page | null>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
   replacePageComponents(pageId: string, components: PageComponent[]): Promise<void>;
@@ -26,7 +39,7 @@ export type CmsRepository = {
   updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null>;
   deleteSlug(id: string): Promise<Slug | null>;
 
-  // Relationships (can be added as needed, but let's start with these)
+  // Relationships
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
   removeSlugFromPage(pageId: string, slugId: string): Promise<void>;
   addBlockToPage(pageId: string, blockId: string): Promise<void>;

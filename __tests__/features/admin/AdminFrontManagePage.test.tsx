@@ -11,8 +11,8 @@ vi.mock('@/shared/hooks/useSettings', () => ({
 }));
 
 // Mock useToast
-vi.mock('@/shared/ui', () => ({
-  ...vi.importActual('@/shared/ui'),
+vi.mock('@/shared/ui', async () => ({
+  ...(await vi.importActual<any>('@/shared/ui')),
   useToast: vi.fn(() => ({ toast: vi.fn() })),
   Button: ({ children, onClick, disabled, className }: any) => (
     <button onClick={onClick} disabled={disabled} className={className}>{children}</button>

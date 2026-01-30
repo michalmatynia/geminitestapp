@@ -1,27 +1,40 @@
 "use client";
 
 import React from "react";
-import { Layers, Heading, AlignLeft, MousePointerClick, Box, LayoutGrid, Columns, FileText, LayoutTemplate } from "lucide-react";
+import { LayoutGrid, Columns, Image as ImageIcon } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
-
-const SECTION_ICONS: Record<string, React.ElementType> = {
-  ImageWithText: Layers,
-  RichText: AlignLeft,
-  Hero: Layers,
-  Grid: LayoutGrid,
-};
-
-const BLOCK_ICONS: Record<string, React.ElementType> = {
-  Heading: Heading,
-  Text: AlignLeft,
-  Button: MousePointerClick,
-  ImageWithText: Layers,
-  RichText: FileText,
-  Hero: LayoutTemplate,
-};
 
 // Section-type block types that get a richer preview
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];
+
+// ---------------------------------------------------------------------------
+// Color scheme background tints
+// ---------------------------------------------------------------------------
+
+const COLOR_SCHEME_BG: Record<string, string> = {
+  "scheme-1": "bg-transparent",
+  "scheme-2": "bg-blue-500/5",
+  "scheme-3": "bg-purple-500/5",
+  "scheme-4": "bg-green-500/5",
+  "scheme-5": "bg-amber-500/5",
+};
+
+function getColorSchemeBg(scheme: unknown): string {
+  if (typeof scheme === "string" && scheme in COLOR_SCHEME_BG) {
+    return COLOR_SCHEME_BG[scheme];
+  }
+  return "";
+}
+
+function getSectionPadding(settings: Record<string, unknown>): React.CSSProperties {
+  const pt = typeof settings["paddingTop"] === "number" ? settings["paddingTop"] : 36;
+  const pb = typeof settings["paddingBottom"] === "number" ? settings["paddingBottom"] : 36;
+  return { paddingTop: `${pt}px`, paddingBottom: `${pb}px` };
+}
+
+// ---------------------------------------------------------------------------
+// Top-level section preview
+// ---------------------------------------------------------------------------
 
 interface PreviewSectionProps {
   section: SectionInstance;
@@ -31,30 +44,30 @@ interface PreviewSectionProps {
 
 export function PreviewSection({ section, selectedNodeId, onSelect }: PreviewSectionProps): React.ReactNode {
   const isSectionSelected = selectedNodeId === section.id;
-  const SectionIcon = SECTION_ICONS[section.type] ?? Box;
+  const colorBg = getColorSchemeBg(section.settings["colorScheme"]);
+  const paddingStyle = getSectionPadding(section.settings);
 
-  // Grid sections use dashed border, full-width
+  // Grid sections — keep existing grid rendering
   if (section.type === "Grid") {
     return (
       <div
         role="button"
         tabIndex={0}
-        onClick={() => onSelect(section.id)}
-        onKeyDown={(e: React.KeyboardEvent) => {
+        onClick={(): void => onSelect(section.id)}
+        onKeyDown={(e: React.KeyboardEvent): void => {
           if (e.key === "Enter" || e.key === " ") onSelect(section.id);
         }}
-        className={`w-full rounded-lg border-2 border-dashed p-4 text-left transition cursor-pointer ${
+        style={paddingStyle}
+        className={`w-full rounded-lg border-2 border-dashed px-4 text-left transition cursor-pointer ${colorBg} ${
           isSectionSelected
             ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
             : "border-border/50 bg-transparent hover:border-border/70"
         }`}
       >
-        {/* Grid header */}
         <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
           <LayoutGrid className="size-3.5" />
           <span>Grid</span>
         </div>
-
         <PreviewGridContent
           section={section}
           selectedNodeId={selectedNodeId}
@@ -64,30 +77,155 @@ export function PreviewSection({ section, selectedNodeId, onSelect }: PreviewSec
     );
   }
 
+  // ImageWithText section — side-by-side image + content
+  if (section.type === "ImageWithText") {
+    const placement = section.settings["desktopImagePlacement"] as string | undefined;
+    const imageFirst = placement !== "image-second";
+
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={(): void => onSelect(section.id)}
+        onKeyDown={(e: React.KeyboardEvent): void => {
+          if (e.key === "Enter" || e.key === " ") onSelect(section.id);
+        }}
+        style={paddingStyle}
+        className={`w-full rounded-lg border-2 px-4 text-left transition cursor-pointer ${colorBg} ${
+          isSectionSelected
+            ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
+            : "border-border/40 bg-card/40 hover:border-border/60"
+        }`}
+      >
+        <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
+          {/* Image placeholder */}
+          <div className="flex w-2/5 shrink-0 items-center justify-center rounded-md bg-gray-700/30 min-h-[100px]">
+            <ImageIcon className="size-8 text-gray-500" />
+          </div>
+          {/* Content area */}
+          <div className="flex flex-1 flex-col justify-center gap-2">
+            {section.blocks.length === 0 ? (
+              <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
+                Add blocks to content area
+              </div>
+            ) : (
+              section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Hero section — full-width banner with centered content overlay
+  if (section.type === "Hero") {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={(): void => onSelect(section.id)}
+        onKeyDown={(e: React.KeyboardEvent): void => {
+          if (e.key === "Enter" || e.key === " ") onSelect(section.id);
+        }}
+        style={paddingStyle}
+        className={`w-full rounded-lg border-2 text-left transition cursor-pointer ${colorBg} ${
+          isSectionSelected
+            ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
+            : "border-border/40 bg-card/40 hover:border-border/60"
+        }`}
+      >
+        <div className="relative min-h-[140px] rounded-md bg-gradient-to-br from-gray-700/40 to-gray-800/60 px-6">
+          <div className="flex min-h-[140px] flex-col items-center justify-center gap-2">
+            {section.blocks.length === 0 ? (
+              <span className="text-sm text-gray-500">Add content to hero banner</span>
+            ) : (
+              section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RichText section — simple content wrapper
+  if (section.type === "RichText") {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={(): void => onSelect(section.id)}
+        onKeyDown={(e: React.KeyboardEvent): void => {
+          if (e.key === "Enter" || e.key === " ") onSelect(section.id);
+        }}
+        style={paddingStyle}
+        className={`w-full rounded-lg border-2 px-4 text-left transition cursor-pointer ${colorBg} ${
+          isSectionSelected
+            ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
+            : "border-border/40 bg-card/40 hover:border-border/60"
+        }`}
+      >
+        {section.blocks.length === 0 ? (
+          <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
+            Add blocks to rich text section
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {section.blocks.map((block: BlockInstance) => (
+              <PreviewBlockItem
+                key={block.id}
+                block={block}
+                isSelected={selectedNodeId === block.id}
+                onSelect={onSelect}
+                contained
+                selectedNodeId={selectedNodeId}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for unknown section types
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onSelect(section.id)}
-      onKeyDown={(e: React.KeyboardEvent) => {
+      onClick={(): void => onSelect(section.id)}
+      onKeyDown={(e: React.KeyboardEvent): void => {
         if (e.key === "Enter" || e.key === " ") onSelect(section.id);
       }}
-      className={`w-full rounded-lg border-2 p-4 text-left transition cursor-pointer ${
+      style={paddingStyle}
+      className={`w-full rounded-lg border-2 px-4 text-left transition cursor-pointer ${colorBg} ${
         isSectionSelected
           ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
           : "border-border/40 bg-card/40 hover:border-border/60"
       }`}
     >
-      {/* Section header */}
-      <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-        <SectionIcon className="size-3.5" />
-        <span>{section.type}</span>
+      <div className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+        {section.type}
       </div>
-
-      {/* Section content area */}
       {section.blocks.length === 0 ? (
-        <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30 text-sm text-gray-500">
-          No blocks - click + in the tree to add
+        <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
+          No blocks
         </div>
       ) : (
         <div className="space-y-2">
@@ -97,6 +235,7 @@ export function PreviewSection({ section, selectedNodeId, onSelect }: PreviewSec
               block={block}
               isSelected={selectedNodeId === block.id}
               onSelect={onSelect}
+              contained
               selectedNodeId={selectedNodeId}
             />
           ))}
@@ -107,7 +246,7 @@ export function PreviewSection({ section, selectedNodeId, onSelect }: PreviewSec
 }
 
 // ---------------------------------------------------------------------------
-// Grid preview content (columns side by side, dashed borders)
+// Grid preview content (columns side by side)
 // ---------------------------------------------------------------------------
 
 interface PreviewGridContentProps {
@@ -138,11 +277,11 @@ function PreviewGridContent({ section, selectedNodeId, onSelect }: PreviewGridCo
             key={column.id}
             role="button"
             tabIndex={0}
-            onClick={(e: React.MouseEvent) => {
+            onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
               onSelect(column.id);
             }}
-            onKeyDown={(e: React.KeyboardEvent) => {
+            onKeyDown={(e: React.KeyboardEvent): void => {
               if (e.key === "Enter" || e.key === " ") {
                 e.stopPropagation();
                 onSelect(column.id);
@@ -196,15 +335,16 @@ interface PreviewBlockItemProps {
 }
 
 function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNodeId }: PreviewBlockItemProps): React.ReactNode {
-  const BlockIcon = BLOCK_ICONS[block.type] ?? Box;
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
 
-  // Section-type blocks get a richer, contained preview
+  // ---------------------------------------------------------------------------
+  // Section-type blocks (ImageWithText, Hero) — layout-aware preview
+  // ---------------------------------------------------------------------------
   if (isSectionType) {
     return (
       <button
         type="button"
-        onClick={(e: React.MouseEvent) => {
+        onClick={(e: React.MouseEvent): void => {
           e.stopPropagation();
           onSelect(block.id);
         }}
@@ -216,66 +356,143 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
             : "border-border/30 bg-gray-800/30 hover:border-border/50"
         }`}
       >
-        {/* Section-type header bar */}
-        <div className="flex items-center gap-1.5 border-b border-border/20 bg-gray-800/40 px-2.5 py-1.5">
-          <BlockIcon className="size-3 shrink-0 text-gray-400" />
-          <span className="text-xs font-medium text-gray-400">{block.type}</span>
-        </div>
-        {/* Section-type content: show child elements if any, otherwise placeholder */}
         <div className="p-2.5 overflow-hidden">
-          {(block.blocks ?? []).length > 0 ? (
-            <div className="space-y-1.5 overflow-hidden">
-              {(block.blocks ?? []).map((child: BlockInstance) => (
-                <PreviewBlockItem
-                  key={child.id}
-                  block={child}
-                  isSelected={selectedNodeId === child.id}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                />
-              ))}
-            </div>
-          ) : (
-            <>
-              {block.type === "ImageWithText" && (
-                <div className="flex gap-2">
-                  <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded bg-gray-700/40 text-[10px] text-gray-500">
-                    IMG
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
-                    <div className="h-2 w-3/4 rounded bg-gray-700/40" />
-                    <div className="h-2 w-full rounded bg-gray-700/30" />
-                    <div className="h-2 w-1/2 rounded bg-gray-700/30" />
-                  </div>
-                </div>
-              )}
-              {block.type === "RichText" && (
-                <div className="flex flex-col gap-1 overflow-hidden">
-                  <div className="h-2 w-full rounded bg-gray-700/40" />
-                  <div className="h-2 w-5/6 rounded bg-gray-700/30" />
-                  <div className="h-2 w-2/3 rounded bg-gray-700/30" />
-                </div>
-              )}
-              {block.type === "Hero" && (
-                <div className="relative overflow-hidden rounded bg-gray-700/30">
-                  <div className="flex h-14 items-center justify-center text-[10px] text-gray-500">
-                    Hero Banner
-                  </div>
-                </div>
-              )}
-            </>
+          {block.type === "ImageWithText" && (
+            <PreviewImageWithTextBlock block={block} selectedNodeId={selectedNodeId} onSelect={onSelect} />
+          )}
+          {block.type === "Hero" && (
+            <PreviewHeroBlock block={block} selectedNodeId={selectedNodeId} onSelect={onSelect} />
           )}
         </div>
       </button>
     );
   }
 
-  // Standard element block types (Heading, Text, Button, RichText, etc.)
+  // ---------------------------------------------------------------------------
+  // Standard element blocks — render actual styled content
+  // ---------------------------------------------------------------------------
+
+  // Heading block
+  if (block.type === "Heading") {
+    const text = (block.settings["headingText"] as string) || "Heading";
+    const size = (block.settings["headingSize"] as string) || "medium";
+    const sizeClass = size === "small" ? "text-base font-semibold" : size === "large" ? "text-2xl font-bold" : "text-xl font-bold";
+
+    return (
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            : "border-border/30 bg-gray-800/20 hover:border-border/50"
+        }`}
+      >
+        <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
+      </button>
+    );
+  }
+
+  // Text block
+  if (block.type === "Text") {
+    const text = (block.settings["textContent"] as string) || "";
+
+    return (
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            : "border-border/30 bg-gray-800/20 hover:border-border/50"
+        }`}
+      >
+        {text ? (
+          <p className="text-sm text-gray-300 line-clamp-3">{text}</p>
+        ) : (
+          <p className="text-sm italic text-gray-500">Add text content...</p>
+        )}
+      </button>
+    );
+  }
+
+  // Button block
+  if (block.type === "Button") {
+    const label = (block.settings["buttonLabel"] as string) || "Button";
+    const style = (block.settings["buttonStyle"] as string) || "solid";
+
+    return (
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            : "border-border/30 bg-gray-800/20 hover:border-border/50"
+        }`}
+      >
+        <div
+          className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
+            style === "outline"
+              ? "border border-gray-400 text-gray-300"
+              : "bg-gray-200 text-gray-900"
+          }`}
+        >
+          {label}
+        </div>
+      </button>
+    );
+  }
+
+  // RichText block
+  if (block.type === "RichText") {
+    const colorScheme = block.settings["colorScheme"] as string | undefined;
+    const schemeBg = getColorSchemeBg(colorScheme);
+
+    return (
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`w-full rounded border p-3 text-left transition overflow-hidden ${schemeBg} ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            : "border-border/30 bg-gray-800/20 hover:border-border/50"
+        }`}
+      >
+        <div className="flex flex-col gap-1.5">
+          <div className="h-2 w-full rounded bg-gray-600/40" />
+          <div className="h-2 w-5/6 rounded bg-gray-600/30" />
+          <div className="h-2 w-2/3 rounded bg-gray-600/30" />
+        </div>
+      </button>
+    );
+  }
+
+  // Fallback for unknown block types
   return (
     <button
       type="button"
-      onClick={(e: React.MouseEvent) => {
+      onClick={(e: React.MouseEvent): void => {
         e.stopPropagation();
         onSelect(block.id);
       }}
@@ -287,14 +504,78 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           : "border-border/30 bg-gray-800/20 hover:border-border/50"
       }`}
     >
-      <BlockIcon className="size-3.5 shrink-0 text-gray-400" />
-      <span className="flex-1 truncate text-gray-300">
-        {block.type === "Heading" && (block.settings["headingText"] as string || "Heading")}
-        {block.type === "Text" && (block.settings["textContent"] as string || "Text block")}
-        {block.type === "Button" && (block.settings["buttonLabel"] as string || "Button")}
-        {block.type === "RichText" && "Rich text"}
-        {!["Heading", "Text", "Button", "RichText"].includes(block.type) && block.type}
-      </span>
+      <span className="flex-1 truncate text-gray-300">{block.type}</span>
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ImageWithText block preview (inside columns)
+// ---------------------------------------------------------------------------
+
+interface PreviewSectionBlockProps {
+  block: BlockInstance;
+  selectedNodeId?: string | null;
+  onSelect: (nodeId: string) => void;
+}
+
+function PreviewImageWithTextBlock({ block, selectedNodeId, onSelect }: PreviewSectionBlockProps): React.ReactNode {
+  const placement = block.settings["desktopImagePlacement"] as string | undefined;
+  const imageFirst = placement !== "image-second";
+  const children = block.blocks ?? [];
+
+  return (
+    <div className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
+      <div className="flex w-1/3 shrink-0 items-center justify-center rounded bg-gray-700/40 min-h-[48px]">
+        <ImageIcon className="size-5 text-gray-500" />
+      </div>
+      <div className="flex flex-1 flex-col justify-center gap-1 overflow-hidden">
+        {children.length > 0 ? (
+          children.map((child: BlockInstance) => (
+            <PreviewBlockItem
+              key={child.id}
+              block={child}
+              isSelected={selectedNodeId === child.id}
+              onSelect={onSelect}
+              contained
+              selectedNodeId={selectedNodeId}
+            />
+          ))
+        ) : (
+          <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
+            Add content
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hero block preview (inside columns)
+// ---------------------------------------------------------------------------
+
+function PreviewHeroBlock({ block, selectedNodeId, onSelect }: PreviewSectionBlockProps): React.ReactNode {
+  const children = block.blocks ?? [];
+
+  return (
+    <div className="relative min-h-[80px] rounded bg-gradient-to-br from-gray-700/30 to-gray-800/50 px-3">
+      <div className="flex min-h-[80px] flex-col items-center justify-center gap-1">
+        {children.length > 0 ? (
+          children.map((child: BlockInstance) => (
+            <PreviewBlockItem
+              key={child.id}
+              block={child}
+              isSelected={selectedNodeId === child.id}
+              onSelect={onSelect}
+              contained
+              selectedNodeId={selectedNodeId}
+            />
+          ))
+        ) : (
+          <span className="text-xs text-gray-500">Hero banner</span>
+        )}
+      </div>
+    </div>
   );
 }

@@ -19,8 +19,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock useToast and UI components
-vi.mock('@/shared/ui', () => {
-  const actual = vi.importActual('@/shared/ui');
+vi.mock('@/shared/ui', async () => {
+  const actual = await vi.importActual<any>('@/shared/ui');
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
@@ -113,7 +113,7 @@ describe('SystemLogsPage', () => {
     expect(screen.getByText('Errors: 1')).toBeInTheDocument();
   });
 
-  it('filters logs by level', async () => {
+  it('filters logs by level', () => {
     render(<SystemLogsPage />);
     
     const levelSelect = screen.getByRole('combobox');

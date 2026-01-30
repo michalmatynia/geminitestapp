@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,25 @@ const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "warn", label: "Warnings" },
   { value: "info", label: "Info" },
 ];
+
+type MongoIndexInfo = {
+  name?: string;
+  key: Record<string, unknown>;
+};
+
+type MongoCollectionIndexStatus = {
+  name: string;
+  expected: MongoIndexInfo[];
+  existing: MongoIndexInfo[];
+  missing: MongoIndexInfo[];
+  extra: MongoIndexInfo[];
+  error?: string;
+};
+
+type MongoIndexDiagnostics = {
+  generatedAt: string;
+  collections: MongoCollectionIndexStatus[];
+};
 
 const formatTimestamp = (value: Date | string) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -124,6 +143,30 @@ export default function SystemLogsPage() {
     },
   });
 
+  const mongoDiagnosticsQuery = useQuery<MongoIndexDiagnostics>({
+    queryKey: ["mongo-index-diagnostics"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/diagnostics/mongo-indexes");
+      if (!res.ok) throw new Error("Failed to load Mongo index diagnostics.");
+      return (await res.json()) as MongoIndexDiagnostics;
+    },
+  });
+
+  const rebuildIndexesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/system/diagnostics/mongo-indexes", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to rebuild Mongo indexes.");
+      return (await res.json()) as MongoIndexDiagnostics & {
+        created?: Array<{ collection: string; key: Record<string, unknown> }>;
+      };
+    },
+    onSuccess: () => {
+      void mongoDiagnosticsQuery.refetch();
+    },
+  });
+
   useEffect(() => {
     if (!logsQuery.error) return;
     toast(
@@ -144,11 +187,24 @@ export default function SystemLogsPage() {
     );
   }, [metricsQuery.error, toast]);
 
+  useEffect(() => {
+    if (!mongoDiagnosticsQuery.error) return;
+    toast(
+      mongoDiagnosticsQuery.error instanceof Error
+        ? mongoDiagnosticsQuery.error.message
+        : "Failed to load Mongo diagnostics.",
+      { variant: "error" }
+    );
+  }, [mongoDiagnosticsQuery.error, toast]);
+
   const logs = logsQuery.data?.logs ?? [];
   const total = logsQuery.data?.total ?? 0;
   const metrics = metricsQuery.data?.metrics ?? null;
+  const diagnostics = mongoDiagnosticsQuery.data?.collections ?? [];
+  const diagnosticsUpdatedAt = mongoDiagnosticsQuery.data?.generatedAt ?? null;
   const loading = logsQuery.isPending;
   const metricsLoading = metricsQuery.isPending;
+  const diagnosticsLoading = mongoDiagnosticsQuery.isPending;
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));
@@ -174,6 +230,24 @@ export default function SystemLogsPage() {
       toast("System logs cleared.", { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to clear logs.", {
+        variant: "error",
+      });
+    }
+  };
+
+  const rebuildMongoIndexes = async () => {
+    if (!window.confirm("Rebuild missing Mongo indexes for AI Paths runtime?")) return;
+    try {
+      const result = await rebuildIndexesMutation.mutateAsync();
+      const createdCount = result?.created?.length ?? 0;
+      toast(
+        createdCount > 0
+          ? `Rebuilt ${createdCount} index(es).`
+          : "Mongo indexes already up to date.",
+        { variant: "success" }
+      );
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to rebuild indexes.", {
         variant: "error",
       });
     }
@@ -255,6 +329,124 @@ export default function SystemLogsPage() {
               </>
             }
           />
+        }
+        alerts={
+          <SectionPanel className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-lg font-semibold text-white">Diagnostics</div>
+                <div className="text-xs text-gray-400">
+                  Mongo index status for AI Paths runtime collections.
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>
+                  {diagnosticsUpdatedAt
+                    ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
+                    : "—"}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void mongoDiagnosticsQuery.refetch()}
+                  disabled={diagnosticsLoading}
+                >
+                  Refresh
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void rebuildMongoIndexes()}
+                  disabled={rebuildIndexesMutation.isPending}
+                  className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+                >
+                  {rebuildIndexesMutation.isPending ? "Rebuilding..." : "Rebuild missing indexes"}
+                </Button>
+              </div>
+            </div>
+            {diagnosticsLoading ? (
+              <div className="text-sm text-gray-400">Loading diagnostics...</div>
+            ) : diagnostics.length === 0 ? (
+              <div className="text-sm text-gray-400">No diagnostics available.</div>
+            ) : (
+              <div className="rounded-md border border-border/70 bg-card/60">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/60">
+                      <TableHead className="text-xs text-gray-400">Collection</TableHead>
+                      <TableHead className="text-xs text-gray-400">Expected</TableHead>
+                      <TableHead className="text-xs text-gray-400">Missing</TableHead>
+                      <TableHead className="text-xs text-gray-400">Extra</TableHead>
+                      <TableHead className="text-xs text-gray-400 text-right">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {diagnostics.map((collection) => {
+                      const missingCount = collection.missing.length;
+                      const extraCount = collection.extra.length;
+                      const statusLabel = collection.error
+                        ? "Error"
+                        : missingCount === 0
+                          ? "OK"
+                          : "Missing";
+                      return (
+                        <TableRow key={collection.name} className="border-border/50">
+                          <TableCell className="font-mono text-xs text-gray-200">
+                            {collection.name}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-300">
+                            {collection.expected.length}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-300">
+                            {collection.error ? (
+                              <div className="space-y-1 text-rose-200">
+                                <div>—</div>
+                                <div className="rounded bg-rose-500/10 px-2 py-1 text-[10px]">
+                                  {collection.error}
+                                </div>
+                              </div>
+                            ) : missingCount === 0 ? (
+                              "0"
+                            ) : (
+                              <div className="space-y-1">
+                                <div className="text-amber-200">{missingCount}</div>
+                                <div className="space-y-1 text-[10px] text-amber-200">
+                                  {collection.missing.map((item) => (
+                                    <div
+                                      key={JSON.stringify(item.key)}
+                                      className="rounded bg-amber-500/10 px-2 py-1"
+                                    >
+                                      {JSON.stringify(item.key)}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-300">
+                            {extraCount}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span
+                              className={`rounded border px-2 py-0.5 text-xs ${
+                                collection.error
+                                  ? "border-rose-400/40 text-rose-200 bg-rose-500/10"
+                                  : missingCount === 0
+                                  ? "border-emerald-400/40 text-emerald-200 bg-emerald-500/10"
+                                  : "border-amber-400/40 text-amber-200 bg-amber-500/10"
+                              }`}
+                            >
+                              {statusLabel}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </SectionPanel>
         }
         filters={
           <SectionPanel>

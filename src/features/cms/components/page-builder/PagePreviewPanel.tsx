@@ -31,8 +31,16 @@ export function PagePreviewPanel(): React.ReactNode {
   const handleSave = useCallback(async () => {
     if (!state.currentPage) return;
 
+    const page = state.currentPage;
     const updatedPage = {
-      ...state.currentPage,
+      ...page,
+      status: page.status,
+      publishedAt: page.publishedAt,
+      seoTitle: page.seoTitle,
+      seoDescription: page.seoDescription,
+      seoOgImage: page.seoOgImage,
+      seoCanonical: page.seoCanonical,
+      robotsMeta: page.robotsMeta,
       components: state.sections.map((s: SectionInstance) => ({
         type: s.type,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
@@ -40,7 +48,7 @@ export function PagePreviewPanel(): React.ReactNode {
     };
 
     await updatePage.mutateAsync({
-      id: state.currentPage.id,
+      id: page.id,
       input: updatedPage,
     });
   }, [state.currentPage, state.sections, updatePage]);

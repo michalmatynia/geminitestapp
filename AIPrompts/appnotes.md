@@ -11,6 +11,8 @@ Changing currency doesn't work again
 
 I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a cursor there
 
+unify Refresh button so that it's one component everywhere
+
 ---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework
 Jobs system for the whole Path
@@ -20,13 +22,26 @@ Polling
 Action logger
  1. Persistent runtime engine (resume runs, track node status, replay/retry, audit history) <-
   2. Execution scheduling (queue, concurrency limits, retries, backoff, dead-letter) <-
-     a. Add a dead‑letter review screen (filter + requeue from DLQ). <- Stopped here
-  b. Add per‑node retry controls in the Run Details modal.
+     a. Add a dead‑letter review screen (filter + requeue from DLQ). <- 
+  b. Add per‑node retry controls in the Run Details modal. <-
 
   3. Streaming + progress tracking (node-by-node status, live logs, timestamps)
-  4. Deterministic execution + caching (hash inputs, memoize node outputs)
+  4. Deterministic execution + caching (hash inputs, memoize node outputs)  <- here now
   5. Multi-tenant safety (per-user isolation, permissions, rate limits)
   6. Visual runtime timeline (per-run trace + logs shown in UI)
+
+There is an error in the prompt node, when I first connected the EntityID input before any run was made, the result was shown in the output as prompt, it should not be the result there but be whatever is in the prompt field. If the prompt is empty, the prompt output should also be empty.
+
+* Each node should have an input output history, everything that goes in or out is to be recorder on a per node basis with timestap, which path executed it, which node did the information come from and which node did the information go to or whether a node failed or delayed passing the information.
+
+AI Paths should have a separate Job queue, meaning a separate Tab for job queue, job queue entries should contain maximum information about each run (timestamps, run history, which nodes participates, input and outputs. everything you can record about a job  run should be there)
+
+Animated wires, that show the signal path, if data is on the way to another node, the node that takes data is should have some visual signifier that the input has been loaded or that the output is out
+  describe everything in Docs
+
+* The whole AI Paths system is connected to MongoDB as this is the currently default Database
+  * Each Node connector is also an individual data container that retains data passed around. When I hover over a connector, I should be able to see the data that it currently holds that is to be passover, or the data from previous passes
+
 
 ---
 node module inputs and output should have a step by step logger, logging all the data that is coming in and that is coming out

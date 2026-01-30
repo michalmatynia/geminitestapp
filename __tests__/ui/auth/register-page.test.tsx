@@ -37,7 +37,7 @@ describe("RegisterPage", () => {
     } as any);
   });
 
-  it("renders correctly", async () => {
+  it("renders correctly", () => {
     render(<RegisterPage />);
     expect(screen.getByRole("heading", { name: /create account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe("RegisterPage", () => {
     });
   });
 
-  it("shows error message if signup is disabled", async () => {
+  it("shows error message if signup is disabled", () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
       data: new Map([

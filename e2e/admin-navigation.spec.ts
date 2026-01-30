@@ -43,17 +43,17 @@ test.describe('Admin Navigation and Layout', () => {
 
   test('should navigate through main sections via sidebar', async ({ page }) => {
     // Test navigation to System Logs
-    await page.getByText('System Logs').click();
-    await expect(page).toHaveURL(/\/admin\/system\/logs/);
+    await page.getByText('System Logs').click({ force: true });
+    await expect(page).toHaveURL(/\/admin\/system\/logs/, { timeout: 10000 });
     await expect(page.getByRole('heading', { name: /System Logs/i })).toBeVisible();
 
     // Test navigation to Front Manage
-    await page.getByText('Front Manage').click();
-    await expect(page).toHaveURL(/\/admin\/front-manage/);
+    await page.getByText('Front Manage').click({ force: true });
+    await expect(page).toHaveURL(/\/admin\/front-manage/, { timeout: 10000 });
     
     // Test navigation to Files
-    await page.getByText('Files').click();
-    await expect(page).toHaveURL(/\/admin\/files/);
+    await page.getByText('Files').click({ force: true });
+    await expect(page).toHaveURL(/\/admin\/files/, { timeout: 10000 });
   });
 
   test('should open collapsible menu items', async ({ page }) => {

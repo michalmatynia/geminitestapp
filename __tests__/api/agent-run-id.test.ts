@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
-import { GET, POST, DELETE } from "@/app/api/agentcreator/agent/[runId]/route";
-import prisma from "@/shared/lib/db/prisma";
+
+vi.mock("@/shared/lib/api/api-handler", () => ({
+  apiHandler: (handler: any) => handler,
+  apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
+    // If ctx is passed, it might be { params: Promise<{...}> } or just { params: {...} }
+    // The handler expects (req, ctx, resolvedParams)
+    const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' 
+      ? ctx.params 
+      : Promise.resolve(ctx?.params ?? {});
+    return handler(req, ctx, resolvedParams);
+  },
+}));
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {
@@ -21,15 +30,9 @@ vi.mock("@/features/agent-runtime/server", () => ({
   logAgentAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/shared/lib/api/api-handler", () => ({
-  apiHandlerWithParams: (handler: any) => async (req: any, ctx: any) => {
-      // In tests, apiHandlerWithParams wrapper might be different, 
-      // but let's assume it passes params correctly or we mock the wrapper.
-      // Actually, the route.ts exports the wrapped handler.
-      // We'll call the GET/POST/DELETE exported from route.ts.
-      return handler(req, ctx, ctx.params);
-  },
-}));
+import { NextRequest } from "next/server";
+import { GET, POST, DELETE } from "@/app/api/agentcreator/agent/[runId]/route";
+import prisma from "@/shared/lib/db/prisma";
 
 describe("Agent Run [runId] API", () => {
   beforeEach(() => {

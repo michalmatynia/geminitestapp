@@ -1,4 +1,4 @@
-import type { PageSummary, Page } from "./index";
+import type { PageSummary, Page, PageStatus, PageSeoData } from "./index";
 
 // ---------------------------------------------------------------------------
 // Settings schema (drives the right-panel form controls)
@@ -97,5 +97,7 @@ export type PageBuilderAction =
   | { type: "UPDATE_NESTED_BLOCK_SETTINGS"; sectionId: string; columnId: string; parentBlockId: string; blockId: string; settings: Record<string, unknown> }
   | { type: "REORDER_SECTIONS"; zone: PageZone; fromIndex: number; toIndex: number }
   | { type: "MOVE_SECTION_TO_ZONE"; sectionId: string; toZone: PageZone; toIndex: number }
+  | { type: "SET_PAGE_STATUS"; status: PageStatus }
+  | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
   | { type: "TOGGLE_LEFT_PANEL" }
   | { type: "TOGGLE_RIGHT_PANEL" };

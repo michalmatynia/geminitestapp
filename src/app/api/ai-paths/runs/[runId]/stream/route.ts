@@ -8,6 +8,14 @@ const TERMINAL_STATUSES = new Set([
   "canceled",
   "dead_lettered",
 ]);
+const normalizeLimit = (value: number, fallback: number) => {
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.floor(value);
+};
+const EVENT_BATCH_LIMIT = normalizeLimit(
+  Number(process.env.AI_PATHS_STREAM_EVENT_LIMIT ?? "200"),
+  200
+);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -96,10 +104,13 @@ export async function GET(
 
         const events = await repo.listRunEvents(runId, {
           ...(lastEventCreatedAt ? { since: lastEventCreatedAt } : {}),
+          limit: EVENT_BATCH_LIMIT + 1,
         });
         if (events.length > 0) {
-          send("events", events);
-          const latestEventTime = events.reduce<string | null>((max, event) => {
+          const overflow = events.length > EVENT_BATCH_LIMIT;
+          const batch = overflow ? events.slice(0, EVENT_BATCH_LIMIT) : events;
+          send("events", { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
+          const latestEventTime = batch.reduce<string | null>((max, event) => {
             const candidate = toISOStringSafe(event.createdAt);
             if (!candidate) return max;
             if (!max) return candidate;

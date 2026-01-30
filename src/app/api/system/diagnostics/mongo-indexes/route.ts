@@ -23,8 +23,11 @@ const serializeKey = (key: Record<string, unknown>) => JSON.stringify(key);
 
 const buildExpectedByCollection = () =>
   AI_PATHS_MONGO_INDEXES.reduce<Record<string, IndexInfo[]>>((acc, index) => {
-    if (!acc[index.collection]) acc[index.collection] = [];
-    acc[index.collection].push({ key: index.key });
+    if (!index.collection) return acc;
+    const collection = index.collection;
+    const existing = acc[collection] ?? [];
+    existing.push({ key: index.key });
+    acc[collection] = existing;
     return acc;
   }, {});
 

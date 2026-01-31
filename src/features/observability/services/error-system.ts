@@ -20,7 +20,7 @@ export const ErrorSystem = {
    * @param error The error object or message
    * @param context Contextual information (service name, IDs, etc.)
    */
-  captureException: async (error: unknown, context: ErrorContext = {}) => {
+  captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
     const service = context.service || "unknown";
@@ -52,7 +52,7 @@ export const ErrorSystem = {
   /**
    * Log a warning (non-fatal issue).
    */
-  logWarning: async (message: string, context: ErrorContext = {}) => {
+  logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     const service = context.service || "unknown";
     
     logger.warn(`[${service}] ${message}`, context);
@@ -69,9 +69,9 @@ export const ErrorSystem = {
   /**
    * Log an operational info event.
    */
-  logInfo: (message: string, context: ErrorContext = {}) => {
-     const service = context.service || "unknown";
-     logger.info(`[${service}] ${message}`, context);
-     return Promise.resolve();
+  logInfo: (message: string, context: ErrorContext = {}): Promise<void> => {
+    const service = context.service || "unknown";
+    logger.info(`[${service}] ${message}`, context);
+    return Promise.resolve();
   }
 };

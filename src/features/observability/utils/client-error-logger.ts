@@ -7,6 +7,11 @@ import {
 } from "@/shared/lib/observability/log-redaction";
 
 type ClientErrorContext = Record<string, unknown>;
+type SerializedContext =
+  | Record<string, unknown>
+  | { truncated: true; preview: string }
+  | { error: string }
+  | null;
 
 export type ClientErrorPayload = {
   message: string;
@@ -24,14 +29,14 @@ const MAX_CONTEXT_SIZE = 6000;
 const MAX_VALUE_LENGTH = 2000;
 let baseContext: ClientErrorContext = {};
 
-export const setClientErrorBaseContext = (context: ClientErrorContext) => {
+export const setClientErrorBaseContext = (context: ClientErrorContext): void => {
   baseContext = { ...baseContext, ...context };
 };
 
-const safeSerialize = (value: unknown) => {
+const safeSerialize = (value: unknown): SerializedContext => {
   try {
     const seen = new WeakSet();
-    const json = JSON.stringify(value, (_key, val: unknown) => {
+    const json = JSON.stringify(value, (_key: string, val: unknown) => {
       if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
       if (typeof val === "object" && val !== null) {
         if (seen.has(val)) return "[Circular]";
@@ -102,7 +107,7 @@ export const logClientError = (
     componentStack?: string | null;
     context?: ClientErrorContext | null;
   }
-) => {
+): void => {
   if (typeof window === "undefined") return;
   const payload = buildPayload(error, extra);
   const body = JSON.stringify(payload);
@@ -133,10 +138,10 @@ export const initClientErrorReporting = () => {
 
   // Expose for Playwright tests in non-production environments
   if (process.env.NODE_ENV !== 'production') {
-    (window as any)._logClientError = logClientError;
+    (window as Window & { _logClientError?: typeof logClientError })._logClientError = logClientError;
   }
 
-  window.addEventListener("error", (event) => {
+  window.addEventListener("error", (event: ErrorEvent) => {
     logClientError(event.error ?? event.message, {
       context: {
         source: "window.error",
@@ -147,7 +152,7 @@ export const initClientErrorReporting = () => {
     });
   });
 
-  window.addEventListener("unhandledrejection", (event) => {
+  window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => {
     logClientError(event.reason ?? "Unhandled promise rejection", {
       context: { source: "window.unhandledrejection" },
     });

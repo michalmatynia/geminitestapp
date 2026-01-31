@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationOptions,
+  type UseMutationResult,
+} from "@tanstack/react-query";
 import type { Integration, IntegrationConnection } from "@/features/integrations/types/integrations-ui";
 
 export function useCreateIntegration(): UseMutationResult<Integration, Error, { name: string; slug: string }> {
@@ -34,7 +39,11 @@ type UpsertConnectionVariables = {
 export function useUpsertConnection(): UseMutationResult<IntegrationConnection, Error, UpsertConnectionVariables> {
   const queryClient = useQueryClient();
 
-  return useMutation<IntegrationConnection, Error, UpsertConnectionVariables>({
+  const mutationOptions: UseMutationOptions<
+    IntegrationConnection,
+    Error,
+    UpsertConnectionVariables
+  > = {
     mutationFn: async ({ 
       integrationId, 
       connectionId, 
@@ -59,7 +68,9 @@ export function useUpsertConnection(): UseMutationResult<IntegrationConnection, 
     onSuccess: (_data: IntegrationConnection, variables: UpsertConnectionVariables): void => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
-  });
+  };
+
+  return useMutation(mutationOptions);
 }
 
 export function useDeleteConnection(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string }> {

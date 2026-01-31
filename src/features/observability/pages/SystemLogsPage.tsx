@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -61,7 +61,7 @@ export default function SystemLogsPage(): React.JSX.Element {
 
   const [level, setLevel] = useState<SystemLogLevel | "all">(() => {
     const p = searchParams?.get("level");
-    if (p && levelOptions.some((option) => option.value === p)) {
+    if (p && levelOptions.some((option: (typeof levelOptions)[number]) => option.value === p)) {
       return p as SystemLogLevel | "all";
     }
     return "all";
@@ -388,7 +388,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {diagnostics.map((collection) => {
+                    {diagnostics.map((collection: MongoCollectionIndexStatus) => {
                       const missingCount = collection.missing.length;
                       const extraCount = collection.extra.length;
                       const statusLabel = collection.error
@@ -418,7 +418,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                               <div className="space-y-1">
                                 <div className="text-amber-200">{missingCount}</div>
                                 <div className="space-y-1 text-[10px] text-amber-200">
-                                  {collection.missing.map((item) => (
+                                  {collection.missing.map((item: MongoIndexInfo) => (
                                     <div
                                       key={JSON.stringify(item.key)}
                                       className="rounded bg-amber-500/10 px-2 py-1"
@@ -462,7 +462,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 <Label className="text-xs text-gray-400">Level</Label>
                 <Select
                   value={level}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string): void => {
                     setLevel(value as SystemLogLevel | "all");
                     setPage(1);
                   }}
@@ -471,7 +471,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     <SelectValue placeholder="All levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    {levelOptions.map((option) => (
+                    {levelOptions.map((option: (typeof levelOptions)[number]) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -485,7 +485,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                   className="mt-2"
                   placeholder="Message or source"
                   value={query}
-                  onChange={(event) => {
+                  onChange={(event: ChangeEvent<HTMLInputElement>): void => {
                     setQuery(event.target.value);
                     setPage(1);
                   }}
@@ -497,7 +497,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                   className="mt-2"
                   placeholder="api/products, auth, etc."
                   value={source}
-                  onChange={(event) => {
+                  onChange={(event: ChangeEvent<HTMLInputElement>): void => {
                     setSource(event.target.value);
                     setPage(1);
                   }}
@@ -510,7 +510,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     className="mt-2"
                     type="date"
                     value={fromDate}
-                    onChange={(event) => {
+                    onChange={(event: ChangeEvent<HTMLInputElement>): void => {
                       setFromDate(event.target.value);
                       setPage(1);
                     }}
@@ -522,7 +522,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     className="mt-2"
                     type="date"
                     value={toDate}
-                    onChange={(event) => {
+                    onChange={(event: ChangeEvent<HTMLInputElement>): void => {
                       setToDate(event.target.value);
                       setPage(1);
                     }}
@@ -576,7 +576,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
                   ) : (
                     <div className="mt-2 space-y-1 text-xs text-gray-300">
-                      {metrics.topSources.map((item) => (
+                      {metrics.topSources.map((item: SystemLogMetrics["topSources"][number]) => (
                         <div key={item.source} className="flex items-center justify-between gap-2">
                           <span className="truncate">{item.source}</span>
                           <span className="text-gray-500">{item.count}</span>
@@ -589,7 +589,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                     <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
                   ) : (
                     <div className="mt-2 space-y-1 text-xs text-gray-300">
-                      {metrics.topPaths.map((item) => (
+                      {metrics.topPaths.map((item: SystemLogMetrics["topPaths"][number]) => (
                         <div key={item.path} className="flex items-center justify-between gap-2">
                           <span className="truncate">{item.path}</span>
                           <span className="text-gray-500">{item.count}</span>
@@ -617,7 +617,7 @@ export default function SystemLogsPage(): React.JSX.Element {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {logs.map((log) => (
+                {logs.map((log: SystemLogRecord) => (
                   <div key={log.id} className="px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -718,7 +718,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 size="sm"
                 className="border"
                 disabled={page <= 1}
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
               >
                 Previous
               </Button>
@@ -727,7 +727,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 size="sm"
                 className="border"
                 disabled={page >= totalPages}
-                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
               >
                 Next
               </Button>

@@ -243,11 +243,15 @@ export default function AuthUsersPage(): React.JSX.Element {
       return;
     }
     try {
-      const res = (await registerUserMutation.mutateAsync({
+      const registerInput: { email: string; password: string; name?: string } = {
         email: createForm.email.trim(),
         password: createForm.password.trim(),
-        name: createForm.name.trim() || undefined,
-      })) as { ok: boolean; payload: { id: string; email: string; name?: string | null; error?: string; details?: { issues?: string[] } } };
+      };
+      const trimmedName: string = createForm.name.trim();
+      if (trimmedName) {
+        registerInput.name = trimmedName;
+      }
+      const res = (await registerUserMutation.mutateAsync(registerInput)) as { ok: boolean; payload: { id: string; email: string; name?: string | null; error?: string; details?: { issues?: string[] } } };
 
       if (!res.ok) {
         const errorPayload = res.payload;

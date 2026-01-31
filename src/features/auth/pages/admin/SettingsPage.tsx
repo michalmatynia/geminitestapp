@@ -297,10 +297,10 @@ export default function AuthSettingsPage(): React.JSX.Element {
                   ["requireNumber", "Number"],
                   ["requireSymbol", "Symbol"],
                 ] as const
-              ).map(([key, label]: [keyof AuthSecurityPolicy, string]) => (
+              ).map(([key, label]: readonly ["requireUppercase" | "requireLowercase" | "requireNumber" | "requireSymbol", string]) => (
                 <Label key={key} className="flex items-center gap-2">
                   <Checkbox
-                    checked={securityPolicy[key] as boolean} onCheckedChange={(checked: boolean | "indeterminate") => {
+                    checked={securityPolicy[key]} onCheckedChange={(checked: boolean | "indeterminate") => {
                       setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                         ...prev,
                         [key]: Boolean(checked),

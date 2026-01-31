@@ -50,7 +50,7 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   RichText: 140,
   ImageWithText: 200,
   Hero: 240,
-  Block: 120,
+  Block: 0,
 };
 
 const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;

@@ -48,11 +48,15 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
     setError(null);
 
     try {
-      const response = await registerUserMutation.mutateAsync({
-        name: name.trim() || undefined,
+      const registerInput: { email: string; password: string; name?: string } = {
         email,
         password,
-      });
+      };
+      const trimmedName: string = name.trim();
+      if (trimmedName) {
+        registerInput.name = trimmedName;
+      }
+      const response = await registerUserMutation.mutateAsync(registerInput);
 
       if (!response.ok) {
         const payload = response.payload as

@@ -85,7 +85,7 @@ export function useUpdateAuthUserSecurity(): UseMutationResult<
       if (!result.ok) throw new Error("Failed to update security settings");
       return result.payload;
     },
-    onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string }): void => {
+    onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {
       void queryClient.invalidateQueries({ queryKey: authKeys.users });
       void queryClient.invalidateQueries({ queryKey: authKeys.userSecurity(variables.userId) });
     },
@@ -101,7 +101,7 @@ export function useMockSignIn(): UseMutationResult<{ ok: boolean; payload: { ok?
 export function useRegisterUser(): UseMutationResult<
   { ok: boolean; payload: RegisterResponse },
   Error,
-  { email: string; password: string; name?: string; emailVerified?: boolean }
+  { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined }
 > {
   const queryClient = useQueryClient();
   return useMutation({

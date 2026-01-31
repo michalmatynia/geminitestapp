@@ -19,6 +19,7 @@ import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/fea
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
+type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 const MANAGEMENT_FIELDS: SettingsField[] = [
   { key: "label", label: "Label", type: "text", defaultValue: "" },
   { key: "notes", label: "Internal notes", type: "text", defaultValue: "" },
@@ -325,8 +326,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
     const options = APP_EMBED_OPTIONS
-      .filter((option) => enabledAppEmbeds.includes(option.id))
-      .map((option) => ({
+      .filter((option: AppEmbedOption) => enabledAppEmbeds.includes(option.id))
+      .map((option: AppEmbedOption) => ({
         label: option.label,
         value: option.id,
       }));
@@ -401,24 +402,24 @@ export function ComponentSettingsPanel(): React.ReactNode {
     ]
   );
 
-  useEffect((): void => {
-    if (state.inspectorEnabled) {
-      setActiveTab((prev: "settings" | "animation" | "connections") =>
-        prev === "connections" ? prev : "connections"
-      );
-      return;
-    }
-    setActiveTab((prev: "settings" | "animation" | "connections") =>
-      prev === "connections" ? "settings" : prev
-    );
-  }, [state.inspectorEnabled]);
-
   const updateInspectorSetting = useCallback(
     (patch: Partial<InspectorSettings>): void => {
       dispatch({ type: "UPDATE_INSPECTOR_SETTINGS", settings: patch });
     },
     [dispatch]
   );
+
+  const handleToggleInspector = useCallback((): void => {
+    const nextEnabled = !state.inspectorEnabled;
+    dispatch({ type: "TOGGLE_INSPECTOR" });
+    if (nextEnabled) {
+      setActiveTab("connections");
+      return;
+    }
+    if (activeTab === "connections") {
+      setActiveTab("settings");
+    }
+  }, [activeTab, dispatch, state.inspectorEnabled]);
 
   return (
     <aside className="flex w-80 flex-col border-l border-border bg-gray-900">
@@ -439,7 +440,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             type="button"
             size="icon"
             variant="ghost"
-            onClick={(): void => dispatch({ type: "TOGGLE_INSPECTOR" })}
+            onClick={handleToggleInspector}
             title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
             aria-label="Toggle inspector"
             className={`h-6 w-6 p-0 ${
@@ -786,43 +787,22 @@ function PageSettingsTab(): React.ReactNode {
   const allSlugsQuery = useCmsAllSlugs(Boolean(page));
   const updateSlug = useUpdateSlug();
   const [search, setSearch] = useState("");
-  const [selectedSlugIds, setSelectedSlugIds] = useState<string[]>([]);
-  const initializedRef = useRef(false);
 
-  const allSlugs = allSlugsQuery.data ?? [];
-  const domainSlugs = slugsQuery.data ?? [];
+  const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
+  const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugByValue = useMemo((): Map<string, Slug> => {
     const map = new Map<string, Slug>();
     allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
     return map;
   }, [allSlugs]);
 
-  useEffect((): void => {
-    if (!page || !allSlugs.length) return;
-    if (initializedRef.current) return;
+  const selectedSlugIds = useMemo((): string[] => {
+    if (!page) return [];
     const pageSlugValues = (page.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
-    const ids = pageSlugValues
+    return pageSlugValues
       .map((value: string) => allSlugByValue.get(value)?.id)
       .filter((value: string | undefined): value is string => Boolean(value));
-    setSelectedSlugIds(ids);
-    initializedRef.current = true;
-  }, [allSlugs, allSlugByValue, page?.id, page?.slugs]);
-
-  useEffect((): void => {
-    initializedRef.current = false;
-  }, [page?.id, activeDomainId]);
-
-  useEffect((): void => {
-    if (!initializedRef.current) return;
-    const selectedSlugsList = selectedSlugIds
-      .map((id: string) => allSlugs.find((slug: Slug) => slug.id === id))
-      .filter(Boolean) as Slug[];
-    dispatch({
-      type: "UPDATE_PAGE_SLUGS",
-      slugIds: selectedSlugIds,
-      slugValues: selectedSlugsList.map((slug: Slug) => slug.slug),
-    });
-  }, [selectedSlugIds, allSlugs, dispatch]);
+  }, [page, allSlugByValue]);
 
   const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
   const selectedSlugs = useMemo((): Slug[] => {
@@ -874,6 +854,28 @@ function PageSettingsTab(): React.ReactNode {
   };
 
   const showMenuValue = page.showMenu !== false;
+
+  const applySelectedSlugIds = (ids: string[]): void => {
+    const selectedSlugsList = ids
+      .map((idValue: string) => allSlugs.find((slug: Slug) => slug.id === idValue))
+      .filter((value: Slug | undefined): value is Slug => Boolean(value));
+    dispatch({
+      type: "UPDATE_PAGE_SLUGS",
+      slugIds: ids,
+      slugValues: selectedSlugsList.map((slug: Slug) => slug.slug),
+    });
+  };
+
+  const handleToggleSlug = (slug: Slug): void => {
+    const nextIds = selectedSlugIds.includes(slug.id)
+      ? selectedSlugIds.filter((idValue: string) => idValue !== slug.id)
+      : [...selectedSlugIds, slug.id];
+    applySelectedSlugIds(nextIds);
+  };
+
+  const handleRemoveSlug = (slug: Slug): void => {
+    applySelectedSlugIds(selectedSlugIds.filter((idValue: string) => idValue !== slug.id));
+  };
 
   const handleSetHome = async (slug: Slug): Promise<void> => {
     await updateSlug.mutateAsync({
@@ -969,11 +971,7 @@ function PageSettingsTab(): React.ReactNode {
                     <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
                       <Checkbox
                         checked={checked}
-                        onCheckedChange={(): void => {
-                          setSelectedSlugIds((prev: string[]) =>
-                            checked ? prev.filter((idValue: string) => idValue !== slug.id) : [...prev, slug.id]
-                          );
-                        }}
+                        onCheckedChange={(): void => handleToggleSlug(slug)}
                       />
                       /{slug.slug}
                     </label>
@@ -997,9 +995,7 @@ function PageSettingsTab(): React.ReactNode {
                   <button
                     key={slug.id}
                     type="button"
-                    onClick={(): void =>
-                      setSelectedSlugIds((prev: string[]) => prev.filter((idValue: string) => idValue !== slug.id))
-                    }
+                    onClick={(): void => handleRemoveSlug(slug)}
                     className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
                   >
                     /{slug.slug} ×

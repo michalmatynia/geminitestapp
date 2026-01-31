@@ -100,9 +100,28 @@ function createRowBlock(columnCount: number): BlockInstance {
 
 function ensureGridRows(section: SectionInstance): SectionInstance {
   if (section.type !== "Grid") return section;
-  const hasRows = section.blocks.some((b: BlockInstance) => b.type === "Row");
-  if (hasRows) return section;
+  const rows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
   const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+  if (rows.length > 0) {
+    if (columns.length === 0) return section;
+    const rowDef = getBlockDefinition("Row");
+    const extraRow: BlockInstance = {
+      id: uid(),
+      type: "Row",
+      settings: rowDef ? { ...rowDef.defaultSettings } : {},
+      blocks: columns,
+    };
+    const allRows = [...rows, extraRow];
+    const maxColumns = Math.max(
+      1,
+      ...allRows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length)
+    );
+    return {
+      ...section,
+      blocks: allRows,
+      settings: { ...section.settings, rows: allRows.length, columns: maxColumns },
+    };
+  }
   const rowDef = getBlockDefinition("Row");
   const rowsSetting = (section.settings["rows"] as number) ?? 1;
   const columnsSetting = (section.settings["columns"] as number) ?? Math.max(1, columns.length || 1);
@@ -313,13 +332,14 @@ function cloneBlock(block: BlockInstance): BlockInstance {
 }
 
 function cloneSection(section: SectionInstance): SectionInstance {
-  return {
+  const cloned: SectionInstance = {
     id: uid(),
     type: section.type,
     zone: section.zone,
     settings: { ...section.settings },
     blocks: section.blocks.map(cloneBlock),
   };
+  return ensureGridRows(cloned);
 }
 
 function applySettingsDefaults(

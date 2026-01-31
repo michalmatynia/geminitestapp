@@ -281,7 +281,7 @@ type SocialLink = {
   id: string;
   label: string;
   href: string;
-  Icon?: (props: React.SVGProps<SVGSVGElement>) => JSX.Element;
+  Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   fallback: string;
 };
 

@@ -199,7 +199,7 @@ export default function SelectProductForListingModal({
   };
 
   const getProductDisplayName = (product: ProductWithImages): string => {
-    return product.name_en || product.name_pl || product.name_de || product.sku;
+    return product.name_en || product.name_pl || product.name_de || product.sku || "Unnamed product";
   };
 
   const loading = loadingProducts || loadingIntegrations;

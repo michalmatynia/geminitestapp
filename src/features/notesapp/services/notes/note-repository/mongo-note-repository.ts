@@ -232,11 +232,11 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   }
 
   if (filters.tagIds && filters.tagIds.length > 0) {
-    filter["tags.tagId"] = { $in: filters.tagIds } as Filter<NoteDocument>["tags.tagId"];
+    filter.tags = { $elemMatch: { tagId: { $in: filters.tagIds } } };
   }
 
   if (filters.categoryIds && filters.categoryIds.length > 0) {
-    filter["categories.categoryId"] = { $in: filters.categoryIds } as Filter<NoteDocument>["categories.categoryId"];
+    filter.categories = { $elemMatch: { categoryId: { $in: filters.categoryIds } } };
   }
 
   return filter;
@@ -326,7 +326,7 @@ export const mongoNoteRepository: NoteRepository = {
     }));
 
     if (filters.truncateContent) {
-      return result.map((note) => ({
+      return result.map((note: NoteRecord) => ({
         ...note,
         content: note.content.length > 300 ? note.content.slice(0, 300) + "..." : note.content,
       })) as NoteRecord[];
@@ -579,7 +579,7 @@ export const mongoNoteRepository: NoteRepository = {
     );
 
     if (!result) throw notFoundError("Note not found");
-    return toNoteResponse(result as WithId<NoteDocument>);
+    return toNoteResponse(result);
   },
 
   async delete(id: string): Promise<boolean> {
@@ -653,7 +653,7 @@ export const mongoNoteRepository: NoteRepository = {
     );
 
     if (!result) throw notFoundError("Tag not found");
-    return toTagResponse(result as WithId<TagDocument>);
+    return toTagResponse(result);
   },
 
   async deleteTag(id: string): Promise<boolean> {
@@ -760,7 +760,7 @@ export const mongoNoteRepository: NoteRepository = {
     );
 
     if (!result) throw notFoundError("Category not found");
-    return toCategoryResponse(result as WithId<CategoryDocument>);
+    return toCategoryResponse(result);
   },
 
   async deleteCategory(id: string, recursive?: boolean): Promise<boolean> {
@@ -872,7 +872,7 @@ export const mongoNoteRepository: NoteRepository = {
       { returnDocument: "after" }
     );
     if (!result) return null;
-    return toNotebookResponse(result as WithId<NotebookDocument>);
+    return toNotebookResponse(result);
   },
 
   async deleteNotebook(id: string): Promise<boolean> {
@@ -967,7 +967,7 @@ export const mongoNoteRepository: NoteRepository = {
       { returnDocument: "after" }
     );
     if (!result) return null;
-    return toThemeResponse(result as WithId<ThemeDocument>);
+    return toThemeResponse(result);
   },
 
   async deleteTheme(id: string): Promise<boolean> {

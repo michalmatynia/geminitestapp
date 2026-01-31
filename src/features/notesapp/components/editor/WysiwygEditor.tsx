@@ -3,6 +3,7 @@
 import { Button } from "@/shared/ui";
 import React, { useEffect, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -124,7 +125,7 @@ export function WysiwygEditor({
           "prose prose-invert max-w-none min-h-[200px] focus:outline-none px-4 py-3",
       },
     },
-    onUpdate: ({ editor }): void => {
+    onUpdate: ({ editor }: { editor: Editor }): void => {
       // Convert HTML to markdown-like format for storage
       const html = editor.getHTML();
       if (html !== lastContentRef.current) {

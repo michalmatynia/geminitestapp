@@ -1874,6 +1874,7 @@ function PreviewBlockItem({
   // ---------------------------------------------------------------------------
   if (isSectionType) {
     const canReplaceImage = showEditorChrome && Boolean(onOpenMedia);
+    const sectionBase = `w-full text-left text-sm transition ${contained ? "max-w-full" : ""} ${showEditorChrome ? "overflow-hidden" : ""}`.trim();
     return (
       wrapBlock(
         <div className="relative group">
@@ -1883,7 +1884,7 @@ function PreviewBlockItem({
             onClick={handleSelect}
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
-              `w-full text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+              sectionBase,
               `rounded border-2 ${
                 isSelected
                   ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -1891,7 +1892,7 @@ function PreviewBlockItem({
               }`
             )}
           >
-            <div className={isFaithful ? "overflow-hidden" : "p-2.5 overflow-hidden"}>
+            <div className={showEditorChrome ? "p-2.5 overflow-hidden" : ""}>
               {block.type === "ImageWithText" && (
                 <PreviewImageWithTextBlock
                   block={block}

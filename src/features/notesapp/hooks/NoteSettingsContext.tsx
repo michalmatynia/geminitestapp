@@ -159,7 +159,7 @@ async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" |
     const setting = settingsList.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
 
     if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {
-      return setting.value as "markdown" | "wysiwyg" | "code";
+      return setting.value;
     }
     return null;
   } catch (error: unknown) {

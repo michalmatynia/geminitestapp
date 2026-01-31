@@ -80,8 +80,8 @@ export type EvaluateGraphOptions = {
     iteration: number;
     inputs: Record<string, RuntimePortValues>;
     outputs: Record<string, RuntimePortValues>;
-    hashes?: Record<string, string>;
-    history?: Record<string, RuntimeHistoryEntry[]>;
+    hashes?: Record<string, string> | undefined;
+    history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   }) => void | Promise<void>;
   fetchEntityByType: (
     entityType: string,

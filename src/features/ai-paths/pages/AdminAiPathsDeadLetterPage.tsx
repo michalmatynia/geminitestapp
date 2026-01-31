@@ -93,7 +93,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data?.runs]);
 
-  useEffect((): void => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
@@ -151,7 +151,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     setStreamStatus("connecting");
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setDetail((prev: typeof detail) => {
+      setDetail((prev) => {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
@@ -176,7 +176,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     source.addEventListener("run", (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setDetail((prev: typeof detail) => (prev ? { ...prev, run: payload } : prev));
+        setDetail((prev) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
@@ -184,7 +184,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     source.addEventListener("nodes", (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setDetail((prev: typeof detail) => (prev ? { ...prev, nodes: payload } : prev));
+        setDetail((prev) => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }

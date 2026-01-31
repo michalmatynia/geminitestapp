@@ -45,7 +45,7 @@ type LegacyUpdaterConfig = {
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] =>
   items.map((node: AiNode): AiNode => {
-    const nodeType: NodeType = node.type;
+    const nodeType: string = node.type as string;
     if (node.type === "context") {
       const contextConfig = node.config?.context;
       const cleanedOutputs = (node.outputs ?? []).filter(

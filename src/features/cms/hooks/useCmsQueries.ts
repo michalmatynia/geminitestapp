@@ -1,7 +1,7 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Page, Slug, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "@/features/cms/types";
+import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
+import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "@/features/cms/types";
 import {
   createPage,
   deletePage,
@@ -42,14 +42,14 @@ const cmsKeys = {
   theme: (id: string) => ["cms-theme", id] as const,
 };
 
-export function useCmsPages(domainId?: string | null) {
+export function useCmsPages(domainId?: string | null): UseQueryResult<PageSummary[], Error> {
   return useQuery({
     queryKey: domainId ? [...cmsKeys.pages, domainId] : cmsKeys.pages,
     queryFn: () => fetchPages(domainId),
   });
 }
 
-export function useCmsPage(id?: string) {
+export function useCmsPage(id?: string): UseQueryResult<Page, Error> {
   return useQuery({
     queryKey: id ? cmsKeys.page(id) : cmsKeys.page(""),
     queryFn: () => fetchPage(id as string),
@@ -57,7 +57,7 @@ export function useCmsPage(id?: string) {
   });
 }
 
-export function useCreatePage() {
+export function useCreatePage(): UseMutationResult<Page, Error, { name: string; slugIds: string[] }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { name: string; slugIds: string[] }) => {
@@ -71,7 +71,7 @@ export function useCreatePage() {
   });
 }
 
-export function useUpdatePage() {
+export function useUpdatePage(): UseMutationResult<Page, Error, { id: string; input: Page & { slugIds?: string[] } }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) => {
@@ -79,14 +79,14 @@ export function useUpdatePage() {
       if (!ok) throw new Error("Failed to update page");
       return payload;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: Page, variables: { id: string; input: Page & { slugIds?: string[] } }) => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.pages });
       void queryClient.invalidateQueries({ queryKey: cmsKeys.page(variables.id) });
     },
   });
 }
 
-export function useDeletePage() {
+export function useDeletePage(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
@@ -100,14 +100,14 @@ export function useDeletePage() {
   });
 }
 
-export function useCmsSlugs(domainId?: string | null) {
+export function useCmsSlugs(domainId?: string | null): UseQueryResult<Slug[], Error> {
   return useQuery({
     queryKey: domainId ? [...cmsKeys.slugs, domainId] : cmsKeys.slugs,
     queryFn: () => fetchSlugs(domainId),
   });
 }
 
-export function useCmsAllSlugs(enabled = true) {
+export function useCmsAllSlugs(enabled: boolean = true): UseQueryResult<Slug[], Error> {
   return useQuery({
     queryKey: cmsKeys.slugsAll,
     queryFn: fetchAllSlugs,
@@ -115,7 +115,7 @@ export function useCmsAllSlugs(enabled = true) {
   });
 }
 
-export function useCmsSlug(id?: string, domainId?: string) {
+export function useCmsSlug(id?: string, domainId?: string): UseQueryResult<Slug, Error> {
   return useQuery({
     queryKey: id ? [...cmsKeys.slug(id), domainId ?? "current"] : cmsKeys.slug(""),
     queryFn: () => fetchSlug(id as string, domainId),
@@ -123,7 +123,7 @@ export function useCmsSlug(id?: string, domainId?: string) {
   });
 }
 
-export function useCreateSlug() {
+export function useCreateSlug(): UseMutationResult<Slug, Error, { slug: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { slug: string; domainId?: string }) => {
@@ -137,7 +137,7 @@ export function useCreateSlug() {
   });
 }
 
-export function useUpdateSlug() {
+export function useUpdateSlug(): UseMutationResult<Slug, Error, { id: string; input: Partial<Slug>; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -153,14 +153,14 @@ export function useUpdateSlug() {
       if (!ok) throw new Error("Failed to update slug");
       return payload;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: Slug, variables: { id: string; input: Partial<Slug>; domainId?: string | null }) => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs });
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slug(variables.id) });
     },
   });
 }
 
-export function useDeleteSlug() {
+export function useDeleteSlug(): UseMutationResult<string, Error, { id: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, domainId }: { id: string; domainId?: string | null }) => {
@@ -178,14 +178,14 @@ export function useDeleteSlug() {
 // Domains
 // ---------------------------------------------------------------------------
 
-export function useCmsDomains() {
+export function useCmsDomains(): UseQueryResult<CmsDomain[], Error> {
   return useQuery({
     queryKey: cmsKeys.domains,
     queryFn: fetchDomains,
   });
 }
 
-export function useCreateCmsDomain() {
+export function useCreateCmsDomain(): UseMutationResult<CmsDomain, Error, { domain: string }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { domain: string }) => {
@@ -199,7 +199,7 @@ export function useCreateCmsDomain() {
   });
 }
 
-export function useDeleteCmsDomain() {
+export function useDeleteCmsDomain(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
@@ -213,7 +213,7 @@ export function useDeleteCmsDomain() {
   });
 }
 
-export function useUpdateCmsDomain() {
+export function useUpdateCmsDomain(): UseMutationResult<CmsDomain, Error, { id: string; input: { aliasOf?: string | null } }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: { aliasOf?: string | null } }) => {
@@ -231,14 +231,14 @@ export function useUpdateCmsDomain() {
 // Themes
 // ---------------------------------------------------------------------------
 
-export function useCmsThemes() {
+export function useCmsThemes(): UseQueryResult<CmsTheme[], Error> {
   return useQuery({
     queryKey: cmsKeys.themes,
     queryFn: fetchThemes,
   });
 }
 
-export function useCmsTheme(id?: string) {
+export function useCmsTheme(id?: string): UseQueryResult<CmsTheme, Error> {
   return useQuery({
     queryKey: id ? cmsKeys.theme(id) : cmsKeys.theme(""),
     queryFn: () => fetchTheme(id as string),
@@ -246,7 +246,7 @@ export function useCmsTheme(id?: string) {
   });
 }
 
-export function useCreateTheme() {
+export function useCreateTheme(): UseMutationResult<CmsTheme, Error, CmsThemeCreateInput> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CmsThemeCreateInput) => {
@@ -260,7 +260,7 @@ export function useCreateTheme() {
   });
 }
 
-export function useUpdateTheme() {
+export function useUpdateTheme(): UseMutationResult<CmsTheme, Error, { id: string; input: CmsThemeUpdateInput }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: CmsThemeUpdateInput }) => {
@@ -275,7 +275,7 @@ export function useUpdateTheme() {
   });
 }
 
-export function useDeleteTheme() {
+export function useDeleteTheme(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {

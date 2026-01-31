@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
 import { useSettingsMap } from "@/shared/hooks/useSettings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
+import type { CmsDomain } from "@/features/cms/types";
 
 type UserPreferencesResponse = {
   cmsActiveDomainId?: string | null;
@@ -30,9 +31,8 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
   );
   const zoningEnabled = domainSettings.zoningEnabled;
   const domainsQuery = useCmsDomains();
-  const domains = domainsQuery.data ?? [];
+  const domains = useMemo<CmsDomain[]>(() => domainsQuery.data ?? [], [domainsQuery.data]);
   const queryClient = useQueryClient();
-  const [hostDomainId, setHostDomainId] = useState<string | null>(null);
 
   const preferencesQuery = useQuery({
     queryKey: userPreferencesQueryKey,
@@ -65,15 +65,13 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
     },
   });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!zoningEnabled) return;
-    if (!domains.length) return;
+  const hostDomainId = useMemo((): string | null => {
+    if (typeof window === "undefined") return null;
+    if (!zoningEnabled) return null;
+    if (!domains.length) return null;
     const host = window.location.hostname.toLowerCase();
-    const match = domains.find((item) => item.domain.toLowerCase() === host);
-    if (match) {
-      setHostDomainId(match.id);
-    }
+    const match = domains.find((item: CmsDomain) => item.domain.toLowerCase() === host);
+    return match?.id ?? null;
   }, [domains, zoningEnabled]);
 
   const preferredDomainId = useMemo(() => {
@@ -84,28 +82,28 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
 
   const activeDomainId = useMemo(() => {
     if (!zoningEnabled) return null;
-    if (preferredDomainId && domains.some((item) => item.id === preferredDomainId)) {
+    if (preferredDomainId && domains.some((item: CmsDomain) => item.id === preferredDomainId)) {
       return preferredDomainId;
     }
-    if (hostDomainId && domains.some((item) => item.id === hostDomainId)) {
+    if (hostDomainId && domains.some((item: CmsDomain) => item.id === hostDomainId)) {
       return hostDomainId;
     }
     return domains[0]?.id ?? null;
   }, [preferredDomainId, hostDomainId, domains, zoningEnabled]);
 
   const activeDomain = useMemo(
-    () => (zoningEnabled ? domains.find((item) => item.id === activeDomainId) ?? null : null),
+    () => (zoningEnabled ? domains.find((item: CmsDomain) => item.id === activeDomainId) ?? null : null),
     [domains, activeDomainId, zoningEnabled]
   );
 
   const canonicalDomain = useMemo(() => {
     if (!zoningEnabled) return null;
     if (!activeDomain?.aliasOf) return null;
-    return domains.find((item) => item.id === activeDomain.aliasOf) ?? null;
+    return domains.find((item: CmsDomain) => item.id === activeDomain.aliasOf) ?? null;
   }, [domains, activeDomain, zoningEnabled]);
 
   const sharedWithDomains = useMemo(
-    () => (zoningEnabled && activeDomainId ? domains.filter((item) => item.aliasOf === activeDomainId) : []),
+    () => (zoningEnabled && activeDomainId ? domains.filter((item: CmsDomain) => item.aliasOf === activeDomainId) : []),
     [domains, activeDomainId, zoningEnabled]
   );
 
@@ -114,7 +112,7 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
       if (!persist) return;
       if (!zoningEnabled) return;
       if (domainId === preferencesQuery.data?.cmsActiveDomainId) return;
-      queryClient.setQueryData<UserPreferencesResponse>(userPreferencesQueryKey, (prev) => ({
+      queryClient.setQueryData<UserPreferencesResponse>(userPreferencesQueryKey, (prev: UserPreferencesResponse | undefined) => ({
         ...(prev ?? {}),
         cmsActiveDomainId: domainId,
       }));

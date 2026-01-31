@@ -364,13 +364,13 @@ export function RunTimeline({
     if (timed.length === 0) {
       return { min: null, max: null };
     }
-    let min = timed[0];
-    let max = timed[0];
+    let min: NodeDurationRow = timed[0]!;
+    let max: NodeDurationRow = timed[0]!;
     timed.forEach((row: NodeDurationRow): void => {
-      if ((row.durationMs ?? 0) < (min.durationMs ?? 0)) min = row;
-      if ((row.durationMs ?? 0) > (max.durationMs ?? 0)) max = row;
+      if ((row.durationMs ?? 0) < (min?.durationMs ?? 0)) min = row;
+      if ((row.durationMs ?? 0) > (max?.durationMs ?? 0)) max = row;
     });
-    return { min, max };
+    return { min: min ?? null, max: max ?? null };
   }, [nodeDurationRows]);
 
   const toggleSection = (section: TimelineFilter): void => {
@@ -473,7 +473,7 @@ export function RunTimeline({
                   { id: "avg", label: "Avg duration" },
                   { id: "total", label: "Total duration" },
                   { id: "alpha", label: "A-Z" },
-                ] as const).map((option: { id: string; label: string }): React.JSX.Element => {
+                ] as const).map((option: { id: "count" | "total" | "avg" | "alpha"; label: string }): React.JSX.Element => {
                   const active = statusSort === option.id;
                   return (
                     <Button

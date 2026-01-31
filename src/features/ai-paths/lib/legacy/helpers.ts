@@ -595,7 +595,7 @@ const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
 };
 
 const normalizeNodes = (items: AiNode[]): AiNode[] =>
-  items.map((node: AiNode) => {
+  items.map((node: AiNode): AiNode => {
     const nodeType: string = node.type as string;
     if (node.type === "context") {
       const contextConfig = node.config?.context;
@@ -1407,7 +1407,7 @@ const buildFlattenedMappings = (
         break;
       }
     }
-    const lastToken: string | number = tokens[tokens.length - 1];
+    const lastToken: string | number = tokens[tokens.length - 1] ?? "";
     if (leafKey && typeof lastToken === "number") {
       leafKey = `${leafKey}_${lastToken}`;
     }
@@ -1532,7 +1532,7 @@ const inferImageMappingPath = (value: unknown, depth: number): string | null => 
 
 const getContextPresetSet = (entityType?: string): { light: string[]; medium: string[]; full: string[]; suggested: string[] } => {
   const key: string = entityType === "auto" ? "" : entityType ?? "";
-  return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default;
+  return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default ?? { light: [], medium: [], full: [], suggested: [] };
 };
 
 const applyContextPreset = (

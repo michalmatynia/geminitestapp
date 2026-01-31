@@ -19,9 +19,8 @@ interface FrontendGridSectionProps {
 
 export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
-  const columns = blocks.filter((b: BlockInstance) => b.type === "Column");
-  const columnsPerRow = Math.max(1, (settings["columns"] as number) ?? 1);
-  const rows = Math.max(1, (settings["rows"] as number) ?? 1);
+  const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
+  const directColumns = blocks.filter((b: BlockInstance) => b.type === "Column");
   const gap = (settings["gap"] as string) || "medium";
 
   const gapClass =
@@ -30,21 +29,27 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
     : gap === "large" ? "gap-12"
     : "gap-8"; // medium
 
-  if (columns.length === 0) return null;
+  const rowsToRender: BlockInstance[] =
+    rowBlocks.length > 0
+      ? rowBlocks
+      : directColumns.length > 0
+      ? [{ id: `row-virtual`, type: "Row", settings: {}, blocks: directColumns }]
+      : [];
+
+  if (rowsToRender.length === 0) return null;
 
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div className={`flex flex-col ${gapClass}`}>
-          {Array.from({ length: rows }, (_, rowIndex: number) => {
-            const start = rowIndex * columnsPerRow;
-            const rowColumns = columns.slice(start, start + columnsPerRow);
+          {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
+            const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
             if (rowColumns.length === 0) return null;
             return (
               <div
-                key={`grid-row-${rowIndex}`}
+                key={`grid-row-${row.id}-${rowIndex}`}
                 className={`grid ${gapClass}`}
-                style={{ gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)` }}
+                style={{ gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)` }}
               >
                 {rowColumns.map((column: BlockInstance) => (
                   <ColumnRenderer key={column.id} column={column} />

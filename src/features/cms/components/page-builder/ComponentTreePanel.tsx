@@ -452,11 +452,11 @@ function ZoneGroup({
                   onSelect={onSelectNode}
                   onAddBlock={onAddBlock}
                   onDropBlock={onDropBlock}
-                onAddBlockToColumn={onAddBlockToColumn}
-                onDropBlockToColumn={onDropBlockToColumn}
-                onAddGridRow={onAddGridRow}
-                onAddColumnToRow={onAddColumnToRow}
-                onAddElementToNestedBlock={onAddElementToNestedBlock}
+                  onAddBlockToColumn={onAddBlockToColumn}
+                  onDropBlockToColumn={onDropBlockToColumn}
+                  onAddGridRow={onAddGridRow}
+                  onAddColumnToRow={onAddColumnToRow}
+                  onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   onRemoveSection={onRemoveSection}

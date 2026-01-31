@@ -131,7 +131,6 @@ export function AiPathsSettingsView({
     viewportRef,
     canvasRef,
     configOpen,
-    setConfigOpen,
     modelOptions,
     parserSamples,
     setParserSamples,

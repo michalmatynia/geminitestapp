@@ -233,12 +233,18 @@ export function PreviewSection({
     { label: "Blocks", value: String(section.blocks.length) },
   ];
   if (section.type === "Grid") {
-    const columnsPerRow = (section.settings["columns"] as number) ?? 1;
-    const rows = (section.settings["rows"] as number) ?? 1;
-    const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column").length;
-    structureEntries.push({ label: "Rows", value: String(rows) });
+    const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === "Row");
+    const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+    const columnsInRows = rowBlocks.flatMap((row: BlockInstance) => row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+    const rowsCount = rowBlocks.length || (directColumns.length > 0 ? 1 : 0);
+    const columnsPerRow =
+      rowBlocks.length > 0
+        ? Math.max(1, ...rowBlocks.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length))
+        : directColumns.length;
+    const cellCount = rowBlocks.length > 0 ? columnsInRows.length : directColumns.length;
+    structureEntries.push({ label: "Rows", value: String(rowsCount) });
     structureEntries.push({ label: "Columns / row", value: String(columnsPerRow) });
-    structureEntries.push({ label: "Cells", value: String(columns) });
+    structureEntries.push({ label: "Cells", value: String(cellCount) });
   }
   const visibilityEntries: InspectorEntry[] = [
     { label: "Hidden", value: isHidden ? "Yes" : "No" },
@@ -469,23 +475,14 @@ export function PreviewSection({
 
   // Grid sections
   if (section.type === "Grid") {
-    const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
-    const columnsPerRow = Math.max(1, (section.settings["columns"] as number) ?? 1);
-    const rows = Math.max(1, (section.settings["rows"] as number) ?? 1);
-    const totalCells = rows * columnsPerRow;
-    const colCount = columnsPerRow;
-    const normalizedColumns =
-      gridColumns.length === totalCells
-        ? gridColumns
-        : [
-            ...gridColumns,
-            ...Array.from({ length: Math.max(0, totalCells - gridColumns.length) }, (_, idx: number): BlockInstance => ({
-              id: `placeholder-${section.id}-${idx}`,
-              type: "Column",
-              settings: {},
-              blocks: [],
-            })),
-          ].slice(0, totalCells);
+    const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === "Row");
+    const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+    const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
+      rowBlocks.length > 0
+        ? rowBlocks.map((row: BlockInstance) => ({ row, virtual: false }))
+        : directColumns.length > 0
+        ? [{ row: { id: `row-virtual-${section.id}`, type: "Row", settings: {}, blocks: directColumns }, virtual: true }]
+        : [];
 
     return (
       wrapInspector(
@@ -505,159 +502,166 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          {gridColumns.length === 0 ? (
+          {rowsToRender.length === 0 ? (
             <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
-              No columns
+              No rows
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {Array.from({ length: rows }, (_, rowIndex: number) => {
-                const start = rowIndex * columnsPerRow;
-                const rowColumns = normalizedColumns.slice(start, start + columnsPerRow);
-                return (
+              {rowsToRender.map(({ row, virtual }, rowIndex: number) => {
+                const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+                const columnCount = Math.max(1, rowColumns.length);
+                const isRowSelected = !virtual && selectedNodeId === row.id;
+                const rowContainer = (
                   <div
-                    key={`grid-row-${rowIndex}`}
-                    className="grid gap-2"
-                    style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
+                    role={!virtual ? "button" : undefined}
+                    tabIndex={!virtual ? 0 : undefined}
+                    onClick={(e: React.MouseEvent): void => {
+                      if (virtual) return;
+                      e.stopPropagation();
+                      onSelect(row.id);
+                    }}
+                    onKeyDown={(e: React.KeyboardEvent): void => {
+                      if (virtual) return;
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        onSelect(row.id);
+                      }
+                    }}
+                    className={`rounded border border-dashed border-border/30 p-2 ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40 bg-blue-500/5" : ""}`}
                   >
-                    {rowColumns.map((column: BlockInstance, colIndex: number) => {
-                      const isPlaceholder = column.id.startsWith("placeholder-");
-                      const isColumnSelected = !isPlaceholder && selectedNodeId === column.id;
-                      const isColumnHovered = !isPlaceholder && isInspecting && hoveredNodeId === column.id;
-                      const isLast = colIndex === rowColumns.length - 1;
-                      const columnHoverClass =
-                        isColumnHovered && !isColumnSelected
-                          ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
-                          : "";
-                      if (isPlaceholder) {
-                        return (
-                          <div
-                            key={column.id}
-                            className="min-h-[48px] rounded border border-dashed border-border/40 bg-gray-900/20"
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                      {rowColumns.map((column: BlockInstance, colIndex: number) => {
+                        const isColumnSelected = selectedNodeId === column.id;
+                        const isColumnHovered = isInspecting && hoveredNodeId === column.id;
+                        const isLast = colIndex === rowColumns.length - 1;
+                        const columnHoverClass =
+                          isColumnHovered && !isColumnSelected
+                            ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
+                            : "";
+                        const columnTooltip = (
+                          <InspectorTooltip
+                            title="Column"
+                            sections={[
+                              {
+                                title: "Meta",
+                                entries: inspectorSettings.showIdentifiers
+                                  ? [
+                                      { label: "Type", value: "Column" },
+                                      { label: "ID", value: column.id },
+                                    ]
+                                  : [{ label: "Type", value: "Column" }],
+                              },
+                              ...(inspectorSettings.showStructureInfo
+                                ? [
+                                    {
+                                      title: "Structure",
+                                      entries: [
+                                        { label: "Section", value: section.type },
+                                        { label: "Zone", value: section.zone },
+                                        { label: "Row", value: String(rowIndex + 1) },
+                                        { label: "Column", value: String(colIndex + 1) },
+                                      ],
+                                    },
+                                  ]
+                                : []),
+                              ...(inspectorSettings.showConnectionInfo
+                                ? [
+                                    {
+                                      title: "Connection",
+                                      entries: (() => {
+                                        const connection = column.settings["connection"] as
+                                          | { enabled?: boolean; source?: string; path?: string; fallback?: string }
+                                          | undefined;
+                                        if (!connection) return [];
+                                        const entries: InspectorEntry[] = [
+                                          { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
+                                        ];
+                                        if (connection.source) entries.push({ label: "Source", value: connection.source });
+                                        if (connection.path) entries.push({ label: "Path", value: connection.path });
+                                        if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
+                                        return entries;
+                                      })(),
+                                    },
+                                  ]
+                                : []),
+                              ...(inspectorSettings.showStyleSettings
+                                ? [
+                                    {
+                                      title: "Styles",
+                                      entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
+                                    },
+                                  ]
+                                : []),
+                            ]}
                           />
                         );
-                      }
-                      const columnTooltip = (
-                        <InspectorTooltip
-                          title="Column"
-                          sections={[
-                            {
-                              title: "Meta",
-                              entries: inspectorSettings.showIdentifiers
-                                ? [
-                                    { label: "Type", value: "Column" },
-                                    { label: "ID", value: column.id },
-                                  ]
-                                : [{ label: "Type", value: "Column" }],
-                            },
-                            ...(inspectorSettings.showStructureInfo
-                              ? [
-                                  {
-                                    title: "Structure",
-                                    entries: [
-                                      { label: "Section", value: section.type },
-                                      { label: "Zone", value: section.zone },
-                                      { label: "Row", value: String(rowIndex + 1) },
-                                      { label: "Column", value: String(colIndex + 1) },
-                                    ],
-                                  },
-                                ]
-                              : []),
-                            ...(inspectorSettings.showConnectionInfo
-                              ? [
-                                  {
-                                    title: "Connection",
-                                    entries: (() => {
-                                      const connection = column.settings["connection"] as
-                                        | { enabled?: boolean; source?: string; path?: string; fallback?: string }
-                                        | undefined;
-                                      if (!connection) return [];
-                                      const entries: InspectorEntry[] = [
-                                        { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
-                                      ];
-                                      if (connection.source) entries.push({ label: "Source", value: connection.source });
-                                      if (connection.path) entries.push({ label: "Path", value: connection.path });
-                                      if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
-                                      return entries;
-                                    })(),
-                                  },
-                                ]
-                              : []),
-                            ...(inspectorSettings.showStyleSettings
-                              ? [
-                                  {
-                                    title: "Styles",
-                                    entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
-                                  },
-                                ]
-                              : []),
-                          ]}
-                        />
-                      );
-                      return (
-                        <InspectorHover
-                          key={column.id}
-                          enabled={inspectorActive}
-                          showTooltip={inspectorSettings.showTooltip}
-                          nodeId={column.id}
-                          onHover={onHoverNode}
-                          fallbackNodeId={section.id}
-                          content={columnTooltip}
-                          className="w-full"
-                        >
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e: React.MouseEvent): void => {
-                              e.stopPropagation();
-                              onSelect(column.id);
-                            }}
-                            onKeyDown={(e: React.KeyboardEvent): void => {
-                              if (e.key === "Enter" || e.key === " ") {
+                        return (
+                          <InspectorHover
+                            key={column.id}
+                            enabled={inspectorActive}
+                            showTooltip={inspectorSettings.showTooltip}
+                            nodeId={column.id}
+                            onHover={onHoverNode}
+                            fallbackNodeId={section.id}
+                            content={columnTooltip}
+                            className="w-full"
+                          >
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e: React.MouseEvent): void => {
                                 e.stopPropagation();
                                 onSelect(column.id);
-                              }
-                            }}
-                            className={`p-2 text-left transition cursor-pointer ${
-                              !isLast ? "border-r border-dashed border-border/40" : ""
-                            } ${
-                              isColumnSelected
-                                ? isInspecting
-                                  ? "bg-blue-500/10"
-                                  : "bg-blue-500/5"
-                                : "hover:bg-gray-800/30"
-                            } ${columnHoverClass}`}
-                          >
-                            {(column.blocks ?? []).length > 0 && (
-                              <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
-                                {(column.blocks ?? []).map((block: BlockInstance) => (
-                                  <PreviewBlockItem
-                                    key={block.id}
-                                    block={block}
-                                    isSelected={selectedNodeId === block.id}
-                                    isInspecting={isInspecting}
-                                    inspectorSettings={inspectorSettings}
-                                    hoveredNodeId={hoveredNodeId}
-                                    onHoverNode={onHoverNode}
-                                    onSelect={onSelect}
-                                    contained
-                                    selectedNodeId={selectedNodeId}
-                                    sectionId={section.id}
-                                    sectionType={section.type}
-                                    sectionZone={section.zone}
-                                    columnId={column.id}
-                                    onOpenMedia={onOpenMedia}
-                                    mediaStyles={mediaStyles}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </InspectorHover>
-                      );
-                    })}
+                              }}
+                              onKeyDown={(e: React.KeyboardEvent): void => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.stopPropagation();
+                                  onSelect(column.id);
+                                }
+                              }}
+                              className={`p-2 text-left transition cursor-pointer ${
+                                !isLast ? "border-r border-dashed border-border/40" : ""
+                              } ${
+                                isColumnSelected
+                                  ? isInspecting
+                                    ? "bg-blue-500/10"
+                                    : "bg-blue-500/5"
+                                  : "hover:bg-gray-800/30"
+                              } ${columnHoverClass}`}
+                            >
+                              {(column.blocks ?? []).length > 0 && (
+                                <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
+                                  {(column.blocks ?? []).map((block: BlockInstance) => (
+                                    <PreviewBlockItem
+                                      key={block.id}
+                                      block={block}
+                                      isSelected={selectedNodeId === block.id}
+                                      isInspecting={isInspecting}
+                                      inspectorSettings={inspectorSettings}
+                                      hoveredNodeId={hoveredNodeId}
+                                      onHoverNode={onHoverNode}
+                                      onSelect={onSelect}
+                                      contained
+                                      selectedNodeId={selectedNodeId}
+                                      sectionId={section.id}
+                                      sectionType={section.type}
+                                      sectionZone={section.zone}
+                                      columnId={column.id}
+                                      onOpenMedia={onOpenMedia}
+                                      mediaStyles={mediaStyles}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </InspectorHover>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
+                return <div key={row.id}>{rowContainer}</div>;
               })}
             </div>
           )}

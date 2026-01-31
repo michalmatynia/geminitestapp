@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow } from "lucide-react";
+import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow, Plus } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 
@@ -55,6 +55,8 @@ interface SectionNodeItemProps {
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onAddGridRow: (sectionId: string) => void;
+  onAddColumnToRow: (sectionId: string, rowId: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSection: (sectionId: string, toIndex: number) => void;
   onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
@@ -85,6 +87,8 @@ export function SectionNodeItem({
   onDropBlock,
   onAddBlockToColumn,
   onDropBlockToColumn,
+  onAddGridRow,
+  onAddColumnToRow,
   onAddElementToNestedBlock,
   onDropSection,
   onToggleSectionVisibility,
@@ -113,6 +117,8 @@ export function SectionNodeItem({
   const [isSectionDragOver, setIsSectionDragOver] = useState(false);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
+  const gridRows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
+  const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
 
   return (
     <div
@@ -167,7 +173,9 @@ export function SectionNodeItem({
               // Section dropped on a Grid — route to first column
               const CONVERTIBLE = ["ImageWithText", "RichText", "Hero"];
               if (CONVERTIBLE.includes(draggedSectionType ?? "")) {
-                const firstColumn = section.blocks.find((b: BlockInstance) => b.type === "Column");
+                const firstColumn =
+                  gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
+                  gridColumns.find((b: BlockInstance) => b.type === "Column");
                 if (firstColumn) {
                   onDropSectionToColumn(draggedSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
                 }
@@ -181,7 +189,9 @@ export function SectionNodeItem({
           } else if (draggedBlockId && draggedFromSectionId) {
             if (section.type === "Grid") {
               // Block dropped on a Grid — route to first column
-              const firstColumn = section.blocks.find((b: BlockInstance) => b.type === "Column");
+              const firstColumn =
+                gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
+                gridColumns.find((b: BlockInstance) => b.type === "Column");
               if (firstColumn) {
                 onDropBlockToColumn(draggedBlockId, draggedFromSectionId, draggedFromColumnId ?? undefined, section.id, firstColumn.id, (firstColumn.blocks ?? []).length, draggedFromParentBlockId ?? undefined);
               }
@@ -263,11 +273,39 @@ export function SectionNodeItem({
         </div>
       </div>
 
-      {isExpanded && hasBlocks && section.type === "Grid" && (
+      {isExpanded && section.type === "Grid" && (
         <div className="ml-4 border-l border-border/30 pl-1">
-          {section.blocks
-            .filter((b: BlockInstance) => b.type === "Column")
-            .map((column: BlockInstance, colIndex: number) => (
+          {gridRows.length > 0 ? (
+            gridRows.map((row: BlockInstance, rowIndex: number) => (
+              <RowNodeItem
+                key={row.id}
+                row={row}
+                rowIndex={rowIndex}
+                sectionId={section.id}
+                selectedNodeId={selectedNodeId}
+                onSelect={onSelect}
+                onAddColumnToRow={onAddColumnToRow}
+                onAddBlockToColumn={onAddBlockToColumn}
+                onDropBlockToColumn={onDropBlockToColumn}
+                onAddElementToNestedBlock={onAddElementToNestedBlock}
+                expandedIds={expandedIds}
+                onToggleExpand={onToggleExpand}
+                draggedBlockId={draggedBlockId}
+                setDraggedBlockId={setDraggedBlockId}
+                draggedFromSectionId={draggedFromSectionId}
+                setDraggedFromSectionId={setDraggedFromSectionId}
+                draggedFromColumnId={draggedFromColumnId}
+                setDraggedFromColumnId={setDraggedFromColumnId}
+                draggedFromParentBlockId={draggedFromParentBlockId}
+                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                draggedSectionId={draggedSectionId}
+                setDraggedSectionId={setDraggedSectionId}
+                draggedSectionType={draggedSectionType}
+                onDropSectionToColumn={onDropSectionToColumn}
+              />
+            ))
+          ) : gridColumns.length > 0 ? (
+            gridColumns.map((column: BlockInstance, colIndex: number) => (
               <ColumnNodeItem
                 key={column.id}
                 column={column}
@@ -293,7 +331,21 @@ export function SectionNodeItem({
                 draggedSectionType={draggedSectionType}
                 onDropSectionToColumn={onDropSectionToColumn}
               />
-            ))}
+            ))
+          ) : (
+            <div className="py-2 text-xs text-gray-500">No rows yet.</div>
+          )}
+          <button
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onAddGridRow(section.id);
+            }}
+            className="mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:bg-muted/40 hover:text-gray-200"
+          >
+            <Plus className="size-3" />
+            Add row
+          </button>
         </div>
       )}
 
@@ -312,6 +364,153 @@ export function SectionNodeItem({
               setDraggedBlockId={setDraggedBlockId}
               draggedFromSectionId={draggedFromSectionId}
               setDraggedFromSectionId={setDraggedFromSectionId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Row node (non-draggable, inside Grid sections)
+// ---------------------------------------------------------------------------
+
+interface RowNodeItemProps {
+  row: BlockInstance;
+  rowIndex: number;
+  sectionId: string;
+  selectedNodeId: string | null;
+  onSelect: (nodeId: string) => void;
+  onAddColumnToRow: (sectionId: string, rowId: string) => void;
+  onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
+  onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
+  expandedIds: Set<string>;
+  onToggleExpand: (nodeId: string) => void;
+  draggedBlockId: string | null;
+  setDraggedBlockId: (id: string | null) => void;
+  draggedFromSectionId: string | null;
+  setDraggedFromSectionId: (id: string | null) => void;
+  draggedFromColumnId: string | null;
+  setDraggedFromColumnId: (id: string | null) => void;
+  draggedFromParentBlockId: string | null;
+  setDraggedFromParentBlockId: (id: string | null) => void;
+  draggedSectionId: string | null;
+  setDraggedSectionId: (id: string | null) => void;
+  draggedSectionType: string | null;
+  onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+}
+
+function RowNodeItem({
+  row,
+  rowIndex,
+  sectionId,
+  selectedNodeId,
+  onSelect,
+  onAddColumnToRow,
+  onAddBlockToColumn,
+  onDropBlockToColumn,
+  onAddElementToNestedBlock,
+  expandedIds,
+  onToggleExpand,
+  draggedBlockId,
+  setDraggedBlockId,
+  draggedFromSectionId,
+  setDraggedFromSectionId,
+  draggedFromColumnId,
+  setDraggedFromColumnId,
+  draggedFromParentBlockId,
+  setDraggedFromParentBlockId,
+  draggedSectionId,
+  setDraggedSectionId,
+  draggedSectionType,
+  onDropSectionToColumn,
+}: RowNodeItemProps): React.ReactNode {
+  const isSelected = selectedNodeId === row.id;
+  const isExpanded = expandedIds.has(row.id);
+  const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+  const hasColumns = columns.length > 0;
+
+  return (
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          onSelect(row.id);
+        }}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect(row.id);
+          }
+        }}
+        className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
+          isSelected ? "bg-blue-600/80 text-white" : "text-gray-300 hover:bg-muted/40"
+        }`}
+      >
+        <div
+          role="button"
+          tabIndex={-1}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onToggleExpand(row.id);
+          }}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation();
+              onToggleExpand(row.id);
+            }
+          }}
+          className="shrink-0"
+        >
+          {isExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        </div>
+        <GripVertical className="size-3.5 shrink-0" />
+        <span className="flex-1 truncate text-left">Row {rowIndex + 1}</span>
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onAddColumnToRow(sectionId, row.id);
+          }}
+          className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10"
+          title="Add column"
+        >
+          <Plus className="size-3" />
+        </button>
+      </div>
+
+      {isExpanded && hasColumns && (
+        <div className="ml-4 border-l border-border/30 pl-1">
+          {columns.map((column: BlockInstance, colIndex: number) => (
+            <ColumnNodeItem
+              key={column.id}
+              column={column}
+              columnIndex={colIndex}
+              sectionId={sectionId}
+              selectedNodeId={selectedNodeId}
+              onSelect={onSelect}
+              onAddBlockToColumn={onAddBlockToColumn}
+              onDropBlockToColumn={onDropBlockToColumn}
+              onAddElementToNestedBlock={onAddElementToNestedBlock}
+              expandedIds={expandedIds}
+              onToggleExpand={onToggleExpand}
+              draggedBlockId={draggedBlockId}
+              setDraggedBlockId={setDraggedBlockId}
+              draggedFromSectionId={draggedFromSectionId}
+              setDraggedFromSectionId={setDraggedFromSectionId}
+              draggedFromColumnId={draggedFromColumnId}
+              setDraggedFromColumnId={setDraggedFromColumnId}
+              draggedFromParentBlockId={draggedFromParentBlockId}
+              setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+              draggedSectionId={draggedSectionId}
+              setDraggedSectionId={setDraggedSectionId}
+              draggedSectionType={draggedSectionType}
+              onDropSectionToColumn={onDropSectionToColumn}
             />
           ))}
         </div>

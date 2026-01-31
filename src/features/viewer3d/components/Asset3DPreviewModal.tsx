@@ -15,7 +15,7 @@ import {
   Eye,
   Layers,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import type { Asset3DRecord } from "../types";
 import { cn } from "@/shared/utils";
 
@@ -25,7 +25,11 @@ interface Asset3DPreviewModalProps {
   asset: Asset3DRecord;
 }
 
-const environmentPresets: { value: EnvironmentPreset; label: string }[] = [
+type EnvironmentPresetOption = { value: EnvironmentPreset; label: string };
+type LightingPresetOption = { value: LightingPreset; label: string; icon: ReactNode };
+type LuminanceOption = { value: number; label: string };
+
+const environmentPresets: EnvironmentPresetOption[] = [
   { value: "studio", label: "Studio" },
   { value: "sunset", label: "Sunset" },
   { value: "dawn", label: "Dawn" },
@@ -38,7 +42,7 @@ const environmentPresets: { value: EnvironmentPreset; label: string }[] = [
   { value: "lobby", label: "Lobby" },
 ];
 
-const lightingPresets: { value: LightingPreset; label: string; icon: React.ReactNode }[] = [
+const lightingPresets: LightingPresetOption[] = [
   { value: "studio", label: "Studio", icon: <Sun className="h-4 w-4" /> },
   { value: "outdoor", label: "Outdoor", icon: <Sun className="h-4 w-4" /> },
   { value: "dramatic", label: "Dramatic", icon: <Moon className="h-4 w-4" /> },
@@ -81,8 +85,11 @@ const orderedDitheringPresets = {
 } as const;
 
 type OrderedDitheringPresetKey = keyof typeof orderedDitheringPresets;
+const orderedDitheringEntries = Object.entries(orderedDitheringPresets) as Array<
+  [OrderedDitheringPresetKey, (typeof orderedDitheringPresets)[OrderedDitheringPresetKey]]
+>;
 
-const orderedDitheringLuminanceOptions = [
+const orderedDitheringLuminanceOptions: LuminanceOption[] = [
   { value: 0, label: "Average" },
   { value: 1, label: "Rec. 601" },
   { value: 2, label: "Rec. 709" },
@@ -93,7 +100,7 @@ export function Asset3DPreviewModal({
   open,
   onClose,
   asset,
-}: Asset3DPreviewModalProps) {
+}: Asset3DPreviewModalProps): React.JSX.Element {
   // View settings
   const [autoRotate, setAutoRotate] = useState(true);
   const [autoRotateSpeed, setAutoRotateSpeed] = useState(2);
@@ -141,13 +148,13 @@ export function Asset3DPreviewModal({
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<"environment" | "effects" | "view">("environment");
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
-  const applyOrderedDitheringPreset = (preset: OrderedDitheringPresetKey) => {
+  const applyOrderedDitheringPreset = (preset: OrderedDitheringPresetKey): void => {
     const config = orderedDitheringPresets[preset];
     setOrderedDitheringGridSize(config.gridSize);
     setOrderedDitheringPixelSizeRatio(config.pixelSizeRatio);
@@ -156,7 +163,7 @@ export function Asset3DPreviewModal({
     setOrderedDitheringLuminanceMethod(config.luminanceMethod);
   };
 
-  const resetSettings = () => {
+  const resetSettings = (): void => {
     setAutoRotate(true);
     setAutoRotateSpeed(2);
     setEnvironment("studio");
@@ -185,7 +192,7 @@ export function Asset3DPreviewModal({
   };
 
   return (
-    <AppModal open={open} onOpenChange={(o) => !o && onClose()} title={asset.filename}>
+    <AppModal open={open} onOpenChange={(o: boolean): void => { if (!o) onClose(); }} title={asset.filename}>
       <div className="bg-gray-900 rounded-lg shadow-2xl w-[95vw] max-w-6xl border border-gray-700 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
@@ -315,10 +322,10 @@ export function Asset3DPreviewModal({
                       <Label className="text-sm text-gray-300 mb-2 block">HDR Environment</Label>
                       <select
                         value={environment}
-                        onChange={(e) => setEnvironment(e.target.value as EnvironmentPreset)}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>): void => setEnvironment(e.target.value as EnvironmentPreset)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        {environmentPresets.map((preset) => (
+                        {environmentPresets.map((preset: EnvironmentPresetOption) => (
                           <option key={preset.value} value={preset.value}>
                             {preset.label}
                           </option>
@@ -330,7 +337,7 @@ export function Asset3DPreviewModal({
                     <div>
                       <Label className="text-sm text-gray-300 mb-2 block">Lighting</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        {lightingPresets.map((preset) => (
+                        {lightingPresets.map((preset: LightingPresetOption) => (
                           <button
                             key={preset.value}
                             onClick={() => setLighting(preset.value)}
@@ -359,7 +366,7 @@ export function Asset3DPreviewModal({
                         max="3"
                         step="0.1"
                         value={lightIntensity}
-                        onChange={(e) => setLightIntensity(parseFloat(e.target.value))}
+                        onChange={(e: ChangeEvent<HTMLInputElement>): void => setLightIntensity(parseFloat(e.target.value))}
                         className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
@@ -368,7 +375,7 @@ export function Asset3DPreviewModal({
                     <div>
                       <Label className="text-sm text-gray-300 mb-2 block">Background</Label>
                       <div className="flex gap-2">
-                        {["#1a1a2e", "#0a0a0f", "#1f1f1f", "#2d2d3a", "#111827"].map((color) => (
+                        {["#1a1a2e", "#0a0a0f", "#1f1f1f", "#2d2d3a", "#111827"].map((color: string) => (
                           <button
                             key={color}
                             onClick={() => setBackgroundColor(color)}
@@ -384,7 +391,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="color"
                           value={backgroundColor}
-                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setBackgroundColor(e.target.value)}
                           className="w-8 h-8 rounded-md cursor-pointer"
                         />
                       </div>
@@ -396,7 +403,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableShadows}
-                          onChange={(e) => setEnableShadows(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableShadows(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">Enable Shadows</span>
@@ -405,7 +412,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableContactShadows}
-                          onChange={(e) => setEnableContactShadows(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableContactShadows(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">Contact Shadows</span>
@@ -414,7 +421,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={showGround}
-                          onChange={(e) => setShowGround(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setShowGround(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">Show Ground</span>
@@ -432,7 +439,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableToneMapping}
-                          onChange={(e) => setEnableToneMapping(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableToneMapping(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">ACES Tone Mapping</span>
@@ -448,7 +455,7 @@ export function Asset3DPreviewModal({
                             max="3"
                             step="0.1"
                             value={exposure}
-                            onChange={(e) => setExposure(parseFloat(e.target.value))}
+                            onChange={(e: ChangeEvent<HTMLInputElement>): void => setExposure(parseFloat(e.target.value))}
                             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                           />
                         </div>
@@ -461,7 +468,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableBloom}
-                          onChange={(e) => setEnableBloom(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableBloom(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">Bloom Effect</span>
@@ -477,7 +484,7 @@ export function Asset3DPreviewModal({
                             max="2"
                             step="0.1"
                             value={bloomIntensity}
-                            onChange={(e) => setBloomIntensity(parseFloat(e.target.value))}
+                            onChange={(e: ChangeEvent<HTMLInputElement>): void => setBloomIntensity(parseFloat(e.target.value))}
                             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                           />
                         </div>
@@ -489,7 +496,7 @@ export function Asset3DPreviewModal({
                       <input
                         type="checkbox"
                         checked={enableVignette}
-                        onChange={(e) => setEnableVignette(e.target.checked)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableVignette(e.target.checked)}
                         className="rounded border-gray-600 bg-gray-800 text-blue-500"
                       />
                       <span className="text-sm text-gray-300">Vignette</span>
@@ -501,7 +508,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enablePixelation}
-                          onChange={(e) => setEnablePixelation(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnablePixelation(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <div>
@@ -520,7 +527,7 @@ export function Asset3DPreviewModal({
                             max="24"
                             step="1"
                             value={pixelSize}
-                            onChange={(e) => setPixelSize(parseInt(e.target.value, 10))}
+                            onChange={(e: ChangeEvent<HTMLInputElement>): void => setPixelSize(parseInt(e.target.value, 10))}
                             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                           />
                         </div>
@@ -533,7 +540,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableOrderedDithering}
-                          onChange={(e) => setEnableOrderedDithering(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableOrderedDithering(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <div>
@@ -547,7 +554,7 @@ export function Asset3DPreviewModal({
                             <Label className="text-xs text-gray-400 mb-1 block">Preset</Label>
                             <select
                               value={orderedDitheringPreset}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLSelectElement>): void => {
                                 const value = e.target.value as OrderedDitheringPresetKey | "custom";
                                 setOrderedDitheringPreset(value);
                                 if (value !== "custom") {
@@ -556,11 +563,13 @@ export function Asset3DPreviewModal({
                               }}
                               className="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded-md text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              {Object.entries(orderedDitheringPresets).map(([key, preset]) => (
+                              {orderedDitheringEntries.map(
+                                ([key, preset]: [OrderedDitheringPresetKey, (typeof orderedDitheringPresets)[OrderedDitheringPresetKey]]) => (
                                 <option key={key} value={key}>
                                   {preset.label}
                                 </option>
-                              ))}
+                                )
+                              )}
                               <option value="custom">Custom</option>
                             </select>
                           </div>
@@ -574,7 +583,7 @@ export function Asset3DPreviewModal({
                               max="12"
                               step="0.5"
                               value={orderedDitheringGridSize}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLInputElement>): void => {
                                 setOrderedDitheringGridSize(parseFloat(e.target.value));
                                 setOrderedDitheringPreset("custom");
                               }}
@@ -591,7 +600,7 @@ export function Asset3DPreviewModal({
                               max="3"
                               step="0.1"
                               value={orderedDitheringPixelSizeRatio}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLInputElement>): void => {
                                 setOrderedDitheringPixelSizeRatio(parseFloat(e.target.value));
                                 setOrderedDitheringPreset("custom");
                               }}
@@ -602,13 +611,13 @@ export function Asset3DPreviewModal({
                             <Label className="text-xs text-gray-400 mb-1 block">Luminance</Label>
                             <select
                               value={orderedDitheringLuminanceMethod}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLSelectElement>): void => {
                                 setOrderedDitheringLuminanceMethod(parseInt(e.target.value, 10));
                                 setOrderedDitheringPreset("custom");
                               }}
                               className="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded-md text-xs text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              {orderedDitheringLuminanceOptions.map((option) => (
+                              {orderedDitheringLuminanceOptions.map((option: LuminanceOption) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
@@ -619,7 +628,7 @@ export function Asset3DPreviewModal({
                             <input
                               type="checkbox"
                               checked={orderedDitheringGrayscaleOnly}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLInputElement>): void => {
                                 setOrderedDitheringGrayscaleOnly(e.target.checked);
                                 setOrderedDitheringPreset("custom");
                               }}
@@ -631,7 +640,7 @@ export function Asset3DPreviewModal({
                             <input
                               type="checkbox"
                               checked={orderedDitheringInvertColor}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLInputElement>): void => {
                                 setOrderedDitheringInvertColor(e.target.checked);
                                 setOrderedDitheringPreset("custom");
                               }}
@@ -649,7 +658,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={enableDithering}
-                          onChange={(e) => setEnableDithering(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setEnableDithering(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <div>
@@ -668,7 +677,7 @@ export function Asset3DPreviewModal({
                             max="2"
                             step="0.1"
                             value={ditheringIntensity}
-                            onChange={(e) => setDitheringIntensity(parseFloat(e.target.value))}
+                            onChange={(e: ChangeEvent<HTMLInputElement>): void => setDitheringIntensity(parseFloat(e.target.value))}
                             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                           />
                         </div>
@@ -686,7 +695,7 @@ export function Asset3DPreviewModal({
                         <input
                           type="checkbox"
                           checked={autoRotate}
-                          onChange={(e) => setAutoRotate(e.target.checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>): void => setAutoRotate(e.target.checked)}
                           className="rounded border-gray-600 bg-gray-800 text-blue-500"
                         />
                         <span className="text-sm text-gray-300">Auto-rotate</span>
@@ -702,7 +711,7 @@ export function Asset3DPreviewModal({
                             max="10"
                             step="0.5"
                             value={autoRotateSpeed}
-                            onChange={(e) => setAutoRotateSpeed(parseFloat(e.target.value))}
+                            onChange={(e: ChangeEvent<HTMLInputElement>): void => setAutoRotateSpeed(parseFloat(e.target.value))}
                             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                           />
                         </div>

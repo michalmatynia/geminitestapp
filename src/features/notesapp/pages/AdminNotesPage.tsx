@@ -200,10 +200,10 @@ export function AdminNotesPage(): React.JSX.Element {
       const sourceRelations: string[] =
         selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
         [
-          ...(selectedNote.relationsFrom ?? []).map((rel: any): string => rel.targetNote?.id || rel.targetNoteId),
-          ...(selectedNote.relationsTo ?? []).map((rel: any): string => rel.sourceNote?.id || rel.sourceNoteId),
+          ...(selectedNote.relationsFrom ?? []).map((rel: { targetNote: { id: string } }): string => rel.targetNote.id),
+          ...(selectedNote.relationsTo ?? []).map((rel: { sourceNote: { id: string } }): string => rel.sourceNote.id),
         ].filter(
-          (id: string, index: number, array: string[]): boolean => array.findIndex((entry: string): boolean => entry === id) === index
+          (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
         );
 
       const nextSourceIds: string[] = sourceRelations.filter((id: string): boolean => id !== relatedId);

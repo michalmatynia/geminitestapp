@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
-import type { Filter, WithId, UpdateFilter, Document } from "mongodb";
+import type { Filter, WithId, UpdateFilter } from "mongodb";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type {
   NoteWithRelations as NoteRecord,
@@ -211,11 +211,11 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
     const searchScope = filters.searchScope || "both";
 
     if (searchScope === "both") {
-      filter.$or = [{ title: regex }, { content: regex }] as any[];
+      filter.$or = [{ title: regex }, { content: regex }] as Filter<NoteDocument>["$or"];
     } else if (searchScope === "title") {
-      filter.title = regex as any;
+      filter.title = regex as Filter<NoteDocument>["title"];
     } else if (searchScope === "content") {
-      filter.content = regex as any;
+      filter.content = regex as Filter<NoteDocument>["content"];
     }
   }
 
@@ -232,11 +232,11 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   }
 
   if (filters.tagIds && filters.tagIds.length > 0) {
-    filter["tags.tagId"] = { $in: filters.tagIds } as any;
+    filter["tags.tagId"] = { $in: filters.tagIds } as Filter<NoteDocument>["tags.tagId"];
   }
 
   if (filters.categoryIds && filters.categoryIds.length > 0) {
-    filter["categories.categoryId"] = { $in: filters.categoryIds } as any;
+    filter["categories.categoryId"] = { $in: filters.categoryIds } as Filter<NoteDocument>["categories.categoryId"];
   }
 
   return filter;
@@ -664,7 +664,7 @@ export const mongoNoteRepository: NoteRepository = {
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const pullTags: UpdateFilter<NoteDocument> = {
-      $pull: { tags: { tagId: id } } as any,
+      $pull: { tags: { tagId: id } } as UpdateFilter<NoteDocument>["$pull"],
     };
     await noteCollection.updateMany({ "tags.tagId": id } as Filter<NoteDocument>, pullTags);
     

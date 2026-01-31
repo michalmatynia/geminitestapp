@@ -92,7 +92,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousName && previousName !== newName) {
-          setUndoStack((prev: UndoAction[]): UndoAction[] => [
+          setUndoStack((prev: UndoAction[]) => [
             { type: "renameFolder", folderId, fromName: previousName, toName: newName },
             ...prev,
           ]);
@@ -197,7 +197,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousTitle && previousTitle !== newTitle) {
-          setUndoStack((prev: UndoAction[]): UndoAction[] => [
+          setUndoStack((prev: UndoAction[]) => [
             { type: "renameNote", noteId, fromTitle: previousTitle, toTitle: newTitle },
             ...prev,
           ]);
@@ -232,7 +232,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousFolderId !== folderId) {
-          setUndoStack((prev: UndoAction[]): UndoAction[] => [
+          setUndoStack((prev: UndoAction[]) => [
             { type: "moveNote", noteId, fromFolderId: previousFolderId, toFolderId: folderId },
             ...prev,
           ]);
@@ -262,7 +262,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousParentId !== targetParentId) {
-          setUndoStack((prev: UndoAction[]): UndoAction[] => [
+          setUndoStack((prev: UndoAction[]) => [
             { type: "moveFolder", folderId, fromParentId: previousParentId, toParentId: targetParentId },
             ...prev,
           ]);

@@ -26,6 +26,7 @@ import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import type { Slug } from "../../types";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { useThemeSettings } from "./ThemeSettingsContext";
+import type { ColorScheme } from "@/features/cms/types/theme-settings";
 
 const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
   { label: "Inter", value: "Inter, sans-serif" },
@@ -88,9 +89,12 @@ export function SettingsFieldRenderer({
     const baseOptions =
       theme.colorSchemes.length === 0
         ? COLOR_SCHEME_OPTIONS
-        : theme.colorSchemes.map((scheme: any) => ({ label: scheme.name, value: scheme.id }));
+        : theme.colorSchemes.map((scheme: ColorScheme) => ({
+            label: scheme.name || scheme.id,
+            value: scheme.id,
+          }));
     const extraOptions = field.options
-      ? field.options.filter((opt: SettingsFieldOption) => !baseOptions.some((base: any) => base.value === opt.value))
+      ? field.options.filter((opt: SettingsFieldOption) => !baseOptions.some((base: SettingsFieldOption) => base.value === opt.value))
       : [];
     return [...extraOptions, ...baseOptions];
   }, [field.options, theme.colorSchemes]);
@@ -292,7 +296,7 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === "font-family" && (
-        (() => {
+        ((): React.ReactNode => {
           const fallback =
             (typeof field.defaultValue === "string" && field.defaultValue.trim().length > 0
               ? field.defaultValue

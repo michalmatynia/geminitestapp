@@ -46,7 +46,7 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   RichText: 140,
   ImageWithText: 200,
   Hero: 240,
-  Block: 120,
+  Block: 0,
 };
 
 const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
@@ -218,6 +218,7 @@ function SectionBlockRenderer({
       ...getTextAlign(block.settings["contentAlignment"]),
     };
     const alignment = (block.settings["contentAlignment"] as string) || "left";
+    const blockGap = typeof block.settings["blockGap"] === "number" ? (block.settings["blockGap"] as number) : 0;
     const alignmentClass =
       alignment === "center"
         ? "justify-center"
@@ -227,14 +228,10 @@ function SectionBlockRenderer({
     return (
       <GsapAnimationWrapper config={animConfig}>
         <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
-          <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
-            {children.length > 0 ? (
-              children.map((child: BlockInstance) => (
-                <FrontendBlockRenderer key={child.id} block={child} />
-              ))
-            ) : (
-              <p className="text-sm text-gray-400">Block</p>
-            )}
+          <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
+            {children.map((child: BlockInstance) => (
+              <FrontendBlockRenderer key={child.id} block={child} />
+            ))}
           </div>
         </div>
       </GsapAnimationWrapper>

@@ -69,11 +69,14 @@ export function ThemeSettingsProvider({ children }: { children: React.ReactNode 
   const setThemeProxy = useCallback((val: React.SetStateAction<ThemeSettings>): void => {
     setUserTheme((prev: ThemeSettings | null) => {
       const current = prev ?? initialTheme;
-      return typeof val === "function" ? (val as any)(current) : val;
+      if (typeof val === "function") {
+        return (val as (prevState: ThemeSettings) => ThemeSettings)(current);
+      }
+      return val;
     });
   }, [initialTheme]);
 
-  const value = useMemo(() => ({ theme, setTheme: setThemeProxy as any, update }), [theme, update, setThemeProxy]);
+  const value = useMemo(() => ({ theme, setTheme: setThemeProxy, update }), [theme, update, setThemeProxy]);
   return (
     <ThemeSettingsContext.Provider value={value}>
       {children}

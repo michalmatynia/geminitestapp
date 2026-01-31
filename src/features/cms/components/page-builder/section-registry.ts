@@ -176,6 +176,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       paddingBottom: 24,
       paddingLeft: 24,
       paddingRight: 24,
+      blockGap: 0,
       marginTop: 0,
       marginBottom: 0,
       marginLeft: 0,
@@ -184,6 +185,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
+      { key: "blockGap", label: "Content gap (px)", type: "number", defaultValue: 0 },
       {
         key: "contentAlignment",
         label: "Content alignment",
@@ -779,6 +781,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       paddingBottom: 24,
       paddingLeft: 24,
       paddingRight: 24,
+      blockGap: 0,
       marginTop: 0,
       marginBottom: 0,
       marginLeft: 0,
@@ -787,6 +790,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
+      { key: "blockGap", label: "Content gap (px)", type: "number", defaultValue: 0 },
       {
         key: "contentAlignment",
         label: "Content alignment",

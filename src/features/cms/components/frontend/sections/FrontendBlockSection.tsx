@@ -21,6 +21,7 @@ export function FrontendBlockSection({
     ...getTextAlign(settings["contentAlignment"]),
   };
   const alignment = (settings["contentAlignment"] as string) || "left";
+  const blockGap = typeof settings["blockGap"] === "number" ? (settings["blockGap"] as number) : 0;
   const alignmentClass =
     alignment === "center"
       ? "justify-center"
@@ -31,7 +32,7 @@ export function FrontendBlockSection({
   return (
     <section className="w-full" style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-6xl" })}>
-        <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
+        <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
           {blocks.map((block: BlockInstance) => (
             <FrontendBlockRenderer key={block.id} block={block} />
           ))}

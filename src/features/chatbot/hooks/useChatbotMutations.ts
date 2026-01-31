@@ -80,20 +80,17 @@ export function useDeleteChatbotSessions(): UseMutationResult<unknown, Error, st
 /**
  * Mutation hook for persisting a message to a session
  */
-export function usePersistSessionMessage(): UseMutationResult<void, Error, { sessionId: string; role: ChatMessage["role"]; content: string }> {
+export function usePersistSessionMessage(): UseMutationResult<
+  void,
+  Error,
+  { sessionId: string; role: ChatMessage["role"]; content: string }
+> {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({
-      sessionId,
-      role,
-      content,
-    }: {
-      sessionId: string;
-      role: ChatMessage["role"];
-      content: string;
-    }) => persistSessionMessage(sessionId, role, content),
-    onSuccess: (_data: unknown, { sessionId }: { sessionId: string }): Promise<void> => {
+  return useMutation<void, Error, { sessionId: string; role: ChatMessage["role"]; content: string }>({
+    mutationFn: ({ sessionId, role, content }) =>
+      persistSessionMessage(sessionId, role, content),
+    onSuccess: (_data, { sessionId }): Promise<void> => {
       return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
   });

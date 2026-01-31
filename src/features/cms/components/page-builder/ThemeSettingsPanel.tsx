@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import { ArrowLeft, Bold, ChevronDown, FolderOpen, Italic, Link2, List, ListOrdered, Upload } from "lucide-react";
@@ -250,7 +250,7 @@ function MiniRichTextEditor({
         class: "min-h-full outline-none text-sm text-gray-200",
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }): void => {
       const html = editor.getHTML();
       if (html !== lastValueRef.current) {
         lastValueRef.current = html;
@@ -259,7 +259,7 @@ function MiniRichTextEditor({
     },
   });
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!editor) return;
     if (value === lastValueRef.current) return;
     const sanitized = sanitizeRichText(value);
@@ -269,7 +269,7 @@ function MiniRichTextEditor({
     }
   }, [value, editor]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!editor || !showFormatSelect) return;
     const updateFormat = (): void => {
       if (editor.isActive("heading", { level: 1 })) return setFormatValue("heading-1");
@@ -280,7 +280,7 @@ function MiniRichTextEditor({
     updateFormat();
     editor.on("selectionUpdate", updateFormat);
     editor.on("transaction", updateFormat);
-    return () => {
+    return (): void => {
       editor.off("selectionUpdate", updateFormat);
       editor.off("transaction", updateFormat);
     };

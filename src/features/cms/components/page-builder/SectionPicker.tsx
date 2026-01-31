@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { AppModal, Button, ModalShell } from "@/shared/ui";
-import type { PageZone, SectionDefinition } from "../../types/page-builder";
+import type { BlockInstance, PageZone, SectionDefinition } from "../../types/page-builder";
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
@@ -14,6 +14,17 @@ interface SectionPickerProps {
   onSelect: (sectionType: string) => void;
 }
 
+type TemplatePreview = {
+  template: SectionTemplate;
+  blockTypes: string[];
+  sectionType: string;
+};
+
+type TemplatePreviewGroup = {
+  category: string;
+  templates: TemplatePreview[];
+};
+
 export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
@@ -22,15 +33,15 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
   const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement"]), []);
   const primitives = useMemo(
-    () => sectionTypes.filter((def) => primitiveTypes.has(def.type)),
+    () => sectionTypes.filter((def: SectionDefinition) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]
   );
   const elements = useMemo(
-    () => sectionTypes.filter((def) => elementTypes.has(def.type)),
+    () => sectionTypes.filter((def: SectionDefinition) => elementTypes.has(def.type)),
     [sectionTypes, elementTypes]
   );
   const templates = useMemo(
-    () => sectionTypes.filter((def) => !primitiveTypes.has(def.type) && !elementTypes.has(def.type)),
+    () => sectionTypes.filter((def: SectionDefinition) => !primitiveTypes.has(def.type) && !elementTypes.has(def.type)),
     [sectionTypes, primitiveTypes, elementTypes]
   );
 
@@ -52,13 +63,13 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     [dispatch, zone]
   );
 
-  const templatePreviewGroups = useMemo((): { category: string; templates: { template: SectionTemplate; blockTypes: string[]; sectionType: string }[] }[] => {
+  const templatePreviewGroups = useMemo((): TemplatePreviewGroup[] => {
     if (!isOpen) return [];
     return Object.entries(groupedTemplates).map(([category, templates]: [string, SectionTemplate[]]) => ({
       category,
       templates: templates.map((template: SectionTemplate) => {
         const section = template.create();
-        const blockTypes = section.blocks?.map((block: any) => block.type) ?? [];
+        const blockTypes = section.blocks?.map((block: BlockInstance) => block.type) ?? [];
         return { template, blockTypes, sectionType: section.type };
       }),
     }));
@@ -216,13 +227,13 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
               Templates
             </div>
             <div className="space-y-4">
-              {templatePreviewGroups.map((group: any) => (
+              {templatePreviewGroups.map((group: TemplatePreviewGroup) => (
                 <div key={group.category}>
                   <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
                     {group.category}
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    {group.templates.map(({ template, blockTypes, sectionType }: any) => (
+                    {group.templates.map(({ template, blockTypes, sectionType }: TemplatePreview) => (
                       <button
                         key={template.name}
                         type="button"

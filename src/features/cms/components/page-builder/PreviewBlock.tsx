@@ -416,6 +416,7 @@ export function PreviewSection({
         : alignment === "right"
           ? "justify-end text-right"
           : "justify-center text-center";
+    const blockGap = getSpacingValue(section.settings["blockGap"]);
 
     const containerStyles: React.CSSProperties = {
       ...getSectionStyles(section.settings, colorSchemes),
@@ -443,7 +444,10 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-            <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
+            <div
+              className={`flex flex-wrap items-center ${section.type === "Block" ? "" : "gap-3"} ${alignmentClasses}`}
+              style={section.type === "Block" ? { gap: `${blockGap}px` } : undefined}
+            >
               {section.blocks.length === 0 && section.type !== "Block" ? (
                 <p className="text-sm text-gray-400">Announcement bar</p>
               ) : (
@@ -2387,10 +2391,11 @@ function PreviewBlockSectionBlock({
       : alignment === "right"
         ? "justify-end"
         : "justify-start";
+  const blockGap = getSpacingValue(block.settings["blockGap"]);
 
   return (
     <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
-      <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
+      <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
         {children.map((child: BlockInstance) => (
           <PreviewBlockItem
             key={child.id}

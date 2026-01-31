@@ -10,6 +10,23 @@ import type {
 import { Prisma } from "@prisma/client";
 import { getOrCreateDefaultNotebook } from "./notebook-impl";
 
+const categoryTreeInclude = {
+  notes: {
+    include: {
+      note: {
+        include: {
+          tags: { include: { tag: true } },
+          categories: { include: { category: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.CategoryInclude;
+
+type CategoryTreeRecord = Prisma.CategoryGetPayload<{
+  include: typeof categoryTreeInclude;
+}>;
+
 export const getAllCategories = async (
   notebookId?: string | null
 ): Promise<CategoryRecord[]> => {
@@ -32,29 +49,18 @@ export const getCategoryTree = async (
 ): Promise<CategoryWithChildren[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
-  const categories = await prisma.category.findMany({
+  const categories: CategoryTreeRecord[] = await prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
     orderBy: { name: "asc" },
-    include: {
-      notes: {
-        include: {
-          note: {
-            include: {
-              tags: { include: { tag: true } },
-              categories: { include: { category: true } },
-            },
-          },
-        },
-      },
-    },
+    include: categoryTreeInclude,
   });
 
   const buildTree = (parentId: string | null): CategoryWithChildren[] => {
     return categories
-      .filter((cat: CategoryRecord) => cat.parentId === parentId)
-      .map((cat: any): CategoryWithChildren => ({
+      .filter((cat: CategoryTreeRecord) => cat.parentId === parentId)
+      .map((cat: CategoryTreeRecord): CategoryWithChildren => ({
         ...cat,
-        notes: (cat.notes as any[]).map((nc: any) => nc.note),
+        notes: cat.notes.map((nc: CategoryTreeRecord["notes"][number]) => nc.note),
         children: buildTree(cat.id),
       }));
   };
@@ -139,7 +145,7 @@ export const deleteCategory = async (
         select: { noteId: true },
       });
       const noteIds = Array.from(
-        new Set(notesInCategories.map((nc) => nc.noteId))
+        new Set(notesInCategories.map((nc: { noteId: string }) => nc.noteId))
       );
 
       // Delete note-tag relations for these notes

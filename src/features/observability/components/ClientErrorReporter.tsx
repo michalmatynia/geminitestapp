@@ -8,7 +8,7 @@ import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-l
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap } from "@/shared/hooks/useSettings";
 
-export default function ClientErrorReporter() {
+export default function ClientErrorReporter(): null {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -80,7 +80,7 @@ export default function ClientErrorReporter() {
       featureFlags:
         typeof window !== "undefined"
           ? (window as Window & { __FEATURE_FLAGS__?: Record<string, unknown> }).__FEATURE_FLAGS__ ??
-            (() => {
+            ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem("featureFlags");
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
@@ -93,7 +93,7 @@ export default function ClientErrorReporter() {
         typeof window !== "undefined"
           ? (window as Window & { __CLIENT_LOG_TAGS__?: Record<string, unknown> })
               .__CLIENT_LOG_TAGS__ ??
-            (() => {
+            ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem("clientLogTags");
                 return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;

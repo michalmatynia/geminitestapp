@@ -88,7 +88,7 @@ const escapeHtml = (value: string): string =>
 const preserveSpans = (value: string): { withTokens: string; tokens: string[] } => {
   const tokens: string[] = [];
 
-  const withTokens = value.replace(/<span\b[^>]*>[\s\S]*?<\/span>/gi, (match) => {
+  const withTokens = value.replace(/<span\b[^>]*>[\s\S]*?<\/span>/gi, (match: string) => {
     const token = `__SPAN_${tokens.length}__`;
 
     tokens.push(match);
@@ -102,7 +102,7 @@ const preserveSpans = (value: string): { withTokens: string; tokens: string[] } 
 const restoreSpans = (value: string, tokens: string[]): string => {
   let restored = value;
 
-  tokens.forEach((token, index) => {
+  tokens.forEach((token: string, index: number) => {
     restored = restored.replace(`__SPAN_${index}__`, token);
   });
 
@@ -172,22 +172,21 @@ export const renderMarkdownToHtml = (value: string): string => {
 
   let tableRows: string[][] = [];
 
-  const flushTable = () => {
+  const flushTable = (): void => {
     if (!inTable) return;
 
     const header = tableHeaderCells
 
-      .map((cell) => `<th>${renderInlineMarkdown(cell.trim())}</th>`)
+      .map((cell: string) => `<th>${renderInlineMarkdown(cell.trim())}</th>`)
 
       .join("");
 
     const body = tableRows
 
       .map(
-        (row) =>
+        (row: string[]) =>
           `<tr>${row
-
-            .map((cell) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
+            .map((cell: string) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
 
             .join("")}</tr>`
       )
@@ -220,7 +219,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
         const encoded = encodeURIComponent(rawCode);
 
-        const highlighted = codeLines.map((codeLine) => highlightCode(codeLine)).join("\n");
+        const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join("\n");
 
         html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
 
@@ -318,7 +317,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
           .split("|")
 
-          .filter((cell) => cell.trim().length > 0);
+          .filter((cell: string) => cell.trim().length > 0);
 
         continue;
       }
@@ -328,7 +327,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
           .split("|")
 
-          .filter((cell) => cell.trim().length > 0);
+          .filter((cell: string) => cell.trim().length > 0);
 
         tableRows.push(cells);
 
@@ -392,7 +391,7 @@ export const renderMarkdownToHtml = (value: string): string => {
 
     const encoded = encodeURIComponent(rawCode);
 
-    const highlighted = codeLines.map((codeLine) => highlightCode(codeLine)).join("\n");
+    const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join("\n");
 
     html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
   }

@@ -25,19 +25,21 @@ export function useCreateIntegration(): UseMutationResult<Integration, Error, { 
   });
 }
 
-export function useUpsertConnection(): UseMutationResult<IntegrationConnection, Error, { integrationId: string; connectionId?: string | null; payload: Record<string, unknown> }> {
+type UpsertConnectionVariables = {
+  integrationId: string;
+  connectionId?: string | null;
+  payload: Record<string, unknown>;
+};
+
+export function useUpsertConnection(): UseMutationResult<IntegrationConnection, Error, UpsertConnectionVariables> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<IntegrationConnection, Error, UpsertConnectionVariables>({
     mutationFn: async ({ 
       integrationId, 
       connectionId, 
       payload 
-    }: { 
-      integrationId: string; 
-      connectionId?: string | null; 
-      payload: Record<string, unknown> 
-    }): Promise<IntegrationConnection> => {
+    }: UpsertConnectionVariables): Promise<IntegrationConnection> => {
       const url = connectionId
         ? `/api/integrations/connections/${connectionId}`
         : `/api/integrations/${integrationId}/connections`;
@@ -54,7 +56,7 @@ export function useUpsertConnection(): UseMutationResult<IntegrationConnection, 
       }
       return (await res.json()) as IntegrationConnection;
     },
-    onSuccess: (_data: IntegrationConnection, variables: { integrationId: string }): void => {
+    onSuccess: (_data: IntegrationConnection, variables: UpsertConnectionVariables): void => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });

@@ -1,12 +1,43 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow, Plus, Folder } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Heading,
+  AlignLeft,
+  MousePointerClick,
+  Box,
+  Layers,
+  GripVertical,
+  LayoutGrid,
+  Columns,
+  FileText,
+  LayoutTemplate,
+  ListCollapse,
+  Quote,
+  Video,
+  GalleryHorizontal,
+  Mail,
+  Send,
+  ImageIcon,
+  Minus,
+  Share2,
+  Smile,
+  Megaphone,
+  Eye,
+  EyeOff,
+  Trash2,
+  AppWindow,
+  Plus,
+  Folder,
+  type LucideIcon,
+} from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 import { getSectionDefinition } from "./section-registry";
 
-const SECTION_ICONS: Record<string, React.ElementType> = {
+const SECTION_ICONS: Record<string, LucideIcon> = {
   AnnouncementBar: Megaphone,
   Block: Box,
   TextElement: FileText,
@@ -25,7 +56,7 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   ContactForm: Send,
 };
 
-const BLOCK_ICONS: Record<string, React.ElementType> = {
+const BLOCK_ICONS: Record<string, LucideIcon> = {
   Row: GripVertical,
   Announcement: Megaphone,
   Heading: Heading,
@@ -159,7 +190,7 @@ export function SectionNodeItem({
   const targetAllowsButton =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("Button") ?? false;
   const hasBlocks = section.blocks.length > 0;
-  const Icon = SECTION_ICONS[section.type] ?? Box;
+  const Icon: LucideIcon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSectionDragOver, setIsSectionDragOver] = useState(false);
   const isDraggingSection = draggedSectionId === section.id;
@@ -975,7 +1006,7 @@ function SectionBlockNodeItem({
   const isSelected = selectedNodeId === block.id;
   const isExpanded = expandedIds.has(block.id);
   const hasChildren = (block.blocks ?? []).length > 0;
-  const Icon = BLOCK_ICONS[block.type] ?? Box;
+  const Icon: LucideIcon = BLOCK_ICONS[block.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
   const isTextAtom = block.type === "TextAtom";

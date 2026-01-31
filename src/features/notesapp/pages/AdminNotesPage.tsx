@@ -14,6 +14,8 @@ import { useNoteTheme } from "@/features/notesapp/hooks/useNoteTheme";
 import type { NoteWithRelations, TagRecord, NoteTagRecord } from "@/shared/types/notes";
 import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
 
+type NoteTagWithDetails = NoteTagRecord & { tag: TagRecord };
+
 export function AdminNotesPage(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayout();
   const { settings, updateSettings } = useNoteSettings();
@@ -37,7 +39,7 @@ export function AdminNotesPage(): React.JSX.Element {
   }, [updateSettings]);
 
   // Hooks
-  const filters: ReturnType<typeof useNoteFilters> = useNoteFilters({ settings, updateSettings });
+  const filters = useNoteFilters({ settings, updateSettings });
   
   const {
     notes,
@@ -65,7 +67,7 @@ export function AdminNotesPage(): React.JSX.Element {
     setSelectedNotebookId,
   });
 
-  const operations: ReturnType<typeof useNoteOperations> = useNoteOperations({
+  const operations = useNoteOperations({
     selectedNotebookId: settings.selectedNotebookId,
     notesRef,
     folderTreeRef,
@@ -78,7 +80,7 @@ export function AdminNotesPage(): React.JSX.Element {
     selectedNote,
   });
 
-  const themeLogic: ReturnType<typeof useNoteTheme> = useNoteTheme({
+  const themeLogic = useNoteTheme({
     themes,
     notebook,
     folderTree,
@@ -90,16 +92,7 @@ export function AdminNotesPage(): React.JSX.Element {
   });
 
   // Derived Logic (Sorting & Pagination)
-  // We can keep this here or move to a separate utility/hook if needed, 
-  // but it's lightweight enough to stay for now given dependencies on 'notes' and 'filters'.
   const notesInScope: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
-    // Note: useNoteData already fetches scoped notes if we rely on API filtering.
-    // However, the original code did client-side filtering for descendants if selectedFolderId was set.
-    // Our useNoteData passes categoryIds to API, so API returns correct subset.
-    // But we might still need to ensure we aren't showing stale data if we just switched folders.
-    // The original code was:
-    // return notes.filter((note) => ...);
-    // Since we fetch based on folder ID now, 'notes' should be correct.
     return notes;
   }, [notes]);
 
@@ -117,7 +110,7 @@ export function AdminNotesPage(): React.JSX.Element {
   }, [notesInScope, settings.sortBy, settings.sortOrder]);
 
   const totalPages: number = useMemo((): number => {
-    return Math.max(1, Math.ceil(sortedNotes.length / filters.pageSize));
+    return Math.max(1, Math.ceil(sortedNotes.length / (filters.pageSize || 1)));
   }, [sortedNotes.length, filters.pageSize]);
 
   const pagedNotes: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
@@ -139,7 +132,7 @@ export function AdminNotesPage(): React.JSX.Element {
   const availableTagsInScope: TagRecord[] = useMemo((): TagRecord[] => {
     const tagMap: Map<string, TagRecord> = new Map<string, TagRecord>();
     notesInScope.forEach((note: NoteWithRelations): void => {
-      note.tags.forEach((noteTag: NoteTagRecord & { tag: TagRecord }): void => {
+      (note.tags as NoteTagWithDetails[]).forEach((noteTag: NoteTagWithDetails): void => {
         tagMap.set(noteTag.tagId, noteTag.tag);
       });
     });
@@ -207,8 +200,8 @@ export function AdminNotesPage(): React.JSX.Element {
       const sourceRelations: string[] =
         selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
         [
-          ...(selectedNote.relationsFrom ?? []).map((rel: { targetNote: { id: string } }): string => rel.targetNote.id),
-          ...(selectedNote.relationsTo ?? []).map((rel: { sourceNote: { id: string } }): string => rel.sourceNote.id),
+          ...(selectedNote.relationsFrom ?? []).map((rel: any): string => rel.targetNote?.id || rel.targetNoteId),
+          ...(selectedNote.relationsTo ?? []).map((rel: any): string => rel.sourceNote?.id || rel.sourceNoteId),
         ].filter(
           (id: string, index: number, array: string[]): boolean => array.findIndex((entry: string): boolean => entry === id) === index
         );
@@ -286,11 +279,13 @@ export function AdminNotesPage(): React.JSX.Element {
       });
       return;
     }
-    await fetch(`/api/notes/${action.noteId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: action.fromTitle }),
-    });
+    if (action.type === "renameNote") {
+      await fetch(`/api/notes/${action.noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: action.fromTitle }),
+      });
+    }
   }, []);
 
   const handleUndoFolderTree = useCallback(async (count: number = 1): Promise<void> => {
@@ -342,32 +337,32 @@ export function AdminNotesPage(): React.JSX.Element {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onCreateFolder={(parentId: string | null): void => void operations.handleCreateFolder(parentId)}
+              onCreateFolder={(parentId: string | null): void => { void operations.handleCreateFolder(parentId); }}
               onCreateNote={(folderId: string | null): void => {
                 setSelectedFolderId(folderId);
                 setIsCreating(true);
                 setSelectedNote(null);
               }}
-              onDeleteFolder={(id: string): void => void operations.handleDeleteFolder(id)}
-              onRenameFolder={(id: string, name: string): void => void operations.handleRenameFolder(id, name)}
-              onSelectNote={(id: string): void => void handleSelectNoteFromTree(id)}
-              onDuplicateNote={(id: string): void => void operations.handleDuplicateNote(id)}
-              onDeleteNote={(id: string): void => void operations.handleDeleteNoteFromTree(id)}
-              onRenameNote={(id: string, title: string): void => void operations.handleRenameNote(id, title)}
-              onRelateNotes={(id1: string, id2: string): void => void operations.handleRelateNotes(id1, id2)}
+              onDeleteFolder={(id: string): void => { void operations.handleDeleteFolder(id); }}
+              onRenameFolder={(id: string, name: string): void => { void operations.handleRenameFolder(id, name); }}
+              onSelectNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
+              onDuplicateNote={(id: string): void => { void operations.handleDuplicateNote(id); }}
+              onDeleteNote={(id: string): void => { void operations.handleDeleteNoteFromTree(id); }}
+              onRenameNote={(id: string, title: string): void => { void operations.handleRenameNote(id, title); }}
+              onRelateNotes={(id1: string, id2: string): void => { void operations.handleRelateNotes(id1, id2); }}
               selectedNoteId={selectedNote?.id}
-              onDropNote={(id: string, folderId: string | null): void => void operations.handleMoveNoteToFolder(id, folderId)}
-              onDropFolder={(id: string, parentId: string | null): void => void operations.handleMoveFolderToFolder(id, parentId)}
+              onDropNote={(id: string, folderId: string | null): void => { void operations.handleMoveNoteToFolder(id, folderId); }}
+              onDropFolder={(id: string, parentId: string | null): void => { void operations.handleMoveFolderToFolder(id, parentId); }}
               draggedNoteId={draggedNoteId}
               setDraggedNoteId={setDraggedNoteId}
               onToggleCollapse={(): void => setIsFolderTreeCollapsed(true)}
               isFavoritesActive={filters.filterFavorite === true}
               onToggleFavorites={(): void => filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing)}
               canUndo={undoStack.length > 0}
-              onUndo={(): void => void handleUndoFolderTree(1)}
+              onUndo={(): void => { void handleUndoFolderTree(1); }}
               undoHistory={undoHistory}
               onUndoAtIndex={handleUndoAtIndex}
-              onRefreshFolders={(): void => fetchFolderTree()}
+              onRefreshFolders={(): void => { void fetchFolderTree(); }}
             />
           </SectionPanel>
         )}
@@ -385,16 +380,16 @@ export function AdminNotesPage(): React.JSX.Element {
               setSelectedNote={setSelectedNote}
               isEditing={isEditing}
               setIsEditing={setIsEditing}
-              onToggleFavorite={(note: NoteWithRelations): void => void handleToggleFavorite(note)}
+              onToggleFavorite={(note: NoteWithRelations): void => { void handleToggleFavorite(note); }}
               onDeleteNote={handleDeleteNote}
               tags={tags}
               selectedNotebookId={settings.selectedNotebookId}
               onUpdateSuccess={handleUpdateSuccess}
-              fetchTags={(): void => void fetchTags()}
+              fetchTags={(): void => { void fetchTags(); }}
               selectedNoteTheme={themeLogic.selectedNoteTheme}
-              onSelectRelatedNote={(id: string): void => void handleSelectNoteFromTree(id)}
+              onSelectRelatedNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
               onFilterByTag={(tagId: string): void => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
-              onUnlinkRelatedNote={(id: string): void => void handleUnlinkRelatedNote(id)}
+              onUnlinkRelatedNote={(id: string): void => { void handleUnlinkRelatedNote(id); }}
             />
           ) : (
             <NoteListView
@@ -416,7 +411,7 @@ export function AdminNotesPage(): React.JSX.Element {
               }}
               selectedFolderThemeId={themeLogic.selectedFolderThemeId}
               themes={themes}
-              onThemeChange={(themeId: string | null): void => void themeLogic.handleThemeChange(themeId)}
+              onThemeChange={(themeId: string | null): void => { void themeLogic.handleThemeChange(themeId); }}
               availableTagsInScope={availableTagsInScope}
               filterTagIds={filters.filterTagIds}
               setFilterTagIds={filters.setFilterTagIds}
@@ -447,7 +442,7 @@ export function AdminNotesPage(): React.JSX.Element {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onToggleFavorite={(note: NoteWithRelations): void => void handleToggleFavorite(note)}
+              onToggleFavorite={(note: NoteWithRelations): void => { void handleToggleFavorite(note); }}
               onDragStart={setDraggedNoteId}
               onDragEnd={(): void => setDraggedNoteId(null)}
               setSelectedFolderId={setSelectedFolderId}
@@ -466,7 +461,7 @@ export function AdminNotesPage(): React.JSX.Element {
           tags={tags}
           selectedNotebookId={settings.selectedNotebookId}
           onSuccess={handleCreateSuccess}
-          onTagCreated={(): void => void fetchTags()}
+          onTagCreated={(): void => { void fetchTags(); }}
           folderTheme={themeLogic.selectedFolderTheme}
           onSelectRelatedNote={(id: string): void => {
             setIsCreating(false);

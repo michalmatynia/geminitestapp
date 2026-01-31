@@ -1,4 +1,8 @@
 
+> libapp2@0.1.0 lint
+> eslint .
+
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/dialog/PollNodeConfigSection.tsx
    90:45  error  Unsafe spread of an `any` value in an array                                                   @typescript-eslint/no-unsafe-assignment
   115:18  error  This assertion is unnecessary since the receiver accepts the original type of the expression  @typescript-eslint/no-unnecessary-type-assertion
@@ -24,6 +28,14 @@
   48:59  error  Unsafe member access .getValue on an `any` value                        @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasesPage.tsx
+   42:17  error  Expected _data to have a type annotation                             @typescript-eslint/typedef
+   42:24  error  Expected variables to have a type annotation                         @typescript-eslint/typedef
+   62:7   error  Expected _data to have a type annotation                             @typescript-eslint/typedef
+   63:7   error  Expected variables to have a type annotation                         @typescript-eslint/typedef
+   74:17  error  Expected _data to have a type annotation                             @typescript-eslint/typedef
+   74:24  error  Expected variables to have a type annotation                         @typescript-eslint/typedef
+   82:17  error  Expected _data to have a type annotation                             @typescript-eslint/typedef
+   82:24  error  Expected variables to have a type annotation                         @typescript-eslint/typedef
   112:19  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
   117:13  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
   117:27  error  Unsafe member access .log on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
@@ -1511,6 +1523,6 @@
   20:66  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
   20:66  error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
 
-✖ 1286 problems (1286 errors, 0 warnings)
+✖ 1294 problems (1294 errors, 0 warnings)
   7 errors and 0 warnings potentially fixable with the `--fix` option.
 

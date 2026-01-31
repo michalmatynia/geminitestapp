@@ -1,7 +1,14 @@
 
+> libapp2@0.1.0 lint
+> eslint .
+
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/dialog/PollNodeConfigSection.tsx
    90:45  error  Unsafe spread of an `any` value in an array                                                   @typescript-eslint/no-unsafe-assignment
   115:18  error  This assertion is unnecessary since the receiver accepts the original type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
+  5:24  error  Parsing error: 'from' expected
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/MenuSettingsPanel.tsx
   404:72  error  Unsafe argument of type `any` assigned to a parameter of type `"top" | "left" | "right"`  @typescript-eslint/no-unsafe-argument
@@ -24,17 +31,41 @@
   48:59  error  Unsafe member access .getValue on an `any` value                        @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasesPage.tsx
-  112:19  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
-  117:13  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  117:27  error  Unsafe member access .log on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  121:22  error  Unsafe member access .message on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  125:19  error  Unsafe member access .errorId on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  125:50  error  Unsafe member access .errorId on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  126:19  error  Unsafe member access .stage on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  126:45  error  Unsafe member access .stage on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  127:19  error  Unsafe member access .backupName on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  127:51  error  Unsafe member access .backupName on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  133:22  error  Unsafe member access .error on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
+    4:41  error  'useEffect' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  114:19  error  Unsafe object destructuring of a property with an error typed value          @typescript-eslint/no-unsafe-assignment
+  115:13  error  Unsafe assignment of an `any` value                                          @typescript-eslint/no-unsafe-assignment
+  115:31  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  115:36  error  Unsafe member access .log on an `any` value                                  @typescript-eslint/no-unsafe-member-access
+  119:26  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  119:31  error  Unsafe member access .message on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  123:23  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  123:28  error  Unsafe member access .errorId on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  123:63  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  123:68  error  Unsafe member access .errorId on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  124:23  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  124:28  error  Unsafe member access .stage on an `any` value                                @typescript-eslint/no-unsafe-member-access
+  124:58  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  124:63  error  Unsafe member access .stage on an `any` value                                @typescript-eslint/no-unsafe-member-access
+  125:23  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  125:28  error  Unsafe member access .backupName on an `any` value                           @typescript-eslint/no-unsafe-member-access
+  125:64  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  125:69  error  Unsafe member access .backupName on an `any` value                           @typescript-eslint/no-unsafe-member-access
+  131:26  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  131:31  error  Unsafe member access .error on an `any` value                                @typescript-eslint/no-unsafe-member-access
+  145:19  error  Unsafe object destructuring of a property with an error typed value          @typescript-eslint/no-unsafe-assignment
+  146:13  error  Unsafe assignment of an `any` value                                          @typescript-eslint/no-unsafe-assignment
+  146:31  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  146:36  error  Unsafe member access .log on an `any` value                                  @typescript-eslint/no-unsafe-member-access
+  148:25  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  148:30  error  Unsafe member access .warning on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  150:28  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  150:33  error  Unsafe member access .message on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  151:27  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  151:32  error  Unsafe member access .warning on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  157:27  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  157:32  error  Unsafe member access .message on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  163:26  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  163:31  error  Unsafe member access .error on an `any` value                                @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/listings/MassListProductModal.tsx
    21:15  error  'InventoryOption' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -297,6 +328,32 @@
    78:9   error  'any' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
   134:5   error  Unsafe assignment of an `any` value                 @typescript-eslint/no-unsafe-assignment
   135:5   error  Unsafe assignment of an `any` value                 @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/pages/AdminNotesNotebooksPage.tsx
+  122:10  error  Unknown property '  setMenu' found  react/no-unknown-property
+  129:12  error  Unknown property 'r noteboo' found  react/no-unknown-property
+  132:16  error  Unknown property 'ate Noteb' found  react/no-unknown-property
+  133:18  error  Unknown property 'flex-col ' found  react/no-unknown-property
+  163:18  error  Unknown property '   )}
+   ' found  react/no-unknown-property
+  165:18  error  Unknown property '
+        ' found  react/no-unknown-property
+  167:18  error  Unknown property 'ebooks cr' found  react/no-unknown-property
+  173:21  error  Unknown property '   ' found        react/no-unknown-property
+  174:21  error  Unknown property '
+        ' found  react/no-unknown-property
+  175:21  error  Unknown property 'y-3 tra' found    react/no-unknown-property
+  180:26  error  Unknown property '         ' found  react/no-unknown-property
+  182:30  error  Unknown property '         ' found  react/no-unknown-property
+  191:30  error  Unknown property '>
+       ' found  react/no-unknown-property
+  203:35  error  Unknown property '         ' found  react/no-unknown-property
+  208:26  error  Unknown property '    )}
+  ' found  react/no-unknown-property
+  237:30  error  Unknown property '         ' found  react/no-unknown-property
+  254:33  error  Unknown property '         ' found  react/no-unknown-property
+  255:33  error  Unknown property 'sName="' found    react/no-unknown-property
+  257:36  error  Unknown property '         ' found  react/no-unknown-property
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/pages/AdminNotesPage.tsx
    42:9   error  Unsafe assignment of an `any` value     @typescript-eslint/no-unsafe-assignment
@@ -1511,6 +1568,6 @@
   20:66  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
   20:66  error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
 
-✖ 1286 problems (1286 errors, 0 warnings)
+✖ 1330 problems (1330 errors, 0 warnings)
   7 errors and 0 warnings potentially fixable with the `--fix` option.
 

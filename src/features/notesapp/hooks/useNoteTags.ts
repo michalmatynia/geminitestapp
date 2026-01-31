@@ -15,32 +15,43 @@ export function useNoteTags(
   notebookId?: string | null,
   noteNotebookId?: string | null,
   onTagCreated?: () => void
-) {
+): {
+  selectedTagIds: string[];
+  setSelectedTagIds: (ids: string[]) => void;
+  tagInput: string;
+  setTagInput: (input: string) => void;
+  isTagDropdownOpen: boolean;
+  setIsTagDropdownOpen: (isOpen: boolean) => void;
+  filteredTags: TagRecord[];
+  handleAddTag: (tag: TagRecord) => void;
+  handleCreateTag: () => Promise<void>;
+  handleRemoveTag: (tagId: string) => void;
+} {
   const { toast } = useToast();
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
   const [tagInput, setTagInput] = useState("");
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
-  const filteredTags = useMemo(() => 
+  const filteredTags = useMemo((): TagRecord[] => 
     availableTags.filter(
-      (tag) =>
+      (tag: TagRecord) =>
         tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
         !selectedTagIds.includes(tag.id)
     ), 
     [availableTags, tagInput, selectedTagIds]
   );
 
-  const handleAddTag = (tag: TagRecord) => {
+  const handleAddTag = (tag: TagRecord): void => {
     setSelectedTagIds([...selectedTagIds, tag.id]);
     setTagInput("");
     setIsTagDropdownOpen(false);
   };
 
-  const handleCreateTag = async () => {
+  const handleCreateTag = async (): Promise<void> => {
     if (!tagInput.trim()) return;
 
     const existingTag = availableTags.find(
-      (t) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
+      (t: TagRecord) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
     );
 
     if (existingTag) {
@@ -66,18 +77,18 @@ export function useNoteTags(
       if (response.ok) {
         const newTag = (await response.json()) as TagRecord;
         onTagCreated?.();
-        setSelectedTagIds((prev) => [...prev, newTag.id]);
+        setSelectedTagIds((prev: string[]) => [...prev, newTag.id]);
         setTagInput("");
         setIsTagDropdownOpen(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create tag:", error);
       toast("Failed to create tag", { variant: "error" });
     }
   };
 
-  const handleRemoveTag = (tagId: string) => {
-    setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
+  const handleRemoveTag = (tagId: string): void => {
+    setSelectedTagIds(selectedTagIds.filter((id: string) => id !== tagId));
   };
 
   return {

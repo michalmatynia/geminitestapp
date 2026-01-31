@@ -14,9 +14,19 @@ export function useNoteOperations({
   setSelectedFolderId,
   setSelectedNote,
   selectedNote,
-}: UseNoteOperationsProps) {
+}: UseNoteOperationsProps): {
+  handleCreateFolder: (parentId?: string | null) => Promise<void>;
+  handleDeleteFolder: (folderId: string) => Promise<void>;
+  handleRenameFolder: (folderId: string, newName: string) => Promise<void>;
+  handleDuplicateNote: (noteId: string) => Promise<void>;
+  handleDeleteNoteFromTree: (noteId: string) => Promise<void>;
+  handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
+  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
+  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
+  handleRelateNotes: (sourceNoteId: string, targetNoteId: string) => Promise<void>;
+} {
 
-  const handleCreateFolder = useCallback(async (parentId?: string | null) => {
+  const handleCreateFolder = useCallback(async (parentId?: string | null): Promise<void> => {
     const folderName = prompt("Enter folder name:");
     if (!folderName) return;
 
@@ -42,13 +52,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to create folder", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create folder:", error);
       toast("An unexpected error occurred while creating the folder", { variant: "error" });
     }
   }, [selectedNotebookId, fetchFolderTree, setSelectedFolderId, toast]);
 
-  const handleDeleteFolder = useCallback(async (folderId: string) => {
+  const handleDeleteFolder = useCallback(async (folderId: string): Promise<void> => {
     if (!confirm("Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.")) return;
 
     try {
@@ -67,13 +77,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to delete folder", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete folder:", error);
       toast("An unexpected error occurred while deleting the folder", { variant: "error" });
     }
   }, [fetchFolderTree, fetchNotes, toast]);
 
-  const handleRenameFolder = useCallback(async (folderId: string, newName: string) => {
+  const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
     const currentFolder = findFolderById(folderTreeRef.current, folderId);
     const previousName = currentFolder?.name ?? "";
     try {
@@ -85,7 +95,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousName && previousName !== newName) {
-          setUndoStack((prev) => [
+          setUndoStack((prev: any[]) => [
             { type: "renameFolder", folderId, fromName: previousName, toName: newName },
             ...prev,
           ]);
@@ -95,13 +105,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to rename folder", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to rename folder:", error);
       toast("An unexpected error occurred while renaming the folder", { variant: "error" });
     }
   }, [fetchFolderTree, folderTreeRef, setUndoStack, toast]);
 
-  const handleDuplicateNote = useCallback(async (noteId: string) => {
+  const handleDuplicateNote = useCallback(async (noteId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
       if (!response.ok) {
@@ -114,16 +124,16 @@ export function useNoteOperations({
       const baseTitle = note.title.replace(/\s*\(\d+\)$/, "");
       let newTitle = `${baseTitle} (1)`;
 
-      const existingNotes = notesRef.current.filter((n) =>
+      const existingNotes = notesRef.current.filter((n: NoteWithRelations) =>
         n.title.startsWith(baseTitle) && n.title !== note.title
       );
       if (existingNotes.length > 0) {
         const numbers = existingNotes
-          .map((n) => {
+          .map((n: NoteWithRelations) => {
             const match = n.title.match(/\((\d+)\)$/);
             return match ? parseInt(match[1]!, 10) : 0;
           })
-          .filter((n) => n > 0);
+          .filter((n: number) => n > 0);
         const maxNumber = Math.max(0, ...numbers);
         newTitle = `${baseTitle} (${maxNumber + 1})`;
       }
@@ -138,8 +148,8 @@ export function useNoteOperations({
           isPinned: note.isPinned,
           isArchived: note.isArchived,
           isFavorite: note.isFavorite,
-          tagIds: note.tags.map((t) => t.tagId),
-          categoryIds: note.categories.map((c) => c.categoryId),
+          tagIds: note.tags.map((t: { tagId: string }) => t.tagId),
+          categoryIds: note.categories.map((c: { categoryId: string }) => c.categoryId),
           notebookId: note.notebookId ?? selectedNotebookId ?? null,
         }),
       });
@@ -151,13 +161,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to create duplicated note", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to duplicate note:", error);
       toast("An unexpected error occurred while duplicating the note", { variant: "error" });
     }
   }, [selectedNotebookId, fetchNotes, fetchFolderTree, notesRef, toast]);
 
-  const handleDeleteNoteFromTree = useCallback(async (noteId: string) => {
+  const handleDeleteNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
     if (!confirm("Are you sure you want to delete this note?")) return;
 
     try {
@@ -172,14 +182,14 @@ export function useNoteOperations({
       } else {
         toast("Failed to delete note", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete note:", error);
       toast("An unexpected error occurred while deleting the note", { variant: "error" });
     }
   }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote, toast]);
 
-  const handleRenameNote = useCallback(async (noteId: string, newTitle: string) => {
-    const currentNote = notesRef.current.find((note) => note.id === noteId);
+  const handleRenameNote = useCallback(async (noteId: string, newTitle: string): Promise<void> => {
+    const currentNote = notesRef.current.find((note: NoteWithRelations) => note.id === noteId);
     const previousTitle = currentNote?.title ?? "";
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
@@ -190,7 +200,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousTitle && previousTitle !== newTitle) {
-          setUndoStack((prev) => [
+          setUndoStack((prev: any[]) => [
             { type: "renameNote", noteId, fromTitle: previousTitle, toTitle: newTitle },
             ...prev,
           ]);
@@ -205,14 +215,14 @@ export function useNoteOperations({
       } else {
         toast("Failed to rename note", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to rename note:", error);
       toast("An unexpected error occurred while renaming the note", { variant: "error" });
     }
   }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote, notesRef, setUndoStack, toast]);
 
-  const handleMoveNoteToFolder = useCallback(async (noteId: string, folderId: string | null) => {
-    const currentNote = notesRef.current.find((note) => note.id === noteId);
+  const handleMoveNoteToFolder = useCallback(async (noteId: string, folderId: string | null): Promise<void> => {
+    const currentNote = notesRef.current.find((note: NoteWithRelations) => note.id === noteId);
     const previousFolderId = currentNote?.categories?.[0]?.categoryId ?? null;
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
@@ -225,7 +235,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousFolderId !== folderId) {
-          setUndoStack((prev) => [
+          setUndoStack((prev: any[]) => [
             { type: "moveNote", noteId, fromFolderId: previousFolderId, toFolderId: folderId },
             ...prev,
           ]);
@@ -236,13 +246,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to move note", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to move note:", error);
       toast("An unexpected error occurred while moving the note", { variant: "error" });
     }
   }, [fetchFolderTree, fetchNotes, notesRef, setUndoStack, toast]);
 
-  const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null) => {
+  const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null): Promise<void> => {
     const previousParentId = findFolderParentId(folderTreeRef.current, folderId);
     try {
       const response = await fetch(`/api/notes/categories/${folderId}`, {
@@ -255,7 +265,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousParentId !== targetParentId) {
-          setUndoStack((prev) => [
+          setUndoStack((prev: any[]) => [
             { type: "moveFolder", folderId, fromParentId: previousParentId, toParentId: targetParentId },
             ...prev,
           ]);
@@ -266,13 +276,13 @@ export function useNoteOperations({
       } else {
         toast("Failed to move folder", { variant: "error" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to move folder:", error);
       toast("An unexpected error occurred while moving the folder", { variant: "error" });
     }
   }, [fetchFolderTree, fetchNotes, folderTreeRef, setUndoStack, toast]);
 
-  const handleRelateNotes = useCallback(async (sourceNoteId: string, targetNoteId: string) => {
+  const handleRelateNotes = useCallback(async (sourceNoteId: string, targetNoteId: string): Promise<void> => {
     if (!sourceNoteId || !targetNoteId) return;
     if (sourceNoteId === targetNoteId) return;
     try {
@@ -290,7 +300,7 @@ export function useNoteOperations({
       ])) as [NoteWithRelations, NoteWithRelations];
 
       const sourceRelatedIds =
-        sourceNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+        sourceNote.relationsFrom?.map((rel: { targetNote: { id: string } }) => rel.targetNote.id) || [];
       const alreadyLinked = sourceRelatedIds.includes(targetNoteId);
       if (alreadyLinked) {
         toast("Notes are already linked", { variant: "info" });
@@ -300,7 +310,7 @@ export function useNoteOperations({
       const nextSourceIds = Array.from(new Set([...sourceRelatedIds, targetNoteId]));
 
       const targetRelatedIds =
-        targetNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+        targetNote.relationsFrom?.map((rel: { targetNote: { id: string } }) => rel.targetNote.id) || [];
       const nextTargetIds = Array.from(new Set([...targetRelatedIds, sourceNoteId]));
 
       const [sourcePatch, targetPatch] = await Promise.all([
@@ -332,13 +342,13 @@ export function useNoteOperations({
             const refreshedNote = (await refreshRes.json()) as NoteWithRelations;
             setSelectedNote(refreshedNote);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Failed to refresh selected note:", error);
         }
       }
 
       toast("Notes linked");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to relate notes:", error);
       toast("Failed to link notes", { variant: "error" });
     }

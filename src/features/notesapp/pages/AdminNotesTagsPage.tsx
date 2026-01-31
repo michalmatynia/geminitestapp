@@ -13,7 +13,7 @@ import type { TagRecord } from "@/shared/types/notes";
 
 
 
-export function AdminNotesTagsPage() {
+export function AdminNotesTagsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
@@ -29,12 +29,12 @@ export function AdminNotesTagsPage() {
   const updateTag = useUpdateNoteTag();
   const deleteTag = useDeleteNoteTag();
 
-  const tags = useMemo(() => tagsQuery.data ?? [], [tagsQuery.data]);
+  const tags = useMemo((): TagRecord[] => tagsQuery.data ?? [], [tagsQuery.data]);
   const loading = tagsQuery.isPending;
 
   // Query handles tag loading
 
-  useEffect(() => {
+  useEffect((): void => {
     if (selectedNotebookId) return;
     const firstId = notebooksQuery.data?.[0]?.id;
     if (firstId) {
@@ -42,7 +42,7 @@ export function AdminNotesTagsPage() {
     }
   }, [selectedNotebookId, updateSettings, notebooksQuery.data]);
 
-  const handleCreate = async () => {
+  const handleCreate = async (): Promise<void> => {
     if (!name.trim()) {
       toast("Tag name is required", { variant: "error" });
       return;
@@ -52,36 +52,36 @@ export function AdminNotesTagsPage() {
       await createTag.mutateAsync({ name: name.trim(), color, notebookId: selectedNotebookId });
       setName("");
       toast("Tag created", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create tag:", error);
       toast("Failed to create tag", { variant: "error" });
     }
   };
 
-  const handleDelete = async (tagId: string) => {
+  const handleDelete = async (tagId: string): Promise<void> => {
     if (!confirm("Delete this tag? It will be removed from all notes.")) return;
     try {
       await deleteTag.mutateAsync(tagId);
       toast("Tag deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete tag:", error);
       toast("Failed to delete tag", { variant: "error" });
     }
   };
 
-  const handleEditStart = (tag: TagRecord) => {
+  const handleEditStart = (tag: TagRecord): void => {
     setEditingId(tag.id);
     setEditingName(tag.name);
     setEditingColor(tag.color || "#3b82f6");
   };
 
-  const handleEditCancel = () => {
+  const handleEditCancel = (): void => {
     setEditingId(null);
     setEditingName("");
     setEditingColor("#3b82f6");
   };
 
-  const handleUpdate = async (tagId: string) => {
+  const handleUpdate = async (tagId: string): Promise<void> => {
     if (!editingName.trim()) {
       toast("Tag name is required", { variant: "error" });
       return;
@@ -93,14 +93,14 @@ export function AdminNotesTagsPage() {
       });
       toast("Tag updated", { variant: "success" });
       handleEditCancel();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to update tag:", error);
       toast("Failed to update tag", { variant: "error" });
     }
   };
 
   const filteredTags = useMemo(
-    () => tags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
+    (): TagRecord[] => tags.filter((tag: TagRecord) => tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
     [tags, searchQuery]
   );
 
@@ -118,7 +118,7 @@ export function AdminNotesTagsPage() {
           <Input
             type="text"
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
             placeholder="Search tags..."
             className="w-full"
           />
@@ -133,7 +133,7 @@ export function AdminNotesTagsPage() {
               <Input
                 type="text"
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setName(event.target.value)}
                 className="w-full"
                 placeholder="Enter tag name"
               />
@@ -145,11 +145,11 @@ export function AdminNotesTagsPage() {
               <Input
                 type="color"
                 value={color}
-                onChange={(event) => setColor(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
                 className="h-10 w-20"
               />
             </div>
-            <Button onClick={() => { void handleCreate(); }} disabled={createTag.isPending}>
+            <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
               {createTag.isPending ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -161,7 +161,7 @@ export function AdminNotesTagsPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void tagsQuery.refetch(); }}>
+              <Button variant="outline" onClick={(): void => { void tagsQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
@@ -172,7 +172,7 @@ export function AdminNotesTagsPage() {
             <div className="text-sm text-gray-500">No tags created yet.</div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {filteredTags.map((tag) => {
+              {filteredTags.map((tag: TagRecord) => {
                 const isEditing = editingId === tag.id;
                 return (
                   <div
@@ -189,13 +189,13 @@ export function AdminNotesTagsPage() {
                           <Input
                             type="text"
                             value={editingName}
-                            onChange={(event) => setEditingName(event.target.value)}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
                             className="w-full"
                           />
                           <Input
                             type="color"
                             value={editingColor}
-                            onChange={(event) => setEditingColor(event.target.value)}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingColor(event.target.value)}
                             className="h-8 w-14"
                           />
                         </div>
@@ -209,7 +209,7 @@ export function AdminNotesTagsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => { void handleUpdate(tag.id); }}
+                            onClick={(): void => { void handleUpdate(tag.id); }}
                             disabled={updateTag.isPending}
                           >
                             Save
@@ -217,7 +217,7 @@ export function AdminNotesTagsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleEditCancel}
+                            onClick={(): void => handleEditCancel()}
                           >
                             Cancel
                           </Button>
@@ -226,14 +226,14 @@ export function AdminNotesTagsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEditStart(tag)}
+                          onClick={(): void => handleEditStart(tag)}
                         >
                           Edit
                         </Button>
                       )}
                       <Button
                         type="button"
-                        onClick={() => { void handleDelete(tag.id); }}
+                        onClick={(): void => { void handleDelete(tag.id); }}
                         className="text-gray-400 hover:text-red-400"
                         aria-label={`Delete ${tag.name}`}
                       >

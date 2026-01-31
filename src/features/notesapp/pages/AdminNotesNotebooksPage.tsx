@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { MoreVertical } from "lucide-react";
 
 
@@ -15,10 +15,7 @@ import {
 import type { NotebookRecord } from "@/shared/types/notes";
 import { useRouter } from "next/navigation";
 
-
-
-
-export function AdminNotesNotebooksPage() {
+export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
@@ -29,20 +26,20 @@ export function AdminNotesNotebooksPage() {
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
-  const notebooks = useMemo(() => notebooksQuery.data ?? [], [notebooksQuery.data]);
+  const notebooks = useMemo((): NotebookRecord[] => notebooksQuery.data ?? [], [notebooksQuery.data]);
   const loading = notebooksQuery.isPending;
 
   const createNotebook = useCreateNotebook();
   const updateNotebook = useUpdateNotebook();
   const deleteNotebook = useDeleteNotebook();
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!selectedNotebookId && notebooks.length > 0) {
       updateSettings({ selectedNotebookId: notebooks[0]!.id });
     }
   }, [selectedNotebookId, notebooks, updateSettings]);
 
-  const handleCreate = async () => {
+  const handleCreate = async (): Promise<void> => {
     if (!name.trim()) {
       toast("Notebook name is required", { variant: "error" });
       return;
@@ -51,24 +48,24 @@ export function AdminNotesNotebooksPage() {
       await createNotebook.mutateAsync({ name: name.trim() });
       setName("");
       toast("Notebook created", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to create notebook:", error);
       toast("Failed to create notebook", { variant: "error" });
     }
   };
 
-  const handleEditStart = (notebook: NotebookRecord) => {
+  const handleEditStart = useCallback((notebook: NotebookRecord): void => {
     setEditingId(notebook.id);
     setEditingName(notebook.name);
     setMenuNotebookId(null);
-  };
+  }, []);
 
-  const handleEditCancel = () => {
+  const handleEditCancel = useCallback((): void => {
     setEditingId(null);
     setEditingName("");
-  };
+  }, []);
 
-  const handleUpdate = async (id: string) => {
+  const handleUpdate = async (id: string): Promise<void> => {
     if (!editingName.trim()) {
       toast("Notebook name is required", { variant: "error" });
       return;
@@ -77,13 +74,13 @@ export function AdminNotesNotebooksPage() {
       await updateNotebook.mutateAsync({ id, name: editingName.trim() });
       toast("Notebook updated", { variant: "success" });
       handleEditCancel();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to update notebook:", error);
       toast("Failed to update notebook", { variant: "error" });
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string): Promise<void> => {
     if (!confirm("Delete this notebook and all its notes/tags/folders?")) return;
     try {
       await deleteNotebook.mutateAsync(id);
@@ -91,17 +88,17 @@ export function AdminNotesNotebooksPage() {
         updateSettings({ selectedNotebookId: null });
       }
       toast("Notebook deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to delete notebook:", error);
       toast("Failed to delete notebook", { variant: "error" });
     }
   };
 
-  const handleDuplicate = async (notebook: NotebookRecord) => {
+  const handleDuplicate = async (notebook: NotebookRecord): Promise<void> => {
     const baseName = notebook.name.trim();
     const existing = notebooks
-      .filter((item) => item.name.startsWith(baseName))
-      .map((item) => {
+      .filter((item: NotebookRecord): boolean => item.name.startsWith(baseName))
+      .map((item: NotebookRecord): number => {
         const match = item.name.match(/\((\d+)\)$/);
         return match ? Number(match[1]) : 0;
       });
@@ -110,7 +107,7 @@ export function AdminNotesNotebooksPage() {
     try {
       await createNotebook.mutateAsync({ name: newName });
       toast("Notebook duplicated", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to duplicate notebook:", error);
       toast("Failed to duplicate notebook", { variant: "error" });
     } finally {
@@ -137,12 +134,12 @@ export function AdminNotesNotebooksPage() {
               <Input
                 type="text"
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setName(event.target.value)}
                 className="w-full"
                 placeholder="Enter notebook name"
               />
             </div>
-            <Button onClick={() => { void handleCreate(); }} disabled={createNotebook.isPending}>
+            <Button onClick={(): void => { void handleCreate(); }} disabled={createNotebook.isPending}>
               {createNotebook.isPending ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -154,7 +151,7 @@ export function AdminNotesNotebooksPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void notebooksQuery.refetch(); }}>
+              <Button variant="outline" onClick={(): void => { void notebooksQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
@@ -165,14 +162,14 @@ export function AdminNotesNotebooksPage() {
             <div className="text-sm text-gray-500">No notebooks created yet.</div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {notebooks.map((notebook) => {
+              {notebooks.map((notebook: NotebookRecord) => {
                 const isEditing = editingId === notebook.id;
                 const isActive = selectedNotebookId === notebook.id;
                 return (
                   <div
                     key={notebook.id}
                     className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-border/60"
-                    onClick={() => {
+                    onClick={(): void => {
                       updateSettings({ selectedNotebookId: notebook.id });
                       router.push("/admin/notes");
                     }}
@@ -183,7 +180,7 @@ export function AdminNotesNotebooksPage() {
                           <Input
                             type="text"
                             value={editingName}
-                            onChange={(event) => setEditingName(event.target.value)}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
                             className="w-full"
                           />
                         </div>
@@ -191,7 +188,10 @@ export function AdminNotesNotebooksPage() {
                         <div className="flex flex-col">
                           <Button
                             type="button"
-                            onClick={() => handleEditStart(notebook)}
+                            onClick={(event: React.MouseEvent): void => {
+                              event.stopPropagation();
+                              handleEditStart(notebook);
+                            }}
                             className="text-left text-sm text-gray-200 hover:text-white"
                           >
                             {notebook.name}
@@ -208,7 +208,10 @@ export function AdminNotesNotebooksPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => { void handleUpdate(notebook.id); }}
+                            onClick={(event: React.MouseEvent): void => {
+                              event.stopPropagation();
+                              void handleUpdate(notebook.id);
+                            }}
                             disabled={updateNotebook.isPending}
                           >
                             Save
@@ -216,7 +219,10 @@ export function AdminNotesNotebooksPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={handleEditCancel}
+                            onClick={(event: React.MouseEvent): void => {
+                              event.stopPropagation();
+                              handleEditCancel();
+                            }}
                           >
                             Cancel
                           </Button>
@@ -228,9 +234,9 @@ export function AdminNotesNotebooksPage() {
                         <div className="relative">
                           <Button
                             type="button"
-                            onClick={(event) => {
+                            onClick={(event: React.MouseEvent): void => {
                               event.stopPropagation();
-                              setMenuNotebookId((prev) =>
+                              setMenuNotebookId((prev: string | null): string | null =>
                                 prev === notebook.id ? null : notebook.id
                               );
                             }}
@@ -243,39 +249,39 @@ export function AdminNotesNotebooksPage() {
                             <>
                               <div
                                 className="fixed inset-0 z-40"
-                                onClick={() => setMenuNotebookId(null)}
+                                onClick={(): void => setMenuNotebookId(null)}
                               />
                               <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-card p-1 shadow-lg">
                                 <Button
                                   type="button"
-                                  onClick={(event) => {
+                                  onClick={(event: React.MouseEvent): void => {
                                     event.stopPropagation();
                                     handleEditStart(notebook);
                                     setMenuNotebookId(null);
                                   }}
-                                  onClickCapture={(event) => event.stopPropagation()}
+                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                                 >
                                   Rename
                                 </Button>
                                 <Button
                                   type="button"
-                                  onClick={(event) => {
+                                  onClick={(event: React.MouseEvent): void => {
                                     event.stopPropagation();
                                     void handleDuplicate(notebook);
                                   }}
-                                  onClickCapture={(event) => event.stopPropagation()}
+                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                                 >
                                   Duplicate
                                 </Button>
                                 <Button
                                   type="button"
-                                  onClick={(event) => {
+                                  onClick={(event: React.MouseEvent): void => {
                                     event.stopPropagation();
                                     void handleDelete(notebook.id);
                                   }}
-                                  onClickCapture={(event) => event.stopPropagation()}
+                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-muted/50"
                                 >
                                   Delete

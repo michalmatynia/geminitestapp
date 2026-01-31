@@ -37,16 +37,16 @@ const editorModeOptions = [
   { value: "code", label: "Code Snippets", description: "Optimized for code with syntax highlighting and copy button" },
 ] as const;
 
-export function AdminNotesSettingsPage() {
+export function AdminNotesSettingsPage(): React.JSX.Element {
   const { settings, updateSettings, resetToDefaults } = useNoteSettings();
   const { toast } = useToast();
 
-  const handleResetToDefaults = () => {
+  const handleResetToDefaults = (): void => {
     resetToDefaults();
     toast("Settings reset to defaults", { variant: "success" });
   };
 
-  const isDefault = (key: keyof NoteSettings) => {
+  const isDefault = (key: keyof NoteSettings): boolean => {
     return settings[key] === DEFAULT_NOTE_SETTINGS[key];
   };
 
@@ -91,7 +91,7 @@ export function AdminNotesSettingsPage() {
               </Label>
               <Select
                 value={settings.sortBy}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updateSettings({ sortBy: value as NoteSettings["sortBy"] })
                 }
               >
@@ -99,7 +99,7 @@ export function AdminNotesSettingsPage() {
                   <SelectValue placeholder="Select sort field" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sortByOptions.map((option) => (
+                  {sortByOptions.map((option: { value: string; label: string }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -117,7 +117,7 @@ export function AdminNotesSettingsPage() {
               </Label>
               <Select
                 value={settings.sortOrder}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updateSettings({ sortOrder: value as NoteSettings["sortOrder"] })
                 }
               >
@@ -125,7 +125,7 @@ export function AdminNotesSettingsPage() {
                   <SelectValue placeholder="Select sort order" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sortOrderOptions.map((option) => (
+                  {sortOrderOptions.map((option: { value: string; label: string }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -143,7 +143,7 @@ export function AdminNotesSettingsPage() {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.showTimestamps} onCheckedChange={(checked) =>
+                  checked={settings.showTimestamps} onCheckedChange={(checked: boolean | "indeterminate"): void =>
                     updateSettings({ showTimestamps: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -165,7 +165,7 @@ export function AdminNotesSettingsPage() {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.showBreadcrumbs} onCheckedChange={(checked) =>
+                  checked={settings.showBreadcrumbs} onCheckedChange={(checked: boolean | "indeterminate"): void =>
                     updateSettings({ showBreadcrumbs: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -198,7 +198,7 @@ export function AdminNotesSettingsPage() {
             </Label>
             <Select
               value={settings.searchScope}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 updateSettings({ searchScope: value as NoteSettings["searchScope"] })
               }
             >
@@ -206,7 +206,7 @@ export function AdminNotesSettingsPage() {
                 <SelectValue placeholder="Select search scope" />
               </SelectTrigger>
               <SelectContent>
-                {searchScopeOptions.map((option) => (
+                {searchScopeOptions.map((option: { value: string; label: string }) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -230,12 +230,12 @@ export function AdminNotesSettingsPage() {
               <div className="space-y-2">
                 <RadioGroup
                   value={settings.editorMode}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string): void =>
                     updateSettings({ editorMode: value as NoteSettings["editorMode"] })
                   }
                   className="space-y-2"
                 >
-                  {editorModeOptions.map((option) => {
+                  {editorModeOptions.map((option: { value: string; label: string; description: string }) => {
                     const id = `editor-mode-${option.value}`;
                     const isSelected = settings.editorMode === option.value;
                     return (
@@ -268,7 +268,7 @@ export function AdminNotesSettingsPage() {
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={settings.autoformatOnPaste} onCheckedChange={(checked) =>
+                  checked={settings.autoformatOnPaste} onCheckedChange={(checked: boolean | "indeterminate"): void =>
                     updateSettings({ autoformatOnPaste: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
@@ -310,7 +310,7 @@ export function AdminNotesSettingsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => updateSettings({ selectedFolderId: null })}
+                    onClick={(): void => updateSettings({ selectedFolderId: null })}
                     className="h-6 px-2 text-xs text-gray-400 hover:text-white"
                   >
                     Clear
@@ -342,7 +342,7 @@ export function AdminNotesSettingsPage() {
           <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
             <span>Sort:</span>
             <span className="text-gray-300">
-              {sortByOptions.find((o) => o.value === settings.sortBy)?.label} (
+              {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
               {settings.sortOrder === "desc" ? "Descending" : "Ascending"})
             </span>
             <span>Timestamps:</span>
@@ -355,7 +355,7 @@ export function AdminNotesSettingsPage() {
             </span>
             <span>Search Scope:</span>
             <span className="text-gray-300">
-              {searchScopeOptions.find((o) => o.value === settings.searchScope)?.label}
+              {searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)?.label}
             </span>
             <span>Selected Folder:</span>
             <span className="text-gray-300">
@@ -367,7 +367,7 @@ export function AdminNotesSettingsPage() {
             </span>
             <span>Editor Mode:</span>
             <span className="text-gray-300">
-              {editorModeOptions.find((o) => o.value === settings.editorMode)?.label}
+              {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
             </span>
           </div>
         </SectionPanel>

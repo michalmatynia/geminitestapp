@@ -401,7 +401,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={settings.menuPlacement}
-                onChange={(v: string): void => update("menuPlacement", v as any)}
+                onChange={(v: string): void => update("menuPlacement", v as "top" | "left" | "right")}
                 options={[
                   { label: "Top", value: "top" },
                   { label: "Left", value: "left" },
@@ -783,7 +783,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={positionMode}
-                onChange={(v: string): void => update("positionMode", v as any)}
+                onChange={(v: string): void => update("positionMode", v as "sticky" | "static")}
                 options={[
                   { label: "Glued to top", value: "sticky" },
                   { label: "Top of page", value: "static" },

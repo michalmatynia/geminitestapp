@@ -18,7 +18,7 @@ type ExternalCategoryWithState = ExternalCategory & {
   mappedToId?: string | null;
 };
 
-export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategoryMapperProps) {
+export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategoryMapperProps): React.JSX.Element {
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Fetch catalogs
   useEffect(() => {
-    const load = async () => {
+    const load = async (): Promise<void> => {
       try {
         setCatalogsLoading(true);
         const res = await fetch("/api/catalogs");
@@ -49,7 +49,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         setCatalogs(data);
 
         // Auto-select default catalog
-        const defaultCatalog = data.find((c) => c.isDefault) ?? data[0];
+        const defaultCatalog = data.find((c: Catalog) => c.isDefault) ?? data[0];
         if (defaultCatalog) {
           setSelectedCatalogId(defaultCatalog.id);
         }
@@ -70,7 +70,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       return;
     }
 
-    const load = async () => {
+    const load = async (): Promise<void> => {
       try {
         setInternalCategoriesLoading(true);
         const res = await fetch(`/api/products/categories?catalogId=${selectedCatalogId}`);
@@ -88,13 +88,13 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   }, [selectedCatalogId, toast]);
 
   // Fetch external categories and mappings when connection changes
-  const fetchExternalCategories = useCallback(async () => {
+  const fetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
       setExternalCategoriesLoading(true);
       const res = await fetch(`/api/marketplace/categories?connectionId=${connectionId}`);
       if (!res.ok) throw new Error("Failed to fetch external categories");
       const data = (await res.json()) as ExternalCategory[];
-      setExternalCategories(data.map((c) => ({ ...c, isExpanded: c.depth === 0 })));
+      setExternalCategories(data.map((c: ExternalCategory) => ({ ...c, isExpanded: c.depth === 0 })));
     } catch (error) {
       console.error("Failed to fetch external categories:", error);
       toast("Failed to load external categories", { variant: "error" });
@@ -103,7 +103,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     }
   }, [connectionId, toast]);
 
-  const fetchMappings = useCallback(async () => {
+  const fetchMappings = useCallback(async (): Promise<void> => {
     if (!selectedCatalogId) return;
 
     try {
@@ -133,7 +133,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   }, [fetchMappings, selectedCatalogId]);
 
   // Fetch categories from Base.com API
-  const handleFetchFromBase = async () => {
+  const handleFetchFromBase = async (): Promise<void> => {
     try {
       setFetching(true);
       const res = await fetch("/api/marketplace/categories/fetch", {
@@ -169,15 +169,15 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         return pendingMappings.get(externalCategoryId) ?? null;
       }
       // Check saved mappings
-      const mapping = mappings.find((m) => m.externalCategoryId === externalCategoryId);
+      const mapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
       return mapping?.internalCategoryId ?? null;
     },
     [mappings, pendingMappings]
   );
 
   // Handle mapping change
-  const handleMappingChange = (externalCategoryId: string, internalCategoryId: string | null) => {
-    setPendingMappings((prev) => {
+  const handleMappingChange = (externalCategoryId: string, internalCategoryId: string | null): void => {
+    setPendingMappings((prev: Map<string, string>) => {
       const next = new Map(prev);
       if (internalCategoryId) {
         next.set(externalCategoryId, internalCategoryId);
@@ -189,7 +189,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   };
 
   // Save all pending mappings
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (pendingMappings.size === 0 || !selectedCatalogId) {
       toast("No changes to save", { variant: "info" });
       return;
@@ -198,7 +198,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     try {
       setSaving(true);
       const mappingsToSave = Array.from(pendingMappings.entries()).map(
-        ([externalCategoryId, internalCategoryId]) => ({
+        ([externalCategoryId, internalCategoryId]: [string, string]) => ({
           externalCategoryId,
           internalCategoryId,
         })
@@ -235,34 +235,34 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   };
 
   // Toggle category expansion
-  const toggleExpand = (categoryId: string) => {
-    setExternalCategories((prev) =>
-      prev.map((c) => (c.id === categoryId ? { ...c, isExpanded: !c.isExpanded } : c))
+  const toggleExpand = (categoryId: string): void => {
+    setExternalCategories((prev: ExternalCategoryWithState[]) =>
+      prev.map((c: ExternalCategoryWithState) => (c.id === categoryId ? { ...c, isExpanded: !c.isExpanded } : c))
     );
   };
 
   // Build tree structure for display
-  const categoryTree = useMemo(() => {
+  const categoryTree = useMemo((): ExternalCategoryWithState[] => {
     const buildLevel = (parentExternalId: string | null): ExternalCategoryWithState[] => {
       return externalCategories
-        .filter((c) => c.parentExternalId === parentExternalId)
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .filter((c: ExternalCategoryWithState) => c.parentExternalId === parentExternalId)
+        .sort((a: ExternalCategoryWithState, b: ExternalCategoryWithState) => a.name.localeCompare(b.name));
     };
 
     return buildLevel(null);
   }, [externalCategories]);
 
   // Count statistics
-  const stats = useMemo(() => {
+  const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;
-    const mapped = externalCategories.filter((c) => getMappingForExternal(c.id) !== null).length;
+    const mapped = externalCategories.filter((c: ExternalCategoryWithState) => getMappingForExternal(c.id) !== null).length;
     const pending = pendingMappings.size;
     return { total, mapped, pending };
   }, [externalCategories, getMappingForExternal, pendingMappings.size]);
 
   // Render category row with children
-  const renderCategory = (category: ExternalCategoryWithState, depth: number = 0) => {
-    const children = externalCategories.filter((c) => c.parentExternalId === category.externalId);
+  const renderCategory = (category: ExternalCategoryWithState, depth: number = 0): React.JSX.Element => {
+    const children = externalCategories.filter((c: ExternalCategoryWithState) => c.parentExternalId === category.externalId);
     const hasChildren = children.length > 0;
     const isExpanded = category.isExpanded ?? false;
     const currentMapping = getMappingForExternal(category.id);
@@ -275,7 +275,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
             <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
               {hasChildren ? (
                 <Button
-                  onClick={() => toggleExpand(category.id)}
+                  onClick={(): void => toggleExpand(category.id)}
                   className="mr-2 rounded p-0.5 text-gray-400 hover:bg-muted/50 hover:text-white"
                 >
                   {isExpanded ? (
@@ -296,14 +296,14 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           <td className="px-4 py-2">
             <select
               value={currentMapping ?? ""}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
                 handleMappingChange(category.id, e.target.value || null)
               }
               className="w-full rounded border bg-gray-800 px-2 py-1 text-sm text-white"
               disabled={internalCategoriesLoading || !selectedCatalogId}
             >
               <option value="">— Not mapped —</option>
-              {internalCategories.map((ic) => (
+              {internalCategories.map((ic: ProductCategory) => (
                 <option key={ic.id} value={ic.id}>
                   {ic.name}
                 </option>
@@ -314,8 +314,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         {hasChildren && isExpanded && (
           <>
             {children
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((child) => renderCategory(child, depth + 1))}
+              .sort((a: ExternalCategoryWithState, b: ExternalCategoryWithState) => a.name.localeCompare(b.name))
+              .map((child: ExternalCategoryWithState) => renderCategory(child, depth + 1))}
           </>
         )}
       </React.Fragment>
@@ -337,7 +337,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => void handleFetchFromBase()}
+            onClick={(): void => { void handleFetchFromBase(); }}
             disabled={fetching}
             className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
           >
@@ -350,7 +350,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           </Button>
 
           <Button
-            onClick={() => void handleSave()}
+            onClick={(): void => { void handleSave(); }}
             disabled={saving || pendingMappings.size === 0}
             className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
           >
@@ -369,7 +369,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         <Label className="text-sm text-gray-400">Target Catalog:</Label>
         <select
           value={selectedCatalogId ?? ""}
-          onChange={(e) => setSelectedCatalogId(e.target.value || null)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCatalogId(e.target.value || null)}
           disabled={catalogsLoading}
           className="rounded border bg-gray-800 px-3 py-2 text-sm text-white"
         >
@@ -377,7 +377,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           {!catalogsLoading && catalogs.length === 0 && (
             <option value="">No catalogs available</option>
           )}
-          {catalogs.map((catalog) => (
+          {catalogs.map((catalog: Catalog) => (
             <option key={catalog.id} value={catalog.id}>
               {catalog.name}
             </option>
@@ -433,7 +433,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
                 </td>
               </tr>
             ) : (
-              categoryTree.map((category) => renderCategory(category, 0))
+              categoryTree.map((category: ExternalCategoryWithState) => renderCategory(category, 0))
             )}
           </tbody>
         </table>

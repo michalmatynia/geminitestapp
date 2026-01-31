@@ -1,13 +1,13 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import type { Integration, IntegrationConnection } from "@/features/integrations/types/integrations-ui";
 
-export function useCreateIntegration() {
+export function useCreateIntegration(): UseMutationResult<Integration, Error, { name: string; slug: string }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { name: string; slug: string }) => {
+    mutationFn: async (payload: { name: string; slug: string }): Promise<Integration> => {
       const res = await fetch("/api/integrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -19,13 +19,13 @@ export function useCreateIntegration() {
       }
       return (await res.json()) as Integration;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["integrations"] });
     },
   });
 }
 
-export function useUpsertConnection() {
+export function useUpsertConnection(): UseMutationResult<IntegrationConnection, Error, { integrationId: string; connectionId?: string | null; payload: Record<string, unknown> }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -37,7 +37,7 @@ export function useUpsertConnection() {
       integrationId: string; 
       connectionId?: string | null; 
       payload: Record<string, unknown> 
-    }) => {
+    }): Promise<IntegrationConnection> => {
       const url = connectionId
         ? `/api/integrations/connections/${connectionId}`
         : `/api/integrations/${integrationId}/connections`;
@@ -54,13 +54,13 @@ export function useUpsertConnection() {
       }
       return (await res.json()) as IntegrationConnection;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: IntegrationConnection, variables: { integrationId: string }): void => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });
 }
 
-export function useDeleteConnection() {
+export function useDeleteConnection(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -70,7 +70,7 @@ export function useDeleteConnection() {
     }: { 
       integrationId: string; 
       connectionId: string 
-    }) => {
+    }): Promise<Record<string, unknown>> => {
       const res = await fetch(`/api/integrations/connections/${connectionId}`, {
         method: "DELETE",
       });
@@ -80,13 +80,13 @@ export function useDeleteConnection() {
       }
       return (await res.json()) as Record<string, unknown>;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: Record<string, unknown>, variables: { integrationId: string }): void => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });
 }
 
-export function useTestConnection() {
+export function useTestConnection(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string; type?: "test" | "base/test" | "allegro/test" }> {
   return useMutation({
     mutationFn: async ({ 
       integrationId, 
@@ -96,7 +96,7 @@ export function useTestConnection() {
       integrationId: string; 
       connectionId: string; 
       type?: "test" | "base/test" | "allegro/test" 
-    }) => {
+    }): Promise<Record<string, unknown>> => {
       const res = await fetch(`/api/integrations/${integrationId}/connections/${connectionId}/${type}`, {
         method: "POST",
       });

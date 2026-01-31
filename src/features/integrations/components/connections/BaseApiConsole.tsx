@@ -28,7 +28,7 @@ export function BaseApiConsole({
   error,
   response,
   onRequest,
-}: BaseApiConsoleProps) {
+}: BaseApiConsoleProps): React.JSX.Element {
   const defaultInventoryId = activeConnection?.baseLastInventoryId ?? "";
   
   const baseApiPresets = [
@@ -62,12 +62,12 @@ export function BaseApiConsole({
         </p>
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
-        {baseApiPresets.map((preset) => (
+        {baseApiPresets.map((preset: { label: string; method: string; params: Record<string, unknown> }) => (
           <Button
             key={preset.label}
             type="button"
             className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
-            onClick={() => {
+            onClick={(): void => {
               setMethod(preset.method);
               setParams(JSON.stringify(preset.params, null, 2));
             }}
@@ -82,7 +82,7 @@ export function BaseApiConsole({
           className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
           placeholder="getInventories"
           value={method}
-          onChange={(event) => setMethod(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setMethod(event.target.value)}
         />
       </div>
       <div className="mt-3">
@@ -90,7 +90,7 @@ export function BaseApiConsole({
         <Textarea
           className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
           value={params}
-          onChange={(event) => setParams(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => setParams(event.target.value)}
         />
       </div>
       <div className="mt-3 flex items-center gap-3">

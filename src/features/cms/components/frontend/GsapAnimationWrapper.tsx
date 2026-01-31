@@ -361,10 +361,8 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
 
       const makeScrollTrigger = (withLabels: boolean): gsap.TweenVars["scrollTrigger"] => {
         if (!baseScrollTrigger) return undefined;
-        // @ts-expect-error - GSAP ScrollTrigger types
         const triggerConfig = { ...baseScrollTrigger } as Record<string, unknown>;
         if (withLabels && config.scrollSnap) {
-          // @ts-expect-error - GSAP ScrollTrigger types are complex unions
           triggerConfig.snap = {
             snapTo: "labelsDirectional",
             duration: config.scrollSnapDuration ?? 0.35,

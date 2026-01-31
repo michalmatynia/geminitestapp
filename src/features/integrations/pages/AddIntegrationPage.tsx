@@ -37,7 +37,9 @@ const integrations = [
   },
 ];
 
-export default function AddIntegrationPage() {
+import type { Integration } from "@/features/integrations/types/integrations-ui";
+
+export default function AddIntegrationPage(): React.JSX.Element {
   const router = useRouter();
   const integrationsQuery = useIntegrations();
   const createIntegrationMutation = useCreateIntegration();
@@ -52,23 +54,23 @@ export default function AddIntegrationPage() {
     toast(message, { variant: "error" });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
-  const handleAdd = async (integration: (typeof integrations)[number]) => {
+  const handleAdd = async (integration: (typeof integrations)[number]): Promise<void> => {
     try {
       await createIntegrationMutation.mutateAsync({
         name: integration.name,
         slug: integration.slug,
       });
       router.push("/admin/integrations");
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to add integration.";
       toast(message, { variant: "error" });
     }
   };
 
-  const integrationCounts = useMemo(() => {
+  const integrationCounts = useMemo((): Record<string, number> => {
     const data = integrationsQuery.data ?? [];
-    return data.reduce<Record<string, number>>((acc, integration) => {
+    return data.reduce<Record<string, number>>((acc: Record<string, number>, integration: Integration) => {
       acc[integration.slug] = (acc[integration.slug] || 0) + 1;
       return acc;
     }, {});
@@ -89,7 +91,7 @@ export default function AddIntegrationPage() {
         />
 
         <div className="grid gap-6 md:grid-cols-2">
-          {integrations.map((integration) => (
+          {integrations.map((integration: (typeof integrations)[number]) => (
             <div
               key={integration.slug}
               className="rounded-xl border bg-card p-5"

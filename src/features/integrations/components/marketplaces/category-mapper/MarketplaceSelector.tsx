@@ -26,12 +26,14 @@ type MarketplaceSelectorProps = {
   onSelectConnection: (connectionId: string) => void;
 };
 
+import Link from "next/link";
+
 export function MarketplaceSelector({
   integrations,
   loading,
   selectedConnectionId,
   onSelectConnection,
-}: MarketplaceSelectorProps) {
+}: MarketplaceSelectorProps): React.JSX.Element {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -50,9 +52,9 @@ export function MarketplaceSelector({
         <h2 className="mb-4 text-sm font-semibold text-gray-300">Connections</h2>
         <p className="text-sm text-gray-500">
           No marketplace connections found. Configure a Base.com connection in{" "}
-          <a href="/admin/integrations" className="text-blue-400 hover:underline">
+          <Link href="/admin/integrations" className="text-blue-400 hover:underline">
             Integrations
-          </a>{" "}
+          </Link>{" "}
           first.
         </p>
       </div>
@@ -63,7 +65,7 @@ export function MarketplaceSelector({
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-gray-300">Connections</h2>
 
-      {integrations.map((integration) => (
+      {integrations.map((integration: IntegrationWithConnections) => (
         <div key={integration.id} className="space-y-1">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Store className="h-3 w-3" />
@@ -74,10 +76,10 @@ export function MarketplaceSelector({
             {integration.connections.length === 0 ? (
               <p className="text-xs text-gray-600">No connections</p>
             ) : (
-              integration.connections.map((connection) => (
+              integration.connections.map((connection: Connection) => (
                 <Button
                   key={connection.id}
-                  onClick={() => onSelectConnection(connection.id)}
+                  onClick={(): void => onSelectConnection(connection.id)}
                   className={`w-full rounded px-3 py-2 text-left text-sm transition ${
                     selectedConnectionId === connection.id
                       ? "bg-gray-800 text-white"

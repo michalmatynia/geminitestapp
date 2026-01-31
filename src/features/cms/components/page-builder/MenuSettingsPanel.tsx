@@ -19,12 +19,15 @@ import {
   CMS_MENU_SETTINGS_KEY,
   DEFAULT_MENU_SETTINGS,
   getCmsMenuSettingsKey,
+  type MenuItem,
   type MenuSettings,
   normalizeMenuSettings,
 } from "@/features/cms/types/menu-settings";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { ANIMATION_PRESETS } from "@/features/gsap/types/animation";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
+import type { ColorScheme } from "@/features/cms/types/theme-settings";
+import type { CmsDomain } from "@/features/cms/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,7 +100,7 @@ function ColorField({
           <input
             type="color"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
             className="absolute inset-0 size-full cursor-pointer opacity-0"
           />
           <div className="size-full rounded" style={{ backgroundColor: value }} />
@@ -174,7 +177,7 @@ function RangeField({
         min={min}
         max={max}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(Number(e.target.value))}
         className="w-full accent-blue-500"
       />
     </div>
@@ -200,7 +203,7 @@ function SelectField({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {options.map((opt) => (
+          {options.map((opt: { label: string; value: string }) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}
             </SelectItem>
@@ -222,7 +225,10 @@ function CheckboxField({
 }): React.ReactNode {
   return (
     <label className="flex items-center gap-2 cursor-pointer">
-      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(v: boolean | "indeterminate") => onChange(v === true)}
+      />
       <span className="text-xs text-gray-300">{label}</span>
     </label>
   );
@@ -240,7 +246,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const loadedKeyRef = useRef<string | null>(null);
-  const pendingSerializedRef = useRef<string | null>(null);
+  const scopeTouchedRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
 
   const initialMenuScopeId = useMemo((): string => {
@@ -249,7 +255,10 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   }, [zoningEnabled, activeDomainId]);
 
   const [userMenuScopeId, setUserMenuScopeId] = useState<string | null>(null);
-  const menuScopeId = userMenuScopeId ?? initialMenuScopeId;
+  const menuScopeId = useMemo((): string => {
+    if (!zoningEnabled) return "default";
+    return userMenuScopeId ?? initialMenuScopeId;
+  }, [initialMenuScopeId, userMenuScopeId, zoningEnabled]);
 
   const menuKey = useMemo((): string => {
     if (!zoningEnabled) return CMS_MENU_SETTINGS_KEY;
@@ -278,32 +287,19 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
   const colorSchemeOptions = useMemo((): { label: string; value: string }[] => {
     const options = [...COLOR_SCHEME_FALLBACK];
-    const schemes = theme?.colorSchemes ?? [];
-    schemes.forEach((scheme: any) => {
+    const schemes: ColorScheme[] = theme?.colorSchemes ?? [];
+    schemes.forEach((scheme: ColorScheme) => {
       if (!scheme?.id) return;
       options.push({ label: scheme.name || scheme.id, value: scheme.id });
     });
     return options;
   }, [theme?.colorSchemes]);
 
-  useEffect((): void => {
-    if (!zoningEnabled) {
-      if (userMenuScopeId !== "default" && userMenuScopeId !== null) {
-        setUserMenuScopeId("default");
-      }
-      return;
-    }
-  }, [zoningEnabled, userMenuScopeId]);
-
   const hasScopedMenu = useMemo(() => {
     if (!zoningEnabled) return false;
     if (menuKey === CMS_MENU_SETTINGS_KEY) return false;
     return settingsQuery.data?.has(menuKey) ?? false;
   }, [menuKey, settingsQuery.data, zoningEnabled]);
-
-  useEffect(() => {
-    settingsSerializedRef.current = serializeSetting(settings);
-  }, [settings]);
 
   const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]): void => {
     setUserSettings((prev: MenuSettings | null) => ({ ...(prev ?? initialSettings), [key]: value }));
@@ -327,7 +323,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       const current = prev ?? initialSettings;
       return {
         ...current,
-        items: current.items.map((item: any) =>
+        items: current.items.map((item: MenuItem) =>
           item.id === id ? { ...item, [field]: value } : item
         ),
       };
@@ -339,14 +335,14 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       const current = prev ?? initialSettings;
       return {
         ...current,
-        items: current.items.filter((item: any) => item.id !== id),
+        items: current.items.filter((item: MenuItem) => item.id !== id),
       };
     });
   }, [initialSettings]);
 
   useEffect((): void => {
     if (settings.menuColorSchemeId === "custom") return;
-    const available = new Set((theme?.colorSchemes ?? []).map((scheme: any) => scheme.id));
+    const available = new Set((theme?.colorSchemes ?? []).map((scheme: ColorScheme) => scheme.id));
     if (!available.has(settings.menuColorSchemeId)) {
       update("menuColorSchemeId", "custom");
     }
@@ -399,12 +395,12 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <CheckboxField
                 label="Show menu"
                 checked={settings.showMenu}
-                onChange={(v) => update("showMenu", v)}
+                onChange={(v: boolean) => update("showMenu", v)}
               />
               <SelectField
                 label="Menu position"
                 value={settings.menuPlacement}
-                onChange={(v) => update("menuPlacement", v as MenuSettings["menuPlacement"])}
+                onChange={(v: MenuSettings["menuPlacement"]) => update("menuPlacement", v)}
                 options={[
                   { label: "Top", value: "top" },
                   { label: "Left", value: "left" },
@@ -414,13 +410,13 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <CheckboxField
                 label="Collapsible menu"
                 checked={settings.collapsible}
-                onChange={(v) => update("collapsible", v)}
+                onChange={(v: boolean) => update("collapsible", v)}
               />
               {settings.collapsible && (
                 <CheckboxField
                   label="Collapsed by default"
                   checked={settings.collapsedByDefault}
-                  onChange={(v) => update("collapsedByDefault", v)}
+                  onChange={(v: boolean) => update("collapsedByDefault", v)}
                 />
               )}
               {(settings.menuPlacement === "left" || settings.menuPlacement === "right") && (
@@ -428,7 +424,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   <RangeField
                     label="Side width"
                     value={settings.sideWidth}
-                    onChange={(v) => update("sideWidth", v)}
+                    onChange={(v: number) => update("sideWidth", v)}
                     min={160}
                     max={420}
                     suffix="px"
@@ -437,7 +433,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                     <RangeField
                       label="Collapsed width"
                       value={settings.collapsedWidth}
-                      onChange={(v) => update("collapsedWidth", v)}
+                      onChange={(v: number) => update("collapsedWidth", v)}
                       min={48}
                       max={120}
                       suffix="px"
@@ -457,7 +453,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Layout style"
                 value={settings.layoutStyle}
-                onChange={(v) => update("layoutStyle", v)}
+                onChange={(v: string) => update("layoutStyle", v)}
                 options={[
                   { label: "Horizontal", value: "horizontal" },
                   { label: "Vertical", value: "vertical" },
@@ -467,7 +463,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Alignment"
                 value={settings.alignment}
-                onChange={(v) => update("alignment", v)}
+                onChange={(v: string) => update("alignment", v)}
                 options={[
                   { label: "Left", value: "left" },
                   { label: "Center", value: "center" },
@@ -478,7 +474,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <RangeField
                 label="Max width"
                 value={settings.maxWidth}
-                onChange={(v) => update("maxWidth", v)}
+                onChange={(v: number) => update("maxWidth", v)}
                 min={800}
                 max={1400}
                 suffix="px"
@@ -486,7 +482,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <CheckboxField
                 label="Full width"
                 checked={settings.fullWidth}
-                onChange={(v) => update("fullWidth", v)}
+                onChange={(v: boolean) => update("fullWidth", v)}
               />
             </div>
           );
@@ -497,7 +493,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         case "Menu Items":
           return (
             <div className="space-y-2">
-              {settings.items.map((item: any) => (
+              {settings.items.map((item: MenuItem) => (
                 <div
                   key={item.id}
                   className="flex items-start gap-1.5 rounded border border-border/40 bg-gray-800/30 p-2"
@@ -946,9 +942,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <div className="mt-2 space-y-2">
                 <Select
                   value={menuScopeId}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string) => {
                     scopeTouchedRef.current = true;
-                    setMenuScopeId(value);
+                    setUserMenuScopeId(value);
                   }}
                 >
                   <SelectTrigger className="h-8 text-xs">
@@ -956,7 +952,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="default">Default (fallback)</SelectItem>
-                    {domains.map((domain: any) => (
+                    {domains.map((domain: CmsDomain) => (
                       <SelectItem key={domain.id} value={domain.id}>
                         {domain.domain}
                         {domain.id === activeDomainId ? " (active)" : ""}

@@ -664,7 +664,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         .map((key: string): string => key.trim())
         .filter(Boolean);
       const outputsFromMappings: string[] = mappingKeys.length > 0 ? mappingKeys : node.outputs;
-      const outputMode: string = parserConfig?.outputMode ?? "individual";
+      const outputMode: "bundle" | "individual" = parserConfig?.outputMode ?? "individual";
       const hasImagesOutput: boolean = outputsFromMappings.some(
         (key: string): boolean => key.toLowerCase() === "images"
       );
@@ -982,7 +982,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
             vision:
               node.config?.model?.vision ??
               node.inputs.includes("images"),
-            waitForResult: node.config?.model?.waitForResult,
+            waitForResult: node.config?.model?.waitForResult ?? false,
           },
         },
       };

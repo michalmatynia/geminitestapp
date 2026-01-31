@@ -44,6 +44,12 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 
+type RunDetail = {
+  run: AiPathRunRecord;
+  nodes: AiPathRunNodeRecord[];
+  events: AiPathRunEventRecord[];
+} | null;
+
 export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const { toast } = useToast();
   const [pathId, setPathId] = useState("");
@@ -55,11 +61,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detail, setDetail] = useState<{
-    run: AiPathRunRecord;
-    nodes: AiPathRunNodeRecord[];
-    events: AiPathRunEventRecord[];
-  } | null>(null);
+  const [detail, setDetail] = useState<RunDetail>(null);
   const [retryFailedPending, setRetryFailedPending] = useState(false);
   const [showRetryFailedConfirm, setShowRetryFailedConfirm] = useState(false);
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
@@ -93,11 +95,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data?.runs]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  useEffect((): (() => void) => {
+    const timer: ReturnType<typeof setTimeout> = setTimeout((): void => {
       setDebouncedSearchQuery(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [searchQuery]);
 
   useEffect((): void => {
@@ -151,7 +153,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     setStreamStatus("connecting");
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setDetail((prev) => {
+      setDetail((prev: RunDetail): RunDetail => {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
@@ -176,7 +178,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     source.addEventListener("run", (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setDetail((prev) => (prev ? { ...prev, run: payload } : prev));
+        setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
@@ -184,7 +186,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     source.addEventListener("nodes", (event: MessageEvent): void => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setDetail((prev) => (prev ? { ...prev, nodes: payload } : prev));
+        setDetail((prev: RunDetail): RunDetail => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }
@@ -226,7 +228,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       source.close();
       setStreamStatus("stopped");
     };
-  }, [detailOpen, detail?.run?.id, streamPaused, detail.events]);
+  }, [detailOpen, detail?.run?.id, streamPaused, detail?.events]);
 
   const selectedCount = selectedIds.size;
   const visibleSelectedCount = useMemo(

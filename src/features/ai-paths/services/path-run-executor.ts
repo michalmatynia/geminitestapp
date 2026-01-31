@@ -352,15 +352,17 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
       },
       onIterationEnd: async ({
+        iteration: _iteration,
         inputs,
         outputs,
         hashes,
         history,
       }: {
+        iteration: number;
         inputs: Record<string, RuntimePortValues>;
         outputs: Record<string, RuntimePortValues>;
-        hashes?: Record<string, string>;
-        history?: Record<string, RuntimeHistoryEntry[]>;
+        hashes?: Record<string, string> | undefined;
+        history?: Record<string, RuntimeHistoryEntry[]> | undefined;
       }) => {
         await repo.updateRun(run.id, {
           runtimeState: sanitizeRuntimeState({ inputs, outputs, hashes, history }),

@@ -48,6 +48,7 @@ type AiPathsSettingsStateOptions = {
   activeTab: "canvas" | "paths" | "docs" | "queue";
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptions) {
   const { toast } = useToast();
   const normalizeTriggerLabel = (value?: string | null): string =>

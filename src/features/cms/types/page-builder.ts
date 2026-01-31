@@ -150,6 +150,7 @@ export type PageBuilderAction =
   | { type: "SET_GRID_ROWS"; sectionId: string; rowCount: number }
   | { type: "ADD_GRID_ROW"; sectionId: string }
   | { type: "ADD_COLUMN_TO_ROW"; sectionId: string; rowId: string }
+  | { type: "REMOVE_COLUMN_FROM_ROW"; sectionId: string; columnId: string; rowId?: string }
   | { type: "ADD_BLOCK_TO_COLUMN"; sectionId: string; columnId: string; blockType: string }
   | { type: "REMOVE_BLOCK_FROM_COLUMN"; sectionId: string; columnId: string; blockId: string }
   | { type: "UPDATE_COLUMN_SETTINGS"; sectionId: string; columnId: string; settings: Record<string, unknown> }

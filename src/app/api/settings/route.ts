@@ -39,7 +39,7 @@ const productSettingKeys = new Set([
 ]);
 
 const isProductSettingKey = (key: string) => productSettingKeys.has(key);
-const authSettingKeys = new Set(Object.values(AUTH_SETTINGS_KEYS));
+const authSettingKeys: Set<string> = new Set(Object.values(AUTH_SETTINGS_KEYS));
 const isMongoPreferredSettingKey = (key: string) =>
   isProductSettingKey(key) || authSettingKeys.has(key);
 

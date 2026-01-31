@@ -64,8 +64,31 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     type: "Row",
     label: "Row",
     icon: "GripVertical",
-    defaultSettings: {},
-    settingsSchema: [],
+    defaultSettings: {
+      gap: "inherit",
+      paddingTop: 8,
+      paddingBottom: 8,
+      paddingLeft: 8,
+      paddingRight: 8,
+      backgroundColor: "",
+    },
+    settingsSchema: [
+      {
+        key: "gap",
+        label: "Column gap",
+        type: "select",
+        options: [
+          { label: "Inherit section gap", value: "inherit" },
+          { label: "None", value: "none" },
+          { label: "Small", value: "small" },
+          { label: "Medium", value: "medium" },
+          { label: "Large", value: "large" },
+        ],
+        defaultValue: "inherit",
+      },
+      ...paddingFields(),
+      { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+    ],
   },
   Announcement: {
     type: "Announcement",

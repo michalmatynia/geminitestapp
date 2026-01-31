@@ -13,7 +13,7 @@ export type GridTemplateRecord = {
 export function normalizeGridTemplates(input: unknown): GridTemplateRecord[] {
   if (!Array.isArray(input)) return [];
   return input
-    .map((entry, index): GridTemplateRecord | null => {
+    .map((entry: unknown, index: number): GridTemplateRecord | null => {
       if (!entry || typeof entry !== "object") return null;
       const record = entry as Partial<GridTemplateRecord>;
       const section = record.section;
@@ -23,12 +23,12 @@ export function normalizeGridTemplates(input: unknown): GridTemplateRecord[] {
         name: typeof record.name === "string" && record.name.trim().length > 0 ? record.name.trim() : `Grid template ${index + 1}`,
         description: typeof record.description === "string" ? record.description : "",
         createdAt: typeof record.createdAt === "string" && record.createdAt.length > 0 ? record.createdAt : new Date().toISOString(),
-        section: section as SectionInstance,
+        section,
       };
     })
-    .filter((record): record is GridTemplateRecord => Boolean(record));
+    .filter((record: GridTemplateRecord | null): record is GridTemplateRecord => Boolean(record));
 }
 
 export function cloneGridTemplateSection(section: SectionInstance): SectionInstance {
-  return JSON.parse(JSON.stringify(section)) as SectionInstance;
+  return structuredClone(section);
 }

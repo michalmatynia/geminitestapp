@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Input,
@@ -19,17 +19,18 @@ import {
   useDeleteCmsDomain,
   useUpdateCmsDomain,
 } from "@/features/cms/hooks/useCmsQueries";
+import type { CmsDomain } from "@/features/cms/types";
 
-export default function ZonesPage() {
+export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
   const createDomain = useCreateCmsDomain();
   const deleteDomain = useDeleteCmsDomain();
   const updateDomain = useUpdateCmsDomain();
-  const domains = domainsQuery.data ?? [];
+  const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     const value = domain.trim();
     if (!value) {
@@ -40,7 +41,7 @@ export default function ZonesPage() {
     try {
       await createDomain.mutateAsync({ domain: value });
       setDomain("");
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create domain.");
     }
   };
@@ -50,7 +51,7 @@ export default function ZonesPage() {
     await deleteDomain.mutateAsync(id);
   };
 
-  const handleAliasChange = async (id: string, aliasOfValue: string) => {
+  const handleAliasChange = async (id: string, aliasOfValue: string): Promise<void> => {
     const aliasOf = aliasOfValue === "none" ? null : aliasOfValue;
     await updateDomain.mutateAsync({ id, input: { aliasOf } });
   };
@@ -66,7 +67,7 @@ export default function ZonesPage() {
         }
       >
         <form
-          onSubmit={(event) => { void handleSubmit(event); }}
+          onSubmit={(event: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(event); }}
           className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end"
         >
           <div className="flex-1">
@@ -74,7 +75,7 @@ export default function ZonesPage() {
             <Input
               id="domain"
               value={domain}
-              onChange={(event) => setDomain(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setDomain(event.target.value)}
               placeholder="milkbar.com"
               autoComplete="off"
             />
@@ -91,13 +92,13 @@ export default function ZonesPage() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {domains.map((item) => (
+            {domains.map((item: CmsDomain) => (
               <li key={item.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium">{item.domain}</span>
                   {item.aliasOf ? (
                     <span className="text-xs text-muted-foreground">
-                      Shares slugs with {domains.find((d) => d.id === item.aliasOf)?.domain ?? "another zone"}
+                      Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? "another zone"}
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">Independent zone</span>
@@ -106,7 +107,7 @@ export default function ZonesPage() {
                 <div className="flex items-center gap-2">
                   <Select
                     value={item.aliasOf ?? "none"}
-                    onValueChange={(value) => { void handleAliasChange(item.id, value); }}
+                    onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
                   >
                     <SelectTrigger className="h-8 w-[220px]">
                       <SelectValue placeholder="Independent zone" />
@@ -114,8 +115,8 @@ export default function ZonesPage() {
                     <SelectContent>
                       <SelectItem value="none">Independent zone</SelectItem>
                       {domains
-                        .filter((domainOption) => domainOption.id !== item.id)
-                        .map((domainOption) => (
+                        .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
+                        .map((domainOption: CmsDomain) => (
                           <SelectItem key={domainOption.id} value={domainOption.id}>
                             Share with {domainOption.domain}
                           </SelectItem>

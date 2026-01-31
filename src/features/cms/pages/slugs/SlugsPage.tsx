@@ -35,8 +35,9 @@ import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelectio
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
+import type { CmsDomain, Slug } from "@/features/cms/types";
 
-export default function SlugsPage() {
+export default function SlugsPage(): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -68,8 +69,8 @@ export default function SlugsPage() {
   const allSlugsQuery = useCmsAllSlugs(attachOpen);
   const createSlug = useCreateSlug();
   const deleteSlug = useDeleteSlug();
-  const slugs = slugsQuery.data ?? [];
-  const allSlugs = allSlugsQuery.data ?? [];
+  const slugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
+  const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
 
   const handleDomainChange = (value: string): void => {
     const params = new URLSearchParams(searchParams.toString());
@@ -88,33 +89,33 @@ export default function SlugsPage() {
     updateSetting.mutate({ key: CMS_DOMAIN_SETTINGS_KEY, value: serializeSetting(next) });
   };
 
-  const buildDomainHref = useMemo(() => {
-    return (href: string) =>
+  const buildDomainHref = useMemo((): ((href: string) => string) => {
+    return (href: string): string =>
       activeDomainId ? `${href}?domainId=${encodeURIComponent(activeDomainId)}` : href;
   }, [activeDomainId]);
 
-  const availableAttachSlugs = useMemo(() => {
-    const assigned = new Set(slugs.map((slug) => slug.id));
-    const base = allSlugs.filter((slug) => !assigned.has(slug.id));
+  const availableAttachSlugs = useMemo((): Slug[] => {
+    const assigned = new Set(slugs.map((slug: Slug) => slug.id));
+    const base = allSlugs.filter((slug: Slug) => !assigned.has(slug.id));
     const term = attachSearch.trim().toLowerCase();
     if (!term) return base;
-    return base.filter((slug) => slug.slug.toLowerCase().includes(term));
+    return base.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
   }, [allSlugs, slugs, attachSearch]);
 
-  const selectedAttachCount = useMemo(() => attachSelectedIds.length, [attachSelectedIds]);
+  const selectedAttachCount = useMemo((): number => attachSelectedIds.length, [attachSelectedIds]);
 
-  const toggleAttachSelection = (slugId: string) => {
-    setAttachSelectedIds((prev) =>
-      prev.includes(slugId) ? prev.filter((id) => id !== slugId) : [...prev, slugId]
+  const toggleAttachSelection = (slugId: string): void => {
+    setAttachSelectedIds((prev: string[]): string[] =>
+      prev.includes(slugId) ? prev.filter((id: string): boolean => id !== slugId) : [...prev, slugId]
     );
   };
 
-  const selectAllVisible = () => {
-    const visibleIds = availableAttachSlugs.map((slug) => slug.id);
-    setAttachSelectedIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+  const selectAllVisible = (): void => {
+    const visibleIds = availableAttachSlugs.map((slug: Slug) => slug.id);
+    setAttachSelectedIds((prev: string[]): string[] => Array.from(new Set([...prev, ...visibleIds])));
   };
 
-  const clearSelection = () => {
+  const clearSelection = (): void => {
     setAttachSelectedIds([]);
   };
 
@@ -123,7 +124,7 @@ export default function SlugsPage() {
       setAttachError("Select at least one slug to attach.");
       return;
     }
-    const selected = allSlugs.filter((item) => attachSelectedIds.includes(item.id));
+    const selected = allSlugs.filter((item: Slug) => attachSelectedIds.includes(item.id));
     if (!selected.length) {
       setAttachError("Selected slugs are no longer available.");
       return;
@@ -137,7 +138,7 @@ export default function SlugsPage() {
     setAttachOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string): Promise<void> => {
     if (window.confirm("Are you sure you want to delete this slug?")) {
       await deleteSlug.mutateAsync({ id, domainId: activeDomainId });
     }
@@ -168,7 +169,7 @@ export default function SlugsPage() {
                       <SelectValue placeholder="Current domain" />
                     </SelectTrigger>
                     <SelectContent>
-                      {domains.map((item) => (
+                      {domains.map((item: CmsDomain) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.domain}
                           {hostDomainId === item.id ? " (current)" : ""}
@@ -181,7 +182,7 @@ export default function SlugsPage() {
                 )}
                 <Dialog
                   open={attachOpen}
-                  onOpenChange={(open) => {
+                  onOpenChange={(open: boolean): void => {
                     setAttachOpen(open);
                     if (!open) {
                       setAttachSelectedIds([]);
@@ -208,7 +209,7 @@ export default function SlugsPage() {
                         <Input
                           id="attach-search"
                           value={attachSearch}
-                          onChange={(event) => setAttachSearch(event.target.value)}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setAttachSearch(event.target.value)}
                           placeholder="Search slugs..."
                         />
                       </div>
@@ -244,7 +245,7 @@ export default function SlugsPage() {
                             </p>
                           ) : (
                             <ul className="space-y-2">
-                              {availableAttachSlugs.map((slug) => (
+                              {availableAttachSlugs.map((slug: Slug) => (
                                 <li key={slug.id} className="flex items-center gap-2">
                                   <Checkbox
                                     checked={attachSelectedIds.includes(slug.id)}
@@ -294,7 +295,7 @@ export default function SlugsPage() {
         }
       >
         <ul>
-          {slugs.map((slug) => (
+          {slugs.map((slug: Slug) => (
             <li
               key={slug.id}
               className="flex justify-between items-center py-2 border-b border"
@@ -314,7 +315,7 @@ export default function SlugsPage() {
                   </span>
                 ) : sharedWithDomains.length > 0 ? (
                   <span className="text-xs text-muted-foreground">
-                    Shared with {sharedWithDomains.map((item) => item.domain).join(", ")}
+                    Shared with {sharedWithDomains.map((item: CmsDomain) => item.domain).join(", ")}
                   </span>
                 ) : null}
               </Link>

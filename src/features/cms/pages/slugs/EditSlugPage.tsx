@@ -10,7 +10,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useCmsSlug, useUpdateSlug } from "@/features/cms/hooks/useCmsQueries";
 import type { Slug } from "@/features/cms/types";
 
-export default function EditSlugPageLoader() {
+export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
   const id = params.id as string;
   const searchParams = useSearchParams();
@@ -32,12 +32,12 @@ function EditSlugForm({
   initialSlug: Slug;
   id: string;
   domainId?: string;
-}) {
+}): React.JSX.Element {
   const [slug, setSlug] = useState<Slug>(initialSlug);
   const router = useRouter();
   const updateSlug = useUpdateSlug();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!slug) return;
 
@@ -49,13 +49,13 @@ function EditSlugForm({
   return (
     <div className="container mx-auto py-10">
       <SectionHeader title="Edit Slug" className="mb-6" />
-      <form onSubmit={(e) => { void handleSubmit(e); }}>
+      <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
         <div className="mb-4">
           <Label htmlFor="slug">Slug</Label>
           <Input
             id="slug"
             value={slug.slug}
-            onChange={(e) => setSlug({ ...slug, slug: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSlug({ ...slug, slug: e.target.value })}
             required
           />
         </div>
@@ -63,7 +63,7 @@ function EditSlugForm({
           <Switch
             id="isDefault"
             checked={Boolean(slug.isDefault)}
-            onCheckedChange={(checked) => setSlug({ ...slug, isDefault: checked })}
+            onCheckedChange={(checked: boolean): void => setSlug({ ...slug, isDefault: checked })}
           />
           <Label htmlFor="isDefault" className="ml-2">
             Set as default

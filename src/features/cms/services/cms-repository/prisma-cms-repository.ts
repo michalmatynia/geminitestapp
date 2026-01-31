@@ -8,7 +8,7 @@ import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsTheme
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
-  Object.keys(newObj).forEach((key) => {
+  Object.keys(newObj).forEach((key: string): void => {
     if (newObj[key as keyof T] === undefined) {
       delete newObj[key as keyof T];
     }
@@ -99,7 +99,7 @@ export const prismaCmsRepository: CmsRepository = {
     await prisma.pageSlug.deleteMany({ where: { pageId } });
     if (slugIds.length === 0) return;
     await prisma.pageSlug.createMany({
-      data: slugIds.map((slugId) => ({ pageId, slugId })),
+      data: slugIds.map((slugId: string) => ({ pageId, slugId })),
     });
   },
 
@@ -107,7 +107,7 @@ export const prismaCmsRepository: CmsRepository = {
     await prisma.pageComponent.deleteMany({ where: { pageId } });
     if (components.length === 0) return;
     await prisma.pageComponent.createMany({
-      data: components.map((component, index) => ({
+      data: components.map((component: PageComponent, index: number) => ({
         pageId,
         type: component.type,
         content: component.content as Prisma.InputJsonValue,

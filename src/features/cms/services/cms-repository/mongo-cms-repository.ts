@@ -56,7 +56,7 @@ interface PageSlugDocument {
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
-  Object.keys(newObj).forEach((key) => {
+  Object.keys(newObj).forEach((key: string): void => {
     if (newObj[key as keyof T] === undefined) {
       delete newObj[key as keyof T];
     }
@@ -91,10 +91,10 @@ export const mongoCmsRepository: CmsRepository = {
     const db = await getMongoDb();
     const docs = await db.collection<PageDocument>(pagesCollection).find().sort({ createdAt: -1 }).toArray();
     
-    return Promise.all(docs.map(async doc => {
+    return Promise.all(docs.map(async (doc: PageDocument): Promise<Page> => {
       const pageId = doc.id;
       const slugLinks = await db.collection<PageSlugDocument>("cms_page_slugs").find({ pageId }).toArray();
-      const slugIds = slugLinks.map(link => link.slugId);
+      const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
       const slugs = await db.collection<SlugDocument>(slugsCollection).find({ id: { $in: slugIds } }).toArray();
 
       return {
@@ -109,7 +109,7 @@ export const mongoCmsRepository: CmsRepository = {
         robotsMeta: doc.robotsMeta ?? "index,follow",
         showMenu: normalizeShowMenu(doc.showMenu),
         components: doc.components || [],
-        slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
+        slugs: slugs.map((s: SlugDocument) => ({ slug: { slug: s.slug } })),
       } as Page;
     }));
   },
@@ -121,7 +121,7 @@ export const mongoCmsRepository: CmsRepository = {
 
     const pageId = doc.id;
     const slugLinks = await db.collection<PageSlugDocument>("cms_page_slugs").find({ pageId }).toArray();
-    const slugIds = slugLinks.map(link => link.slugId);
+    const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
     const slugs = await db.collection<SlugDocument>(slugsCollection).find({ id: { $in: slugIds } }).toArray();
 
     return {
@@ -136,7 +136,7 @@ export const mongoCmsRepository: CmsRepository = {
       robotsMeta: doc.robotsMeta ?? "index,follow",
       showMenu: normalizeShowMenu(doc.showMenu),
       components: doc.components || [],
-      slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
+      slugs: slugs.map((s: SlugDocument) => ({ slug: { slug: s.slug } })),
     } as Page;
   },
 
@@ -212,7 +212,7 @@ export const mongoCmsRepository: CmsRepository = {
     await db.collection("cms_page_slugs").deleteMany({ pageId });
     if (slugIds.length === 0) return;
     await db.collection<PageSlugDocument>("cms_page_slugs").insertMany(
-      slugIds.map((slugId) => ({ pageId, slugId, assignedAt: new Date() }))
+      slugIds.map((slugId: string) => ({ pageId, slugId, assignedAt: new Date() }))
     );
   },
 
@@ -228,7 +228,7 @@ export const mongoCmsRepository: CmsRepository = {
   async getSlugs(): Promise<Slug[]> {
     const db = await getMongoDb();
     const docs = await db.collection<SlugDocument>(slugsCollection).find().sort({ createdAt: -1 }).toArray();
-    return docs.map(doc => ({
+    return docs.map((doc: SlugDocument) => ({
       id: doc.id,
       slug: doc.slug,
       isDefault: doc.isDefault,

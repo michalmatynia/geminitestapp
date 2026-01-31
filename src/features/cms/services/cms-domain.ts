@@ -215,7 +215,7 @@ export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
     .find()
     .sort({ domain: 1 })
     .toArray();
-  return docs.map((doc) => toDomainResponse(doc));
+  return docs.map((doc: CmsDomainRecord) => toDomainResponse(doc));
 }
 
 export async function createCmsDomain(domain: string): Promise<CmsDomainResponse> {
@@ -357,11 +357,11 @@ export async function getSlugsForDomain(domainId: string, repo: CmsRepository): 
   }
   const links = await getDomainSlugLinks(domainId);
   if (!links.length) return [];
-  const map = new Map(links.map((link) => [link.slugId, link]));
+  const map = new Map(links.map((link: CmsDomainSlugLink) => [link.slugId, link]));
   const slugs = await repo.getSlugs();
   return slugs
-    .filter((slug) => map.has(slug.id))
-    .map((slug) => ({
+    .filter((slug: Slug) => map.has(slug.id))
+    .map((slug: Slug) => ({
       ...slug,
       isDefault: map.get(slug.id)?.isDefault ?? false,
     }));
@@ -379,7 +379,7 @@ export async function getSlugForDomainById(
   const slug = await repo.getSlugById(slugId);
   if (!slug) return null;
   const links = await getDomainSlugLinks(domainId);
-  const link = links.find((item) => item.slugId === slugId);
+  const link = links.find((item: CmsDomainSlugLink) => item.slugId === slugId);
   if (!link && process.env.MONGODB_URI) return null;
   return {
     ...slug,
@@ -401,7 +401,7 @@ export async function getSlugForDomainByValue(
   const isAllowed = await isSlugAssignedToDomain(domainId, slug.id);
   if (!isAllowed) return null;
   const links = await getDomainSlugLinks(domainId);
-  const link = links.find((item) => item.slugId === slug.id);
+  const link = links.find((item: CmsDomainSlugLink) => item.slugId === slug.id);
   return {
     ...slug,
     isDefault: link?.isDefault ?? false,

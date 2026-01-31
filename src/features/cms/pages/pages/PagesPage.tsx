@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
 import { CmsDomainSelector } from "@/features/cms";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import type { PageStatus, PageSummary, PageSlugLink } from "@/features/cms/types";
+import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms/types";
 import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 
@@ -33,8 +33,9 @@ const STATUS_LABELS: Record<PageStatus, string> = {
 };
 
 type StatusFilter = PageStatus | "all";
+type StatusFilterOption = { label: string; value: StatusFilter };
 
-const STATUS_FILTERS: Array<{ label: string; value: StatusFilter }> = [
+const STATUS_FILTERS: StatusFilterOption[] = [
   { label: "All", value: "all" },
   { label: "Draft", value: "draft" },
   { label: "Published", value: "published" },
@@ -51,13 +52,13 @@ export default function PagesPage(): React.ReactNode {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
 
-  const pages = pagesQuery.data ?? [];
-  const domainSlugs = slugsQuery.data ?? [];
+  const pages = useMemo((): PageSummary[] => pagesQuery.data ?? [], [pagesQuery.data]);
+  const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const domainSlugSet = useMemo(
-    () => (domainSlugs.length ? new Set(domainSlugs.map((slug) => slug.slug)) : null),
+    (): Set<string> | null => (domainSlugs.length ? new Set(domainSlugs.map((slug: Slug) => slug.slug)) : null),
     [domainSlugs]
   );
-  const filteredPages = useMemo(() => {
+  const filteredPages = useMemo((): PageSummary[] => {
     if (statusFilter === "all") return pages;
     return pages.filter((page: PageSummary) => (page.status ?? "draft") === statusFilter);
   }, [pages, statusFilter]);
@@ -101,7 +102,7 @@ export default function PagesPage(): React.ReactNode {
         }
       >
         <div className="mb-4 flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((filter) => (
+          {STATUS_FILTERS.map((filter: StatusFilterOption) => (
             <button
               key={filter.value}
               type="button"
@@ -121,10 +122,10 @@ export default function PagesPage(): React.ReactNode {
             const status: PageStatus = page.status ?? "draft";
             const slugValues = page.slugs.map((s: PageSlugLink) => s.slug.slug);
             const outOfZone = domainSlugSet
-              ? slugValues.filter((value) => !domainSlugSet.has(value))
+              ? slugValues.filter((value: string) => !domainSlugSet.has(value))
               : [];
             const zoneSlugs = domainSlugSet
-              ? slugValues.filter((value) => domainSlugSet.has(value))
+              ? slugValues.filter((value: string) => domainSlugSet.has(value))
               : [];
             const selectedSlugCandidate = previewSelections[page.id];
             const previewSlug = zoneSlugs.length
@@ -161,14 +162,14 @@ export default function PagesPage(): React.ReactNode {
                 <div className="flex items-center gap-3">
                   {outOfZone.length > 0 && (
                     <span className="text-xs text-amber-400">
-                      Out of zone: {outOfZone.map((slug) => `/${slug}`).join(", ")}
+                      Out of zone: {outOfZone.map((slug: string) => `/${slug}`).join(", ")}
                     </span>
                   )}
                   {zoneSlugs.length > 1 ? (
                     <Select
                       value={previewSlug ?? ""}
-                      onValueChange={(value) =>
-                        setPreviewSelections((prev) => ({ ...prev, [page.id]: value }))
+                      onValueChange={(value: string): void =>
+                        setPreviewSelections((prev: Record<string, string>): Record<string, string> => ({ ...prev, [page.id]: value }))
                       }
                       disabled={slugsQuery.isLoading}
                     >
@@ -176,7 +177,7 @@ export default function PagesPage(): React.ReactNode {
                         <SelectValue placeholder="Preview slug" />
                       </SelectTrigger>
                       <SelectContent>
-                        {zoneSlugs.map((slug) => (
+                        {zoneSlugs.map((slug: string) => (
                           <SelectItem key={slug} value={slug}>
                             /{slug}
                           </SelectItem>

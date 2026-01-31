@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, useToast } from "@/shared/ui";
-import type { SettingsField, InspectorSettings, BlockInstance } from "../../types/page-builder";
+import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
@@ -352,12 +352,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (!selectedSection || selectedSection.type !== "Grid") return;
     const trimmed = gridTemplateName.trim();
     const name = trimmed.length > 0 ? trimmed : `Grid template ${gridTemplates.length + 1}`;
+    const sectionClone: SectionInstance = structuredClone({
+      ...selectedSection,
+      zone: "template",
+    });
     const nextTemplate: GridTemplateRecord = {
       id: `grid-${Date.now()}`,
       name,
       description: "",
       createdAt: new Date().toISOString(),
-      section: JSON.parse(JSON.stringify({ ...selectedSection, zone: "template" })) as SectionInstance,
+      section: sectionClone,
     };
     const nextTemplates = [...gridTemplates, nextTemplate];
     try {

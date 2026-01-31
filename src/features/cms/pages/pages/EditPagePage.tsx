@@ -1,16 +1,16 @@
 "use client";
 
 import { Button, Checkbox, Input, Label, SectionHeader } from "@/shared/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 import CmsEditorLayout from "@/features/cms/components/CmsEditorLayout";
 import { CmsDomainSelector } from "@/features/cms";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from "@/features/cms/hooks/useCmsQueries";
-import type { Page, Slug } from "@/features/cms/types";
+import type { Page, Slug, PageSlugLink } from "@/features/cms/types";
 
-export default function EditPagePageLoader() {
+export default function EditPagePageLoader(): React.JSX.Element {
   const { id } = useParams();
   const pageQuery = useCmsPage(id as string | undefined);
 
@@ -18,63 +18,56 @@ export default function EditPagePageLoader() {
     return <div>Loading...</div>;
   }
 
-  return <EditPageContent initialPage={pageQuery.data} id={id as string} />;
+  return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={id as string} />;
 }
 
-function EditPageContent({ initialPage, id }: { initialPage: Page; id: string }) {
-  const [page, setPage] = useState<Page>(initialPage);
+function EditPageContent({ initialPage, id }: { initialPage: Page; id: string }): React.JSX.Element {
+  const page = initialPage;
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(true);
   const [search, setSearch] = useState("");
-  const [selectedSlugIds, setSelectedSlugIds] = useState<string[]>([]);
-  const initializedRef = useRef(false);
+  const [manualSelectedSlugIds, setManualSelectedSlugIds] = useState<string[] | null>(null);
   const router = useRouter();
   const updatePage = useUpdatePage();
 
-  useEffect(() => {
-    setPage(initialPage);
-    initializedRef.current = false;
-  }, [initialPage]);
-
-  const allSlugs = allSlugsQuery.data ?? [];
-  const domainSlugs = slugsQuery.data ?? [];
-  const allSlugByValue = useMemo(() => {
+  const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
+  const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
+  const allSlugByValue = useMemo((): Map<string, { id: string; slug: string }> => {
     const map = new Map<string, { id: string; slug: string }>();
-    allSlugs.forEach((slug) => map.set(slug.slug, { id: slug.id, slug: slug.slug }));
+    allSlugs.forEach((slug: Slug): void => map.set(slug.slug, { id: slug.id, slug: slug.slug }));
     return map;
   }, [allSlugs]);
 
-  useEffect(() => {
-    if (initializedRef.current) return;
-    if (!allSlugs.length) return;
-    const pageSlugValues = (initialPage.slugs ?? []).map((s) => s.slug.slug);
-    const ids = pageSlugValues
-      .map((value) => allSlugByValue.get(value)?.id)
-      .filter((value): value is string => Boolean(value));
-    setSelectedSlugIds(ids);
-    initializedRef.current = true;
-  }, [allSlugs, allSlugByValue, initialPage.slugs]);
+  const initialSelectedSlugIds = useMemo((): string[] => {
+    if (!allSlugs.length) return [];
+    const pageSlugValues = (initialPage.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
+    return pageSlugValues
+      .map((value: string) => allSlugByValue.get(value)?.id)
+      .filter((value: string | undefined): value is string => Boolean(value));
+  }, [allSlugs.length, allSlugByValue, initialPage.slugs]);
 
-  const domainSlugIds = useMemo(() => new Set(domainSlugs.map((slug) => slug.id)), [domainSlugs]);
-  const selectedSlugs = useMemo(() => {
-    const byId = new Map(allSlugs.map((slug) => [slug.id, slug]));
+  const selectedSlugIds = manualSelectedSlugIds ?? initialSelectedSlugIds;
+
+  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const selectedSlugs = useMemo((): Slug[] => {
+    const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
     const isSlug = (value: Slug | undefined): value is Slug => Boolean(value);
-    return selectedSlugIds.map((idValue) => byId.get(idValue)).filter(isSlug);
+    return selectedSlugIds.map((idValue: string) => byId.get(idValue)).filter(isSlug);
   }, [allSlugs, selectedSlugIds]);
 
   const crossZoneSlugs = useMemo(
-    () => selectedSlugs.filter((slug) => !domainSlugIds.has(slug.id)),
+    (): Slug[] => selectedSlugs.filter((slug: Slug) => !domainSlugIds.has(slug.id)),
     [selectedSlugs, domainSlugIds]
   );
 
-  const filteredDomainSlugs = useMemo(() => {
+  const filteredDomainSlugs = useMemo((): Slug[] => {
     const term = search.trim().toLowerCase();
     if (!term) return domainSlugs;
-    return domainSlugs.filter((slug) => slug.slug.toLowerCase().includes(term));
+    return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
   }, [domainSlugs, search]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!page) return;
 
     await updatePage.mutateAsync({
@@ -89,7 +82,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
           <SectionHeader title={page.name} description="Manage page slugs per zone." />
-          <Button onClick={() => { void handleSave(); }}>
+          <Button onClick={(): void => { void handleSave(); }}>
             {updatePage.isPending ? "Saving..." : "Save"}
           </Button>
         </div>
@@ -104,7 +97,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
             <Input
               id="slug-search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
               placeholder="Search slugs..."
             />
             <div className="max-h-64 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2">
@@ -113,16 +106,19 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                   No slugs available for this zone.
                 </p>
               ) : (
-                filteredDomainSlugs.map((slug) => {
+                filteredDomainSlugs.map((slug: Slug) => {
                   const checked = selectedSlugIds.includes(slug.id);
                   return (
                     <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
                       <Checkbox
                         checked={checked}
                         onCheckedChange={() => {
-                          setSelectedSlugIds((prev) =>
-                            checked ? prev.filter((idValue) => idValue !== slug.id) : [...prev, slug.id]
-                          );
+                          setManualSelectedSlugIds((prev: string[] | null): string[] => {
+                            const current = prev ?? selectedSlugIds;
+                            return checked
+                              ? current.filter((idValue: string): boolean => idValue !== slug.id)
+                              : [...current, slug.id];
+                          });
                         }}
                       />
                       /{slug.slug}
@@ -143,12 +139,15 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                 These slugs are not part of the current zone. Remove them or switch zones.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {crossZoneSlugs.map((slug) => (
+                {crossZoneSlugs.map((slug: Slug) => (
                   <button
                     key={slug.id}
                     type="button"
                     onClick={() =>
-                      setSelectedSlugIds((prev) => prev.filter((idValue) => idValue !== slug.id))
+                      setManualSelectedSlugIds((prev: string[] | null): string[] => {
+                        const current = prev ?? selectedSlugIds;
+                        return current.filter((idValue: string): boolean => idValue !== slug.id);
+                      })
                     }
                     className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-1 text-[11px] text-amber-200"
                   >

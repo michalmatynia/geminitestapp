@@ -149,7 +149,7 @@ const normalizeItem = (item: Partial<MenuItem> | null | undefined, index: number
   };
 };
 
-const animationPresetSet = new Set(ANIMATION_PRESETS.map((preset) => preset.value));
+const animationPresetSet = new Set(ANIMATION_PRESETS.map((preset: { label: string; value: AnimationPreset }) => preset.value));
 const normalizeAnimationPreset = (value: unknown, fallback: AnimationPreset): AnimationPreset => {
   if (typeof value !== "string") return fallback;
   return animationPresetSet.has(value as AnimationPreset) ? (value as AnimationPreset) : fallback;
@@ -195,7 +195,9 @@ export const normalizeMenuSettings = (input?: Partial<MenuSettings> | null): Men
     normalizeAnimationPreset(input?.menuHoverAnimation, DEFAULT_MENU_SETTINGS.menuHoverAnimation);
 
   const rawItems = Array.isArray(input?.items) ? input?.items : merged.items;
-  const normalizedItems = Array.isArray(rawItems) ? rawItems.map((item, index) => normalizeItem(item, index)) : DEFAULT_MENU_SETTINGS.items;
+  const normalizedItems = Array.isArray(rawItems)
+    ? rawItems.map((item: Partial<MenuItem>, index: number) => normalizeItem(item, index))
+    : DEFAULT_MENU_SETTINGS.items;
   merged.items = normalizedItems.length > 0 ? normalizedItems : DEFAULT_MENU_SETTINGS.items;
 
   return merged;

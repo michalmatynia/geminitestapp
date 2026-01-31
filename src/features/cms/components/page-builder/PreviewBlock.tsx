@@ -974,7 +974,15 @@ export function PreviewSection({
                 <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={src} alt={alt} style={{ ...presentation.imageStyles, height: "auto" }} />
+                <img
+                  src={src}
+                  alt={alt}
+                  style={{
+                    ...presentation.imageStyles,
+                    display: "block",
+                    height: "auto",
+                  }}
+                />
               )}
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
@@ -1863,7 +1871,7 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `w-full text-left transition ${contained ? "max-w-full" : ""}`,
             `rounded border p-1 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -1877,7 +1885,15 @@ function PreviewBlockItem({
                 <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={src} alt={alt} style={{ ...presentation.imageStyles, height: "auto" }} />
+                <img
+                  src={src}
+                  alt={alt}
+                  style={{
+                    ...presentation.imageStyles,
+                    display: "block",
+                    height: "auto",
+                  }}
+                />
               )}
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
@@ -1979,7 +1995,7 @@ function PreviewBlockItem({
             onClick={handleSelect}
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
-              `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+              `w-full text-left transition ${contained ? "max-w-full" : ""}`,
               `rounded border p-1 ${
                 isSelected
                   ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -1989,13 +2005,7 @@ function PreviewBlockItem({
           >
             {src ? (
               <div className="cms-media relative" style={{ width: `${width}%`, ...resolvedStyles }}>
-                <NextImage
-                  src={src}
-                  alt={alt}
-                  className="block h-auto w-full object-cover"
-                  fill
-                  unoptimized
-                />
+                <NextImage src={src} alt={alt} width={800} height={600} className="h-auto w-full" unoptimized />
               </div>
             ) : (
               <div

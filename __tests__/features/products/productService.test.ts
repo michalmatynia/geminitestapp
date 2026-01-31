@@ -79,7 +79,7 @@ describe("productService", () => {
 
       const products = await productService.getProducts({ search: "Apple" });
       expect(products.length).toBe(1);
-      expect(products[0].name_en).toBe("Apple");
+      expect(products[0]!.name_en).toBe("Apple");
     });
   });
 

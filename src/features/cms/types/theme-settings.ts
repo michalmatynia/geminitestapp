@@ -630,12 +630,13 @@ export const normalizeThemeSettings = (
   const fallbackSchemes = DEFAULT_THEME.colorSchemes;
   const rawSchemes = Array.isArray(input?.colorSchemes) ? input?.colorSchemes : merged.colorSchemes;
   const normalizedSchemes = Array.isArray(rawSchemes)
-    ? rawSchemes.map((scheme, index) => normalizeScheme(scheme, fallbackSchemes[index] ?? fallbackSchemes[0]))
+    ? rawSchemes.map((scheme: Partial<ColorScheme> | null | undefined, index: number) =>
+      normalizeScheme(scheme, fallbackSchemes[index] ?? fallbackSchemes[0]))
     : fallbackSchemes;
 
   merged.colorSchemes = normalizedSchemes.length > 0 ? normalizedSchemes : fallbackSchemes;
 
-  if (!merged.colorSchemes.some((scheme) => scheme.id === merged.activeColorSchemeId)) {
+  if (!merged.colorSchemes.some((scheme: ColorScheme) => scheme.id === merged.activeColorSchemeId)) {
     merged.activeColorSchemeId = merged.colorSchemes[0]?.id ?? "";
   }
 
@@ -646,7 +647,7 @@ export const buildColorSchemeMap = (
   settings: ThemeSettings
 ): Record<string, ColorSchemeColors> => {
   const schemes = settings.colorSchemes ?? [];
-  return schemes.reduce<Record<string, ColorSchemeColors>>((acc, scheme) => {
+  return schemes.reduce<Record<string, ColorSchemeColors>>((acc: Record<string, ColorSchemeColors>, scheme: ColorScheme) => {
     acc[scheme.id] = scheme.colors;
     return acc;
   }, {});

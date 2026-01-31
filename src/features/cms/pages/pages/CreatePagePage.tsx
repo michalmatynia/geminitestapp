@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import { CmsDomainSelector } from "@/features/cms";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import { useCmsSlugs, useCreatePage } from "@/features/cms/hooks/useCmsQueries";
+import type { Slug } from "@/features/cms/types";
 
-export default function CreatePagePage() {
+export default function CreatePagePage(): React.JSX.Element {
   const [name, setName] = useState("");
   const [slugIds, setSlugIds] = useState<string[]>([]);
   const router = useRouter();
@@ -18,11 +19,11 @@ export default function CreatePagePage() {
   const [search, setSearch] = useState("");
 
   const slugs = slugsQuery.data ?? [];
-  const filteredSlugs = slugs.filter((slug) =>
+  const filteredSlugs = slugs.filter((slug: Slug): boolean =>
     slug.slug.toLowerCase().includes(search.trim().toLowerCase())
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     await createPage.mutateAsync({ name, slugIds });
     router.push("/admin/cms/pages");
@@ -34,13 +35,13 @@ export default function CreatePagePage() {
       <div className="mb-6">
         <CmsDomainSelector />
       </div>
-      <form onSubmit={(e) => { void handleSubmit(e); }}>
+      <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
         <div className="mb-4">
           <Label htmlFor="name">Page Name</Label>
           <Input
             id="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
             required
           />
         </div>
@@ -49,7 +50,7 @@ export default function CreatePagePage() {
           <Input
             id="slug-search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
             placeholder="Search slugs..."
           />
           <div className="max-h-56 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2">
@@ -58,15 +59,15 @@ export default function CreatePagePage() {
                 No slugs available for this zone.
               </p>
             ) : (
-              filteredSlugs.map((slug) => {
+              filteredSlugs.map((slug: Slug) => {
                 const checked = slugIds.includes(slug.id);
                 return (
                   <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => {
-                        setSlugIds((prev) =>
-                          checked ? prev.filter((id) => id !== slug.id) : [...prev, slug.id]
+                        setSlugIds((prev: string[]): string[] =>
+                          checked ? prev.filter((id: string): boolean => id !== slug.id) : [...prev, slug.id]
                         );
                       }}
                     />

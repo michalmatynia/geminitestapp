@@ -96,7 +96,6 @@ export function PagePreviewPanel(): React.ReactNode {
   );
   const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
   const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
-  const pageCornerRadius = typeof theme.borderRadius === "number" ? theme.borderRadius : 0;
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
@@ -391,9 +390,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const previewWidthClass =
     state.previewMode === "mobile"
       ? "max-w-[420px]"
-      : theme.fullWidth
-        ? "max-w-none w-full"
-        : "max-w-3xl";
+      : "w-full";
   const previewFrameClass =
     state.previewMode === "mobile"
       ? "rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
@@ -560,8 +557,6 @@ export function PagePreviewPanel(): React.ReactNode {
                   ...hoverVars,
                   ...mediaVars,
                   backgroundColor: theme.backgroundColor,
-                  borderRadius: pageCornerRadius > 0 ? pageCornerRadius : undefined,
-                  overflow: pageCornerRadius > 0 ? "hidden" : undefined,
                 }}
               >
                 {ZONE_ORDER.map((zone: PageZone) => {

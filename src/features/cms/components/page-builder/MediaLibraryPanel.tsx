@@ -70,9 +70,9 @@ export function MediaLibraryPanel({
       toast("Upload complete.", { variant: "success" });
       await queryClient.invalidateQueries({ queryKey: ["files"] });
       if (shouldAutoConfirm && uploaded.length > 0) {
-        const selections = uploaded
-          .map((file: any) => ({ id: file.id, filepath: file.filepath }))
-          .filter((file: any) => file.filepath);
+        const selections: ImageFileSelection[] = uploaded
+          .map((file: ImageFileRecord): ImageFileSelection => ({ id: file.id, filepath: file.filepath }))
+          .filter((file: ImageFileSelection): boolean => Boolean(file.filepath));
         if (selections.length > 0) {
           handleSelect(selections);
         }

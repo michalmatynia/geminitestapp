@@ -1075,6 +1075,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setRunDetailOpen,
     runDetailLoading,
     runDetail,
+    setRunDetail,
     runStreamStatus,
     runStreamPaused,
     setRunStreamPaused,

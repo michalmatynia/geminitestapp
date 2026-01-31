@@ -64,7 +64,7 @@ function calculateDepth(
  * Determines if a category is a leaf (has no children).
  */
 function isLeafCategory(categoryId: string, categories: BaseCategory[]): boolean {
-  return !categories.some((cat) => cat.parentId === categoryId);
+  return !categories.some((cat: BaseCategory) => cat.parentId === categoryId);
 }
 
 function buildTree(
@@ -72,12 +72,12 @@ function buildTree(
   parentExternalId: string | null = null
 ): ExternalCategoryWithChildren[] {
   return categories
-    .filter((cat) => cat.parentExternalId === parentExternalId)
-    .map((cat) => ({
+    .filter((cat: ExternalCategory) => cat.parentExternalId === parentExternalId)
+    .map((cat: ExternalCategory) => ({
       ...cat,
       children: buildTree(categories, cat.externalId),
     }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a: ExternalCategoryWithChildren, b: ExternalCategoryWithChildren) => a.name.localeCompare(b.name));
 }
 
 export function getExternalCategoryRepository(): ExternalCategoryRepository {
@@ -91,7 +91,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
 
       // Prepare upsert data
       const now = new Date();
-      const syncInputs: ExternalCategorySyncInput[] = categories.map((cat) => ({
+      const syncInputs: ExternalCategorySyncInput[] = categories.map((cat: BaseCategory) => ({
         connectionId,
         externalId: cat.id,
         name: cat.name,
@@ -144,7 +144,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         orderBy: [{ depth: "asc" }, { name: "asc" }],
       });
 
-      return records.map((r) => ({
+      return records.map((r: any) => ({
         id: r.id,
         connectionId: r.connectionId,
         externalId: r.externalId,
@@ -166,7 +166,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         orderBy: [{ depth: "asc" }, { name: "asc" }],
       });
 
-      const categories: ExternalCategory[] = records.map((r) => ({
+      const categories: ExternalCategory[] = records.map((r: any) => ({
         id: r.id,
         connectionId: r.connectionId,
         externalId: r.externalId,

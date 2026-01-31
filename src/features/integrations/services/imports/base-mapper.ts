@@ -25,7 +25,7 @@ const toInt = (value: unknown): number | null => {
   return null;
 };
 
-const pickString = (record: BaseProductRecord, keys: string[]) => {
+const pickString = (record: BaseProductRecord, keys: string[]): string | null => {
   for (const key of keys) {
     const value = toTrimmedString(record[key]);
     if (value) return value;
@@ -33,7 +33,7 @@ const pickString = (record: BaseProductRecord, keys: string[]) => {
   return null;
 };
 
-const pickInt = (record: BaseProductRecord, keys: string[]) => {
+const pickInt = (record: BaseProductRecord, keys: string[]): number | null => {
   for (const key of keys) {
     const value = toInt(record[key]);
     if (value !== null) return value;
@@ -53,7 +53,7 @@ const pickNested = (
   return current;
 };
 
-const pickNestedInt = (record: BaseProductRecord, paths: string[][]) => {
+const pickNestedInt = (record: BaseProductRecord, paths: string[][]): number | null => {
   for (const path of paths) {
     const value = toInt(pickNested(record, path));
     if (value !== null) return value;
@@ -61,7 +61,7 @@ const pickNestedInt = (record: BaseProductRecord, paths: string[][]) => {
   return null;
 };
 
-const pickNestedString = (record: BaseProductRecord, paths: string[][]) => {
+const pickNestedString = (record: BaseProductRecord, paths: string[][]): string | null => {
   for (const path of paths) {
     const value = toTrimmedString(pickNested(record, path));
     if (value) return value;
@@ -69,7 +69,7 @@ const pickNestedString = (record: BaseProductRecord, paths: string[][]) => {
   return null;
 };
 
-const pickFirstIntFromObject = (record: BaseProductRecord, key: string) => {
+const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number | null => {
   const obj = record[key];
   if (!obj || typeof obj !== "object") return null;
   const values = Object.values(obj);
@@ -87,16 +87,16 @@ const pickFirstIntFromObject = (record: BaseProductRecord, key: string) => {
   return null;
 };
 
-const isUrl = (value: string) => /^https?:\/\//i.test(value);
+const isUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
-const collectUrls = (value: unknown, urls: string[]) => {
+const collectUrls = (value: unknown, urls: string[]): void => {
   if (!value) return;
   if (typeof value === "string") {
     if (isUrl(value)) urls.push(value);
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach((entry) => collectUrls(entry, urls));
+    value.forEach((entry: unknown) => collectUrls(entry, urls));
     return;
   }
   if (typeof value === "object") {
@@ -112,12 +112,12 @@ const collectUrls = (value: unknown, urls: string[]) => {
       record.photo,
       record.thumbnail,
     ];
-    candidates.forEach((candidate) => collectUrls(candidate, urls));
-    Object.values(record).forEach((candidate) => collectUrls(candidate, urls));
+    candidates.forEach((candidate: unknown) => collectUrls(candidate, urls));
+    Object.values(record).forEach((candidate: unknown) => collectUrls(candidate, urls));
   }
 };
 
-const extractImageUrlsFromValue = (value: unknown) => {
+const extractImageUrlsFromValue = (value: unknown): string[] => {
   const urls: string[] = [];
   collectUrls(value, urls);
   return Array.from(new Set(urls));
@@ -154,28 +154,28 @@ const IMAGE_LINK_KEYS = [
 const extractImageUrlsFromRecordKeys = (
   record: BaseProductRecord,
   keys: string[]
-) => {
+): string[] => {
   const urls: string[] = [];
-  keys.forEach((key) => collectUrls(record[key], urls));
+  keys.forEach((key: string) => collectUrls(record[key], urls));
   return Array.from(new Set(urls));
 };
 
-const getImageUrlsForSlots = (record: BaseProductRecord) => {
+const getImageUrlsForSlots = (record: BaseProductRecord): string[] => {
   const urls = extractImageUrlsFromRecordKeys(record, IMAGE_SLOT_KEYS);
   return urls.length > 0 ? urls : extractBaseImageUrls(record);
 };
 
-const getImageUrlsForLinks = (record: BaseProductRecord) => {
+const getImageUrlsForLinks = (record: BaseProductRecord): string[] => {
   const urls = extractImageUrlsFromRecordKeys(record, IMAGE_LINK_KEYS);
   return urls.length > 0 ? urls : extractBaseImageUrls(record);
 };
 
-const getImageUrlsForAll = (record: BaseProductRecord) => {
+const getImageUrlsForAll = (record: BaseProductRecord): string[] => {
   const urls = [...getImageUrlsForSlots(record), ...getImageUrlsForLinks(record)];
   return Array.from(new Set(urls));
 };
 
-const resolveImageTargetIndex = (targetField: string) => {
+const resolveImageTargetIndex = (targetField: string): number | null => {
   const normalized = targetField.toLowerCase();
   if (normalized.startsWith("image_slot_")) {
     const index = parseInt(normalized.replace("image_slot_", ""), 10);
@@ -212,7 +212,7 @@ export function extractBaseImageUrls(record: BaseProductRecord): string[] {
     "main_image",
     "mainImage",
   ];
-  keys.forEach((key) => collectUrls(record[key], urls));
+  keys.forEach((key: string) => collectUrls(record[key], urls));
   collectUrls(record, urls);
   return Array.from(new Set(urls));
 }
@@ -234,8 +234,8 @@ const NUMBER_FIELDS = new Set([
 const toStringValue = (value: unknown): string | null => {
   if (Array.isArray(value)) {
     const parts = value
-      .map((entry) => toTrimmedString(entry))
-      .filter((entry): entry is string => Boolean(entry));
+      .map((entry: unknown) => toTrimmedString(entry))
+      .filter((entry: string | null): entry is string => Boolean(entry));
     return parts.length ? parts.join(", ") : null;
   }
   if (value && typeof value === "object") {
@@ -339,8 +339,8 @@ const resolveTemplateValue = (
     return getImageUrlsForAll(record)[index - 1] ?? null;
   }
   if (sourceKey.includes(".")) {
-    const path = sourceKey.split(".").map((part) => part.trim());
-    const value = getByPath(record, path);
+    const pathParts = sourceKey.split(".").map((part: string) => part.trim());
+    const value = getByPath(record, pathParts);
     if (value !== null && value !== undefined) return value;
   }
   if (sourceKey in record) {
@@ -360,7 +360,7 @@ const applyTemplateMappings = (
   record: BaseProductRecord,
   mapped: ProductCreateData,
   mappings: TemplateMapping[]
-) => {
+): void => {
   for (const mapping of mappings) {
     const sourceKey = mapping.sourceKey.trim();
     const targetField = mapping.targetField.trim();

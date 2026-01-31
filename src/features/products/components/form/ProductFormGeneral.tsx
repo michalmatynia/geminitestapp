@@ -21,6 +21,8 @@ import type {
   PathMeta,
   PathDebugSnapshot,
   PathDebugEntry,
+  Edge,
+  RuntimeState,
 } from "@/features/ai-paths";
 import {
   evaluateGraph,
@@ -35,15 +37,15 @@ import {
   sanitizeEdges,
 } from "@/features/ai-paths";
 
-export default function ProductFormGeneral() {
+export default function ProductFormGeneral(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const safeJsonStringify = (value: unknown) => {
+  const safeJsonStringify = (value: unknown): string => {
     const seen = new WeakSet();
-    const replacer = (_key: string, val: unknown) => {
+    const replacer = (_key: string, val: unknown): unknown => {
       if (typeof val === "bigint") return val.toString();
       if (val instanceof Date) return val.toISOString();
-      if (val instanceof Set) return Array.from(val.values()) as unknown[];
-      if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
+      if (val instanceof Set) return Array.from(val.values());
+      if (val instanceof Map) return Object.fromEntries(val.entries());
       if (typeof val === "function" || typeof val === "symbol") return undefined;
       if (val && typeof val === "object") {
         if (seen.has(val)) return undefined;
@@ -70,14 +72,14 @@ export default function ProductFormGeneral() {
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const { toast } = useToast();
 
-  const [generating, setGenerating] = useState(false);
-  const [translating, setTranslating] = useState(false);
+  const [generating, setGenerating] = useState<boolean>(false);
+  const [translating, setTranslating] = useState<boolean>(false);
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
   const allValues = watch();
   const hasCatalogs = selectedCatalogIds.length > 0;
   const languagesReady = filteredLanguages.length > 0;
 
-  useEffect(() => {
+  useEffect((): void => {
     const vals = getValues();
     if (vals.asin) {
       setIdentifierType("asin");
@@ -86,14 +88,14 @@ export default function ProductFormGeneral() {
     }
   }, [getValues]);
 
-  const handleGenerateDescription = async () => {
+  const handleGenerateDescription = async (): Promise<void> => {
     logger.log("Generating description...");
     setGenerating(true);
     setGenerationError(null);
     const productData = getValues();
     const imageUrls = imageSlots
-      .filter((slot): slot is NonNullable<typeof slot> => slot !== null)
-      .map((slot) => slot.previewUrl);
+      .filter((slot: { previewUrl: string } | null): slot is { previewUrl: string } => slot !== null)
+      .map((slot: { previewUrl: string }) => slot.previewUrl);
 
     try {
       if (product?.id) {
@@ -114,7 +116,7 @@ export default function ProductFormGeneral() {
         let completed = false;
         let attempts = 0;
         while (!completed && attempts < 30) {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise((r: (value: void | PromiseLike<void>) => void) => setTimeout(r, 2000));
           const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
           if (!statusRes.ok) break;
           const { job } = (await statusRes.json()) as { job: ProductAiJob };
@@ -157,7 +159,7 @@ export default function ProductFormGeneral() {
     triggerEvent: string,
     event?: React.MouseEvent<HTMLButtonElement>,
     pathInfo?: { id?: string; name?: string }
-  ) => {
+  ): Record<string, unknown> => {
     const timestamp = new Date().toISOString();
     const nativeEvent = event?.nativeEvent;
     const pointer = nativeEvent
@@ -168,8 +170,8 @@ export default function ProductFormGeneral() {
           pageY: nativeEvent.pageY,
           screenX: nativeEvent.screenX,
           screenY: nativeEvent.screenY,
-          offsetX: "offsetX" in nativeEvent ? nativeEvent.offsetX : undefined,
-          offsetY: "offsetY" in nativeEvent ? nativeEvent.offsetY : undefined,
+          offsetX: "offsetX" in nativeEvent ? (nativeEvent as unknown as { offsetX: number }).offsetX : undefined,
+          offsetY: "offsetY" in nativeEvent ? (nativeEvent as unknown as { offsetY: number }).offsetY : undefined,
           button: nativeEvent.button,
           buttons: nativeEvent.buttons,
           altKey: nativeEvent.altKey,
@@ -244,7 +246,7 @@ export default function ProductFormGeneral() {
 
   const handlePathGenerateDescription = async (
     event?: React.MouseEvent<HTMLButtonElement>
-  ) => {
+  ): Promise<void> => {
     if (!product?.id) {
       toast("Save the product before running a path trigger.", {
         variant: "error",
@@ -277,16 +279,16 @@ export default function ProductFormGeneral() {
           const settingsRes = await fetch("/api/settings", { cache: "no-store" });
           if (settingsRes.ok) {
             const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
-            const map = new Map(data.map((item) => [item.key, item.value]));
+            const map = new Map<string, string>(data.map((item: { key: string; value: string }) => [item.key, item.value]));
             const indexRaw = map.get(PATH_INDEX_KEY);
             if (indexRaw) {
               try {
                 const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
                 if (Array.isArray(parsedIndex)) {
                   settingsPathOrder = parsedIndex
-                    .map((meta) => meta?.id)
-                    .filter((id): id is string => typeof id === "string" && id.length > 0);
-                  parsedIndex.forEach((meta) => {
+                    .map((meta: PathMeta) => meta?.id)
+                    .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0);
+                  parsedIndex.forEach((meta: PathMeta) => {
                     if (!meta?.id) return;
                     const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
                     if (!configRaw) {
@@ -337,19 +339,19 @@ export default function ProductFormGeneral() {
       const configsList = Object.values(configs);
       const pathOrder = Array.isArray(prefs.aiPathsPathIndex)
         ? prefs.aiPathsPathIndex
-            .map((item) => item?.id)
-            .filter((id): id is string => typeof id === "string" && id.length > 0)
+            .map((item: { id?: string }) => item?.id)
+            .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0)
         : settingsPathOrder;
       const orderedConfigs = pathOrder.length
         ? pathOrder
-            .map((id) => configs[id])
-            .filter((config): config is PathConfig => Boolean(config))
+            .map((id: string) => configs[id])
+            .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
         : configsList;
       const triggerEvent = TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
-      const triggerCandidates = orderedConfigs.filter((config) =>
+      const triggerCandidates = orderedConfigs.filter((config: PathConfig) =>
         Array.isArray(config?.nodes)
           ? config.nodes.some(
-              (node) =>
+              (node: AiNode) =>
                 node.type === "trigger" &&
                 (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
             )
@@ -365,24 +367,24 @@ export default function ProductFormGeneral() {
       }
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
       const nodes = normalizeNodes(
-        Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []
+        Array.isArray(selectedConfig.nodes) ? (selectedConfig.nodes as unknown as AiNode[]) : []
       );
       const edges = sanitizeEdges(
         nodes,
-        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
+        Array.isArray(selectedConfig.edges) ? (selectedConfig.edges as unknown as Edge[]) : []
       );
       const triggerNodes = nodes.filter(
-        (node) =>
+        (node: AiNode) =>
           node.type === "trigger" &&
           (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
       );
       const triggerNode =
-        triggerNodes.find((node) => edges.some((edge) => edge.from === node.id)) ??
-        triggerNodes.find((node) =>
-          edges.some((edge) => edge.from === node.id || edge.to === node.id)
+        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
+        triggerNodes.find((node: AiNode) =>
+          edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
         ) ??
         triggerNodes[0] ??
-        nodes.find((node) => node.type === "trigger");
+        nodes.find((node: AiNode) => node.type === "trigger");
       if (!triggerNode) {
         toast("No trigger node found in the selected path.", { variant: "error" });
         return;
@@ -392,7 +394,7 @@ export default function ProductFormGeneral() {
         name: selectedConfig.name,
       });
       const runAt = new Date().toISOString();
-      const runtimeState = await evaluateGraph({
+      const runtimeState: RuntimeState = await evaluateGraph({
         nodes,
         edges,
         activePathId: selectedConfig.id ?? "path",
@@ -401,7 +403,7 @@ export default function ProductFormGeneral() {
         triggerEvent,
         triggerContext,
         deferPoll: false,
-        fetchEntityByType: async (entityType: string, entityId: string) => {
+        fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
           if (entityType !== "product") return null;
           const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, {
             cache: "no-store",
@@ -409,7 +411,7 @@ export default function ProductFormGeneral() {
           if (!res.ok) return null;
           return (await res.json()) as Record<string, unknown>;
         },
-        reportAiPathsError: (error, meta, summary) => {
+        reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
           logger.error(summary ?? "AI Paths trigger failed", error, meta);
         },
         toast,
@@ -426,8 +428,8 @@ export default function ProductFormGeneral() {
           updatedAt: runAt,
         };
         const debugEntries = nodes
-          .filter((node) => node.type === "database")
-          .map((node): PathDebugEntry | null => {
+          .filter((node: AiNode) => node.type === "database")
+          .map((node: AiNode): PathDebugEntry | null => {
             const output = runtimeState.outputs[node.id] as
               | { debugPayload?: unknown }
               | undefined;
@@ -439,7 +441,7 @@ export default function ProductFormGeneral() {
               debug: debugPayload,
             };
           })
-          .filter((entry): entry is PathDebugEntry => Boolean(entry));
+          .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => Boolean(entry));
         const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
           ? {
               pathId: updatedConfig.id,
@@ -450,7 +452,7 @@ export default function ProductFormGeneral() {
         configs[updatedConfig.id] = updatedConfig;
         const orderedIds = pathOrder.length
           ? pathOrder
-          : orderedConfigs.map((config) => config.id);
+          : orderedConfigs.map((config: PathConfig) => config.id);
         const safeConfigs = safeJsonStringify(configs);
         await fetch("/api/user/preferences", {
           method: "PATCH",
@@ -459,13 +461,13 @@ export default function ProductFormGeneral() {
             aiPathsPathConfigs: safeConfigs || configs,
             aiPathsActivePathId: updatedConfig.id,
             ...(orderedIds.length > 0 && {
-              aiPathsPathIndex: orderedIds.map((id) => ({ id })),
+              aiPathsPathIndex: orderedIds.map((id: string) => ({ id })),
             }),
           }),
         });
         try {
           const configValue = safeJsonStringify(updatedConfig);
-          const indexValue = JSON.stringify(orderedIds.map((id) => ({ id })));
+          const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
           const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : "";
           if (configValue) {
             await fetch("/api/settings", {
@@ -506,7 +508,7 @@ export default function ProductFormGeneral() {
     }
   };
 
-  const handleTranslate = async () => {
+  const handleTranslate = async (): Promise<void> => {
     logger.log("Translating product...");
     setTranslating(true);
 
@@ -582,7 +584,7 @@ export default function ProductFormGeneral() {
         <>
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
             <TabsList>
-              {filteredLanguages.map((language) => {
+              {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
                 const fieldValue = allValues[fieldName];
                 return (
@@ -600,7 +602,7 @@ export default function ProductFormGeneral() {
                 );
               })}
             </TabsList>
-            {filteredLanguages.map((language) => {
+            {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
@@ -622,7 +624,7 @@ export default function ProductFormGeneral() {
 
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
             <TabsList>
-              {filteredLanguages.map((language) => {
+              {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
                 const fieldValue = allValues[fieldName];
                 return (
@@ -640,7 +642,7 @@ export default function ProductFormGeneral() {
                 );
               })}
             </TabsList>
-            {filteredLanguages.map((language) => {
+            {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
@@ -661,7 +663,7 @@ export default function ProductFormGeneral() {
                         <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                           {generationError}
                           <Button
-                            onClick={() => setGenerationError(null)}
+                            onClick={(): void => setGenerationError(null)}
                             className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
                           >
                             Dismiss
@@ -671,7 +673,7 @@ export default function ProductFormGeneral() {
                       <div className="flex gap-2 mt-2">
                         <Button
                           type="button"
-                          onClick={() => {
+                          onClick={(): void => {
                             void handleGenerateDescription();
                           }}
                           disabled={generating}
@@ -683,7 +685,7 @@ export default function ProductFormGeneral() {
                         </Button>
                         <Button
                           type="button"
-                          onClick={(event) => {
+                          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                             void handlePathGenerateDescription(event);
                           }}
                           aria-label="Generate description via AI Path"
@@ -694,7 +696,7 @@ export default function ProductFormGeneral() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => {
+                          onClick={(): void => {
                             void handleTranslate();
                           }}
                           disabled={translating || !product?.id}
@@ -734,7 +736,7 @@ export default function ProductFormGeneral() {
           <div className="flex gap-2">
             <Select
               value={identifierType}
-              onValueChange={(value) =>
+              onValueChange={(value: string): void =>
                 setIdentifierType(value as "ean" | "gtin" | "asin")
               }
             >

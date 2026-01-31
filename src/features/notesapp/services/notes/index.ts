@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { NoteRepository } from "@/features/notesapp/services/notes/types/note-repository";
-import type { NoteWithRelations, RelatedNote } from "@/shared/types/notes";
+import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput } from "@/shared/types/notes";
 import { cleanupNoteFile } from "./file-cleanup";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { configurationError } from "@/shared/errors/app-error";
@@ -10,7 +10,7 @@ import { configurationError } from "@/shared/errors/app-error";
 let _repository: NoteRepository | null = null;
 
 const resolveNoteProvider = async (): Promise<"mongodb" | "prisma"> =>
-  getAppDbProvider();
+  getAppDbProvider() as Promise<"mongodb" | "prisma">;
 
 async function getRepository(): Promise<NoteRepository> {
   if (!_repository) {
@@ -45,12 +45,12 @@ const repoCall = async <K extends keyof NoteRepository>(
 
 // Helper: Build Relations
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
-  const relations = [
+  const relations: RelatedNote[] = [
     ...(note.relationsFrom ?? []).map((rel: { targetNote: RelatedNote }) => rel.targetNote),
     ...(note.relationsTo ?? []).map((rel: { sourceNote: RelatedNote }) => rel.sourceNote),
   ];
   const seen = new Set<string>();
-  return relations.filter((rel: RelatedNote | null) => {
+  return relations.filter((rel: RelatedNote) => {
     if (!rel?.id || seen.has(rel.id)) return false;
     seen.add(rel.id);
     return true;
@@ -58,45 +58,46 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 };
 
 // Helper: Populate relations on a note or list of notes
-const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | null>(data: T): T => {
-  if (!data) return data;
-  if (Array.isArray(data)) {
-    const notes = data as NoteWithRelations[];
-    const result = notes.map((note: NoteWithRelations) => ({
-      ...note,
-      relations: buildRelations(note),
-    }));
-    return result as any;
-  }
-  const note = data as NoteWithRelations;
-  const result = {
-    ...note,
-    relations: buildRelations(note),
-  };
-  return result as any;
-};
+function populateRelations(data: NoteWithRelations[]): NoteWithRelations[];
+function populateRelations(data: NoteWithRelations): NoteWithRelations;
+function populateRelations(data: null): null;
+function populateRelations(data: NoteWithRelations | NoteWithRelations[] | null): NoteWithRelations | NoteWithRelations[] | null {
+    if (!data) return data;
+    if (Array.isArray(data)) {
+        return data.map((note: NoteWithRelations) => ({
+            ...note,
+            relations: buildRelations(note)
+        }));
+    }
+    return {
+        ...data,
+        relations: buildRelations(data)
+    };
+}
 
 export const noteService: NoteRepository = {
   // Enhanced Methods with Business Logic
 
-  getAll: async (...args: Parameters<NoteRepository["getAll"]>): Promise<NoteWithRelations[]> => {
-    const notes = await repoCall("getAll", ...args);
+  getAll: async (filters: NoteFilters): Promise<NoteWithRelations[]> => {
+    const notes = await repoCall("getAll", filters);
     return populateRelations(notes);
   },
 
-  getById: async (...args: Parameters<NoteRepository["getById"]>): Promise<NoteWithRelations | null> => {
-    const note = await repoCall("getById", ...args);
+  getById: async (id: string): Promise<NoteWithRelations | null> => {
+    const note = await repoCall("getById", id);
     return populateRelations(note);
   },
 
-  create: async (...args: Parameters<NoteRepository["create"]>): Promise<NoteWithRelations> => {
-    const note = await repoCall("create", ...args);
+  create: async (data: NoteCreateInput): Promise<NoteWithRelations> => {
+    const note = await repoCall("create", data);
     return populateRelations(note);
   },
 
-  update: async (id: string, data: Parameters<NoteRepository["update"]>[1]): Promise<NoteWithRelations> => {
+  update: async (id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> => {
     const previousNote = await repoCall("getById", id);
     const note = await repoCall("update", id, data);
+
+    if (!note) return null;
 
     // Sync Relations
     if (Array.isArray(data.relatedNoteIds) && previousNote) {
@@ -148,7 +149,7 @@ export const noteService: NoteRepository = {
     try {
         const files = await repoCall("getNoteFiles", id);
         await Promise.all(
-            files.map((file: { filepath: string }) => cleanupNoteFile(id, file.filepath))
+            files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath))
         );
     } catch (error) {
         console.error("[noteService][delete] Failed to cleanup files", error);
@@ -157,29 +158,29 @@ export const noteService: NoteRepository = {
   },
 
   // Pass-through methods
-  getAllTags: (...args: Parameters<NoteRepository["getAllTags"]>) => repoCall("getAllTags", ...args),
-  getTagById: (...args: Parameters<NoteRepository["getTagById"]>) => repoCall("getTagById", ...args),
-  createTag: (...args: Parameters<NoteRepository["createTag"]>) => repoCall("createTag", ...args),
-  updateTag: (...args: Parameters<NoteRepository["updateTag"]>) => repoCall("updateTag", ...args),
-  deleteTag: (...args: Parameters<NoteRepository["deleteTag"]>) => repoCall("deleteTag", ...args),
-  getAllCategories: (...args: Parameters<NoteRepository["getAllCategories"]>) => repoCall("getAllCategories", ...args),
-  getCategoryById: (...args: Parameters<NoteRepository["getCategoryById"]>) => repoCall("getCategoryById", ...args),
-  getCategoryTree: (...args: Parameters<NoteRepository["getCategoryTree"]>) => repoCall("getCategoryTree", ...args),
-  createCategory: (...args: Parameters<NoteRepository["createCategory"]>) => repoCall("createCategory", ...args),
-  updateCategory: (...args: Parameters<NoteRepository["updateCategory"]>) => repoCall("updateCategory", ...args),
-  deleteCategory: (...args: Parameters<NoteRepository["deleteCategory"]>) => repoCall("deleteCategory", ...args),
-  getAllNotebooks: (...args: Parameters<NoteRepository["getAllNotebooks"]>) => repoCall("getAllNotebooks", ...args),
-  getNotebookById: (...args: Parameters<NoteRepository["getNotebookById"]>) => repoCall("getNotebookById", ...args),
-  createNotebook: (...args: Parameters<NoteRepository["createNotebook"]>) => repoCall("createNotebook", ...args),
-  updateNotebook: (...args: Parameters<NoteRepository["updateNotebook"]>) => repoCall("updateNotebook", ...args),
-  deleteNotebook: (...args: Parameters<NoteRepository["deleteNotebook"]>) => repoCall("deleteNotebook", ...args),
-  getOrCreateDefaultNotebook: (...args: Parameters<NoteRepository["getOrCreateDefaultNotebook"]>) => repoCall("getOrCreateDefaultNotebook", ...args),
-  getAllThemes: (...args: Parameters<NoteRepository["getAllThemes"]>) => repoCall("getAllThemes", ...args),
-  getThemeById: (...args: Parameters<NoteRepository["getThemeById"]>) => repoCall("getThemeById", ...args),
-  createTheme: (...args: Parameters<NoteRepository["createTheme"]>) => repoCall("createTheme", ...args),
-  updateTheme: (...args: Parameters<NoteRepository["updateTheme"]>) => repoCall("updateTheme", ...args),
-  deleteTheme: (...args: Parameters<NoteRepository["deleteTheme"]>) => repoCall("deleteTheme", ...args),
-  createNoteFile: (...args: Parameters<NoteRepository["createNoteFile"]>) => repoCall("createNoteFile", ...args),
-  getNoteFiles: (...args: Parameters<NoteRepository["getNoteFiles"]>) => repoCall("getNoteFiles", ...args),
-  deleteNoteFile: (...args: Parameters<NoteRepository["deleteNoteFile"]>) => repoCall("deleteNoteFile", ...args),
+  getAllTags: (notebookId?: string | null): Promise<TagRecord[]> => repoCall("getAllTags", notebookId),
+  getTagById: (id: string): Promise<TagRecord | null> => repoCall("getTagById", id),
+  createTag: (data: TagCreateInput): Promise<TagRecord> => repoCall("createTag", data),
+  updateTag: (id: string, data: TagUpdateInput): Promise<TagRecord | null> => repoCall("updateTag", id, data),
+  deleteTag: (id: string): Promise<boolean> => repoCall("deleteTag", id),
+  getAllCategories: (notebookId?: string | null): Promise<CategoryRecord[]> => repoCall("getAllCategories", notebookId),
+  getCategoryById: (id: string): Promise<CategoryRecord | null> => repoCall("getCategoryById", id),
+  getCategoryTree: (notebookId?: string | null): Promise<CategoryWithChildren[]> => repoCall("getCategoryTree", notebookId),
+  createCategory: (data: CategoryCreateInput): Promise<CategoryRecord> => repoCall("createCategory", data),
+  updateCategory: (id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null> => repoCall("updateCategory", id, data),
+  deleteCategory: (id: string, recursive?: boolean): Promise<boolean> => repoCall("deleteCategory", id, recursive),
+  getAllNotebooks: (): Promise<NotebookRecord[]> => repoCall("getAllNotebooks"),
+  getNotebookById: (id: string): Promise<NotebookRecord | null> => repoCall("getNotebookById", id),
+  createNotebook: (data: NotebookCreateInput): Promise<NotebookRecord> => repoCall("createNotebook", data),
+  updateNotebook: (id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> => repoCall("updateNotebook", id, data),
+  deleteNotebook: (id: string): Promise<boolean> => repoCall("deleteNotebook", id),
+  getOrCreateDefaultNotebook: (): Promise<NotebookRecord> => repoCall("getOrCreateDefaultNotebook"),
+  getAllThemes: (notebookId?: string | null): Promise<ThemeRecord[]> => repoCall("getAllThemes", notebookId),
+  getThemeById: (id: string): Promise<ThemeRecord | null> => repoCall("getThemeById", id),
+  createTheme: (data: ThemeCreateInput): Promise<ThemeRecord> => repoCall("createTheme", data),
+  updateTheme: (id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> => repoCall("updateTheme", id, data),
+  deleteTheme: (id: string): Promise<boolean> => repoCall("deleteTheme", id),
+  createNoteFile: (data: NoteFileCreateInput): Promise<NoteFileRecord> => repoCall("createNoteFile", data),
+  getNoteFiles: (noteId: string): Promise<NoteFileRecord[]> => repoCall("getNoteFiles", noteId),
+  deleteNoteFile: (noteId: string, slotIndex: number): Promise<boolean> => repoCall("deleteNoteFile", noteId, slotIndex),
 };

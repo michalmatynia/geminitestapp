@@ -21,11 +21,11 @@ const IMAGE_BASE_URL =
   process.env.NEXTAUTH_URL ||
   "";
 
-const hasScheme = (value: string) => /^[a-z][a-z0-9+.-]*:/i.test(value);
+const hasScheme = (value: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(value);
 export const resolveImageUrl = (
   value: string | null | undefined,
   baseUrl?: string | null
-) => {
+): string | null => {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -88,28 +88,28 @@ const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([
   ".svg",
 ]);
 
-const normalizeMimeType = (value?: string | null) => {
+const normalizeMimeType = (value?: string | null): string | null => {
   if (!value) return null;
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) return null;
   const base = trimmed.split(";")[0]?.trim() ?? trimmed;
-  if (base === "image/jpg" || base === "image/pjpeg") return "image/jpeg";
-  if (base === "image/x-png") return "image/png";
+  if (base === "image/jpeg" || base === "image/jpg" || base === "image/pjpeg") return "image/jpeg";
+  if (base === "image/png" || base === "image/x-png") return "image/png";
   return base;
 };
 
-const getUrlExtension = (value: string) => {
+const getUrlExtension = (value: string): string => {
   const clean = value.split("#")[0]?.split("?")[0] ?? value;
   return path.extname(clean).toLowerCase();
 };
 
-const isSupportedImageMime = (value?: string | null) => {
+const isSupportedImageMime = (value?: string | null): boolean => {
   const normalized = normalizeMimeType(value);
   if (!normalized) return false;
   return SUPPORTED_IMAGE_MIME_TYPES.has(normalized);
 };
 
-const inferMimeFromExtension = (extension?: string | null) => {
+const inferMimeFromExtension = (extension?: string | null): string | null => {
   if (!extension) return null;
   if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
     if (extension === ".png") return "image/png";
@@ -126,7 +126,12 @@ const inferMimeFromExtension = (extension?: string | null) => {
   return null;
 };
 
-const getImageSupportStatus = (url: string, mimetype?: string | null) => {
+const getImageSupportStatus = (url: string, mimetype?: string | null): {
+  supported: boolean;
+  reason?: string;
+  normalizedMime: string | null;
+  extension: string | null;
+} => {
   const normalizedMime = normalizeMimeType(mimetype);
   if (normalizedMime) {
     return {
@@ -179,7 +184,7 @@ const shouldIncludeImageUrl = (
     index?: number;
     source?: string | null;
   }
-) => {
+): boolean => {
   const status = getImageSupportStatus(url, options?.mimetype);
   if (status.supported) return true;
   options?.diagnostics?.log("Skipping unsupported image format", {
@@ -201,7 +206,7 @@ export const collectProductImageDiagnostics = (
   const diagnostics: ImageUrlDiagnostic[] = [];
 
   const slotImages = product.images ?? [];
-  slotImages.forEach((entry, index) => {
+  slotImages.forEach((entry: { imageFile?: { filepath?: string | null; mimetype?: string | null; size?: number | null } | null }, index: number) => {
     const filepath = entry?.imageFile?.filepath ?? null;
     const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
     if (!resolvedUrl) {
@@ -233,7 +238,7 @@ export const collectProductImageDiagnostics = (
   });
 
   const linkImages = product.imageLinks ?? [];
-  linkImages.forEach((link, index) => {
+  linkImages.forEach((link: string, index: number) => {
     const filepath = typeof link === "string" ? link : null;
     const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
     if (!resolvedUrl) {
@@ -281,7 +286,7 @@ const IMAGE_EXPORT_ALIASES = new Set([
   "image_links",
 ]);
 
-const normalizeExportTargetField = (targetField: string) => {
+const normalizeExportTargetField = (targetField: string): string => {
   const trimmed = targetField.trim();
   const normalized = trimmed.toLowerCase();
   if (IMAGE_EXPORT_ALIASES.has(normalized)) {
@@ -297,8 +302,8 @@ const toStringValue = (value: unknown): string | null => {
   if (typeof value === "boolean") return value ? "1" : "0";
   if (Array.isArray(value)) {
     const parts = value
-      .map((entry) => toStringValue(entry))
-      .filter((entry): entry is string => Boolean(entry));
+      .map((entry: unknown) => toStringValue(entry))
+      .filter((entry: string | null): entry is string => Boolean(entry));
     return parts.length ? parts.join(", ") : null;
   }
   if (typeof value === "object") {
@@ -340,7 +345,7 @@ const getImageSlotUrl = (
   mode: "slot" | "file" | "link",
   imageBaseUrl?: string | null,
   diagnostics?: ImageExportDiagnostics
-) => {
+): string | null => {
   if (index < 0) return null;
   if (mode !== "link") {
     const slotEntry = product.images?.[index];
@@ -382,10 +387,10 @@ const getImageList = (
   mode: "slot" | "file" | "link",
   imageBaseUrl?: string | null,
   diagnostics?: ImageExportDiagnostics
-) => {
+): string[] => {
   if (mode === "link") {
     return (product.imageLinks ?? [])
-      .map((link, index) => {
+      .map((link: string, index: number): string => {
         const resolved =
           resolveImageUrl(typeof link === "string" ? link : null, imageBaseUrl) ?? "";
         if (
@@ -404,7 +409,7 @@ const getImageList = (
       .filter(Boolean);
   }
   const slots = (product.images ?? [])
-    .map((entry, index) => {
+    .map((entry: { imageFile?: { filepath?: string | null; mimetype?: string | null } | null }, index: number): string => {
       const resolved = resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? "";
       if (
         resolved &&
@@ -428,7 +433,7 @@ const getAllImageUrls = (
   product: ProductWithImages,
   imageBaseUrl?: string | null,
   diagnostics?: ImageExportDiagnostics
-) => {
+): string[] => {
   const slots = getImageList(product, "slot", imageBaseUrl, diagnostics);
   const links = getImageList(product, "link", imageBaseUrl, diagnostics);
   return Array.from(new Set([...slots, ...links]));
@@ -505,7 +510,7 @@ const imageToBase64DataUri = async (
       format = metadata.format ? metadata.format.toLowerCase() : null;
       metadataWidth = metadata.width ?? null;
       metadataHeight = metadata.height ?? null;
-    } catch (error) {
+    } catch (error: unknown) {
       diagnostics?.log("Failed to read image metadata", {
         source: filepath,
         sourceType,
@@ -571,7 +576,7 @@ const imageToBase64DataUri = async (
           outputFormat,
           resized,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         diagnostics?.log("Failed to convert image to supported format", {
           source: filepath,
           sourceType,
@@ -603,7 +608,7 @@ const imageToBase64DataUri = async (
       return `data:${mime};base64,${base64}`;
     }
     return `data:${base64}`;
-  } catch (error) {
+  } catch (error: unknown) {
     diagnostics?.log("Failed to convert image to base64", {
       source: filepath,
       sourceType,
@@ -654,7 +659,7 @@ export const getProductImagesAsBase64 = async (
 
     // Skip if we already have this as an uploaded image
     const alreadyProcessed = imageSlots.some(
-      slot => slot.imageFile?.filepath === link
+      (slot: { imageFile?: { filepath?: string | null } | null }) => slot.imageFile?.filepath === link
     );
     if (alreadyProcessed) continue;
 
@@ -715,9 +720,9 @@ const getProductValue = (
   }
   // Handle dot notation for nested access
   if (sourceKey.includes(".")) {
-    const path = sourceKey.split(".").map((part) => part.trim());
+    const pathParts = sourceKey.split(".").map((part: string) => part.trim());
     let current: unknown = product;
-    for (const key of path) {
+    for (const key of pathParts) {
       if (!current || typeof current !== "object") return null;
       current = (current as Record<string, unknown>)[key];
     }
@@ -754,11 +759,11 @@ function applyExportTemplateMappings(
     if (isImageTarget) {
       if (Array.isArray(rawValue)) {
         const urls = rawValue
-          .map((entry) =>
+          .map((entry: unknown) =>
             typeof entry === "string" ? resolveImageUrl(entry, imageBaseUrl) ?? "" : ""
           )
           .filter(Boolean)
-          .filter((url, index) =>
+          .filter((url: string, index: number) =>
             shouldIncludeImageUrl(url, {
               diagnostics: imageDiagnostics,
               sourceType: "mapped",
@@ -808,10 +813,10 @@ function applyExportTemplateMappings(
 const mergeTextFields = (
   baseData: BaseProductRecord,
   templateData: Record<string, unknown>
-) => {
+): void => {
   const nextTextFields: Record<string, string> = {};
 
-  const pushValue = (key: string, value: unknown) => {
+  const pushValue = (key: string, value: unknown): void => {
     if (value === null || value === undefined) return;
     const stringValue = toStringValue(value);
     if (!stringValue) return;
@@ -873,7 +878,7 @@ const mergeNumericFields = (
   templateData: Record<string, unknown>,
   fieldName: "prices" | "stock",
   normalizeKey?: (value: string) => string | null
-) => {
+): void => {
   const nextEntries: Record<string, number> = {};
 
   const existing = templateData[fieldName];
@@ -990,7 +995,7 @@ export async function buildBaseProductData(
   // Apply template mappings (these override defaults)
   if (!imagesOnly && mappings.length > 0) {
     // Templates are saved as Base -> product mappings, so invert for export.
-    const exportMappings = mappings.map((mapping) => ({
+    const exportMappings = mappings.map((mapping: ExportTemplateMapping) => ({
       sourceKey: mapping.targetField,
       targetField: normalizeExportTargetField(mapping.sourceKey),
     }));
@@ -1003,7 +1008,7 @@ export async function buildBaseProductData(
     mergeTextFields(baseData, templateData);
     mergeNumericFields(templateData, "prices");
     const stockAliases = options?.stockWarehouseAliases ?? null;
-    const normalizeStockKeyWithAliases = (value: string) => {
+    const normalizeStockKeyWithAliases = (value: string): string | null => {
       const normalized = normalizeStockKey(value);
       if (!normalized) return null;
       return stockAliases?.[normalized] ?? normalized;

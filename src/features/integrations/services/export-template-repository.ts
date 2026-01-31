@@ -13,7 +13,7 @@ import type { ImageRetryPreset } from "@/features/data-import-export";
 
 type SettingDoc = { _id: string | ObjectId; key?: string; value?: string; updatedAt?: Date; createdAt?: Date };
 
-const toMongoId = (id: string) => {
+const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
@@ -23,7 +23,7 @@ type ExportTemplateProvider = "mongodb" | "prisma";
 const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
   const provider = await getProductDataProvider();
   console.log(`[ExportTemplateRepository] Provider: ${provider}`);
-  return provider;
+  return provider as ExportTemplateProvider;
 };
 
 export type TemplateMapping = {
@@ -49,8 +49,8 @@ const STOCK_FALLBACK_KEY = "base_export_stock_fallback_enabled";
 const IMAGE_RETRY_PRESETS_KEY = "base_export_image_retry_presets";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
-const stripBasehostMappings = (mappings: TemplateMapping[]) =>
-  mappings.filter((mapping) => {
+const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =>
+  mappings.filter((mapping: TemplateMapping) => {
     const sourceKey = mapping.sourceKey?.trim().toLowerCase();
     const targetField = mapping.targetField?.trim().toLowerCase();
     return !BASEHOST_MAPPING_KEYS.has(sourceKey) && !BASEHOST_MAPPING_KEYS.has(targetField);
@@ -193,7 +193,7 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
-const writeTemplatesValue = async (value: string) => {
+const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   console.log(`[ExportTemplateRepository] Writing templates... Length: ${value.length}`);
   if (provider === "mongodb") {
@@ -220,7 +220,7 @@ const writeTemplatesValue = async (value: string) => {
   console.log(`[ExportTemplateRepository] Wrote templates (Prisma).`);
 };
 
-const writeActiveTemplateValue = async (value: string) => {
+const writeActiveTemplateValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -245,7 +245,7 @@ const writeActiveTemplateValue = async (value: string) => {
   });
 };
 
-const writeDefaultInventoryValue = async (value: string) => {
+const writeDefaultInventoryValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -270,7 +270,7 @@ const writeDefaultInventoryValue = async (value: string) => {
   });
 };
 
-const writeStockFallbackValue = async (value: string) => {
+const writeStockFallbackValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -295,7 +295,7 @@ const writeStockFallbackValue = async (value: string) => {
   });
 };
 
-const writeDefaultConnectionValue = async (value: string) => {
+const writeDefaultConnectionValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -320,7 +320,7 @@ const writeDefaultConnectionValue = async (value: string) => {
   });
 };
 
-const writeImageRetryPresetsValue = async (value: string) => {
+const writeImageRetryPresetsValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -354,7 +354,7 @@ export const getExportTemplate = async (
   id: string
 ): Promise<Template | null> => {
   const templates = await listExportTemplates();
-  return templates.find((template) => template.id === id) ?? null;
+  return templates.find((template: Template) => template.id === id) ?? null;
 };
 
 export const createExportTemplate = async (input: {
@@ -389,7 +389,7 @@ export const updateExportTemplate = async (
   }>
 ): Promise<Template | null> => {
   const templates = await listExportTemplates();
-  const index = templates.findIndex((template) => template.id === id);
+  const index = templates.findIndex((template: Template) => template.id === id);
   if (index === -1) return null;
   const existing = templates[index]!;
   const updated = {
@@ -408,7 +408,7 @@ export const updateExportTemplate = async (
 
 export const deleteExportTemplate = async (id: string): Promise<boolean> => {
   const templates = await listExportTemplates();
-  const next = templates.filter((template) => template.id !== id);
+  const next = templates.filter((template: Template) => template.id !== id);
   if (next.length === templates.length) return false;
   await writeTemplatesValue(JSON.stringify(next));
   return true;
@@ -419,7 +419,7 @@ export const getExportActiveTemplateId = async (): Promise<string | null> => {
   return value ? value : null;
 };
 
-export const setExportActiveTemplateId = async (value: string | null) => {
+export const setExportActiveTemplateId = async (value: string | null): Promise<void> => {
   await writeActiveTemplateValue(value?.trim() ? value.trim() : "");
 };
 
@@ -428,7 +428,7 @@ export const getExportDefaultInventoryId = async (): Promise<string | null> => {
   return value ? value : null;
 };
 
-export const setExportDefaultInventoryId = async (value: string | null) => {
+export const setExportDefaultInventoryId = async (value: string | null): Promise<void> => {
   await writeDefaultInventoryValue(value?.trim() ? value.trim() : "");
 };
 
@@ -437,7 +437,7 @@ export const getExportStockFallbackEnabled = async (): Promise<boolean> => {
   return value?.trim().toLowerCase() === "true";
 };
 
-export const setExportStockFallbackEnabled = async (enabled: boolean) => {
+export const setExportStockFallbackEnabled = async (enabled: boolean): Promise<void> => {
   await writeStockFallbackValue(enabled ? "true" : "false");
 };
 
@@ -446,7 +446,7 @@ export const getExportDefaultConnectionId = async (): Promise<string | null> => 
   return value ? value : null;
 };
 
-export const setExportDefaultConnectionId = async (value: string | null) => {
+export const setExportDefaultConnectionId = async (value: string | null): Promise<void> => {
   await writeDefaultConnectionValue(value?.trim() ? value.trim() : "");
 };
 
@@ -462,7 +462,7 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
   }
 };
 
-export const setExportImageRetryPresets = async (presets: ImageRetryPreset[]) => {
+export const setExportImageRetryPresets = async (presets: ImageRetryPreset[]): Promise<void> => {
   const normalized = normalizeImageRetryPresets(presets);
   await writeImageRetryPresetsValue(JSON.stringify(normalized));
 };

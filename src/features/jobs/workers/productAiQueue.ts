@@ -26,6 +26,7 @@ import { getInternationalizationProvider } from "@/features/internationalization
 import type { ProductFormData } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
+import type { ImageFileRecord } from "@/features/files/server";
 
 type LanguageRecord = {
   id: string;
@@ -56,7 +57,7 @@ type Job = ProductAiJobRecord & {
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-const getClient = (modelName: string, apiKey: string | null) => {
+const getClient = (modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } => {
   const modelLower = modelName.toLowerCase();
   const isOpenAI =
     (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
@@ -79,13 +80,13 @@ const getClient = (modelName: string, apiKey: string | null) => {
   };
 };
 
-const buildImageParts = async (imageUrls: string[]) => {
+const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionContentPart[]> => {
   if (!imageUrls.length) return [] as ChatCompletionContentPart[];
   const imageFileRepository = await getImageFileRepository();
   const imageFiles = await imageFileRepository.listImageFiles();
-  const imageFileMap = new Map(imageFiles.map((file) => [file.filepath, file]));
+  const imageFileMap = new Map<string, ImageFileRecord>(imageFiles.map((file: ImageFileRecord) => [file.filepath, file]));
 
-  const imagePromises = imageUrls.map(async (item) => {
+  const imagePromises = imageUrls.map(async (item: string): Promise<ChatCompletionContentPart | null> => {
     try {
       let base64Image: string;
       let mimetype = "image/jpeg";
@@ -113,11 +114,11 @@ const buildImageParts = async (imageUrls: string[]) => {
   });
 
   return (await Promise.all(imagePromises)).filter(
-    (img): img is Extract<ChatCompletionContentPart, { type: "image_url" }> => Boolean(img)
+    (img: ChatCompletionContentPart | null): img is Extract<ChatCompletionContentPart, { type: "image_url" }> => Boolean(img)
   );
 };
 
-export async function processGraphModel(job: Job) {
+export async function processGraphModel(job: Job): Promise<Record<string, unknown>> {
   const { payload, productId } = job;
   const prompt = typeof payload.prompt === "string" ? payload.prompt.trim() : "";
   if (!prompt) {
@@ -136,7 +137,7 @@ export async function processGraphModel(job: Job) {
   const maxTokens =
     typeof payload.maxTokens === "number" ? payload.maxTokens : 800;
   const imageUrls = Array.isArray(payload.imageUrls)
-    ? payload.imageUrls.filter((url): url is string => typeof url === "string" && url.trim() !== "")
+    ? payload.imageUrls.filter((url: unknown): url is string => typeof url === "string" && url.trim() !== "")
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   const apiKey = (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? null;
@@ -216,14 +217,14 @@ const normalizeIdValue = (value: unknown): string => {
 };
 
 const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => {
-  const normalizedIds = ids.map((id) => normalizeIdValue(id)).filter(Boolean);
+  const normalizedIds = ids.map((id: string) => normalizeIdValue(id)).filter(Boolean);
   if (!normalizedIds.length) return [];
   const provider = await getInternationalizationProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const objectIds = normalizedIds
-      .filter((id) => ObjectId.isValid(id))
-      .map((id) => new ObjectId(id));
+      .filter((id: string) => ObjectId.isValid(id))
+      .map((id: string) => new ObjectId(id));
     const docs = await mongo
       .collection<Record<string, unknown>>("languages")
       .find({
@@ -234,12 +235,12 @@ const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => 
         ],
       })
       .toArray();
-    return docs.map(normalizeLanguageDoc).filter(Boolean) as LanguageRecord[];
+    return docs.map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc)).filter(Boolean) as LanguageRecord[];
   }
   const languages = await prisma.language.findMany({
     where: { id: { in: normalizedIds } },
   });
-  return languages.map((lang) => ({
+  return languages.map((lang: { id: string; code: string; name: string }) => ({
     id: lang.id,
     code: lang.code,
     name: lang.name,
@@ -254,10 +255,10 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
       .collection<Record<string, unknown>>("languages")
       .find({})
       .toArray();
-    return docs.map(normalizeLanguageDoc).filter(Boolean) as LanguageRecord[];
+    return docs.map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc)).filter(Boolean) as LanguageRecord[];
   }
   const languages = await prisma.language.findMany();
-  return languages.map((lang) => ({
+  return languages.map((lang: { id: string; code: string; name: string }) => ({
     id: lang.id,
     code: lang.code,
     name: lang.name,
@@ -267,13 +268,13 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
 const resolveFallbackLanguages = async (): Promise<string[]> => {
   const allLanguages = await fetchAllLanguages();
   console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
-  const filtered = allLanguages.filter((lang) => lang.code.toUpperCase() !== "EN");
+  const filtered = allLanguages.filter((lang: LanguageRecord) => lang.code.toUpperCase() !== "EN");
   if (filtered.length > 0) {
-    return filtered.map((lang) => lang.name);
+    return filtered.map((lang: LanguageRecord) => lang.name);
   }
   const defaults = defaultLanguages
-    .filter((lang) => lang.code !== "EN")
-    .map((lang) => lang.name);
+    .filter((lang: { code: string }) => lang.code !== "EN")
+    .map((lang: { name: string }) => lang.name);
   console.log(`[processTranslation] Using default languages fallback:`, defaults);
   return defaults;
 };
@@ -294,7 +295,7 @@ function isQueueHealthy(): boolean {
   return timeSinceLastPoll < 10000;
 }
 
-export const stopProductAiJobQueue = (reason?: string) => {
+export const stopProductAiJobQueue = (reason?: string): void => {
   if (!intervalId) return;
   clearInterval(intervalId);
   intervalId = null;
@@ -303,7 +304,7 @@ export const stopProductAiJobQueue = (reason?: string) => {
   console.log(`[productAiQueue] Queue worker stopped${suffix}`);
 };
 
-export async function processDescriptionGeneration(job: Job) {
+export async function processDescriptionGeneration(job: Job): Promise<{ description: string }> {
   const { productId, payload } = job;
 
   console.log(`[processDescriptionGeneration] Starting for productId: ${productId}`);
@@ -377,8 +378,8 @@ export async function processDescriptionGeneration(job: Job) {
     };
 
     const uploadedImages = product.images
-      .map((img) => img.imageFile?.filepath)
-      .filter((p): p is string => Boolean(p));
+      .map((img: { imageFile?: { filepath: string } }) => img.imageFile?.filepath)
+      .filter((p: string | undefined): p is string => Boolean(p));
     const rawExternalImages = product.imageLinks || [];
 
     // Filter out empty strings and invalid URLs from imageLinks
@@ -429,7 +430,7 @@ export async function processDescriptionGeneration(job: Job) {
   return result;
 }
 
-export async function processTranslation(job: Job) {
+export async function processTranslation(job: Job): Promise<Record<string, unknown>> {
   const { productId } = job;
 
   console.log(`[processTranslation] Starting for productId: ${productId}`);
@@ -485,7 +486,7 @@ export async function processTranslation(job: Job) {
 
           console.log(`[processTranslation] Fetched ${languages.length} languages from database`);
 
-          languages.forEach((lang) => {
+          languages.forEach((lang: LanguageRecord) => {
             console.log(`[processTranslation] Checking language: ${lang.name} (${lang.code})`);
             if (lang.code.toUpperCase() !== "EN") {
               languageSet.add(lang.name);
@@ -505,9 +506,9 @@ export async function processTranslation(job: Job) {
 
       let catalogIds: string[] = [];
       if (Array.isArray(product.catalogs)) {
-        catalogIds = product.catalogs.map((c) => {
+        catalogIds = product.catalogs.map((c: { catalogId?: string; catalog?: { id: string } }) => {
           return c.catalogId || c.catalog?.id;
-        }).filter((id): id is string => Boolean(id));
+        }).filter((id: string | undefined): id is string => Boolean(id));
       }
 
       console.log(`[processTranslation] Looking up catalog IDs:`, catalogIds);
@@ -536,14 +537,14 @@ export async function processTranslation(job: Job) {
         console.log(`[processTranslation] WARNING: Catalogs not found in database for IDs: ${catalogIds.join(", ")}`);
       }
 
-      catalogs.forEach(catalog => {
+      catalogs.forEach((catalog: { name: string; id: string; languages: { language: { name: string; code: string } }[] }) => {
         console.log(`[processTranslation] Catalog "${catalog.name}" (${catalog.id}) has ${catalog.languages.length} languages:`,
-          catalog.languages.map(cl => `${cl.language.name} (${cl.language.code})`).join(", "));
+          catalog.languages.map((cl: { language: { name: string; code: string } }) => `${cl.language.name} (${cl.language.code})`).join(", "));
       });
 
       const languageSet = new Set<string>();
-      catalogs.forEach((catalog) => {
-        catalog.languages.forEach((cl) => {
+      catalogs.forEach((catalog: { languages: { language: { name: string; code: string } }[] }) => {
+        catalog.languages.forEach((cl: { language: { name: string; code: string } }) => {
           console.log(`[processTranslation] Checking language: ${cl.language.name} (${cl.language.code})`);
           if (cl.language.code.toUpperCase() !== "EN") {
             languageSet.add(cl.language.name);
@@ -610,15 +611,15 @@ export async function processTranslation(job: Job) {
     // Add more language mappings as needed
   }
 
-  if (Object.keys(updateData).length > 0) {
+  if (updateData && Object.keys(updateData).length > 0) {
     await productRepository.updateProduct(productId, updateData);
     console.log(`[processTranslation] Product updated with translations:`, Object.keys(updateData));
   }
 
-  return result;
+  return result as unknown as Record<string, unknown>;
 }
 
-export const pollQueue = async () => {
+export const pollQueue = async (): Promise<void> => {
   if (isProcessing) {
     console.log("[productAiQueue] Already processing a job, skipping poll");
     return;
@@ -644,7 +645,7 @@ export const pollQueue = async () => {
 
           try {
 
-            let result = null;
+            let result: unknown = null;
 
             const typedJob = nextJob as unknown as Job;
 
@@ -719,7 +720,7 @@ export const pollQueue = async () => {
   }
 };
 
-export const resetProductAiJobQueue = () => {
+export const resetProductAiJobQueue = (): void => {
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
@@ -728,7 +729,7 @@ export const resetProductAiJobQueue = () => {
   lastPollTime = 0;
 };
 
-export const startProductAiJobQueue = () => {
+export const startProductAiJobQueue = (): void => {
   // Check if queue is healthy
   if (intervalId && isQueueHealthy()) {
     console.log("[productAiQueue] Queue worker already running and healthy");
@@ -758,7 +759,13 @@ export const startProductAiJobQueue = () => {
   void pollQueue();
 };
 
-export const getQueueStatus = () => {
+export const getQueueStatus = (): {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+} => {
   return {
     running: !!intervalId,
     healthy: isQueueHealthy(),
@@ -769,7 +776,7 @@ export const getQueueStatus = () => {
 };
 
 // Export function to process a single job by ID (for serverless environments)
-export const processSingleJob = async (jobId: string) => {
+export const processSingleJob = async (jobId: string): Promise<void> => {
   console.log(`[processSingleJob] Processing job ${jobId}`);
 
   const jobRepository = await getProductAiJobRepository();
@@ -797,7 +804,7 @@ export const processSingleJob = async (jobId: string) => {
   });
 
   try {
-    let result = null;
+    let result: unknown = null;
     const typedJob = job as unknown as Job;
     if (job.type === "description_generation") {
       console.log(`[processSingleJob] Processing description generation for job ${job.id}`);

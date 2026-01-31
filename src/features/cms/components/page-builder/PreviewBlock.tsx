@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
-import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
+import { Image as ImageIcon, Play, Share2, Star, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
@@ -1010,8 +1010,10 @@ export function PreviewSection({
 
   // Text element section
   if (section.type === "TextElement") {
-    const text = (section.settings["textContent"] as string) || "Text element";
+    const text = (section.settings["textContent"] as string) || "";
     const typoStyles = getBlockTypographyStyles(section.settings);
+    const hasText = text.trim().length > 0;
+    const showPlaceholder = !hasText && isInspecting;
     return (
       wrapInspector(
         <div
@@ -1026,11 +1028,17 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          <div className="rounded border border-dashed border-border/40 bg-gray-800/20">
-            <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
+          {hasText ? (
+            <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>
               {text}
             </p>
-          </div>
+          ) : showPlaceholder ? (
+            <div className="rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2 text-sm text-gray-500">
+              Text element
+            </div>
+          ) : (
+            <div className="min-h-[1px]" />
+          )}
         </div>
       )
     );
@@ -1448,6 +1456,11 @@ export function PreviewSection({
 
   // Slideshow section
   if (section.type === "Slideshow") {
+    const transition = (section.settings["transition"] as string) || "fade";
+    const showDots = (section.settings["showDots"] as string) !== "no";
+    const slideCount = section.blocks.length;
+    const firstSlide = section.blocks[0];
+
     return (
       wrapInspector(
         <div
@@ -1458,42 +1471,69 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          {section.blocks.length === 0 ? (
-            <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[80px]">
-              <div className="flex flex-col items-center gap-2">
-                <ImageIcon className="size-6 text-gray-500" />
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((dotIdx: number) => (
-                    <div key={dotIdx} className={`size-1.5 rounded-full ${dotIdx === 0 ? "bg-gray-400" : "bg-gray-600"}`} />
-                  ))}
-                </div>
-              </div>
+          {slideCount === 0 ? (
+            <div className="container mx-auto px-4 md:px-6">
+              <p className="text-gray-500 text-center py-12">Add blocks to create slideshow slides</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  isSelected={selectedNodeId === block.id}
-                  isInspecting={isInspecting}
-                  inspectorSettings={inspectorSettings}
-                  hoveredNodeId={hoveredNodeId}
-                  onHoverNode={onHoverNode}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
-                />
-              ))}
+            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+              <div className="relative overflow-hidden rounded-lg min-h-[300px]">
+                {firstSlide && (
+                  <div
+                    className={`${transition === "fade" ? "absolute inset-0" : "absolute inset-0"} flex items-center justify-center`}
+                    style={{ opacity: 1 }}
+                  >
+                    <div className="w-full p-6">
+                      <PreviewBlockItem
+                        block={firstSlide}
+                        isSelected={selectedNodeId === firstSlide.id}
+                        isInspecting={isInspecting}
+                        inspectorSettings={inspectorSettings}
+                        hoveredNodeId={hoveredNodeId}
+                        onHoverNode={onHoverNode}
+                        onSelect={onSelect}
+                        contained
+                        selectedNodeId={selectedNodeId}
+                        sectionId={section.id}
+                        sectionType={section.type}
+                        sectionZone={section.zone}
+                        onOpenMedia={onOpenMedia}
+                        mediaStyles={mediaStyles}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {slideCount > 1 && (
+                <div className="mt-4 flex items-center justify-center gap-4">
+                  <button
+                    type="button"
+                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                  >
+                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  {showDots && (
+                    <div className="flex gap-2">
+                      {section.blocks.map((_: BlockInstance, idx: number) => (
+                        <div
+                          key={idx}
+                          className={`size-2 rounded-full transition ${idx === 0 ? "bg-white" : "bg-gray-600"}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+                  >
+                    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1516,40 +1556,51 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          {section.blocks.length > 0 && (
-            <div className="space-y-2 mb-3">
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  isSelected={selectedNodeId === block.id}
-                  isInspecting={isInspecting}
-                  inspectorSettings={inspectorSettings}
-                  hoveredNodeId={hoveredNodeId}
-                  onHoverNode={onHoverNode}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
-                />
-              ))}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <div className="flex-1 rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500">
-              {placeholder}
-            </div>
-            <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900">
-              {buttonText}
-            </div>
+          <div className={`${getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-2xl" })} text-center`}>
+            {section.blocks.length > 0 && (
+              <div className="mb-6 space-y-4">
+                {section.blocks.map((block: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={block.id}
+                    block={block}
+                    isSelected={selectedNodeId === block.id}
+                    isInspecting={isInspecting}
+                    inspectorSettings={inspectorSettings}
+                    hoveredNodeId={hoveredNodeId}
+                    onHoverNode={onHoverNode}
+                    onSelect={onSelect}
+                    contained
+                    selectedNodeId={selectedNodeId}
+                    sectionId={section.id}
+                    sectionType={section.type}
+                    sectionZone={section.zone}
+                    onOpenMedia={onOpenMedia}
+                    mediaStyles={mediaStyles}
+                  />
+                ))}
+              </div>
+            )}
+            <form
+              onSubmit={(e: React.FormEvent) => e.preventDefault()}
+              className="flex flex-col gap-3 sm:flex-row sm:gap-0"
+            >
+              <input
+                type="email"
+                placeholder={placeholder}
+                className="flex-1 rounded-md border border-gray-600 bg-gray-800/50 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:rounded-r-none"
+                readOnly
+              />
+              <button
+                type="submit"
+                className="cms-hover-button rounded-md bg-white px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-200 sm:rounded-l-none"
+              >
+                {buttonText}
+              </button>
+            </form>
           </div>
         </div>
       )
@@ -1571,19 +1622,46 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          <div className="space-y-2">
-            {fields.map((field: string) => (
-              <div key={field} className="rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500 capitalize">
-                {field}
-              </div>
-            ))}
-            <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900 text-center">
-              {submitText}
-            </div>
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-xl" })}>
+            <form onSubmit={(e: React.FormEvent) => e.preventDefault()} className="space-y-4">
+              {fields.map((field: string) => {
+                const isTextarea = field.toLowerCase() === "message";
+                const label = field.charAt(0).toUpperCase() + field.slice(1);
+
+                return (
+                  <div key={field}>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-300">
+                      {label}
+                    </label>
+                    {isTextarea ? (
+                      <textarea
+                        rows={4}
+                        placeholder={label}
+                        className="w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        readOnly
+                      />
+                    ) : (
+                      <input
+                        type={field.toLowerCase() === "email" ? "email" : "text"}
+                        placeholder={label}
+                        className="w-full rounded-md border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        readOnly
+                      />
+                    )}
+                  </div>
+                );
+              })}
+              <button
+                type="submit"
+                className="cms-hover-button w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200"
+              >
+                {submitText}
+              </button>
+            </form>
           </div>
         </div>
       )
@@ -1976,8 +2054,10 @@ function PreviewBlockItem({
 
   // Text element block
   if (block.type === "TextElement") {
-    const text = (block.settings["textContent"] as string) || "Text element";
+    const text = (block.settings["textContent"] as string) || "";
     const typoStyles = getBlockTypographyStyles(block.settings);
+    const hasText = text.trim().length > 0;
+    const baseClasses = `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(
@@ -1987,17 +2067,17 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-0 ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
-            }`
+            hasText ? baseClasses : `${baseClasses} rounded border border-border/30 bg-gray-800/20`,
+            ""
           )}
         >
-          <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
-            {text}
-          </p>
+          {hasText ? (
+            <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>
+              {text}
+            </p>
+          ) : (
+            <p className="m-0 p-0 text-sm italic text-gray-500">Text element</p>
+          )}
         </div>
       )
     );
@@ -2038,6 +2118,8 @@ function PreviewBlockItem({
     const src = (block.settings["src"] as string) || "";
     const alt = (block.settings["alt"] as string) || "Image";
     const presentation = buildImageElementPresentation(block.settings, mediaStyles);
+    const hasSrc = Boolean(src);
+    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(
@@ -2047,15 +2129,11 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition ${contained ? "max-w-full" : ""}`,
-            `rounded border p-1 ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
-            }`
+            hasSrc ? baseClasses : `${baseClasses} rounded border p-1 border-border/30 bg-gray-800/20`,
+            ""
           )}
         >
-          {src ? (
+          {hasSrc ? (
             <div className="relative" style={presentation.wrapperStyles}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -2153,6 +2231,8 @@ function PreviewBlockItem({
     const alt = (block.settings["alt"] as string) || "Image";
     const width = (block.settings["width"] as number) || 100;
     const borderRadius = (block.settings["borderRadius"] as number) || 0;
+    const hasSrc = Boolean(src);
+    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
     const resolvedStyles: React.CSSProperties = {
       ...(mediaStyles ?? {}),
       ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
@@ -2167,12 +2247,8 @@ function PreviewBlockItem({
             onClick={handleSelect}
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
-              `w-full text-left transition ${contained ? "max-w-full" : ""}`,
-              `rounded border p-1 ${
-                isSelected
-                  ? `${selectedBorderClass} ${selectedSoftBg}`
-                  : "border-transparent hover:border-border/30"
-              }`
+              hasSrc ? baseClasses : `${baseClasses} rounded border p-1 border-transparent hover:border-border/30`,
+              ""
             )}
           >
             {src ? (
@@ -2439,17 +2515,26 @@ function PreviewImageWithTextBlock({
 
   return (
     <div
-      className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"} ${stretchClass}`}
+      className={`flex flex-col gap-4 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"} ${stretchClass}`}
       style={stretchStyle}
     >
-            <div className="cms-media relative flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[80px]" style={mediaStyles ?? undefined}>
-              {blockImage ? (
-                <NextImage src={blockImage} alt="" className="size-full object-cover" fill unoptimized />
-              ) : (
-                <ImageIcon className="size-6 text-gray-500" />
-              )}
-            </div>
-      <div className="flex flex-1 flex-col justify-center gap-1 overflow-hidden">
+      <div className="cms-media relative w-full md:w-2/5" style={mediaStyles ?? undefined}>
+        {blockImage ? (
+          <NextImage
+            src={blockImage}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 40vw"
+            unoptimized
+          />
+        ) : (
+          <div className="flex min-h-[120px] w-full items-center justify-center bg-gray-800">
+            <ImageIcon className="size-10 text-gray-600" />
+          </div>
+        )}
+      </div>
+      <div className="flex w-full flex-col justify-center gap-3 md:w-3/5">
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
             <PreviewBlockItem
@@ -2473,9 +2558,7 @@ function PreviewImageWithTextBlock({
             />
           ))
         ) : (
-          <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
-            Add content
-          </div>
+          <p className="text-gray-500">Add content blocks</p>
         )}
       </div>
     </div>
@@ -2504,18 +2587,25 @@ function PreviewHeroBlock({
 }: PreviewSectionBlockProps): React.ReactNode {
   const children = block.blocks ?? [];
   const blockImage = block.settings["image"] as string | undefined;
-  const heroBgStyle: React.CSSProperties = blockImage
-    ? { backgroundImage: `url(${blockImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : {};
 
   const stretchStyle = stretch ? { height: "100%" } : undefined;
 
   return (
     <div
-      className={`cms-media relative min-h-[80px] px-3 ${blockImage ? "" : "bg-gradient-to-br from-gray-700/30 to-gray-800/50"}`}
-      style={{ ...heroBgStyle, ...(mediaStyles ?? {}), ...(stretchStyle ?? {}) }}
+      className="cms-media relative min-h-[200px] overflow-hidden"
+      style={{ ...(mediaStyles ?? {}), ...(stretchStyle ?? {}) }}
     >
-      <div className="flex min-h-[80px] flex-col items-center justify-center gap-1">
+      {blockImage ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${blockImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-800" />
+      )}
+      <div className="relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center">
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
             <PreviewBlockItem
@@ -2539,7 +2629,7 @@ function PreviewHeroBlock({
             />
           ))
         ) : (
-          <span className="text-xs text-gray-500">Hero banner</span>
+          <p className="text-gray-400">Hero banner</p>
         )}
       </div>
     </div>
@@ -2595,9 +2685,7 @@ function PreviewRichTextBlock({
           />
         ))
       ) : (
-        <div className="text-xs text-gray-600">
-          Rich text section
-        </div>
+        <p className="text-gray-500">Rich text section</p>
       )}
     </div>
   );

@@ -396,6 +396,33 @@ export function PagePreviewPanel(): React.ReactNode {
       ? "rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
       : "";
 
+  const basePadding = typeof theme.pagePadding === "number" ? theme.pagePadding : 0;
+  const baseMargin = typeof theme.pageMargin === "number" ? theme.pageMargin : 0;
+  const paddingTop = typeof theme.pagePaddingTop === "number" ? theme.pagePaddingTop : basePadding;
+  const paddingRight = typeof theme.pagePaddingRight === "number" ? theme.pagePaddingRight : basePadding;
+  const paddingBottom = typeof theme.pagePaddingBottom === "number" ? theme.pagePaddingBottom : basePadding;
+  const paddingLeft = typeof theme.pagePaddingLeft === "number" ? theme.pagePaddingLeft : basePadding;
+  const marginTop = typeof theme.pageMarginTop === "number" ? theme.pageMarginTop : baseMargin;
+  const marginRight = typeof theme.pageMarginRight === "number" ? theme.pageMarginRight : baseMargin;
+  const marginBottom = typeof theme.pageMarginBottom === "number" ? theme.pageMarginBottom : baseMargin;
+  const marginLeft = typeof theme.pageMarginLeft === "number" ? theme.pageMarginLeft : baseMargin;
+  const pageRadius = typeof theme.borderRadius === "number" ? theme.borderRadius : 0;
+  const pageStyle: React.CSSProperties = {
+    backgroundColor: theme.backgroundColor,
+    borderRadius: pageRadius > 0 ? pageRadius : undefined,
+    overflow: pageRadius > 0 ? "hidden" : undefined,
+  };
+  const contentStyle: React.CSSProperties = {
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
+  };
+
   return (
     <div className="relative flex flex-1 flex-col bg-gray-950">
       {/* Toolbar */}
@@ -547,7 +574,7 @@ export function PagePreviewPanel(): React.ReactNode {
           </div>
         ) : (
           <>
-            <div className="p-3 md:p-4">
+            <div className="p-0">
               <div
                 data-cms-canvas="true"
                 className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
@@ -556,44 +583,46 @@ export function PagePreviewPanel(): React.ReactNode {
                 style={{
                   ...hoverVars,
                   ...mediaVars,
-                  backgroundColor: theme.backgroundColor,
+                  ...pageStyle,
                 }}
               >
-                {ZONE_ORDER.map((zone: PageZone) => {
-                  const zoneSections = sectionsByZone[zone];
-                  if (zoneSections.length === 0) return null;
+                <div style={contentStyle}>
+                  {ZONE_ORDER.map((zone: PageZone) => {
+                    const zoneSections = sectionsByZone[zone];
+                    if (zoneSections.length === 0) return null;
 
-                  return (
-                    <div key={zone}>
-                      {/* Zone sections */}
-                      <div>
-                        {zoneSections.map((section: SectionInstance) => (
-                          <PreviewSection
-                            key={section.id}
-                            section={section}
-                            layout={{ fullWidth: theme.fullWidth }}
-                            selectedNodeId={state.selectedNodeId}
-                            isInspecting={state.inspectorEnabled}
-                            inspectorSettings={state.inspectorSettings}
-                            hoveredNodeId={effectiveHoveredNodeId}
-                            colorSchemes={colorSchemes}
-                            mediaStyles={mediaStyles}
-                            onSelect={handleSelectNode}
-                            onHoverNode={handleHoverNode}
-                            onOpenMedia={handleOpenMedia}
-                            onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
-                            onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
-                              dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
-                            }
-                            onRemoveRow={(sectionId: string, rowId: string) =>
-                              dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
-                            }
-                          />
-                        ))}
+                    return (
+                      <div key={zone}>
+                        {/* Zone sections */}
+                        <div>
+                          {zoneSections.map((section: SectionInstance) => (
+                            <PreviewSection
+                              key={section.id}
+                              section={section}
+                              layout={{ fullWidth: theme.fullWidth }}
+                              selectedNodeId={state.selectedNodeId}
+                              isInspecting={state.inspectorEnabled}
+                              inspectorSettings={state.inspectorSettings}
+                              hoveredNodeId={effectiveHoveredNodeId}
+                              colorSchemes={colorSchemes}
+                              mediaStyles={mediaStyles}
+                              onSelect={handleSelectNode}
+                              onHoverNode={handleHoverNode}
+                              onOpenMedia={handleOpenMedia}
+                              onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
+                              onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
+                                dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
+                              }
+                              onRemoveRow={(sectionId: string, rowId: string) =>
+                                dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
+                              }
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </>

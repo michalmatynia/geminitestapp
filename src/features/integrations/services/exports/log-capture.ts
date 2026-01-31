@@ -22,32 +22,32 @@ export class LogCapture {
     this.originalError = console.error;
   }
 
-  start() {
+  start(): void {
     // Override console methods to capture logs
-    console.log = (...args: unknown[]) => {
+    console.log = (...args: unknown[]): void => {
       this.captureLog("info", args);
       this.originalLog(...args);
     };
 
-    console.warn = (...args: unknown[]) => {
+    console.warn = (...args: unknown[]): void => {
       this.captureLog("warn", args);
       this.originalWarn(...args);
     };
 
-    console.error = (...args: unknown[]) => {
+    console.error = (...args: unknown[]): void => {
       this.captureLog("error", args);
       this.originalError(...args);
     };
   }
 
-  stop() {
+  stop(): void {
     // Restore original console methods
     console.log = this.originalLog;
     console.warn = this.originalWarn;
     console.error = this.originalError;
   }
 
-  private captureLog(level: "info" | "warn" | "error", args: unknown[]) {
+  private captureLog(level: "info" | "warn" | "error", args: unknown[]): void {
     if (args.length === 0) return;
 
     const timestamp = new Date().toISOString();
@@ -89,22 +89,22 @@ export class LogCapture {
     return [...this.logs]; // Return a copy
   }
 
-  clearLogs() {
+  clearLogs(): void {
     this.logs = [];
   }
 
   getFilteredLogs(level?: "info" | "warn" | "error"): CapturedLog[] {
     if (!level) return this.getLogs();
-    return this.logs.filter((log) => log.level === level);
+    return this.logs.filter((log: CapturedLog) => log.level === level);
   }
 
-  exportAsJSON() {
+  exportAsJSON(): string {
     return JSON.stringify(this.logs, null, 2);
   }
 
-  exportAsText() {
+  exportAsText(): string {
     return this.logs
-      .map((log) => {
+      .map((log: CapturedLog) => {
         const contextStr = log.context
           ? `\n  ${JSON.stringify(log.context)}`
           : "";

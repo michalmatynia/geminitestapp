@@ -43,8 +43,8 @@ const EXPORT_WAREHOUSE_MAP_KEY = "base_export_warehouse_by_inventory";
 const EXPORT_WAREHOUSE_SKIP_VALUE = "__skip__";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
-const stripBasehostMappings = (mappings: TemplateMapping[]) =>
-  mappings.filter((mapping) => {
+const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =>
+  mappings.filter((mapping: TemplateMapping) => {
     const sourceKey = mapping.sourceKey?.trim().toLowerCase();
     const targetField = mapping.targetField?.trim().toLowerCase();
     return !BASEHOST_MAPPING_KEYS.has(sourceKey) && !BASEHOST_MAPPING_KEYS.has(targetField);
@@ -64,7 +64,7 @@ const parseTemplates = (value: string | null): Template[] => {
         ...template,
         mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
       })) as Template[];
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[ImportTemplateRepository] Failed to parse templates:", error);
     return [];
   }
@@ -79,7 +79,7 @@ const parseExportWarehouseMap = (value: string | null): Record<string, string> =
     }
     const result: Record<string, string> = {};
     Object.entries(parsed as Record<string, unknown>).forEach(
-      ([key, raw]) => {
+      ([key, raw]: [string, unknown]) => {
         const trimmedKey = key.trim();
         if (!trimmedKey) return;
         const normalized =
@@ -246,7 +246,7 @@ const readExportWarehouseMapValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
-const writeTemplatesValue = async (value: string) => {
+const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   console.log(`[ImportTemplateRepository] Writing templates... Length: ${value.length}`);
   if (provider === "mongodb") {
@@ -273,7 +273,7 @@ const writeTemplatesValue = async (value: string) => {
   console.log(`[ImportTemplateRepository] Wrote templates (Prisma).`);
 };
 
-const writeSampleProductValue = async (value: string) => {
+const writeSampleProductValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -298,7 +298,7 @@ const writeSampleProductValue = async (value: string) => {
   });
 };
 
-const writeSampleInventoryValue = async (value: string) => {
+const writeSampleInventoryValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -323,7 +323,7 @@ const writeSampleInventoryValue = async (value: string) => {
   });
 };
 
-const writeExportWarehouseValue = async (value: string) => {
+const writeExportWarehouseValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -348,7 +348,7 @@ const writeExportWarehouseValue = async (value: string) => {
   });
 };
 
-const writeExportWarehouseMapValue = async (value: string) => {
+const writeExportWarehouseMapValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -373,7 +373,7 @@ const writeExportWarehouseMapValue = async (value: string) => {
   });
 };
 
-const writeLastTemplateValue = async (value: string) => {
+const writeLastTemplateValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -398,7 +398,7 @@ const writeLastTemplateValue = async (value: string) => {
   });
 };
 
-const writeActiveTemplateValue = async (value: string) => {
+const writeActiveTemplateValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -423,7 +423,7 @@ const writeActiveTemplateValue = async (value: string) => {
   });
 };
 
-const writeParameterCacheValue = async (value: string) => {
+const writeParameterCacheValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
@@ -456,7 +456,7 @@ export const getImportSampleProductId = async (): Promise<string | null> => {
   return readSampleProductValue();
 };
 
-export const setImportSampleProductId = async (value: string) => {
+export const setImportSampleProductId = async (value: string): Promise<void> => {
   await writeSampleProductValue(value);
 };
 
@@ -464,7 +464,7 @@ export const getImportSampleInventoryId = async (): Promise<string | null> => {
   return readSampleInventoryValue();
 };
 
-export const setImportSampleInventoryId = async (value: string) => {
+export const setImportSampleInventoryId = async (value: string): Promise<void> => {
   await writeSampleInventoryValue(value);
 };
 
@@ -473,7 +473,7 @@ export const getImportLastTemplateId = async (): Promise<string | null> => {
   return value ? value : null;
 };
 
-export const setImportLastTemplateId = async (value: string | null) => {
+export const setImportLastTemplateId = async (value: string | null): Promise<void> => {
   await writeLastTemplateValue(value?.trim() ? value.trim() : "");
 };
 
@@ -482,7 +482,7 @@ export const getImportActiveTemplateId = async (): Promise<string | null> => {
   return value ? value : null;
 };
 
-export const setImportActiveTemplateId = async (value: string | null) => {
+export const setImportActiveTemplateId = async (value: string | null): Promise<void> => {
   await writeActiveTemplateValue(value?.trim() ? value.trim() : "");
 };
 
@@ -513,7 +513,7 @@ export const getExportWarehouseId = async (
 export const setExportWarehouseId = async (
   value: string | null,
   inventoryId?: string | null
-) => {
+): Promise<void> => {
   const normalizedInventory = inventoryId?.trim() ?? "";
   const normalizedValue = value?.trim() ?? "";
   if (normalizedInventory) {
@@ -553,7 +553,7 @@ export const setImportParameterCache = async (input: {
   productId: string | null;
   keys: string[];
   values: Record<string, string>;
-}) => {
+}): Promise<void> => {
   const payload: ImportParameterCache = {
     inventoryId: input.inventoryId,
     productId: input.productId,
@@ -568,7 +568,7 @@ export const getImportTemplate = async (
   id: string
 ): Promise<ImportTemplate | null> => {
   const templates = await listImportTemplates();
-  return templates.find((template) => template.id === id) ?? null;
+  return templates.find((template: Template) => template.id === id) ?? null;
 };
 
 export const createImportTemplate = async (input: {
@@ -600,7 +600,7 @@ export const updateImportTemplate = async (
   }>
 ): Promise<ImportTemplate | null> => {
   const templates = await listImportTemplates();
-  const index = templates.findIndex((template) => template.id === id);
+  const index = templates.findIndex((template: Template) => template.id === id);
   if (index === -1) return null;
   const existing = templates[index]!;
   const updated = {
@@ -618,7 +618,7 @@ export const updateImportTemplate = async (
 
 export const deleteImportTemplate = async (id: string): Promise<boolean> => {
   const templates = await listImportTemplates();
-  const next = templates.filter((template) => template.id !== id);
+  const next = templates.filter((template: Template) => template.id !== id);
   if (next.length === templates.length) return false;
   await writeTemplatesValue(JSON.stringify(next));
   return true;

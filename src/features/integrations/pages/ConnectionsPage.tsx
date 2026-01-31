@@ -1090,11 +1090,3 @@ export default function IntegrationsPage(): React.JSX.Element {
     </Suspense>
   );
 }
-
-export default function IntegrationsPage() {
-  return (
-    <Suspense fallback={<div>Loading integrations...</div>}>
-      <IntegrationsContent />
-    </Suspense>
-  );
-}

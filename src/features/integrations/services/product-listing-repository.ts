@@ -55,7 +55,7 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
 });
 
 const prismaRepository: ProductListingRepository = {
-  getListingsByProductId: async (productId) => {
+  getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
     const listings = await prisma.productListing.findMany({
       where: { productId },
       include: {
@@ -68,13 +68,13 @@ const prismaRepository: ProductListingRepository = {
       },
       orderBy: { createdAt: "desc" },
     });
-    return listings.map((listing) => ({
+    return listings.map((listing: any) => ({
       ...listing,
       exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
     }));
   },
 
-  getListingById: async (id) => {
+  getListingById: async (id: string): Promise<ProductListingRecord | null> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return null;
     return {
@@ -83,7 +83,7 @@ const prismaRepository: ProductListingRepository = {
     };
   },
 
-  createListing: async (input) => {
+  createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
     const listing = await prisma.productListing.create({
       data: {
         productId: input.productId,
@@ -108,14 +108,14 @@ const prismaRepository: ProductListingRepository = {
     };
   },
 
-  updateListingExternalId: async (id, externalListingId) => {
+  updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
     await prisma.productListing.update({
       where: { id },
       data: { externalListingId },
     });
   },
 
-  updateListingStatus: async (id, status) => {
+  updateListingStatus: async (id: string, status: string): Promise<void> => {
     const data: { status: string; listedAt?: Date } = { status };
     if (status === "active") {
       data.listedAt = new Date();
@@ -126,39 +126,40 @@ const prismaRepository: ProductListingRepository = {
     });
   },
 
-  updateListingInventoryId: async (id, inventoryId) => {
+  updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     await prisma.productListing.update({
       where: { id },
       data: { inventoryId },
     });
   },
 
-  appendExportHistory: async (id, event) => {
+  appendExportHistory: async (id: string, event: ProductListingExportEvent): Promise<void> => {
     const listing = await prisma.productListing.findUnique({
       where: { id },
       select: { exportHistory: true },
     });
     const current = Array.isArray(listing?.exportHistory)
-      ? listing?.exportHistory
+      ? (listing?.exportHistory as Prisma.InputJsonValue[])
       : [];
     await prisma.productListing.update({
       where: { id },
-      data: { exportHistory: [...current, event] as Prisma.InputJsonValue[] },
+      data: { exportHistory: [...current, event as unknown as Prisma.InputJsonValue] as Prisma.InputJsonValue[] },
     });
   },
 
-  deleteListing: async (id) => {
+  deleteListing: async (id: string): Promise<boolean> => {
     await prisma.productListing.delete({ where: { id } });
+    return true;
   },
 
-  listingExists: async (productId, connectionId) => {
+  listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const existing = await prisma.productListing.findUnique({
       where: { productId_connectionId: { productId, connectionId } },
     });
     return existing !== null;
   },
 
-  listAllListings: async () => {
+  listAllListings: async (): Promise<Array<{ productId: string; status: string }>> => {
     return prisma.productListing.findMany({
       select: { productId: true, status: true },
     });
@@ -166,7 +167,7 @@ const prismaRepository: ProductListingRepository = {
 };
 
 const mongoRepository: ProductListingRepository = {
-  getListingsByProductId: async (productId) => {
+  getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
     const db = await getMongoDb();
 
     // Get listings
@@ -177,13 +178,13 @@ const mongoRepository: ProductListingRepository = {
       .toArray();
 
     // Get integrations and connections for enrichment
-    const integrationIds = listings.reduce<string[]>((acc, listing) => {
+    const integrationIds = listings.reduce<string[]>((acc: string[], listing: ProductListingDocument) => {
       if (!acc.includes(listing.integrationId)) {
         acc.push(listing.integrationId);
       }
       return acc;
     }, []);
-    const connectionIds = listings.reduce<string[]>((acc, listing) => {
+    const connectionIds = listings.reduce<string[]>((acc: string[], listing: ProductListingDocument) => {
       if (!acc.includes(listing.connectionId)) {
         acc.push(listing.connectionId);
       }
@@ -200,10 +201,10 @@ const mongoRepository: ProductListingRepository = {
       .find({ _id: { $in: Array.from(connectionIds) } })
       .toArray();
 
-    const integrationMap = new Map(integrations.map((i) => [i._id, i]));
-    const connectionMap = new Map(connections.map((c) => [c._id, c]));
+    const integrationMap = new Map<string, { _id: string; name: string; slug: string }>(integrations.map((i: { _id: string; name: string; slug: string }) => [i._id, i]));
+    const connectionMap = new Map<string, { _id: string; name: string }>(connections.map((c: { _id: string; name: string }) => [c._id, c]));
 
-    return listings.map((listing) => {
+    return listings.map((listing: ProductListingDocument) => {
       const integration = integrationMap.get(listing.integrationId);
       const connection = connectionMap.get(listing.connectionId);
       return {
@@ -221,7 +222,7 @@ const mongoRepository: ProductListingRepository = {
     });
   },
 
-  getListingById: async (id) => {
+  getListingById: async (id: string): Promise<ProductListingRecord | null> => {
     const db = await getMongoDb();
     const doc = await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
@@ -229,7 +230,7 @@ const mongoRepository: ProductListingRepository = {
     return doc ? toListingRecord(doc) : null;
   },
 
-  createListing: async (input) => {
+  createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
     const db = await getMongoDb();
     const now = new Date();
     const id = randomUUID();
@@ -273,14 +274,14 @@ const mongoRepository: ProductListingRepository = {
     };
   },
 
-  updateListingExternalId: async (id, externalListingId) => {
+  updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
       .updateOne({ _id: id }, { $set: { externalListingId, updatedAt: new Date() } });
   },
 
-  updateListingStatus: async (id, status) => {
+  updateListingStatus: async (id: string, status: string): Promise<void> => {
     const db = await getMongoDb();
     const updateData: Record<string, unknown> = { status, updatedAt: new Date() };
     if (status === "active") {
@@ -291,7 +292,7 @@ const mongoRepository: ProductListingRepository = {
       .updateOne({ _id: id }, { $set: updateData });
   },
 
-  updateListingInventoryId: async (id, inventoryId) => {
+  updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
@@ -301,7 +302,7 @@ const mongoRepository: ProductListingRepository = {
       );
   },
 
-  appendExportHistory: async (id, event) => {
+  appendExportHistory: async (id: string, event: ProductListingExportEvent): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
@@ -314,12 +315,13 @@ const mongoRepository: ProductListingRepository = {
       );
   },
 
-  deleteListing: async (id) => {
+  deleteListing: async (id: string): Promise<boolean> => {
     const db = await getMongoDb();
     await db.collection<ProductListingDocument>(LISTINGS_COLLECTION).deleteOne({ _id: id });
+    return true;
   },
 
-  listingExists: async (productId, connectionId) => {
+  listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const db = await getMongoDb();
     const existing = await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
@@ -327,14 +329,14 @@ const mongoRepository: ProductListingRepository = {
     return existing !== null;
   },
 
-  listAllListings: async () => {
+  listAllListings: async (): Promise<Array<{ productId: string; status: string }>> => {
     const db = await getMongoDb();
     return db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
       .find({}, { projection: { productId: 1, status: 1 } })
       .toArray()
-      .then((docs) =>
-        docs.map((doc) => ({ productId: doc.productId, status: doc.status }))
+      .then((docs: ProductListingDocument[]) =>
+        docs.map((doc: ProductListingDocument) => ({ productId: doc.productId, status: doc.status }))
       );
   },
 };
@@ -363,13 +365,13 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
       .sort({ createdAt: -1 })
       .toArray();
 
-    return integrations.map((integration) => ({
+    return integrations.map((integration: { _id: string; name: string; slug: string }) => ({
       id: integration._id,
       name: integration.name,
       slug: integration.slug,
       connections: connections
-        .filter((c) => c.integrationId === integration._id)
-        .map((c) => ({
+        .filter((c: { integrationId: string }) => c.integrationId === integration._id)
+        .map((c: { _id: string; name: string; integrationId: string }) => ({
           id: c._id,
           name: c.name,
           integrationId: c.integrationId,
@@ -388,5 +390,5 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
     orderBy: { name: "asc" },
   });
 
-  return integrations;
+  return integrations as IntegrationWithConnectionsBasic[];
 };

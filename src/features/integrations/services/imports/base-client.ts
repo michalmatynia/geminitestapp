@@ -32,7 +32,7 @@ export type BaseApiRawResult = {
 
 const DEFAULT_BASE_API_URL = "https://api.baselinker.com/connector.php";
 
-const buildBaseApiUrl = () => {
+const buildBaseApiUrl = (): string => {
   const raw = process.env.BASE_API_URL || DEFAULT_BASE_API_URL;
   if (raw.includes("connector.php")) return raw;
   return `${raw.replace(/\/$/, "")}/connector.php`;
@@ -63,9 +63,9 @@ const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
     (payload.data as Record<string, unknown> | undefined)?.inventories,
     (payload.data as Record<string, unknown> | undefined)?.storages,
   ];
-  const raw = candidates.map(toArray).find((list) => list.length > 0) ?? [];
+  const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
   return raw
-    .map((entry) => {
+    .map((entry: unknown) => {
       if (!entry || typeof entry !== "object") return null;
       const record = entry as Record<string, unknown>;
       const id =
@@ -79,7 +79,7 @@ const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
         id;
       return { id, name };
     })
-    .filter(Boolean) as BaseInventory[];
+    .filter((entry: BaseInventory | null): entry is BaseInventory => Boolean(entry));
 };
 
 const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
@@ -88,9 +88,9 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
     payload.warehouse,
     (payload.data as Record<string, unknown> | undefined)?.warehouses,
   ];
-  const raw = candidates.map(toArray).find((list) => list.length > 0) ?? [];
+  const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
   return raw
-    .map((entry) => {
+    .map((entry: unknown) => {
       if (!entry || typeof entry !== "object") return null;
       const record = entry as Record<string, unknown>;
       const id =
@@ -110,7 +110,7 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
         id;
       return { id, name, typedId };
     })
-    .filter(Boolean) as BaseWarehouse[];
+    .filter((entry: BaseWarehouse | null): entry is BaseWarehouse => Boolean(entry));
 };
 
 const extractProductIds = (payload: BaseApiResponse): string[] => {
@@ -159,7 +159,7 @@ const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
     (payload.data as Record<string, unknown> | undefined)?.items;
 
   if (Array.isArray(rawProducts)) {
-    return rawProducts.map((entry) => {
+    return rawProducts.map((entry: unknown) => {
       if (entry && typeof entry === "object") {
         return { ...(entry as Record<string, unknown>) };
       }
@@ -170,7 +170,7 @@ const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
 
   if (rawProducts && typeof rawProducts === "object") {
     return Object.entries(rawProducts as Record<string, unknown>).map(
-      ([key, value]) => {
+      ([key, value]: [string, unknown]) => {
         if (value && typeof value === "object") {
           const record = value as Record<string, unknown>;
           return {
@@ -200,7 +200,7 @@ export async function callBaseApi(
     parameters: JSON.stringify(parameters),
   });
   const response = await withTransientRecovery(
-    async () => {
+    async (): Promise<Response> => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -266,7 +266,7 @@ export async function callBaseApiRaw(
   let payload: BaseApiResponse | null = null;
   try {
     payload = (await response.json()) as BaseApiResponse;
-  } catch (error) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Invalid JSON payload.";
     return {
       ok: false,
@@ -295,14 +295,14 @@ export async function deleteBaseProduct(
   token: string,
   inventoryId: string,
   productId: string
-) {
+): Promise<BaseApiResponse> {
   return callBaseApi(token, "deleteInventoryProduct", {
     inventory_id: inventoryId,
     product_id: productId,
   });
 }
 
-export async function fetchBaseInventories(token: string) {
+export async function fetchBaseInventories(token: string): Promise<BaseInventory[]> {
   const methods = ["getInventories", "getInventory", "getInventoryList"];
   let lastError: Error | null = null;
   for (const method of methods) {
@@ -312,7 +312,7 @@ export async function fetchBaseInventories(token: string) {
       if (inventories.length > 0) {
         return inventories;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error("Base API error.");
     }
   }
@@ -322,7 +322,7 @@ export async function fetchBaseInventories(token: string) {
   return [];
 }
 
-export async function fetchBaseInventoriesDebug(token: string) {
+export async function fetchBaseInventoriesDebug(token: string): Promise<BaseApiRawResult & { inventories: BaseInventory[]; method: string; parameters: Record<string, unknown> }> {
   const methods = ["getInventories", "getInventory", "getInventoryList"];
   let lastResult: BaseApiRawResult | null = null;
   for (const method of methods) {
@@ -345,13 +345,13 @@ export async function fetchBaseInventoriesDebug(token: string) {
       payload: null,
       error: "No inventory response.",
     }),
-    method: methods[0],
+    method: methods[0] as string,
     parameters: {},
     inventories: [],
   };
 }
 
-export async function fetchBaseWarehouses(token: string, inventoryId: string) {
+export async function fetchBaseWarehouses(token: string, inventoryId: string): Promise<BaseWarehouse[]> {
   const methods = ["getInventoryWarehouses"];
   let lastError: Error | null = null;
   for (const method of methods) {
@@ -363,7 +363,7 @@ export async function fetchBaseWarehouses(token: string, inventoryId: string) {
       if (warehouses.length > 0) {
         return warehouses;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error("Base API error.");
     }
   }
@@ -373,7 +373,7 @@ export async function fetchBaseWarehouses(token: string, inventoryId: string) {
   return [];
 }
 
-export async function fetchBaseWarehousesDebug(token: string, inventoryId: string) {
+export async function fetchBaseWarehousesDebug(token: string, inventoryId: string): Promise<BaseApiRawResult & { warehouses: BaseWarehouse[]; method: string; parameters: Record<string, unknown> }> {
   const method = "getInventoryWarehouses";
   const parameters = { inventory_id: inventoryId };
   const result = await callBaseApiRaw(token, method, parameters);
@@ -386,7 +386,7 @@ export async function fetchBaseWarehousesDebug(token: string, inventoryId: strin
   };
 }
 
-export async function fetchBaseAllWarehouses(token: string) {
+export async function fetchBaseAllWarehouses(token: string): Promise<BaseWarehouse[]> {
   const methods = ["getWarehouses"];
   let lastError: Error | null = null;
   for (const method of methods) {
@@ -396,7 +396,7 @@ export async function fetchBaseAllWarehouses(token: string) {
       if (warehouses.length > 0) {
         return warehouses;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error("Base API error.");
     }
   }
@@ -406,7 +406,7 @@ export async function fetchBaseAllWarehouses(token: string) {
   return [];
 }
 
-export async function fetchBaseAllWarehousesDebug(token: string) {
+export async function fetchBaseAllWarehousesDebug(token: string): Promise<BaseApiRawResult & { warehouses: BaseWarehouse[]; method: string; parameters: Record<string, unknown> }> {
   const method = "getWarehouses";
   const parameters = {};
   const result = await callBaseApiRaw(token, method, parameters);
@@ -419,7 +419,7 @@ export async function fetchBaseAllWarehousesDebug(token: string) {
   };
 }
 
-export async function fetchBaseProductIds(token: string, inventoryId: string) {
+export async function fetchBaseProductIds(token: string, inventoryId: string): Promise<string[]> {
   const candidates = [
     {
       method: "getInventoryProductsList",
@@ -449,7 +449,7 @@ export async function fetchBaseProductDetails(
   token: string,
   inventoryId: string,
   productIds: string[]
-) {
+): Promise<BaseProductRecord[]> {
   const candidates = [
     {
       method: "getInventoryProductsData",
@@ -480,7 +480,7 @@ export async function fetchBaseProducts(
   token: string,
   inventoryId: string,
   limit?: number
-) {
+): Promise<BaseProductRecord[]> {
   const ids = await fetchBaseProductIds(token, inventoryId);
   const targetIds =
     typeof limit === "number" && limit > 0 ? ids.slice(0, limit) : ids;
@@ -524,7 +524,7 @@ export async function checkBaseSkuExists(
         if (ids.length > 0) {
           // Verify by fetching details
           const details = await fetchBaseProductDetails(token, inventoryId, ids);
-          const match = details.find((p) => {
+          const match = details.find((p: BaseProductRecord) => {
             const pSku = p.sku ?? p.SKU ?? p.Sku;
             return typeof pSku === "string" && pSku.toLowerCase() === sku.toLowerCase();
           });
@@ -547,7 +547,7 @@ export async function checkBaseSkuExists(
     for (let i = 0; i < allIds.length; i += batchSize) {
       const batch = allIds.slice(i, i + batchSize);
       const products = await fetchBaseProductDetails(token, inventoryId, batch);
-      const match = products.find((p) => {
+      const match = products.find((p: BaseProductRecord) => {
         const pSku = p.sku ?? p.SKU ?? p.Sku;
         return typeof pSku === "string" && pSku.toLowerCase() === sku.toLowerCase();
       });
@@ -558,7 +558,7 @@ export async function checkBaseSkuExists(
     }
 
     return { exists: false };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[base-client] Error checking SKU existence:", error);
     // On error, assume SKU doesn't exist to avoid blocking export
     return { exists: false };
@@ -587,8 +587,8 @@ export async function fetchBaseCategories(token: string): Promise<BaseCategory[]
   // Handle object format (keyed by category_id)
   if (rawCategories && typeof rawCategories === "object" && !Array.isArray(rawCategories)) {
     return Object.entries(rawCategories as Record<string, unknown>)
-      .filter(([key]) => key !== "status" && key !== "error_code" && key !== "error_message")
-      .map(([key, value]) => {
+      .filter(([key]: [string, unknown]) => key !== "status" && key !== "error_code" && key !== "error_message")
+      .map(([key, value]: [string, unknown]) => {
         const cat = value as Record<string, unknown>;
         const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
         const name =
@@ -619,7 +619,7 @@ export async function fetchBaseCategories(token: string): Promise<BaseCategory[]
 /**
  * Fetches categories with debug information.
  */
-export async function fetchBaseCategoriesDebug(token: string) {
+export async function fetchBaseCategoriesDebug(token: string): Promise<BaseApiRawResult & { categories: BaseCategory[]; method: string; parameters: Record<string, unknown> }> {
   const method = "getInventoryCategories";
   const parameters = {};
   const result = await callBaseApiRaw(token, method, parameters);
@@ -640,8 +640,8 @@ function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[
 
   if (rawCategories && typeof rawCategories === "object" && !Array.isArray(rawCategories)) {
     return Object.entries(rawCategories as Record<string, unknown>)
-      .filter(([key]) => key !== "status" && key !== "error_code" && key !== "error_message")
-      .map(([key, value]) => {
+      .filter(([key]: [string, unknown]) => key !== "status" && key !== "error_code" && key !== "error_message")
+      .map(([key, value]: [string, unknown]) => {
         const cat = value as Record<string, unknown>;
         const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
         const name =

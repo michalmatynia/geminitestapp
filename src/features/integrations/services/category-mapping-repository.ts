@@ -107,7 +107,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
         ],
       });
 
-      return records.map((r) => ({
+      return records.map((r: any) => ({
         id: r.id,
         connectionId: r.connectionId,
         externalCategoryId: r.externalCategoryId,

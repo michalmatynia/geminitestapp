@@ -18,7 +18,7 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
     const seen = new WeakSet();
     const json = JSON.stringify(
       value,
-      (_key: string, val: unknown): any => {
+      (_key: string, val: unknown): unknown => {
         if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
         if (typeof val === "object" && val !== null) {
           if (seen.has(val)) return "[Circular]";

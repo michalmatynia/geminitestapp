@@ -37,10 +37,10 @@ export function getColorSchemeStyle(
       return {};
     }
     if (schemes?.[scheme]) {
-      return buildSchemeStyle(schemes[scheme]);
+      return buildSchemeStyle(schemes[scheme]!);
     }
     if (scheme in COLOR_SCHEME_STYLES) {
-      return COLOR_SCHEME_STYLES[scheme];
+      return COLOR_SCHEME_STYLES[scheme] ?? {};
     }
   }
   return {};

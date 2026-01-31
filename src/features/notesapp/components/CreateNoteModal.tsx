@@ -17,7 +17,7 @@ export function CreateNoteModal({
   onTagCreated,
   folderTheme,
   onSelectRelatedNote,
-}: CreateNoteModalProps) {
+}: CreateNoteModalProps): React.JSX.Element | null {
   const formRef = useRef<HTMLFormElement>(null);
 
   if (!isOpen) return null;
@@ -26,7 +26,7 @@ export function CreateNoteModal({
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => {
+          onClick={(): void => {
             if (formRef.current) {
               formRef.current.requestSubmit();
             }
@@ -50,7 +50,7 @@ export function CreateNoteModal({
   return (
     <AppModal
       open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Create Note"
     >
       <ModalShell title="Create Note" onClose={onClose} header={header}>

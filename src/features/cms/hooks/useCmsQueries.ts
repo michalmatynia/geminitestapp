@@ -126,7 +126,7 @@ export function useCmsSlug(id?: string, domainId?: string): UseQueryResult<Slug,
 export function useCreateSlug(): UseMutationResult<Slug, Error, { slug: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { slug: string; domainId?: string }) => {
+    mutationFn: async (input: { slug: string; domainId?: string | null }) => {
       const { ok, payload } = await createSlug(input);
       if (!ok) throw new Error("Failed to create slug");
       return payload;

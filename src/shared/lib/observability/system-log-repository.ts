@@ -62,7 +62,7 @@ type MongoSystemLogDoc = {
   createdAt?: Date;
 };
 
-const isMissingPrismaTable = (error: unknown) =>
+const isMissingPrismaTable = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
 
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
@@ -281,7 +281,7 @@ export async function createSystemLog(
       level: created.level as SystemLogLevel,
       context: (created.context as Record<string, unknown> | null) ?? null,
       createdAt: created.createdAt,
-    });
+    } as SystemLogRecord);
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
       const mongo = await getMongoDb();
@@ -289,11 +289,26 @@ export async function createSystemLog(
         _id: toMongoId(payload.id),
         ...payload,
       });
-      return normalizeLogRecord(payload);
+      return normalizeLogRecord(payload as SystemLogRecord);
     }
     throw error;
   }
 }
+
+type PrismaSystemLog = {
+  id: string;
+  level: string;
+  message: string;
+  source: string | null;
+  context: Prisma.JsonValue | null;
+  stack: string | null;
+  path: string | null;
+  method: string | null;
+  statusCode: number | null;
+  requestId: string | null;
+  userId: string | null;
+  createdAt: Date;
+};
 
 export async function listSystemLogs(
   input: ListSystemLogsInput
@@ -332,12 +347,12 @@ export async function listSystemLogs(
       }),
     ]);
 
-    const logs = rows.map((row: Prisma.SystemLog) =>
+    const logs = (rows as unknown as PrismaSystemLog[]).map((row: PrismaSystemLog) =>
       normalizeLogRecord({
         ...row,
         level: row.level as SystemLogLevel,
         context: (row.context as Record<string, unknown> | null) ?? null,
-      })
+      } as SystemLogRecord)
     );
 
     return { logs, total, page, pageSize };
@@ -355,7 +370,7 @@ export async function listSystemLogs(
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .toArray();
-      const logs = docs.map((doc) =>
+      const logs = docs.map((doc: MongoSystemLogDoc) =>
         normalizeLogRecord(toSystemLogRecord(doc))
       );
       return { logs, total, page, pageSize };
@@ -428,10 +443,10 @@ export async function getSystemLogMetrics(
     }
 
     const topSources = (sourceGroups as Array<{ source: string | null; _count: { _all: number } }>)
-      .filter((row) => row.source)
+      .filter((row: { source: string | null; _count: { _all: number } }) => row.source)
       .map((row: { source: string | null; _count: { _all: number } }) => ({ source: row.source as string, count: row._count._all ?? 0 }));
     const topPaths = (pathGroups as Array<{ path: string | null; _count: { _all: number } }>)
-      .filter((row) => row.path)
+      .filter((row: { path: string | null; _count: { _all: number } }) => row.path)
       .map((row: { path: string | null; _count: { _all: number } }) => ({ path: row.path as string, count: row._count._all ?? 0 }));
 
     return {

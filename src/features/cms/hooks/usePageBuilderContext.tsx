@@ -1321,7 +1321,7 @@ function makeSnapshot(state: PageBuilderState): PageBuilderSnapshot {
 export function pageBuilderReducer(state: PageBuilderState, action: PageBuilderAction): PageBuilderState {
   if (action.type === "UNDO") {
     if (state.history.past.length === 0) return state;
-    const previous = state.history.past[state.history.past.length - 1];
+    const previous = state.history.past[state.history.past.length - 1]!;
     const past = state.history.past.slice(0, -1);
     const future = [makeSnapshot(state), ...state.history.future];
     return {
@@ -1335,7 +1335,7 @@ export function pageBuilderReducer(state: PageBuilderState, action: PageBuilderA
 
   if (action.type === "REDO") {
     if (state.history.future.length === 0) return state;
-    const next = state.history.future[0];
+    const next = state.history.future[0]!;
     const future = state.history.future.slice(1);
     const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
     return {

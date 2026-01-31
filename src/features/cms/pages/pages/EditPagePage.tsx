@@ -35,7 +35,9 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugByValue = useMemo((): Map<string, { id: string; slug: string }> => {
     const map = new Map<string, { id: string; slug: string }>();
-    allSlugs.forEach((slug: Slug): void => map.set(slug.slug, { id: slug.id, slug: slug.slug }));
+    allSlugs.forEach((slug: Slug): void => {
+      map.set(slug.slug, { id: slug.id, slug: slug.slug });
+    });
     return map;
   }, [allSlugs]);
 

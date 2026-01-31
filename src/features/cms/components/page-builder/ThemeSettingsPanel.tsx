@@ -234,9 +234,9 @@ function MiniRichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: showFormatSelect ? { levels: [1, 2, 3] } : false,
-        bulletList: enableLists,
-        orderedList: enableLists,
-        listItem: enableLists,
+        bulletList: enableLists ? undefined : false,
+        orderedList: enableLists ? undefined : false,
+        listItem: enableLists ? undefined : false,
       }),
       Link.configure({
         openOnClick: false,

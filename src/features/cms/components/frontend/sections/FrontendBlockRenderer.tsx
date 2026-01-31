@@ -251,7 +251,7 @@ function ImageElementBlock({
   const width = (settings["width"] as number) || 100;
   const height = (settings["height"] as number) || 0;
   const aspectRatio = (settings["aspectRatio"] as string) || "auto";
-  const objectFit = (settings["objectFit"] as string) || "cover";
+  const objectFit = (settings["objectFit"] as React.CSSProperties["objectFit"]) || "cover";
   const objectPosition = resolveObjectPosition((settings["objectPosition"] as string) || "center");
   const opacity = clampNumber(settings["opacity"], 0, 100, 100);
   const blur = clampNumber(settings["blur"], 0, 20, 0);

@@ -21,7 +21,7 @@ export default function ProductAiJobsPanel({
   title = "AI Jobs",
   description = "Monitor AI, import, and export jobs across the platform.",
   showTabs = true,
-}: ProductAiJobsPanelProps) {
+}: ProductAiJobsPanelProps): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<ProductAiJob[]>([]);
@@ -32,13 +32,13 @@ export default function ProductAiJobsPanel({
   const [bulkDeletingAll, setBulkDeletingAll] = useState(false);
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
 
-  const getPayload = (job: ProductAiJob) => {
+  const getPayload = (job: ProductAiJob): Record<string, unknown> | null => {
     return job.payload && typeof job.payload === "object"
       ? (job.payload as Record<string, unknown>)
       : null;
   };
 
-  const getJobMeta = (job: ProductAiJob) => {
+  const getJobMeta = (job: ProductAiJob): any => {
     const payload = getPayload(job);
     const graph = payload?.graph as Record<string, unknown> | undefined;
     const context = payload?.context as Record<string, unknown> | undefined;
@@ -86,20 +86,20 @@ export default function ProductAiJobsPanel({
     };
   };
 
-  const defaultTab = useMemo(() => {
+  const defaultTab = useMemo((): string => {
     if (!showTabs) return "ai";
     const tab = searchParams?.get("tab") ?? "ai";
     return ["ai", "import", "export"].includes(tab) ? tab : "ai";
   }, [searchParams, showTabs]);
 
-  const loadJobs = useCallback(async () => {
+  const loadJobs = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const res = await fetch("/api/products/ai-jobs");
       if (!res.ok) throw new Error("Failed to load jobs.");
       const data = (await res.json()) as { jobs?: ProductAiJob[] };
       setJobs(data.jobs ?? []);
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to load jobs.", { variant: "error" });
     } finally {
       setLoading(false);
@@ -111,16 +111,16 @@ export default function ProductAiJobsPanel({
   }, [loadJobs]);
 
   useEffect(() => {
-    const hasPendingJobs = jobs.some(job => job.status === "pending" || job.status === "running");
+    const hasPendingJobs = jobs.some((job: ProductAiJob) => job.status === "pending" || job.status === "running");
     if (!hasPendingJobs) {
       return;
     }
 
     const interval = setInterval(() => void loadJobs(), 5000);
-    return () => clearInterval(interval);
+    return (): void => clearInterval(interval);
   }, [jobs, loadJobs]);
 
-  const cancelJob = async (jobId: string) => {
+  const cancelJob = async (jobId: string): Promise<void> => {
     setActionId(jobId);
     try {
       const res = await fetch(`/api/products/ai-jobs/${jobId}`, {
@@ -131,14 +131,14 @@ export default function ProductAiJobsPanel({
       if (!res.ok) throw new Error("Failed to cancel job.");
       await loadJobs();
       toast("Job canceled", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to cancel job.", { variant: "error" });
     } finally {
       setActionId(null);
     }
   };
 
-  const deleteJob = async (jobId: string) => {
+  const deleteJob = async (jobId: string): Promise<void> => {
     setActionId(jobId);
     try {
       const res = await fetch(`/api/products/ai-jobs/${jobId}`, {
@@ -147,14 +147,14 @@ export default function ProductAiJobsPanel({
       if (!res.ok) throw new Error("Failed to delete job.");
       await loadJobs();
       toast("Job deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete job.", { variant: "error" });
     } finally {
       setActionId(null);
     }
   };
 
-  const clearCompleted = async () => {
+  const clearCompleted = async (): Promise<void> => {
     if (!window.confirm("Delete all completed jobs? This cannot be undone.")) return;
     setBulkDeleting(true);
     try {
@@ -164,14 +164,14 @@ export default function ProductAiJobsPanel({
       if (!res.ok) throw new Error("Failed to delete completed jobs.");
       await loadJobs();
       toast("Jobs cleared", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete completed jobs.", { variant: "error" });
     } finally {
       setBulkDeleting(false);
     }
   };
 
-  const clearAllJobs = async () => {
+  const clearAllJobs = async (): Promise<void> => {
     if (!window.confirm("Delete ALL AI jobs (including running/pending)?")) return;
     setBulkDeletingAll(true);
     try {
@@ -181,14 +181,14 @@ export default function ProductAiJobsPanel({
       if (!res.ok) throw new Error("Failed to delete all jobs.");
       await loadJobs();
       toast("All jobs deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete all jobs.", { variant: "error" });
     } finally {
       setBulkDeletingAll(false);
     }
   };
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobs.filter((job: ProductAiJob) => {
     const meta = getJobMeta(job);
     return [
       job.id,
@@ -202,7 +202,7 @@ export default function ProductAiJobsPanel({
       meta.source,
       job.product?.name_en,
       job.product?.sku,
-    ].some((val) => val?.toLowerCase().includes(query.toLowerCase()));
+    ].some((val: string | undefined) => val?.toLowerCase().includes(query.toLowerCase()));
   });
 
   const aiContent = (
@@ -211,19 +211,19 @@ export default function ProductAiJobsPanel({
         <Input
           placeholder="Search by ID, entity, path, or model..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setQuery(e.target.value)}
           className="max-w-md bg-gray-900 border-border text-white"
         />
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => void loadJobs()} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={(): void => { void loadJobs(); }} disabled={loading}>
             <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => void clearCompleted()} disabled={bulkDeleting}>
+          <Button variant="destructive" size="sm" onClick={(): void => { void clearCompleted(); }} disabled={bulkDeleting}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear Finished
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => void clearAllJobs()} disabled={bulkDeletingAll}>
+          <Button variant="destructive" size="sm" onClick={(): void => { void clearAllJobs(); }} disabled={bulkDeletingAll}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear All
           </Button>
@@ -249,7 +249,7 @@ export default function ProductAiJobsPanel({
                 </td>
               </tr>
             ) : (
-              filteredJobs.map((job) => {
+              filteredJobs.map((job: ProductAiJob) => {
                 const meta = getJobMeta(job);
                 return (
                   <tr key={job.id} className="hover:bg-card/50">
@@ -290,7 +290,7 @@ export default function ProductAiJobsPanel({
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                        onClick={() => setSelectedJob(job)}
+                        onClick={(): void => setSelectedJob(job)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -299,7 +299,7 @@ export default function ProductAiJobsPanel({
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-yellow-500 hover:text-yellow-400"
-                          onClick={() => void cancelJob(job.id)}
+                          onClick={(): void => { void cancelJob(job.id); }}
                           disabled={actionId === job.id}
                         >
                           {actionId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
@@ -309,7 +309,7 @@ export default function ProductAiJobsPanel({
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-red-500 hover:text-red-400"
-                        onClick={() => void deleteJob(job.id)}
+                        onClick={(): void => { void deleteJob(job.id); }}
                         disabled={actionId === job.id}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -373,10 +373,10 @@ export default function ProductAiJobsPanel({
       {selectedJob && (
         <AppModal
           open={true}
-          onOpenChange={(open) => !open && setSelectedJob(null)}
+          onOpenChange={(open: boolean): void => { if (!open) setSelectedJob(null); }}
           title="Job Details"
         >
-          <ModalShell title="Job Details" onClose={() => setSelectedJob(null)} size="xl">
+          <ModalShell title="Job Details" onClose={(): void => setSelectedJob(null)} size="xl">
             <div className="space-y-6 text-sm">
               <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
                 <div>
@@ -545,7 +545,7 @@ export default function ProductAiJobsPanel({
                           ?.length ? (
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
                             {(selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls?.map(
-                              (url, index) => (
+                              (url: string, index: number) => (
                                 <div key={`${url}-${index}`} className="truncate">
                                   {url}
                                 </div>
@@ -635,7 +635,7 @@ export default function ProductAiJobsPanel({
                     )}
 
                     <div className="space-y-4">
-                      {selectedJob.result.translations && Object.entries(selectedJob.result.translations).map(([lang, trans]) => (
+                      {selectedJob.result.translations && Object.entries(selectedJob.result.translations).map(([lang, trans]: [string, any]) => (
                         <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
                           <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -686,7 +686,7 @@ export default function ProductAiJobsPanel({
   );
 }
 
-export function ProductAiJobsPanelSuspense(props: ProductAiJobsPanelProps) {
+export function ProductAiJobsPanelSuspense(props: ProductAiJobsPanelProps): React.JSX.Element {
   return (
     <Suspense fallback={<div className="container mx-auto py-10"><div className="text-gray-400">Loading...</div></div>}>
       <ProductAiJobsPanel {...props} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { 
   NoteWithRelations, 
   TagRecord, 
@@ -9,10 +9,10 @@ import type {
   NotebookRecord 
 } from "@/shared/types/notes";
 
-export function useNotebooks() {
+export function useNotebooks(): UseQueryResult<NotebookRecord[]> {
   return useQuery({
     queryKey: ["notebooks"],
-    queryFn: async () => {
+    queryFn: async (): Promise<NotebookRecord[]> => {
       const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
       if (!response.ok) throw new Error("Failed to fetch notebooks");
       return (await response.json()) as NotebookRecord[];
@@ -20,10 +20,10 @@ export function useNotebooks() {
   });
 }
 
-export function useNoteFolderTree(notebookId?: string) {
+export function useNoteFolderTree(notebookId?: string): UseQueryResult<CategoryWithChildren[]> {
   return useQuery({
     queryKey: ["note-folder-tree", notebookId],
-    queryFn: async () => {
+    queryFn: async (): Promise<CategoryWithChildren[]> => {
       if (!notebookId) return [] as CategoryWithChildren[];
       const params = new URLSearchParams({ notebookId });
       const response = await fetch(`/api/notes/categories/tree?${params.toString()}`, { cache: "no-store" });
@@ -34,10 +34,10 @@ export function useNoteFolderTree(notebookId?: string) {
   });
 }
 
-export function useNoteTags(notebookId?: string) {
+export function useNoteTags(notebookId?: string): UseQueryResult<TagRecord[]> {
   return useQuery({
     queryKey: ["note-tags", notebookId],
-    queryFn: async () => {
+    queryFn: async (): Promise<TagRecord[]> => {
       if (!notebookId) return [] as TagRecord[];
       const params = new URLSearchParams({ notebookId });
       const response = await fetch(`/api/notes/tags?${params.toString()}`, { cache: "no-store" });
@@ -48,10 +48,10 @@ export function useNoteTags(notebookId?: string) {
   });
 }
 
-export function useNoteThemes(notebookId?: string) {
+export function useNoteThemes(notebookId?: string): UseQueryResult<ThemeRecord[]> {
   return useQuery({
     queryKey: ["note-themes", notebookId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ThemeRecord[]> => {
       if (!notebookId) return [] as ThemeRecord[];
       const params = new URLSearchParams({ notebookId });
       const response = await fetch(`/api/notes/themes?${params.toString()}`, { cache: "no-store" });
@@ -73,10 +73,10 @@ export interface FetchNotesParams {
   categoryIds?: string[] | undefined;
 }
 
-export function useNotes(params: FetchNotesParams) {
+export function useNotes(params: FetchNotesParams): UseQueryResult<NoteWithRelations[]> {
   return useQuery({
     queryKey: ["notes", params],
-    queryFn: async () => {
+    queryFn: async (): Promise<NoteWithRelations[]> => {
       const { notebookId, search, searchScope, isPinned, isArchived, isFavorite, tagIds, categoryIds } = params;
       if (!notebookId) return [] as NoteWithRelations[];
 

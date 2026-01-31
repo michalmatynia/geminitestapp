@@ -60,7 +60,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
   return readPrismaSetting(key);
 };
 
-const toPositiveNumber = (value: unknown, fallback: number, minValue = 0): number => {
+const toPositiveNumber = (value: unknown, fallback: number, minValue: number = 0): number => {
   const parsed = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(parsed) || parsed < minValue) return fallback;
   return parsed;

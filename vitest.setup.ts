@@ -43,11 +43,11 @@ global.ResizeObserver = class ResizeObserver {
 
 // Polyfill for global.crypto.randomUUID if missing (for JSDOM)
 if (!global.crypto) {
-  // @ts-ignore
+  // @ts-expect-error - crypto is read-only in some environments
   global.crypto = {};
 }
 if (!global.crypto.randomUUID) {
-  // @ts-ignore
+  // @ts-expect-error - polyfill for randomUUID
   global.crypto.randomUUID = () => "mock-random-uuid";
 }
 

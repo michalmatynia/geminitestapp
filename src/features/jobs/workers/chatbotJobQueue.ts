@@ -7,14 +7,14 @@ const DEBUG_CHATBOT = process.env.NODE_ENV !== "production";
 let intervalId: NodeJS.Timeout | null = null;
 let isProcessing = false;
 
-const logDebug = (message: string, meta?: Record<string, unknown>) => {
+const logDebug = (message: string, meta?: Record<string, unknown>): void => {
   if (!DEBUG_CHATBOT) return;
   console.info(`[chatbot][jobs] ${message}`, meta || {});
 };
 
-const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: number) => {
+const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: number): Promise<Response> => {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout((): void => controller.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
@@ -22,11 +22,11 @@ const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: numbe
   }
 };
 
-const processJob = async (jobId: string) => {
+const processJob = async (jobId: string): Promise<void> => {
   const job = await chatbotJobRepository.findById(jobId);
   if (!job || job.status !== "running") return;
   
-  const payload = job.payload;
+  const payload = job.payload as { model?: string; messages?: any[] };
   if (!payload?.model || !Array.isArray(payload?.messages)) {
     throw new Error("Invalid job payload.");
   }
@@ -69,7 +69,7 @@ const processJob = async (jobId: string) => {
   });
 };
 
-export const pollQueue = async () => {
+export const pollQueue = async (): Promise<void> => {
   if (isProcessing) return;
   isProcessing = true;
   try {
@@ -87,7 +87,7 @@ export const pollQueue = async () => {
     try {
       await processJob(nextJob.id);
       logDebug("Job completed", { jobId: nextJob.id });
-    } catch (error) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Job failed.";
       await chatbotJobRepository.update(nextJob.id, {
         status: "failed",
@@ -101,11 +101,11 @@ export const pollQueue = async () => {
   }
 };
 
-export const startChatbotJobQueue = () => {
+export const startChatbotJobQueue = (): void => {
 
   if (intervalId) return;
 
-  intervalId = setInterval(() => {
+  intervalId = setInterval((): void => {
 
     void pollQueue();
 
@@ -117,7 +117,7 @@ export const startChatbotJobQueue = () => {
 
 
 
-export const stopChatbotJobQueue = () => {
+export const stopChatbotJobQueue = (): void => {
 
   if (intervalId) {
 

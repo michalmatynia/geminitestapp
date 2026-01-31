@@ -33,7 +33,7 @@ type ListingRow = {
   attemptIndex: number | null;
 };
 
-const getStatusIcon = (status: string) => {
+const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
     case "pending":
       return <Clock className="size-4 text-yellow-500" />;
@@ -55,7 +55,7 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: string): string => {
   switch (status) {
     case "pending":
       return "bg-yellow-900/20 text-yellow-300 border-yellow-900/50";
@@ -79,7 +79,7 @@ const getStatusColor = (status: string) => {
 
 export default function ProductListingJobsPanel({
   showBackToProducts = true,
-}: ProductListingJobsPanelProps) {
+}: ProductListingJobsPanelProps): React.JSX.Element {
   const [jobs, setJobs] = useState<ProductJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +97,7 @@ export default function ProductListingJobsPanel({
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [historySort, setHistorySort] = useState<"desc" | "asc">("desc");
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -107,7 +107,7 @@ export default function ProductListingJobsPanel({
       }
       const data = (await res.json()) as ProductJob[];
       setJobs(data);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to fetch jobs:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch jobs");
     } finally {
@@ -115,13 +115,13 @@ export default function ProductListingJobsPanel({
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     setRefreshing(true);
     await fetchJobs();
     setRefreshing(false);
   };
 
-  const handleCancelListing = async (productId: string, listingId: string) => {
+  const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
     if (!window.confirm("Cancel this listing job? This will remove it from the queue.")) {
       return;
     }
@@ -136,15 +136,15 @@ export default function ProductListingJobsPanel({
         throw new Error("Failed to cancel listing");
       }
 
-      setJobs((prev) =>
+      setJobs((prev: ProductJob[]) =>
         prev
-          .map((job) => ({
+          .map((job: ProductJob) => ({
             ...job,
-            listings: job.listings.filter((l) => l.id !== listingId),
+            listings: job.listings.filter((l: ListingJob) => l.id !== listingId),
           }))
-          .filter((job) => job.listings.length > 0)
+          .filter((job: ProductJob) => job.listings.length > 0)
       );
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to cancel listing:", err);
       setError(err instanceof Error ? err.message : "Failed to cancel listing");
     } finally {
@@ -166,9 +166,9 @@ export default function ProductListingJobsPanel({
   }, [query, jobs]);
 
   useEffect(() => {
-    const hasPending = jobs.some((job) =>
+    const hasPending = jobs.some((job: ProductJob) =>
       job.listings.some(
-        (listing) =>
+        (listing: ListingJob) =>
           listing.status === "pending" ||
           listing.status === "processing" ||
           listing.status === "in_progress"
@@ -183,33 +183,33 @@ export default function ProductListingJobsPanel({
       void fetchJobs();
     }, 10000);
 
-    return () => clearInterval(interval);
+    return (): void => clearInterval(interval);
   }, [jobs]);
 
-  const formatDateTime = (value: Date | string | null) => {
+  const formatDateTime = (value: Date | string | null): string => {
     if (!value) return "—";
-    const date = value instanceof Date ? value : new Date(value);
+    const date: Date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return "—";
     return date.toLocaleString();
   };
 
-  const getSortedHistory = (history: ListingJob["exportHistory"]) => {
+  const getSortedHistory = (history: ListingJob["exportHistory"]): ListingAttempt[] => {
     if (!history?.length) return [];
-    const sorted = [...history].sort((a, b) => {
-      const aTime = new Date(a.exportedAt).getTime();
-      const bTime = new Date(b.exportedAt).getTime();
+    const sorted = [...history].sort((a: ListingAttempt, b: ListingAttempt) => {
+      const aTime: number = new Date(a.exportedAt).getTime();
+      const bTime: number = new Date(b.exportedAt).getTime();
       return historySort === "asc" ? aTime - bTime : bTime - aTime;
     });
     return sorted;
   };
 
-  const listingRows: ListingRow[] = jobs.flatMap((job) =>
-    job.listings.flatMap((listing): ListingRow[] => {
+  const listingRows: ListingRow[] = jobs.flatMap((job: ProductJob) =>
+    job.listings.flatMap((listing: ListingJob): ListingRow[] => {
       const history = listing.exportHistory ?? [];
       if (history.length === 0) {
         return [{ job, listing, attempt: null, attemptIndex: null }];
       }
-      return history.map((attempt, index) => ({
+      return history.map((attempt: ListingAttempt, index: number) => ({
         job,
         listing,
         attempt,
@@ -218,7 +218,7 @@ export default function ProductListingJobsPanel({
     })
   );
 
-  const filteredRows = listingRows.filter(({ job, listing, attempt }) => {
+  const filteredRows = listingRows.filter(({ job, listing, attempt }: ListingRow) => {
     if (!query.trim()) return true;
     const target = [
       job.productName,
@@ -240,9 +240,9 @@ export default function ProductListingJobsPanel({
     return target.includes(query.trim().toLowerCase());
   });
 
-  const sortedRows = [...filteredRows].sort((a, b) => {
-    const aTime = new Date(a.attempt?.exportedAt ?? a.listing.updatedAt ?? a.listing.createdAt).getTime();
-    const bTime = new Date(b.attempt?.exportedAt ?? b.listing.updatedAt ?? b.listing.createdAt).getTime();
+  const sortedRows = [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
+    const aTime: number = new Date(a.attempt?.exportedAt ?? a.listing.updatedAt ?? a.listing.createdAt).getTime();
+    const bTime: number = new Date(b.attempt?.exportedAt ?? b.listing.updatedAt ?? b.listing.createdAt).getTime();
     return bTime - aTime;
   });
   const totalRows = sortedRows.length;
@@ -307,12 +307,12 @@ export default function ProductListingJobsPanel({
           id="exportJobsPageSize"
           className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
           value={pageSize}
-          onChange={(event) => {
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
             setPageSize(Number(event.target.value));
             setPage(1);
           }}
         >
-          {[10, 25, 50, 100].map((size) => (
+          {[10, 25, 50, 100].map((size: number) => (
             <option key={size} value={size}>
               {size}
             </option>
@@ -321,7 +321,7 @@ export default function ProductListingJobsPanel({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage((current) => Math.max(1, current - 1))}
+          onClick={(): void => setPage((current: number) => Math.max(1, current - 1))}
           disabled={clampedPage <= 1}
           className="border bg-gray-800 hover:bg-gray-700"
         >
@@ -333,7 +333,7 @@ export default function ProductListingJobsPanel({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+          onClick={(): void => setPage((current: number) => Math.min(totalPages, current + 1))}
           disabled={clampedPage >= totalPages}
           className="border bg-gray-800 hover:bg-gray-700"
         >
@@ -381,7 +381,7 @@ export default function ProductListingJobsPanel({
                     </td>
                   </tr>
                 ) : (
-                  pagedRows.map(({ job, listing, attempt, attemptIndex }) => {
+                  pagedRows.map(({ job, listing, attempt, attemptIndex }: ListingRow) => {
                     const status = attempt?.status ?? listing.status ?? "unknown";
                     const typeLabel =
                       status === "deleted" || status === "removed" ? "Removal" : "Export";
@@ -450,7 +450,7 @@ export default function ProductListingJobsPanel({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                              onClick={() =>
+                              onClick={(): void =>
                                 setSelectedListing({
                                   job,
                                   listing,
@@ -468,7 +468,7 @@ export default function ProductListingJobsPanel({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-red-500 hover:text-red-400"
-                                  onClick={() => void handleCancelListing(job.productId, listing.id)}
+                                  onClick={(): void => { void handleCancelListing(job.productId, listing.id); }}
                                   disabled={deleting === listing.id}
                                   aria-label="Cancel export job"
                                 >
@@ -493,12 +493,12 @@ export default function ProductListingJobsPanel({
       {selectedListing && (
         <AppModal
           open={true}
-          onOpenChange={(open) => !open && setSelectedListing(null)}
+          onOpenChange={(open: boolean): void => { if (!open) setSelectedListing(null); }}
           title="Export Job Details"
         >
           <ModalShell
             title="Export Job Details"
-            onClose={() => setSelectedListing(null)}
+            onClose={(): void => setSelectedListing(null)}
             size="lg"
           >
             <div className="space-y-6 text-sm">
@@ -661,8 +661,8 @@ export default function ProductListingJobsPanel({
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                      onClick={() =>
-                        setHistorySort((prev) => (prev === "desc" ? "asc" : "desc"))
+                      onClick={(): void =>
+                        setHistorySort((prev: "desc" | "asc") => (prev === "desc" ? "asc" : "desc"))
                       }
                       aria-label="Toggle export history sort"
                     >
@@ -673,7 +673,7 @@ export default function ProductListingJobsPanel({
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-xs text-gray-300 hover:text-white"
-                      onClick={() => setHistoryExpanded((prev) => !prev)}
+                      onClick={(): void => setHistoryExpanded((prev: boolean) => !prev)}
                       aria-expanded={historyExpanded}
                     >
                       {historyExpanded ? "Collapse" : "Expand"}
@@ -685,7 +685,7 @@ export default function ProductListingJobsPanel({
                     {selectedListing.listing.exportHistory?.length ? (
                       <div className="mt-3 space-y-3">
                         {getSortedHistory(selectedListing.listing.exportHistory).map(
-                          (event, index) => (
+                          (event: ListingAttempt, index: number) => (
                             <div
                               key={`${selectedListing.listing.id}-history-${index}`}
                               className="rounded border border-border bg-card/60 p-3 text-xs text-gray-300"

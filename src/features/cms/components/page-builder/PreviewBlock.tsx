@@ -425,13 +425,15 @@ export function PreviewSection({
       ...getSectionStyles(section.settings, colorSchemes),
       ...getTextAlign(section.settings["contentAlignment"]),
     };
-    const containerRingClass = isSectionSelected
-      ? isInspecting
-        ? "ring-2 ring-inset ring-blue-500/60"
-        : "ring-2 ring-inset ring-blue-500/40"
-      : isSectionHovered
-        ? "ring-2 ring-inset ring-blue-500/30"
-        : "hover:ring-1 hover:ring-inset hover:ring-border/40";
+    const containerRingClass = showEditorChrome
+      ? isSectionSelected
+        ? isInspecting
+          ? "ring-2 ring-inset ring-blue-500/60"
+          : "ring-2 ring-inset ring-blue-500/40"
+        : isSectionHovered
+          ? "ring-2 ring-inset ring-blue-500/30"
+          : "hover:ring-1 hover:ring-inset hover:ring-border/40"
+      : "";
     return (
       wrapInspector(
         <div
@@ -560,6 +562,10 @@ export function PreviewSection({
         return columnHeightMode === "fixed" && columnHeight > 0;
       });
     });
+
+    if (rowsToRender.length === 0 && !showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapInspector(
@@ -1019,6 +1025,9 @@ export function PreviewSection({
     const typoStyles = getBlockTypographyStyles(section.settings);
     const hasText = text.trim().length > 0;
     const showPlaceholder = !hasText && showEditorChrome;
+    if (!hasText && !showEditorChrome) {
+      return null;
+    }
     return (
       wrapInspector(
         <div
@@ -1180,6 +1189,10 @@ export function PreviewSection({
       rowGap: lineGap,
       whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
     };
+
+    if (letters.length === 0 && !showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapInspector(
@@ -1700,6 +1713,9 @@ export function PreviewSection({
   }
 
   // Fallback for unknown section types
+  if (!showEditorChrome) {
+    return null;
+  }
   return (
     wrapInspector(
       <div
@@ -2038,15 +2054,7 @@ function PreviewBlockItem({
     const typoStyles = getBlockTypographyStyles(block.settings);
 
     if (!hasText && !showEditorChrome) {
-      return wrapBlock(
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleSelect}
-          onKeyDown={handleKeyDown}
-          className={buildContainerClass("min-h-[1px] w-full", "")}
-        />
-      );
+      return null;
     }
 
     const content = link ? (
@@ -2095,15 +2103,7 @@ function PreviewBlockItem({
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     if (!hasText && !showEditorChrome) {
-      return wrapBlock(
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleSelect}
-          onKeyDown={handleKeyDown}
-          className={buildContainerClass("min-h-[1px] w-full", "")}
-        />
-      );
+      return null;
     }
 
     return (
@@ -2140,15 +2140,7 @@ function PreviewBlockItem({
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     if (!hasText && !showEditorChrome) {
-      return wrapBlock(
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleSelect}
-          onKeyDown={handleKeyDown}
-          className={buildContainerClass("min-h-[1px] w-full", "")}
-        />
-      );
+      return null;
     }
 
     return (
@@ -2655,15 +2647,7 @@ function PreviewBlockItem({
 
   // Fallback for unknown block types
   if (!showEditorChrome) {
-    return wrapBlock(
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={handleKeyDown}
-        className={buildContainerClass("min-h-[1px] w-full", "")}
-      />
-    );
+    return null;
   }
 
   return (
@@ -3078,7 +3062,7 @@ function buildImageElementPresentation(
   const width = (settings["width"] as number) || 100;
   const height = (settings["height"] as number) || 0;
   const aspectRatio = (settings["aspectRatio"] as string) || "auto";
-  const objectFit = (settings["objectFit"] as string) || "cover";
+  const objectFit = (settings["objectFit"] as React.CSSProperties["objectFit"]) || "cover";
   const objectPosition = resolveObjectPosition((settings["objectPosition"] as string) || "center");
   const opacity = clampNumber(settings["opacity"], 0, 100, 100);
   const blur = clampNumber(settings["blur"], 0, 20, 0);

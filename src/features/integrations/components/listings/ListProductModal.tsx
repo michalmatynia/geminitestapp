@@ -27,7 +27,8 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
-import type { Integration, IntegrationConnectionBasic } from "@/features/integrations/types/integrations-ui";
+import type { Integration } from "@/features/integrations/types/integrations-ui";
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from "@/features/integrations/types/listings";
 import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
 
 export default function ListProductModal({
@@ -47,7 +48,16 @@ export default function ListProductModal({
     isBaseComIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId) as {
+    integrations: IntegrationWithConnections[];
+    loading: boolean;
+    selectedIntegrationId: string;
+    selectedConnectionId: string;
+    selectedIntegration: IntegrationWithConnections | null;
+    isBaseComIntegration: boolean;
+    setSelectedIntegrationId: (id: string) => void;
+    setSelectedConnectionId: (id: string) => void;
+  };
 
   // Base.com specific settings
   const {
@@ -73,7 +83,7 @@ export default function ListProductModal({
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
   const selectedConnection = selectedIntegration?.connections.find(
-    (connection: any) => connection.id === selectedConnectionId
+    (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
@@ -311,8 +321,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {integrationsWithConnections
-                        .filter((integration: any) => integration.id)
-                        .map((integration: any) => (
+                        .filter((integration: Integration): boolean => !!integration.id)
+                        .map((integration: Integration) => (
                           <SelectItem key={integration.id} value={integration.id}>
                             {integration.name}
                           </SelectItem>
@@ -333,8 +343,8 @@ export default function ListProductModal({
                       </SelectTrigger>
                       <SelectContent>
                         {selectedIntegration.connections
-                          .filter((connection: any) => connection.id)
-                          .map((connection: any) => (
+                          .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                          .map((connection: IntegrationConnectionBasic) => (
                             <SelectItem key={connection.id} value={connection.id}>
                               {connection.name}
                             </SelectItem>
@@ -366,8 +376,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {inventories
-                        .filter((inventory: any) => inventory.id)
-                        .map((inventory: any) => (
+                        .filter((inventory: InventoryOption): boolean => !!inventory.id)
+                        .map((inventory: InventoryOption) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -393,8 +403,8 @@ export default function ListProductModal({
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
                       {templates
-                        .filter((template: any) => template.id)
-                        .map((template: any) => (
+                        .filter((template: Template): boolean => !!template.id)
+                        .map((template: Template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>

@@ -961,7 +961,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         const useCarousel = config.draggableCarousel ?? false;
         const dragAxis = config.draggableType ?? "x,y";
         let dragTargets: HTMLElement[] = targetsArray;
-        let dragType: string = dragAxis;
+        let dragType: Draggable.Vars["type"] = dragAxis;
         let bounds: Draggable.Vars["bounds"];
         let snap: Draggable.Vars["snap"];
 
@@ -971,27 +971,33 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           if (track) {
             dragTargets = [track];
             dragType = dragAxis === "y" ? "y" : "x";
-                          const items = Array.from(track.children) as HTMLElement[];
-                          if (items.length) {
-                            const positions = items.map((item: HTMLElement): number => (dragType === "y" ? -item.offsetTop : -item.offsetLeft));
-                            const min = Math.min(...positions);
-            
-              const max = Math.max(...positions);
-              bounds = dragType === "y" ? { minY: min, maxY: max } : { minX: min, maxX: max };
-              if (config.draggableCarouselSnap ?? true) {
-                const snapFn = (value: number): number => {
-                  let closest = positions[0];
-                  let diff = Math.abs(value - closest);
-                  for (let i = 1; i < positions.length; i += 1) {
-                    const d = Math.abs(value - positions[i]);
-                    if (d < diff) {
-                      diff = d;
-                      closest = positions[i];
+            const items = Array.from(track.children) as HTMLElement[];
+            if (items.length) {
+              const positions = items.map((item: HTMLElement): number =>
+                dragType === "y" ? -item.offsetTop : -item.offsetLeft
+              );
+              const firstPosition = positions[0];
+              if (firstPosition !== undefined) {
+                const min = Math.min(...positions);
+                const max = Math.max(...positions);
+                bounds = dragType === "y" ? { minY: min, maxY: max } : { minX: min, maxX: max };
+                if (config.draggableCarouselSnap ?? true) {
+                  const snapFn = (value: number): number => {
+                    let closest = firstPosition;
+                    let diff = Math.abs(value - closest);
+                    for (let i = 1; i < positions.length; i += 1) {
+                      const position = positions[i];
+                      if (position === undefined) continue;
+                      const d = Math.abs(value - position);
+                      if (d < diff) {
+                        diff = d;
+                        closest = position;
+                      }
                     }
-                  }
-                  return closest;
-                };
-                snap = dragType === "y" ? { y: snapFn } : { x: snapFn };
+                    return closest;
+                  };
+                  snap = dragType === "y" ? { y: snapFn } : { x: snapFn };
+                }
               }
             }
           }

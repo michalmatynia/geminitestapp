@@ -22,7 +22,7 @@ const getState = (): AgentQueueState => {
 
 const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
 
-export function startAgentQueue() {
+export function startAgentQueue(): void {
   const state = getState();
   if (state.timer) return;
   void processAgentQueue();
@@ -31,7 +31,7 @@ export function startAgentQueue() {
   }, 2000);
 }
 
-export function stopAgentQueue() {
+export function stopAgentQueue(): void {
   const state = getState();
   if (state.timer) {
     clearInterval(state.timer);
@@ -40,7 +40,7 @@ export function stopAgentQueue() {
   state.running = false;
 }
 
-export async function processAgentQueue() {
+export async function processAgentQueue(): Promise<void> {
   const state = getState();
   if (state.running) return;
   state.running = true;
@@ -75,10 +75,10 @@ export async function processAgentQueue() {
 
     try {
       await runAgentControlLoop(nextRun.id);
-    } catch (error) {
+    } catch (error: unknown) {
       await logAgentFailure(nextRun.id, error);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     const errorId = randomUUID();
     if (debugEnabled) {
       console.error("[chatbot][agent][queue] Failed to process queue", {
@@ -91,7 +91,7 @@ export async function processAgentQueue() {
   }
 }
 
-async function recoverStuckRuns() {
+async function recoverStuckRuns(): Promise<void> {
   if (!("chatbotAgentRun" in prisma)) return;
   const cutoff = new Date(Date.now() - STUCK_RUN_THRESHOLD_MS);
   const stuckRuns = await prisma.chatbotAgentRun.findMany({
@@ -131,7 +131,7 @@ async function recoverStuckRuns() {
   }
 }
 
-async function logAgentFailure(runId: string, error: unknown) {
+async function logAgentFailure(runId: string, error: unknown): Promise<void> {
   const errorId = randomUUID();
   await logAgentAudit(
     runId,

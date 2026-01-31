@@ -4,7 +4,13 @@ import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
 import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
 import type { ProductAiJobType } from "@/shared/types/jobs";
 
-export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown) {
+import { productService } from "@/features/products/server";
+import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
+import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
+import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
+import type { ProductAiJobType, ProductAiJob } from "@/shared/types/jobs";
+
+export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.createJob(productId, type, payload);
@@ -12,11 +18,11 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
   return job;
 }
 
-export async function getProductAiJobs(productId?: string) {
+export async function getProductAiJobs(productId?: string): Promise<(ProductAiJob & { product: { name_en: string | null; sku: string | null } | null })[]> {
   const jobRepository = await getProductAiJobRepository();
   const jobs = await jobRepository.findJobs(productId);
 
-  const shouldFetchProduct = (job: { productId: string; payload: unknown }) => {
+  const shouldFetchProduct = (job: { productId: string; payload: unknown }): boolean => {
     const payload =
       job.payload && typeof job.payload === "object"
         ? (job.payload as Record<string, unknown>)
@@ -36,16 +42,16 @@ export async function getProductAiJobs(productId?: string) {
 
   // Batch fetch products - deduplicate IDs to avoid redundant queries
   const uniqueProductIds = [
-    ...new Set(jobs.filter(shouldFetchProduct).map((j) => j.productId)),
+    ...new Set(jobs.filter(shouldFetchProduct).map((j: ProductAiJob) => j.productId)),
   ];
 
   // Fetch all unique products in parallel
   const productResults = await Promise.all(
-    uniqueProductIds.map(async (id) => {
+    uniqueProductIds.map(async (id: string) => {
       try {
         const product = await productService.getProductById(id);
         return { id, product };
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`[getProductAiJobs] Failed to fetch product ${id}:`, error);
         return { id, product: null };
       }
@@ -54,20 +60,20 @@ export async function getProductAiJobs(productId?: string) {
 
   // Create lookup map for O(1) access
   const productMap = new Map(
-    productResults.map(({ id, product }) => [
+    productResults.map(({ id, product }: { id: string; product: any }) => [
       id,
       product ? { name_en: product.name_en, sku: product.sku } : null,
     ])
   );
 
   // Enrich jobs with product data from map
-  return jobs.map((job) => ({
+  return jobs.map((job: ProductAiJob) => ({
     ...job,
     product: productMap.get(job.productId) ?? null,
   }));
 }
 
-export async function getProductAiJob(jobId: string) {
+export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { product: any }) | null> {
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.findJobById(jobId);
   if (!job) return null;
@@ -94,7 +100,7 @@ export async function getProductAiJob(jobId: string) {
   if (shouldFetch) {
     try {
       product = await productService.getProductById(job.productId);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
       // Continue without product details if it fails
     }
@@ -106,12 +112,12 @@ export async function getProductAiJob(jobId: string) {
   };
 }
 
-export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate) {
+export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.updateJob(jobId, data);
 }
 
-export async function cancelProductAiJob(jobId: string) {
+export async function cancelProductAiJob(jobId: string): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.findJobById(jobId);
   if (!job) throw notFoundError("Job not found", { jobId });
@@ -128,22 +134,22 @@ export async function cancelProductAiJob(jobId: string) {
   });
 }
 
-export async function deleteProductAiJob(jobId: string) {
+export async function deleteProductAiJob(jobId: string): Promise<void> {
   const jobRepository = await getProductAiJobRepository();
   await jobRepository.deleteJob(jobId);
 }
 
-export async function deleteTerminalProductAiJobs() {
+export async function deleteTerminalProductAiJobs(): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.deleteTerminalJobs();
 }
 
-export async function deleteAllProductAiJobs() {
+export async function deleteAllProductAiJobs(): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.deleteAllJobs();
 }
 
-export async function cleanupStaleRunningProductAiJobs(maxAgeMs: number) {
+export async function cleanupStaleRunningProductAiJobs(maxAgeMs: number): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.markStaleRunningJobs(maxAgeMs);
 }

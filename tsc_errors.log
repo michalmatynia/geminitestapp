@@ -18,9 +18,9 @@ src/features/cms/components/frontend/GsapAnimationWrapper.tsx(1011,13): error TS
 src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(323,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
 src/features/cms/components/frontend/theme-styles.ts(43,7): error TS2322: Type 'CSSProperties | undefined' is not assignable to type 'CSSProperties'.
   Type 'undefined' is not assignable to type 'Properties<string | number, string & {}>'.
-src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(622,26): error TS2345: Argument of type '(prev: string) => string' is not assignable to parameter of type 'SetStateAction<"animation" | "settings" | "connections">'.
-  Type '(prev: string) => string' is not assignable to type '(prevState: "animation" | "settings" | "connections") => "animation" | "settings" | "connections"'.
-    Type 'string' is not assignable to type '"animation" | "settings" | "connections"'.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(622,26): error TS2345: Argument of type '(prev: string) => string' is not assignable to parameter of type 'SetStateAction<"connections" | "settings" | "animation">'.
+  Type '(prev: string) => string' is not assignable to type '(prevState: "connections" | "settings" | "animation") => "connections" | "settings" | "animation"'.
+    Type 'string' is not assignable to type '"connections" | "settings" | "animation"'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(299,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1095,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1273,15): error TS2322: Type 'string' is not assignable to type 'never'.
@@ -32,7 +32,7 @@ src/features/cms/components/page-builder/MenuSettingsPanel.tsx(786,17): error TS
     Type 'string' is not assignable to type '"sticky" | "static"'.
 src/features/cms/components/page-builder/MenuSettingsPanel.tsx(905,71): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
 src/features/cms/components/page-builder/MenuSettingsPanel.tsx(911,71): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
-src/features/cms/components/page-builder/PreviewBlock.tsx(3115,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(3154,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
 src/features/cms/components/page-builder/section-registry.ts(850,27): error TS18048: 'BLOCK_DEFINITIONS.TextAtom' is possibly 'undefined'.
 src/features/cms/components/page-builder/section-registry.ts(851,25): error TS18048: 'BLOCK_DEFINITIONS.TextAtom' is possibly 'undefined'.
 src/features/cms/components/page-builder/section-registry.ts(858,27): error TS18048: 'BLOCK_DEFINITIONS.ImageElement' is possibly 'undefined'.
@@ -122,9 +122,6 @@ src/features/database/pages/DatabasesPage.tsx(67,5): error TS2322: Type '({ dbTy
 src/features/database/pages/DatabasesPage.tsx(75,5): error TS2322: Type '({ dbType, backupName }: { dbType: DatabaseType; backupName: string; }) => Promise<{ ok: boolean; payload: DatabaseBackupResponse; }>' is not assignable to type 'MutationFunction<unknown, { dbType: DatabaseType; }>'.
   Types of parameters '__0' and 'variables' are incompatible.
     Property 'backupName' is missing in type '{ dbType: DatabaseType; }' but required in type '{ dbType: DatabaseType; backupName: string; }'.
-src/features/database/pages/DatabasesPage.tsx(141,15): error TS2339: Property 'ok' does not exist on type 'unknown'.
-src/features/database/pages/DatabasesPage.tsx(141,19): error TS2339: Property 'payload' does not exist on type 'unknown'.
-src/features/drafter/components/DraftList.tsx(47,28): error TS2307: Cannot find module '@/features/drafter/types/draft' or its corresponding type declarations.
 src/features/files/components/FileManager.tsx(175,51): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
 src/features/files/components/FileManager.tsx(179,42): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
 src/features/files/services/image-file-repository/prisma-image-file-repository.ts(43,9): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ImageFileCreateInput, ImageFileUncheckedCreateInput> & ImageFileUncheckedCreateInput) | (Without<...> & ImageFileCreateInput)'.
@@ -148,17 +145,17 @@ src/features/files/services/image-file-repository/prisma-image-file-repository.t
 src/features/gsap/components/AnimationPreviewIcon.tsx(185,17): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
   Type 'undefined' is not assignable to type 'TweenTarget'.
 src/features/integrations/components/listings/ListProductModal.tsx(30,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
+src/features/integrations/components/listings/ListProductModal.tsx(30,28): error TS6196: 'IntegrationConnectionBasic' is declared but never used.
+src/features/integrations/components/listings/ListProductModal.tsx(31,1): error TS6192: All imports in import declaration are unused.
 src/features/integrations/components/listings/ListProductModal.tsx(191,27): error TS2339: Property 'connections' does not exist on type 'Integration'.
+src/features/integrations/components/listings/MassListProductModal.tsx(24,1): error TS6133: 'IntegrationConnectionBasic' is declared but its value is never read.
 src/features/integrations/components/listings/MassListProductModal.tsx(24,15): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
 src/features/integrations/components/listings/ProductListingsModal.tsx(223,12): error TS2304: Cannot find name 'Link'.
 src/features/integrations/components/listings/ProductListingsModal.tsx(225,13): error TS2304: Cannot find name 'Link'.
+src/features/integrations/components/listings/SelectIntegrationModal.tsx(16,1): error TS6192: All imports in import declaration are unused.
 src/features/integrations/components/listings/SelectIntegrationModal.tsx(16,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
 src/features/integrations/components/listings/SelectProductForListingModal.tsx(204,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
   Type 'null' is not assignable to type 'string'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(337,45): error TS2304: Cannot find name 'InventoryOption'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(338,42): error TS2304: Cannot find name 'InventoryOption'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(364,44): error TS2304: Cannot find name 'Template'.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(365,41): error TS2304: Cannot find name 'Template'.
 src/features/integrations/hooks/useIntegrationMutations.ts(32,5): error TS2322: Type '({ integrationId, connectionId, payload }: { integrationId: string; connectionId?: string | null; payload: Record<string, unknown>; }) => Promise<IntegrationConnection>' is not assignable to type 'MutationFunction<IntegrationConnection, { integrationId: string; }>'.
   Types of parameters '__0' and 'variables' are incompatible.
     Property 'payload' is missing in type '{ integrationId: string; }' but required in type '{ integrationId: string; connectionId?: string | null | undefined; payload: Record<string, unknown>; }'.

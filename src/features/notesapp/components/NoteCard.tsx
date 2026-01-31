@@ -38,14 +38,14 @@ function NoteCardBase({
   onDragEnd,
   buildBreadcrumbPath,
   theme,
-}: NoteCardProps) {
+}: NoteCardProps): React.JSX.Element {
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = theme ?? FALLBACK_THEME;
   const [isCopied, setIsCopied] = React.useState(false);
   const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(
-    () => {
+    (): string => {
       let html = note.editorType === "wysiwyg"
         ? note.content
         : renderMarkdownToHtml(note.content);
@@ -63,7 +63,7 @@ function NoteCardBase({
   const backgroundColor = hasCustomColor
     ? normalizedColor
     : effectiveTheme.backgroundColor;
-  const getReadableTextColor = (hexColor: string) => {
+  const getReadableTextColor = (hexColor: string): string => {
     const normalized = hexColor.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
       return "#111827";
@@ -83,7 +83,7 @@ function NoteCardBase({
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
-  const relatedNotes = (() => {
+  const relatedNotes = ((): any[] => {
     if (note.relations && note.relations.length > 0) {
       return note.relations;
     }
@@ -92,41 +92,41 @@ function NoteCardBase({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ) => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): { id: string; title: string; color: string | null } | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
 
     const fromRelations = (note.relationsFrom ?? [])
-      .map((relation) =>
+      .map((relation: any) =>
         build(
           relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
       )
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
 
     const toRelations = (note.relationsTo ?? [])
-      .map((relation) =>
+      .map((relation: any) =>
         build(
           relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )
       )
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
 
     return [...fromRelations, ...toRelations];
   })();
   const thumbnailFile = note.files?.find(
-    (file) => file.mimetype?.startsWith("image/") && file.filepath
+    (file: any) => file.mimetype?.startsWith("image/") && file.filepath
   );
 
-  const handleCopyCode = async (e: React.MouseEvent) => {
+  const handleCopyCode = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
     try {
       await navigator.clipboard.writeText(note.content);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to copy code:", err);
     }
   };
@@ -137,7 +137,7 @@ function NoteCardBase({
       draggable={enableDrag}
       onDragStart={
         enableDrag
-          ? (e) => {
+          ? (e: React.DragEvent): void => {
               e.dataTransfer.setData("noteId", note.id);
               e.dataTransfer.setData("text/plain", note.id);
               e.dataTransfer.effectAllowed = "linkMove";
@@ -149,14 +149,14 @@ function NoteCardBase({
       }
       onDragEnd={
         enableDrag
-          ? (e) => {
+          ? (e: React.DragEvent): void => {
               const target = e.currentTarget as HTMLElement;
               target.style.opacity = "1";
               onDragEnd();
             }
           : undefined
       }
-      onClick={() => onSelectNote(note)}
+      onClick={(): void => onSelectNote(note)}
       style={{
         backgroundColor,
         color: textColor,
@@ -188,8 +188,8 @@ function NoteCardBase({
           {isCodeNote && (
                           <Button
                             type="button"
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={(e) => { void handleCopyCode(e); }}
+                            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+                            onClick={(e: React.MouseEvent): void => { void handleCopyCode(e); }}
                             className={`transition-colors ${                isCopied
                   ? "text-green-500"
                   : "text-gray-500 hover:text-blue-500"
@@ -202,8 +202,8 @@ function NoteCardBase({
           )}
           <Button
             type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={(event) => {
+            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+            onClick={(event: React.MouseEvent): void => {
               event.stopPropagation();
               onToggleFavorite(note);
             }}
@@ -236,7 +236,7 @@ function NoteCardBase({
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
       <div className="flex flex-wrap gap-2">
-        {note.tags.map((nt) => (
+        {note.tags.map((nt: any) => (
           <span
             key={nt.tagId}
             style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
@@ -259,10 +259,10 @@ function NoteCardBase({
               note.categories[0]?.categoryId || null,
               null,
               folderTree
-            ).map((crumb, index, array) => (
+            ).map((crumb: any, index: number, array: any[]) => (
               <React.Fragment key={index}>
                 <Button
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent): void => {
                     e.stopPropagation();
                     onSelectFolder(crumb.id);
                   }}
@@ -283,9 +283,9 @@ function NoteCardBase({
           <div className="mt-2">
             <div className="flex flex-wrap gap-2">
               {relatedNotes
-                .filter((item, index, array) => array.findIndex((entry) => entry.id === item.id) === index)
+                .filter((item: any, index: number, array: any[]) => array.findIndex((entry: any) => entry.id === item.id) === index)
                 .slice(0, 4)
-                .map((related) => (
+                .map((related: any) => (
                   <div
                     key={related.id}
                     className="w-24 cursor-pointer rounded-md px-2 py-1 text-[10px]"

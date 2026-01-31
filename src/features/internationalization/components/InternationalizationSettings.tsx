@@ -41,7 +41,7 @@ export function InternationalizationSettings({
   handleOpenNewLanguageModal,
   handleOpenLanguageModal,
   handleDeleteLanguage,
-}: InternationalizationSettingsProps) {
+}: InternationalizationSettingsProps): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
@@ -56,7 +56,7 @@ export function InternationalizationSettings({
             <Button
               className="min-w-[100px] border border-white/20 hover:border-white/40"
               type="button"
-              onClick={() => handleOpenCurrencyModal()}
+              onClick={(): void => handleOpenCurrencyModal()}
             >
               Add Currency
             </Button>
@@ -71,7 +71,7 @@ export function InternationalizationSettings({
             </div>
           ) : (
             <div className="space-y-3">
-              {currencyOptions.map((currency) => (
+              {currencyOptions.map((currency: CurrencyOption) => (
                 <div
                   key={currency.id}
                   className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
@@ -99,7 +99,7 @@ export function InternationalizationSettings({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           handleOpenCurrencyModal(currency);
                         }}
@@ -108,7 +108,7 @@ export function InternationalizationSettings({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-300 focus:text-red-300"
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           void handleDeleteCurrency(currency);
                         }}
@@ -133,7 +133,7 @@ export function InternationalizationSettings({
             <Button
               className="min-w-[100px] border border-white/20 hover:border-white/40"
               type="button"
-              onClick={() => handleOpenCountryModal()}
+              onClick={(): void => handleOpenCountryModal()}
             >
               Add Country
             </Button>
@@ -144,7 +144,7 @@ export function InternationalizationSettings({
                 className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 placeholder="Search countries..."
                 value={countrySearch}
-                onChange={(event) => setCountrySearch(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
               />
             </div>
             <p className="text-xs text-gray-500">
@@ -161,7 +161,7 @@ export function InternationalizationSettings({
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredCountries.map((country) => (
+              {filteredCountries.map((country: CountryOption) => (
                 <div
                   key={country.id}
                   className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
@@ -176,7 +176,7 @@ export function InternationalizationSettings({
                     <p className="text-sm text-gray-400">{country.name}</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                       {country.currencies?.length ? (
-                        country.currencies.map((entry) => (
+                        country.currencies.map((entry: { currencyId: string; currency: { code: string } }) => (
                           <span
                             key={entry.currencyId}
                             className="rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
@@ -203,7 +203,7 @@ export function InternationalizationSettings({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           handleOpenCountryModal(country);
                         }}
@@ -212,7 +212,7 @@ export function InternationalizationSettings({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-300 focus:text-red-300"
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           void handleDeleteCountry(country);
                         }}
@@ -234,7 +234,7 @@ export function InternationalizationSettings({
             <Button
               className="min-w-[100px] border border-white/20 hover:border-white/40"
               type="button"
-              onClick={handleOpenNewLanguageModal}
+              onClick={(): void => handleOpenNewLanguageModal()}
             >
               Add Language
             </Button>
@@ -253,7 +253,7 @@ export function InternationalizationSettings({
             </div>
           ) : (
             <div className="mt-4 space-y-3">
-              {languages.map((language) => (
+              {languages.map((language: Language) => (
                 <div
                   key={language.id}
                   className="flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
@@ -272,7 +272,7 @@ export function InternationalizationSettings({
                     ) : null}
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
                       {language.countries?.length ? (
-                        language.countries.map((entry) => (
+                        language.countries.map((entry: { countryId: string; country: { name: string; code: string } }) => (
                           <div
                             key={entry.countryId}
                             className="flex items-center gap-2 rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
@@ -301,7 +301,7 @@ export function InternationalizationSettings({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           handleOpenLanguageModal(language);
                         }}
@@ -310,7 +310,7 @@ export function InternationalizationSettings({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-300 focus:text-red-300"
-                        onSelect={(event) => {
+                        onSelect={(event: Event): void => {
                           event.preventDefault();
                           handleDeleteLanguage(language);
                         }}

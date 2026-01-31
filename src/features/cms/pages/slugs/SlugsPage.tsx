@@ -164,7 +164,7 @@ export default function SlugsPage(): React.JSX.Element {
                   </Label>
                 </div>
                 {zoningEnabled ? (
-                  <Select value={activeDomainId} onValueChange={handleDomainChange}>
+                  <Select value={activeDomainId ?? undefined} onValueChange={handleDomainChange}>
                     <SelectTrigger className="h-9 w-[220px]">
                       <SelectValue placeholder="Current domain" />
                     </SelectTrigger>

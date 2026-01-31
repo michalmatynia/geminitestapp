@@ -1,25 +1,12 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type {
-  NoteWithRelations,
-  NoteCreateInput,
-  NoteUpdateInput,
-  CategoryRecord,
-  CategoryUpdateInput,
-  NotebookRecord,
-  TagRecord,
-  TagUpdateInput,
-  ThemeRecord,
-  ThemeUpdateInput,
-} from "@/shared/types/notes";
-import type { DeleteResponse } from "@/shared/types/api";
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 
-export function useCreateNote() {
+export function useCreateNote(): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: NoteCreateInput) => {
+    mutationFn: async (payload: NoteCreateInput): Promise<NoteWithRelations> => {
       const response = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28,18 +15,18 @@ export function useCreateNote() {
       if (!response.ok) throw new Error("Failed to create note");
       return (await response.json()) as NoteWithRelations;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
     },
   });
 }
 
-export function useUpdateNote() {
+export function useUpdateNote(): UseMutationResult<NoteWithRelations, Error, { id: string; data: NoteUpdateInput }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: NoteUpdateInput }) => {
+    mutationFn: async ({ id, data }: { id: string; data: NoteUpdateInput }): Promise<NoteWithRelations> => {
       const response = await fetch(`/api/notes/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -48,7 +35,7 @@ export function useUpdateNote() {
       if (!response.ok) throw new Error("Failed to update note");
       return (await response.json()) as NoteWithRelations;
     },
-    onSuccess: (_data) => {
+    onSuccess: (_data: NoteWithRelations): void => {
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
       // Also invalidate specific note if needed, but the list should be enough for most cases
@@ -56,29 +43,29 @@ export function useUpdateNote() {
   });
 }
 
-export function useDeleteNote() {
+export function useDeleteNote(): UseMutationResult<DeleteResponse, Error, string> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
       const response = await fetch(`/api/notes/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete note");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
     },
   });
 }
 
-export function useCreateNoteFolder() {
+export function useCreateNoteFolder(): UseMutationResult<CategoryRecord, Error, { name: string; parentId: string | null; notebookId: string }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { name: string; parentId: string | null; notebookId: string }) => {
+    mutationFn: async (payload: { name: string; parentId: string | null; notebookId: string }): Promise<CategoryRecord> => {
       const response = await fetch("/api/notes/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,17 +74,17 @@ export function useCreateNoteFolder() {
       if (!response.ok) throw new Error("Failed to create folder");
       return (await response.json()) as CategoryRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
     },
   });
 }
 
-export function useUpdateNoteFolder() {
+export function useUpdateNoteFolder(): UseMutationResult<CategoryRecord, Error, { id: string; data: CategoryUpdateInput }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CategoryUpdateInput }) => {
+    mutationFn: async ({ id, data }: { id: string; data: CategoryUpdateInput }): Promise<CategoryRecord> => {
       const response = await fetch(`/api/notes/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -106,18 +93,18 @@ export function useUpdateNoteFolder() {
       if (!response.ok) throw new Error("Failed to update folder");
       return (await response.json()) as CategoryRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
 
-export function useDeleteNoteFolder() {
+export function useDeleteNoteFolder(): UseMutationResult<DeleteResponse, Error, { folderId: string; recursive?: boolean }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ folderId, recursive }: { folderId: string; recursive?: boolean }) => {
+    mutationFn: async ({ folderId, recursive }: { folderId: string; recursive?: boolean }): Promise<DeleteResponse> => {
       const url = `/api/notes/categories/${folderId}${recursive ? "?recursive=true" : ""}`;
       const response = await fetch(url, {
         method: "DELETE",
@@ -125,17 +112,17 @@ export function useDeleteNoteFolder() {
       if (!response.ok) throw new Error("Failed to delete folder");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
 
-export function useCreateNotebook() {
+export function useCreateNotebook(): UseMutationResult<NotebookRecord, Error, { name: string }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name }: { name: string }) => {
+    mutationFn: async ({ name }: { name: string }): Promise<NotebookRecord> => {
       const response = await fetch("/api/notes/notebooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,16 +131,16 @@ export function useCreateNotebook() {
       if (!response.ok) throw new Error("Failed to create notebook");
       return (await response.json()) as NotebookRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["notebooks"] });
     },
   });
 }
 
-export function useUpdateNotebook() {
+export function useUpdateNotebook(): UseMutationResult<NotebookRecord, Error, { id: string; name: string }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }): Promise<NotebookRecord> => {
       const response = await fetch(`/api/notes/notebooks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -162,21 +149,21 @@ export function useUpdateNotebook() {
       if (!response.ok) throw new Error("Failed to update notebook");
       return (await response.json()) as NotebookRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["notebooks"] });
     },
   });
 }
 
-export function useDeleteNotebook() {
+export function useDeleteNotebook(): UseMutationResult<DeleteResponse, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
       const response = await fetch(`/api/notes/notebooks/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete notebook");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["notebooks"] });
       void queryClient.invalidateQueries({ queryKey: ["note-folder-tree"] });
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -186,10 +173,10 @@ export function useDeleteNotebook() {
   });
 }
 
-export function useCreateNoteTag() {
+export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, { name: string; notebookId: string; color?: string }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { name: string; notebookId: string; color?: string }) => {
+    mutationFn: async (payload: { name: string; notebookId: string; color?: string }): Promise<TagRecord> => {
       const response = await fetch("/api/notes/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -198,16 +185,16 @@ export function useCreateNoteTag() {
       if (!response.ok) throw new Error("Failed to create tag");
       return (await response.json()) as TagRecord;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: TagRecord, variables: { notebookId: string }): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-tags", variables.notebookId] });
     },
   });
 }
 
-export function useUpdateNoteTag() {
+export function useUpdateNoteTag(): UseMutationResult<TagRecord, Error, { id: string; data: TagUpdateInput }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: TagUpdateInput }) => {
+    mutationFn: async ({ id, data }: { id: string; data: TagUpdateInput }): Promise<TagRecord> => {
       const response = await fetch(`/api/notes/tags/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -216,30 +203,30 @@ export function useUpdateNoteTag() {
       if (!response.ok) throw new Error("Failed to update tag");
       return (await response.json()) as TagRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-tags"] });
     },
   });
 }
 
-export function useDeleteNoteTag() {
+export function useDeleteNoteTag(): UseMutationResult<DeleteResponse, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
       const response = await fetch(`/api/notes/tags/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete tag");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-tags"] });
     },
   });
 }
 
-export function useCreateNoteTheme() {
+export function useCreateNoteTheme(): UseMutationResult<ThemeRecord, Error, { name: string; notebookId: string; colors: Record<string, string> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { name: string; notebookId: string; colors: Record<string, string> }) => {
+    mutationFn: async (payload: { name: string; notebookId: string; colors: Record<string, string> }): Promise<ThemeRecord> => {
       const response = await fetch("/api/notes/themes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -248,16 +235,16 @@ export function useCreateNoteTheme() {
       if (!response.ok) throw new Error("Failed to create theme");
       return (await response.json()) as ThemeRecord;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: ThemeRecord, variables: { notebookId: string }): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-themes", variables.notebookId] });
     },
   });
 }
 
-export function useUpdateNoteTheme() {
+export function useUpdateNoteTheme(): UseMutationResult<ThemeRecord, Error, { id: string; data: ThemeUpdateInput }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: ThemeUpdateInput }) => {
+    mutationFn: async ({ id, data }: { id: string; data: ThemeUpdateInput }): Promise<ThemeRecord> => {
       const response = await fetch(`/api/notes/themes/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -266,21 +253,21 @@ export function useUpdateNoteTheme() {
       if (!response.ok) throw new Error("Failed to update theme");
       return (await response.json()) as ThemeRecord;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-themes"] });
     },
   });
 }
 
-export function useDeleteNoteTheme() {
+export function useDeleteNoteTheme(): UseMutationResult<DeleteResponse, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
       const response = await fetch(`/api/notes/themes/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete theme");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-themes"] });
     },
   });

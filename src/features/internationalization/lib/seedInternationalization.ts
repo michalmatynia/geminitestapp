@@ -10,7 +10,7 @@ import {
 
 export async function ensureInternationalizationDefaults(
   tx: Prisma.TransactionClient
-) {
+): Promise<void> {
   await tx.currency.createMany({
     data: defaultCurrencies,
     skipDuplicates: true,
@@ -33,15 +33,15 @@ export async function ensureInternationalizationDefaults(
   ]);
 
   const countryByCode = new Map<string, string>(
-    countries.map((country) => [country.code, country.id])
+    countries.map((country: { code: string; id: string }) => [country.code, country.id])
   );
 
   const currencyByCode = new Map<string, string>(
-    currencies.map((currency) => [currency.code, currency.id])
+    currencies.map((currency: { code: string; id: string }) => [currency.code, currency.id])
   );
 
   const languageByCode = new Map<string, string>(
-    languages.map((language) => [language.code, language.id])
+    languages.map((language: { code: string; id: string }) => [language.code, language.id])
   );
 
   const countryCurrencyRows: Array<{

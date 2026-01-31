@@ -619,7 +619,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab((prev: string) => (prev === value ? prev : (value as "settings" | "animation" | "connections")))
+            setActiveTab(value as "settings" | "animation" | "connections")
           }
           className="flex flex-1 flex-col overflow-hidden"
         >

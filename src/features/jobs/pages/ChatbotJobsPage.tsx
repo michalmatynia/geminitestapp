@@ -21,7 +21,7 @@ type ChatbotJob = {
   payload?: unknown;
 };
 
-export default function ChatbotJobsPage() {
+export default function ChatbotJobsPage(): React.JSX.Element {
   const { toast } = useToast();
   const [jobs, setJobs] = useState<ChatbotJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function ChatbotJobsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [bulkDeletingJobs, setBulkDeletingJobs] = useState(false);
 
-  const loadJobs = useCallback(async () => {
+  const loadJobs = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
       const res = await fetch("/api/chatbot/jobs");
@@ -40,7 +40,7 @@ export default function ChatbotJobsPage() {
       }
       const data = (await res.json()) as { jobs?: ChatbotJob[] };
       setJobs(data.jobs ?? []);
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to load jobs.";
       setError(message);
@@ -54,18 +54,18 @@ export default function ChatbotJobsPage() {
     void loadJobs();
   }, [loadJobs]);
 
-  const filteredJobs = useMemo(() => {
+  const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();
     const sorted = [...jobs].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: ChatbotJob, b: ChatbotJob) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     if (!term) return sorted;
-    return sorted.filter((job) => {
+    return sorted.filter((job: ChatbotJob) => {
       const payload = job.payload as {
         messages?: Array<{ role?: string; content?: string }>;
       };
       const userMessage = payload?.messages
-        ?.filter((msg) => msg.role === "user")
+        ?.filter((msg: { role?: string }) => msg.role === "user")
         .at(-1)?.content;
       return [
         job.id,
@@ -80,8 +80,8 @@ export default function ChatbotJobsPage() {
     });
   }, [jobs, query]);
 
-  const cancelJob = async (jobId: string) => {
-    const job = jobs.find((item) => item.id === jobId);
+  const cancelJob = async (jobId: string): Promise<void> => {
+    const job = jobs.find((item: ChatbotJob) => item.id === jobId);
     if (!job) {
       toast("Job not found.", { variant: "error" });
       return;
@@ -98,7 +98,7 @@ export default function ChatbotJobsPage() {
       }
       await loadJobs();
       toast("Job canceled", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to cancel job.";
       toast(message, { variant: "error" });
@@ -107,7 +107,7 @@ export default function ChatbotJobsPage() {
     }
   };
 
-  const deleteJob = async (jobId: string, force = false) => {
+  const deleteJob = async (jobId: string, force: boolean = false): Promise<void> => {
     setDeletingId(jobId);
     try {
       const confirmed = window.confirm(
@@ -126,7 +126,7 @@ export default function ChatbotJobsPage() {
       }
       await loadJobs();
       toast("Job deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete job.";
       toast(message, { variant: "error" });
@@ -135,7 +135,7 @@ export default function ChatbotJobsPage() {
     }
   };
 
-  const deleteCompletedJobs = async () => {
+  const deleteCompletedJobs = async (): Promise<void> => {
     setBulkDeletingJobs(true);
     try {
       const confirmed = window.confirm(
@@ -151,7 +151,7 @@ export default function ChatbotJobsPage() {
       }
       await loadJobs();
       toast("Completed jobs deleted", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete jobs.";
       toast(message, { variant: "error" });
@@ -180,13 +180,13 @@ export default function ChatbotJobsPage() {
             className="max-w-sm h-8 text-sm"
             placeholder="Search jobs..."
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
+              onClick={(): void => {
                 void loadJobs();
               }}
               disabled={loading}
@@ -196,7 +196,7 @@ export default function ChatbotJobsPage() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => void deleteCompletedJobs()}
+              onClick={(): void => { void deleteCompletedJobs(); }}
               disabled={bulkDeletingJobs}
             >
               {bulkDeletingJobs ? "Deleting jobs..." : "Delete completed jobs"}
@@ -211,7 +211,7 @@ export default function ChatbotJobsPage() {
           <p className="text-sm text-gray-400">No jobs yet.</p>
         ) : (
           <div className="space-y-3">
-            {filteredJobs.map((job) => (
+            {filteredJobs.map((job: ChatbotJob) => (
               <div
                 key={job.id}
                 className="rounded-md border border-border bg-gray-900 px-4 py-3"
@@ -238,7 +238,7 @@ export default function ChatbotJobsPage() {
                             }>;
                           };
                           const userMessage = payload.messages
-                            ?.filter((msg) => msg.role === "user")
+                            ?.filter((msg: { role?: string }) => msg.role === "user")
                             .at(-1)?.content;
                           return userMessage
                             ? userMessage.slice(0, 160)
@@ -263,7 +263,7 @@ export default function ChatbotJobsPage() {
                         variant="destructive"
                         size="sm"
                         disabled={cancelingId === job.id}
-                        onClick={() => void cancelJob(job.id)}
+                        onClick={(): void => { void cancelJob(job.id); }}
                       >
                         {cancelingId === job.id ? "Canceling..." : "Cancel"}
                       </Button>
@@ -272,7 +272,7 @@ export default function ChatbotJobsPage() {
                       variant="destructive"
                       size="sm"
                       disabled={deletingId === job.id}
-                      onClick={() => void deleteJob(job.id)}
+                      onClick={(): void => { void deleteJob(job.id); }}
                     >
                       {deletingId === job.id ? "Deleting..." : "Delete"}
                     </Button>
@@ -281,7 +281,7 @@ export default function ChatbotJobsPage() {
                         variant="destructive"
                         size="sm"
                         disabled={deletingId === job.id}
-                        onClick={() => void deleteJob(job.id, true)}
+                        onClick={(): void => { void deleteJob(job.id, true); }}
                       >
                         {deletingId === job.id
                           ? "Deleting..."

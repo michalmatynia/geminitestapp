@@ -401,7 +401,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={settings.menuPlacement}
-                onChange={(v: MenuSettings["menuPlacement"]) => update("menuPlacement", v)}
+                onChange={(v: string) => update("menuPlacement", v as any)}
                 options={[
                   { label: "Top", value: "top" },
                   { label: "Left", value: "left" },
@@ -783,7 +783,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={positionMode}
-                onChange={(v: MenuSettings["positionMode"]) => update("positionMode", v)}
+                onChange={(v: string) => update("positionMode", v as any)}
                 options={[
                   { label: "Glued to top", value: "sticky" },
                   { label: "Top of page", value: "static" },
@@ -902,13 +902,13 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Entry animation"
                 value={settings.menuEntryAnimation}
-                onChange={(v: string) => update("menuEntryAnimation", v)}
+                onChange={(v: string) => update("menuEntryAnimation", v as any)}
                 options={ANIMATION_PRESETS}
               />
               <SelectField
                 label="Hover animation"
                 value={settings.menuHoverAnimation}
-                onChange={(v: string) => update("menuHoverAnimation", v)}
+                onChange={(v: string) => update("menuHoverAnimation", v as any)}
                 options={ANIMATION_PRESETS}
               />
             </div>

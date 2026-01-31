@@ -19,8 +19,8 @@ import type { AiPathsSettingsState } from "./useAiPathsSettingsState";
 
 type AiPathsSettingsViewProps = {
   activeTab: "canvas" | "paths" | "docs" | "queue";
-  renderActions?: (actions: React.ReactNode) => React.ReactNode;
-  onTabChange?: (tab: "canvas" | "paths" | "docs" | "queue") => void;
+  renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
+  onTabChange?: ((tab: "canvas" | "paths" | "docs" | "queue") => void) | undefined;
   state: AiPathsSettingsState;
 };
 

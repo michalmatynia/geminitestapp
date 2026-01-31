@@ -1695,6 +1695,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       startAddScheme,
       startEditScheme,
       schemeView,
+      isGlobalPaletteOpen,
       themePresetOptions,
       handleThemePresetChange,
       theme,

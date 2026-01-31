@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow } from "lucide-react";
 import { Button } from "@/shared/ui";
 import { useAdminLayout } from "@/features/admin";
@@ -19,6 +19,8 @@ function PageBuilderInner(): React.ReactNode {
   const { setIsProgrammaticallyCollapsed } = useAdminLayout();
   useBuilderKeyboardShortcuts();
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
+  const leftPanelRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelRef = useRef<HTMLDivElement | null>(null);
   const [leftPanelMode, setLeftPanelMode] = useState<"sections" | "theme" | "menu" | "app-embeds">("sections");
   const leftPanelLabel =
     leftPanelMode === "sections"
@@ -36,7 +38,16 @@ function PageBuilderInner(): React.ReactNode {
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white">
-      <div className="relative flex flex-1 overflow-hidden">
+      <div
+        className="relative flex flex-1 overflow-hidden"
+        onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
+          const target = event.target as Node | null;
+          if (!target) return;
+          if (leftPanelRef.current?.contains(target)) return;
+          if (rightPanelRef.current?.contains(target)) return;
+          dispatch({ type: "SELECT_NODE", nodeId: null });
+        }}
+      >
         {/* Left panel toggle (shown when collapsed) */}
         {state.leftPanelCollapsed && !isViewing && (
           <Button
@@ -52,6 +63,10 @@ function PageBuilderInner(): React.ReactNode {
 
         {/* Left panel: Component tree / Theme settings */}
         <div
+          ref={leftPanelRef}
+          onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
+            event.stopPropagation();
+          }}
           className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
             state.leftPanelCollapsed ? "w-0 opacity-0 -translate-x-2 pointer-events-none" : "w-72 opacity-100 translate-x-0"
           }`}
@@ -155,6 +170,10 @@ function PageBuilderInner(): React.ReactNode {
 
         {/* Right panel: Settings */}
         <div
+          ref={rightPanelRef}
+          onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
+            event.stopPropagation();
+          }}
           className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
             state.rightPanelCollapsed ? "w-0 opacity-0 translate-x-2 pointer-events-none" : "w-80 opacity-100 translate-x-0"
           }`}

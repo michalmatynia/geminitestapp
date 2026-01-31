@@ -482,7 +482,8 @@ function RowNodeItem({
           }
         }}
         onDragOver={(e: React.DragEvent) => {
-          if (!draggedBlockId || !draggedFromSectionId || !firstColumn) return;
+          const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+          if (!dragId || !firstColumn) return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
@@ -492,15 +493,23 @@ function RowNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          if (!draggedBlockId || !draggedFromSectionId || !firstColumn) return;
+          const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+          if (!dragId || !firstColumn) return;
+          const fromSection =
+            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+          const fromColumn =
+            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+          const fromParent =
+            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+          if (!fromSection) return;
           onDropBlockToColumn(
-            draggedBlockId,
-            draggedFromSectionId,
-            draggedFromColumnId ?? undefined,
+            dragId,
+            fromSection,
+            fromColumn || undefined,
             sectionId,
             firstColumn.id,
             (firstColumn.blocks ?? []).length,
-            draggedFromParentBlockId ?? undefined
+            fromParent || undefined
           );
           setDraggedBlockId(null);
           setDraggedFromSectionId(null);
@@ -663,6 +672,49 @@ function ColumnNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
 
+  const handleColumnDragOver = (e: React.DragEvent): void => {
+    const CONVERTIBLE = ["ImageWithText", "RichText", "Hero"];
+    const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+    const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE.includes(draggedSectionType ?? "");
+    if (!dragId && !isSectionDrop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleColumnDrop = (e: React.DragEvent): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+          const fromSection =
+            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+          const fromColumn =
+            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+          const fromParent =
+            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+    if (dragId && fromSection) {
+      onDropBlockToColumn(
+        dragId,
+        fromSection,
+        fromColumn || undefined,
+        sectionId,
+        column.id,
+        (column.blocks ?? []).length,
+        fromParent || undefined
+      );
+      setDraggedBlockId(null);
+      setDraggedFromSectionId(null);
+      setDraggedFromColumnId(null);
+      setDraggedFromParentBlockId(null);
+      return;
+    }
+    if (draggedSectionId && draggedSectionId !== sectionId) {
+      onDropSectionToColumn(draggedSectionId, sectionId, column.id, (column.blocks ?? []).length);
+      setDraggedSectionId(null);
+    }
+  };
+
   return (
     <div
       draggable={false}
@@ -670,6 +722,9 @@ function ColumnNodeItem({
         e.preventDefault();
         e.stopPropagation();
       }}
+      onDragOver={handleColumnDragOver}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={handleColumnDrop}
     >
       <div
         role="button"
@@ -685,34 +740,13 @@ function ColumnNodeItem({
             onSelect(column.id);
           }
         }}
-        onDragOver={(e: React.DragEvent) => {
-          const CONVERTIBLE = ["ImageWithText", "RichText", "Hero"];
-          const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE.includes(draggedSectionType ?? "");
-          if (!draggedBlockId && !isSectionDrop) return;
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(true);
-        }}
+        onDragOver={handleColumnDragOver}
         onDragLeave={() => setIsDragOver(false)}
-        onDrop={(e: React.DragEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsDragOver(false);
-          if (draggedBlockId && draggedFromSectionId) {
-            onDropBlockToColumn(draggedBlockId, draggedFromSectionId, draggedFromColumnId ?? undefined, sectionId, column.id, (column.blocks ?? []).length, draggedFromParentBlockId ?? undefined);
-            setDraggedBlockId(null);
-            setDraggedFromSectionId(null);
-            setDraggedFromColumnId(null);
-            setDraggedFromParentBlockId(null);
-          } else if (draggedSectionId && draggedSectionId !== sectionId) {
-            onDropSectionToColumn(draggedSectionId, sectionId, column.id, (column.blocks ?? []).length);
-            setDraggedSectionId(null);
-          }
-        }}
+        onDrop={handleColumnDrop}
         className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
-            : isSelected
+          : isSelected
             ? "bg-blue-600/80 text-white"
             : "text-gray-300 hover:bg-muted/40"
         }`}
@@ -883,6 +917,9 @@ function SectionBlockNodeItem({
       onDragStart={(e: React.DragEvent) => {
         e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
+        e.dataTransfer.setData("fromSectionId", sectionId);
+        e.dataTransfer.setData("fromColumnId", columnId ?? "");
+        e.dataTransfer.setData("fromParentBlockId", parentBlockId ?? "");
         e.dataTransfer.effectAllowed = "move";
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.4";
@@ -1070,6 +1107,9 @@ function BlockNodeItem({
       onDragStart={(e: React.DragEvent) => {
         e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
+        e.dataTransfer.setData("fromSectionId", sectionId);
+        e.dataTransfer.setData("fromColumnId", columnId);
+        e.dataTransfer.setData("fromParentBlockId", "");
         e.dataTransfer.effectAllowed = "move";
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.4";
@@ -1087,7 +1127,8 @@ function BlockNodeItem({
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
       onDragOver={(e: React.DragEvent) => {
-        if (!draggedBlockId || draggedBlockId === block.id) return;
+        const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+        if (!dragId || dragId === block.id) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(true);
@@ -1097,16 +1138,23 @@ function BlockNodeItem({
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
-        if (!draggedBlockId || !draggedFromSectionId || draggedBlockId === block.id) return;
-        if (columnId && onDropBlockToColumn) {
+        const dragId = draggedBlockId || e.dataTransfer.getData("blockId");
+        if (!dragId || dragId === block.id) return;
+        const fromSection =
+          draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+        const fromColumn =
+          (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+        const fromParent =
+          (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+        if (columnId && onDropBlockToColumn && fromSection) {
           onDropBlockToColumn(
-            draggedBlockId,
-            draggedFromSectionId,
-            draggedFromColumnId ?? undefined,
+            dragId,
+            fromSection,
+            fromColumn || undefined,
             sectionId,
             columnId,
             index,
-            draggedFromParentBlockId ?? undefined,
+            fromParent || undefined,
             parentBlockId
           );
           setDraggedBlockId(null);
@@ -1115,7 +1163,8 @@ function BlockNodeItem({
           if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
           return;
         }
-        onDropBlock(draggedBlockId, draggedFromSectionId, sectionId, index);
+        if (!fromSection) return;
+        onDropBlock(dragId, fromSection, sectionId, index);
         setDraggedBlockId(null);
         setDraggedFromSectionId(null);
       }}

@@ -48,8 +48,8 @@ describe("NoteService", () => {
 
       const notes = await noteService.getAll({ isPinned: true });
       expect(notes).toHaveLength(1);
-      expect(notes[0].id).toBe(note.id);
-      expect(notes[0].relations).toBeDefined();
+      expect(notes[0]!.id).toBe(note.id);
+      expect(notes[0]!.relations).toBeDefined();
     });
 
     it("filters by isFavorite", async () => {
@@ -58,7 +58,7 @@ describe("NoteService", () => {
 
       const favs = await noteService.getAll({ isFavorite: true });
       expect(favs).toHaveLength(1);
-      expect(favs[0].title).toBe("Fav");
+      expect(favs[0]!.title).toBe("Fav");
     });
 
     it("truncates content when requested", async () => {

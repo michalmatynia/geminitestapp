@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import { ArrowLeft, Bold, ChevronDown, FolderOpen, Italic, Link2, List, ListOrdered, Upload } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import {
   Button,
   Input,
@@ -403,9 +404,15 @@ function ImagePickerField({
   return (
     <div className="space-y-2">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+      <div className="relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
         {value ? (
-          <img src={value} alt="Selected" className="h-full w-full object-cover" />
+          <Image
+            src={value}
+            alt="Selected"
+            fill
+            sizes="320px"
+            className="object-cover"
+          />
         ) : (
           <span className="text-xs text-gray-500">No image</span>
         )}
@@ -435,7 +442,7 @@ function ImagePickerField({
         open={open}
         onOpenChange={setOpen}
         selectionMode="single"
-        onSelect={(filepaths) => onChange(filepaths[0] ?? "")}
+        onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? "")}
       />
     </div>
   );
@@ -509,7 +516,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
   const themesQuery = useCmsThemes();
-  const savedThemes = themesQuery.data ?? [];
+  const savedThemes = useMemo((): CmsTheme[] => themesQuery.data ?? [], [themesQuery.data]);
 
   // Logo-specific state (file picker)
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -590,21 +597,14 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     }));
   }, [theme.colorSchemes, theme.activeColorSchemeId, setTheme]);
 
-  // Logo file preview
-  useEffect((): void | (() => void) => {
-    if (!logoFile) {
-      if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
-      setLogoPreviewUrl((prev: string | null) => prev === null ? null : null);
-      return;
-    }
-    const nextUrl = URL.createObjectURL(logoFile);
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    previewUrlRef.current = nextUrl;
-    setLogoPreviewUrl(nextUrl);
+  useEffect((): (() => void) => {
     return (): void => {
-      if (previewUrlRef.current === nextUrl) { URL.revokeObjectURL(nextUrl); previewUrlRef.current = null; }
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
     };
-  }, [logoFile]);
+  }, []);
 
   const toggleSection = useCallback((section: string): void => {
     setUserOpenSections((prev: Set<string> | null) => {
@@ -672,7 +672,19 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
 
   const handlePickLogo = useCallback((): void => { fileInputRef.current?.click(); }, []);
   const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
-    setLogoFile(event.target.files?.[0] ?? null);
+    const file = event.target.files?.[0] ?? null;
+    setLogoFile(file);
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    if (file) {
+      const nextUrl = URL.createObjectURL(file);
+      previewUrlRef.current = nextUrl;
+      setLogoPreviewUrl(nextUrl);
+    } else {
+      setLogoPreviewUrl(null);
+    }
     event.target.value = "";
   }, []);
 
@@ -703,6 +715,31 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setTheme((prev: ThemeSettings) => ({ ...prev, themePreset: value }));
   }, [savedThemes, setTheme]);
 
+  const updateSetting = useCallback(
+    <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
+      return (value: ThemeSettings[K]): void => {
+        update(key, value);
+      };
+    },
+    [update]
+  );
+
+  const updateSchemeColor = useCallback(
+    (key: keyof ColorSchemeColors): ((value: string) => void) => {
+      return (value: string): void => {
+        setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => ({
+          ...prev,
+          [key]: value,
+        }));
+      };
+    },
+    []
+  );
+
+  const toggleGlobalPalette = useCallback((): void => {
+    setIsGlobalPaletteOpen((prev: boolean): boolean => !prev);
+  }, []);
+
   // ---------------------------------------------------------------------------
   // Section bodies
   // ---------------------------------------------------------------------------
@@ -719,7 +756,14 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Logo preview</div>
                 <div className="mt-3 flex items-center justify-center rounded border border-border/40 bg-gray-900/50 p-4">
                   {logoPreviewUrl ? (
-                    <img src={logoPreviewUrl} alt="Logo preview" style={{ width: `${logoWidth}px` }} className="h-auto max-w-full object-contain" />
+                    <Image
+                      src={logoPreviewUrl}
+                      alt="Logo preview"
+                      width={Math.max(1, logoWidth)}
+                      height={Math.max(1, Math.round((logoWidth / 4) * 3))}
+                      style={{ width: `${logoWidth}px`, height: "auto" }}
+                      className="h-auto max-w-full object-contain"
+                    />
                   ) : (
                     <div className="text-xs text-gray-500">No logo selected</div>
                   )}
@@ -906,27 +950,27 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                       <ColorField
                         label="Background"
                         value={newSchemeColors.background}
-                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, background: value }))}
+                        onChange={updateSchemeColor("background")}
                       />
                       <ColorField
                         label="Surface"
                         value={newSchemeColors.surface}
-                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, surface: value }))}
+                        onChange={updateSchemeColor("surface")}
                       />
                       <ColorField
                         label="Text"
                         value={newSchemeColors.text}
-                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, text: value }))}
+                        onChange={updateSchemeColor("text")}
                       />
                       <ColorField
                         label="Accent"
                         value={newSchemeColors.accent}
-                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, accent: value }))}
+                        onChange={updateSchemeColor("accent")}
                       />
                       <ColorField
                         label="Border"
                         value={newSchemeColors.border}
-                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, border: value }))}
+                        onChange={updateSchemeColor("border")}
                       />
                     </div>
                   </div>
@@ -936,7 +980,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <div className="rounded border border-border/40 bg-gray-900/40 p-3">
                 <button
                   type="button"
-                  onClick={() => setIsGlobalPaletteOpen((prev) => !prev)}
+                  onClick={toggleGlobalPalette}
                   className="flex w-full items-center justify-between gap-2 text-left"
                 >
                   <span className="text-[10px] uppercase tracking-wider text-gray-500">Global palette</span>
@@ -944,16 +988,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 </button>
                 {isGlobalPaletteOpen && (
                   <div className="mt-3 space-y-3">
-                    <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
-                    <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
-                    <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
-                    <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
-                    <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
-                    <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
-                    <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
-                    <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
-                    <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
-                    <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
+                    <ColorField label="Primary" value={theme.primaryColor} onChange={updateSetting("primaryColor")} />
+                    <ColorField label="Secondary" value={theme.secondaryColor} onChange={updateSetting("secondaryColor")} />
+                    <ColorField label="Accent" value={theme.accentColor} onChange={updateSetting("accentColor")} />
+                    <ColorField label="Background" value={theme.backgroundColor} onChange={updateSetting("backgroundColor")} />
+                    <ColorField label="Surface" value={theme.surfaceColor} onChange={updateSetting("surfaceColor")} />
+                    <ColorField label="Text" value={theme.textColor} onChange={updateSetting("textColor")} />
+                    <ColorField label="Muted text" value={theme.mutedTextColor} onChange={updateSetting("mutedTextColor")} />
+                    <ColorField label="Border" value={theme.borderColor} onChange={updateSetting("borderColor")} />
+                    <ColorField label="Error" value={theme.errorColor} onChange={updateSetting("errorColor")} />
+                    <ColorField label="Success" value={theme.successColor} onChange={updateSetting("successColor")} />
                   </div>
                 )}
               </div>
@@ -964,15 +1008,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Typography":
           return (
             <div className="space-y-3">
-              <NumberField label="Base size" value={theme.baseSize} onChange={(v) => update("baseSize", v)} suffix="px" min={12} max={24} />
-              <SelectField label="Heading font" value={theme.headingFont} onChange={(v) => update("headingFont", v)} options={FONT_OPTIONS} />
-              <RangeField label="Heading size scale" value={theme.headingSizeScale} onChange={(v) => update("headingSizeScale", v)} min={0.5} max={2} step={0.05} suffix="x" />
-              <SelectField label="Heading weight" value={theme.headingWeight} onChange={(v) => update("headingWeight", v)} options={WEIGHT_OPTIONS} />
-              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={(v) => update("headingLineHeight", v)} min={1} max={2} step={0.1} />
-              <SelectField label="Body font" value={theme.bodyFont} onChange={(v) => update("bodyFont", v)} options={FONT_OPTIONS} />
-              <RangeField label="Body size scale" value={theme.bodySizeScale} onChange={(v) => update("bodySizeScale", v)} min={0.5} max={2} step={0.05} suffix="x" />
-              <SelectField label="Body weight" value={theme.bodyWeight} onChange={(v) => update("bodyWeight", v)} options={WEIGHT_OPTIONS} />
-              <RangeField label="Body line height" value={theme.lineHeight} onChange={(v) => update("lineHeight", v)} min={1} max={2.5} step={0.1} />
+              <NumberField label="Base size" value={theme.baseSize} onChange={updateSetting("baseSize")} suffix="px" min={12} max={24} />
+              <SelectField label="Heading font" value={theme.headingFont} onChange={updateSetting("headingFont")} options={FONT_OPTIONS} />
+              <RangeField label="Heading size scale" value={theme.headingSizeScale} onChange={updateSetting("headingSizeScale")} min={0.5} max={2} step={0.05} suffix="x" />
+              <SelectField label="Heading weight" value={theme.headingWeight} onChange={updateSetting("headingWeight")} options={WEIGHT_OPTIONS} />
+              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={updateSetting("headingLineHeight")} min={1} max={2} step={0.1} />
+              <SelectField label="Body font" value={theme.bodyFont} onChange={updateSetting("bodyFont")} options={FONT_OPTIONS} />
+              <RangeField label="Body size scale" value={theme.bodySizeScale} onChange={updateSetting("bodySizeScale")} min={0.5} max={2} step={0.05} suffix="x" />
+              <SelectField label="Body weight" value={theme.bodyWeight} onChange={updateSetting("bodyWeight")} options={WEIGHT_OPTIONS} />
+              <RangeField label="Body line height" value={theme.lineHeight} onChange={updateSetting("lineHeight")} min={1} max={2.5} step={0.1} />
             </div>
           );
 
@@ -980,30 +1024,30 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Layout":
           return (
             <div className="space-y-3">
-              <CheckboxField label="Full width page" checked={theme.fullWidth} onChange={(v) => update("fullWidth", v)} />
-              <RangeField label="Max content width" value={theme.maxContentWidth} onChange={(v) => update("maxContentWidth", v)} min={800} max={1600} suffix="px" />
-              <RangeField label="Grid gutter" value={theme.gridGutter} onChange={(v) => update("gridGutter", v)} min={8} max={48} suffix="px" />
-              <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={(v) => update("sectionSpacing", v)} min={16} max={128} suffix="px" />
-              <RangeField label="Container padding" value={theme.containerPadding} onChange={(v) => update("containerPadding", v)} min={8} max={64} suffix="px" />
+              <CheckboxField label="Full width page" checked={theme.fullWidth} onChange={updateSetting("fullWidth")} />
+              <RangeField label="Max content width" value={theme.maxContentWidth} onChange={updateSetting("maxContentWidth")} min={800} max={1600} suffix="px" />
+              <RangeField label="Grid gutter" value={theme.gridGutter} onChange={updateSetting("gridGutter")} min={8} max={48} suffix="px" />
+              <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={updateSetting("sectionSpacing")} min={16} max={128} suffix="px" />
+              <RangeField label="Container padding" value={theme.containerPadding} onChange={updateSetting("containerPadding")} min={8} max={64} suffix="px" />
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page padding (px)</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <NumberField label="Top" value={theme.pagePaddingTop} onChange={(v) => update("pagePaddingTop", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Right" value={theme.pagePaddingRight} onChange={(v) => update("pagePaddingRight", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Bottom" value={theme.pagePaddingBottom} onChange={(v) => update("pagePaddingBottom", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Left" value={theme.pagePaddingLeft} onChange={(v) => update("pagePaddingLeft", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Top" value={theme.pagePaddingTop} onChange={updateSetting("pagePaddingTop")} suffix="px" min={0} max={200} />
+                  <NumberField label="Right" value={theme.pagePaddingRight} onChange={updateSetting("pagePaddingRight")} suffix="px" min={0} max={200} />
+                  <NumberField label="Bottom" value={theme.pagePaddingBottom} onChange={updateSetting("pagePaddingBottom")} suffix="px" min={0} max={200} />
+                  <NumberField label="Left" value={theme.pagePaddingLeft} onChange={updateSetting("pagePaddingLeft")} suffix="px" min={0} max={200} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page margin (px)</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <NumberField label="Top" value={theme.pageMarginTop} onChange={(v) => update("pageMarginTop", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Right" value={theme.pageMarginRight} onChange={(v) => update("pageMarginRight", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Bottom" value={theme.pageMarginBottom} onChange={(v) => update("pageMarginBottom", v)} suffix="px" min={0} max={200} />
-                  <NumberField label="Left" value={theme.pageMarginLeft} onChange={(v) => update("pageMarginLeft", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Top" value={theme.pageMarginTop} onChange={updateSetting("pageMarginTop")} suffix="px" min={0} max={200} />
+                  <NumberField label="Right" value={theme.pageMarginRight} onChange={updateSetting("pageMarginRight")} suffix="px" min={0} max={200} />
+                  <NumberField label="Bottom" value={theme.pageMarginBottom} onChange={updateSetting("pageMarginBottom")} suffix="px" min={0} max={200} />
+                  <NumberField label="Left" value={theme.pageMarginLeft} onChange={updateSetting("pageMarginLeft")} suffix="px" min={0} max={200} />
                 </div>
               </div>
-              <RangeField label="Page corner radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={40} suffix="px" />
+              <RangeField label="Page corner radius" value={theme.borderRadius} onChange={updateSetting("borderRadius")} min={0} max={40} suffix="px" />
             </div>
           );
 
@@ -1011,11 +1055,11 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Animations":
           return (
             <div className="space-y-3">
-              <CheckboxField label="Enable animations" checked={theme.enableAnimations} onChange={(v) => update("enableAnimations", v)} />
+              <CheckboxField label="Enable animations" checked={theme.enableAnimations} onChange={updateSetting("enableAnimations")} />
               {theme.enableAnimations && (
                 <>
-                  <RangeField label="Duration" value={theme.animationDuration} onChange={(v) => update("animationDuration", v)} min={100} max={1000} suffix="ms" />
-                  <SelectField label="Easing" value={theme.animationEasing} onChange={(v) => update("animationEasing", v)} options={[
+                  <RangeField label="Duration" value={theme.animationDuration} onChange={updateSetting("animationDuration")} min={100} max={1000} suffix="ms" />
+                  <SelectField label="Easing" value={theme.animationEasing} onChange={updateSetting("animationEasing")} options={[
                     { label: "Ease out", value: "ease-out" },
                     { label: "Ease in-out", value: "ease-in-out" },
                     { label: "Ease in", value: "ease-in" },
@@ -1046,13 +1090,13 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                   <SelectField
                     label="Hover effect"
                     value={theme.hoverEffect}
-                    onChange={(v) => update("hoverEffect", v)}
+                    onChange={updateSetting("hoverEffect")}
                     options={[
                       { label: "Vertical lift", value: "vertical-lift" },
                       { label: "3D lift", value: "lift-3d" },
                     ]}
                   />
-                  <RangeField label="Hover scale" value={theme.hoverScale} onChange={(v) => update("hoverScale", v)} min={1} max={1.2} step={0.01} suffix="x" />
+                  <RangeField label="Hover scale" value={theme.hoverScale} onChange={updateSetting("hoverScale")} min={1} max={1.2} step={0.01} suffix="x" />
                 </>
               )}
             </div>
@@ -1063,43 +1107,43 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Padding X" value={theme.btnPaddingX} onChange={(v) => update("btnPaddingX", v)} suffix="px" min={4} max={48} />
-                <NumberField label="Padding Y" value={theme.btnPaddingY} onChange={(v) => update("btnPaddingY", v)} suffix="px" min={4} max={24} />
+                <NumberField label="Padding X" value={theme.btnPaddingX} onChange={updateSetting("btnPaddingX")} suffix="px" min={4} max={48} />
+                <NumberField label="Padding Y" value={theme.btnPaddingY} onChange={updateSetting("btnPaddingY")} suffix="px" min={4} max={24} />
               </div>
-              <NumberField label="Font size" value={theme.btnFontSize} onChange={(v) => update("btnFontSize", v)} suffix="px" min={10} max={24} />
-              <SelectField label="Font weight" value={theme.btnFontWeight} onChange={(v) => update("btnFontWeight", v)} options={WEIGHT_OPTIONS} />
-              <NumberField label="Radius" value={theme.btnRadius} onChange={(v) => update("btnRadius", v)} suffix="px" min={0} max={24} />
+              <NumberField label="Font size" value={theme.btnFontSize} onChange={updateSetting("btnFontSize")} suffix="px" min={10} max={24} />
+              <SelectField label="Font weight" value={theme.btnFontWeight} onChange={updateSetting("btnFontWeight")} options={WEIGHT_OPTIONS} />
+              <NumberField label="Radius" value={theme.btnRadius} onChange={updateSetting("btnRadius")} suffix="px" min={0} max={24} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Primary</Label>
                 <div className="space-y-2">
-                  <ColorField label="Background" value={theme.btnPrimaryBg} onChange={(v) => update("btnPrimaryBg", v)} />
-                  <ColorField label="Text" value={theme.btnPrimaryText} onChange={(v) => update("btnPrimaryText", v)} />
+                  <ColorField label="Background" value={theme.btnPrimaryBg} onChange={updateSetting("btnPrimaryBg")} />
+                  <ColorField label="Text" value={theme.btnPrimaryText} onChange={updateSetting("btnPrimaryText")} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Secondary</Label>
                 <div className="space-y-2">
-                  <ColorField label="Background" value={theme.btnSecondaryBg} onChange={(v) => update("btnSecondaryBg", v)} />
-                  <ColorField label="Text" value={theme.btnSecondaryText} onChange={(v) => update("btnSecondaryText", v)} />
+                  <ColorField label="Background" value={theme.btnSecondaryBg} onChange={updateSetting("btnSecondaryBg")} />
+                  <ColorField label="Text" value={theme.btnSecondaryText} onChange={updateSetting("btnSecondaryText")} />
                 </div>
               </div>
-              <ColorField label="Outline border" value={theme.btnOutlineBorder} onChange={(v) => update("btnOutlineBorder", v)} />
+              <ColorField label="Outline border" value={theme.btnOutlineBorder} onChange={updateSetting("btnOutlineBorder")} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.btnBorderWidth} onChange={(v) => update("btnBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.btnBorderOpacity} onChange={(v) => update("btnBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.btnBorderRadius} onChange={(v) => update("btnBorderRadius", v)} suffix="px" min={0} max={48} />
+                  <NumberField label="Thickness" value={theme.btnBorderWidth} onChange={updateSetting("btnBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.btnBorderOpacity} onChange={updateSetting("btnBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.btnBorderRadius} onChange={updateSetting("btnBorderRadius")} suffix="px" min={0} max={48} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.btnShadowOpacity} onChange={(v) => update("btnShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.btnShadowOpacity} onChange={updateSetting("btnShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.btnShadowX} onChange={(v) => update("btnShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.btnShadowY} onChange={(v) => update("btnShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.btnShadowBlur} onChange={(v) => update("btnShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.btnShadowX} onChange={updateSetting("btnShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.btnShadowY} onChange={updateSetting("btnShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.btnShadowBlur} onChange={updateSetting("btnShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1110,32 +1154,32 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Variant Pills":
           return (
             <div className="space-y-3">
-              <NumberField label="Corner radius" value={theme.pillRadius} onChange={(v) => update("pillRadius", v)} suffix="px" min={0} max={999} />
+              <NumberField label="Corner radius" value={theme.pillRadius} onChange={updateSetting("pillRadius")} suffix="px" min={0} max={999} />
               <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Padding X" value={theme.pillPaddingX} onChange={(v) => update("pillPaddingX", v)} suffix="px" min={4} max={32} />
-                <NumberField label="Padding Y" value={theme.pillPaddingY} onChange={(v) => update("pillPaddingY", v)} suffix="px" min={2} max={16} />
+                <NumberField label="Padding X" value={theme.pillPaddingX} onChange={updateSetting("pillPaddingX")} suffix="px" min={4} max={32} />
+                <NumberField label="Padding Y" value={theme.pillPaddingY} onChange={updateSetting("pillPaddingY")} suffix="px" min={2} max={16} />
               </div>
-              <NumberField label="Font size" value={theme.pillFontSize} onChange={(v) => update("pillFontSize", v)} suffix="px" min={10} max={18} />
-              <ColorField label="Background" value={theme.pillBg} onChange={(v) => update("pillBg", v)} />
-              <ColorField label="Text" value={theme.pillText} onChange={(v) => update("pillText", v)} />
-              <ColorField label="Active background" value={theme.pillActiveBg} onChange={(v) => update("pillActiveBg", v)} />
-              <ColorField label="Active text" value={theme.pillActiveText} onChange={(v) => update("pillActiveText", v)} />
+              <NumberField label="Font size" value={theme.pillFontSize} onChange={updateSetting("pillFontSize")} suffix="px" min={10} max={18} />
+              <ColorField label="Background" value={theme.pillBg} onChange={updateSetting("pillBg")} />
+              <ColorField label="Text" value={theme.pillText} onChange={updateSetting("pillText")} />
+              <ColorField label="Active background" value={theme.pillActiveBg} onChange={updateSetting("pillActiveBg")} />
+              <ColorField label="Active text" value={theme.pillActiveText} onChange={updateSetting("pillActiveText")} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <ColorField label="Border" value={theme.pillBorderColor} onChange={(v) => update("pillBorderColor", v)} />
-                  <NumberField label="Thickness" value={theme.pillBorderWidth} onChange={(v) => update("pillBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.pillBorderOpacity} onChange={(v) => update("pillBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <ColorField label="Border" value={theme.pillBorderColor} onChange={updateSetting("pillBorderColor")} />
+                  <NumberField label="Thickness" value={theme.pillBorderWidth} onChange={updateSetting("pillBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.pillBorderOpacity} onChange={updateSetting("pillBorderOpacity")} min={0} max={100} suffix="%" />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.pillShadowOpacity} onChange={(v) => update("pillShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.pillShadowOpacity} onChange={updateSetting("pillShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.pillShadowX} onChange={(v) => update("pillShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.pillShadowY} onChange={(v) => update("pillShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.pillShadowBlur} onChange={(v) => update("pillShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.pillShadowX} onChange={updateSetting("pillShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.pillShadowY} onChange={updateSetting("pillShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.pillShadowBlur} onChange={updateSetting("pillShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1146,29 +1190,29 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Inputs":
           return (
             <div className="space-y-3">
-              <NumberField label="Height" value={theme.inputHeight} onChange={(v) => update("inputHeight", v)} suffix="px" min={28} max={56} />
-              <NumberField label="Font size" value={theme.inputFontSize} onChange={(v) => update("inputFontSize", v)} suffix="px" min={10} max={20} />
-              <ColorField label="Background" value={theme.inputBg} onChange={(v) => update("inputBg", v)} />
-              <ColorField label="Text" value={theme.inputText} onChange={(v) => update("inputText", v)} />
-              <ColorField label="Focus border" value={theme.inputFocusBorder} onChange={(v) => update("inputFocusBorder", v)} />
-              <ColorField label="Placeholder" value={theme.inputPlaceholder} onChange={(v) => update("inputPlaceholder", v)} />
+              <NumberField label="Height" value={theme.inputHeight} onChange={updateSetting("inputHeight")} suffix="px" min={28} max={56} />
+              <NumberField label="Font size" value={theme.inputFontSize} onChange={updateSetting("inputFontSize")} suffix="px" min={10} max={20} />
+              <ColorField label="Background" value={theme.inputBg} onChange={updateSetting("inputBg")} />
+              <ColorField label="Text" value={theme.inputText} onChange={updateSetting("inputText")} />
+              <ColorField label="Focus border" value={theme.inputFocusBorder} onChange={updateSetting("inputFocusBorder")} />
+              <ColorField label="Placeholder" value={theme.inputPlaceholder} onChange={updateSetting("inputPlaceholder")} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <ColorField label="Border" value={theme.inputBorderColor} onChange={(v) => update("inputBorderColor", v)} />
-                  <NumberField label="Thickness" value={theme.inputBorderWidth} onChange={(v) => update("inputBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.inputBorderOpacity} onChange={(v) => update("inputBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.inputRadius} onChange={(v) => update("inputRadius", v)} suffix="px" min={0} max={24} />
+                  <ColorField label="Border" value={theme.inputBorderColor} onChange={updateSetting("inputBorderColor")} />
+                  <NumberField label="Thickness" value={theme.inputBorderWidth} onChange={updateSetting("inputBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.inputBorderOpacity} onChange={updateSetting("inputBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.inputRadius} onChange={updateSetting("inputRadius")} suffix="px" min={0} max={24} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.inputShadowOpacity} onChange={(v) => update("inputShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.inputShadowOpacity} onChange={updateSetting("inputShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.inputShadowX} onChange={(v) => update("inputShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.inputShadowY} onChange={(v) => update("inputShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.inputShadowBlur} onChange={(v) => update("inputShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.inputShadowX} onChange={updateSetting("inputShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.inputShadowY} onChange={updateSetting("inputShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.inputShadowBlur} onChange={updateSetting("inputShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1179,18 +1223,18 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Product Cards":
           return (
             <div className="space-y-3">
-              <SelectField label="Style" value={theme.cardStyle} onChange={(v) => update("cardStyle", v)} options={[
+              <SelectField label="Style" value={theme.cardStyle} onChange={updateSetting("cardStyle")} options={[
                 { label: "Standard", value: "standard" },
                 { label: "Card", value: "card" },
               ]} />
-              <SelectField label="Image ratio" value={theme.cardImageRatio} onChange={(v) => update("cardImageRatio", v)} options={[
+              <SelectField label="Image ratio" value={theme.cardImageRatio} onChange={updateSetting("cardImageRatio")} options={[
                 { label: "1:1 Square", value: "1:1" },
                 { label: "3:4 Portrait", value: "3:4" },
                 { label: "4:3 Landscape", value: "4:3" },
                 { label: "16:9 Wide", value: "16:9" },
               ]} />
-              <RangeField label="Image padding" value={theme.cardImagePadding} onChange={(v) => update("cardImagePadding", v)} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.cardTextAlignment} onChange={(v) => update("cardTextAlignment", v)} options={[
+              <RangeField label="Image padding" value={theme.cardImagePadding} onChange={updateSetting("cardImagePadding")} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.cardTextAlignment} onChange={updateSetting("cardTextAlignment")} options={[
                 { label: "Left", value: "left" },
                 { label: "Center", value: "center" },
                 { label: "Right", value: "right" },
@@ -1198,32 +1242,32 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField label="Color scheme" value={theme.cardColorScheme} onChange={(v: string): void => update("cardColorScheme", v)} options={
                 theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
-              <NumberField label="Radius" value={theme.cardRadius} onChange={(v) => update("cardRadius", v)} suffix="px" min={0} max={24} />
-              <ColorField label="Background" value={theme.cardBg} onChange={(v) => update("cardBg", v)} />
-              <SelectField label="Shadow" value={theme.cardShadow} onChange={(v) => update("cardShadow", v)} options={[
+              <NumberField label="Radius" value={theme.cardRadius} onChange={updateSetting("cardRadius")} suffix="px" min={0} max={24} />
+              <ColorField label="Background" value={theme.cardBg} onChange={updateSetting("cardBg")} />
+              <SelectField label="Shadow" value={theme.cardShadow} onChange={updateSetting("cardShadow")} options={[
                 { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
               ]} />
-              <SelectField label="Hover shadow" value={theme.cardHoverShadow} onChange={(v) => update("cardHoverShadow", v)} options={[
+              <SelectField label="Hover shadow" value={theme.cardHoverShadow} onChange={updateSetting("cardHoverShadow")} options={[
                 { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
               ]} />
-              <CheckboxField label="Show badge" checked={theme.showBadge} onChange={(v) => update("showBadge", v)} />
-              <CheckboxField label="Show quick-add button" checked={theme.showQuickAdd} onChange={(v) => update("showQuickAdd", v)} />
+              <CheckboxField label="Show badge" checked={theme.showBadge} onChange={updateSetting("showBadge")} />
+              <CheckboxField label="Show quick-add button" checked={theme.showQuickAdd} onChange={updateSetting("showQuickAdd")} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.cardBorderWidth} onChange={(v) => update("cardBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.cardBorderOpacity} onChange={(v) => update("cardBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.cardBorderRadius} onChange={(v) => update("cardBorderRadius", v)} suffix="px" min={0} max={48} />
+                  <NumberField label="Thickness" value={theme.cardBorderWidth} onChange={updateSetting("cardBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.cardBorderOpacity} onChange={updateSetting("cardBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.cardBorderRadius} onChange={updateSetting("cardBorderRadius")} suffix="px" min={0} max={48} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.cardShadowOpacity} onChange={(v) => update("cardShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.cardShadowOpacity} onChange={updateSetting("cardShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.cardShadowX} onChange={(v) => update("cardShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.cardShadowY} onChange={(v) => update("cardShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.cardShadowBlur} onChange={(v) => update("cardShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.cardShadowX} onChange={updateSetting("cardShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.cardShadowY} onChange={updateSetting("cardShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.cardShadowBlur} onChange={updateSetting("cardShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1234,40 +1278,40 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Collection Cards":
           return (
             <div className="space-y-3">
-              <SelectField label="Style" value={theme.collectionStyle} onChange={(v) => update("collectionStyle", v)} options={[
+              <SelectField label="Style" value={theme.collectionStyle} onChange={updateSetting("collectionStyle")} options={[
                 { label: "Standard", value: "standard" },
                 { label: "Card", value: "card" },
               ]} />
-              <SelectField label="Image ratio" value={theme.collectionRatio} onChange={(v) => update("collectionRatio", v)} options={[
+              <SelectField label="Image ratio" value={theme.collectionRatio} onChange={updateSetting("collectionRatio")} options={[
                 { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
               ]} />
-              <RangeField label="Image padding" value={theme.collectionImagePadding} onChange={(v) => update("collectionImagePadding", v)} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={(v) => update("collectionTextAlign", v)} options={[
+              <RangeField label="Image padding" value={theme.collectionImagePadding} onChange={updateSetting("collectionImagePadding")} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={updateSetting("collectionTextAlign")} options={[
                 { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
               ]} />
               <SelectField label="Color scheme" value={theme.collectionColorScheme} onChange={(v: string): void => update("collectionColorScheme", v)} options={
                 theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
-              <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={(v) => update("collectionOverlay", v)} />
+              <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={updateSetting("collectionOverlay")} />
               {theme.collectionOverlay && (
-                <ColorField label="Overlay color" value={theme.collectionOverlayColor} onChange={(v) => update("collectionOverlayColor", v)} />
+                <ColorField label="Overlay color" value={theme.collectionOverlayColor} onChange={updateSetting("collectionOverlayColor")} />
               )}
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.collectionBorderWidth} onChange={(v) => update("collectionBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.collectionBorderOpacity} onChange={(v) => update("collectionBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.collectionRadius} onChange={(v) => update("collectionRadius", v)} suffix="px" min={0} max={24} />
+                  <NumberField label="Thickness" value={theme.collectionBorderWidth} onChange={updateSetting("collectionBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.collectionBorderOpacity} onChange={updateSetting("collectionBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.collectionRadius} onChange={updateSetting("collectionRadius")} suffix="px" min={0} max={24} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.collectionShadowOpacity} onChange={(v) => update("collectionShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.collectionShadowOpacity} onChange={updateSetting("collectionShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.collectionShadowX} onChange={(v) => update("collectionShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.collectionShadowY} onChange={(v) => update("collectionShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.collectionShadowBlur} onChange={(v) => update("collectionShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.collectionShadowX} onChange={updateSetting("collectionShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.collectionShadowY} onChange={updateSetting("collectionShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.collectionShadowBlur} onChange={updateSetting("collectionShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1278,15 +1322,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Blog Cards":
           return (
             <div className="space-y-3">
-              <SelectField label="Style" value={theme.blogStyle} onChange={(v) => update("blogStyle", v)} options={[
+              <SelectField label="Style" value={theme.blogStyle} onChange={updateSetting("blogStyle")} options={[
                 { label: "Standard", value: "standard" },
                 { label: "Card", value: "card" },
               ]} />
-              <SelectField label="Image ratio" value={theme.blogRatio} onChange={(v) => update("blogRatio", v)} options={[
+              <SelectField label="Image ratio" value={theme.blogRatio} onChange={updateSetting("blogRatio")} options={[
                 { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
               ]} />
-              <RangeField label="Image padding" value={theme.blogImagePadding} onChange={(v) => update("blogImagePadding", v)} min={0} max={20} suffix="px" />
-              <SelectField label="Text alignment" value={theme.blogTextAlignment} onChange={(v) => update("blogTextAlignment", v)} options={[
+              <RangeField label="Image padding" value={theme.blogImagePadding} onChange={updateSetting("blogImagePadding")} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.blogTextAlignment} onChange={updateSetting("blogTextAlignment")} options={[
                 { label: "Left", value: "left" },
                 { label: "Center", value: "center" },
                 { label: "Right", value: "right" },
@@ -1294,28 +1338,28 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField label="Color scheme" value={theme.blogColorScheme} onChange={(v: string): void => update("blogColorScheme", v)} options={
                 theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
-              <NumberField label="Radius" value={theme.blogRadius} onChange={(v) => update("blogRadius", v)} suffix="px" min={0} max={24} />
-              <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={(v) => update("blogShowDate", v)} />
-              <CheckboxField label="Show excerpt" checked={theme.blogShowExcerpt} onChange={(v) => update("blogShowExcerpt", v)} />
+              <NumberField label="Radius" value={theme.blogRadius} onChange={updateSetting("blogRadius")} suffix="px" min={0} max={24} />
+              <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={updateSetting("blogShowDate")} />
+              <CheckboxField label="Show excerpt" checked={theme.blogShowExcerpt} onChange={updateSetting("blogShowExcerpt")} />
               {theme.blogShowExcerpt && (
-                <NumberField label="Excerpt lines" value={theme.blogExcerptLines} onChange={(v) => update("blogExcerptLines", v)} min={1} max={5} />
+                <NumberField label="Excerpt lines" value={theme.blogExcerptLines} onChange={updateSetting("blogExcerptLines")} min={1} max={5} />
               )}
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.blogBorderWidth} onChange={(v) => update("blogBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.blogBorderOpacity} onChange={(v) => update("blogBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.blogBorderRadius} onChange={(v) => update("blogBorderRadius", v)} suffix="px" min={0} max={48} />
+                  <NumberField label="Thickness" value={theme.blogBorderWidth} onChange={updateSetting("blogBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.blogBorderOpacity} onChange={updateSetting("blogBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.blogBorderRadius} onChange={updateSetting("blogBorderRadius")} suffix="px" min={0} max={48} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.blogShadowOpacity} onChange={(v) => update("blogShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.blogShadowOpacity} onChange={updateSetting("blogShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.blogShadowX} onChange={(v) => update("blogShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.blogShadowY} onChange={(v) => update("blogShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.blogShadowBlur} onChange={(v) => update("blogShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.blogShadowX} onChange={updateSetting("blogShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.blogShadowY} onChange={updateSetting("blogShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.blogShadowBlur} onChange={updateSetting("blogShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1326,29 +1370,29 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Content Containers":
           return (
             <div className="space-y-3">
-              <ColorField label="Background" value={theme.containerBg} onChange={(v) => update("containerBg", v)} />
-              <ColorField label="Border color" value={theme.containerBorderColor} onChange={(v) => update("containerBorderColor", v)} />
-              <NumberField label="Radius" value={theme.containerRadius} onChange={(v) => update("containerRadius", v)} suffix="px" min={0} max={24} />
-              <NumberField label="Inner padding" value={theme.containerPaddingInner} onChange={(v) => update("containerPaddingInner", v)} suffix="px" min={8} max={64} />
-              <SelectField label="Shadow" value={theme.containerShadow} onChange={(v) => update("containerShadow", v)} options={[
+              <ColorField label="Background" value={theme.containerBg} onChange={updateSetting("containerBg")} />
+              <ColorField label="Border color" value={theme.containerBorderColor} onChange={updateSetting("containerBorderColor")} />
+              <NumberField label="Radius" value={theme.containerRadius} onChange={updateSetting("containerRadius")} suffix="px" min={0} max={24} />
+              <NumberField label="Inner padding" value={theme.containerPaddingInner} onChange={updateSetting("containerPaddingInner")} suffix="px" min={8} max={64} />
+              <SelectField label="Shadow" value={theme.containerShadow} onChange={updateSetting("containerShadow")} options={[
                 { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
               ]} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <NumberField label="Thickness" value={theme.containerBorderWidth} onChange={(v) => update("containerBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.containerBorderOpacity} onChange={(v) => update("containerBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.containerBorderRadius} onChange={(v) => update("containerBorderRadius", v)} suffix="px" min={0} max={48} />
+                  <NumberField label="Thickness" value={theme.containerBorderWidth} onChange={updateSetting("containerBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.containerBorderOpacity} onChange={updateSetting("containerBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.containerBorderRadius} onChange={updateSetting("containerBorderRadius")} suffix="px" min={0} max={48} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.containerShadowOpacity} onChange={(v) => update("containerShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.containerShadowOpacity} onChange={updateSetting("containerShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.containerShadowX} onChange={(v) => update("containerShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.containerShadowY} onChange={(v) => update("containerShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.containerShadowBlur} onChange={(v) => update("containerShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.containerShadowX} onChange={updateSetting("containerShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.containerShadowY} onChange={updateSetting("containerShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.containerShadowBlur} onChange={updateSetting("containerShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1359,27 +1403,27 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Media":
           return (
             <div className="space-y-3">
-              <ColorField label="Placeholder bg" value={theme.imagePlaceholderBg} onChange={(v) => update("imagePlaceholderBg", v)} />
-              <SelectField label="Video ratio" value={theme.videoRatio} onChange={(v) => update("videoRatio", v)} options={[
+              <ColorField label="Placeholder bg" value={theme.imagePlaceholderBg} onChange={updateSetting("imagePlaceholderBg")} />
+              <SelectField label="Video ratio" value={theme.videoRatio} onChange={updateSetting("videoRatio")} options={[
                 { label: "16:9", value: "16:9" }, { label: "4:3", value: "4:3" }, { label: "1:1", value: "1:1" }, { label: "9:16 Vertical", value: "9:16" },
               ]} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <ColorField label="Border color" value={theme.imageBorderColor} onChange={(v) => update("imageBorderColor", v)} />
-                  <NumberField label="Thickness" value={theme.imageBorderWidth} onChange={(v) => update("imageBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.imageBorderOpacity} onChange={(v) => update("imageBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.imageRadius} onChange={(v) => update("imageRadius", v)} suffix="px" min={0} max={48} />
+                  <ColorField label="Border color" value={theme.imageBorderColor} onChange={updateSetting("imageBorderColor")} />
+                  <NumberField label="Thickness" value={theme.imageBorderWidth} onChange={updateSetting("imageBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.imageBorderOpacity} onChange={updateSetting("imageBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.imageRadius} onChange={updateSetting("imageRadius")} suffix="px" min={0} max={48} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.imageShadowOpacity} onChange={(v) => update("imageShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.imageShadowOpacity} onChange={updateSetting("imageShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.imageShadowX} onChange={(v) => update("imageShadowX", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Vertical" value={theme.imageShadowY} onChange={(v) => update("imageShadowY", v)} suffix="px" min={-20} max={20} />
-                    <NumberField label="Blur" value={theme.imageShadowBlur} onChange={(v) => update("imageShadowBlur", v)} suffix="px" min={0} max={40} />
+                    <NumberField label="Horizontal" value={theme.imageShadowX} onChange={updateSetting("imageShadowX")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.imageShadowY} onChange={updateSetting("imageShadowY")} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.imageShadowBlur} onChange={updateSetting("imageShadowBlur")} suffix="px" min={0} max={40} />
                   </div>
                 </div>
               </div>
@@ -1390,31 +1434,31 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Dropdowns and pop-ups":
           return (
             <div className="space-y-3">
-              <ColorField label="Dropdown bg" value={theme.dropdownBg} onChange={(v) => update("dropdownBg", v)} />
-              <ColorField label="Popup overlay" value={theme.popupOverlayColor} onChange={(v) => update("popupOverlayColor", v)} />
+              <ColorField label="Dropdown bg" value={theme.dropdownBg} onChange={updateSetting("dropdownBg")} />
+              <ColorField label="Popup overlay" value={theme.popupOverlayColor} onChange={updateSetting("popupOverlayColor")} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <ColorField label="Border color" value={theme.dropdownBorder} onChange={(v) => update("dropdownBorder", v)} />
-                  <NumberField label="Thickness" value={theme.dropdownBorderWidth} onChange={(v) => update("dropdownBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.dropdownBorderOpacity} onChange={(v) => update("dropdownBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <ColorField label="Border color" value={theme.dropdownBorder} onChange={updateSetting("dropdownBorder")} />
+                  <NumberField label="Thickness" value={theme.dropdownBorderWidth} onChange={updateSetting("dropdownBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.dropdownBorderOpacity} onChange={updateSetting("dropdownBorderOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-2 gap-2">
-                    <NumberField label="Dropdown radius" value={theme.dropdownRadius} onChange={(v) => update("dropdownRadius", v)} suffix="px" min={0} max={24} />
-                    <NumberField label="Popup radius" value={theme.popupRadius} onChange={(v) => update("popupRadius", v)} suffix="px" min={0} max={32} />
+                    <NumberField label="Dropdown radius" value={theme.dropdownRadius} onChange={updateSetting("dropdownRadius")} suffix="px" min={0} max={24} />
+                    <NumberField label="Popup radius" value={theme.popupRadius} onChange={updateSetting("popupRadius")} suffix="px" min={0} max={32} />
                   </div>
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <SelectField label="Preset" value={theme.dropdownShadow} onChange={(v) => update("dropdownShadow", v)} options={[
+                  <SelectField label="Preset" value={theme.dropdownShadow} onChange={updateSetting("dropdownShadow")} options={[
                     { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
                   ]} />
-                  <RangeField label="Opacity" value={theme.dropdownShadowOpacity} onChange={(v) => update("dropdownShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.dropdownShadowOpacity} onChange={updateSetting("dropdownShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.dropdownShadowX} onChange={(v) => update("dropdownShadowX", v)} suffix="px" min={-30} max={30} />
-                    <NumberField label="Vertical" value={theme.dropdownShadowY} onChange={(v) => update("dropdownShadowY", v)} suffix="px" min={-30} max={30} />
-                    <NumberField label="Blur" value={theme.dropdownShadowBlur} onChange={(v) => update("dropdownShadowBlur", v)} suffix="px" min={0} max={60} />
+                    <NumberField label="Horizontal" value={theme.dropdownShadowX} onChange={updateSetting("dropdownShadowX")} suffix="px" min={-30} max={30} />
+                    <NumberField label="Vertical" value={theme.dropdownShadowY} onChange={updateSetting("dropdownShadowY")} suffix="px" min={-30} max={30} />
+                    <NumberField label="Blur" value={theme.dropdownShadowBlur} onChange={updateSetting("dropdownShadowBlur")} suffix="px" min={0} max={60} />
                   </div>
                 </div>
               </div>
@@ -1425,29 +1469,29 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Drawers":
           return (
             <div className="space-y-3">
-              <RangeField label="Width" value={theme.drawerWidth} onChange={(v) => update("drawerWidth", v)} min={280} max={600} suffix="px" />
-              <ColorField label="Background" value={theme.drawerBg} onChange={(v) => update("drawerBg", v)} />
-              <ColorField label="Overlay" value={theme.drawerOverlayColor} onChange={(v) => update("drawerOverlayColor", v)} />
-              <SelectField label="Position" value={theme.drawerPosition} onChange={(v) => update("drawerPosition", v)} options={[
+              <RangeField label="Width" value={theme.drawerWidth} onChange={updateSetting("drawerWidth")} min={280} max={600} suffix="px" />
+              <ColorField label="Background" value={theme.drawerBg} onChange={updateSetting("drawerBg")} />
+              <ColorField label="Overlay" value={theme.drawerOverlayColor} onChange={updateSetting("drawerOverlayColor")} />
+              <SelectField label="Position" value={theme.drawerPosition} onChange={updateSetting("drawerPosition")} options={[
                 { label: "Right", value: "right" }, { label: "Left", value: "left" },
               ]} />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
                 <div className="space-y-2">
-                  <ColorField label="Border color" value={theme.drawerBorderColor} onChange={(v) => update("drawerBorderColor", v)} />
-                  <NumberField label="Thickness" value={theme.drawerBorderWidth} onChange={(v) => update("drawerBorderWidth", v)} suffix="px" min={0} max={8} />
-                  <RangeField label="Opacity" value={theme.drawerBorderOpacity} onChange={(v) => update("drawerBorderOpacity", v)} min={0} max={100} suffix="%" />
-                  <NumberField label="Corner radius" value={theme.drawerRadius} onChange={(v) => update("drawerRadius", v)} suffix="px" min={0} max={32} />
+                  <ColorField label="Border color" value={theme.drawerBorderColor} onChange={updateSetting("drawerBorderColor")} />
+                  <NumberField label="Thickness" value={theme.drawerBorderWidth} onChange={updateSetting("drawerBorderWidth")} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.drawerBorderOpacity} onChange={updateSetting("drawerBorderOpacity")} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.drawerRadius} onChange={updateSetting("drawerRadius")} suffix="px" min={0} max={32} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
                 <div className="space-y-2">
-                  <RangeField label="Opacity" value={theme.drawerShadowOpacity} onChange={(v) => update("drawerShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <RangeField label="Opacity" value={theme.drawerShadowOpacity} onChange={updateSetting("drawerShadowOpacity")} min={0} max={100} suffix="%" />
                   <div className="grid grid-cols-3 gap-2">
-                    <NumberField label="Horizontal" value={theme.drawerShadowX} onChange={(v) => update("drawerShadowX", v)} suffix="px" min={-30} max={30} />
-                    <NumberField label="Vertical" value={theme.drawerShadowY} onChange={(v) => update("drawerShadowY", v)} suffix="px" min={-30} max={30} />
-                    <NumberField label="Blur" value={theme.drawerShadowBlur} onChange={(v) => update("drawerShadowBlur", v)} suffix="px" min={0} max={60} />
+                    <NumberField label="Horizontal" value={theme.drawerShadowX} onChange={updateSetting("drawerShadowX")} suffix="px" min={-30} max={30} />
+                    <NumberField label="Vertical" value={theme.drawerShadowY} onChange={updateSetting("drawerShadowY")} suffix="px" min={-30} max={30} />
+                    <NumberField label="Blur" value={theme.drawerShadowBlur} onChange={updateSetting("drawerShadowBlur")} suffix="px" min={0} max={60} />
                   </div>
                 </div>
               </div>
@@ -1461,7 +1505,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField
                 label="Position on cards"
                 value={theme.badgePosition}
-                onChange={(v) => update("badgePosition", v)}
+                onChange={updateSetting("badgePosition")}
                 options={[
                   { label: "Top left", value: "top-left" },
                   { label: "Top right", value: "top-right" },
@@ -1469,11 +1513,11 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                   { label: "Bottom right", value: "bottom-right" },
                 ]}
               />
-              <RangeField label="Corner radius" value={theme.badgeRadius} onChange={(v) => update("badgeRadius", v)} min={0} max={40} suffix="px" />
-              <NumberField label="Font size" value={theme.badgeFontSize} onChange={(v) => update("badgeFontSize", v)} suffix="px" min={8} max={16} />
+              <RangeField label="Corner radius" value={theme.badgeRadius} onChange={updateSetting("badgeRadius")} min={0} max={40} suffix="px" />
+              <NumberField label="Font size" value={theme.badgeFontSize} onChange={updateSetting("badgeFontSize")} suffix="px" min={8} max={16} />
               <div className="grid grid-cols-2 gap-2">
-                <NumberField label="Padding X" value={theme.badgePaddingX} onChange={(v) => update("badgePaddingX", v)} suffix="px" min={2} max={16} />
-                <NumberField label="Padding Y" value={theme.badgePaddingY} onChange={(v) => update("badgePaddingY", v)} suffix="px" min={0} max={8} />
+                <NumberField label="Padding X" value={theme.badgePaddingX} onChange={updateSetting("badgePaddingX")} suffix="px" min={2} max={16} />
+                <NumberField label="Padding Y" value={theme.badgePaddingY} onChange={updateSetting("badgePaddingY")} suffix="px" min={0} max={8} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <SelectField
@@ -1492,15 +1536,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Default</Label>
                 <div className="space-y-2">
-                  <ColorField label="Background" value={theme.badgeDefaultBg} onChange={(v) => update("badgeDefaultBg", v)} />
-                  <ColorField label="Text" value={theme.badgeDefaultText} onChange={(v) => update("badgeDefaultText", v)} />
+                  <ColorField label="Background" value={theme.badgeDefaultBg} onChange={updateSetting("badgeDefaultBg")} />
+                  <ColorField label="Text" value={theme.badgeDefaultText} onChange={updateSetting("badgeDefaultText")} />
                 </div>
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Sale</Label>
                 <div className="space-y-2">
-                  <ColorField label="Background" value={theme.badgeSaleBg} onChange={(v) => update("badgeSaleBg", v)} />
-                  <ColorField label="Text" value={theme.badgeSaleText} onChange={(v) => update("badgeSaleText", v)} />
+                  <ColorField label="Background" value={theme.badgeSaleBg} onChange={updateSetting("badgeSaleBg")} />
+                  <ColorField label="Text" value={theme.badgeSaleText} onChange={updateSetting("badgeSaleText")} />
                 </div>
               </div>
             </div>
@@ -1510,24 +1554,24 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Brand Information":
           return (
             <div className="space-y-4">
-              <TextField label="Brand name" value={theme.brandName} onChange={(v) => update("brandName", v)} placeholder="Your brand" />
-              <TextField label="Tagline" value={theme.brandTagline} onChange={(v) => update("brandTagline", v)} placeholder="Your tagline" />
-              <TextField label="Email" value={theme.brandEmail} onChange={(v) => update("brandEmail", v)} placeholder="hello@example.com" />
-              <TextField label="Phone" value={theme.brandPhone} onChange={(v) => update("brandPhone", v)} placeholder="+1 234 567 890" />
-              <TextField label="Address" value={theme.brandAddress} onChange={(v) => update("brandAddress", v)} placeholder="123 Main St" />
+              <TextField label="Brand name" value={theme.brandName} onChange={updateSetting("brandName")} placeholder="Your brand" />
+              <TextField label="Tagline" value={theme.brandTagline} onChange={updateSetting("brandTagline")} placeholder="Your tagline" />
+              <TextField label="Email" value={theme.brandEmail} onChange={updateSetting("brandEmail")} placeholder="hello@example.com" />
+              <TextField label="Phone" value={theme.brandPhone} onChange={updateSetting("brandPhone")} placeholder="+1 234 567 890" />
+              <TextField label="Address" value={theme.brandAddress} onChange={updateSetting("brandAddress")} placeholder="123 Main St" />
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Footer description</Label>
                 <div className="space-y-3">
                   <MiniRichTextEditor
                     label="Headline"
                     value={theme.brandFooterHeadline}
-                    onChange={(v) => update("brandFooterHeadline", v)}
+                    onChange={updateSetting("brandFooterHeadline")}
                     minHeight={70}
                   />
                   <MiniRichTextEditor
                     label="Description"
                     value={theme.brandFooterDescription}
-                    onChange={(v) => update("brandFooterDescription", v)}
+                    onChange={updateSetting("brandFooterDescription")}
                     minHeight={140}
                     showFormatSelect
                     enableLists
@@ -1535,12 +1579,12 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                   <ImagePickerField
                     label="Image"
                     value={theme.brandFooterImage}
-                    onChange={(v) => update("brandFooterImage", v)}
+                    onChange={updateSetting("brandFooterImage")}
                   />
                   <RangeField
                     label="Image width"
                     value={theme.brandFooterImageWidth}
-                    onChange={(v) => update("brandFooterImageWidth", v)}
+                    onChange={updateSetting("brandFooterImageWidth")}
                     min={50}
                     max={550}
                     suffix="px"
@@ -1554,16 +1598,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Social Media":
           return (
             <div className="space-y-3">
-              <TextField label="Facebook" value={theme.socialFacebook} onChange={(v) => update("socialFacebook", v)} placeholder="https://facebook.com/..." />
-              <TextField label="Instagram" value={theme.socialInstagram} onChange={(v) => update("socialInstagram", v)} placeholder="https://instagram.com/..." />
-              <TextField label="YouTube" value={theme.socialYoutube} onChange={(v) => update("socialYoutube", v)} placeholder="https://youtube.com/..." />
-              <TextField label="TikTok" value={theme.socialTiktok} onChange={(v) => update("socialTiktok", v)} placeholder="https://tiktok.com/..." />
-              <TextField label="X / Twitter" value={theme.socialTwitter} onChange={(v) => update("socialTwitter", v)} placeholder="https://x.com/..." />
-              <TextField label="Snapchat" value={theme.socialSnapchat} onChange={(v) => update("socialSnapchat", v)} placeholder="https://snapchat.com/add/..." />
-              <TextField label="Pinterest" value={theme.socialPinterest} onChange={(v) => update("socialPinterest", v)} placeholder="https://pinterest.com/..." />
-              <TextField label="Tumblr" value={theme.socialTumblr} onChange={(v) => update("socialTumblr", v)} placeholder="https://tumblr.com/..." />
-              <TextField label="Vimeo" value={theme.socialVimeo} onChange={(v) => update("socialVimeo", v)} placeholder="https://vimeo.com/..." />
-              <TextField label="LinkedIn" value={theme.socialLinkedin} onChange={(v) => update("socialLinkedin", v)} placeholder="https://linkedin.com/..." />
+              <TextField label="Facebook" value={theme.socialFacebook} onChange={updateSetting("socialFacebook")} placeholder="https://facebook.com/..." />
+              <TextField label="Instagram" value={theme.socialInstagram} onChange={updateSetting("socialInstagram")} placeholder="https://instagram.com/..." />
+              <TextField label="YouTube" value={theme.socialYoutube} onChange={updateSetting("socialYoutube")} placeholder="https://youtube.com/..." />
+              <TextField label="TikTok" value={theme.socialTiktok} onChange={updateSetting("socialTiktok")} placeholder="https://tiktok.com/..." />
+              <TextField label="X / Twitter" value={theme.socialTwitter} onChange={updateSetting("socialTwitter")} placeholder="https://x.com/..." />
+              <TextField label="Snapchat" value={theme.socialSnapchat} onChange={updateSetting("socialSnapchat")} placeholder="https://snapchat.com/add/..." />
+              <TextField label="Pinterest" value={theme.socialPinterest} onChange={updateSetting("socialPinterest")} placeholder="https://pinterest.com/..." />
+              <TextField label="Tumblr" value={theme.socialTumblr} onChange={updateSetting("socialTumblr")} placeholder="https://tumblr.com/..." />
+              <TextField label="Vimeo" value={theme.socialVimeo} onChange={updateSetting("socialVimeo")} placeholder="https://vimeo.com/..." />
+              <TextField label="LinkedIn" value={theme.socialLinkedin} onChange={updateSetting("socialLinkedin")} placeholder="https://linkedin.com/..." />
             </div>
           );
 
@@ -1571,16 +1615,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Search Behaviour":
           return (
             <div className="space-y-3">
-              <TextField label="Placeholder text" value={theme.searchPlaceholder} onChange={(v) => update("searchPlaceholder", v)} />
-              <NumberField label="Min characters" value={theme.searchMinChars} onChange={(v) => update("searchMinChars", v)} min={1} max={5} />
-              <CheckboxField label="Enable search suggestions" checked={theme.searchShowSuggestions} onChange={(v) => update("searchShowSuggestions", v)} />
+              <TextField label="Placeholder text" value={theme.searchPlaceholder} onChange={updateSetting("searchPlaceholder")} />
+              <NumberField label="Min characters" value={theme.searchMinChars} onChange={updateSetting("searchMinChars")} min={1} max={5} />
+              <CheckboxField label="Enable search suggestions" checked={theme.searchShowSuggestions} onChange={updateSetting("searchShowSuggestions")} />
               {theme.searchShowSuggestions && (
                 <>
-                  <CheckboxField label="Show product vendor" checked={theme.searchShowVendor} onChange={(v) => update("searchShowVendor", v)} />
-                  <CheckboxField label="Show product price" checked={theme.searchShowPrice} onChange={(v) => update("searchShowPrice", v)} />
+                  <CheckboxField label="Show product vendor" checked={theme.searchShowVendor} onChange={updateSetting("searchShowVendor")} />
+                  <CheckboxField label="Show product price" checked={theme.searchShowPrice} onChange={updateSetting("searchShowPrice")} />
                 </>
               )}
-              <NumberField label="Max results" value={theme.searchMaxResults} onChange={(v) => update("searchMaxResults", v)} min={3} max={20} />
+              <NumberField label="Max results" value={theme.searchMaxResults} onChange={updateSetting("searchMaxResults")} min={3} max={20} />
             </div>
           );
 
@@ -1588,18 +1632,18 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Currency Format":
           return (
             <div className="space-y-3">
-              <SelectField label="Currency" value={theme.currencyCode} onChange={(v) => update("currencyCode", v)} options={[
+              <SelectField label="Currency" value={theme.currencyCode} onChange={updateSetting("currencyCode")} options={[
                 { label: "USD ($)", value: "USD" }, { label: "EUR (\u20ac)", value: "EUR" }, { label: "GBP (\u00a3)", value: "GBP" },
                 { label: "CAD (C$)", value: "CAD" }, { label: "AUD (A$)", value: "AUD" }, { label: "JPY (\u00a5)", value: "JPY" },
               ]} />
-              <TextField label="Symbol" value={theme.currencySymbol} onChange={(v) => update("currencySymbol", v)} />
-              <SelectField label="Symbol position" value={theme.currencyPosition} onChange={(v) => update("currencyPosition", v)} options={[
+              <TextField label="Symbol" value={theme.currencySymbol} onChange={updateSetting("currencySymbol")} />
+              <SelectField label="Symbol position" value={theme.currencyPosition} onChange={updateSetting("currencyPosition")} options={[
                 { label: "Before ($10)", value: "before" }, { label: "After (10$)", value: "after" },
               ]} />
-              <CheckboxField label="Show currency codes" checked={theme.currencyShowCode} onChange={(v) => update("currencyShowCode", v)} />
-              <TextField label="Thousands separator" value={theme.thousandsSeparator} onChange={(v) => update("thousandsSeparator", v)} />
-              <TextField label="Decimal separator" value={theme.decimalSeparator} onChange={(v) => update("decimalSeparator", v)} />
-              <NumberField label="Decimal places" value={theme.decimalPlaces} onChange={(v) => update("decimalPlaces", v)} min={0} max={4} />
+              <CheckboxField label="Show currency codes" checked={theme.currencyShowCode} onChange={updateSetting("currencyShowCode")} />
+              <TextField label="Thousands separator" value={theme.thousandsSeparator} onChange={updateSetting("thousandsSeparator")} />
+              <TextField label="Decimal separator" value={theme.decimalSeparator} onChange={updateSetting("decimalSeparator")} />
+              <NumberField label="Decimal places" value={theme.decimalPlaces} onChange={updateSetting("decimalPlaces")} min={0} max={4} />
             </div>
           );
 
@@ -1612,16 +1656,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
 
           return (
             <div className="space-y-3">
-              <SelectField label="Cart type" value={theme.cartStyle} onChange={(v) => update("cartStyle", v)} options={[
+              <SelectField label="Cart type" value={theme.cartStyle} onChange={updateSetting("cartStyle")} options={[
                 { label: "Drawer", value: "drawer" }, { label: "Page", value: "page" }, { label: "Popup notification", value: "dropdown" },
               ]} />
-              <SelectField label="Icon style" value={theme.cartIconStyle} onChange={(v) => update("cartIconStyle", v)} options={[
+              <SelectField label="Icon style" value={theme.cartIconStyle} onChange={updateSetting("cartIconStyle")} options={[
                 { label: "Bag", value: "bag" }, { label: "Cart", value: "cart" }, { label: "Basket", value: "basket" },
               ]} />
-              <CheckboxField label="Show item count" checked={theme.showCartCount} onChange={(v) => update("showCartCount", v)} />
-              <CheckboxField label="Show vendor" checked={theme.cartShowVendor} onChange={(v) => update("cartShowVendor", v)} />
-              <CheckboxField label="Enable cart note" checked={theme.cartEnableNote} onChange={(v) => update("cartEnableNote", v)} />
-              <TextField label="Empty cart text" value={theme.cartEmptyText} onChange={(v) => update("cartEmptyText", v)} />
+              <CheckboxField label="Show item count" checked={theme.showCartCount} onChange={updateSetting("showCartCount")} />
+              <CheckboxField label="Show vendor" checked={theme.cartShowVendor} onChange={updateSetting("cartShowVendor")} />
+              <CheckboxField label="Enable cart note" checked={theme.cartEnableNote} onChange={updateSetting("cartEnableNote")} />
+              <TextField label="Empty cart text" value={theme.cartEmptyText} onChange={updateSetting("cartEmptyText")} />
               {theme.cartStyle === "drawer" && (
                 <div className="border-t border-border/30 pt-2">
                   <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Cart drawer</Label>
@@ -1629,7 +1673,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                     <SelectField
                       label="Collection"
                       value={drawerCollectionValue}
-                      onChange={(v) => update("cartDrawerCollectionId", v)}
+                      onChange={updateSetting("cartDrawerCollectionId")}
                       options={drawerCollectionOptions}
                       disabled
                       placeholder="Coming soon"
@@ -1637,12 +1681,12 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                     <CheckboxField
                       label="Visible when cart drawer is empty"
                       checked={theme.cartDrawerShowWhenEmpty}
-                      onChange={(v) => update("cartDrawerShowWhenEmpty", v)}
+                      onChange={updateSetting("cartDrawerShowWhenEmpty")}
                     />
                     <SelectField
                       label="Color scheme"
                       value={theme.cartDrawerColorScheme}
-                      onChange={(v) => update("cartDrawerColorScheme", v)}
+                      onChange={updateSetting("cartDrawerColorScheme")}
                       options={theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))}
                     />
                   </div>
@@ -1660,7 +1704,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <TextField
                 label="CSS selectors"
                 value={theme.customCssSelectors}
-                onChange={(v) => update("customCssSelectors", v)}
+                onChange={updateSetting("customCssSelectors")}
                 placeholder=".product-card, #cart, .footer"
               />
               <textarea
@@ -1678,7 +1722,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-3">
               <SelectField label="Preset" value={theme.themePreset} onChange={handleThemePresetChange} options={themePresetOptions} />
-              <CheckboxField label="Dark mode" checked={theme.darkMode} onChange={(v) => update("darkMode", v)} />
+              <CheckboxField label="Dark mode" checked={theme.darkMode} onChange={updateSetting("darkMode")} />
             </div>
           );
 
@@ -1704,6 +1748,9 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       isGlobalPaletteOpen,
       themePresetOptions,
       handleThemePresetChange,
+      toggleGlobalPalette,
+      updateSchemeColor,
+      updateSetting,
       theme,
       update,
     ]

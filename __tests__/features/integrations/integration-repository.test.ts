@@ -137,8 +137,8 @@ describe("Integration Repository", () => {
 
       expect(mockCollection).toHaveBeenCalledWith("integrations");
       expect(mockFind).toHaveBeenCalledWith({});
-      expect(result[0].id).toBe("1");
-      expect(result[0].name).toBe("Int 1");
+      expect(result[0]!.id).toBe("1");
+      expect(result[0]!.name).toBe("Int 1");
     });
 
     it("createConnection inserts into mongo collection", async () => {

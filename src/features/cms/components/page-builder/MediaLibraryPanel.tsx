@@ -71,8 +71,8 @@ export function MediaLibraryPanel({
       await queryClient.invalidateQueries({ queryKey: ["files"] });
       if (shouldAutoConfirm && uploaded.length > 0) {
         const selections = uploaded
-          .map((file) => ({ id: file.id, filepath: file.filepath }))
-          .filter((file) => file.filepath);
+          .map((file: any) => ({ id: file.id, filepath: file.filepath }))
+          .filter((file: any) => file.filepath);
         if (selections.length > 0) {
           handleSelect(selections);
         }

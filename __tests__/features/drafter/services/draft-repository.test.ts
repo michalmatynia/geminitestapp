@@ -39,8 +39,8 @@ describe("DraftRepository (Prisma)", () => {
 
     const drafts = await listDrafts();
     expect(drafts.length).toBe(2);
-    expect(drafts[0].name).toBe("Draft 2");
-    expect(drafts[1].name).toBe("Draft 1");
+    expect(drafts[0]!.name).toBe("Draft 2");
+    expect(drafts[1]!.name).toBe("Draft 1");
   });
 
   it("should update a draft", async () => {

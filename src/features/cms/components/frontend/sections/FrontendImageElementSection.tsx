@@ -12,7 +12,7 @@ export function FrontendImageElementSection({
   settings,
 }: FrontendImageElementSectionProps): React.ReactNode {
   const blockSettings = useMemo(() => {
-    const { gsapAnimation, ...rest } = settings as Record<string, unknown>;
+    const { gsapAnimation, ...rest } = settings;
     return rest;
   }, [settings]);
 

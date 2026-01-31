@@ -30,7 +30,7 @@ vi.mock("@/shared/ui", async () => {
   const actual = await vi.importActual("@/shared/ui");
   return {
     ...actual,
-    Dialog: ({ children, open, _onOpenChange }: any) => (
+    Dialog: ({ children, open }: any) => (
       <div data-testid="dialog">
         {children}
         {open && <div data-testid="dialog-content" />}

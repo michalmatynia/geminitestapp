@@ -218,7 +218,7 @@ function SectionBlockRenderer({
       ...getTextAlign(block.settings["contentAlignment"]),
     };
     const alignment = (block.settings["contentAlignment"] as string) || "left";
-    const blockGap = typeof block.settings["blockGap"] === "number" ? (block.settings["blockGap"] as number) : 0;
+    const blockGap = typeof block.settings["blockGap"] === "number" ? block.settings["blockGap"] : 0;
     const alignmentClass =
       alignment === "center"
         ? "justify-center"

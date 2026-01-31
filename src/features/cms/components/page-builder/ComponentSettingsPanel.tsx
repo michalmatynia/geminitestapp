@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, Slug, PageSlugLink } from "../../types";
@@ -13,9 +13,10 @@ import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
-import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
@@ -123,6 +124,9 @@ export function ComponentSettingsPanel(): React.ReactNode {
     dispatch,
   } = usePageBuilder();
   const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
+  const [gridTemplateName, setGridTemplateName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
   const rowCount = useMemo((): number => {
@@ -334,6 +338,40 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (options.length > 0) return options;
     return [{ label: "No app embeds enabled", value: "" }];
   }, [enabledAppEmbeds]);
+
+  const gridTemplates = useMemo<GridTemplateRecord[]>(() => {
+    if (!settingsQuery.data) return [];
+    const stored = parseJsonSetting<unknown>(
+      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      []
+    );
+    return normalizeGridTemplates(stored);
+  }, [settingsQuery.data]);
+
+  const handleSaveGridTemplate = useCallback(async (): Promise<void> => {
+    if (!selectedSection || selectedSection.type !== "Grid") return;
+    const trimmed = gridTemplateName.trim();
+    const name = trimmed.length > 0 ? trimmed : `Grid template ${gridTemplates.length + 1}`;
+    const nextTemplate: GridTemplateRecord = {
+      id: `grid-${Date.now()}`,
+      name,
+      description: "",
+      createdAt: new Date().toISOString(),
+      section: JSON.parse(JSON.stringify({ ...selectedSection, zone: "template" })) as SectionInstance,
+    };
+    const nextTemplates = [...gridTemplates, nextTemplate];
+    try {
+      await updateSetting.mutateAsync({
+        key: GRID_TEMPLATE_SETTINGS_KEY,
+        value: serializeSetting(nextTemplates),
+      });
+      setGridTemplateName("");
+      toast("Grid saved as template.", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to save grid template:", error);
+      toast("Failed to save grid template.", { variant: "error" });
+    }
+  }, [selectedSection, gridTemplateName, gridTemplates, updateSetting, toast]);
 
   // ---------------------------------------------------------------------------
   // Determine what to show
@@ -608,6 +646,31 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   ),
                   selectedSection.settings,
                   handleSectionSettingChangeWithGridColumns,
+                )}
+
+                {selectedSection.type === "Grid" && (
+                  <div className="rounded border border-border/40 bg-gray-900/40 p-3">
+                    <div className="text-xs font-semibold text-gray-200">Save grid as template</div>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      Saved grids appear under Templates when adding sections.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        value={gridTemplateName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGridTemplateName(e.target.value)}
+                        placeholder="Template name"
+                        className="h-8 text-xs"
+                      />
+                      <Button
+                        onClick={() => void handleSaveGridTemplate()}
+                        size="sm"
+                        className="h-8"
+                        disabled={updateSetting.isPending || !selectedSection || !settingsQuery.data}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </div>
                 )}
 
                 <div className="border-t border-border/30 pt-4">

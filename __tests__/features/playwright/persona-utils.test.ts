@@ -18,19 +18,19 @@ describe("Playwright Persona Utils", () => {
       const input = [{ name: "" }, { name: "Valid" }];
       const result = normalizePlaywrightPersonas(input);
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe("Valid");
+      expect(result[0]!.name).toBe("Valid");
     });
 
     it("ensures default settings are applied", () => {
       const input = [{ name: "Standard" }];
       const result = normalizePlaywrightPersonas(input);
-      expect(result[0].settings).toEqual(defaultPlaywrightSettings);
+      expect(result[0]!.settings).toEqual(defaultPlaywrightSettings);
     });
 
     it("assigns IDs if missing", () => {
       const input = [{ name: "No ID" }];
       const result = normalizePlaywrightPersonas(input);
-      expect(result[0].id).toBeDefined();
+      expect(result[0]!.id).toBeDefined();
     });
   });
 

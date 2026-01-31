@@ -7,6 +7,9 @@ import type { BlockInstance, PageZone, SectionDefinition } from "../../types/pag
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from "./grid-templates";
 
 interface SectionPickerProps {
   disabled?: boolean;
@@ -28,10 +31,36 @@ type TemplatePreviewGroup = {
 export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
-  const groupedTemplates = useMemo(() => getTemplatesByCategory(zone), [zone]);
   const { dispatch } = usePageBuilder();
+  const settingsQuery = useSettingsMap();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
   const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "ButtonElement"]), []);
+  const gridAllowed = useMemo(
+    () => sectionTypes.some((def: SectionDefinition) => def.type === "Grid"),
+    [sectionTypes]
+  );
+  const savedGridTemplates = useMemo<GridTemplateRecord[]>(() => {
+    if (!settingsQuery.data) return [];
+    const stored = parseJsonSetting<unknown>(
+      settingsQuery.data.get(GRID_TEMPLATE_SETTINGS_KEY),
+      []
+    );
+    return normalizeGridTemplates(stored);
+  }, [settingsQuery.data]);
+  const groupedTemplates = useMemo(() => {
+    const base = getTemplatesByCategory(zone);
+    if (!gridAllowed || savedGridTemplates.length === 0) return base;
+    const savedTemplates: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
+      name: record.name,
+      description: record.description && record.description.length > 0 ? record.description : "Saved grid template",
+      category: "Saved grids",
+      create: () => cloneGridTemplateSection(record.section),
+    }));
+    return {
+      "Saved grids": savedTemplates,
+      ...base,
+    };
+  }, [zone, gridAllowed, savedGridTemplates]);
   const primitives = useMemo(
     () => sectionTypes.filter((def: SectionDefinition) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]

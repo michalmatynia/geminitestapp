@@ -70,15 +70,15 @@ describe("playwright personas", () => {
       ];
       const result = normalizePlaywrightPersonas(input);
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe("Valid");
+      expect(result[0]!.name).toBe("Valid");
     });
 
     it("should assign defaults", () => {
       const input = [{ name: "Test" }];
       const result = normalizePlaywrightPersonas(input);
-      expect(result[0].id).toBeDefined();
-      expect(result[0].createdAt).toBeDefined();
-      expect(result[0].settings).toBeDefined();
+      expect(result[0]!.id).toBeDefined();
+      expect(result[0]!.createdAt).toBeDefined();
+      expect(result[0]!.settings).toBeDefined();
     });
   });
 });

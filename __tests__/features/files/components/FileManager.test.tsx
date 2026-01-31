@@ -104,7 +104,7 @@ describe("FileManager Component", () => {
     render(<FileManager mode="view" />, { wrapper });
     
     const viewButtons = screen.getAllByText("View");
-    fireEvent.click(viewButtons[0]);
+    fireEvent.click(viewButtons[0]!);
     
     expect(screen.getByTestId("preview-modal")).toBeInTheDocument();
     expect(screen.getByText("Linked Products")).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe("FileManager Component", () => {
     
     const deleteButtons = screen.getAllByText("X");
     act(() => {
-      fireEvent.click(deleteButtons[0]);
+      fireEvent.click(deleteButtons[0]!);
     });
     
     expect(window.confirm).toHaveBeenCalled();

@@ -86,7 +86,7 @@ describe("Mongo Note Repository", () => {
       const notes = await mongoNoteRepository.getAll({ search: "N1" });
 
       expect(notes).toHaveLength(1);
-      expect(notes[0].title).toBe("N1");
+      expect(notes[0]!.title).toBe("N1");
       expect(mockCollection.find).toHaveBeenCalledWith(expect.objectContaining({
         $or: expect.any(Array)
       }));
@@ -135,9 +135,9 @@ describe("Mongo Note Repository", () => {
       const tree = await mongoNoteRepository.getCategoryTree();
 
       expect(tree).toHaveLength(1);
-      expect(tree[0].name).toBe("Parent");
-      expect(tree[0].children).toHaveLength(1);
-      expect(tree[0].children[0].name).toBe("Child");
+      expect(tree[0]!.name).toBe("Parent");
+      expect(tree[0]!.children).toHaveLength(1);
+      expect(tree[0]!.children[0]!.name).toBe("Child");
     });
   });
 });

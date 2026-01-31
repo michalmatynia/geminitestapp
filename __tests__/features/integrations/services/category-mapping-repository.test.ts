@@ -80,7 +80,7 @@ describe("CategoryMappingRepository", () => {
     
     const result = await repo.listByConnection("conn-1");
     expect(result.length).toBe(1);
-    expect(result[0].externalCategory.name).toBe("Ext");
+    expect(result[0]!.externalCategory.name).toBe("Ext");
   });
 
   it("bulk upserts mappings", async () => {

@@ -37,16 +37,16 @@ describe("notesapp utils", () => {
     it("should build path for a category", () => {
       const path = buildBreadcrumbPath("grandchild-1", null, mockCategories);
       expect(path).toHaveLength(3);
-      expect(path[0].name).toBe("Root");
-      expect(path[1].name).toBe("Child 1");
-      expect(path[2].name).toBe("Grandchild 1");
+      expect(path[0]!.name).toBe("Root");
+      expect(path[1]!.name).toBe("Child 1");
+      expect(path[2]!.name).toBe("Grandchild 1");
     });
 
     it("should include note title at the end", () => {
       const path = buildBreadcrumbPath("child-2", "My Note", mockCategories);
       expect(path).toHaveLength(3);
-      expect(path[2].name).toBe("My Note");
-      expect(path[2].isNote).toBe(true);
+      expect(path[2]!.name).toBe("My Note");
+      expect(path[2]!.isNote).toBe(true);
     });
   });
 

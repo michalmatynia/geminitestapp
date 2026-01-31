@@ -20,11 +20,11 @@ vi.mock("@/shared/lib/db/prisma", () => {
   };
   return {
     default: new Proxy({}, {
-      get: (target, prop) => {
+      get: (_target, prop) => {
         if (prop === "chatbotAgentRun") return mockChatbotAgentRun;
         return undefined;
       },
-      has: (target, prop) => prop === "chatbotAgentRun",
+      has: (_target, prop) => prop === "chatbotAgentRun",
     }),
   };
 });
@@ -40,7 +40,7 @@ describe("Agent Queue Worker", () => {
     stopAgentQueue();
     vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([]);
     vi.mocked(prisma.chatbotAgentRun.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue(null);
+    vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({} as any);
   });
 
   afterEach(() => {

@@ -39,7 +39,7 @@ describe("ExportTemplateRepository", () => {
 
     const templates = await listExportTemplates();
     expect(templates.length).toBe(1);
-    expect(templates[0].id).toBe(template.id);
+    expect(templates[0]!.id).toBe(template.id);
   });
 
   it("should filter out forbidden basehost mappings", async () => {
@@ -52,8 +52,8 @@ describe("ExportTemplateRepository", () => {
     });
 
     const templates = await listExportTemplates();
-    expect(templates[0].mappings.length).toBe(1);
-    expect(templates[0].mappings[0].sourceKey).toBe("sku");
+    expect(templates[0]!.mappings.length).toBe(1);
+    expect(templates[0]!.mappings[0]!.sourceKey).toBe("sku");
   });
 
   it("should update an existing template", async () => {

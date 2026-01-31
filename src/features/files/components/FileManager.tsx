@@ -21,6 +21,12 @@ interface FileManagerProps {
 
 // This component provides a UI for browsing and selecting existing image files.
 // It fetches the list of files from the API and allows the user to filter them.
+const normalizeTag = (tag: string): string => tag.trim().toLowerCase();
+const parseTagInput = (input: string): string[] => {
+  const raw = input.split(",").map(normalizeTag).filter(Boolean);
+  return Array.from(new Set(raw));
+};
+
 export default function FileManager({
   onSelectFile,
   mode = "select",
@@ -43,11 +49,6 @@ export default function FileManager({
   const deleteFileMutation = useDeleteFile();
   const updateTagsMutation = useUpdateFileTags();
 
-  const normalizeTag = (tag: string): string => tag.trim().toLowerCase();
-  const parseTagInput = (input: string): string[] => {
-    const raw = input.split(",").map(normalizeTag).filter(Boolean);
-    return Array.from(new Set(raw));
-  };
   const enableTagSearch = showTagSearch || showBulkActions;
   const tagSearchList = useMemo(() => parseTagInput(tagSearch), [tagSearch]);
 

@@ -21,7 +21,7 @@ export function FrontendBlockSection({
     ...getTextAlign(settings["contentAlignment"]),
   };
   const alignment = (settings["contentAlignment"] as string) || "left";
-  const blockGap = typeof settings["blockGap"] === "number" ? (settings["blockGap"] as number) : 0;
+  const blockGap = typeof settings["blockGap"] === "number" ? settings["blockGap"] : 0;
   const alignmentClass =
     alignment === "center"
       ? "justify-center"

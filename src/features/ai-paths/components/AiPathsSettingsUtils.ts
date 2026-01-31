@@ -5,6 +5,7 @@ import type {
   RuntimeState,
   AiNode,
 } from "@/features/ai-paths/lib";
+import type { DbQueryPayload } from "@/features/ai-paths/lib/api/client";
 import {
   safeParseJson,
   parseJsonSafe,
@@ -132,7 +133,7 @@ export const serializePathConfigs = (configs: Record<string, PathConfig>): strin
 export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
   queryConfig: DbQueryConfig
-): Record<string, unknown> => {
+): DbQueryPayload => {
   const inputQuery = coerceInput(nodeInputs.query);
   const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
   const entityIdInput = coerceInput(nodeInputs.entityId);

@@ -8,7 +8,7 @@ import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, CmsTheme, Slug } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsSlugs, useCmsThemes } from "../../hooks/useCmsQueries";
+import { useCmsAllSlugs, useCmsSlugs, useCmsThemes, useUpdateSlug } from "../../hooks/useCmsQueries";
 import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
@@ -764,6 +764,7 @@ function PageSettingsTab(): React.ReactNode {
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(Boolean(page));
+  const updateSlug = useUpdateSlug();
   const [search, setSearch] = useState("");
   const [selectedSlugIds, setSelectedSlugIds] = useState<string[]>([]);
   const initializedRef = useRef(false);
@@ -816,6 +817,18 @@ function PageSettingsTab(): React.ReactNode {
     () => selectedSlugs.filter((slug) => !domainSlugIds.has(slug.id)),
     [selectedSlugs, domainSlugIds]
   );
+  const eligibleHomeSlugs = useMemo(
+    () => selectedSlugs.filter((slug) => domainSlugIds.has(slug.id)),
+    [selectedSlugs, domainSlugIds]
+  );
+  const currentHomeSlug = useMemo(
+    () => domainSlugs.find((slug) => slug.isDefault) ?? null,
+    [domainSlugs]
+  );
+  const pageHomeSlug = useMemo(
+    () => (currentHomeSlug ? eligibleHomeSlugs.find((slug) => slug.id === currentHomeSlug.id) ?? null : null),
+    [currentHomeSlug, eligibleHomeSlugs]
+  );
 
   const filteredDomainSlugs = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -829,6 +842,14 @@ function PageSettingsTab(): React.ReactNode {
 
   const handleSeoChange = (key: string, value: string): void => {
     dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
+  };
+
+  const handleSetHome = async (slug: Slug): Promise<void> => {
+    await updateSlug.mutateAsync({
+      id: slug.id,
+      input: { slug: slug.slug, isDefault: true },
+      domainId: activeDomainId,
+    });
   };
 
   return (
@@ -937,6 +958,49 @@ function PageSettingsTab(): React.ReactNode {
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Home page</Label>
+            {eligibleHomeSlugs.length === 0 ? (
+              <p className="text-xs text-gray-500">
+                Assign at least one slug in this zone to set this page as the home page.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {eligibleHomeSlugs.map((slug) => {
+                  const isHome = currentHomeSlug?.id === slug.id;
+                  return (
+                    <div
+                      key={slug.id}
+                      className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-2.5 py-2 text-xs"
+                    >
+                      <span className="text-gray-200">/{slug.slug}</span>
+                      {isHome ? (
+                        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300">
+                          Home
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={updateSlug.isPending}
+                          onClick={() => { void handleSetHome(slug); }}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          Set as home
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+                {currentHomeSlug && !pageHomeSlug ? (
+                  <p className="text-[10px] text-gray-500">
+                    Current home page: /{currentHomeSlug.slug}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
 
           <p className="text-xs text-gray-500">
             Select a section or block from the tree to edit its settings.

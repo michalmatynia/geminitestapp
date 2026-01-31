@@ -375,6 +375,7 @@ export const STORAGE_VERSION = 1;
 export const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 export const TRIGGER_EVENTS = [
   { id: "path_generate_description", label: "Path Generate Description" },
+  { id: "scheduled_run", label: "Scheduled Run (Server)" },
 ];
 
 export const PORT_COMPATIBILITY: Record<string, string[]> = {

@@ -98,6 +98,7 @@ const toImageFileRecord = (imageFile: {
   size: number;
   width: number | null;
   height: number | null;
+  tags: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 }): ImageFileRecord => ({
@@ -108,6 +109,7 @@ const toImageFileRecord = (imageFile: {
   size: imageFile.size,
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
+  tags: imageFile.tags ?? [],
   createdAt: imageFile.createdAt,
   updatedAt: imageFile.updatedAt,
 });

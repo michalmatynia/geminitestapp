@@ -13,8 +13,14 @@ const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
   undefined
 );
 
-export function AdminLayoutProvider({ children }: { children: ReactNode }): React.ReactNode {
-  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+export function AdminLayoutProvider({
+  children,
+  initialMenuCollapsed = false,
+}: {
+  children: ReactNode;
+  initialMenuCollapsed?: boolean;
+}): React.ReactNode {
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(initialMenuCollapsed);
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
 
   return (

@@ -69,7 +69,7 @@ const processJob = async (jobId: string) => {
   });
 };
 
-const pollQueue = async () => {
+export const pollQueue = async () => {
   if (isProcessing) return;
   isProcessing = true;
   try {
@@ -102,9 +102,31 @@ const pollQueue = async () => {
 };
 
 export const startChatbotJobQueue = () => {
+
   if (intervalId) return;
+
   intervalId = setInterval(() => {
+
     void pollQueue();
+
   }, 2000);
+
   logDebug("Job queue started");
+
+};
+
+
+
+export const stopChatbotJobQueue = () => {
+
+  if (intervalId) {
+
+    clearInterval(intervalId);
+
+    intervalId = null;
+
+  }
+
+  isProcessing = false;
+
 };

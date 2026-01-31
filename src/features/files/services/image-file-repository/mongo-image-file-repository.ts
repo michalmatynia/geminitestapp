@@ -19,6 +19,7 @@ type ImageFileDocument = {
   size: number;
   width: number | null;
   height: number | null;
+  tags?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,6 +34,7 @@ const toRecord = (doc: WithId<ImageFileDocument>): ImageFileRecord => ({
   size: doc.size,
   width: doc.width ?? null,
   height: doc.height ?? null,
+  tags: doc.tags ?? [],
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -51,6 +53,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
       size: data.size,
       width: data.width ?? null,
       height: data.height ?? null,
+      tags: data.tags ?? [],
       createdAt: now,
       updatedAt: now,
     };
@@ -69,9 +72,14 @@ export const mongoImageFileRepository: ImageFileRepository = {
   async listImageFiles(filters?: ImageFileListFilters) {
     const db = await getMongoDb();
     const filename = filters?.filename?.trim();
-    const query = filename
-      ? { filename: { $regex: filename, $options: "i" } }
-      : {};
+    const tags = (filters?.tags ?? []).filter(Boolean);
+    const query: Record<string, unknown> = {};
+    if (filename) {
+      query.filename = { $regex: filename, $options: "i" };
+    }
+    if (tags.length > 0) {
+      query.tags = { $in: tags };
+    }
     const docs = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .find(query)
@@ -96,6 +104,19 @@ export const mongoImageFileRepository: ImageFileRepository = {
       .findOneAndUpdate(
         { $or: [{ _id: id }, { id }] },
         { $set: { filepath, updatedAt: new Date() } },
+        { returnDocument: "after" }
+      );
+    if (!result) return null;
+    return toRecord({ ...result, _id: result._id });
+  },
+
+  async updateImageFileTags(id: string, tags: string[]) {
+    const db = await getMongoDb();
+    const result = await db
+      .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
+      .findOneAndUpdate(
+        { $or: [{ _id: id }, { id }] },
+        { $set: { tags, updatedAt: new Date() } },
         { returnDocument: "after" }
       );
     if (!result) return null;

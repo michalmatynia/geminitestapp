@@ -31,7 +31,7 @@ describe("CMS API", () => {
     expect(data.slug).toBe("test-slug");
   });
 
-  it("should not create a duplicate slug", async () => {
+  it("should not create a duplicate slug (idempotent)", async () => {
     await cmsRepository.createSlug({ slug: "test-slug" });
 
     const req = new NextRequest("http://localhost/api/cms/slugs", {
@@ -40,7 +40,9 @@ describe("CMS API", () => {
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { slug: string };
+    expect(data.slug).toBe("test-slug");
   });
 
   it("should fetch all slugs", async () => {

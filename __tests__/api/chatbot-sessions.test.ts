@@ -42,7 +42,7 @@ describe("Chatbot Sessions API", () => {
       body: JSON.stringify({ title: "New Session" }),
     });
 
-    const res = await POST(req, {} as any);
+    const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(201);
@@ -61,7 +61,7 @@ describe("Chatbot Sessions API", () => {
       body: JSON.stringify({ sessionId: "s1", title: "Updated Title" }),
     });
 
-    const res = await PATCH(req, {} as any);
+    const res = await PATCH(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -76,7 +76,7 @@ describe("Chatbot Sessions API", () => {
       body: JSON.stringify({ sessionId: "s1" }),
     });
 
-    const res = await DELETE(req, {} as any);
+    const res = await DELETE(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -91,7 +91,7 @@ describe("Chatbot Sessions API", () => {
       body: JSON.stringify({ sessionId: "missing" }),
     });
 
-    const res = await DELETE(req, {} as any);
+    const res = await DELETE(req);
     expect(res.status).toBe(404);
   });
 });

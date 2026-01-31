@@ -5,6 +5,7 @@ import { normalizeNodes, sanitizeEdges } from "@/features/ai-paths/lib";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 
 type EnqueueRunInput = {
+  userId?: string | null;
   pathId: string;
   pathName?: string | null;
   nodes: AiNode[];
@@ -30,6 +31,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     backoffMaxMs: input.backoffMaxMs ?? undefined,
   };
   const run = await repo.createRun({
+    userId: input.userId ?? null,
     pathId: input.pathId,
     pathName: input.pathName ?? null,
     triggerEvent: input.triggerEvent ?? null,

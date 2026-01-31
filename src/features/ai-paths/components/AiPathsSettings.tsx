@@ -14,11 +14,12 @@ import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
 import { ClusterPresetsPanel, type ClusterPresetDraft } from "./cluster-presets-panel";
 import { GraphModelDebugPanel } from "./graph-model-debug-panel";
+import { JobQueuePanel } from "./job-queue-panel";
 import { PresetsDialog } from "./presets-dialog";
 import { RunDetailDialog } from "./run-detail-dialog";
 import { RunHistoryPanel, type RunHistoryFilter } from "./run-history-panel";
 import { SimulationDialog } from "./simulation-dialog";
-import { buildHistoryNodeOptions } from "./run-history-utils";
+import { buildHistoryNodeOptions, type HistoryNodeOption } from "./run-history-utils";
 import type {
   AiNode,
   AiPathRunEventRecord,
@@ -37,7 +38,6 @@ import type {
   PathDebugSnapshot,
   PathMeta,
   RuntimePortValues,
-  RuntimeHistoryEntry,
   RuntimeState,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
@@ -76,6 +76,7 @@ import {
   parsePathList,
   safeParseJson,
   safeStringify,
+  stableStringify,
   sanitizeEdges,
   triggers,
   validateConnection,
@@ -91,9 +92,9 @@ import {
 } from "./AiPathsSettingsUtils";
 
 type AiPathsSettingsProps = {
-  activeTab: "canvas" | "paths" | "docs";
+  activeTab: "canvas" | "paths" | "docs" | "queue";
   renderActions?: (actions: React.ReactNode) => React.ReactNode;
-  onTabChange?: (tab: "canvas" | "paths" | "docs") => void;
+  onTabChange?: (tab: "canvas" | "paths" | "docs" | "queue") => void;
 };
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
@@ -242,7 +243,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const runId = runDetail.run.id;
     const params = new URLSearchParams();
     const latestEventTimestamp = runDetail.events?.length
-      ? runDetail.events.reduce<string | null>((max, event) => {
+      ? runDetail.events.reduce<string | null>((max: string | null, event: AiPathRunEventRecord) => {
           const time = new Date(event.createdAt).getTime();
           if (!Number.isFinite(time)) return max;
           if (!max) return new Date(time).toISOString();
@@ -258,17 +259,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const source = new EventSource(url);
     setRunStreamStatus("connecting");
 
-    const mergeEvents = (incoming: AiPathRunEventRecord[]) => {
-      setRunDetail((prev) => {
+    const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
+      setRunDetail((prev: typeof runDetail) => {
         if (!prev) return prev;
-        const existingIds = new Set(prev.events.map((event) => event.id));
+        const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
-        incoming.forEach((event) => {
+        incoming.forEach((event: AiPathRunEventRecord) => {
           if (!existingIds.has(event.id)) {
             merged.push(event);
           }
         });
-        merged.sort((a, b) => {
+        merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
           const aTime = new Date(a.createdAt).getTime();
           const bTime = new Date(b.createdAt).getTime();
           return aTime - bTime;
@@ -280,25 +281,25 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     source.addEventListener("ready", () => {
       setRunStreamStatus("live");
     });
-    source.addEventListener("run", (event) => {
+    source.addEventListener("run", (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunRecord;
-        setRunDetail((prev) => (prev ? { ...prev, run: payload } : prev));
+        const payload = JSON.parse(event.data as string) as AiPathRunRecord;
+        setRunDetail((prev: typeof runDetail) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
     });
-    source.addEventListener("nodes", (event) => {
+    source.addEventListener("nodes", (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunNodeRecord[];
-        setRunDetail((prev) => (prev ? { ...prev, nodes: payload } : prev));
+        const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
+        setRunDetail((prev: typeof runDetail) => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }
     });
-    source.addEventListener("events", (event) => {
+    source.addEventListener("events", (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data) as
+        const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
           | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
         if (Array.isArray(payload)) {
@@ -329,7 +330,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setRunStreamStatus("stopped");
     });
 
-    return () => {
+    return (): void => {
       source.close();
       setRunStreamStatus("stopped");
     };
@@ -343,8 +344,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
     const counts: Record<string, number> = {};
-    runDetail.nodes.forEach((node) => {
-      const status = (node as AiPathRunNodeRecord).status ?? "unknown";
+    runDetail.nodes.forEach((node: AiPathRunNodeRecord) => {
+      const status = node.status ?? "unknown";
       counts[status] = (counts[status] ?? 0) + 1;
     });
     const total = runDetail.nodes.length;
@@ -353,9 +354,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return { counts, total, completed, progress };
   }, [runDetail]);
 
-  const runDetailHistory = (runDetail?.run?.runtimeState?.history ?? undefined) as
-    | Record<string, RuntimeHistoryEntry[]>
-    | undefined;
+  const runDetailHistory = runDetail?.run?.runtimeState?.history;
   const runDetailHistoryOptions = useMemo(
     () =>
       buildHistoryNodeOptions(
@@ -371,18 +370,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setRunHistoryNodeId(null);
       return;
     }
-    if (runDetailHistoryOptions.length === 0) {
+    const firstHistoryOption = runDetailHistoryOptions.at(0);
+    if (!firstHistoryOption) {
       setRunHistoryNodeId(null);
       return;
     }
-    if (runHistoryNodeId && runDetailHistoryOptions.some((option) => option.id === runHistoryNodeId)) {
+    if (runHistoryNodeId && runDetailHistoryOptions.some((option: HistoryNodeOption) => option.id === runHistoryNodeId)) {
       return;
     }
-    setRunHistoryNodeId(runDetailHistoryOptions[0].id);
+    setRunHistoryNodeId(firstHistoryOption.id);
   }, [runDetail?.run?.id, runDetailHistoryOptions, runHistoryNodeId]);
 
   const runDetailSelectedHistoryNodeId =
-    runHistoryNodeId ?? runDetailHistoryOptions[0]?.id ?? null;
+    runHistoryNodeId ?? runDetailHistoryOptions.at(0)?.id ?? null;
   const runDetailSelectedHistoryEntries =
     runDetailSelectedHistoryNodeId && runDetailHistory
       ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
@@ -436,6 +436,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const lastPrefsPayloadRef = useRef<string>("");
   const lastPathSavePayloadRef = useRef<string>("");
   const lastSettingsPayloadRef = useRef<string>("");
+  const normalizeConfigForHash = useCallback((config: PathConfig): PathConfig => ({
+    ...config,
+    nodes: [...config.nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
+    edges: [...config.edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
+  }), []);
+  const buildPathConfigsHash = useCallback((configs: Record<string, PathConfig>): string => {
+    const normalizedConfigs = Object.fromEntries(
+      Object.entries(configs).map(([key, config]: [string, PathConfig]) => [
+        key,
+        normalizeConfigForHash(sanitizePathConfig(config)),
+      ])
+    );
+    return stableStringify(normalizedConfigs);
+  }, [normalizeConfigForHash]);
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
   const updateSettingsBulkMutation = useUpdateSettingsBulk();
@@ -1114,10 +1128,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
         setPaths(metas);
         setPathConfigs(configs);
-        const initialConfigs = serializePathConfigs(configs);
-        lastPathSavePayloadRef.current = JSON.stringify({
+        const initialConfigsHash = buildPathConfigsHash(configs);
+        lastPathSavePayloadRef.current = stableStringify({
           aiPathsPathIndex: metas,
-          aiPathsPathConfigs: initialConfigs,
+          aiPathsPathConfigs: initialConfigsHash,
         });
         if (preferredGroups !== null) {
           setExpandedPaletteGroups(new Set(preferredGroups));
@@ -1129,10 +1143,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             : firstPathCandidate;
         const firstConfigForSettings = configs[firstPath];
         if (firstConfigForSettings) {
-          lastSettingsPayloadRef.current = JSON.stringify({
+          lastSettingsPayloadRef.current = stableStringify({
             index: metas,
             configId: firstPath,
-            config: sanitizePathConfig(firstConfigForSettings),
+            config: normalizeConfigForHash(sanitizePathConfig(firstConfigForSettings)),
           });
         }
         setActivePathId(firstPath);
@@ -1169,17 +1183,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     settingsQuery,
     preferencesQuery,
     updateSettingsBulkMutation,
+    normalizeConfigForHash,
+    buildPathConfigsHash,
     persistLastError,
   ]);
 
   useEffect((): void | (() => void) => {
     if (!prefsLoaded) return;
+    const expandedGroups = Array.from(expandedPaletteGroups).sort();
     const payload = {
       aiPathsActivePathId: activePathId,
-      aiPathsExpandedGroups: Array.from(expandedPaletteGroups),
+      aiPathsExpandedGroups: expandedGroups,
       aiPathsPaletteCollapsed: paletteCollapsed,
     };
-    const payloadKey = JSON.stringify(payload);
+    const payloadKey = stableStringify(payload);
     if (payloadKey === lastPrefsPayloadRef.current) return;
     lastPrefsPayloadRef.current = payloadKey;
     const timeout = setTimeout((): void => {
@@ -1200,6 +1217,54 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   useEffect((): void => {
     runtimeStateRef.current = runtimeState;
   }, [runtimeState]);
+
+  const pruneRuntimeInputs = useCallback(
+    (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]): RuntimeState => {
+      if (removedEdges.length === 0) return state;
+      const remainingTargets = new Set<string>();
+      remainingEdges.forEach((edge: Edge) => {
+        if (!edge.toPort) return;
+        remainingTargets.add(`${edge.to}:${edge.toPort}`);
+      });
+
+      const existingInputs = state.inputs ?? {};
+      let nextInputs = existingInputs;
+      let changed = false;
+
+      removedEdges.forEach((edge: Edge) => {
+        if (!edge.toPort) return;
+        const targetKey = `${edge.to}:${edge.toPort}`;
+        if (remainingTargets.has(targetKey)) return;
+        const nodeInputs = (nextInputs?.[edge.to] ?? {}) as Record<string, unknown>;
+        if (!(edge.toPort in nodeInputs)) return;
+        if (!changed) {
+          nextInputs = { ...existingInputs };
+          changed = true;
+        }
+        const nextNodeInputs = { ...nodeInputs };
+        delete nextNodeInputs[edge.toPort];
+        if (Object.keys(nextNodeInputs).length === 0) {
+          delete (nextInputs as Record<string, Record<string, unknown>>)[edge.to];
+        } else {
+          (nextInputs as Record<string, Record<string, unknown>>)[edge.to] = nextNodeInputs;
+        }
+      });
+
+      if (!changed) return state;
+      return { ...state, inputs: nextInputs };
+    },
+    []
+  );
+
+  const clearRuntimeInputsForEdges = useCallback(
+    (removedEdges: Edge[], remainingEdges: Edge[]): void => {
+      if (removedEdges.length === 0) return;
+      setRuntimeState((prev: RuntimeState): RuntimeState =>
+        pruneRuntimeInputs(prev, removedEdges, remainingEdges)
+      );
+    },
+    [pruneRuntimeInputs]
+  );
 
   const clearRuntimeForNode = React.useCallback((nodeId: string): void => {
     setRuntimeState((prev: RuntimeState): RuntimeState => {
@@ -1267,12 +1332,40 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const handleRemoveEdge = useCallback(
     (edgeId: string): void => {
-      setEdges((prev: Edge[]): Edge[] => prev.filter((edge: Edge): boolean => edge.id !== edgeId));
+      setEdges((prev: Edge[]): Edge[] => {
+        const target = prev.find((edge: Edge): boolean => edge.id === edgeId) ?? null;
+        if (!target) return prev;
+        const remaining = prev.filter((edge: Edge): boolean => edge.id !== edgeId);
+        clearRuntimeInputsForEdges([target], remaining);
+        return remaining;
+      });
       if (selectedEdgeId === edgeId) {
         setSelectedEdgeId(null);
       }
     },
-    [selectedEdgeId]
+    [clearRuntimeInputsForEdges, selectedEdgeId]
+  );
+
+  const handleDisconnectPort = useCallback(
+    (direction: "input" | "output", nodeId: string, port: string): void => {
+      setEdges((prev: Edge[]): Edge[] => {
+        const shouldRemove = (edge: Edge): boolean =>
+          direction === "input"
+            ? edge.to === nodeId && edge.toPort === port
+            : edge.from === nodeId && edge.fromPort === port;
+        const removed = prev.filter((edge: Edge): boolean => shouldRemove(edge));
+        const remaining = prev.filter((edge: Edge): boolean => !shouldRemove(edge));
+        if (selectedEdgeId) {
+          const selectedEdge = prev.find((edge: Edge) => edge.id === selectedEdgeId);
+          if (selectedEdge && shouldRemove(selectedEdge)) {
+            setSelectedEdgeId(null);
+          }
+        }
+        clearRuntimeInputsForEdges(removed, remaining);
+        return remaining;
+      });
+    },
+    [clearRuntimeInputsForEdges, selectedEdgeId]
   );
 
   const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -1291,11 +1384,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
     if (!confirmed) return;
     setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== selectedNodeId));
-    setEdges((prev: Edge[]): Edge[] =>
-      prev.filter((edge: Edge): boolean => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
-    );
+    setEdges((prev: Edge[]): Edge[] => {
+      const removed = prev.filter(
+        (edge: Edge): boolean => edge.from === selectedNodeId || edge.to === selectedNodeId
+      );
+      const remaining = prev.filter(
+        (edge: Edge): boolean => edge.from !== selectedNodeId && edge.to !== selectedNodeId
+      );
+      clearRuntimeInputsForEdges(removed, remaining);
+      return remaining;
+    });
     setSelectedNodeId(null);
-  }, [nodes, selectedNodeId]);
+  }, [nodes, selectedNodeId, clearRuntimeInputsForEdges]);
 
   useEffect((): void | (() => void) => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -1443,6 +1543,44 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const y = node.position.y + getPortOffsetY(safeIndex, ports.length);
     return { x, y };
   };
+
+  const handleReconnectInput = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string): void => {
+      if (connecting) return;
+      let edgeToMove: Edge | null = null;
+      for (let index = edges.length - 1; index >= 0; index -= 1) {
+        const edge = edges[index];
+        if (edge && edge.to === nodeId && edge.toPort === port) {
+          edgeToMove = edge;
+          break;
+        }
+      }
+      if (!edgeToMove || !edgeToMove.from || !edgeToMove.fromPort) return;
+      const fromNode = nodes.find((node: AiNode): boolean => node.id === edgeToMove.from);
+      if (!fromNode) return;
+      const start = getPortPosition(fromNode, edgeToMove.fromPort, "output");
+      const viewport = viewportRef.current?.getBoundingClientRect();
+      const nextPos = viewport
+        ? {
+            x: (event.clientX - viewport.left - view.x) / view.scale,
+            y: (event.clientY - viewport.top - view.y) / view.scale,
+          }
+        : start;
+      setEdges((prev: Edge[]): Edge[] => {
+        const remaining = prev.filter(
+          (edge: Edge): boolean => edge.id !== edgeToMove.id
+        );
+        clearRuntimeInputsForEdges([edgeToMove], remaining);
+        return remaining;
+      });
+      if (selectedEdgeId === edgeToMove.id) {
+        setSelectedEdgeId(null);
+      }
+      setConnecting({ fromNodeId: edgeToMove.from, fromPort: edgeToMove.fromPort, start });
+      setConnectingPos(nextPos);
+    },
+    [connecting, edges, nodes, selectedEdgeId, view, getPortPosition, clearRuntimeInputsForEdges]
+  );
 
   // Create a stable key based only on edge-relevant node data (position, ports)
   // This prevents edge recalculation when only config/title changes occur
@@ -1628,12 +1766,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       Math.max(localY - NODE_MIN_HEIGHT / 2, 16),
       CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
     );
-    const config = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
+    const defaultConfig = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
+    const mergedConfig = payload.config
+      ? {
+          ...(defaultConfig ?? {}),
+          ...payload.config,
+        }
+      : defaultConfig;
     const newNode: AiNode = {
       ...payload,
       id: `node-${Math.random().toString(36).slice(2, 8)}`,
       position: { x: nextX, y: nextY },
-      ...(config ? { config } : {}),
+      ...(mergedConfig ? { config: mergedConfig } : {}),
     };
     setSelectedNodeId(newNode.id);
     setNodes((prev: AiNode[]): AiNode[] => [...prev, newNode]);
@@ -1648,8 +1792,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   };
 
   const handleClearWires = async (): Promise<void> => {
-    if (!activePathId) return;
+    if (!activePathId) return false;
     const updatedAt = new Date().toISOString();
+    const nextRuntimeState = pruneRuntimeInputs(runtimeState, edges, []);
+    if (nextRuntimeState !== runtimeState) {
+      setRuntimeState(nextRuntimeState);
+    }
     const config: PathConfig = {
       id: activePathId,
       version: STORAGE_VERSION,
@@ -1661,7 +1809,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       updatedAt,
       parserSamples,
       updaterSamples,
-      runtimeState,
+      runtimeState: nextRuntimeState,
       lastRunAt,
     };
     setEdges([]);
@@ -2325,7 +2473,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     } finally {
       pollInFlightRef.current.delete(pollKey);
     }
-  }, [nodes, edges, activePathId, fetchEntityByType, reportAiPathsError, toast, persistDebugSnapshot, buildActivePathConfig]);
+  }, [nodes, edges, activePathId, pathName, fetchEntityByType, reportAiPathsError, toast, persistDebugSnapshot, buildActivePathConfig]);
 
   const startPendingPolls = useCallback((state: RuntimeState): void => {
     nodes
@@ -2409,6 +2557,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
+    const isScheduled = triggerEvent === "scheduled_run";
     const connectedSimulationIds = edges
       .filter((edge: Edge): boolean => edge.to === triggerNode.id)
       .filter(
@@ -2421,7 +2570,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       (node: AiNode): boolean => node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
-      toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
+      if (!isScheduled) {
+        toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
+        return;
+      }
+      void runGraphForTrigger(triggerNode, event);
       return;
     }
     simulationNodes.forEach((node: AiNode) => handleRunSimulation(node, triggerEvent));
@@ -2433,6 +2586,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     event?: React.MouseEvent
   ): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
+    const isScheduled = triggerEvent === "scheduled_run";
     const connectedSimulationIds = edges
       .filter((edge: Edge): boolean => edge.to === triggerNode.id)
       .filter(
@@ -2445,7 +2599,30 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       (node: AiNode): boolean => node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
-      toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
+      if (!isScheduled) {
+        toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
+        return;
+      }
+      const triggerContext = buildTriggerContext(triggerNode, triggerEvent ?? "", event);
+      const enqueueResult = await runsApi.enqueue({
+        pathId: activePathId ?? "default",
+        pathName,
+        nodes,
+        edges,
+        ...(triggerEvent ? { triggerEvent } : {}),
+        triggerNodeId: triggerNode.id,
+        triggerContext,
+        meta: {
+          source: "ai_paths_ui",
+        },
+      });
+      if (!enqueueResult.ok) {
+        toast(enqueueResult.error || "Failed to enqueue persistent run.", {
+          variant: "error",
+        });
+        return;
+      }
+      toast("Persistent run queued.", { variant: "success" });
       return;
     }
     const primarySimulation = simulationNodes[0]!;
@@ -2923,17 +3100,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     );
   };
 
-
   const persistPathSettings = useCallback(async (
     nextPaths: PathMeta[],
     configId: string,
     config: PathConfig
   ): Promise<void> => {
     const sanitizedConfig = sanitizePathConfig(config);
-    const payloadKey = JSON.stringify({
+    const payloadKey = stableStringify({
       index: nextPaths,
       configId,
-      config: sanitizedConfig,
+      config: normalizeConfigForHash(sanitizedConfig),
     });
     if (payloadKey === lastSettingsPayloadRef.current) return;
     await updateSettingsBulkMutation.mutateAsync([
@@ -2944,16 +3120,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       },
     ]);
     lastSettingsPayloadRef.current = payloadKey;
-  }, [updateSettingsBulkMutation]);
+  }, [normalizeConfigForHash, updateSettingsBulkMutation]);
 
   const buildPathSnapshot = useCallback((): string =>
-    JSON.stringify({
+    stableStringify({
       activePathId,
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
-      nodes,
-      edges,
+      nodes: [...nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
+      edges: [...edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
       parserSamples,
       updaterSamples,
     }), [
@@ -2967,9 +3143,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     updaterSamples,
   ]);
 
-  const persistPathConfig = useCallback(async (options?: { silent?: boolean }): Promise<void> => {
+  const persistPathConfig = useCallback(async (options?: { silent?: boolean; force?: boolean }): Promise<boolean> => {
     if (!activePathId) return;
     const silent = options?.silent ?? false;
+    const force = options?.force ?? false;
+    if (!force) {
+      const snapshot = buildPathSnapshot();
+      if (snapshot && snapshot === lastSavedSnapshotRef.current) {
+        return true;
+      }
+    }
     if (!silent) setSaving(true);
     try {
       const updatedAt = new Date().toISOString();
@@ -2981,9 +3164,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setPathConfigs(nextConfigs);
       setPaths(nextPaths);
       const safeConfigs = serializePathConfigs(nextConfigs);
-      const payloadKey = JSON.stringify({
+      const safeConfigsHash = buildPathConfigsHash(nextConfigs);
+      const payloadKey = stableStringify({
         aiPathsPathIndex: nextPaths,
-        aiPathsPathConfigs: safeConfigs,
+        aiPathsPathConfigs: safeConfigsHash,
       });
       if (payloadKey !== lastPathSavePayloadRef.current) {
         await updatePreferencesMutation.mutateAsync({
@@ -3017,6 +3201,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     buildActivePathConfig,
     persistPathSettings,
     buildPathSnapshot,
+    buildPathConfigsHash,
     updatePreferencesMutation,
     reportAiPathsError,
     persistLastError,
@@ -3024,7 +3209,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   ]);
 
   const handleSave = async (): Promise<void> => {
-    const ok = await persistPathConfig();
+    const ok = await persistPathConfig({ force: true });
     if (ok) {
       setAutoSaveStatus("saved");
       setAutoSaveAt(new Date().toISOString());
@@ -3677,6 +3862,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               selectedEdgeId={selectedEdgeId}
               onSelectEdgeId={handleSelectEdge}
               onRemoveEdge={handleRemoveEdge}
+              onDisconnectPort={handleDisconnectPort}
+              onReconnectInput={handleReconnectInput}
               onSelectNode={handleSelectNode}
               onOpenNodeConfig={() => setConfigOpen(true)}
               onFireTrigger={handleFireTrigger}
@@ -3725,6 +3912,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         />
       )}
 
+      {activeTab === "queue" && <JobQueuePanel activePathId={activePathId} />}
+
       <NodeConfigDialog
         configOpen={configOpen}
         setConfigOpen={setConfigOpen}
@@ -3769,7 +3958,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         runDetail={runDetail}
         runStreamStatus={runStreamStatus}
         runStreamPaused={runStreamPaused}
-        onToggleStreamPause={() => setRunStreamPaused((prev) => !prev)}
+        onToggleStreamPause={() => setRunStreamPaused((prev: boolean) => !prev)}
         runNodeSummary={runNodeSummary}
         runEventsOverflow={runEventsOverflow}
         runEventsBatchLimit={runEventsBatchLimit}

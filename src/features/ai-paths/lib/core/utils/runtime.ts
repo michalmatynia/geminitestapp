@@ -60,8 +60,8 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
     return keyed.map((item: { value: unknown }) => item.value);
   }
   if (typeof value === "object") {
-    if (seen.has(value as object)) return "[Circular]";
-    seen.add(value as object);
+    if (seen.has(value)) return "[Circular]";
+    seen.add(value);
     const record = value as Record<string, unknown>;
     const keys = Object.keys(record).sort();
     const normalized: Record<string, unknown> = {};

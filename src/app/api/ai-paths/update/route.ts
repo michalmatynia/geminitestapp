@@ -12,6 +12,11 @@ import { getProductRepository } from "@/features/products/server";
 import { noteService } from "@/features/notesapp/server";
 import { removeUndefined } from "@/shared/utils";
 import { NoteUpdateInput } from "@/shared/types/notes";
+import {
+  enforceAiPathsActionRateLimit,
+  ensureAiPathsPermission,
+  requireAiPathsAccess,
+} from "@/features/ai-paths/server";
 
 const updateSchema = z.object({
   entityType: z.enum(["product", "note", "custom"]),
@@ -60,6 +65,8 @@ const applyAppendMode = (
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    enforceAiPathsActionRateLimit(access, "entity-update");
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.update",
     });
@@ -88,6 +95,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     if (entityType === "product") {
+      ensureAiPathsPermission(access, "products.manage", "Forbidden.");
       const productRepository = await getProductRepository();
       const existing =
         mode === "append" ? await productRepository.getProductById(entityId as string) : null;
@@ -124,6 +132,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     if (entityType === "note") {
+      ensureAiPathsPermission(access, "notes.manage", "Forbidden.");
       const existing =
         mode === "append" ? await noteService.getById(entityId as string) : null;
       if (mode === "append" && !existing) {

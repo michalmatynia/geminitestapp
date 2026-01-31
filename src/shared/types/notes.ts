@@ -51,13 +51,13 @@ export type TagRecord = {
 export type CategoryRecord = {
   id: string;
   name: string;
-  description: string | null;
-  color: string | null;
-  parentId: string | null;
-  notebookId: string | null;
-  themeId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  description?: string | null;
+  color?: string | null;
+  parentId?: string | null;
+  notebookId?: string | null;
+  themeId?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type NoteTagRecord = {
@@ -105,6 +105,9 @@ export type NoteWithRelations = NoteRecord & {
 export type CategoryWithChildren = CategoryRecord & {
   children: CategoryWithChildren[];
   notes: NoteRecord[];
+  _count?: {
+    notes: number;
+  };
 };
 
 export type NoteEditorType = "markdown" | "wysiwyg" | "code";

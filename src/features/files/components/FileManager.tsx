@@ -1,16 +1,22 @@
 "use client";
-import { FilePreviewModal, Button, useToast, Input } from "@/shared/ui";
+import { FilePreviewModal, Button, useToast, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products";
-import { useFiles, useDeleteFile } from "@/features/files/hooks/useFiles";
+import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
   mode?: "view" | "select";
   showFileManager?: boolean;
+  selectionMode?: "single" | "multiple";
+  autoConfirmSelection?: boolean;
+  showFolderFilter?: boolean;
+  defaultFolder?: string;
+  showBulkActions?: boolean;
+  showTagSearch?: boolean;
 }
 
 // This component provides a UI for browsing and selecting existing image files.
@@ -18,13 +24,32 @@ interface FileManagerProps {
 export default function FileManager({
   onSelectFile,
   mode = "select",
+  selectionMode = "multiple",
+  autoConfirmSelection = false,
+  showFolderFilter = false,
+  defaultFolder,
+  showBulkActions = false,
+  showTagSearch = false,
 }: FileManagerProps) {
   const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
+  const [tagSearch, setTagSearch] = useState("");
+  const [bulkTagInput, setBulkTagInput] = useState("");
+  const [bulkTagMode, setBulkTagMode] = useState<"add" | "replace">("add");
+  const [folderFilter, setFolderFilter] = useState("all");
   const [previewFile, setPreviewFile] = useState<ExpandedImageFile | null>(null);
   const { toast } = useToast();
   const deleteFileMutation = useDeleteFile();
+  const updateTagsMutation = useUpdateFileTags();
+
+  const normalizeTag = (tag: string): string => tag.trim().toLowerCase();
+  const parseTagInput = (input: string): string[] => {
+    const raw = input.split(",").map(normalizeTag).filter(Boolean);
+    return Array.from(new Set(raw));
+  };
+  const enableTagSearch = showTagSearch || showBulkActions;
+  const tagSearchList = useMemo(() => parseTagInput(tagSearch), [tagSearch]);
 
   const queryParams = useMemo(() => {
     const query = new URLSearchParams();
@@ -34,10 +59,58 @@ export default function FileManager({
     if (productNameSearch) {
       query.append("productName", productNameSearch);
     }
+    if (enableTagSearch && tagSearchList.length > 0) {
+      query.append("tags", tagSearchList.join(","));
+    }
     return query.toString();
-  }, [filenameSearch, productNameSearch]);
+  }, [filenameSearch, productNameSearch, tagSearchList, enableTagSearch]);
 
   const { data: files = [] } = useFiles(queryParams);
+
+  const resolveFolder = (filepath: string): string => {
+    const clean = filepath.replace(/^\/+/, "");
+    const parts = clean.split("/");
+    if (parts.length === 0) return "uploads";
+    if (parts[0] === "uploads") {
+      return parts[1] ?? "uploads";
+    }
+    return parts[0] || "uploads";
+  };
+
+  const folderOptions = useMemo(() => {
+    const folders = new Set<string>();
+    files.forEach((file) => {
+      if (file.filepath) {
+        folders.add(resolveFolder(file.filepath));
+      }
+    });
+    return ["all", ...Array.from(folders).sort()];
+  }, [files]);
+
+  const tagOptions = useMemo(() => {
+    const tags = new Set<string>();
+    files.forEach((file) => {
+      (file.tags ?? []).forEach((tag) => tags.add(tag));
+    });
+    return Array.from(tags).sort();
+  }, [files]);
+
+  useEffect(() => {
+    if (!defaultFolder) return;
+    if (folderFilter !== "all") return;
+    if (folderOptions.includes(defaultFolder)) {
+      setFolderFilter(defaultFolder);
+    }
+  }, [defaultFolder, folderOptions, folderFilter]);
+
+  const filteredFiles = useMemo(() => {
+    if (folderFilter === "all") return files;
+    return files.filter((file) => resolveFolder(file.filepath) === folderFilter);
+  }, [files, folderFilter]);
+
+  const fileById = useMemo(() => {
+    return new Map(files.map((file) => [file.id, file]));
+  }, [files]);
 
   const handleClick = (file: ExpandedImageFile) => {
     if (mode === "select") {
@@ -50,10 +123,15 @@ export default function FileManager({
   // This function toggles the selection of a file.
   const handleToggleSelect = (file: ImageFileSelection) => {
     setSelectedFiles((prev) =>
-      prev.some((f) => f.id === file.id)
+      selectionMode === "single"
+        ? [file]
+        : prev.some((f) => f.id === file.id)
         ? prev.filter((f) => f.id !== file.id)
         : [...prev, file]
     );
+    if (selectionMode === "single" && autoConfirmSelection && onSelectFile) {
+      onSelectFile([file]);
+    }
   };
 
   // This function is called when the user confirms their selection.
@@ -61,6 +139,58 @@ export default function FileManager({
   const handleConfirmSelection = () => {
     if (onSelectFile) {
       onSelectFile(selectedFiles);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const toSelect = filteredFiles.map((file) => ({ id: file.id, filepath: file.filepath }));
+    setSelectedFiles(toSelect);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedFiles([]);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedFiles.length === 0) return;
+    if (!confirm(`Delete ${selectedFiles.length} selected file(s)?`)) return;
+    try {
+      for (const file of selectedFiles) {
+        await deleteFileMutation.mutateAsync(file.id);
+      }
+      setSelectedFiles([]);
+      toast("Selected files deleted.", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to delete files:", error);
+      toast("Failed to delete selected files.", { variant: "error" });
+    }
+  };
+
+  const handleApplyTags = async () => {
+    const tags = parseTagInput(bulkTagInput);
+    if (selectedFiles.length === 0) {
+      toast("Select at least one file to tag.", { variant: "warning" });
+      return;
+    }
+    if (tags.length === 0) {
+      toast("Enter at least one tag.", { variant: "warning" });
+      return;
+    }
+    try {
+      await Promise.all(
+        selectedFiles.map((file) => {
+          const existing = fileById.get(file.id)?.tags ?? [];
+          const nextTags = bulkTagMode === "replace"
+            ? tags
+            : Array.from(new Set([...existing, ...tags]));
+          return updateTagsMutation.mutateAsync({ id: file.id, tags: nextTags });
+        })
+      );
+      toast("Tags updated.", { variant: "success" });
+      setBulkTagInput("");
+    } catch (error) {
+      console.error("Failed to update tags:", error);
+      toast("Failed to update tags.", { variant: "error" });
     }
   };
 
@@ -81,30 +211,129 @@ export default function FileManager({
     <div className="p-4 bg-gray-900 text-white">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">File Manager</h2>
-        {mode === "select" && onSelectFile && (
+        {mode === "select" && onSelectFile && !autoConfirmSelection && (
           <Button onClick={handleConfirmSelection}>
             Confirm Selection ({selectedFiles.length})
           </Button>
         )}
       </div>
-      <div className="flex space-x-4 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         <Input
           type="text"
           placeholder="Search by filename"
           value={filenameSearch}
           onChange={(e) => setFilenameSearch(e.target.value)}
-          className="w-full p-2 bg-gray-800 rounded"
+          className="w-full md:w-64 p-2 bg-gray-800 rounded"
         />
         <Input
           type="text"
           placeholder="Search by product name"
           value={productNameSearch}
           onChange={(e) => setProductNameSearch(e.target.value)}
-          className="w-full p-2 bg-gray-800 rounded"
+          className="w-full md:w-64 p-2 bg-gray-800 rounded"
         />
+        {enableTagSearch && (
+          <Input
+            type="text"
+            placeholder="Search by tags (comma-separated)"
+            value={tagSearch}
+            onChange={(e) => setTagSearch(e.target.value)}
+            className="w-full md:w-64 p-2 bg-gray-800 rounded"
+          />
+        )}
+        {showFolderFilter && (
+          <Select value={folderFilter} onValueChange={setFolderFilter}>
+            <SelectTrigger className="w-full md:w-48 text-sm">
+              <SelectValue placeholder="All folders" />
+            </SelectTrigger>
+            <SelectContent>
+              {folderOptions.map((folder) => (
+                <SelectItem key={folder} value={folder}>
+                  {folder === "all" ? "All folders" : folder}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {mode === "select" && selectionMode === "multiple" && showBulkActions && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+              Select all
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleClearSelection}>
+              Clear
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => void handleDeleteSelected()}>
+              Delete selected
+            </Button>
+          </div>
+        )}
       </div>
+      {(showFolderFilter || (enableTagSearch && tagOptions.length > 0)) && (
+        <div className="mb-4 space-y-2">
+          {showFolderFilter && (
+            <div className="flex flex-wrap gap-2">
+              {folderOptions.map((folder) => (
+                <button
+                  key={folder}
+                  type="button"
+                  onClick={() => setFolderFilter(folder)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition ${
+                    folderFilter === folder
+                      ? "border-blue-500 bg-blue-500/10 text-blue-300"
+                      : "border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60"
+                  }`}
+                >
+                  {folder === "all" ? "All folders" : folder}
+                </button>
+              ))}
+            </div>
+          )}
+          {enableTagSearch && tagOptions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tagOptions.slice(0, 20).map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setTagSearch(tag)}
+                  className="rounded-full border border-border/40 bg-gray-900/40 px-2.5 py-0.5 text-[10px] text-gray-400 hover:border-border/60"
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {mode === "select" && selectionMode === "multiple" && showBulkActions && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Tags to apply (comma-separated)"
+            value={bulkTagInput}
+            onChange={(e) => setBulkTagInput(e.target.value)}
+            className="w-full md:w-72 p-2 bg-gray-800 rounded"
+          />
+          <Select value={bulkTagMode} onValueChange={(value) => setBulkTagMode(value as "add" | "replace")}>
+            <SelectTrigger className="w-full md:w-32 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="add">Add</SelectItem>
+              <SelectItem value="replace">Replace</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            onClick={() => void handleApplyTags()}
+            disabled={updateTagsMutation.isPending}
+          >
+            {updateTagsMutation.isPending ? "Saving..." : "Apply tags"}
+          </Button>
+        </div>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {files.map((file) => (
+        {filteredFiles.map((file) => (
           <div
             key={file.id}
             className={`relative border-2 ${
@@ -114,6 +343,9 @@ export default function FileManager({
             }`}
             onClick={() => handleClick(file)}
           >
+            <div className="absolute left-2 top-2 rounded bg-gray-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-300">
+              {resolveFolder(file.filepath)}
+            </div>
             <Image
               src={file.filepath}
               alt={file.filename}
@@ -122,6 +354,15 @@ export default function FileManager({
               className="object-cover rounded"
             />
             <p className="text-center mt-2">{file.filename}</p>
+            {(file.tags ?? []).length > 0 && (
+              <div className="mt-1 flex flex-wrap justify-center gap-1">
+                {(file.tags ?? []).slice(0, 4).map((tag) => (
+                  <span key={tag} className="rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="text-center text-xs text-gray-400">
               {file.products.map(({ product }) => (
                 <Link

@@ -245,10 +245,11 @@ export const handleModel: NodeHandler = async ({
 export const handleAiDescription: NodeHandler = async ({ 
   node,
   nodeInputs,
+  prevOutputs,
   executed,
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.ai.has(node.id)) return {};
+  if (executed.ai.has(node.id)) return prevOutputs;
   const entityJson = coerceInput(nodeInputs.entityJson) as
     | Record<string, unknown>
     | undefined;
@@ -298,10 +299,11 @@ export const handleAiDescription: NodeHandler = async ({
 export const handleDescriptionUpdater: NodeHandler = async ({ 
   node,
   nodeInputs,
+  prevOutputs,
   executed,
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.updater.has(node.id)) return {};
+  if (executed.updater.has(node.id)) return prevOutputs;
   const productId = nodeInputs.productId as string | undefined;
   const description = nodeInputs.description_en as string | undefined;
   if (!productId || !description) {

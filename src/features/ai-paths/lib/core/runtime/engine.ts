@@ -199,7 +199,7 @@ export async function evaluateGraph({
   });
   const triggerSource =
     triggerContext && typeof triggerContext === "object"
-      ? (triggerContext as Record<string, unknown>).source
+      ? (triggerContext).source
       : null;
   const resolvedPathId =
     activePathId ??

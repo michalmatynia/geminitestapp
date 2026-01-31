@@ -17,7 +17,7 @@ export const registerUser = async (input: {
   password: string;
   name?: string | undefined;
   emailVerified?: boolean | undefined;
-}) => {
+}): Promise<{ ok: boolean; payload: RegisterResponse }> => {
   const res = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

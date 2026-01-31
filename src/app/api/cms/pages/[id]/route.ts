@@ -18,11 +18,12 @@ const pageUpdateSchema = z.object({
   seoOgImage: z.string().nullable().optional(),
   seoCanonical: z.string().nullable().optional(),
   robotsMeta: z.string().nullable().optional(),
-  slugIds: z.array(z.string().trim().min(1)),
+  themeId: z.string().nullable().optional(),
+  slugIds: z.array(z.string().trim().min(1)).optional(),
   components: z.array(
     z.object({
       type: z.string().trim().min(1),
-      content: z.record(z.string(), z["unknown"]()),
+      content: z.record(z.string(), z.any()),
     })
   ),
 });
@@ -65,7 +66,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     if (!parsed.ok) {
       return parsed.response;
     }
-    const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, slugIds, components } = parsed.data;
+    const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, themeId, slugIds, components } = parsed.data;
 
     const cmsRepository = await getCmsRepository();
 
@@ -79,6 +80,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
       seoOgImage,
       seoCanonical,
       robotsMeta,
+      themeId,
       components,
     });
 
@@ -86,8 +88,10 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
       throw notFoundError("Page not found");
     }
 
-    // Update slugs
-    await cmsRepository.replacePageSlugs(id, slugIds);
+    // Update slugs only when provided
+    if (slugIds !== undefined) {
+      await cmsRepository.replacePageSlugs(id, slugIds);
+    }
 
     return NextResponse.json(updatedPage);
   } catch (error) {

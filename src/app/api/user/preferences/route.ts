@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/shared/lib/services/user-preferences-repository";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -13,7 +12,7 @@ export const runtime = "nodejs";
 // For now, we'll use a hardcoded user ID
 // In a real app, this would come from the session
 const DEFAULT_USER_ID = "default-user";
-const isDatabaseConfigured = Boolean(process.env.DATABASE_URL || process.env.MONGODB_URI);
+const isDatabaseConfigured = Boolean(process.env.MONGODB_URI);
 
 const updatePreferencesSchema = z.object({
   productListNameLocale: z.enum(["name_en", "name_pl", "name_de"]).optional().nullable(),
@@ -25,6 +24,12 @@ const updatePreferencesSchema = z.object({
   aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
   aiPathsPathIndex: z.array(z["unknown"]()).optional().nullable(),
   aiPathsPathConfigs: z.union([z.record(z.string(), z["unknown"]()), z.string()]).optional().nullable(),
+  adminMenuCollapsed: z.boolean().optional().nullable(),
+  cmsLastPageId: z.string().optional().nullable(),
+  cmsActiveDomainId: z.string().optional().nullable(),
+  cmsThemeOpenSections: z.array(z.string()).optional().nullable(),
+  cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
+  cmsThemeLogoUrl: z.string().optional().nullable(),
 });
 
 /**
@@ -47,30 +52,20 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         aiPathsPaletteCollapsed: false,
         aiPathsPathIndex: null,
         aiPathsPathConfigs: null,
+        adminMenuCollapsed: false,
+        cmsLastPageId: null,
+        cmsActiveDomainId: null,
+        cmsThemeOpenSections: [],
+        cmsThemeLogoWidth: null,
+        cmsThemeLogoUrl: null,
       });
     }
     const preferences = await getUserPreferences(userId);
     return NextResponse.json(preferences);
   } catch (error) {
-    // If foreign key constraint fails (no user exists), return defaults
-    const isPrismaFKError = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";
-    if (isPrismaFKError) {
-      return NextResponse.json({
-        productListNameLocale: "name_en",
-        productListCatalogFilter: "all",
-        productListCurrencyCode: "PLN",
-        productListPageSize: 12,
-        aiPathsActivePathId: null,
-        aiPathsExpandedGroups: ["Triggers"],
-        aiPathsPaletteCollapsed: false,
-        aiPathsPathIndex: null,
-        aiPathsPathConfigs: null,
-      });
-    }
     console.error("[user/preferences][GET] Error:", {
       error,
       hasMongo: Boolean(process.env.MONGODB_URI),
-      hasPrisma: Boolean(process.env.DATABASE_URL),
     });
     return createErrorResponse(error, {
       source: "user.preferences.GET",
@@ -113,8 +108,14 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
       ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
       ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups ?? [] }),
       ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
-      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: (parsed.aiPathsPathIndex ?? Prisma.JsonNull) as Prisma.InputJsonValue }),
-      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: (parsed.aiPathsPathConfigs ?? Prisma.JsonNull) as Prisma.InputJsonValue }),
+      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: (parsed.aiPathsPathIndex ?? null) as UserPreferencesData["aiPathsPathIndex"] }),
+      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: (parsed.aiPathsPathConfigs ?? null) as UserPreferencesData["aiPathsPathConfigs"] }),
+      ...(parsed.adminMenuCollapsed !== undefined && { adminMenuCollapsed: parsed.adminMenuCollapsed }),
+      ...(parsed.cmsLastPageId !== undefined && { cmsLastPageId: parsed.cmsLastPageId }),
+      ...(parsed.cmsActiveDomainId !== undefined && { cmsActiveDomainId: parsed.cmsActiveDomainId }),
+      ...(parsed.cmsThemeOpenSections !== undefined && { cmsThemeOpenSections: parsed.cmsThemeOpenSections ?? [] }),
+      ...(parsed.cmsThemeLogoWidth !== undefined && { cmsThemeLogoWidth: parsed.cmsThemeLogoWidth }),
+      ...(parsed.cmsThemeLogoUrl !== undefined && { cmsThemeLogoUrl: parsed.cmsThemeLogoUrl }),
     };
 
     if (!isDatabaseConfigured) {
@@ -137,24 +138,9 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (isAbort) {
       return new NextResponse(null, { status: 204 });
     }
-    // If foreign key constraint fails (no user exists), return success anyway
-    // This allows the app to work without authentication
-    const isPrismaFKError = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";
-    if (isPrismaFKError) {
-      console.warn("[user/preferences][PATCH] No user exists, returning mock success");
-      return NextResponse.json({
-        id: "mock",
-        userId,
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
     console.error("[user/preferences][PATCH] Error:", {
       error,
       hasMongo: Boolean(process.env.MONGODB_URI),
-      hasPrisma: Boolean(process.env.DATABASE_URL),
       payload: data,
     });
     return createErrorResponse(error, {

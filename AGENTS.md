@@ -53,15 +53,28 @@ The platform can run on **Prisma (Postgres)** or **MongoDB**, selected by:
 See: `src/features/products/services/product-provider.ts` and repository implementations under
 `src/features/products/services/*-repository/` (e.g. `mongo-*` and `prisma-*`).
 
+## CMS Domains & Slugs (Mongo)
+
+- CMS slugs are scoped per **domain** via Mongo collections `cms_domains` and `cms_domain_slugs`.
+- Slugs can be shared across domains; default slug is **domain-specific**.
+- Slug APIs and pickers resolve the active domain from the request host.
+
+**AI Paths storage is MongoDB-only** (collections: `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`).
+Ensure `MONGODB_URI` is set for AI Paths to run.
+
+**Auth + user storage is MongoDB-only** (`users`, `sessions`, `accounts`, `auth_security_profiles`).
+Auth settings (roles, permissions, policies) are stored in the Mongo `settings` collection.
+
 ## AI & Agent Runtime
 
 - **AI services** live in `src/features/products/services/aiDescriptionService.ts` and
   `src/features/products/services/aiTranslationService.ts`. Product AI job processing lives in
   `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
   `src/features/jobs/services/productAiService.ts`).
-- **AI Paths persistent runtime** runs are stored in `AiPathRun`, `AiPathRunNode`, and
-  `AiPathRunEvent` (Prisma) or `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events` (Mongo).
+- **AI Paths persistent runtime** runs are stored in Mongo only:
+  `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`.
   Queue worker: `src/features/jobs/workers/aiPathRunQueue.ts`.
+  API access is per-user scoped with `ai_paths.manage` permission and rate limits.
 - **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
   (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
 - **Agent runtime** lives in `src/features/agent-runtime/` with planning, execution, memory,
@@ -134,6 +147,11 @@ AI_PATHS_RUN_CONCURRENCY=1
 AI_PATHS_RUN_MAX_ATTEMPTS=3
 AI_PATHS_RUN_BACKOFF_MS=5000
 AI_PATHS_RUN_BACKOFF_MAX_MS=60000
+AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS=60
+AI_PATHS_RUN_RATE_LIMIT_MAX=20
+AI_PATHS_RUN_ACTIVE_LIMIT=5
+AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS=60
+AI_PATHS_ACTION_RATE_LIMIT_MAX=120
 ```
 
 ## Commands (package.json)
@@ -163,4 +181,4 @@ If you change architecture, data providers, or AI flows, update this file and
 
 ---
 
-**Last Updated**: January 28, 2026
+**Last Updated**: January 30, 2026

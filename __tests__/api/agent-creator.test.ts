@@ -38,7 +38,7 @@ describe("Agent Creator API", () => {
       vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue(mockRuns as any);
 
       const req = new NextRequest("http://localhost/api/agentcreator/agent");
-      const res = await GET(req, {} as any);
+      const res = await GET(req);
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -51,7 +51,7 @@ describe("Agent Creator API", () => {
       delete (prisma as any).chatbotAgentRun;
       
       const req = new NextRequest("http://localhost/api/agentcreator/agent");
-      const res = await GET(req, {} as any);
+      const res = await GET(req);
       expect(res.status).toBe(500);
 
       (prisma as any).chatbotAgentRun = originalPrisma;
@@ -75,7 +75,7 @@ describe("Agent Creator API", () => {
         }),
       });
 
-      const res = await POST(req, {} as any);
+      const res = await POST(req);
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -100,7 +100,7 @@ describe("Agent Creator API", () => {
         body: JSON.stringify({ prompt: "" }),
       });
 
-      const res = await POST(req, {} as any);
+      const res = await POST(req);
       expect(res.status).toBe(400);
     });
   });
@@ -114,7 +114,7 @@ describe("Agent Creator API", () => {
         method: "DELETE",
       });
 
-      const res = await DELETE(req, {} as any);
+      const res = await DELETE(req);
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -125,7 +125,7 @@ describe("Agent Creator API", () => {
       const req = new NextRequest("http://localhost/api/agentcreator/agent?scope=all", {
         method: "DELETE",
       });
-      const res = await DELETE(req, {} as any);
+      const res = await DELETE(req);
       expect(res.status).toBe(400);
     });
   });

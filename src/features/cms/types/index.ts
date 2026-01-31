@@ -48,8 +48,10 @@ export interface Page {
   seoOgImage?: string;
   seoCanonical?: string;
   robotsMeta?: string;
+  themeId?: string;
   components: PageComponent[];
   slugs?: PageSlugLink[];
+  slugIds?: string[];
 }
 
 export interface Slug {
@@ -59,4 +61,13 @@ export interface Slug {
   isDefault?: boolean;
 }
 
+export interface CmsDomain {
+  id: string;
+  domain: string;
+  aliasOf?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export * from "./page-builder";
+export * from "./theme";

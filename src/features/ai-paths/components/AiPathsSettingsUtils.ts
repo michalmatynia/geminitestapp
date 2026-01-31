@@ -14,6 +14,7 @@ import {
   aiJobsApi,
   getValueAtMappingPath,
   safeStringify,
+  stableStringify,
 } from "@/features/ai-paths/lib";
 
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
@@ -126,7 +127,7 @@ export const sanitizePathConfigs = (configs: Record<string, PathConfig>): Record
   );
 
 export const serializePathConfigs = (configs: Record<string, PathConfig>): string =>
-  JSON.stringify(sanitizePathConfigs(configs));
+  stableStringify(sanitizePathConfigs(configs));
 
 export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
@@ -292,4 +293,3 @@ export const pollGraphJob = async (
   }
   throw new Error("AI job timed out.");
 };
-

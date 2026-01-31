@@ -12,7 +12,23 @@ export interface SettingsFieldOption {
 export interface SettingsField {
   key: string;
   label: string;
-  type: "text" | "select" | "radio" | "number" | "image" | "color-scheme" | "range";
+  type:
+    | "text"
+    | "select"
+    | "radio"
+    | "number"
+    | "image"
+    | "color-scheme"
+    | "range"
+    | "color"
+    | "font-family"
+    | "font-weight"
+    | "spacing"
+    | "border"
+    | "shadow"
+    | "background"
+    | "typography"
+    | "link";
   options?: SettingsFieldOption[];
   defaultValue?: unknown;
   min?: number;
@@ -65,6 +81,21 @@ export interface SectionInstance {
 // Page builder state & actions
 // ---------------------------------------------------------------------------
 
+export interface ClipboardData {
+  type: "section" | "block";
+  data: SectionInstance | BlockInstance;
+}
+
+export interface PageBuilderSnapshot {
+  currentPage: Page | null;
+  sections: SectionInstance[];
+}
+
+export interface PageBuilderHistory {
+  past: PageBuilderSnapshot[];
+  future: PageBuilderSnapshot[];
+}
+
 export interface PageBuilderState {
   pages: PageSummary[];
   currentPage: Page | null;
@@ -72,11 +103,16 @@ export interface PageBuilderState {
   selectedNodeId: string | null;
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
+  clipboard: ClipboardData | null;
+  history: PageBuilderHistory;
 }
 
 export type PageBuilderAction =
+  | { type: "UNDO" }
+  | { type: "REDO" }
   | { type: "SET_PAGES"; pages: PageSummary[] }
   | { type: "SET_CURRENT_PAGE"; page: Page }
+  | { type: "CLEAR_CURRENT_PAGE" }
   | { type: "SELECT_NODE"; nodeId: string | null }
   | { type: "ADD_SECTION"; sectionType: string; zone: PageZone }
   | { type: "REMOVE_SECTION"; sectionId: string }
@@ -99,5 +135,13 @@ export type PageBuilderAction =
   | { type: "MOVE_SECTION_TO_ZONE"; sectionId: string; toZone: PageZone; toIndex: number }
   | { type: "SET_PAGE_STATUS"; status: PageStatus }
   | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
+  | { type: "UPDATE_PAGE_SLUGS"; slugIds: string[]; slugValues: string[] }
   | { type: "TOGGLE_LEFT_PANEL" }
-  | { type: "TOGGLE_RIGHT_PANEL" };
+  | { type: "TOGGLE_RIGHT_PANEL" }
+  | { type: "COPY_SECTION"; sectionId: string }
+  | { type: "PASTE_SECTION"; zone: PageZone }
+  | { type: "COPY_BLOCK"; sectionId: string; blockId: string; columnId?: string; parentBlockId?: string }
+  | { type: "PASTE_BLOCK"; sectionId: string; columnId?: string; parentBlockId?: string }
+  | { type: "DUPLICATE_SECTION"; sectionId: string }
+  | { type: "INSERT_TEMPLATE_SECTION"; section: SectionInstance }
+  | { type: "SET_PAGE_THEME"; themeId: string | null };

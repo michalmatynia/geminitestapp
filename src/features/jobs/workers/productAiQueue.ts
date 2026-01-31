@@ -117,7 +117,7 @@ const buildImageParts = async (imageUrls: string[]) => {
   );
 };
 
-async function processGraphModel(job: Job) {
+export async function processGraphModel(job: Job) {
   const { payload, productId } = job;
   const prompt = typeof payload.prompt === "string" ? payload.prompt.trim() : "";
   if (!prompt) {
@@ -294,15 +294,16 @@ function isQueueHealthy(): boolean {
   return timeSinceLastPoll < 10000;
 }
 
-const stopProductAiJobQueue = (reason?: string) => {
+export const stopProductAiJobQueue = (reason?: string) => {
   if (!intervalId) return;
   clearInterval(intervalId);
   intervalId = null;
+  isProcessing = false;
   const suffix = reason ? `: ${reason}` : "";
   console.log(`[productAiQueue] Queue worker stopped${suffix}`);
 };
 
-async function processDescriptionGeneration(job: Job) {
+export async function processDescriptionGeneration(job: Job) {
   const { productId, payload } = job;
 
   console.log(`[processDescriptionGeneration] Starting for productId: ${productId}`);
@@ -428,7 +429,7 @@ async function processDescriptionGeneration(job: Job) {
   return result;
 }
 
-async function processTranslation(job: Job) {
+export async function processTranslation(job: Job) {
   const { productId } = job;
 
   console.log(`[processTranslation] Starting for productId: ${productId}`);
@@ -617,7 +618,7 @@ async function processTranslation(job: Job) {
   return result;
 }
 
-const pollQueue = async () => {
+export const pollQueue = async () => {
   if (isProcessing) {
     console.log("[productAiQueue] Already processing a job, skipping poll");
     return;
@@ -716,6 +717,15 @@ const pollQueue = async () => {
   } finally {
     isProcessing = false;
   }
+};
+
+export const resetProductAiJobQueue = () => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+  isProcessing = false;
+  lastPollTime = 0;
 };
 
 export const startProductAiJobQueue = () => {

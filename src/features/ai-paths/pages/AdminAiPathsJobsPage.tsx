@@ -1,6 +1,7 @@
+import React from "react";
 import { ProductAiJobsPanelSuspense } from "@/features/jobs";
 
-export function AdminAiPathsJobsPage() {
+export function AdminAiPathsJobsPage(): React.JSX.Element {
   return (
     <ProductAiJobsPanelSuspense
       title="Jobs"

@@ -9,6 +9,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { enqueuePathRun } from "@/features/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
+import { enforceAiPathsRunRateLimit, requireAiPathsAccess } from "@/features/ai-paths/server";
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -28,6 +29,8 @@ const enqueueSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    await enforceAiPathsRunRateLimit(access);
     const parsed = await parseJsonBody(req, enqueueSchema, {
       logPrefix: "ai-paths.runs.enqueue",
     });
@@ -39,6 +42,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const run = await enqueuePathRun({
+      userId: access.userId,
       pathId: rest.pathId,
       pathName: rest.pathName ?? null,
       nodes: nodes as AiNode[],

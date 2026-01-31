@@ -9,10 +9,12 @@ export type ImageFileCreateInput = {
   size: number;
   width?: number | null;
   height?: number | null;
+  tags?: string[] | null;
 };
 
 export type ImageFileListFilters = {
   filename?: string | null;
+  tags?: string[] | null;
 };
 
 export type ImageFileRepository = {
@@ -23,6 +25,10 @@ export type ImageFileRepository = {
   updateImageFilePath(
     id: string,
     filepath: string
+  ): Promise<ImageFileRecord | null>;
+  updateImageFileTags(
+    id: string,
+    tags: string[]
   ): Promise<ImageFileRecord | null>;
   deleteImageFile(id: string): Promise<ImageFileRecord | null>;
 };

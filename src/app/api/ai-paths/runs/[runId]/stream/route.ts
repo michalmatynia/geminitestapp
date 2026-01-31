@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { notFoundError } from "@/shared/errors/app-error";
+import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai-paths/server";
 
 const TERMINAL_STATUSES = new Set([
   "completed",
@@ -42,7 +45,34 @@ export async function GET(
   ctx: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const { runId } = await ctx.params;
+  let access;
+  try {
+    access = await requireAiPathsAccess();
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "ai-paths.runs.stream",
+      fallbackMessage: "Unauthorized.",
+    });
+  }
   const repo = await getPathRunRepository();
+  const initialRun = await repo.findRunById(runId);
+  if (!initialRun) {
+    return createErrorResponse(notFoundError("Run not found", { runId }), {
+      request: req,
+      source: "ai-paths.runs.stream",
+      fallbackMessage: "Run not found",
+    });
+  }
+  try {
+    assertAiPathRunAccess(access, initialRun);
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "ai-paths.runs.stream",
+      fallbackMessage: "Forbidden.",
+    });
+  }
   const encoder = new TextEncoder();
   const sinceParam = new URL(req.url).searchParams.get("since");
   const initialSince = parseSinceParam(sinceParam);
@@ -59,12 +89,7 @@ export async function GET(
         controller.enqueue(encoder.encode(payload));
       };
 
-      const run = await repo.findRunById(runId);
-      if (!run) {
-        send("error", { message: "Run not found", runId });
-        controller.close();
-        return;
-      }
+      const run = initialRun;
 
       send("ready", { runId });
       send("run", run);

@@ -325,6 +325,10 @@ export const handlers = [
     return HttpResponse.json({
       productListNameLocale: 'name_en',
       productListCurrencyCode: 'USD',
+      cmsLastPageId: null,
+      cmsThemeOpenSections: [],
+      cmsThemeLogoWidth: null,
+      cmsThemeLogoUrl: null,
     });
   }),
 

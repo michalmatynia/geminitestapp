@@ -32,6 +32,7 @@ export interface GsapAnimationConfig {
   delay: number;
   easing: AnimationEasing;
   trigger: AnimationTrigger;
+  selector?: string;
 }
 
 export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
@@ -40,6 +41,7 @@ export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
   delay: 0,
   easing: "power2.out",
   trigger: "load",
+  selector: "",
 };
 
 export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [

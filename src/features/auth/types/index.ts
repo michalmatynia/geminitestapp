@@ -1,4 +1,4 @@
-export type AuthDbProvider = "prisma" | "mongodb";
+export type AuthDbProvider = "mongodb";
 
 export type AuthUserSummary = {
   id: string;

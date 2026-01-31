@@ -5,6 +5,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 import type { AiPathRunStatus } from "@/shared/types/ai-paths";
+import { requireAiPathsAccess } from "@/features/ai-paths/server";
 
 const RUN_STATUSES: AiPathRunStatus[] = [
   "queued",
@@ -18,6 +19,7 @@ const RUN_STATUSES: AiPathRunStatus[] = [
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
     const url = new URL(req.url);
     const pathId = url.searchParams.get("pathId")?.trim() || undefined;
     const query = url.searchParams.get("query")?.trim() || undefined;
@@ -35,6 +37,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
     const repo = await getPathRunRepository();
     const result = await repo.listRuns({
+      ...(!access.isElevated ? { userId: access.userId } : {}),
       ...(pathId ? { pathId } : {}),
       ...(query ? { query } : {}),
       ...(status ? { status } : {}),

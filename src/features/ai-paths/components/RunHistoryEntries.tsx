@@ -40,9 +40,9 @@ export function RunHistoryEntries({
   entries,
   emptyMessage,
   showNodeLabel,
-}: RunHistoryEntriesProps) {
+}: RunHistoryEntriesProps): React.JSX.Element {
   const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a: RuntimeHistoryEntry, b: RuntimeHistoryEntry) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
   if (sortedEntries.length === 0) {
@@ -55,7 +55,7 @@ export function RunHistoryEntries({
 
   return (
     <div className="space-y-4">
-      {sortedEntries.map((entry, index) => {
+      {sortedEntries.map((entry: RuntimeHistoryEntry, index: number) => {
         const statusClass = statusStyles[entry.status] ?? "border-border bg-card/40 text-gray-200";
         const pathLabel = entry.pathName ?? entry.pathId ?? "Unknown path";
         const nodeLabel = entry.nodeTitle ?? entry.nodeId;
@@ -110,7 +110,7 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">From</div>
                 {entry.inputsFrom && entry.inputsFrom.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.inputsFrom.map((link, idx) => (
+                    {entry.inputsFrom.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
                         {link.nodeType ? ` (${link.nodeType})` : ""}
@@ -133,7 +133,7 @@ export function RunHistoryEntries({
                 <div className="text-[11px] uppercase text-gray-500">To</div>
                 {entry.outputsTo && entry.outputsTo.length > 0 ? (
                   <ul className="mt-2 space-y-1">
-                    {entry.outputsTo.map((link, idx) => (
+                    {entry.outputsTo.map((link: { nodeId: string; nodeTitle?: string | null; nodeType?: string | null; fromPort?: string | null; toPort?: string | null }, idx: number) => (
                       <li key={`${link.nodeId}-${idx}`}>
                         {link.nodeTitle ?? link.nodeId}
                         {link.nodeType ? ` (${link.nodeType})` : ""}

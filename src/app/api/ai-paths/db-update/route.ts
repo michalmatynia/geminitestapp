@@ -8,6 +8,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
+import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai-paths/server";
 
 const updateSchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
@@ -74,6 +75,8 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Rec
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    enforceAiPathsActionRateLimit(access, "db-update");
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",
     });

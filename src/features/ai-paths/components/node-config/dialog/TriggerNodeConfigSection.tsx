@@ -20,6 +20,7 @@ export function TriggerNodeConfigSection({
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
   };
+  const isScheduled = triggerConfig.event === "scheduled_run";
 
   return (
     <div className="space-y-4">
@@ -45,6 +46,17 @@ export function TriggerNodeConfigSection({
           </SelectContent>
         </Select>
       </div>
+      {isScheduled ? (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+            Server Schedule
+          </div>
+          <div className="mt-1 text-amber-100/80">
+            This trigger runs from server schedules or cron. Simulation input is optional,
+            and manual runs are allowed for testing.
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

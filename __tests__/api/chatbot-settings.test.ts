@@ -26,7 +26,7 @@ describe("Chatbot Settings API", () => {
     vi.mocked(prisma.chatbotSettings.findUnique).mockResolvedValue(mockSettings as any);
 
     const req = new NextRequest("http://localhost/api/chatbot/settings?key=default");
-    const res = await GET(req, {} as any);
+    const res = await GET(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -45,7 +45,7 @@ describe("Chatbot Settings API", () => {
       body: JSON.stringify({ key: "default", settings: { model: "gpt-4" } }),
     });
 
-    const res = await POST(req, {} as any);
+    const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -63,7 +63,7 @@ describe("Chatbot Settings API", () => {
       body: JSON.stringify({ key: "default" }),
     });
 
-    const res = await POST(req, {} as any);
+    const res = await POST(req);
     expect(res.status).toBe(400);
   });
 });

@@ -296,6 +296,7 @@ export type NodeDefinition = {
   description: string;
   inputs: string[];
   outputs: string[];
+  config?: NodeConfig;
 };
 
 export type AiNode = NodeDefinition & {
@@ -368,6 +369,7 @@ export type AiPathRunEventLevel = "info" | "warning" | "error";
 
 export type AiPathRunRecord = {
   id: string;
+  userId?: string | null;
   pathId?: string | null;
   pathName?: string | null;
   status: AiPathRunStatus;

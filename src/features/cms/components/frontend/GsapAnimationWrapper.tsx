@@ -3,7 +3,8 @@
 import React, { useRef, useEffect, type ReactNode } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import type { GsapAnimationConfig } from "../../types/animation";
+import type { GsapAnimationConfig } from "@/features/gsap";
+import { getGsapFromVars } from "@/features/gsap";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,37 +14,30 @@ interface GsapAnimationWrapperProps {
   className?: string;
 }
 
-// ---------------------------------------------------------------------------
-// Map animation preset to GSAP "from" properties
-// ---------------------------------------------------------------------------
+const DEFAULT_STAGGER = 0.12;
 
-function getFromVars(preset: string): gsap.TweenVars {
-  switch (preset) {
-    case "fadeIn":
-      return { opacity: 0 };
-    case "fadeOut":
-      return { opacity: 1 };
-    case "slideInLeft":
-      return { x: -80, opacity: 0 };
-    case "slideInRight":
-      return { x: 80, opacity: 0 };
-    case "slideInTop":
-      return { y: -60, opacity: 0 };
-    case "slideInBottom":
-      return { y: 60, opacity: 0 };
-    case "scaleUp":
-      return { scale: 0.8, opacity: 0 };
-    case "scaleDown":
-      return { scale: 1.2, opacity: 0 };
-    case "rotate":
-      return { rotation: -15, opacity: 0 };
-    case "bounce":
-      return { y: -40, opacity: 0 };
-    case "stagger":
-      return { y: 30, opacity: 0 };
-    default:
-      return {};
+function resolveTargets(el: HTMLDivElement, config: GsapAnimationConfig): gsap.DOMTarget {
+  const selector = config.selector?.trim();
+
+  if (!selector) {
+    if (config.preset === "stagger") {
+      const children = Array.from(el.children);
+      return children.length ? children : el;
+    }
+    return el;
   }
+
+  const scopedSelector = selector.startsWith(">") ? `:scope ${selector}` : selector;
+  const selectorFn = gsap.utils.selector(el);
+
+  try {
+    const found = selectorFn(scopedSelector);
+    if (found.length) return found;
+  } catch {
+    // Invalid selector; fall back to animating the wrapper element.
+  }
+
+  return el;
 }
 
 export function GsapAnimationWrapper({ config, children, className }: GsapAnimationWrapperProps): React.ReactNode {
@@ -53,41 +47,45 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
     if (!config || config.preset === "none" || !ref.current) return;
 
     const el = ref.current;
-    const fromVars = getFromVars(config.preset);
-    const duration = config.duration ?? 1;
-    const delay = config.delay ?? 0;
-    const ease = config.easing ?? "power2.out";
+    const ctx = gsap.context(() => {
+      const fromVars = getGsapFromVars(config.preset);
+      const duration = config.duration ?? 1;
+      const delay = config.delay ?? 0;
+      const ease = config.easing ?? "power2.out";
 
-    // For bounce preset, override easing
-    const finalEase = config.preset === "bounce" ? "bounce.out" : ease;
-
-    if (config.trigger === "scroll") {
-      gsap.from(el, {
-        ...fromVars,
+      // For bounce preset, override easing
+      const finalEase = config.preset === "bounce" ? "bounce.out" : ease;
+      const targets = resolveTargets(el, config);
+      const isFadeOut = config.preset === "fadeOut";
+      const tweenVars: gsap.TweenVars = {
+        ...(isFadeOut ? { opacity: 0 } : fromVars),
         duration,
         delay,
         ease: finalEase,
-        scrollTrigger: {
-          trigger: el,
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      });
-    } else {
-      // trigger === "load"
-      gsap.from(el, {
-        ...fromVars,
-        duration,
-        delay,
-        ease: finalEase,
-      });
-    }
+      };
 
-    return (): void => {
-      ScrollTrigger.getAll().forEach((st: ScrollTrigger) => {
-        if (st.trigger === el) st.kill();
-      });
-    };
+      if (config.preset === "stagger") {
+        tweenVars.stagger = DEFAULT_STAGGER;
+      }
+
+      if (config.trigger === "scroll") {
+        const tweenFn = isFadeOut ? gsap.to : gsap.from;
+        tweenFn(targets, {
+          ...tweenVars,
+          scrollTrigger: {
+            trigger: el,
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        });
+      } else {
+        // trigger === "load"
+        const tweenFn = isFadeOut ? gsap.to : gsap.from;
+        tweenFn(targets, tweenVars);
+      }
+    }, ref);
+
+    return () => ctx.revert();
   }, [config]);
 
   // If no animation configured, render children directly without a wrapper div

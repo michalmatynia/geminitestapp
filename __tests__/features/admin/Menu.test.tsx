@@ -55,13 +55,14 @@ describe('Menu Component', () => {
     expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
   });
 
-  it('contains correctly linked standalone sections', () => {
+  it('contains correctly linked standalone sections', async () => {
     renderMenu();
     
-    const filesLink = screen.getByRole('link', { name: /Files/i });
+    // Use findByRole to wait for potential effects/updates
+    const filesLink = await screen.findByRole('link', { name: /Files/i });
     expect(filesLink).toHaveAttribute('href', '/admin/files');
     
-    const systemLogsLink = screen.getByRole('link', { name: /System Logs/i });
+    const systemLogsLink = await screen.findByRole('link', { name: /System Logs/i });
     expect(systemLogsLink).toHaveAttribute('href', '/admin/system/logs');
   });
 });

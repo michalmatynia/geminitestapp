@@ -51,6 +51,9 @@ export function CanvasSidebar({
   onRemoveEdge,
   onClearWires,
 }: CanvasSidebarProps): React.JSX.Element {
+  const selectedIsScheduledTrigger =
+    selectedNode?.type === "trigger" && selectedNode.config?.trigger?.event === "scheduled_run";
+
   return (
     <div className="space-y-4">
       <div
@@ -130,14 +133,27 @@ export function CanvasSidebar({
                           onDragStart={(event: React.DragEvent<HTMLDivElement>) => onDragStart(event, node)}
                           className="cursor-grab rounded-lg border bg-card/60 backdrop-blur p-3 text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-white">
-                              {node.title}
-                            </span>
-                            <span className="text-[10px] uppercase text-gray-500">
-                              {node.type}
-                            </span>
-                          </div>
+                          {((): React.JSX.Element => {
+                            const isScheduledTrigger =
+                              node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
+                            return (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold text-white">
+                                  {node.title}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  {isScheduledTrigger ? (
+                                    <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                                      Scheduled
+                                    </span>
+                                  ) : null}
+                                  <span className="text-[10px] uppercase text-gray-500">
+                                    {node.type}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
                           <p className="mt-1 text-[11px] text-gray-400">
                             {node.description}
                           </p>
@@ -157,6 +173,21 @@ export function CanvasSidebar({
           <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
           {selectedNode ? (
             <div className="space-y-3 text-xs text-gray-300">
+              <div className="rounded-md border bg-card/50 px-3 py-2 text-[11px] text-gray-400">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase text-gray-500">Type</span>
+                  <div className="flex items-center gap-1">
+                    {selectedIsScheduledTrigger ? (
+                      <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                        Scheduled
+                      </span>
+                    ) : null}
+                    <span className="text-[10px] uppercase text-gray-300">
+                      {selectedNode.type}
+                    </span>
+                  </div>
+                </div>
+              </div>
               {selectedNode.type === "trigger" && (
                 <div className="space-y-2">
                   <Button

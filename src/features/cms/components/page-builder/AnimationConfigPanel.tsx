@@ -2,13 +2,9 @@
 
 import React, { useCallback } from "react";
 import {
+  Button,
   Label,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   RadioGroup,
   RadioGroupItem,
 } from "@/shared/ui";
@@ -17,12 +13,12 @@ import type {
   AnimationPreset,
   AnimationEasing,
   AnimationTrigger,
-} from "../../types/animation";
+} from "@/features/gsap";
 import {
   DEFAULT_ANIMATION_CONFIG,
-  ANIMATION_PRESETS,
   ANIMATION_EASINGS,
-} from "../../types/animation";
+  AnimationPresetPicker,
+} from "@/features/gsap";
 
 interface AnimationConfigPanelProps {
   value: GsapAnimationConfig | undefined;
@@ -31,13 +27,23 @@ interface AnimationConfigPanelProps {
 
 export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelProps): React.ReactNode {
   const config = value ?? DEFAULT_ANIMATION_CONFIG;
+  const selectorValue = config.selector ?? "";
+
+  const quickSelectors = [
+    { label: "Self", value: "" },
+    { label: "Children", value: ":scope > *" },
+    { label: "Headings", value: "h1, h2, h3, h4, h5, h6" },
+    { label: "Text", value: "p, li" },
+    { label: "Buttons", value: "button, a" },
+    { label: "Images", value: "img" },
+  ];
 
   const handlePresetChange = useCallback(
-    (preset: string) => {
+    (preset: AnimationPreset) => {
       if (preset === "none") {
         onChange({ ...DEFAULT_ANIMATION_CONFIG, preset: "none" });
       } else {
-        onChange({ ...config, preset: preset as AnimationPreset });
+        onChange({ ...config, preset });
       }
     },
     [config, onChange]
@@ -77,6 +83,20 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
+  const handleSelectorChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange({ ...config, selector: e.target.value });
+    },
+    [config, onChange]
+  );
+
+  const handleQuickSelector = useCallback(
+    (selector: string) => {
+      onChange({ ...config, selector });
+    },
+    [config, onChange]
+  );
+
   return (
     <div className="space-y-4">
       {/* Preset selector */}
@@ -84,22 +104,41 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
         <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
           Animation preset
         </Label>
-        <Select value={config.preset} onValueChange={handlePresetChange}>
-          <SelectTrigger className="w-full text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ANIMATION_PRESETS.map((p: { label: string; value: AnimationPreset }) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <AnimationPresetPicker value={config.preset} onChange={handlePresetChange} />
       </div>
 
       {config.preset !== "none" && (
         <>
+          {/* Target selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              Target selector
+            </Label>
+            <Input
+              value={selectorValue}
+              onChange={handleSelectorChange}
+              placeholder=":scope > *, h2, .card"
+              className="text-sm"
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {quickSelectors.map((option) => (
+                <Button
+                  key={option.label}
+                  type="button"
+                  size="sm"
+                  variant={selectorValue === option.value ? "secondary" : "outline"}
+                  onClick={(): void => handleQuickSelector(option.value)}
+                  className="h-7 px-2 text-[10px]"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-500">
+              Leave empty to animate the wrapper element. Use <span className="text-gray-400">:scope &gt; *</span> for direct children.
+            </p>
+          </div>
+
           {/* Duration */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">

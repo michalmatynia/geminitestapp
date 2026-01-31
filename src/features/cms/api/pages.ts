@@ -8,8 +8,14 @@ const safeJson = async <T>(res: Response): Promise<T> => {
   }
 };
 
-export const fetchPages = async (): Promise<PageSummary[]> => {
-  const res = await fetch("/api/cms/pages");
+const withDomainQuery = (url: string, domainId?: string | null): string => {
+  if (!domainId) return url;
+  const params = new URLSearchParams({ domainId });
+  return `${url}?${params.toString()}`;
+};
+
+export const fetchPages = async (domainId?: string | null): Promise<PageSummary[]> => {
+  const res = await fetch(withDomainQuery("/api/cms/pages", domainId ?? undefined));
   if (!res.ok) {
     throw new Error("Failed to fetch pages");
   }
@@ -37,7 +43,7 @@ export const createPage = async (input: {
   return { ok: res.ok, payload };
 };
 
-export const updatePage = async (id: string, input: Page) => {
+export const updatePage = async (id: string, input: Page & { slugIds?: string[] }) => {
   const res = await fetch(`/api/cms/pages/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

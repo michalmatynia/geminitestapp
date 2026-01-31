@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Input,
   Label,
@@ -12,9 +12,55 @@ import {
   RadioGroup,
   RadioGroupItem,
   Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/shared/ui";
-import { Upload, FolderOpen } from "lucide-react";
+import { Upload, FolderOpen, Link2, Search } from "lucide-react";
 import type { SettingsField, SettingsFieldOption } from "../../types/page-builder";
+import { useCmsSlugs } from "../../hooks/useCmsQueries";
+import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
+import type { Slug } from "../../types";
+import { MediaLibraryPanel } from "./MediaLibraryPanel";
+
+const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
+  { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Times New Roman", value: "'Times New Roman', serif" },
+  { label: "Courier New", value: "'Courier New', monospace" },
+  { label: "Verdana", value: "Verdana, sans-serif" },
+  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+  { label: "Palatino", value: "'Palatino Linotype', serif" },
+  { label: "System UI", value: "system-ui, sans-serif" },
+];
+
+const FONT_WEIGHT_OPTIONS: SettingsFieldOption[] = [
+  { label: "100 – Thin", value: "100" },
+  { label: "200 – Extra Light", value: "200" },
+  { label: "300 – Light", value: "300" },
+  { label: "400 – Normal", value: "400" },
+  { label: "500 – Medium", value: "500" },
+  { label: "600 – Semi Bold", value: "600" },
+  { label: "700 – Bold", value: "700" },
+  { label: "800 – Extra Bold", value: "800" },
+  { label: "900 – Black", value: "900" },
+];
+
+const BORDER_STYLE_OPTIONS: SettingsFieldOption[] = [
+  { label: "Solid", value: "solid" },
+  { label: "Dashed", value: "dashed" },
+  { label: "Dotted", value: "dotted" },
+  { label: "None", value: "none" },
+];
+
+const BG_TYPE_OPTIONS: SettingsFieldOption[] = [
+  { label: "Solid", value: "solid" },
+  { label: "Gradient", value: "gradient" },
+  { label: "Image", value: "image" },
+];
 
 const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
   { label: "Scheme 1", value: "scheme-1" },
@@ -42,6 +88,9 @@ export function SettingsFieldRenderer({
     [field.key, onChange]
   );
 
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const imageValue = typeof value === "string" ? value : "";
+
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -54,6 +103,10 @@ export function SettingsFieldRenderer({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
           className="text-sm"
         />
+      )}
+
+      {field.type === "link" && (
+        <LinkField value={(value as string) ?? ""} onChange={handleChange} />
       )}
 
       {field.type === "number" && (
@@ -102,23 +155,49 @@ export function SettingsFieldRenderer({
 
       {field.type === "image" && (
         <div className="space-y-2">
-          <div className="flex h-24 items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30">
-            {value ? (
-              <span className="text-xs text-gray-400">Image selected</span>
+          <div className="flex h-24 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+            {imageValue ? (
+              <img src={imageValue} alt="Selected" className="h-full w-full object-cover" />
             ) : (
               <span className="text-xs text-gray-500">No image</span>
             )}
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1 text-xs">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs"
+              onClick={() => setMediaOpen(true)}
+            >
               <Upload className="mr-1.5 size-3" />
-              Upload image
+              {imageValue ? "Replace image" : "Upload image"}
             </Button>
-            <Button size="sm" variant="outline" className="flex-1 text-xs">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs"
+              onClick={() => setMediaOpen(true)}
+            >
               <FolderOpen className="mr-1.5 size-3" />
-              Image Manager
+              Browse
             </Button>
           </div>
+          {imageValue ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full text-xs text-gray-400 hover:text-gray-200"
+              onClick={() => handleChange("")}
+            >
+              Clear image
+            </Button>
+          ) : null}
+          <MediaLibraryPanel
+            open={mediaOpen}
+            onOpenChange={setMediaOpen}
+            selectionMode="single"
+            onSelect={(filepaths) => handleChange(filepaths[0] ?? "")}
+          />
         </div>
       )}
 
@@ -155,6 +234,512 @@ export function SettingsFieldRenderer({
           </SelectContent>
         </Select>
       )}
+
+      {field.type === "color" && (
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={(value as string) ?? "#ffffff"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+            className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+          />
+          <Input
+            value={(value as string) ?? "#ffffff"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+            className="flex-1 text-sm font-mono"
+            maxLength={7}
+          />
+        </div>
+      )}
+
+      {field.type === "font-family" && (
+        <Select
+          value={(value as string) ?? "Inter, sans-serif"}
+          onValueChange={(v: string) => handleChange(v)}
+        >
+          <SelectTrigger className="w-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_FAMILY_OPTIONS.map((opt: SettingsFieldOption) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                <span style={{ fontFamily: opt.value }}>{opt.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {field.type === "font-weight" && (
+        <Select
+          value={String((value as string | number) ?? "400")}
+          onValueChange={(v: string) => handleChange(v)}
+        >
+          <SelectTrigger className="w-full text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_WEIGHT_OPTIONS.map((opt: SettingsFieldOption) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {field.type === "spacing" && (
+        <SpacingField value={value} onChange={handleChange} fieldKey={field.key} />
+      )}
+
+      {field.type === "border" && (
+        <BorderField value={value} onChange={handleChange} fieldKey={field.key} />
+      )}
+
+      {field.type === "shadow" && (
+        <ShadowField value={value} onChange={handleChange} fieldKey={field.key} />
+      )}
+
+      {field.type === "background" && (
+        <BackgroundField value={value} onChange={handleChange} fieldKey={field.key} />
+      )}
+
+      {field.type === "typography" && (
+        <TypographyField value={value} onChange={handleChange} fieldKey={field.key} />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Composite field components
+// ---------------------------------------------------------------------------
+
+interface CompositeFieldProps {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  fieldKey: string;
+}
+
+function SpacingField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+  const spacing = (value as Record<string, number>) ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  const update = (side: string, v: number): void => {
+    onChange({ ...spacing, [side]: v });
+  };
+  return (
+    <div className="grid grid-cols-4 gap-1.5">
+      {(["top", "right", "bottom", "left"] as const).map((side: string) => (
+        <div key={side} className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">{side[0]}</span>
+          <Input
+            type="number"
+            value={spacing[side] ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update(side, Number(e.target.value))}
+            className="text-xs h-7 px-1.5"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+  const border = (value as Record<string, unknown>) ?? { width: 0, style: "solid", color: "#4b5563", radius: 0 };
+  const update = (key: string, v: unknown): void => {
+    onChange({ ...border, [key]: v });
+  };
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Width</span>
+          <Input
+            type="number"
+            value={(border.width as number) ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("width", Number(e.target.value))}
+            className="text-xs h-7"
+            min={0}
+          />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Radius</span>
+          <Input
+            type="number"
+            value={(border.radius as number) ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("radius", Number(e.target.value))}
+            className="text-xs h-7"
+            min={0}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Style</span>
+          <Select
+            value={(border.style as string) ?? "solid"}
+            onValueChange={(v: string) => update("style", v)}
+          >
+            <SelectTrigger className="text-xs h-7">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BORDER_STYLE_OPTIONS.map((opt: SettingsFieldOption) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Color</span>
+          <div className="flex items-center gap-1">
+            <input
+              type="color"
+              value={(border.color as string) ?? "#4b5563"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+            />
+            <Input
+              value={(border.color as string) ?? "#4b5563"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+              className="text-xs h-7 font-mono flex-1"
+              maxLength={7}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+  const shadow = (value as Record<string, unknown>) ?? { x: 0, y: 2, blur: 4, spread: 0, color: "#00000040" };
+  const update = (key: string, v: unknown): void => {
+    onChange({ ...shadow, [key]: v });
+  };
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-4 gap-1.5">
+        {(["x", "y", "blur", "spread"] as const).map((prop: string) => (
+          <div key={prop} className="space-y-0.5">
+            <span className="text-[10px] text-gray-500 uppercase">{prop}</span>
+            <Input
+              type="number"
+              value={(shadow[prop] as number) ?? 0}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update(prop, Number(e.target.value))}
+              className="text-xs h-7 px-1.5"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] text-gray-500 uppercase w-10">Color</span>
+        <input
+          type="color"
+          value={(shadow.color as string)?.slice(0, 7) ?? "#000000"}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+          className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+        />
+        <Input
+          value={(shadow.color as string) ?? "#00000040"}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+          className="text-xs h-7 font-mono flex-1"
+        />
+      </div>
+    </div>
+  );
+}
+
+function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+  const bg = (value as Record<string, unknown>) ?? { type: "solid", color: "#000000" };
+  const bgType = (bg.type as string) ?? "solid";
+  const update = (key: string, v: unknown): void => {
+    onChange({ ...bg, [key]: v });
+  };
+  return (
+    <div className="space-y-2">
+      <Select value={bgType} onValueChange={(v: string) => update("type", v)}>
+        <SelectTrigger className="text-xs h-7">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {BG_TYPE_OPTIONS.map((opt: SettingsFieldOption) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {bgType === "solid" && (
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={(bg.color as string) ?? "#000000"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+            className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+          />
+          <Input
+            value={(bg.color as string) ?? "#000000"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+            className="flex-1 text-xs font-mono"
+            maxLength={7}
+          />
+        </div>
+      )}
+
+      {bgType === "gradient" && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 w-10">From</span>
+            <input
+              type="color"
+              value={(bg.gradientFrom as string) ?? "#000000"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientFrom", e.target.value)}
+              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+            />
+            <Input
+              value={(bg.gradientFrom as string) ?? "#000000"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientFrom", e.target.value)}
+              className="flex-1 text-xs font-mono"
+              maxLength={7}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 w-10">To</span>
+            <input
+              type="color"
+              value={(bg.gradientTo as string) ?? "#ffffff"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientTo", e.target.value)}
+              className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+            />
+            <Input
+              value={(bg.gradientTo as string) ?? "#ffffff"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientTo", e.target.value)}
+              className="flex-1 text-xs font-mono"
+              maxLength={7}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 w-10">Angle</span>
+            <Input
+              type="number"
+              value={(bg.gradientAngle as number) ?? 180}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientAngle", Number(e.target.value))}
+              className="w-20 text-xs h-7"
+              min={0}
+              max={360}
+            />
+            <span className="text-xs text-gray-500">deg</span>
+          </div>
+        </div>
+      )}
+
+      {bgType === "image" && (
+        <Input
+          value={(bg.imageUrl as string) ?? ""}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("imageUrl", e.target.value)}
+          placeholder="Image URL..."
+          className="text-xs"
+        />
+      )}
+    </div>
+  );
+}
+
+function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+  const typo = (value as Record<string, unknown>) ?? {};
+  const update = (key: string, v: unknown): void => {
+    onChange({ ...typo, [key]: v });
+  };
+  return (
+    <div className="space-y-2">
+      <div className="space-y-0.5">
+        <span className="text-[10px] text-gray-500 uppercase">Font Family</span>
+        <Select
+          value={(typo.fontFamily as string) ?? "Inter, sans-serif"}
+          onValueChange={(v: string) => update("fontFamily", v)}
+        >
+          <SelectTrigger className="text-xs h-7">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_FAMILY_OPTIONS.map((opt: SettingsFieldOption) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                <span style={{ fontFamily: opt.value }}>{opt.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Weight</span>
+          <Select
+            value={String((typo.fontWeight as string | number) ?? "400")}
+            onValueChange={(v: string) => update("fontWeight", v)}
+          >
+            <SelectTrigger className="text-xs h-7">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FONT_WEIGHT_OPTIONS.map((opt: SettingsFieldOption) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Size (px)</span>
+          <Input
+            type="number"
+            value={(typo.fontSize as number) ?? 16}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("fontSize", Number(e.target.value))}
+            className="text-xs h-7"
+            min={8}
+            max={200}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Line Height</span>
+          <Input
+            type="number"
+            value={(typo.lineHeight as number) ?? 1.5}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("lineHeight", Number(e.target.value))}
+            className="text-xs h-7"
+            min={0.5}
+            max={5}
+            step={0.1}
+          />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] text-gray-500 uppercase">Letter Spacing</span>
+          <Input
+            type="number"
+            value={(typo.letterSpacing as number) ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("letterSpacing", Number(e.target.value))}
+            className="text-xs h-7"
+            step={0.5}
+          />
+        </div>
+      </div>
+      <div className="space-y-0.5">
+        <span className="text-[10px] text-gray-500 uppercase">Text Color</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={(typo.textColor as string) ?? "#ffffff"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("textColor", e.target.value)}
+            className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
+          />
+          <Input
+            value={(typo.textColor as string) ?? "#ffffff"}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("textColor", e.target.value)}
+            className="flex-1 text-xs font-mono"
+            maxLength={7}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Link field (manual URL + slug picker)
+// ---------------------------------------------------------------------------
+
+interface LinkFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { activeDomainId } = useCmsDomainSelection();
+  const slugsQuery = useCmsSlugs(activeDomainId);
+  const slugs = slugsQuery.data ?? [];
+  const filtered = slugs.filter((slug: Slug) =>
+    slug.slug.toLowerCase().includes(query.trim().toLowerCase())
+  );
+
+  const handleSelect = (slug: Slug): void => {
+    onChange(`/${slug.slug}`);
+    setOpen(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Input
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          className="pr-10 text-sm"
+          placeholder="https://example.com or /your-slug"
+        />
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1 h-7 w-7 text-gray-400 hover:text-gray-200"
+              title="Pick from slugs"
+            >
+              <Link2 className="size-3.5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Select a slug</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-gray-500" />
+                <Input
+                  value={query}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+                  className="pl-8 text-sm"
+                  placeholder="Search slugs..."
+                />
+              </div>
+              <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-border/50 p-2">
+                {slugsQuery.isLoading && (
+                  <div className="p-2 text-xs text-gray-500">Loading slugs...</div>
+                )}
+                {!slugsQuery.isLoading && filtered.length === 0 && (
+                  <div className="p-2 text-xs text-gray-500">No slugs found.</div>
+                )}
+                {filtered.map((slug: Slug) => (
+                  <button
+                    key={slug.id}
+                    type="button"
+                    onClick={() => handleSelect(slug)}
+                    className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-gray-200 hover:bg-foreground/5"
+                  >
+                    <span>/{slug.slug}</span>
+                    {slug.isDefault ? (
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                        Default
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {value ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="w-full text-xs text-gray-400 hover:text-gray-200"
+          onClick={() => onChange("")}
+        >
+          Clear link
+        </Button>
+      ) : null}
     </div>
   );
 }

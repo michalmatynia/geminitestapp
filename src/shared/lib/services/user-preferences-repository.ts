@@ -1,11 +1,16 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
 import { ObjectId } from "mongodb";
 import { operationFailedError } from "@/shared/errors/app-error";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
+
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -20,8 +25,14 @@ export type UserPreferencesData = {
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: Prisma.InputJsonValue | null;
-  aiPathsPathConfigs?: Prisma.InputJsonValue | null;
+  aiPathsPathIndex?: JsonValue | null;
+  aiPathsPathConfigs?: JsonValue | null;
+  adminMenuCollapsed?: boolean | null;
+  cmsLastPageId?: string | null;
+  cmsActiveDomainId?: string | null;
+  cmsThemeOpenSections?: string[] | null;
+  cmsThemeLogoWidth?: number | null;
+  cmsThemeLogoUrl?: string | null;
 };
 
 export type UserPreferences = {
@@ -34,8 +45,14 @@ export type UserPreferences = {
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
-  aiPathsPathIndex: Prisma.JsonValue | null;
-  aiPathsPathConfigs: Prisma.JsonValue | null;
+  aiPathsPathIndex: JsonValue | null;
+  aiPathsPathConfigs: JsonValue | null;
+  adminMenuCollapsed: boolean | null;
+  cmsLastPageId: string | null;
+  cmsActiveDomainId: string | null;
+  cmsThemeOpenSections: string[];
+  cmsThemeLogoWidth: number | null;
+  cmsThemeLogoUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -50,8 +67,14 @@ type UserPreferencesDocument = {
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
-  aiPathsPathIndex: Prisma.JsonValue | null;
-  aiPathsPathConfigs: Prisma.JsonValue | null;
+  aiPathsPathIndex: JsonValue | null;
+  aiPathsPathConfigs: JsonValue | null;
+  adminMenuCollapsed: boolean | null;
+  cmsLastPageId: string | null;
+  cmsActiveDomainId: string | null;
+  cmsThemeOpenSections: string[];
+  cmsThemeLogoWidth: number | null;
+  cmsThemeLogoUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -70,15 +93,15 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
   aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
   aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
+  adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
+  cmsLastPageId: doc.cmsLastPageId ?? null,
+  cmsActiveDomainId: doc.cmsActiveDomainId ?? null,
+  cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
+  cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null,
+  cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
-
-const resolvePreferencesProvider = async (): Promise<"mongodb" | "prisma"> => {
-  const provider = await getAppDbProvider();
-  if (provider === "mongodb" && process.env.MONGODB_URI) return "mongodb";
-  return "prisma";
-};
 
 const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "createdAt" | "updatedAt"> => ({
   userId,
@@ -91,80 +114,42 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
   aiPathsPaletteCollapsed: false,
   aiPathsPathIndex: null,
   aiPathsPathConfigs: null,
+  adminMenuCollapsed: false,
+  cmsLastPageId: null,
+  cmsActiveDomainId: null,
+  cmsThemeOpenSections: [],
+  cmsThemeLogoWidth: null,
+  cmsThemeLogoUrl: null,
 });
-
-/**
- * Ensure default user exists
- */
-async function ensureDefaultUser(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    await prisma.user.create({
-      data: {
-        id: userId,
-        name: "Default User",
-        email: null,
-      },
-    });
-  }
-}
 
 /**
  * Get user preferences by user ID
  * Creates default preferences if they don't exist
  */
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {
-  const provider = await resolvePreferencesProvider();
-  if (provider === "mongodb") {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
+  if (!process.env.MONGODB_URI) {
+    throw operationFailedError("MongoDB is not configured.");
+  }
+  const db = await getMongoDb();
+  const doc = await db
+    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
+    .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
 
-    if (doc) {
-      return toUserPreferences(doc);
-    }
-
-    const now = new Date();
-    const document: UserPreferencesDocument = {
-      _id: userId,
-      ...defaultPreferences(userId),
-      createdAt: now,
-      updatedAt: now,
-    };
-    await db
-      .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .insertOne(document);
-    return toUserPreferences(document);
+  if (doc) {
+    return toUserPreferences(doc);
   }
 
-  const existing = await prisma.userPreferences.findUnique({
-    where: { userId },
-  });
-
-  if (existing) {
-    return existing as unknown as UserPreferences;
-  }
-
-  // Ensure user exists first
-  await ensureDefaultUser(userId);
-
-  // Create default preferences
-  const created = await prisma.userPreferences.create({
-    data: {
-      userId,
-      productListNameLocale: "name_en",
-      productListCatalogFilter: "all",
-      productListCurrencyCode: "PLN",
-      productListPageSize: 12,
-      aiPathsActivePathId: null,
-      aiPathsExpandedGroups: ["Triggers"],
-      aiPathsPaletteCollapsed: false,
-      aiPathsPathIndex: Prisma.JsonNull,
-      aiPathsPathConfigs: Prisma.JsonNull,
-    },
-  });
-  return created as unknown as UserPreferences;
+  const now = new Date();
+  const document: UserPreferencesDocument = {
+    _id: userId,
+    ...defaultPreferences(userId),
+    createdAt: now,
+    updatedAt: now,
+  };
+  await db
+    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
+    .insertOne(document);
+  return toUserPreferences(document);
 }
 
 /**
@@ -174,76 +159,53 @@ export async function updateUserPreferences(
   userId: string,
   data: Partial<UserPreferencesData>
 ): Promise<UserPreferences> {
-  const provider = await resolvePreferencesProvider();
-  if (provider === "mongodb") {
-    const db = await getMongoDb();
-    const now = new Date();
-    const insertDefaults = {
-      _id: userId,
-      ...defaultPreferences(userId),
-      createdAt: now,
-    } as Record<string, unknown>;
-    for (const key of Object.keys(data)) {
-      delete insertDefaults[key];
-    }
-    const result = await db
-      .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .findOneAndUpdate(
-        { $or: [{ _id: toMongoId(userId) }, { userId }] },
-        {
-          $set: {
-            ...data,
-            updatedAt: now,
-          } as Record<string, unknown>,
-          $setOnInsert: {
-            ...insertDefaults,
-          },
+  if (!process.env.MONGODB_URI) {
+    throw operationFailedError("MongoDB is not configured.");
+  }
+  const db = await getMongoDb();
+  const now = new Date();
+  const insertDefaults = {
+    _id: userId,
+    ...defaultPreferences(userId),
+    createdAt: now,
+  } as Record<string, unknown>;
+  for (const key of Object.keys(data)) {
+    delete insertDefaults[key];
+  }
+  const result = await db
+    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
+    .findOneAndUpdate(
+      { $or: [{ _id: toMongoId(userId) }, { userId }] },
+      {
+        $set: {
+          ...data,
+          updatedAt: now,
+        } as Record<string, unknown>,
+        $setOnInsert: {
+          ...insertDefaults,
         },
-        { upsert: true, returnDocument: "after" }
-      );
+      },
+      { upsert: true, returnDocument: "after" }
+    );
 
-    if (result && 'value' in result && result.value) {
-      return toUserPreferences(result.value as UserPreferencesDocument);
-    }
-    if (result && !('value' in result) && result) {
-      return toUserPreferences(result as unknown as UserPreferencesDocument);
-    }
-
-    const fallbackDoc = await db
-      .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
-
-    if (!fallbackDoc) {
-      throw operationFailedError("Failed to update preferences", undefined, {
-        userId,
-      });
-    }
-
-    return toUserPreferences(fallbackDoc);
+  if (result && "value" in result && result.value) {
+    return toUserPreferences(result.value as UserPreferencesDocument);
+  }
+  if (result && !("value" in result) && result) {
+    return toUserPreferences(result as unknown as UserPreferencesDocument);
   }
 
-  try {
-    // Ensure preferences exist
-    await getUserPreferences(userId);
+  const fallbackDoc = await db
+    .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
+    .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
 
-    const updated = await prisma.userPreferences.update({
-      where: { userId },
-      data: data as Prisma.UserPreferencesUpdateInput,
+  if (!fallbackDoc) {
+    throw operationFailedError("Failed to update preferences", undefined, {
+      userId,
     });
-    return updated as unknown as UserPreferences;
-  } catch (error) {
-    // If it's a foreign key error, ensure user exists and try again
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-      await ensureDefaultUser(userId);
-      await getUserPreferences(userId);
-      const updated = await prisma.userPreferences.update({
-        where: { userId },
-        data: data as Prisma.UserPreferencesUpdateInput,
-      });
-      return updated as unknown as UserPreferences;
-    }
-    throw error;
   }
+
+  return toUserPreferences(fallbackDoc);
 }
 
 /**

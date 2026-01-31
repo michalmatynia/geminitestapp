@@ -4,8 +4,11 @@ import Link from "next/link";
 
 import { useAdminLayout } from "@/features/admin";
 import { useRouter } from "next/navigation";
-import { useCmsPages, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
+import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
+import { CmsDomainSelector } from "@/features/cms";
+import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { PageStatus, PageSummary, PageSlugLink } from "@/features/cms/types";
+import { useMemo, useState } from "react";
 
 const STATUS_BADGE_CLASSES: Record<PageStatus, string> = {
   draft: "bg-gray-600/20 text-gray-400 border-gray-600/40",
@@ -19,13 +22,34 @@ const STATUS_LABELS: Record<PageStatus, string> = {
   scheduled: "Scheduled",
 };
 
+type StatusFilter = PageStatus | "all";
+
+const STATUS_FILTERS: Array<{ label: string; value: StatusFilter }> = [
+  { label: "All", value: "all" },
+  { label: "Draft", value: "draft" },
+  { label: "Published", value: "published" },
+  { label: "Scheduled", value: "scheduled" },
+];
+
 export default function PagesPage(): React.ReactNode {
-  const { setIsMenuCollapsed } = useAdminLayout();
+  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
-  const pagesQuery = useCmsPages();
+  const { activeDomainId } = useCmsDomainSelection();
+  const pagesQuery = useCmsPages(activeDomainId);
+  const slugsQuery = useCmsSlugs(activeDomainId);
   const deletePage = useDeletePage();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const pages = pagesQuery.data ?? [];
+  const domainSlugs = slugsQuery.data ?? [];
+  const domainSlugSet = useMemo(
+    () => (domainSlugs.length ? new Set(domainSlugs.map((slug) => slug.slug)) : null),
+    [domainSlugs]
+  );
+  const filteredPages = useMemo(() => {
+    if (statusFilter === "all") return pages;
+    return pages.filter((page: PageSummary) => (page.status ?? "draft") === statusFilter);
+  }, [pages, statusFilter]);
 
   const handleDelete = async (id: string): Promise<void> => {
     if (window.confirm("Are you sure you want to delete this page?")) {
@@ -35,6 +59,7 @@ export default function PagesPage(): React.ReactNode {
 
   const handleCreatePage = (): void => {
     setIsMenuCollapsed(true);
+    setIsProgrammaticallyCollapsed(true);
     router.push("/admin/cms/pages/create");
   };
 
@@ -44,13 +69,38 @@ export default function PagesPage(): React.ReactNode {
         header={
           <SectionHeader
             title="Pages"
-            actions={<Button onClick={handleCreatePage}>Create Page</Button>}
+            actions={
+              <>
+                <CmsDomainSelector />
+                <Button onClick={handleCreatePage}>Create Page</Button>
+              </>
+            }
           />
         }
       >
+        <div className="mb-4 flex flex-wrap gap-2">
+          {STATUS_FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setStatusFilter(filter.value)}
+              className={`rounded-md border px-3 py-1 text-xs font-medium transition ${
+                statusFilter === filter.value
+                  ? "border-blue-500 bg-blue-500/10 text-blue-300"
+                  : "border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
         <ul>
-          {pages.map((page: PageSummary) => {
+          {filteredPages.map((page: PageSummary) => {
             const status: PageStatus = page.status ?? "draft";
+            const slugValues = page.slugs.map((s: PageSlugLink) => s.slug.slug);
+            const outOfZone = domainSlugSet
+              ? slugValues.filter((value) => !domainSlugSet.has(value))
+              : [];
             return (
               <li key={page.id} className="flex justify-between items-center py-2 border-b border">
                 <div className="flex items-center gap-3">
@@ -63,6 +113,18 @@ export default function PagesPage(): React.ReactNode {
                   {page.slugs.length > 0 && (
                     <span className="text-xs text-gray-500">
                       {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(", ")}
+                      {outOfZone.length > 0 && (
+                        <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                          Cross-zone
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {outOfZone.length > 0 && (
+                    <span className="text-xs text-amber-400">
+                      Out of zone: {outOfZone.map((slug) => `/${slug}`).join(", ")}
                     </span>
                   )}
                 </div>
@@ -70,6 +132,11 @@ export default function PagesPage(): React.ReactNode {
               </li>
             );
           })}
+          {filteredPages.length === 0 && (
+            <li className="py-6 text-center text-sm text-gray-500">
+              No pages match this filter.
+            </li>
+          )}
         </ul>
       </ListPanel>
     </div>

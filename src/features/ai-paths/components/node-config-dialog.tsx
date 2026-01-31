@@ -106,14 +106,22 @@ export function NodeConfigDialog({
   toast,
 }: NodeConfigDialogProps): React.JSX.Element | null {
   if (!selectedNode) return null;
+  const isScheduledTrigger =
+    selectedNode.type === "trigger" &&
+    selectedNode.config?.trigger?.event === "scheduled_run";
 
   return (
     <Dialog open={configOpen} onOpenChange={setConfigOpen}>
       <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg">
-              Configure {selectedNode.title}
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span>Configure {selectedNode.title}</span>
+              {isScheduledTrigger ? (
+                <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200">
+                  Scheduled
+                </span>
+              ) : null}
             </DialogTitle>
             <Button
               type="button"

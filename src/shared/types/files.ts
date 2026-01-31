@@ -6,6 +6,7 @@ export type ImageFileRecord = {
   size: number;
   width: number | null;
   height: number | null;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 };

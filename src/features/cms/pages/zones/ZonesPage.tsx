@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Button,
+  Input,
+  Label,
+  ListPanel,
+  SectionHeader,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui";
+import {
+  useCmsDomains,
+  useCreateCmsDomain,
+  useDeleteCmsDomain,
+  useUpdateCmsDomain,
+} from "@/features/cms/hooks/useCmsQueries";
+
+export default function ZonesPage() {
+  const domainsQuery = useCmsDomains();
+  const createDomain = useCreateCmsDomain();
+  const deleteDomain = useDeleteCmsDomain();
+  const updateDomain = useUpdateCmsDomain();
+  const domains = domainsQuery.data ?? [];
+  const [domain, setDomain] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = domain.trim();
+    if (!value) {
+      setError("Enter a domain or hostname.");
+      return;
+    }
+    setError("");
+    try {
+      await createDomain.mutateAsync({ domain: value });
+      setDomain("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create domain.");
+    }
+  };
+
+  const handleDelete = async (id: string): Promise<void> => {
+    if (!confirm("Remove this domain and its slug assignments?")) return;
+    await deleteDomain.mutateAsync(id);
+  };
+
+  const handleAliasChange = async (id: string, aliasOfValue: string) => {
+    const aliasOf = aliasOfValue === "none" ? null : aliasOfValue;
+    await updateDomain.mutateAsync({ id, input: { aliasOf } });
+  };
+
+  return (
+    <div className="container mx-auto py-10">
+      <ListPanel
+        header={
+          <SectionHeader
+            title="Zones (Domains)"
+            description="Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets."
+          />
+        }
+      >
+        <form
+          onSubmit={(event) => { void handleSubmit(event); }}
+          className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end"
+        >
+          <div className="flex-1">
+            <Label htmlFor="domain">Domain</Label>
+            <Input
+              id="domain"
+              value={domain}
+              onChange={(event) => setDomain(event.target.value)}
+              placeholder="milkbar.com"
+              autoComplete="off"
+            />
+            {error ? <p className="mt-1 text-sm text-red-500">{error}</p> : null}
+          </div>
+          <Button type="submit" size="sm">
+            Add Zone
+          </Button>
+        </form>
+
+        {domains.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-500">
+            No zones yet. Create one or visit a domain to auto-register it.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {domains.map((item) => (
+              <li key={item.id} className="flex items-center justify-between px-4 py-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">{item.domain}</span>
+                  {item.aliasOf ? (
+                    <span className="text-xs text-muted-foreground">
+                      Shares slugs with {domains.find((d) => d.id === item.aliasOf)?.domain ?? "another zone"}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Independent zone</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={item.aliasOf ?? "none"}
+                    onValueChange={(value) => { void handleAliasChange(item.id, value); }}
+                  >
+                    <SelectTrigger className="h-8 w-[220px]">
+                      <SelectValue placeholder="Independent zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Independent zone</SelectItem>
+                      {domains
+                        .filter((domainOption) => domainOption.id !== item.id)
+                        .map((domainOption) => (
+                          <SelectItem key={domainOption.id} value={domainOption.id}>
+                            Share with {domainOption.domain}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => { void handleDelete(item.id); }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </ListPanel>
+    </div>
+  );
+}

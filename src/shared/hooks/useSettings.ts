@@ -1,14 +1,14 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import type { SystemSetting } from "@/shared/types/settings";
 
 export type { SystemSetting };
 
-export function useSettings() {
+export function useSettings(): UseQueryResult<SystemSetting[], Error> {
   return useQuery({
     queryKey: ["settings"],
-    queryFn: async () => {
+    queryFn: async (): Promise<SystemSetting[]> => {
       const res = await fetch("/api/settings");
       if (!res.ok) throw new Error("Failed to fetch settings");
       return (await res.json()) as SystemSetting[];
@@ -17,24 +17,24 @@ export function useSettings() {
   });
 }
 
-export function useSettingsMap() {
+export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
   return useQuery({
     queryKey: ["settings"],
-    queryFn: async () => {
+    queryFn: async (): Promise<SystemSetting[]> => {
       const res = await fetch("/api/settings");
       if (!res.ok) throw new Error("Failed to fetch settings");
       return (await res.json()) as SystemSetting[];
     },
-    select: (data) => new Map(data.map((item) => [item.key, item.value])),
+    select: (data: SystemSetting[]): Map<string, string> => new Map(data.map((item) => [item.key, item.value])),
     staleTime: 0,
   });
 }
 
-export function useUpdateSetting() {
+export function useUpdateSetting(): UseMutationResult<SystemSetting, Error, { key: string; value: string }> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+    mutationFn: async ({ key, value }: { key: string; value: string }): Promise<SystemSetting> => {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,17 +43,17 @@ export function useUpdateSetting() {
       if (!res.ok) throw new Error("Failed to update setting");
       return (await res.json()) as SystemSetting;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["settings"] });
     },
   });
 }
 
-export function useUpdateSettingsBulk() {
+export function useUpdateSettingsBulk(): UseMutationResult<Response[], Error, Array<{ key: string; value: string }>> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payloads: Array<{ key: string; value: string }>) => {
+    mutationFn: async (payloads: Array<{ key: string; value: string }>): Promise<Response[]> => {
       const responses = await Promise.all(
         payloads.map((payload) =>
           fetch("/api/settings", {
@@ -68,7 +68,7 @@ export function useUpdateSettingsBulk() {
       }
       return responses;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["settings"] });
     },
   });

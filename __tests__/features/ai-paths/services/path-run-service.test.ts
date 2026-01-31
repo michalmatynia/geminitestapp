@@ -1,0 +1,123 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { 
+  enqueuePathRun, 
+  resumePathRun, 
+  cancelPathRun, 
+  retryPathRunNode 
+} from "@/features/ai-paths/services/path-run-service";
+import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import prisma from "@/shared/lib/db/prisma";
+import type { AiNode } from "@/shared/types/ai-paths";
+
+describe("PathRunService", () => {
+  let repo: any;
+
+  beforeEach(async () => {
+    repo = await getPathRunRepository();
+    // Direct prisma cleanup since repo doesn't have deleteMany
+    await prisma.aiPathRunEvent.deleteMany();
+    await prisma.aiPathRunNode.deleteMany();
+    await prisma.aiPathRun.deleteMany();
+  });
+
+  const mockNodes: AiNode[] = [
+    {
+      id: "node-1",
+      type: "trigger",
+      title: "Trigger",
+      description: "",
+      position: { x: 0, y: 0 },
+      inputs: [],
+      outputs: ["value"],
+      config: { trigger: { event: "manual" } }
+    }
+  ];
+
+  describe("enqueuePathRun", () => {
+    it("should create a new run and its nodes", async () => {
+      const run = await enqueuePathRun({
+        pathId: "test-path",
+        pathName: "Test Path",
+        nodes: mockNodes,
+        edges: [],
+        triggerEvent: "manual_run"
+      });
+
+      expect(run.id).toBeDefined();
+      expect(run.status).toBe("queued");
+      expect(run.pathId).toBe("test-path");
+
+      const nodes = await repo.listRunNodes(run.id);
+      expect(nodes.length).toBe(1);
+      expect(nodes[0].nodeId).toBe("node-1");
+      expect(nodes[0].status).toBe("pending");
+
+      const events = await repo.listRunEvents(run.id);
+      expect(events.some((e: any) => e.message === "Run queued.")).toBe(true);
+    });
+  });
+
+  describe("resumePathRun", () => {
+    it("should reset run status to queued", async () => {
+      const run = await enqueuePathRun({
+        pathId: "test-path",
+        nodes: mockNodes,
+        edges: []
+      });
+
+      // Manually fail it
+      await repo.updateRun(run.id, { status: "failed", errorMessage: "Error" });
+
+      const resumed = await resumePathRun(run.id, "resume");
+      expect(resumed.status).toBe("queued");
+      expect(resumed.errorMessage).toBeNull();
+      
+      const events = await repo.listRunEvents(run.id);
+      expect(events.some((e: any) => e.message === "Run resumed (resume).")).toBe(true);
+    });
+  });
+
+  describe("cancelPathRun", () => {
+    it("should set status to canceled and mark finishedAt", async () => {
+      const run = await enqueuePathRun({
+        pathId: "test-path",
+        nodes: mockNodes,
+        edges: []
+      });
+
+      const canceled = await cancelPathRun(run.id);
+      expect(canceled.status).toBe("canceled");
+      expect(canceled.finishedAt).toBeDefined();
+
+      const events = await repo.listRunEvents(run.id);
+      expect(events.some((e: any) => e.message === "Run canceled.")).toBe(true);
+    });
+  });
+
+  describe("retryPathRunNode", () => {
+    it("should reset specific node and re-queue the run", async () => {
+      const run = await enqueuePathRun({
+        pathId: "test-path",
+        nodes: mockNodes,
+        edges: []
+      });
+
+      // Mark node as failed
+      await repo.upsertRunNode(run.id, "node-1", {
+        nodeType: "trigger",
+        status: "failed",
+        errorMessage: "Node failed"
+      });
+
+      const updatedRun = await retryPathRunNode(run.id, "node-1");
+      expect(updatedRun.status).toBe("queued");
+      
+      const nodes = await repo.listRunNodes(run.id);
+      expect(nodes[0].status).toBe("pending");
+      expect(nodes[0].errorMessage).toBeNull();
+
+      const events = await repo.listRunEvents(run.id);
+      expect(events.some((e: any) => e.message === "Retry node node-1.")).toBe(true);
+    });
+  });
+});

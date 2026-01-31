@@ -80,6 +80,7 @@ export type UserPreferences = {
   aiPathsPaletteCollapsed?: boolean | null;
   aiPathsPathIndex?: unknown[] | null;
   aiPathsPathConfigs?: Record<string, unknown> | string | null;
+  adminMenuCollapsed?: boolean | null;
 };
 
 export type IntegrationDbProvider = "prisma" | "mongodb";

@@ -1,19 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate } from "lucide-react";
+import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2 } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
-import { BlockPicker } from "./BlockPicker";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 
 const SECTION_ICONS: Record<string, React.ElementType> = {
+  AnnouncementBar: Megaphone,
   ImageWithText: Layers,
   RichText: AlignLeft,
   Hero: Layers,
   Grid: LayoutGrid,
+  Accordion: ListCollapse,
+  Testimonials: Quote,
+  Video: Video,
+  Slideshow: GalleryHorizontal,
+  Newsletter: Mail,
+  ContactForm: Send,
 };
 
 const BLOCK_ICONS: Record<string, React.ElementType> = {
+  Announcement: Megaphone,
   Heading: Heading,
   Text: AlignLeft,
   Button: MousePointerClick,
@@ -21,6 +28,11 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
   ImageWithText: Layers,
   RichText: FileText,
   Hero: LayoutTemplate,
+  Image: ImageIcon,
+  VideoEmbed: Video,
+  Divider: Minus,
+  SocialLinks: Share2,
+  Icon: Smile,
 };
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];
@@ -40,6 +52,8 @@ interface SectionNodeItemProps {
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSection: (sectionId: string, toIndex: number) => void;
+  onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
+  onRemoveSection: (sectionId: string) => void;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -59,12 +73,14 @@ export function SectionNodeItem({
   sectionIndex,
   selectedNodeId,
   onSelect,
-  onAddBlock,
+  onAddBlock: _onAddBlock,
   onDropBlock,
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddElementToNestedBlock,
   onDropSection,
+  onToggleSectionVisibility,
+  onRemoveSection,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
@@ -85,6 +101,7 @@ export function SectionNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSectionDragOver, setIsSectionDragOver] = useState(false);
   const isDraggingSection = draggedSectionId === section.id;
+  const isHidden = Boolean(section.settings["isHidden"]);
 
   return (
     <div
@@ -104,9 +121,16 @@ export function SectionNodeItem({
       }}
       className="group/section"
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => onSelect(section.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(section.id);
+          }
+        }}
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
@@ -180,13 +204,31 @@ export function SectionNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
-        {section.type !== "Grid" && (
-          <BlockPicker
-            sectionType={section.type}
-            onSelect={(blockType: string) => onAddBlock(section.id, blockType)}
-          />
-        )}
-      </button>
+        <div className={`flex items-center gap-0.5 transition ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}>
+          <button
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onToggleSectionVisibility(section.id, !isHidden);
+            }}
+            className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10"
+            title={isHidden ? "Show section" : "Hide section"}
+          >
+            {isHidden ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+          </button>
+          <button
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onRemoveSection(section.id);
+            }}
+            className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20"
+            title="Delete section"
+          >
+            <Trash2 className="size-3" />
+          </button>
+        </div>
+      </div>
 
       {isExpanded && hasBlocks && section.type === "Grid" && (
         <div className="ml-4 border-l border-border/30 pl-1">
@@ -293,9 +335,16 @@ function ColumnNodeItem({
 
   return (
     <div>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => onSelect(column.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(column.id);
+          }
+        }}
         onDragOver={(e: React.DragEvent) => {
           if (!draggedBlockId) return;
           e.preventDefault();
@@ -351,7 +400,7 @@ function ColumnNodeItem({
         <ColumnBlockPicker
           onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
         />
-      </button>
+      </div>
 
       {isExpanded && hasBlocks && (
         <div className="ml-4 border-l border-border/30 pl-1">
@@ -478,9 +527,16 @@ function SectionBlockNodeItem({
       }}
       className="group/sblock"
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => onSelect(block.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(block.id);
+          }
+        }}
         onDragOver={(e: React.DragEvent) => {
           if (!draggedBlockId || draggedBlockId === block.id) return;
           // Only accept element-type drops (not section blocks)
@@ -550,7 +606,7 @@ function SectionBlockNodeItem({
         <ColumnBlockPicker
           onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
         />
-      </button>
+      </div>
 
       {isExpanded && hasChildren && (
         <div className="ml-5 border-l border-border/30 pl-1">

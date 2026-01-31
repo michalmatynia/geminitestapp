@@ -1,0 +1,984 @@
+"use client";
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Checkbox,
+} from "@/shared/ui";
+
+// ---------------------------------------------------------------------------
+// Theme settings state
+// ---------------------------------------------------------------------------
+
+interface ThemeSettings {
+  // Colors
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  surfaceColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  borderColor: string;
+  errorColor: string;
+  successColor: string;
+  // Typography
+  headingFont: string;
+  bodyFont: string;
+  baseSize: number;
+  headingWeight: string;
+  bodyWeight: string;
+  lineHeight: number;
+  headingLineHeight: number;
+  // Layout
+  maxContentWidth: number;
+  gridGutter: number;
+  sectionSpacing: number;
+  containerPadding: number;
+  borderRadius: number;
+  // Animations
+  enableAnimations: boolean;
+  animationDuration: number;
+  animationEasing: string;
+  scrollReveal: boolean;
+  hoverScale: number;
+  // Buttons
+  btnPaddingX: number;
+  btnPaddingY: number;
+  btnFontSize: number;
+  btnFontWeight: string;
+  btnRadius: number;
+  btnPrimaryBg: string;
+  btnPrimaryText: string;
+  btnSecondaryBg: string;
+  btnSecondaryText: string;
+  btnOutlineBorder: string;
+  // Variant Pills
+  pillRadius: number;
+  pillPaddingX: number;
+  pillPaddingY: number;
+  pillFontSize: number;
+  pillBg: string;
+  pillText: string;
+  pillActiveBg: string;
+  pillActiveText: string;
+  // Inputs
+  inputHeight: number;
+  inputRadius: number;
+  inputBorderColor: string;
+  inputBg: string;
+  inputText: string;
+  inputFocusBorder: string;
+  inputPlaceholder: string;
+  inputFontSize: number;
+  // Product Cards
+  cardImageRatio: string;
+  cardRadius: number;
+  cardShadow: string;
+  cardBg: string;
+  cardHoverShadow: string;
+  showBadge: boolean;
+  showQuickAdd: boolean;
+  // Collection Cards
+  collectionRatio: string;
+  collectionRadius: number;
+  collectionOverlay: boolean;
+  collectionOverlayColor: string;
+  collectionTextAlign: string;
+  // Blog Cards
+  blogRatio: string;
+  blogRadius: number;
+  blogShowDate: boolean;
+  blogShowExcerpt: boolean;
+  blogExcerptLines: number;
+  // Content Containers
+  containerBg: string;
+  containerBorderColor: string;
+  containerRadius: number;
+  containerPaddingInner: number;
+  containerShadow: string;
+  // Media
+  imageRadius: number;
+  imageBorderColor: string;
+  imagePlaceholderBg: string;
+  videoRatio: string;
+  // Dropdowns and pop-ups
+  dropdownBg: string;
+  dropdownBorder: string;
+  dropdownRadius: number;
+  dropdownShadow: string;
+  popupOverlayColor: string;
+  popupRadius: number;
+  // Drawers
+  drawerWidth: number;
+  drawerBg: string;
+  drawerOverlayColor: string;
+  drawerPosition: string;
+  // Badges
+  badgeFontSize: number;
+  badgeRadius: number;
+  badgePaddingX: number;
+  badgePaddingY: number;
+  badgeDefaultBg: string;
+  badgeDefaultText: string;
+  badgeSaleBg: string;
+  badgeSaleText: string;
+  // Brand Information
+  brandName: string;
+  brandTagline: string;
+  brandEmail: string;
+  brandPhone: string;
+  brandAddress: string;
+  // Social Media
+  socialFacebook: string;
+  socialInstagram: string;
+  socialTwitter: string;
+  socialLinkedin: string;
+  socialYoutube: string;
+  socialTiktok: string;
+  // Search Behaviour
+  searchPlaceholder: string;
+  searchMinChars: number;
+  searchShowSuggestions: boolean;
+  searchMaxResults: number;
+  // Currency Format
+  currencyCode: string;
+  currencySymbol: string;
+  currencyPosition: string;
+  thousandsSeparator: string;
+  decimalSeparator: string;
+  decimalPlaces: number;
+  // Cart
+  cartStyle: string;
+  cartIconStyle: string;
+  showCartCount: boolean;
+  cartEmptyText: string;
+  // Custom CSS
+  customCss: string;
+  // Theme Style
+  themePreset: string;
+  darkMode: boolean;
+}
+
+const DEFAULT_THEME: ThemeSettings = {
+  primaryColor: "#3b82f6",
+  secondaryColor: "#6366f1",
+  accentColor: "#f59e0b",
+  backgroundColor: "#030712",
+  surfaceColor: "#111827",
+  textColor: "#f3f4f6",
+  mutedTextColor: "#9ca3af",
+  borderColor: "#1f2937",
+  errorColor: "#ef4444",
+  successColor: "#22c55e",
+  headingFont: "Inter, sans-serif",
+  bodyFont: "Inter, sans-serif",
+  baseSize: 16,
+  headingWeight: "700",
+  bodyWeight: "400",
+  lineHeight: 1.6,
+  headingLineHeight: 1.2,
+  maxContentWidth: 1200,
+  gridGutter: 24,
+  sectionSpacing: 64,
+  containerPadding: 24,
+  borderRadius: 8,
+  enableAnimations: true,
+  animationDuration: 300,
+  animationEasing: "ease-out",
+  scrollReveal: true,
+  hoverScale: 1.02,
+  btnPaddingX: 20,
+  btnPaddingY: 10,
+  btnFontSize: 14,
+  btnFontWeight: "600",
+  btnRadius: 8,
+  btnPrimaryBg: "#3b82f6",
+  btnPrimaryText: "#ffffff",
+  btnSecondaryBg: "#374151",
+  btnSecondaryText: "#f3f4f6",
+  btnOutlineBorder: "#4b5563",
+  pillRadius: 999,
+  pillPaddingX: 12,
+  pillPaddingY: 4,
+  pillFontSize: 12,
+  pillBg: "#1f2937",
+  pillText: "#d1d5db",
+  pillActiveBg: "#3b82f6",
+  pillActiveText: "#ffffff",
+  inputHeight: 40,
+  inputRadius: 8,
+  inputBorderColor: "#374151",
+  inputBg: "#111827",
+  inputText: "#f3f4f6",
+  inputFocusBorder: "#3b82f6",
+  inputPlaceholder: "#6b7280",
+  inputFontSize: 14,
+  cardImageRatio: "3:4",
+  cardRadius: 12,
+  cardShadow: "small",
+  cardBg: "#111827",
+  cardHoverShadow: "medium",
+  showBadge: true,
+  showQuickAdd: true,
+  collectionRatio: "16:9",
+  collectionRadius: 12,
+  collectionOverlay: true,
+  collectionOverlayColor: "#00000066",
+  collectionTextAlign: "center",
+  blogRatio: "16:9",
+  blogRadius: 12,
+  blogShowDate: true,
+  blogShowExcerpt: true,
+  blogExcerptLines: 2,
+  containerBg: "#111827",
+  containerBorderColor: "#1f2937",
+  containerRadius: 12,
+  containerPaddingInner: 24,
+  containerShadow: "none",
+  imageRadius: 8,
+  imageBorderColor: "#1f2937",
+  imagePlaceholderBg: "#1f2937",
+  videoRatio: "16:9",
+  dropdownBg: "#1f2937",
+  dropdownBorder: "#374151",
+  dropdownRadius: 8,
+  dropdownShadow: "medium",
+  popupOverlayColor: "#000000aa",
+  popupRadius: 16,
+  drawerWidth: 400,
+  drawerBg: "#111827",
+  drawerOverlayColor: "#000000aa",
+  drawerPosition: "right",
+  badgeFontSize: 11,
+  badgeRadius: 4,
+  badgePaddingX: 8,
+  badgePaddingY: 2,
+  badgeDefaultBg: "#374151",
+  badgeDefaultText: "#d1d5db",
+  badgeSaleBg: "#ef4444",
+  badgeSaleText: "#ffffff",
+  brandName: "",
+  brandTagline: "",
+  brandEmail: "",
+  brandPhone: "",
+  brandAddress: "",
+  socialFacebook: "",
+  socialInstagram: "",
+  socialTwitter: "",
+  socialLinkedin: "",
+  socialYoutube: "",
+  socialTiktok: "",
+  searchPlaceholder: "Search...",
+  searchMinChars: 2,
+  searchShowSuggestions: true,
+  searchMaxResults: 8,
+  currencyCode: "USD",
+  currencySymbol: "$",
+  currencyPosition: "before",
+  thousandsSeparator: ",",
+  decimalSeparator: ".",
+  decimalPlaces: 2,
+  cartStyle: "drawer",
+  cartIconStyle: "bag",
+  showCartCount: true,
+  cartEmptyText: "Your cart is empty",
+  customCss: "",
+  themePreset: "default",
+  darkMode: true,
+};
+
+const THEME_SECTIONS = [
+  "Logo",
+  "Colors",
+  "Typography",
+  "Layout",
+  "Animations",
+  "Buttons",
+  "Variant Pills",
+  "Inputs",
+  "Product Cards",
+  "Collection Cards",
+  "Blog Cards",
+  "Content Containers",
+  "Media",
+  "Dropdowns and pop-ups",
+  "Drawers",
+  "Badges",
+  "Brand Information",
+  "Social Media",
+  "Search Behaviour",
+  "Currency Format",
+  "Cart",
+  "Custom CSS",
+  "Theme Style",
+];
+
+const FONT_OPTIONS = [
+  { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Times New Roman", value: "'Times New Roman', serif" },
+  { label: "Courier New", value: "'Courier New', monospace" },
+  { label: "Verdana", value: "Verdana, sans-serif" },
+  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+  { label: "Palatino", value: "'Palatino Linotype', serif" },
+  { label: "System UI", value: "system-ui, sans-serif" },
+];
+
+const WEIGHT_OPTIONS = [
+  { label: "100 – Thin", value: "100" },
+  { label: "200 – Extra Light", value: "200" },
+  { label: "300 – Light", value: "300" },
+  { label: "400 – Normal", value: "400" },
+  { label: "500 – Medium", value: "500" },
+  { label: "600 – Semi Bold", value: "600" },
+  { label: "700 – Bold", value: "700" },
+  { label: "800 – Extra Bold", value: "800" },
+  { label: "900 – Black", value: "900" },
+];
+
+// ---------------------------------------------------------------------------
+// Reusable field components
+// ---------------------------------------------------------------------------
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }): React.ReactNode {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <div className="flex items-center gap-2">
+        <label className="relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50">
+          <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
+          <div className="size-full rounded" style={{ backgroundColor: value }} />
+        </label>
+        <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-7 flex-1 bg-gray-800/40 text-xs" />
+      </div>
+    </div>
+  );
+}
+
+function NumberField({ label, value, onChange, suffix, min, max }: { label: string; value: number; onChange: (v: number) => void; suffix?: string; min?: number; max?: number }): React.ReactNode {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Input type="number" value={value} min={min} max={max} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(Number(e.target.value))} className="h-7 flex-1 bg-gray-800/40 text-xs" />
+        {suffix && <span className="text-[10px] text-gray-500">{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+function RangeField({ label, value, onChange, min, max, suffix, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string; step?: number }): React.ReactNode {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+        <span className="text-[11px] text-gray-300">{value}{suffix}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }): React.ReactNode {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-7 bg-gray-800/40 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }): React.ReactNode {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <span className="text-xs text-gray-300">{label}</span>
+    </label>
+  );
+}
+
+function TextField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }): React.ReactNode {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} placeholder={placeholder} className="h-7 bg-gray-800/40 text-xs" />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Persistence
+// ---------------------------------------------------------------------------
+
+const userPreferencesQueryKey = ["user-preferences"] as const;
+
+// ---------------------------------------------------------------------------
+// Panel
+// ---------------------------------------------------------------------------
+
+export function ThemeSettingsPanel(): React.ReactNode {
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+
+  // Logo-specific state (file picker)
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoWidth, setLogoWidth] = useState<number>(180);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  // Accordion open-state persistence
+  const hasHydratedRef = useRef(false);
+  const lastSavedRef = useRef<string>("[]");
+  const persistTimerRef = useRef<number | null>(null);
+  const queryClient = useQueryClient();
+
+  const preferencesQuery = useQuery({
+    queryKey: userPreferencesQueryKey,
+    queryFn: async (): Promise<{ cmsThemeOpenSections?: string[] | null }> => {
+      const res = await fetch("/api/user/preferences");
+      if (!res.ok) throw new Error("Failed to load user preferences");
+      return (await res.json()) as { cmsThemeOpenSections?: string[] | null };
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (payload: { cmsThemeOpenSections: string[] }): Promise<void> => {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to update user preferences");
+    },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey }); },
+    onError: (error: Error) => { console.warn("[CMS] Failed to persist theme settings state.", error); },
+  });
+
+  useEffect(() => {
+    if (hasHydratedRef.current) return;
+    if (!preferencesQuery.isFetched) return;
+    const saved = preferencesQuery.data?.cmsThemeOpenSections ?? [];
+    const filtered = saved.filter((item) => typeof item === "string");
+    setOpenSections(new Set(filtered));
+    lastSavedRef.current = JSON.stringify(filtered);
+    hasHydratedRef.current = true;
+  }, [preferencesQuery.data, preferencesQuery.isFetched]);
+
+  const openSectionsArray = useMemo(() => Array.from(openSections), [openSections]);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current) return;
+    const nextSerialized = JSON.stringify(openSectionsArray);
+    if (nextSerialized === lastSavedRef.current) return;
+    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = window.setTimeout(() => {
+      lastSavedRef.current = nextSerialized;
+      updatePreferencesMutation.mutate({ cmsThemeOpenSections: openSectionsArray });
+    }, 400);
+  }, [openSectionsArray, updatePreferencesMutation]);
+
+  useEffect(() => {
+    return () => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
+  }, []);
+
+  // Logo file preview
+  useEffect(() => {
+    if (!logoFile) {
+      if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
+      setLogoPreviewUrl(null);
+      return;
+    }
+    const nextUrl = URL.createObjectURL(logoFile);
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = nextUrl;
+    setLogoPreviewUrl(nextUrl);
+    return () => {
+      if (previewUrlRef.current === nextUrl) { URL.revokeObjectURL(nextUrl); previewUrlRef.current = null; }
+    };
+  }, [logoFile]);
+
+  const toggleSection = useCallback((section: string) => {
+    setOpenSections((prev) => {
+      if (!hasHydratedRef.current) hasHydratedRef.current = true;
+      const next = new Set(prev);
+      if (next.has(section)) { next.delete(section); } else { next.add(section); }
+      return next;
+    });
+  }, []);
+
+  const update = useCallback(<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
+    setTheme((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handlePickLogo = useCallback(() => { fileInputRef.current?.click(); }, []);
+  const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoFile(event.target.files?.[0] ?? null);
+    event.target.value = "";
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Section bodies
+  // ---------------------------------------------------------------------------
+
+  const renderSectionBody = useCallback(
+    (section: string): React.ReactNode => {
+      switch (section) {
+
+        // ---------------------------------------------------------------
+        case "Logo":
+          return (
+            <div className="space-y-3">
+              <div className="rounded border border-dashed border-border/50 bg-gray-800/30 p-3">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Logo preview</div>
+                <div className="mt-3 flex items-center justify-center rounded border border-border/40 bg-gray-900/50 p-4">
+                  {logoPreviewUrl ? (
+                    <img src={logoPreviewUrl} alt="Logo preview" style={{ width: `${logoWidth}px` }} className="h-auto max-w-full object-contain" />
+                  ) : (
+                    <div className="text-xs text-gray-500">No logo selected</div>
+                  )}
+                </div>
+              </div>
+              <RangeField label="Desktop logo width" value={logoWidth} onChange={setLogoWidth} min={50} max={300} suffix="px" />
+              <div className="space-y-2">
+                <button type="button" onClick={handlePickLogo} className="flex w-full items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40">
+                  Image upload box
+                </button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={handlePickLogo}>Choose file</Button>
+                  <span className="flex-1 truncate text-[11px] text-gray-500">{logoFile?.name ?? "No file selected"}</span>
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+              </div>
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Colors":
+          return (
+            <div className="space-y-3">
+              <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
+              <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
+              <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
+              <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
+              <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
+              <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
+              <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
+              <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
+              <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
+              <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Typography":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Heading font" value={theme.headingFont} onChange={(v) => update("headingFont", v)} options={FONT_OPTIONS} />
+              <SelectField label="Body font" value={theme.bodyFont} onChange={(v) => update("bodyFont", v)} options={FONT_OPTIONS} />
+              <NumberField label="Base size" value={theme.baseSize} onChange={(v) => update("baseSize", v)} suffix="px" min={12} max={24} />
+              <SelectField label="Heading weight" value={theme.headingWeight} onChange={(v) => update("headingWeight", v)} options={WEIGHT_OPTIONS} />
+              <SelectField label="Body weight" value={theme.bodyWeight} onChange={(v) => update("bodyWeight", v)} options={WEIGHT_OPTIONS} />
+              <RangeField label="Body line height" value={theme.lineHeight} onChange={(v) => update("lineHeight", v)} min={1} max={2.5} step={0.1} />
+              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={(v) => update("headingLineHeight", v)} min={1} max={2} step={0.1} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Layout":
+          return (
+            <div className="space-y-3">
+              <RangeField label="Max content width" value={theme.maxContentWidth} onChange={(v) => update("maxContentWidth", v)} min={800} max={1600} suffix="px" />
+              <RangeField label="Grid gutter" value={theme.gridGutter} onChange={(v) => update("gridGutter", v)} min={8} max={48} suffix="px" />
+              <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={(v) => update("sectionSpacing", v)} min={16} max={128} suffix="px" />
+              <RangeField label="Container padding" value={theme.containerPadding} onChange={(v) => update("containerPadding", v)} min={8} max={64} suffix="px" />
+              <RangeField label="Border radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={24} suffix="px" />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Animations":
+          return (
+            <div className="space-y-3">
+              <CheckboxField label="Enable animations" checked={theme.enableAnimations} onChange={(v) => update("enableAnimations", v)} />
+              {theme.enableAnimations && (
+                <>
+                  <RangeField label="Duration" value={theme.animationDuration} onChange={(v) => update("animationDuration", v)} min={100} max={1000} suffix="ms" />
+                  <SelectField label="Easing" value={theme.animationEasing} onChange={(v) => update("animationEasing", v)} options={[
+                    { label: "Ease out", value: "ease-out" },
+                    { label: "Ease in-out", value: "ease-in-out" },
+                    { label: "Ease in", value: "ease-in" },
+                    { label: "Linear", value: "linear" },
+                    { label: "Spring", value: "cubic-bezier(.68,-0.55,.27,1.55)" },
+                  ]} />
+                  <CheckboxField label="Scroll reveal" checked={theme.scrollReveal} onChange={(v) => update("scrollReveal", v)} />
+                  <RangeField label="Hover scale" value={theme.hoverScale} onChange={(v) => update("hoverScale", v)} min={1} max={1.2} step={0.01} suffix="x" />
+                </>
+              )}
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Buttons":
+          return (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField label="Padding X" value={theme.btnPaddingX} onChange={(v) => update("btnPaddingX", v)} suffix="px" min={4} max={48} />
+                <NumberField label="Padding Y" value={theme.btnPaddingY} onChange={(v) => update("btnPaddingY", v)} suffix="px" min={4} max={24} />
+              </div>
+              <NumberField label="Font size" value={theme.btnFontSize} onChange={(v) => update("btnFontSize", v)} suffix="px" min={10} max={24} />
+              <SelectField label="Font weight" value={theme.btnFontWeight} onChange={(v) => update("btnFontWeight", v)} options={WEIGHT_OPTIONS} />
+              <NumberField label="Radius" value={theme.btnRadius} onChange={(v) => update("btnRadius", v)} suffix="px" min={0} max={24} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Primary</Label>
+                <div className="space-y-2">
+                  <ColorField label="Background" value={theme.btnPrimaryBg} onChange={(v) => update("btnPrimaryBg", v)} />
+                  <ColorField label="Text" value={theme.btnPrimaryText} onChange={(v) => update("btnPrimaryText", v)} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Secondary</Label>
+                <div className="space-y-2">
+                  <ColorField label="Background" value={theme.btnSecondaryBg} onChange={(v) => update("btnSecondaryBg", v)} />
+                  <ColorField label="Text" value={theme.btnSecondaryText} onChange={(v) => update("btnSecondaryText", v)} />
+                </div>
+              </div>
+              <ColorField label="Outline border" value={theme.btnOutlineBorder} onChange={(v) => update("btnOutlineBorder", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Variant Pills":
+          return (
+            <div className="space-y-3">
+              <NumberField label="Radius" value={theme.pillRadius} onChange={(v) => update("pillRadius", v)} suffix="px" min={0} max={999} />
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField label="Padding X" value={theme.pillPaddingX} onChange={(v) => update("pillPaddingX", v)} suffix="px" min={4} max={32} />
+                <NumberField label="Padding Y" value={theme.pillPaddingY} onChange={(v) => update("pillPaddingY", v)} suffix="px" min={2} max={16} />
+              </div>
+              <NumberField label="Font size" value={theme.pillFontSize} onChange={(v) => update("pillFontSize", v)} suffix="px" min={10} max={18} />
+              <ColorField label="Background" value={theme.pillBg} onChange={(v) => update("pillBg", v)} />
+              <ColorField label="Text" value={theme.pillText} onChange={(v) => update("pillText", v)} />
+              <ColorField label="Active background" value={theme.pillActiveBg} onChange={(v) => update("pillActiveBg", v)} />
+              <ColorField label="Active text" value={theme.pillActiveText} onChange={(v) => update("pillActiveText", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Inputs":
+          return (
+            <div className="space-y-3">
+              <NumberField label="Height" value={theme.inputHeight} onChange={(v) => update("inputHeight", v)} suffix="px" min={28} max={56} />
+              <NumberField label="Radius" value={theme.inputRadius} onChange={(v) => update("inputRadius", v)} suffix="px" min={0} max={24} />
+              <NumberField label="Font size" value={theme.inputFontSize} onChange={(v) => update("inputFontSize", v)} suffix="px" min={10} max={20} />
+              <ColorField label="Background" value={theme.inputBg} onChange={(v) => update("inputBg", v)} />
+              <ColorField label="Text" value={theme.inputText} onChange={(v) => update("inputText", v)} />
+              <ColorField label="Border" value={theme.inputBorderColor} onChange={(v) => update("inputBorderColor", v)} />
+              <ColorField label="Focus border" value={theme.inputFocusBorder} onChange={(v) => update("inputFocusBorder", v)} />
+              <ColorField label="Placeholder" value={theme.inputPlaceholder} onChange={(v) => update("inputPlaceholder", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Product Cards":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Image ratio" value={theme.cardImageRatio} onChange={(v) => update("cardImageRatio", v)} options={[
+                { label: "1:1 Square", value: "1:1" },
+                { label: "3:4 Portrait", value: "3:4" },
+                { label: "4:3 Landscape", value: "4:3" },
+                { label: "16:9 Wide", value: "16:9" },
+              ]} />
+              <NumberField label="Radius" value={theme.cardRadius} onChange={(v) => update("cardRadius", v)} suffix="px" min={0} max={24} />
+              <ColorField label="Background" value={theme.cardBg} onChange={(v) => update("cardBg", v)} />
+              <SelectField label="Shadow" value={theme.cardShadow} onChange={(v) => update("cardShadow", v)} options={[
+                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
+              ]} />
+              <SelectField label="Hover shadow" value={theme.cardHoverShadow} onChange={(v) => update("cardHoverShadow", v)} options={[
+                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
+              ]} />
+              <CheckboxField label="Show badge" checked={theme.showBadge} onChange={(v) => update("showBadge", v)} />
+              <CheckboxField label="Show quick-add button" checked={theme.showQuickAdd} onChange={(v) => update("showQuickAdd", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Collection Cards":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Image ratio" value={theme.collectionRatio} onChange={(v) => update("collectionRatio", v)} options={[
+                { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
+              ]} />
+              <NumberField label="Radius" value={theme.collectionRadius} onChange={(v) => update("collectionRadius", v)} suffix="px" min={0} max={24} />
+              <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={(v) => update("collectionOverlay", v)} />
+              {theme.collectionOverlay && (
+                <ColorField label="Overlay color" value={theme.collectionOverlayColor} onChange={(v) => update("collectionOverlayColor", v)} />
+              )}
+              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={(v) => update("collectionTextAlign", v)} options={[
+                { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
+              ]} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Blog Cards":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Image ratio" value={theme.blogRatio} onChange={(v) => update("blogRatio", v)} options={[
+                { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
+              ]} />
+              <NumberField label="Radius" value={theme.blogRadius} onChange={(v) => update("blogRadius", v)} suffix="px" min={0} max={24} />
+              <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={(v) => update("blogShowDate", v)} />
+              <CheckboxField label="Show excerpt" checked={theme.blogShowExcerpt} onChange={(v) => update("blogShowExcerpt", v)} />
+              {theme.blogShowExcerpt && (
+                <NumberField label="Excerpt lines" value={theme.blogExcerptLines} onChange={(v) => update("blogExcerptLines", v)} min={1} max={5} />
+              )}
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Content Containers":
+          return (
+            <div className="space-y-3">
+              <ColorField label="Background" value={theme.containerBg} onChange={(v) => update("containerBg", v)} />
+              <ColorField label="Border" value={theme.containerBorderColor} onChange={(v) => update("containerBorderColor", v)} />
+              <NumberField label="Radius" value={theme.containerRadius} onChange={(v) => update("containerRadius", v)} suffix="px" min={0} max={24} />
+              <NumberField label="Inner padding" value={theme.containerPaddingInner} onChange={(v) => update("containerPaddingInner", v)} suffix="px" min={8} max={64} />
+              <SelectField label="Shadow" value={theme.containerShadow} onChange={(v) => update("containerShadow", v)} options={[
+                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
+              ]} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Media":
+          return (
+            <div className="space-y-3">
+              <NumberField label="Image radius" value={theme.imageRadius} onChange={(v) => update("imageRadius", v)} suffix="px" min={0} max={24} />
+              <ColorField label="Image border" value={theme.imageBorderColor} onChange={(v) => update("imageBorderColor", v)} />
+              <ColorField label="Placeholder bg" value={theme.imagePlaceholderBg} onChange={(v) => update("imagePlaceholderBg", v)} />
+              <SelectField label="Video ratio" value={theme.videoRatio} onChange={(v) => update("videoRatio", v)} options={[
+                { label: "16:9", value: "16:9" }, { label: "4:3", value: "4:3" }, { label: "1:1", value: "1:1" }, { label: "9:16 Vertical", value: "9:16" },
+              ]} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Dropdowns and pop-ups":
+          return (
+            <div className="space-y-3">
+              <ColorField label="Dropdown bg" value={theme.dropdownBg} onChange={(v) => update("dropdownBg", v)} />
+              <ColorField label="Dropdown border" value={theme.dropdownBorder} onChange={(v) => update("dropdownBorder", v)} />
+              <NumberField label="Dropdown radius" value={theme.dropdownRadius} onChange={(v) => update("dropdownRadius", v)} suffix="px" min={0} max={24} />
+              <SelectField label="Dropdown shadow" value={theme.dropdownShadow} onChange={(v) => update("dropdownShadow", v)} options={[
+                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
+              ]} />
+              <ColorField label="Popup overlay" value={theme.popupOverlayColor} onChange={(v) => update("popupOverlayColor", v)} />
+              <NumberField label="Popup radius" value={theme.popupRadius} onChange={(v) => update("popupRadius", v)} suffix="px" min={0} max={32} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Drawers":
+          return (
+            <div className="space-y-3">
+              <RangeField label="Width" value={theme.drawerWidth} onChange={(v) => update("drawerWidth", v)} min={280} max={600} suffix="px" />
+              <ColorField label="Background" value={theme.drawerBg} onChange={(v) => update("drawerBg", v)} />
+              <ColorField label="Overlay" value={theme.drawerOverlayColor} onChange={(v) => update("drawerOverlayColor", v)} />
+              <SelectField label="Position" value={theme.drawerPosition} onChange={(v) => update("drawerPosition", v)} options={[
+                { label: "Right", value: "right" }, { label: "Left", value: "left" },
+              ]} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Badges":
+          return (
+            <div className="space-y-3">
+              <NumberField label="Font size" value={theme.badgeFontSize} onChange={(v) => update("badgeFontSize", v)} suffix="px" min={8} max={16} />
+              <NumberField label="Radius" value={theme.badgeRadius} onChange={(v) => update("badgeRadius", v)} suffix="px" min={0} max={16} />
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField label="Padding X" value={theme.badgePaddingX} onChange={(v) => update("badgePaddingX", v)} suffix="px" min={2} max={16} />
+                <NumberField label="Padding Y" value={theme.badgePaddingY} onChange={(v) => update("badgePaddingY", v)} suffix="px" min={0} max={8} />
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Default</Label>
+                <div className="space-y-2">
+                  <ColorField label="Background" value={theme.badgeDefaultBg} onChange={(v) => update("badgeDefaultBg", v)} />
+                  <ColorField label="Text" value={theme.badgeDefaultText} onChange={(v) => update("badgeDefaultText", v)} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Sale</Label>
+                <div className="space-y-2">
+                  <ColorField label="Background" value={theme.badgeSaleBg} onChange={(v) => update("badgeSaleBg", v)} />
+                  <ColorField label="Text" value={theme.badgeSaleText} onChange={(v) => update("badgeSaleText", v)} />
+                </div>
+              </div>
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Brand Information":
+          return (
+            <div className="space-y-3">
+              <TextField label="Brand name" value={theme.brandName} onChange={(v) => update("brandName", v)} placeholder="Your brand" />
+              <TextField label="Tagline" value={theme.brandTagline} onChange={(v) => update("brandTagline", v)} placeholder="Your tagline" />
+              <TextField label="Email" value={theme.brandEmail} onChange={(v) => update("brandEmail", v)} placeholder="hello@example.com" />
+              <TextField label="Phone" value={theme.brandPhone} onChange={(v) => update("brandPhone", v)} placeholder="+1 234 567 890" />
+              <TextField label="Address" value={theme.brandAddress} onChange={(v) => update("brandAddress", v)} placeholder="123 Main St" />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Social Media":
+          return (
+            <div className="space-y-3">
+              <TextField label="Facebook" value={theme.socialFacebook} onChange={(v) => update("socialFacebook", v)} placeholder="https://facebook.com/..." />
+              <TextField label="Instagram" value={theme.socialInstagram} onChange={(v) => update("socialInstagram", v)} placeholder="https://instagram.com/..." />
+              <TextField label="Twitter / X" value={theme.socialTwitter} onChange={(v) => update("socialTwitter", v)} placeholder="https://x.com/..." />
+              <TextField label="LinkedIn" value={theme.socialLinkedin} onChange={(v) => update("socialLinkedin", v)} placeholder="https://linkedin.com/..." />
+              <TextField label="YouTube" value={theme.socialYoutube} onChange={(v) => update("socialYoutube", v)} placeholder="https://youtube.com/..." />
+              <TextField label="TikTok" value={theme.socialTiktok} onChange={(v) => update("socialTiktok", v)} placeholder="https://tiktok.com/..." />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Search Behaviour":
+          return (
+            <div className="space-y-3">
+              <TextField label="Placeholder text" value={theme.searchPlaceholder} onChange={(v) => update("searchPlaceholder", v)} />
+              <NumberField label="Min characters" value={theme.searchMinChars} onChange={(v) => update("searchMinChars", v)} min={1} max={5} />
+              <CheckboxField label="Show suggestions" checked={theme.searchShowSuggestions} onChange={(v) => update("searchShowSuggestions", v)} />
+              <NumberField label="Max results" value={theme.searchMaxResults} onChange={(v) => update("searchMaxResults", v)} min={3} max={20} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Currency Format":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Currency" value={theme.currencyCode} onChange={(v) => update("currencyCode", v)} options={[
+                { label: "USD ($)", value: "USD" }, { label: "EUR (\u20ac)", value: "EUR" }, { label: "GBP (\u00a3)", value: "GBP" },
+                { label: "CAD (C$)", value: "CAD" }, { label: "AUD (A$)", value: "AUD" }, { label: "JPY (\u00a5)", value: "JPY" },
+              ]} />
+              <TextField label="Symbol" value={theme.currencySymbol} onChange={(v) => update("currencySymbol", v)} />
+              <SelectField label="Symbol position" value={theme.currencyPosition} onChange={(v) => update("currencyPosition", v)} options={[
+                { label: "Before ($10)", value: "before" }, { label: "After (10$)", value: "after" },
+              ]} />
+              <TextField label="Thousands separator" value={theme.thousandsSeparator} onChange={(v) => update("thousandsSeparator", v)} />
+              <TextField label="Decimal separator" value={theme.decimalSeparator} onChange={(v) => update("decimalSeparator", v)} />
+              <NumberField label="Decimal places" value={theme.decimalPlaces} onChange={(v) => update("decimalPlaces", v)} min={0} max={4} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Cart":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Cart style" value={theme.cartStyle} onChange={(v) => update("cartStyle", v)} options={[
+                { label: "Drawer", value: "drawer" }, { label: "Page", value: "page" }, { label: "Dropdown", value: "dropdown" },
+              ]} />
+              <SelectField label="Icon style" value={theme.cartIconStyle} onChange={(v) => update("cartIconStyle", v)} options={[
+                { label: "Bag", value: "bag" }, { label: "Cart", value: "cart" }, { label: "Basket", value: "basket" },
+              ]} />
+              <CheckboxField label="Show item count" checked={theme.showCartCount} onChange={(v) => update("showCartCount", v)} />
+              <TextField label="Empty cart text" value={theme.cartEmptyText} onChange={(v) => update("cartEmptyText", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Custom CSS":
+          return (
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase tracking-wider text-gray-500">Custom CSS</Label>
+              <textarea
+                value={theme.customCss}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => update("customCss", e.target.value)}
+                placeholder={".my-class {\n  color: red;\n}"}
+                className="w-full rounded border border-border/50 bg-gray-800/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 focus:border-blue-500 focus:outline-none min-h-[120px] resize-y"
+                spellCheck={false}
+              />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        case "Theme Style":
+          return (
+            <div className="space-y-3">
+              <SelectField label="Preset" value={theme.themePreset} onChange={(v) => update("themePreset", v)} options={[
+                { label: "Default", value: "default" },
+                { label: "Minimal", value: "minimal" },
+                { label: "Bold", value: "bold" },
+                { label: "Elegant", value: "elegant" },
+                { label: "Playful", value: "playful" },
+              ]} />
+              <CheckboxField label="Dark mode" checked={theme.darkMode} onChange={(v) => update("darkMode", v)} />
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        default:
+          return <div className="text-xs text-gray-500">Settings coming soon.</div>;
+      }
+    },
+    [handleLogoChange, handlePickLogo, logoFile?.name, logoPreviewUrl, logoWidth, theme, update]
+  );
+
+  return (
+    <aside className="flex w-72 flex-col border-r border-border bg-gray-900">
+      <div className="border-b border-border px-4 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          Theme settings
+        </div>
+        <p className="mt-1 text-[11px] text-gray-500">
+          Configure global styles and storefront components.
+        </p>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="space-y-2">
+          {THEME_SECTIONS.map((section) => {
+            const isOpen = openSections.has(section);
+            return (
+              <div key={section} className="rounded border border-border/40 bg-gray-900/60">
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40"
+                  aria-expanded={isOpen}
+                >
+                  <span>{section}</span>
+                  <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isOpen && (
+                  <div className="px-3 pb-3">{renderSectionBody(section)}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+}

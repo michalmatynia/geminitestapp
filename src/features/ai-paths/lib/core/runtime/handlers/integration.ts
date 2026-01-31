@@ -334,10 +334,11 @@ export const handlePoll: NodeHandler = async ({
 export const handleHttp: NodeHandler = async ({ 
   node,
   nodeInputs,
+  prevOutputs,
   executed,
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  if (executed.http.has(node.id)) return {};
+  if (executed.http.has(node.id)) return prevOutputs;
 
   const httpConfig: HttpConfig = node.config?.http ?? {
     url: "",
@@ -737,7 +738,7 @@ export const handleDatabase: NodeHandler = async ({
         return { result: null, bundle: { error: "Invalid payload" }, aiPrompt };
       }
       if (executed.updater.has(node.id)) {
-        return { result: payload, bundle: payload as RuntimePortValues, aiPrompt };
+        return prevOutputs;
       }
       if (dryRun) {
         executed.updater.add(node.id);
@@ -905,12 +906,7 @@ export const handleDatabase: NodeHandler = async ({
         };
       }
       if (executed.updater.has(node.id)) {
-        return {
-          result: updateDoc as Record<string, unknown>,
-          bundle: updateDoc as Record<string, unknown>,
-          debugPayload,
-          aiPrompt,
-        };
+        return prevOutputs;
       }
       if (dryRun) {
         executed.updater.add(node.id);
@@ -966,7 +962,7 @@ export const handleDatabase: NodeHandler = async ({
 
     if (actionCategory === "delete") {
       if (executed.updater.has(node.id)) {
-        return { result: { ok: true }, bundle: { ok: true }, aiPrompt };
+        return prevOutputs;
       }
       if (dryRun) {
         executed.updater.add(node.id);

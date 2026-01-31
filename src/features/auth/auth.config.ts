@@ -1,7 +1,21 @@
 import type { NextAuthConfig, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
-const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+const devFallbackSecret = "dev-secret-change-me";
+const secret =
+  process.env.AUTH_SECRET ||
+  process.env.NEXTAUTH_SECRET ||
+  (process.env.NODE_ENV === "development" ? devFallbackSecret : undefined);
+
+if (
+  process.env.NODE_ENV === "development" &&
+  !process.env.AUTH_SECRET &&
+  !process.env.NEXTAUTH_SECRET
+) {
+  console.warn(
+    "[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret."
+  );
+}
 
 // Basic config that is edge-compatible
 const adminOnlyPrefixes = ["/admin/auth", "/admin/products"];
@@ -17,6 +31,7 @@ const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: "/admin/notes", permissions: ["notes.manage"] },
   { prefix: "/admin/chatbot", permissions: ["chatbot.manage"] },
   { prefix: "/admin/agentcreator", permissions: ["chatbot.manage"] },
+  { prefix: "/admin/ai-paths", permissions: ["ai_paths.manage"] },
   { prefix: "/admin/integrations", permissions: ["settings.manage"] },
   { prefix: "/admin/system", permissions: ["settings.manage"] },
   { prefix: "/admin/settings", permissions: ["settings.manage"] },
@@ -26,7 +41,7 @@ const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: "/admin/cms", permissions: ["settings.manage"] },
 ];
 
-const resolveRequiredPermissions = (pathname: string) => {
+const resolveRequiredPermissions = (pathname: string): string[] => {
   for (const rule of permissionRules) {
     if (pathname.startsWith(rule.prefix)) {
       return rule.permissions;
@@ -50,7 +65,7 @@ export const authConfig = {
     }: {
       auth: Session | null;
       request: { nextUrl: URL };
-    }) {
+    }): boolean | Response | Promise<boolean | Response> {
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
@@ -69,7 +84,7 @@ export const authConfig = {
           return Response.redirect(redirectUrl);
         }
         if (
-          adminOnlyPrefixes.some((prefix) =>
+          adminOnlyPrefixes.some((prefix: string) =>
             nextUrl.pathname.startsWith(prefix),
           )
         ) {
@@ -89,7 +104,7 @@ export const authConfig = {
           (auth?.user as { permissions?: string[] })?.permissions ?? [];
         const hasAccess =
           isElevated ||
-          requiredPermissions.some((permission) =>
+          requiredPermissions.some((permission: string) =>
             permissions.includes(permission),
           );
         if (hasAccess) return true;
@@ -99,7 +114,7 @@ export const authConfig = {
       }
       return true;
     },
-    session({ session, token }: { session: Session; token: JWT }) {
+    session({ session, token }: { session: Session; token: JWT }): Session {
       if (session.user) {
         if (token.sub) {
           session.user.id = token.sub;

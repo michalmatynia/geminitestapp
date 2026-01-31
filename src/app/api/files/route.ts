@@ -15,10 +15,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const filename = searchParams.get("filename")?.trim() || null;
     const productId = searchParams.get("productId")?.trim() || null;
     const productName = searchParams.get("productName")?.trim() || null;
+    const tagsParam = searchParams.get("tags")?.trim() || null;
+    const tags = tagsParam ? tagsParam.split(",").map((tag) => tag.trim()).filter(Boolean) : [];
 
     const imageFileRepository = await getImageFileRepository();
     const productRepository = await getProductRepository();
-    const files = await imageFileRepository.listImageFiles({ filename });
+    const files = await imageFileRepository.listImageFiles({ filename, tags });
 
     const getProductDisplayName = (product: ProductWithImages): string =>
       product.name_en ?? product.name_pl ?? product.name_de ?? "Product";

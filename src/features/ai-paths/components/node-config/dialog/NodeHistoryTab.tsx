@@ -11,7 +11,7 @@ export function NodeHistoryTab({
   selectedNode,
   runtimeState,
 }: NodeHistoryTabProps) {
-  const history = (runtimeState.history?.[selectedNode.id] ?? []) as RuntimeHistoryEntry[];
+  const history = (runtimeState.history?.[selectedNode.id] ?? []);
   return (
     <RunHistoryEntries
       entries={history}

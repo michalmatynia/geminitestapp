@@ -444,6 +444,10 @@ export const runsApi = {
     );
   },
 
+  async queueStatus(): Promise<ApiResponse<{ status: unknown }>> {
+    return apiFetch<{ status: unknown }>("/api/ai-paths/runs/queue-status");
+  },
+
   async resume(runId: string, mode?: "resume" | "replay"): Promise<ApiResponse<{ run: unknown }>> {
     return apiPost<{ run: unknown }>(
       `/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`,

@@ -26,7 +26,7 @@ function getUploadTarget({
   sku,
   noteId,
 }: {
-  category?: "products" | "notes" | undefined;
+  category?: "products" | "notes" | "cms" | undefined;
   sku?: string | null | undefined;
   noteId?: string | null | undefined;
 }) {
@@ -43,12 +43,18 @@ function getUploadTarget({
     return { diskDir, publicDir };
   }
 
+  if (category === "cms") {
+    const diskDir = path.join(uploadsRoot, "cms");
+    const publicDir = `/uploads/cms`;
+    return { diskDir, publicDir };
+  }
+
   return { diskDir: uploadsRoot, publicDir: "/uploads" };
 }
 
 export async function uploadFile(
   file: File,
-  options?: { category?: "products" | "notes" | undefined; sku?: string | null | undefined; noteId?: string | null | undefined }
+  options?: { category?: "products" | "notes" | "cms" | undefined; sku?: string | null | undefined; noteId?: string | null | undefined }
 ) {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const filename = `${Date.now()}-${path.basename(file.name)}`;

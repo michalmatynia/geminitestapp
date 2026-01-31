@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo } from "react";
 
 
 
@@ -16,8 +16,9 @@ import {
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useAuthUsers } from "@/features/auth/hooks/useAuthQueries";
 import { useSettingsMap } from "@/shared/hooks/useSettings";
+import type { AuthUserSummary } from "@/features/auth/types";
 
-export default function AuthDashboardPage() {
+export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
   const authUsersQuery = useAuthUsers();
   const settingsQuery = useSettingsMap();
@@ -34,16 +35,16 @@ export default function AuthDashboardPage() {
     toast("Failed to load auth settings", { variant: "error" });
   }, [settingsQuery.error, toast]);
 
-  const users = useMemo(() => (authUsersQuery.data?.users ?? []), [authUsersQuery.data?.users]);
-  const provider = authUsersQuery.data?.provider ?? "prisma";
-  const roles = useMemo(() => {
+  const users = useMemo<AuthUserSummary[]>(() => (authUsersQuery.data?.users ?? []), [authUsersQuery.data?.users]);
+  const provider = authUsersQuery.data?.provider ?? "mongodb";
+  const roles = useMemo<AuthRole[]>(() => {
     const storedRoles = parseJsonSetting<AuthRole[]>(
       settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles),
       DEFAULT_AUTH_ROLES
     );
     return mergeDefaultRoles(storedRoles);
   }, [settingsQuery.data]);
-  const userRoles = useMemo(
+  const userRoles = useMemo<AuthUserRoleMap>(
     () =>
       parseJsonSetting<AuthUserRoleMap>(
         settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles),
@@ -54,14 +55,14 @@ export default function AuthDashboardPage() {
 
   const metrics = useMemo(() => {
     const total = users.length;
-    const verified = users.filter((user) => Boolean(user.emailVerified)).length;
+    const verified = users.filter((user: AuthUserSummary) => Boolean(user.emailVerified)).length;
     const unverified = total - verified;
-    const roleCounts = roles.reduce<Record<string, number>>((acc, role) => {
+    const roleCounts = roles.reduce<Record<string, number>>((acc: Record<string, number>, role: AuthRole) => {
       acc[role.id] = 0;
       return acc;
     }, {});
     let unassigned = 0;
-    users.forEach((user) => {
+    users.forEach((user: AuthUserSummary) => {
       const assignedRole = userRoles[user.id];
       if (assignedRole && roleCounts[assignedRole] !== undefined) {
         roleCounts[assignedRole] += 1;
@@ -136,7 +137,7 @@ export default function AuthDashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {roles.map((role) => (
+          {roles.map((role: AuthRole) => (
             <div
               key={role.id}
               className="rounded-md border border-border bg-card/50 px-4 py-3"

@@ -17,6 +17,7 @@ type ImageFileInput = {
   size: number;
   width?: number | null;
   height?: number | null;
+  tags?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -130,6 +131,7 @@ const toImageFileRecord = (imageFile: ImageFileInput): ImageFileRecord => ({
   size: imageFile.size,
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
+  tags: imageFile.tags ?? [],
   createdAt: imageFile.createdAt,
   updatedAt: imageFile.updatedAt,
 });

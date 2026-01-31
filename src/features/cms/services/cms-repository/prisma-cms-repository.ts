@@ -3,7 +3,7 @@ import "server-only";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Block, Page, Slug, PageComponent } from "../../types";
+import type { Block, Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
@@ -119,6 +119,7 @@ export const prismaCmsRepository: CmsRepository = {
       seoOgImage: data.seoOgImage,
       seoCanonical: data.seoCanonical,
       robotsMeta: data.robotsMeta,
+      themeId: data.themeId,
     });
 
     if (Object.keys(cleanData).length > 0) {
@@ -240,5 +241,51 @@ export const prismaCmsRepository: CmsRepository = {
         },
       },
     });
+  },
+
+  // Themes
+  async getThemes(): Promise<CmsTheme[]> {
+    const themes = await prisma.cmsTheme.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return themes as unknown as CmsTheme[];
+  },
+
+  async getThemeById(id: string): Promise<CmsTheme | null> {
+    const theme = await prisma.cmsTheme.findUnique({ where: { id } });
+    return theme as unknown as CmsTheme | null;
+  },
+
+  async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
+    const theme = await prisma.cmsTheme.create({
+      data: {
+        name: data.name,
+        colors: data.colors as Prisma.InputJsonValue,
+        typography: data.typography as Prisma.InputJsonValue,
+        spacing: data.spacing as Prisma.InputJsonValue,
+        customCss: data.customCss ?? null,
+      },
+    });
+    return theme as unknown as CmsTheme;
+  },
+
+  async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
+    const cleanData = removeUndefined({
+      name: data.name,
+      colors: data.colors as Prisma.InputJsonValue | undefined,
+      typography: data.typography as Prisma.InputJsonValue | undefined,
+      spacing: data.spacing as Prisma.InputJsonValue | undefined,
+      customCss: data.customCss,
+    });
+    const theme = await prisma.cmsTheme.update({
+      where: { id },
+      data: cleanData as Prisma.CmsThemeUpdateInput,
+    });
+    return theme as unknown as CmsTheme | null;
+  },
+
+  async deleteTheme(id: string): Promise<CmsTheme | null> {
+    const theme = await prisma.cmsTheme.delete({ where: { id } });
+    return theme as unknown as CmsTheme | null;
   },
 };

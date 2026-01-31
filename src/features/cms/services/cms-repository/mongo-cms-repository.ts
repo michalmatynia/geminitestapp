@@ -5,11 +5,12 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
 import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Block, Page, Slug, PageComponent } from "../../types";
+import type { Block, Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
 
 const blocksCollection = "cms_blocks";
 const pagesCollection = "cms_pages";
 const slugsCollection = "cms_slugs";
+const themesCollection = "cms_themes";
 
 interface BlockDocument {
   id: string;
@@ -29,7 +30,19 @@ interface PageDocument {
   seoOgImage?: string | null;
   seoCanonical?: string | null;
   robotsMeta?: string | null;
+  themeId?: string | null;
   components: PageComponent[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ThemeDocument {
+  id: string;
+  name: string;
+  colors: Record<string, string>;
+  typography: Record<string, unknown>;
+  spacing: Record<string, string>;
+  customCss?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -238,6 +251,7 @@ export const mongoCmsRepository: CmsRepository = {
       seoOgImage: data.seoOgImage,
       seoCanonical: data.seoCanonical,
       robotsMeta: data.robotsMeta,
+      themeId: data.themeId,
       components: data.components,
       updatedAt: new Date(),
     }) as Partial<PageDocument>;
@@ -407,5 +421,104 @@ export const mongoCmsRepository: CmsRepository = {
   async removeBlockFromPage(pageId: string, blockId: string): Promise<void> {
     const db = await getMongoDb();
     await db.collection("cms_page_blocks").deleteOne({ pageId, blockId });
+  },
+
+  // Themes
+  async getThemes(): Promise<CmsTheme[]> {
+    const db = await getMongoDb();
+    const docs = await db.collection<ThemeDocument>(themesCollection).find().sort({ createdAt: -1 }).toArray();
+    return docs.map((doc: ThemeDocument) => ({
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      customCss: doc.customCss ?? undefined,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    })) as CmsTheme[];
+  },
+
+  async getThemeById(id: string): Promise<CmsTheme | null> {
+    const db = await getMongoDb();
+    const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id));
+    if (!doc) return null;
+    return {
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      customCss: doc.customCss ?? undefined,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    } as CmsTheme;
+  },
+
+  async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
+    const db = await getMongoDb();
+    const id = randomUUID();
+    const doc: ThemeDocument = {
+      id,
+      name: data.name,
+      colors: data.colors as Record<string, string>,
+      typography: data.typography as Record<string, unknown>,
+      spacing: data.spacing as Record<string, string>,
+      customCss: data.customCss ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await db.collection<ThemeDocument>(themesCollection).insertOne(doc);
+    return {
+      id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      customCss: doc.customCss ?? undefined,
+    } as CmsTheme;
+  },
+
+  async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
+    const db = await getMongoDb();
+    const update = removeUndefined({
+      name: data.name,
+      colors: data.colors as Record<string, string> | undefined,
+      typography: data.typography as Record<string, unknown> | undefined,
+      spacing: data.spacing as Record<string, string> | undefined,
+      customCss: data.customCss,
+      updatedAt: new Date(),
+    }) as Partial<ThemeDocument>;
+
+    const result = await db.collection<ThemeDocument>(themesCollection).findOneAndUpdate(
+      buildIdFilter<ThemeDocument>(id),
+      { $set: update },
+      { returnDocument: "after" }
+    );
+    if (!result) return null;
+    return {
+      id: result.id,
+      name: result.name,
+      colors: result.colors,
+      typography: result.typography,
+      spacing: result.spacing,
+      customCss: result.customCss ?? undefined,
+      createdAt: result.createdAt.toISOString(),
+      updatedAt: result.updatedAt.toISOString(),
+    } as CmsTheme;
+  },
+
+  async deleteTheme(id: string): Promise<CmsTheme | null> {
+    const db = await getMongoDb();
+    const doc = await db.collection<ThemeDocument>(themesCollection).findOneAndDelete(buildIdFilter<ThemeDocument>(id));
+    if (!doc) return null;
+    return {
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      customCss: doc.customCss ?? undefined,
+    } as CmsTheme;
   },
 };

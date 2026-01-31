@@ -185,11 +185,11 @@ export default function ImportsPage(): React.JSX.Element {
   const currentParameterKeys = isImportTemplateScope
     ? Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]))
     : EXPORT_PARAMETER_KEYS;
-  const inventoryWarehouseIds = new Set(warehouses.map((warehouse) => warehouse.id));
+  const inventoryWarehouseIds = new Set(warehouses.map((warehouse: WarehouseOption): string => warehouse.id));
   const warehouseOptions =
     showAllWarehouses && allWarehouses.length > 0 ? allWarehouses : warehouses;
-  const normalizeWarehouseId = (value: string) => value.trim().toLowerCase();
-  const inferTypedWarehouseId = (value: string) => {
+  const normalizeWarehouseId = (value: string): string => value.trim().toLowerCase();
+  const inferTypedWarehouseId = (value: string): { typed: string; numeric: string } | null => {
     const match = value.match(/([a-z]+)[_-]?(\d+)/i);
     if (!match?.[1] || !match?.[2]) return null;
     return { typed: `${match[1].toLowerCase()}_${match[2]}`, numeric: match[2] };
@@ -209,30 +209,30 @@ export default function ImportsPage(): React.JSX.Element {
     }
   }
   const stockMappingEntries = currentTemplateMappings
-    .map((mapping) => mapping.sourceKey.trim())
-    .filter((key) => key.toLowerCase().startsWith("stock"))
-    .map((key) => {
+    .map((mapping: TemplateMapping): string => mapping.sourceKey.trim())
+    .filter((key: string): boolean => key.toLowerCase().startsWith("stock"))
+    .map((key: string): { key: string; suffix: string; normalized: string } => {
       const suffix = key.replace(/^stock[._-]?/i, "").trim();
       return { key, suffix, normalized: normalizeWarehouseId(suffix) };
     });
   const invalidStockMappings =
     acceptedWarehouseIds.size > 0
       ? stockMappingEntries.filter(
-          ({ suffix, normalized }) => suffix && !acceptedWarehouseIds.has(normalized)
+          ({ suffix, normalized }: { suffix: string; normalized: string }): boolean => suffix && !acceptedWarehouseIds.has(normalized)
         )
       : [];
   const hasStockMappingMismatch =
     !isImportTemplateScope && invalidStockMappings.length > 0;
-  const invalidStockMappingLabels = invalidStockMappings.map(({ key }) => key);
+  const invalidStockMappingLabels = invalidStockMappings.map(({ key }: { key: string }): string => key);
   const stockMappingSuggestions = invalidStockMappings
-    .map(({ suffix }) => {
+    .map(({ suffix }: { suffix: string }): string | null => {
       const numeric = suffix.match(/(\d+)/)?.[1];
       const typed = numeric ? warehouseAliases[numeric] : null;
       return typed ? `stock.${typed}` : null;
     })
-    .filter((value): value is string => Boolean(value));
+    .filter((value: string | null): value is string => Boolean(value));
 
-  const applyTemplate = useCallback((template: Template, scope: "import" | "export") => {
+  const applyTemplate = useCallback((template: Template, scope: "import" | "export"): void => {
     const nextMappings =
       template.mappings && template.mappings.length > 0
         ? template.mappings
@@ -252,12 +252,12 @@ export default function ImportsPage(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    const checkIntegration = async () => {
+    const checkIntegration = async (): Promise<void> => {
       try {
         const res = await fetch("/api/integrations/with-connections");
         if (res.ok) {
           const data = (await res.json()) as IntegrationWithConnections[];
-          const baseIntegration = data.find((i) => i.slug === "baselinker");
+          const baseIntegration = data.find((i: IntegrationWithConnections): boolean => i.slug === "baselinker");
           // Check if there is at least one connection with a token (though frontend doesn't see token, it sees connections)
           // The backend route /api/integrations/with-connections returns connections.
           // We can check if any connection exists.
@@ -265,7 +265,7 @@ export default function ImportsPage(): React.JSX.Element {
           setBaseConnections(connections);
           if (connections.length > 0) {
             setIsBaseConnected(true);
-            setSelectedBaseConnectionId((prev) => prev || connections[0]?.id || "");
+            setSelectedBaseConnectionId((prev: string): string => prev || connections[0]?.id || "");
           }
         }
       } catch (error) {

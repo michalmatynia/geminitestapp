@@ -28,8 +28,10 @@ type MongoIndexSpec = {
 
 export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
   { collection: RUNS_COLLECTION, key: { id: 1 } },
+  { collection: RUNS_COLLECTION, key: { userId: 1 } },
   { collection: RUNS_COLLECTION, key: { pathId: 1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, createdAt: -1 } },
+  { collection: RUNS_COLLECTION, key: { userId: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, nextRetryAt: 1, createdAt: 1 } },
   { collection: NODES_COLLECTION, key: { runId: 1 } },
   { collection: NODES_COLLECTION, key: { runId: 1, nodeId: 1 } },
@@ -62,6 +64,7 @@ const ensureIndexes = async () => {
 type RunDocument = {
   _id: string;
   id?: string;
+  userId?: string | null;
   pathId: string;
   pathName?: string | null;
   status: string;
@@ -112,6 +115,7 @@ type EventDocument = {
 
 const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   id: doc.id || doc._id,
+  userId: doc.userId ?? null,
   pathId: doc.pathId ?? null,
   pathName: doc.pathName ?? null,
   prompt: null,
@@ -172,6 +176,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const document: RunDocument = {
       _id: id,
       id,
+      userId: input.userId ?? null,
       pathId: input.pathId,
       pathName: input.pathName ?? null,
       status: "queued",
@@ -240,10 +245,16 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const filter: Record<string, unknown> = {};
+    if (options.userId) {
+      filter.userId = options.userId;
+    }
     if (options.pathId) {
       filter.pathId = options.pathId;
     }
-    if (options.status) {
+    const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+    if (statuses.length > 0) {
+      filter.status = { $in: statuses };
+    } else if (options.status) {
       filter.status = options.status;
     }
     const query = options.query?.trim();
@@ -257,6 +268,19 @@ export const mongoPathRunRepository: AiPathRunRepository = {
         { entityId: { $regex: regex } },
         { errorMessage: { $regex: regex } },
       ];
+    }
+    const parseDate = (value: Date | string | null | undefined): Date | null => {
+      if (!value) return null;
+      const date = typeof value === "string" ? new Date(value) : value;
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+    const createdAfter = parseDate(options.createdAfter);
+    const createdBefore = parseDate(options.createdBefore);
+    if (createdAfter || createdBefore) {
+      filter.createdAt = {
+        ...(createdAfter ? { $gte: createdAfter } : {}),
+        ...(createdBefore ? { $lte: createdBefore } : {}),
+      };
     }
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)

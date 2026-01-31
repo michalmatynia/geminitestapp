@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
 
 
 
@@ -33,12 +33,14 @@ import {
 } from "@/features/auth/hooks/useAuthQueries";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
+type CreateUserForm = typeof EMPTY_CREATE;
+
 const EMPTY_CREATE = { name: "", email: "", password: "", roleId: "none", verified: false };
 
-export default function AuthUsersPage() {
+export default function AuthUsersPage(): React.JSX.Element {
   const { toast } = useToast();
   const [users, setUsers] = useState<AuthUserSummary[]>([]);
-  const [provider, setProvider] = useState<"prisma" | "mongodb">("prisma");
+  const [provider, setProvider] = useState<"mongodb">("mongodb");
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
   const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
   const [search, setSearch] = useState("");
@@ -54,7 +56,7 @@ export default function AuthUsersPage() {
   const [editMfaEnabled, setEditMfaEnabled] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState(EMPTY_CREATE);
+  const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
 
   const [mockEmail, setMockEmail] = useState("");
   const [mockPassword, setMockPassword] = useState("");
@@ -92,7 +94,7 @@ export default function AuthUsersPage() {
   useEffect(() => {
     if (authUsersQuery.data) {
       setUsers(authUsersQuery.data.users ?? []);
-      setProvider(authUsersQuery.data.provider ?? "prisma");
+      setProvider(authUsersQuery.data.provider ?? "mongodb");
     }
   }, [authUsersQuery.data]);
 
@@ -113,10 +115,10 @@ export default function AuthUsersPage() {
     setDirtyRoles(false);
   }, [settingsQuery.data]);
 
-  const filteredUsers = useMemo(() => {
+  const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();
     if (!query) return users;
-    return users.filter((user) => {
+    return users.filter((user: AuthUserSummary) => {
       return (
         user.email?.toLowerCase().includes(query) ||
         user.name?.toLowerCase().includes(query) ||
@@ -125,8 +127,8 @@ export default function AuthUsersPage() {
     });
   }, [search, users]);
 
-  const handleRoleChange = (userId: string, roleId: string) => {
-    setUserRoles((prev) => {
+  const handleRoleChange = (userId: string, roleId: string): void => {
+    setUserRoles((prev: AuthUserRoleMap) => {
       const next = { ...prev };
       if (!roleId || roleId === "none") {
         delete next[userId];
@@ -138,7 +140,7 @@ export default function AuthUsersPage() {
     setDirtyRoles(true);
   };
 
-  const handleSaveRoles = async () => {
+  const handleSaveRoles = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
         key: AUTH_SETTINGS_KEYS.userRoles,
@@ -152,7 +154,7 @@ export default function AuthUsersPage() {
     }
   };
 
-  const handleOpenEdit = (user: AuthUserSummary) => {
+  const handleOpenEdit = (user: AuthUserSummary): void => {
     setEditingUser(user);
     setEditName(user.name ?? "");
     setEditEmail(user.email ?? "");
@@ -171,14 +173,14 @@ export default function AuthUsersPage() {
     setEditMfaEnabled(Boolean(userSecurityQuery.data.mfaEnabled));
   }, [userSecurityQuery.data, editingUser]);
 
-  const handleSaveUser = async () => {
+  const handleSaveUser = async (): Promise<void> => {
     if (!editingUser) return;
     if (!editEmail.trim()) {
       toast("Email is required", { variant: "error" });
       return;
     }
     try {
-      const payload: { name?: string; email: string; emailVerified?: boolean } = {
+      const payload: { name?: string | null; email: string | null; emailVerified?: boolean | null } = {
         email: editEmail.trim(),
       };
       if (editName.trim()) {
@@ -196,15 +198,15 @@ export default function AuthUsersPage() {
         banned: editBanned,
         allowedIps: editAllowedIps
           .split(/\r?\n|,/)
-          .map((entry) => entry.trim())
+          .map((entry: string) => entry.trim())
           .filter(Boolean),
       };
       await updateAuthUserSecurityMutation.mutateAsync({
         userId: editingUser.id,
         input: securityPayload,
       });
-      setUsers((prev) =>
-        prev.map((user) => (user.id === updated.id ? updated : user))
+      setUsers((prev: AuthUserSummary[]) =>
+        prev.map((user: AuthUserSummary) => (user.id === updated.id ? updated : user))
       );
       toast("User updated", { variant: "success" });
       setEditingUser(null);
@@ -214,7 +216,7 @@ export default function AuthUsersPage() {
     }
   };
 
-  const handleDisableMfa = async () => {
+  const handleDisableMfa = async (): Promise<void> => {
     if (!editingUser) return;
     try {
       await updateAuthUserSecurityMutation.mutateAsync({
@@ -229,7 +231,7 @@ export default function AuthUsersPage() {
     }
   };
 
-  const handleCreateUser = async () => {
+  const handleCreateUser = async (): Promise<void> => {
     if (!createForm.email.trim() || !createForm.password.trim()) {
       toast("Email and password are required", { variant: "error" });
       return;
@@ -241,15 +243,14 @@ export default function AuthUsersPage() {
       return;
     }
     try {
-      const res = await registerUserMutation.mutateAsync({
+      const res = (await registerUserMutation.mutateAsync({
         email: createForm.email.trim(),
         password: createForm.password.trim(),
         name: createForm.name.trim() || undefined,
-      });
+      })) as { ok: boolean; payload: { id: string; email: string; name?: string | null; error?: string; details?: { issues?: string[] } } };
+
       if (!res.ok) {
-        const errorPayload = res.payload as
-          | { error?: string; details?: { issues?: string[] } }
-          | null;
+        const errorPayload = res.payload;
         const details = errorPayload?.details?.issues?.join(" ") ?? "";
         toast(
           errorPayload?.error
@@ -259,7 +260,7 @@ export default function AuthUsersPage() {
         );
         return;
       }
-      const created = res.payload as { id: string; email: string; name?: string | null };
+      const created = res.payload;
 
       if (createForm.roleId && createForm.roleId !== "none") {
         const nextRoles = { ...userRoles, [created.id]: createForm.roleId };
@@ -292,7 +293,7 @@ export default function AuthUsersPage() {
     }
   };
 
-  const handleMockSignIn = async () => {
+  const handleMockSignIn = async (): Promise<void> => {
     if (!mockEmail.trim() || !mockPassword.trim()) {
       setMockStatus("error");
       setMockMessage("Email and password are required.");
@@ -363,7 +364,7 @@ export default function AuthUsersPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Input
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                 placeholder="Search by name, email, or ID"
                 className="h-8 text-sm sm:max-w-xs"
               />
@@ -397,7 +398,7 @@ export default function AuthUsersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredUsers.map((user) => (
+                filteredUsers.map((user: AuthUserSummary) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name ?? "Unnamed"}</TableCell>
                     <TableCell className="text-gray-300">{user.email ?? "No email"}</TableCell>
@@ -415,19 +416,19 @@ export default function AuthUsersPage() {
                     <TableCell className="min-w-[180px]">
                       {(() => {
                         const currentRoleId = userRoles[user.id];
-                        const isValidRole = currentRoleId && roles.some((r) => r.id === currentRoleId);
+                        const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
                         const selectValue = isValidRole ? currentRoleId : "none";
                         return (
                           <Select
                             value={selectValue}
-                            onValueChange={(value) => handleRoleChange(user.id, value)}
+                            onValueChange={(value: string) => handleRoleChange(user.id, value)}
                           >
                             <SelectTrigger className="h-8 bg-gray-900 border text-white">
                               <SelectValue placeholder="Select role" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Unassigned</SelectItem>
-                              {roles.map((role) => (
+                              {roles.map((role: AuthRole) => (
                                 <SelectItem key={role.id} value={role.id}>
                                   {role.name}
                                 </SelectItem>
@@ -435,7 +436,7 @@ export default function AuthUsersPage() {
                             </SelectContent>
                           </Select>
                         );
-                      })()}
+                      })() as React.ReactNode}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
@@ -450,7 +451,7 @@ export default function AuthUsersPage() {
         )}
       </ListPanel>
 
-      <Dialog open={Boolean(editingUser)} onOpenChange={(open) => !open && setEditingUser(null)}>
+      <Dialog open={Boolean(editingUser)} onOpenChange={(open: boolean) => !open && setEditingUser(null)}>
         <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
@@ -463,7 +464,7 @@ export default function AuthUsersPage() {
               <Input
                 id="edit-name"
                 value={editName}
-                onChange={(event) => setEditName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditName(event.target.value)}
                 className="bg-gray-900 border text-white"
               />
             </div>
@@ -474,14 +475,14 @@ export default function AuthUsersPage() {
               <Input
                 id="edit-email"
                 value={editEmail}
-                onChange={(event) => setEditEmail(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditEmail(event.target.value)}
                 className="bg-gray-900 border text-white"
               />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="edit-verified"
-                checked={editVerified} onCheckedChange={(checked) => setEditVerified(Boolean(checked))}
+                checked={editVerified} onCheckedChange={(checked: boolean | "indeterminate") => setEditVerified(Boolean(checked))}
                 className="h-4 w-4 rounded border bg-gray-900"
               />
               <Label htmlFor="edit-verified" className="text-xs text-gray-300">
@@ -498,7 +499,7 @@ export default function AuthUsersPage() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-disabled"
-                  checked={editDisabled} onCheckedChange={(checked) => setEditDisabled(Boolean(checked))}
+                  checked={editDisabled} onCheckedChange={(checked: boolean | "indeterminate") => setEditDisabled(Boolean(checked))}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
@@ -508,7 +509,7 @@ export default function AuthUsersPage() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-banned"
-                  checked={editBanned} onCheckedChange={(checked) => setEditBanned(Boolean(checked))}
+                  checked={editBanned} onCheckedChange={(checked: boolean | "indeterminate") => setEditBanned(Boolean(checked))}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-banned" className="text-xs text-gray-300">
@@ -522,7 +523,7 @@ export default function AuthUsersPage() {
                 <Textarea
                   id="edit-allowed-ips"
                   value={editAllowedIps}
-                  onChange={(event) => setEditAllowedIps(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
                   className="min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white"
                   placeholder="One IP per line or comma-separated"
                 />
@@ -571,7 +572,7 @@ export default function AuthUsersPage() {
               <Input
                 id="create-name"
                 value={createForm.name}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev) => ({ ...prev, name: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
@@ -584,7 +585,7 @@ export default function AuthUsersPage() {
               <Input
                 id="create-email"
                 value={createForm.email}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev) => ({ ...prev, email: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
@@ -598,7 +599,7 @@ export default function AuthUsersPage() {
                 id="create-password"
                 type="password"
                 value={createForm.password}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setCreateForm((prev) => ({ ...prev, password: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
@@ -610,7 +611,7 @@ export default function AuthUsersPage() {
               </Label>
               <Select
                 value={createForm.roleId}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   setCreateForm((prev) => ({ ...prev, roleId: value }))
                 }
               >
@@ -619,7 +620,7 @@ export default function AuthUsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Unassigned</SelectItem>
-                  {roles.map((role) => (
+                  {roles.map((role: AuthRole) => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}
                     </SelectItem>
@@ -630,7 +631,7 @@ export default function AuthUsersPage() {
             <div className="flex items-center gap-2">
               <Checkbox
                 id="create-verified"
-                checked={createForm.verified} onCheckedChange={(checked) =>
+                checked={createForm.verified} onCheckedChange={(checked: boolean | "indeterminate") =>
                   setCreateForm((prev) => ({
                     ...prev,
                     verified: Boolean(checked),
@@ -670,7 +671,7 @@ export default function AuthUsersPage() {
               <Input
                 id="mock-email"
                 value={mockEmail}
-                onChange={(event) => setMockEmail(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockEmail(event.target.value)}
                 className="bg-gray-900 border text-white"
               />
             </div>
@@ -682,7 +683,7 @@ export default function AuthUsersPage() {
                 id="mock-password"
                 type="password"
                 value={mockPassword}
-                onChange={(event) => setMockPassword(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMockPassword(event.target.value)}
                 className="bg-gray-900 border text-white"
               />
             </div>

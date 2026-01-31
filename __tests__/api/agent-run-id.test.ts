@@ -39,7 +39,7 @@ describe("Agent Run [runId] API", () => {
     vi.clearAllMocks();
   });
 
-  const ctx = { params: { runId: "test-run-123" } };
+  const ctx = { params: Promise.resolve({ runId: "test-run-123" }) };
 
   describe("GET", () => {
     it("returns specific agent run", async () => {

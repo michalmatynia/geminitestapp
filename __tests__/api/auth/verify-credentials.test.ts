@@ -50,7 +50,7 @@ describe("Auth Verify Credentials API", () => {
       }),
     });
 
-    const res = await POST(req, {} as any);
+    const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -70,7 +70,7 @@ describe("Auth Verify Credentials API", () => {
       body: JSON.stringify({ email: "test@example.com", password: "wrong" }),
     });
 
-    const res = await POST(req, {} as any);
+    const res = await POST(req);
     const data = await res.json();
 
     expect(data.ok).toBe(false);

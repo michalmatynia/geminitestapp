@@ -26,6 +26,7 @@ import type {
 } from "@/features/ai-paths/lib";
 import type { HistoryNodeOption } from "./run-history-utils";
 import { RunHistoryEntries } from "./RunHistoryEntries";
+import { RunTimeline } from "./run-timeline";
 
 type RunDetailDialogProps = {
   open: boolean;
@@ -69,6 +70,7 @@ export function RunDetailDialog({
   onSelectHistoryNode,
   historyEntries,
 }: RunDetailDialogProps): React.JSX.Element {
+  const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === "scheduled_run");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl border border-border bg-card text-white">
@@ -85,7 +87,14 @@ export function RunDetailDialog({
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
                 <span className="text-[10px] uppercase text-gray-500">Status</span>
-                <div className="text-sm">{runDetail.run.status}</div>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span>{runDetail.run.status}</span>
+                  {isScheduledRun ? (
+                    <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                      Scheduled
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-gray-500">Stream</span>
@@ -144,37 +153,13 @@ export function RunDetailDialog({
                 </div>
               </div>
             ) : null}
-            <div>
-              <Label className="text-[10px] uppercase text-gray-500">Run</Label>
-              <Textarea
-                className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                readOnly
-                value={JSON.stringify(runDetail.run, null, 2)}
-              />
-            </div>
-            <div>
-              <Label className="text-[10px] uppercase text-gray-500">Nodes</Label>
-              <Textarea
-                className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                readOnly
-                value={JSON.stringify(runDetail.nodes, null, 2)}
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <Label className="text-[10px] uppercase text-gray-500">Events</Label>
-                {runEventsOverflow ? (
-                  <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
-                    Truncated{runEventsBatchLimit ? ` (limit ${runEventsBatchLimit})` : ""}
-                  </span>
-                ) : null}
-              </div>
-              <Textarea
-                className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
-                readOnly
-                value={JSON.stringify(runDetail.events, null, 2)}
-              />
-            </div>
+            <RunTimeline
+              run={runDetail.run}
+              nodes={runDetail.nodes}
+              events={runDetail.events}
+              eventsOverflow={runEventsOverflow}
+              eventsBatchLimit={runEventsBatchLimit}
+            />
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Label className="text-[10px] uppercase text-gray-500">History</Label>
@@ -213,6 +198,44 @@ export function RunDetailDialog({
                 </div>
               )}
             </div>
+            <details className="rounded-md border border-border/70 bg-black/20 p-3">
+              <summary className="cursor-pointer text-[11px] uppercase text-gray-400">
+                Raw payloads
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div>
+                  <Label className="text-[10px] uppercase text-gray-500">Run</Label>
+                  <Textarea
+                    className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                    readOnly
+                    value={JSON.stringify(runDetail.run, null, 2)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase text-gray-500">Nodes</Label>
+                  <Textarea
+                    className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                    readOnly
+                    value={JSON.stringify(runDetail.nodes, null, 2)}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-[10px] uppercase text-gray-500">Events</Label>
+                    {runEventsOverflow ? (
+                      <span className="rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200">
+                        Truncated{runEventsBatchLimit ? ` (limit ${runEventsBatchLimit})` : ""}
+                      </span>
+                    ) : null}
+                  </div>
+                  <Textarea
+                    className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                    readOnly
+                    value={JSON.stringify(runDetail.events, null, 2)}
+                  />
+                </div>
+              </div>
+            </details>
           </div>
         ) : (
           <div className="text-sm text-gray-400">No run selected.</div>

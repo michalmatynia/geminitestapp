@@ -7,6 +7,7 @@ import type {
   SectionInstance,
   BlockInstance,
   PageZone,
+  PageBuilderSnapshot,
 } from "../types/page-builder";
 import type { PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
@@ -57,11 +58,30 @@ function findColumn(sections: SectionInstance[], nodeId: string): { column: Bloc
   return null;
 }
 
+function cloneBlock(block: BlockInstance): BlockInstance {
+  return {
+    id: uid(),
+    type: block.type,
+    settings: { ...block.settings },
+    ...(block.blocks ? { blocks: block.blocks.map(cloneBlock) } : {}),
+  };
+}
+
+function cloneSection(section: SectionInstance): SectionInstance {
+  return {
+    id: uid(),
+    type: section.type,
+    zone: section.zone,
+    settings: { ...section.settings },
+    blocks: section.blocks.map(cloneBlock),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Reducer
 // ---------------------------------------------------------------------------
 
-function pageBuilderReducer(
+export function basePageBuilderReducer(
   state: PageBuilderState,
   action: PageBuilderAction
 ): PageBuilderState {
@@ -94,6 +114,14 @@ function pageBuilderReducer(
         selectedNodeId: null,
       };
     }
+
+    case "CLEAR_CURRENT_PAGE":
+      return {
+        ...state,
+        currentPage: null,
+        sections: [],
+        selectedNodeId: null,
+      };
 
     case "SELECT_NODE":
       return { ...state, selectedNodeId: action.nodeId };
@@ -535,11 +563,112 @@ function pageBuilderReducer(
       };
     }
 
+    case "UPDATE_PAGE_SLUGS": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          slugs: action.slugValues.map((slug) => ({ slug: { slug } })),
+          slugIds: action.slugIds,
+        },
+      };
+    }
+
     case "TOGGLE_LEFT_PANEL":
       return { ...state, leftPanelCollapsed: !state.leftPanelCollapsed };
 
     case "TOGGLE_RIGHT_PANEL":
       return { ...state, rightPanelCollapsed: !state.rightPanelCollapsed };
+
+    case "COPY_SECTION": {
+      const section = findSection(state.sections, action.sectionId);
+      if (!section) return state;
+      return { ...state, clipboard: { type: "section", data: section } };
+    }
+
+    case "PASTE_SECTION": {
+      if (!state.clipboard || state.clipboard.type !== "section") return state;
+      const cloned = cloneSection(state.clipboard.data as SectionInstance);
+      cloned.zone = action.zone;
+      return {
+        ...state,
+        sections: [...state.sections, cloned],
+        selectedNodeId: cloned.id,
+      };
+    }
+
+    case "COPY_BLOCK": {
+      const found = findBlock(state.sections, action.blockId);
+      if (!found) return state;
+      if (found.section.id !== action.sectionId) return state;
+      return { ...state, clipboard: { type: "block", data: found.block } };
+    }
+
+    case "PASTE_BLOCK": {
+      if (!state.clipboard || state.clipboard.type !== "block") return state;
+      const cloned = cloneBlock(state.clipboard.data as BlockInstance);
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        if (action.columnId) {
+          return {
+            ...s,
+            blocks: s.blocks.map((b: BlockInstance) => {
+              if (b.id !== action.columnId) return b;
+              if (action.parentBlockId) {
+                return {
+                  ...b,
+                  blocks: (b.blocks ?? []).map((pb: BlockInstance) => {
+                    if (pb.id !== action.parentBlockId) return pb;
+                    return { ...pb, blocks: [...(pb.blocks ?? []), cloned] };
+                  }),
+                };
+              }
+              return { ...b, blocks: [...(b.blocks ?? []), cloned] };
+            }),
+          };
+        }
+        return { ...s, blocks: [...s.blocks, cloned] };
+      });
+      return {
+        ...state,
+        sections: updatedSections,
+        selectedNodeId: cloned.id,
+      };
+    }
+
+    case "DUPLICATE_SECTION": {
+      const sectionIndex = state.sections.findIndex((s: SectionInstance) => s.id === action.sectionId);
+      const original = state.sections[sectionIndex];
+      if (sectionIndex === -1 || !original) return state;
+      const cloned = cloneSection(original);
+      const newSections = [...state.sections];
+      newSections.splice(sectionIndex + 1, 0, cloned);
+      return {
+        ...state,
+        sections: newSections,
+        selectedNodeId: cloned.id,
+      };
+    }
+
+    case "INSERT_TEMPLATE_SECTION": {
+      return {
+        ...state,
+        sections: [...state.sections, action.section],
+        selectedNodeId: action.section.id,
+      };
+    }
+
+    case "SET_PAGE_THEME": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          themeId: action.themeId ?? undefined,
+        },
+      };
+    }
 
     default:
       return state;
@@ -547,16 +676,96 @@ function pageBuilderReducer(
 }
 
 // ---------------------------------------------------------------------------
+// History wrapper (undo/redo)
+// ---------------------------------------------------------------------------
+
+const HISTORY_LIMIT = 50;
+
+const HISTORY_IGNORED_ACTIONS = new Set<PageBuilderAction["type"]>([
+  "SET_PAGES",
+  "CLEAR_CURRENT_PAGE",
+  "SELECT_NODE",
+  "TOGGLE_LEFT_PANEL",
+  "TOGGLE_RIGHT_PANEL",
+  "COPY_SECTION",
+  "COPY_BLOCK",
+  "UPDATE_PAGE_SLUGS",
+]);
+
+function makeSnapshot(state: PageBuilderState): PageBuilderSnapshot {
+  return {
+    currentPage: state.currentPage,
+    sections: state.sections,
+  };
+}
+
+export function pageBuilderReducer(state: PageBuilderState, action: PageBuilderAction): PageBuilderState {
+  if (action.type === "UNDO") {
+    if (state.history.past.length === 0) return state;
+    const previous = state.history.past[state.history.past.length - 1];
+    const past = state.history.past.slice(0, -1);
+    const future = [makeSnapshot(state), ...state.history.future];
+    return {
+      ...state,
+      currentPage: previous.currentPage,
+      sections: previous.sections,
+      selectedNodeId: null,
+      history: { past, future },
+    };
+  }
+
+  if (action.type === "REDO") {
+    if (state.history.future.length === 0) return state;
+    const next = state.history.future[0];
+    const future = state.history.future.slice(1);
+    const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
+    return {
+      ...state,
+      currentPage: next.currentPage,
+      sections: next.sections,
+      selectedNodeId: null,
+      history: { past, future },
+    };
+  }
+
+  const nextState = basePageBuilderReducer(state, action);
+
+  if (nextState === state) return state;
+
+  if (action.type === "SET_CURRENT_PAGE") {
+    return {
+      ...nextState,
+      history: { past: [], future: [] },
+    };
+  }
+
+  if (HISTORY_IGNORED_ACTIONS.has(action.type)) {
+    return {
+      ...nextState,
+      history: state.history,
+    };
+  }
+
+  const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
+  return {
+    ...nextState,
+    history: { past, future: [] },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
-const initialState: PageBuilderState = {
+export const initialState: PageBuilderState = {
   pages: [],
   currentPage: null,
   sections: [],
   selectedNodeId: null,
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
+  clipboard: null,
+  history: { past: [], future: [] },
 };
 
 interface PageBuilderContextValue {

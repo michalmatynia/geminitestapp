@@ -1,4 +1,4 @@
-import type { SectionDefinition, BlockDefinition, SettingsField } from "../../types/page-builder";
+import type { SectionDefinition, BlockDefinition, SettingsField, PageZone } from "../../types/page-builder";
 
 // ---------------------------------------------------------------------------
 // Shared field helpers
@@ -30,13 +30,31 @@ function marginFields(): SettingsField[] {
   ];
 }
 
+function sectionStyleFields(): SettingsField[] {
+  return [
+    { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+    { key: "sectionBorder", label: "Border", type: "border", defaultValue: { width: 0, style: "none", color: "#4b5563", radius: 0 } },
+    { key: "sectionShadow", label: "Shadow", type: "shadow", defaultValue: { x: 0, y: 0, blur: 0, spread: 0, color: "#00000000" } },
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "Button", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "ImageWithText", "RichText", "Hero"];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
+  Announcement: {
+    type: "Announcement",
+    label: "Announcement",
+    icon: "Megaphone",
+    defaultSettings: { text: "Announcement", link: "" },
+    settingsSchema: [
+      { key: "text", label: "Text", type: "text", defaultValue: "Announcement" },
+      { key: "link", label: "Link", type: "link", defaultValue: "" },
+    ],
+  },
   Column: {
     type: "Column",
     label: "Column",
@@ -90,6 +108,12 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "medium",
       },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
   Text: {
@@ -99,6 +123,10 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     defaultSettings: { textContent: "" },
     settingsSchema: [
       { key: "textContent", label: "Text", type: "text", defaultValue: "" },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
   Button: {
@@ -119,6 +147,14 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "solid",
       },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "" },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
+      { key: "bgColor", label: "Background color", type: "color", defaultValue: "" },
+      { key: "borderColor", label: "Border color", type: "color", defaultValue: "" },
+      { key: "borderRadius", label: "Border radius (px)", type: "number", defaultValue: 0 },
+      { key: "borderWidth", label: "Border width (px)", type: "number", defaultValue: 0 },
     ],
   },
   ImageWithText: {
@@ -208,6 +244,89 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       ...paddingFields(),
     ],
   },
+  Image: {
+    type: "Image",
+    label: "Image",
+    icon: "ImageIcon",
+    defaultSettings: { src: "", alt: "", width: 100, borderRadius: 0 },
+    settingsSchema: [
+      { key: "src", label: "Image", type: "image" },
+      { key: "alt", label: "Alt text", type: "text", defaultValue: "" },
+      { key: "width", label: "Width (%)", type: "range", defaultValue: 100, min: 10, max: 100 },
+      { key: "borderRadius", label: "Border radius", type: "number", defaultValue: 0 },
+    ],
+  },
+  VideoEmbed: {
+    type: "VideoEmbed",
+    label: "Video embed",
+    icon: "Video",
+    defaultSettings: { url: "", aspectRatio: "16:9", autoplay: "no" },
+    settingsSchema: [
+      { key: "url", label: "Video URL", type: "text", defaultValue: "" },
+      {
+        key: "aspectRatio",
+        label: "Aspect ratio",
+        type: "select",
+        options: [
+          { label: "16:9", value: "16:9" },
+          { label: "4:3", value: "4:3" },
+          { label: "1:1", value: "1:1" },
+        ],
+        defaultValue: "16:9",
+      },
+      {
+        key: "autoplay",
+        label: "Autoplay",
+        type: "select",
+        options: [
+          { label: "No", value: "no" },
+          { label: "Yes", value: "yes" },
+        ],
+        defaultValue: "no",
+      },
+    ],
+  },
+  Divider: {
+    type: "Divider",
+    label: "Divider",
+    icon: "Minus",
+    defaultSettings: { dividerStyle: "solid", thickness: 1, dividerColor: "#4b5563" },
+    settingsSchema: [
+      {
+        key: "dividerStyle",
+        label: "Style",
+        type: "select",
+        options: [
+          { label: "Solid", value: "solid" },
+          { label: "Dashed", value: "dashed" },
+          { label: "Dotted", value: "dotted" },
+        ],
+        defaultValue: "solid",
+      },
+      { key: "thickness", label: "Thickness (px)", type: "number", defaultValue: 1 },
+      { key: "dividerColor", label: "Color", type: "color", defaultValue: "#4b5563" },
+    ],
+  },
+  SocialLinks: {
+    type: "SocialLinks",
+    label: "Social links",
+    icon: "Share2",
+    defaultSettings: { platforms: "" },
+    settingsSchema: [
+      { key: "platforms", label: "Platform URLs (comma-separated)", type: "text", defaultValue: "" },
+    ],
+  },
+  Icon: {
+    type: "Icon",
+    label: "Icon",
+    icon: "Smile",
+    defaultSettings: { iconName: "Star", iconSize: 24, iconColor: "#ffffff" },
+    settingsSchema: [
+      { key: "iconName", label: "Icon name", type: "text", defaultValue: "Star" },
+      { key: "iconSize", label: "Size (px)", type: "number", defaultValue: 24 },
+      { key: "iconColor", label: "Color", type: "color", defaultValue: "#ffffff" },
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -215,6 +334,34 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
 // ---------------------------------------------------------------------------
 
 export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
+  AnnouncementBar: {
+    type: "AnnouncementBar",
+    label: "Announcement bar",
+    icon: "Megaphone",
+    allowedBlockTypes: ["Announcement", "Text", "Button", "Icon"],
+    defaultSettings: {
+      colorScheme: "scheme-2",
+      paddingTop: 12,
+      paddingBottom: 12,
+      contentAlignment: "center",
+    },
+    settingsSchema: [
+      colorSchemeField("colorScheme", "Color scheme", "scheme-2"),
+      {
+        key: "contentAlignment",
+        label: "Content alignment",
+        type: "select",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+        defaultValue: "center",
+      },
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
   ImageWithText: {
     type: "ImageWithText",
     label: "Image with text",
@@ -314,6 +461,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         defaultValue: "none",
       },
       ...paddingFields(),
+      ...sectionStyleFields(),
     ],
   },
 
@@ -330,6 +478,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     settingsSchema: [
       colorSchemeField("colorScheme", "Color scheme"),
       ...paddingFields(),
+      ...sectionStyleFields(),
     ],
   },
 
@@ -364,6 +513,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       ...paddingFields(),
       ...marginFields(),
       colorSchemeField("colorScheme", "Color scheme"),
+      ...sectionStyleFields(),
     ],
   },
 
@@ -394,6 +544,181 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       },
       colorSchemeField("colorScheme", "Color scheme"),
       ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  Accordion: {
+    type: "Accordion",
+    label: "Accordion",
+    icon: "ListCollapse",
+    allowedBlockTypes: ["Heading", "Text"],
+    defaultSettings: {
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  Testimonials: {
+    type: "Testimonials",
+    label: "Testimonials",
+    icon: "Quote",
+    allowedBlockTypes: ["Heading", "Text", "Image"],
+    defaultSettings: {
+      layout: "grid",
+      columns: 3,
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      {
+        key: "layout",
+        label: "Layout",
+        type: "select",
+        options: [
+          { label: "Grid", value: "grid" },
+          { label: "Carousel", value: "carousel" },
+        ],
+        defaultValue: "grid",
+      },
+      { key: "columns", label: "Columns", type: "range", defaultValue: 3, min: 1, max: 4 },
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  Video: {
+    type: "Video",
+    label: "Video",
+    icon: "Video",
+    allowedBlockTypes: [],
+    defaultSettings: {
+      videoUrl: "",
+      aspectRatio: "16:9",
+      autoplay: "no",
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      { key: "videoUrl", label: "Video URL", type: "text", defaultValue: "" },
+      {
+        key: "aspectRatio",
+        label: "Aspect ratio",
+        type: "select",
+        options: [
+          { label: "16:9", value: "16:9" },
+          { label: "4:3", value: "4:3" },
+          { label: "1:1", value: "1:1" },
+        ],
+        defaultValue: "16:9",
+      },
+      {
+        key: "autoplay",
+        label: "Autoplay",
+        type: "select",
+        options: [
+          { label: "No", value: "no" },
+          { label: "Yes", value: "yes" },
+        ],
+        defaultValue: "no",
+      },
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  Slideshow: {
+    type: "Slideshow",
+    label: "Slideshow",
+    icon: "GalleryHorizontal",
+    allowedBlockTypes: ["Image", "Heading", "Text", "Button"],
+    defaultSettings: {
+      transition: "fade",
+      autoplaySpeed: 5000,
+      showDots: "yes",
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      {
+        key: "transition",
+        label: "Transition",
+        type: "select",
+        options: [
+          { label: "Fade", value: "fade" },
+          { label: "Slide", value: "slide" },
+        ],
+        defaultValue: "fade",
+      },
+      { key: "autoplaySpeed", label: "Autoplay speed (ms)", type: "number", defaultValue: 5000 },
+      {
+        key: "showDots",
+        label: "Show dots",
+        type: "select",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        defaultValue: "yes",
+      },
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  Newsletter: {
+    type: "Newsletter",
+    label: "Newsletter",
+    icon: "Mail",
+    allowedBlockTypes: ["Heading", "Text"],
+    defaultSettings: {
+      buttonText: "Subscribe",
+      placeholder: "Enter your email",
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      { key: "buttonText", label: "Button text", type: "text", defaultValue: "Subscribe" },
+      { key: "placeholder", label: "Placeholder", type: "text", defaultValue: "Enter your email" },
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+
+  ContactForm: {
+    type: "ContactForm",
+    label: "Contact form",
+    icon: "Send",
+    allowedBlockTypes: [],
+    defaultSettings: {
+      fields: "name,email,message",
+      submitText: "Send message",
+      successMessage: "Thank you! We will be in touch.",
+      colorScheme: "scheme-1",
+      paddingTop: 36,
+      paddingBottom: 36,
+    },
+    settingsSchema: [
+      { key: "fields", label: "Fields (comma-separated)", type: "text", defaultValue: "name,email,message" },
+      { key: "submitText", label: "Submit button text", type: "text", defaultValue: "Send message" },
+      { key: "successMessage", label: "Success message", type: "text", defaultValue: "Thank you! We will be in touch." },
+      colorSchemeField("colorScheme", "Color scheme"),
+      ...paddingFields(),
+      ...sectionStyleFields(),
     ],
   },
 };
@@ -412,6 +737,19 @@ export function getBlockDefinition(type: string): BlockDefinition | undefined {
 
 export function getAllSectionTypes(): SectionDefinition[] {
   return Object.values(SECTION_DEFINITIONS);
+}
+
+const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
+  header: ["AnnouncementBar", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  template: Object.keys(SECTION_DEFINITIONS).filter((type) => type !== "AnnouncementBar"),
+  footer: ["RichText", "Grid", "Newsletter", "ContactForm"],
+};
+
+export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {
+  const types = SECTION_TYPES_BY_ZONE[zone] ?? Object.keys(SECTION_DEFINITIONS);
+  return types
+    .map((type: string) => SECTION_DEFINITIONS[type])
+    .filter((def: SectionDefinition | undefined): def is SectionDefinition => def !== undefined);
 }
 
 export function getAllowedBlockTypes(sectionType: string): BlockDefinition[] {

@@ -14,6 +14,7 @@ const toRecord = (imageFile: {
   size: number;
   width: number | null;
   height: number | null;
+  tags: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 }): ImageFileRecord => ({
@@ -24,6 +25,7 @@ const toRecord = (imageFile: {
   size: imageFile.size,
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
+  tags: imageFile.tags ?? [],
   createdAt: imageFile.createdAt,
   updatedAt: imageFile.updatedAt,
 });
@@ -38,6 +40,7 @@ export const prismaImageFileRepository: ImageFileRepository = {
         size: data.size,
         width: data.width ?? null,
         height: data.height ?? null,
+        tags: data.tags ?? [],
       },
     });
     return toRecord(imageFile);
@@ -50,16 +53,15 @@ export const prismaImageFileRepository: ImageFileRepository = {
 
   async listImageFiles(filters?: ImageFileListFilters) {
     const filename = filters?.filename?.trim();
-    const files = await prisma.imageFile.findMany({
-      ...(filename && {
-        where: {
-          filename: {
-            contains: filename,
-            mode: "insensitive",
-          },
-        },
-      }),
-    });
+    const tags = (filters?.tags ?? []).filter(Boolean);
+    const where: Record<string, unknown> = {};
+    if (filename) {
+      where.filename = { contains: filename, mode: "insensitive" };
+    }
+    if (tags.length > 0) {
+      where.tags = { hasSome: tags };
+    }
+    const files = await prisma.imageFile.findMany({ where });
     return files.map(toRecord);
   },
 
@@ -75,6 +77,14 @@ export const prismaImageFileRepository: ImageFileRepository = {
     const imageFile = await prisma.imageFile.update({
       where: { id },
       data: { filepath },
+    });
+    return imageFile ? toRecord(imageFile) : null;
+  },
+
+  async updateImageFileTags(id: string, tags: string[]) {
+    const imageFile = await prisma.imageFile.update({
+      where: { id },
+      data: { tags },
     });
     return imageFile ? toRecord(imageFile) : null;
   },

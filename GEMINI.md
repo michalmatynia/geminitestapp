@@ -44,6 +44,11 @@ AI_PATHS_RUN_CONCURRENCY=1
 AI_PATHS_RUN_MAX_ATTEMPTS=3
 AI_PATHS_RUN_BACKOFF_MS=5000
 AI_PATHS_RUN_BACKOFF_MAX_MS=60000
+AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS=60
+AI_PATHS_RUN_RATE_LIMIT_MAX=20
+AI_PATHS_RUN_ACTIVE_LIMIT=5
+AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS=60
+AI_PATHS_ACTION_RATE_LIMIT_MAX=120
 ```
 
 ## Stack (Actual Versions)
@@ -52,7 +57,7 @@ AI_PATHS_RUN_BACKOFF_MAX_MS=60000
 - React 19.2.3
 - TypeScript 5.9 (strict true)
 - Prisma 7.2.0 + Postgres
-- MongoDB optional provider for products/settings
+- MongoDB (required for AI Paths + auth/users; optional for products/settings)
 - Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
 - TanStack Query + TanStack Table
 - NextAuth/Auth.js 5.0.0-beta.30
@@ -101,15 +106,20 @@ selected by:
 See `src/features/products/services/product-provider.ts` and the repository implementations under
 `src/features/products/services/*-repository/`.
 
+Auth + user storage is MongoDB-only (NextAuth adapter, user profiles, auth security records),
+and auth settings live in the Mongo `settings` collection.
+
+CMS slugs are domain-scoped in Mongo via `cms_domains` + `cms_domain_slugs` (slugs can be shared across domains; defaults are per-domain).
+
 ## AI & Agent Runtime
 
 - **AI services**: `src/features/products/services/aiDescriptionService.ts`,
   `src/features/products/services/aiTranslationService.ts`, plus product AI job processing in
   `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
   `src/features/jobs/services/productAiService.ts`)
-- **AI Paths persistent runtime**: run records live in `AiPathRun`, `AiPathRunNode`, `AiPathRunEvent`
-  (Prisma) or `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events` (Mongo). Queue worker:
-  `src/features/jobs/workers/aiPathRunQueue.ts`.
+- **AI Paths persistent runtime**: run records live in Mongo only:
+  `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`. Queue worker:
+  `src/features/jobs/workers/aiPathRunQueue.ts`. API access is per-user scoped and rate-limited.
 - **Agent runtime**: `src/features/agent-runtime/` (planning, execution, memory, tool calls)
 - **Chatbot feature**: `src/features/chatbot/` (UI, hooks, helpers)
 - **Agent creator feature**: `src/features/agentcreator/` (agent settings UI)

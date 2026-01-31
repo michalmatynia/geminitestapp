@@ -3,7 +3,8 @@
 import { Button } from "@/shared/ui";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/features/notesapp";
 import { usePathname } from "next/navigation";
@@ -19,10 +20,78 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     setIsProgrammaticallyCollapsed,
   } = useAdminLayout();
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const didUserToggleRef = useRef(false);
+  const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
+  const programmaticCollapsedRef = useRef(false);
+  const hydratedUserRef = useRef<string | null>(null);
+  const menuCookieKey = "adminMenuCollapsed";
+
+  const setMenuCookie = useCallback((collapsed: boolean): void => {
+    if (typeof document === "undefined") return;
+    const maxAge = 60 * 60 * 24 * 365;
+    document.cookie = `${menuCookieKey}=${collapsed ? "true" : "false"}; path=/; max-age=${maxAge}; samesite=lax`;
+  }, []);
+
+  const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
+    try {
+      await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ adminMenuCollapsed: collapsed }),
+      });
+    } catch (error) {
+      console.warn("Failed to persist menu collapse preference.", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    programmaticCollapsedRef.current = isProgrammaticallyCollapsed;
+  }, [isProgrammaticallyCollapsed]);
+
+  useEffect(() => {
+    let active = true;
+    const userId = session?.user?.id ?? null;
+    if (status === "loading") return () => {
+      active = false;
+    };
+    if (!userId) return () => {
+      active = false;
+    };
+    if (userId && hydratedUserRef.current === userId) return () => {
+      active = false;
+    };
+    const hydrate = async (): Promise<void> => {
+      try {
+        const res = await fetch("/api/user/preferences", {
+          cache: "no-store",
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { adminMenuCollapsed?: boolean | null };
+        if (!active || didUserToggleRef.current || programmaticCollapsedRef.current) return;
+        if (typeof data.adminMenuCollapsed === "boolean") {
+          preferredMenuCollapsedRef.current = data.adminMenuCollapsed;
+          setIsMenuCollapsed(data.adminMenuCollapsed);
+          setMenuCookie(data.adminMenuCollapsed);
+        }
+        if (userId) {
+          hydratedUserRef.current = userId;
+        }
+      } catch (error) {
+        console.warn("Failed to load menu collapse preference.", error);
+      }
+    };
+    void hydrate();
+    return (): void => {
+      active = false;
+    };
+  }, [session?.user?.id, setIsMenuCollapsed, setMenuCookie, status]);
 
   useEffect(() => {
     if (isProgrammaticallyCollapsed && pathname !== "/admin/cms/pages/create") {
-      setIsMenuCollapsed(false);
+      setIsMenuCollapsed(preferredMenuCollapsedRef.current);
       setIsProgrammaticallyCollapsed(false);
     }
   }, [
@@ -33,8 +102,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   ]);
 
   const handleToggleCollapse = (): void => {
-    setIsMenuCollapsed(!isMenuCollapsed);
+    const nextCollapsed = !isMenuCollapsed;
+    didUserToggleRef.current = true;
+    preferredMenuCollapsedRef.current = nextCollapsed;
+    setIsMenuCollapsed(nextCollapsed);
     setIsProgrammaticallyCollapsed(false);
+    setMenuCookie(nextCollapsed);
+    void persistMenuCollapsed(nextCollapsed);
   };
 
   return (
@@ -77,9 +151,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   );
 }
 
-export function AdminLayout({ children }: { children: React.ReactNode }): React.ReactNode {
+export function AdminLayout({
+  children,
+  initialMenuCollapsed = false,
+}: {
+  children: React.ReactNode;
+  initialMenuCollapsed?: boolean;
+}): React.ReactNode {
   return (
-    <AdminLayoutProvider>
+    <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
       <NoteSettingsProvider>
         <AdminLayoutContent>{children}</AdminLayoutContent>
       </NoteSettingsProvider>

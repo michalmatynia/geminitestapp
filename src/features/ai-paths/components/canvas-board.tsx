@@ -9,12 +9,45 @@ import {
   PORT_SIZE,
   getPortOffsetY,
   formatRuntimeValue,
+  hashRuntimeValue,
   typeStyles,
   validateConnection,
+  arePortTypesCompatible,
+  formatPortDataTypes,
+  getPortDataTypes,
+  getValueTypeLabel,
+  isValueCompatibleWithTypes,
+  type PortDataType,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "../utils/ui-utils";
 
 type EdgePath = { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } };
+type ConnectionTypeMismatch = {
+  fromNode?: AiNode | null;
+  toNode?: AiNode | null;
+  fromPort: string;
+  toPort: string;
+  fromTypes: PortDataType[];
+  toTypes: PortDataType[];
+};
+type ConnectorInfo = {
+  direction: "input" | "output";
+  port: string;
+  expectedTypes: PortDataType[];
+  expectedLabel: string;
+  rawValue: unknown;
+  value: unknown;
+  isHistory: boolean;
+  historyLength: number;
+  actualType: string | null;
+  runtimeMismatch: boolean;
+  connectionMismatches: ConnectionTypeMismatch[];
+  hasMismatch: boolean;
+};
+type RuntimeHashes = {
+  inputs: Record<string, Record<string, string>>;
+  outputs: Record<string, Record<string, string>>;
+};
 
 type CanvasBoardProps = {
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -34,6 +67,8 @@ type CanvasBoardProps = {
   selectedEdgeId: string | null;
   onSelectEdgeId: (edgeId: string | null) => void;
   onRemoveEdge: (edgeId: string) => void;
+  onDisconnectPort: (direction: "input" | "output", nodeId: string, port: string) => void;
+  onReconnectInput: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
   onSelectNode: (nodeId: string) => void;
   onOpenNodeConfig: (nodeId: string) => void;
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
@@ -78,6 +113,8 @@ export function CanvasBoard({
   selectedEdgeId,
   onSelectEdgeId,
   onRemoveEdge,
+  onDisconnectPort,
+  onReconnectInput,
   onSelectNode,
   onOpenNodeConfig,
   onFireTrigger,
@@ -97,14 +134,26 @@ export function CanvasBoard({
 }: CanvasBoardProps): React.JSX.Element {
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
+  const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
+  const [inputPulseNodes, setInputPulseNodes] = React.useState<Set<string>>(() => new Set());
+  const [outputPulseNodes, setOutputPulseNodes] = React.useState<Set<string>>(() => new Set());
+  const prevHashesRef = React.useRef<RuntimeHashes | null>(null);
+  const edgePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const FLOW_ANIMATION_MS = 1600;
+  const NODE_PULSE_MS = 1400;
 
   const buildConnectorKey = (
     direction: "input" | "output",
     nodeId: string,
     port: string
-  ) => `${direction}:${nodeId}:${port}`;
+  ): string => `${direction}:${nodeId}:${port}`;
+  const buildEdgePortKey = React.useCallback(
+    (nodeId: string, port: string): string => `${nodeId}:${port}`,
+    []
+  );
 
-  const formatConnectorValue = (value: unknown) => {
+  const formatConnectorValue = (value: unknown): string => {
     if (value === undefined) return "No data yet.";
     if (value === null) return "null";
     const formatted = typeof value === "string" ? value : formatRuntimeValue(value);
@@ -112,7 +161,7 @@ export function CanvasBoard({
     return formatted;
   };
 
-  const stringifyForDiff = (value: unknown) => {
+  const stringifyForDiff = (value: unknown): string => {
     if (value === undefined) return "";
     if (value === null) return "null";
     if (typeof value === "string") return value;
@@ -124,7 +173,7 @@ export function CanvasBoard({
     }
   };
 
-  const buildDiffLines = (prev: string, next: string, limit = 120) => {
+  const buildDiffLines = (prev: string, next: string, limit = 120): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
     const prevLines = prev.split("\n");
     const nextLines = next.split("\n");
     const max = Math.max(prevLines.length, nextLines.length);
@@ -153,51 +202,145 @@ export function CanvasBoard({
     return { lines, truncated };
   };
 
-  const getPortValue = (
+  const getPortValue = React.useCallback(
+    (direction: "input" | "output", nodeId: string, port: string): unknown => {
+      const source = direction === "input" ? runtimeState.inputs : runtimeState.outputs;
+      const nodeValues = source?.[nodeId] ?? {};
+      return (nodeValues as Record<string, unknown>)[port];
+    },
+    [runtimeState]
+  );
+
+  const nodeById = React.useMemo(
+    () => new Map(nodes.map((node: AiNode) => [node.id, node])),
+    [nodes]
+  );
+
+  const getConnectionMismatches = (
     direction: "input" | "output",
     nodeId: string,
     port: string
-  ) => {
-    const source = direction === "input" ? runtimeState.inputs : runtimeState.outputs;
-    const nodeValues = source?.[nodeId] ?? {};
-    return (nodeValues as Record<string, unknown>)[port];
+  ): ConnectionTypeMismatch[] => {
+    const relevantEdges =
+      direction === "input"
+        ? edges.filter((edge: Edge) => edge.to === nodeId && edge.toPort === port)
+        : edges.filter((edge: Edge) => edge.from === nodeId && edge.fromPort === port);
+    return relevantEdges.flatMap((edge: Edge) => {
+      if (!edge.fromPort || !edge.toPort) return [];
+      const fromTypes = getPortDataTypes(edge.fromPort);
+      const toTypes = getPortDataTypes(edge.toPort);
+      if (arePortTypesCompatible(fromTypes, toTypes)) return [];
+      return [
+        {
+          fromNode: nodeById.get(edge.from) ?? null,
+          toNode: nodeById.get(edge.to) ?? null,
+          fromPort: edge.fromPort,
+          toPort: edge.toPort,
+          fromTypes,
+          toTypes,
+        },
+      ];
+    });
   };
 
-  const renderConnectorTooltip = (
+  const buildConnectorInfo = (
     direction: "input" | "output",
     nodeId: string,
     port: string
-  ) => {
-    const value = getPortValue(direction, nodeId, port);
-    const label = direction === "input" ? "Input" : "Output";
-    const history = Array.isArray(value) ? value : null;
-    const currentValue = history ? history[history.length - 1] : value;
-    const isHistory = Array.isArray(value) && value.length > 1;
+  ): ConnectorInfo => {
+    const expectedTypes = getPortDataTypes(port);
+    const rawValue = getPortValue(direction, nodeId, port);
+    const treatArrayAsHistory =
+      Array.isArray(rawValue) &&
+      !expectedTypes.includes("array") &&
+      !expectedTypes.includes("image");
+    const history = treatArrayAsHistory ? (rawValue as unknown[]) : null;
+    const value = history ? history[history.length - 1] : rawValue;
+    const actualType = value !== undefined ? getValueTypeLabel(value) : null;
+    const runtimeMismatch =
+      value !== undefined && value !== null
+        ? !isValueCompatibleWithTypes(value, expectedTypes)
+        : false;
+    const connectionMismatches = getConnectionMismatches(direction, nodeId, port);
+    const hasMismatch = runtimeMismatch || connectionMismatches.length > 0;
+    return {
+      direction,
+      port,
+      expectedTypes,
+      expectedLabel: formatPortDataTypes(expectedTypes),
+      rawValue,
+      value,
+      isHistory: Boolean(history),
+      historyLength: history ? history.length : 0,
+      actualType,
+      runtimeMismatch,
+      connectionMismatches,
+      hasMismatch,
+    };
+  };
+
+  const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element => {
+    const label = info.direction === "input" ? "Input" : "Output";
     const diff =
-      history && history.length > 1
+      info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
         ? buildDiffLines(
-            stringifyForDiff(history[history.length - 2]),
-            stringifyForDiff(history[history.length - 1])
+            stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
+            stringifyForDiff(info.rawValue[info.rawValue.length - 1])
           )
         : null;
     return (
       <div className="space-y-1">
         <div className="text-[11px] text-gray-400">
-          {label}: {formatPortLabel(port)}
+          {label}: {formatPortLabel(info.port)}
         </div>
-        {Array.isArray(value) ? (
+        <div className="text-[10px] text-gray-400">
+          Data type: <span className="text-gray-200">{info.expectedLabel}</span>
+        </div>
+        {info.actualType ? (
+          <div
+            className={`text-[10px] ${
+              info.runtimeMismatch ? "text-rose-300" : "text-gray-400"
+            }`}
+          >
+            Actual: {info.actualType}
+          </div>
+        ) : null}
+        {info.isHistory ? (
           <div className="text-[10px] text-amber-200">
-            {isHistory ? `History (${value.length})` : "Single value"}
+            {info.historyLength > 1 ? `History (${info.historyLength})` : "Single value"}
+          </div>
+        ) : null}
+        {info.runtimeMismatch ? (
+          <div className="text-[10px] text-rose-300">
+            Type mismatch (expected {info.expectedLabel})
+          </div>
+        ) : null}
+        {info.connectionMismatches.length > 0 ? (
+          <div className="space-y-1 text-[10px] text-rose-300">
+            {info.connectionMismatches.map((mismatch: ConnectionTypeMismatch, index: number) => {
+              const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? "unknown";
+              const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? "unknown";
+              return (
+                <div key={`${mismatch.fromPort}-${mismatch.toPort}-${index}`}>
+                  Connection mismatch: {fromLabel}.{formatPortLabel(mismatch.fromPort)} (
+                  {formatPortDataTypes(mismatch.fromTypes)}) {"->"} {toLabel}.
+                  {formatPortLabel(mismatch.toPort)} ({formatPortDataTypes(mismatch.toTypes)})
+                </div>
+              );
+            })}
           </div>
         ) : null}
         <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
-          {formatConnectorValue(currentValue)}
+          {formatConnectorValue(info.value)}
         </pre>
+        <div className="text-[10px] text-gray-500">
+          Right-click to disconnect. Drag to reconnect.
+        </div>
         {diff ? (
           <div className="mt-2">
             <div className="text-[10px] text-gray-400">Diff (last two passes)</div>
             <div className="mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed">
-              {diff.lines.map((line, index) => {
+              {diff.lines.map((line: { type: "add" | "remove" | "same"; text: string }, index: number) => {
                 const prefix = line.type === "add" ? "+ " : line.type === "remove" ? "- " : "  ";
                 const colorClass =
                   line.type === "add"
@@ -258,6 +401,180 @@ export function CanvasBoard({
     (): Map<string, Edge> => new Map(edges.map((edge: Edge) => [edge.id, edge])),
     [edges]
   );
+  const edgesByFromPort = React.useMemo(() => {
+    const map = new Map<string, Edge[]>();
+    edges.forEach((edge: Edge) => {
+      if (!edge.from || !edge.fromPort) return;
+      const key = buildEdgePortKey(edge.from, edge.fromPort);
+      const list = map.get(key) ?? [];
+      list.push(edge);
+      map.set(key, list);
+    });
+    return map;
+  }, [edges, buildEdgePortKey]);
+  const edgesByToPort = React.useMemo(() => {
+    const map = new Map<string, Edge[]>();
+    edges.forEach((edge: Edge) => {
+      if (!edge.to || !edge.toPort) return;
+      const key = buildEdgePortKey(edge.to, edge.toPort);
+      const list = map.get(key) ?? [];
+      list.push(edge);
+      map.set(key, list);
+    });
+    return map;
+  }, [edges, buildEdgePortKey]);
+
+  const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
+    const inputHashes: Record<string, Record<string, string>> = {};
+    const outputHashes: Record<string, Record<string, string>> = {};
+    nodes.forEach((node: AiNode) => {
+      if (node.inputs?.length) {
+        const nodeInputs = (runtimeState.inputs?.[node.id] ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const hashed: Record<string, string> = {};
+        node.inputs.forEach((port: string) => {
+          hashed[port] = hashRuntimeValue(nodeInputs[port]);
+        });
+        inputHashes[node.id] = hashed;
+      }
+      if (node.outputs?.length) {
+        const nodeOutputs = (runtimeState.outputs?.[node.id] ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const hashed: Record<string, string> = {};
+        node.outputs.forEach((port: string) => {
+          hashed[port] = hashRuntimeValue(nodeOutputs[port]);
+        });
+        outputHashes[node.id] = hashed;
+      }
+    });
+    return { inputs: inputHashes, outputs: outputHashes };
+  }, [nodes, runtimeState]);
+
+  const scheduleEdgePulse = React.useCallback(
+    (edgeId: string): void => {
+      setActiveEdgeIds((prev: Set<string>) => {
+        if (prev.has(edgeId)) return prev;
+        const next = new Set(prev);
+        next.add(edgeId);
+        return next;
+      });
+      const existing = edgePulseTimeouts.current.get(edgeId);
+      if (existing) clearTimeout(existing);
+      const timeout = setTimeout(() => {
+        setActiveEdgeIds((prev: Set<string>) => {
+          if (!prev.has(edgeId)) return prev;
+          const next = new Set(prev);
+          next.delete(edgeId);
+          return next;
+        });
+        edgePulseTimeouts.current.delete(edgeId);
+      }, FLOW_ANIMATION_MS);
+      edgePulseTimeouts.current.set(edgeId, timeout);
+    },
+    [FLOW_ANIMATION_MS]
+  );
+
+  const scheduleNodePulse = React.useCallback(
+    (nodeId: string, direction: "input" | "output"): void => {
+      const setState = direction === "input" ? setInputPulseNodes : setOutputPulseNodes;
+      const key = `${direction}:${nodeId}`;
+      setState((prev: Set<string>) => {
+        if (prev.has(nodeId)) return prev;
+        const next = new Set(prev);
+        next.add(nodeId);
+        return next;
+      });
+      const existing = nodePulseTimeouts.current.get(key);
+      if (existing) clearTimeout(existing);
+      const timeout = setTimeout(() => {
+        setState((prev: Set<string>) => {
+          if (!prev.has(nodeId)) return prev;
+          const next = new Set(prev);
+          next.delete(nodeId);
+          return next;
+        });
+        nodePulseTimeouts.current.delete(key);
+      }, NODE_PULSE_MS);
+      nodePulseTimeouts.current.set(key, timeout);
+    },
+    [NODE_PULSE_MS]
+  );
+
+  React.useEffect(() => {
+    const nextHashes = buildRuntimeHashes();
+    const prevHashes = prevHashesRef.current;
+    prevHashesRef.current = nextHashes;
+    if (!prevHashes) return;
+    const outputChanges: Array<{ nodeId: string; port: string }> = [];
+    const inputChanges: Array<{ nodeId: string; port: string }> = [];
+    Object.entries(nextHashes.outputs).forEach(([nodeId, ports]: [string, Record<string, string>]) => {
+      const prevPorts = prevHashes.outputs[nodeId];
+      if (!prevPorts) return;
+      Object.entries(ports).forEach(([port, nextHash]: [string, string]) => {
+        const prevHash = prevPorts[port];
+        if (prevHash === undefined) return;
+        if (prevHash !== nextHash) outputChanges.push({ nodeId, port });
+      });
+    });
+    Object.entries(nextHashes.inputs).forEach(([nodeId, ports]: [string, Record<string, string>]) => {
+      const prevPorts = prevHashes.inputs[nodeId];
+      if (!prevPorts) return;
+      Object.entries(ports).forEach(([port, nextHash]: [string, string]) => {
+        const prevHash = prevPorts[port];
+        if (prevHash === undefined) return;
+        if (prevHash !== nextHash) inputChanges.push({ nodeId, port });
+      });
+    });
+    if (outputChanges.length === 0 && inputChanges.length === 0) return;
+    const edgeIds = new Set<string>();
+    const inputNodes = new Set<string>();
+    const outputNodes = new Set<string>();
+    outputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
+      const value = getPortValue("output", nodeId, port);
+      if (value === undefined) return;
+      outputNodes.add(nodeId);
+      const outgoing = edgesByFromPort.get(buildEdgePortKey(nodeId, port));
+      outgoing?.forEach((edge: Edge) => {
+        edgeIds.add(edge.id);
+        if (edge.to) inputNodes.add(edge.to);
+      });
+    });
+    inputChanges.forEach(({ nodeId, port }: { nodeId: string; port: string }) => {
+      const value = getPortValue("input", nodeId, port);
+      if (value === undefined) return;
+      inputNodes.add(nodeId);
+      const incoming = edgesByToPort.get(buildEdgePortKey(nodeId, port));
+      incoming?.forEach((edge: Edge) => {
+        edgeIds.add(edge.id);
+      });
+    });
+    edgeIds.forEach((edgeId: string) => scheduleEdgePulse(edgeId));
+    outputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "output"));
+    inputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "input"));
+  }, [
+    buildRuntimeHashes,
+    buildEdgePortKey,
+    edgesByFromPort,
+    edgesByToPort,
+    getPortValue,
+    scheduleEdgePulse,
+    scheduleNodePulse,
+  ]);
+
+  React.useEffect(() => {
+    const epTimeouts = edgePulseTimeouts.current;
+    const npTimeouts = nodePulseTimeouts.current;
+    return (): void => {
+      epTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+      npTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+      epTimeouts.clear();
+      npTimeouts.clear();
+    };
+  }, []);
 
   return (
     <div
@@ -350,6 +667,7 @@ export function CanvasBoard({
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
+            const isFlowing = activeEdgeIds.has(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
             // Check if this is a schema connection (db_schema -> database)
@@ -404,6 +722,16 @@ export function CanvasBoard({
                   fill="none"
                   style={{ pointerEvents: "none" }}
                 />
+                {isFlowing ? (
+                  <path
+                    d={edge.path}
+                    className={`${edgeClass} ai-paths-wire-flow`}
+                    strokeWidth={isSelected ? 3.4 : 2.2}
+                    stroke="currentColor"
+                    fill="none"
+                    style={{ pointerEvents: "none" }}
+                  />
+                ) : null}
                 {edge.arrow ? (
                   <path
                     d={arrowPath}
@@ -481,6 +809,10 @@ export function CanvasBoard({
               : pollStatus === "failed" || pollStatus === "timeout"
                 ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
                 : "border-sky-500/60 bg-sky-500/15 text-sky-200";
+          const isScheduledTrigger =
+            node.type === "trigger" && node.config?.trigger?.event === "scheduled_run";
+          const isInputPulse = inputPulseNodes.has(node.id);
+          const isOutputPulse = outputPulseNodes.has(node.id);
           return (
             <div
               key={node.id}
@@ -504,6 +836,28 @@ export function CanvasBoard({
                   style.border
                 } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
               >
+                {isInputPulse || isOutputPulse ? (
+                  <div className="absolute -top-2 right-2 flex items-center gap-1">
+                    {isInputPulse ? (
+                      <span
+                        className="relative inline-flex h-2.5 w-2.5"
+                        title="Input loaded"
+                      >
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]" />
+                      </span>
+                    ) : null}
+                    {isOutputPulse ? (
+                      <span
+                        className="relative inline-flex h-2.5 w-2.5"
+                        title="Output sent"
+                      >
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]" />
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 {node.inputs.map((input: string, index: number) => (
                   <div
                     key={`input-${node.id}-${input}`}
@@ -529,50 +883,67 @@ export function CanvasBoard({
                             input
                           ).valid
                         : false;
+                      const connectorInfo = buildConnectorInfo("input", node.id, input);
+                      const hasIncomingEdge = edges.some(
+                        (edge: Edge): boolean =>
+                          edge.to === node.id && edge.toPort === input
+                      );
                       const connectorKey = buildConnectorKey("input", node.id, input);
                       const isPinned = pinnedConnectorKey === connectorKey;
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
+                      const hasMismatch = connectorInfo.hasMismatch;
                       return (
                         <>
                           <Tooltip
-                            content={renderConnectorTooltip("input", node.id, input)}
+                            content={renderConnectorTooltip(connectorInfo)}
                             side="right"
                             maxWidth="360px"
                             open={isTooltipOpen}
                             disableHover
                           >
-                            <button
-                              type="button"
-                              data-port="input"
-                              className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
-                                isConnecting
-                                  ? isConnectable
-                                    ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
-                                    : "border-border/60 bg-card/20 opacity-40 shadow-none"
-                                  : isPinned
-                                    ? "border-amber-300/80 ring-2 ring-amber-300/70"
-                                    : "border-sky-400/60"
-                              }`}
-                              style={{
-                                width: PORT_SIZE + 2,
-                                height: PORT_SIZE + 2,
-                              }}
-                              onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
-                                onCompleteConnection(event, node, input)
-                              }
-                              onPointerUp={(event: React.PointerEvent<HTMLButtonElement>) =>
-                                onCompleteConnection(event, node, input)
-                              }
-                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                event.stopPropagation();
-                                setPinnedConnectorKey((prev) =>
-                                  prev === connectorKey ? null : connectorKey
-                                );
-                              }}
-                              aria-label={`Connect to ${formatPortLabel(input)}`}
-                              title={`Input: ${formatPortLabel(input)}`}
-                            />
+                            <div className="relative">
+                              <button
+                                type="button"
+                                data-port="input"
+                                className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
+                                  isConnecting
+                                    ? isConnectable
+                                      ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
+                                      : "border-border/60 bg-card/20 opacity-40 shadow-none"
+                                    : isPinned
+                                      ? "border-amber-300/80 ring-2 ring-amber-300/70"
+                                      : "border-sky-400/60"
+                                }`}
+                                style={{
+                                  width: PORT_SIZE + 2,
+                                  height: PORT_SIZE + 2,
+                                }}
+                                onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+                                  event.stopPropagation();
+                                  if (connecting) return;
+                                  if (hasIncomingEdge) {
+                                    onReconnectInput(event, node.id, input);
+                                  }
+                                }}
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                  event.stopPropagation();
+                                  setPinnedConnectorKey((prev: string | null) =>
+                                    prev === connectorKey ? null : connectorKey
+                                  );
+                                }}
+                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  onDisconnectPort("input", node.id, input);
+                                }}
+                                aria-label={`Connect to ${formatPortLabel(input)}`}
+                                title={`Input: ${formatPortLabel(input)}`}
+                              />
+                              {hasMismatch ? (
+                              <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
+                              ) : null}
+                            </div>
                           </Tooltip>
                           <span
                             className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
@@ -580,7 +951,9 @@ export function CanvasBoard({
                                 ? isConnectable
                                   ? "bg-emerald-500/15 text-emerald-200"
                                   : "bg-muted/60 text-gray-500"
-                                : "bg-sky-500/10 text-sky-300"
+                                : hasMismatch
+                                  ? "bg-rose-500/15 text-rose-200"
+                                  : "bg-sky-500/10 text-sky-300"
                             }`}
                           >
                             {formatPortLabel(input)}
@@ -600,59 +973,86 @@ export function CanvasBoard({
                     }}
                     onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("output", node.id, output))}
                     onMouseLeave={() =>
-                      setHoveredConnectorKey((prev) =>
+                      setHoveredConnectorKey((prev: string | null) =>
                         prev === buildConnectorKey("output", node.id, output) ? null : prev
                       )
                     }
                   >
                     {((): React.JSX.Element => {
+                      const connectorInfo = buildConnectorInfo("output", node.id, output);
                       const connectorKey = buildConnectorKey("output", node.id, output);
                       const isPinned = pinnedConnectorKey === connectorKey;
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
+                      const hasMismatch = connectorInfo.hasMismatch;
                       return (
                         <>
-                    <span className="mr-1.5 rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-medium text-amber-300">
-                      {formatPortLabel(output)}
-                    </span>
-                    <Tooltip
-                      content={renderConnectorTooltip("output", node.id, output)}
-                      side="left"
-                      maxWidth="360px"
-                      open={isTooltipOpen}
-                      disableHover
-                    >
-                      <button
-                        type="button"
-                        data-port="output"
-                        className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
-                          isPinned ? "border-amber-300/80 ring-2 ring-amber-300/70" : "border-amber-400/60"
-                        }`}
-                        style={{
-                          width: PORT_SIZE + 2,
-                          height: PORT_SIZE + 2,
-                        }}
-                        onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => onStartConnection(event, node, output)}
-                        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                          setPinnedConnectorKey((prev) =>
-                            prev === connectorKey ? null : connectorKey
-                          );
-                        }}
-                        aria-label={`Start connection from ${formatPortLabel(output)}`}
-                        title={`Output: ${formatPortLabel(output)}`}
-                      />
-                    </Tooltip>
+                          <span
+                            className={`mr-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
+                              hasMismatch
+                                ? "bg-rose-500/15 text-rose-200"
+                                : "bg-amber-500/10 text-amber-300"
+                            }`}
+                          >
+                            {formatPortLabel(output)}
+                          </span>
+                          <Tooltip
+                            content={renderConnectorTooltip(connectorInfo)}
+                            side="left"
+                            maxWidth="360px"
+                            open={isTooltipOpen}
+                            disableHover
+                          >
+                            <div className="relative">
+                              <button
+                                type="button"
+                                data-port="output"
+                                className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
+                                  isPinned ? "border-amber-300/80 ring-2 ring-amber-300/70" : "border-amber-400/60"
+                                }`}
+                                style={{
+                                  width: PORT_SIZE + 2,
+                                  height: PORT_SIZE + 2,
+                                }}
+                                onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
+                                  onStartConnection(event, node, output)
+                                }
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                  event.stopPropagation();
+                                  setPinnedConnectorKey((prev) =>
+                                    prev === connectorKey ? null : connectorKey
+                                  );
+                                }}
+                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  onDisconnectPort("output", node.id, output);
+                                }}
+                                aria-label={`Start connection from ${formatPortLabel(output)}`}
+                                title={`Output: ${formatPortLabel(output)}`}
+                              />
+                              {hasMismatch ? (
+                                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60" />
+                              ) : null}
+                            </div>
+                          </Tooltip>
                         </>
                       );
                     })()}
                   </div>
                 ))}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-white">{node.title}</span>
-                  <span className="rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400">
-                    {node.type}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {isScheduledTrigger ? (
+                      <span className="rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                        Scheduled
+                      </span>
+                    ) : null}
+                    <span className="rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400">
+                      {node.type}
+                    </span>
+                  </div>
                 </div>
                 {node.type === "model" && modelStatusLabel && (
                   <div
@@ -685,7 +1085,9 @@ export function CanvasBoard({
                 )}
                 {node.type === "trigger" && (
                   <div className="text-[10px] uppercase text-lime-200/80">
-                    Accepts simulation input
+                    {isScheduledTrigger
+                      ? "Server scheduled trigger"
+                      : "Accepts simulation input"}
                   </div>
                 )}
                 {node.type === "context" && (

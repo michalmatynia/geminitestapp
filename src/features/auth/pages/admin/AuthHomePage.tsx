@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 
@@ -32,7 +33,7 @@ const cards = [
   },
 ];
 
-export default function AuthPage() {
+export default function AuthPage(): React.JSX.Element {
   return (
     <SectionPanel className="p-6">
       <SectionHeader
@@ -42,7 +43,7 @@ export default function AuthPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
+        {cards.map((card: { title: string; description: string; href: string }) => (
           <Link
             key={card.title}
             href={card.href}

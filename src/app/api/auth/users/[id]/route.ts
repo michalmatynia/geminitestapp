@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/features/auth/server";
 import { normalizeAuthEmail } from "@/features/auth/server";
 import { auth } from "@/features/auth/server";
 import { parseJsonBody } from "@/features/products/server";
@@ -54,106 +52,58 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
       );
     }
 
-    const provider = await getAuthDataProvider();
     const { id: userId } = params;
+    const provider = "mongodb" as const;
 
-    if (provider === "mongodb") {
-      if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
-      }
-      if (!ObjectId.isValid(userId)) {
-        throw notFoundError("User not found.");
-      }
-      const db = await getMongoDb();
-      const objectId = new ObjectId(userId);
-      const existing = await db
-        .collection<MongoUserDoc>("users")
-        .findOne({ _id: objectId });
-      if (!existing) {
-        throw notFoundError("User not found.");
-      }
-
-      const nextEmail =
-        typeof email === "string" ? normalizeAuthEmail(email) : undefined;
-      if (nextEmail && nextEmail !== existing.email) {
-        const conflict = await db
-          .collection<MongoUserDoc>("users")
-          .findOne({ email: nextEmail });
-        if (conflict && conflict._id.toString() !== userId) {
-          throw conflictError("Email already in use.");
-        }
-      }
-
-      const updateDoc: Partial<MongoUserDoc> = {
-        ...(typeof name === "string" ? { name } : {}),
-        ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
-        ...(typeof emailVerified === "boolean"
-          ? { emailVerified: emailVerified ? new Date() : null }
-          : {}),
-        updatedAt: new Date(),
-      };
-
-      await db.collection<MongoUserDoc>("users").updateOne(
-        { _id: objectId },
-        { $set: updateDoc }
-      );
-
-      const updated = await db
-        .collection<MongoUserDoc>("users")
-        .findOne({ _id: objectId });
-      if (!updated) {
-        throw notFoundError("User not found.");
-      }
-
-      const payload: AuthUserSummary = {
-        id: updated._id.toString(),
-        email: updated.email ?? null,
-        name: updated.name ?? null,
-        image: updated.image ?? null,
-        emailVerified: updated.emailVerified
-          ? updated.emailVerified.toISOString()
-          : null,
-        provider,
-      };
-      return NextResponse.json(payload);
+    if (!process.env.MONGODB_URI) {
+      throw internalError("MongoDB is not configured.");
     }
-
-    if (!process.env.DATABASE_URL) {
-      throw internalError("Postgres is not configured.");
+    if (!ObjectId.isValid(userId)) {
+      throw notFoundError("User not found.");
+    }
+    const db = await getMongoDb();
+    const objectId = new ObjectId(userId);
+    const existing = await db
+      .collection<MongoUserDoc>("users")
+      .findOne({ _id: objectId });
+    if (!existing) {
+      throw notFoundError("User not found.");
     }
 
     const nextEmail =
       typeof email === "string" ? normalizeAuthEmail(email) : undefined;
-    if (nextEmail) {
-      const conflict = await prisma.user.findUnique({
-        where: { email: nextEmail },
-        select: { id: true },
-      });
-      if (conflict && conflict.id !== userId) {
+    if (nextEmail && nextEmail !== existing.email) {
+      const conflict = await db
+        .collection<MongoUserDoc>("users")
+        .findOne({ email: nextEmail });
+      if (conflict && conflict._id.toString() !== userId) {
         throw conflictError("Email already in use.");
       }
     }
 
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(typeof name === "string" ? { name } : {}),
-        ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
-        ...(typeof emailVerified === "boolean"
-          ? { emailVerified: emailVerified ? new Date() : null }
-          : {}),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        emailVerified: true,
-      },
-    });
+    const updateDoc: Partial<MongoUserDoc> = {
+      ...(typeof name === "string" ? { name } : {}),
+      ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
+      ...(typeof emailVerified === "boolean"
+        ? { emailVerified: emailVerified ? new Date() : null }
+        : {}),
+      updatedAt: new Date(),
+    };
+
+    await db.collection<MongoUserDoc>("users").updateOne(
+      { _id: objectId },
+      { $set: updateDoc }
+    );
+
+    const updated = await db
+      .collection<MongoUserDoc>("users")
+      .findOne({ _id: objectId });
+    if (!updated) {
+      throw notFoundError("User not found.");
+    }
 
     const payload: AuthUserSummary = {
-      id: updated.id,
+      id: updated._id.toString(),
       email: updated.email ?? null,
       name: updated.name ?? null,
       image: updated.image ?? null,
@@ -162,7 +112,6 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
         : null,
       provider,
     };
-
     return NextResponse.json(payload);
   } catch (error) {
     return createErrorResponse(error, {

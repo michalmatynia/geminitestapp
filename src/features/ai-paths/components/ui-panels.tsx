@@ -335,7 +335,8 @@ export function DocsTabPanel({
             <h4 className="text-sm font-semibold text-white">Trigger</h4>
             <p className="mt-2 text-gray-400">
               The execution hub. Accepts simulation input and emits trigger,
-              context, and meta outputs.
+              context, and meta outputs. Use Scheduled Run for server-initiated
+              periodic jobs.
             </p>
           </div>
           <div className="rounded-md border border-border bg-card/50 p-4">

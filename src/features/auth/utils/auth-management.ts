@@ -51,6 +51,11 @@ export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
     description: "Manage chatbot sessions, jobs, and settings.",
   },
   {
+    id: "ai_paths.manage",
+    name: "Manage AI paths",
+    description: "Configure and run AI Paths automation flows.",
+  },
+  {
     id: "settings.manage",
     name: "Manage settings",
     description: "Change platform configuration and integrations.",
@@ -91,6 +96,7 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
       "products.manage",
       "notes.manage",
       "chatbot.manage",
+      "ai_paths.manage",
     ],
     deniedPermissions: [],
     level: 60,

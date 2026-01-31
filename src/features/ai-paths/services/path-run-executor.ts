@@ -175,8 +175,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     return;
   }
 
-  const nodes = normalizeNodes(graph.nodes as AiNode[]);
-  const edges = sanitizeEdges(nodes, graph.edges as Edge[]);
+  const nodes = normalizeNodes(graph.nodes);
+  const edges = sanitizeEdges(nodes, graph.edges);
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,
@@ -223,7 +223,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       activePathName: run.pathName ?? null,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
-      ...(run.triggerContext ? { triggerContext: run.triggerContext as Record<string, unknown> } : {}),
+      ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
       seedHashes: runtimeState.hashes ?? undefined,
       seedHistory: runtimeState.history ?? undefined,

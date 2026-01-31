@@ -25,7 +25,7 @@ const normalizeNumber = (value: number, fallback: number, min = 0) => {
   return Math.max(min, value);
 };
 
-const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>) => {
+export const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>) => {
   const base =
     typeof meta?.backoffMs === "number" ? meta.backoffMs : DEFAULT_BACKOFF_MS;
   const max =
@@ -40,7 +40,7 @@ const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>) =>
   return Math.max(0, withJitter);
 };
 
-const processRun = async (run: AiPathRunRecord) => {
+export const processRun = async (run: AiPathRunRecord) => {
   console.log(`[aiPathRunQueue] Processing run ${run.id}`);
   try {
     await executePathRun(run);

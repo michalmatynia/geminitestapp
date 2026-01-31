@@ -31,7 +31,16 @@ export function startAgentQueue() {
   }, 2000);
 }
 
-async function processAgentQueue() {
+export function stopAgentQueue() {
+  const state = getState();
+  if (state.timer) {
+    clearInterval(state.timer);
+    state.timer = null;
+  }
+  state.running = false;
+}
+
+export async function processAgentQueue() {
   const state = getState();
   if (state.running) return;
   state.running = true;

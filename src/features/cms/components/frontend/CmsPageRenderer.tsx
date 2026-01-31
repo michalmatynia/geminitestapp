@@ -1,11 +1,18 @@
 import React from "react";
 import type { PageComponent } from "../../types";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
-import type { GsapAnimationConfig } from "../../types/animation";
+import type { GsapAnimationConfig } from "@/features/gsap";
+import { FrontendAnnouncementBarSection } from "./sections/FrontendAnnouncementBarSection";
 import { FrontendHeroSection } from "./sections/FrontendHeroSection";
 import { FrontendImageWithTextSection } from "./sections/FrontendImageWithTextSection";
 import { FrontendRichTextSection } from "./sections/FrontendRichTextSection";
 import { FrontendGridSection } from "./sections/FrontendGridSection";
+import { FrontendAccordionSection } from "./sections/FrontendAccordionSection";
+import { FrontendTestimonialsSection } from "./sections/FrontendTestimonialsSection";
+import { FrontendVideoSection } from "./sections/FrontendVideoSection";
+import { FrontendSlideshowSection } from "./sections/FrontendSlideshowSection";
+import { FrontendNewsletterSection } from "./sections/FrontendNewsletterSection";
+import { FrontendContactFormSection } from "./sections/FrontendContactFormSection";
 import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
 
 // ---------------------------------------------------------------------------
@@ -43,7 +50,7 @@ export function CmsPageRenderer({ components }: CmsPageRendererProps): React.Rea
       settings: content.settings ?? {},
       blocks: content.blocks ?? [],
     };
-  });
+  }).filter((section) => !section.settings["isHidden"]);
 
   // Group by zone and render in order
   const sectionsByZone: Record<PageZone, typeof sections> = {
@@ -89,6 +96,8 @@ interface SectionRendererProps {
 
 function SectionRenderer({ type, settings, blocks }: SectionRendererProps): React.ReactNode {
   switch (type) {
+    case "AnnouncementBar":
+      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} />;
     case "Hero":
       return <FrontendHeroSection settings={settings} blocks={blocks} />;
     case "ImageWithText":
@@ -97,6 +106,18 @@ function SectionRenderer({ type, settings, blocks }: SectionRendererProps): Reac
       return <FrontendRichTextSection settings={settings} blocks={blocks} />;
     case "Grid":
       return <FrontendGridSection settings={settings} blocks={blocks} />;
+    case "Accordion":
+      return <FrontendAccordionSection settings={settings} blocks={blocks} />;
+    case "Testimonials":
+      return <FrontendTestimonialsSection settings={settings} blocks={blocks} />;
+    case "Video":
+      return <FrontendVideoSection settings={settings} />;
+    case "Slideshow":
+      return <FrontendSlideshowSection settings={settings} blocks={blocks} />;
+    case "Newsletter":
+      return <FrontendNewsletterSection settings={settings} blocks={blocks} />;
+    case "ContactForm":
+      return <FrontendContactFormSection settings={settings} />;
     default:
       return null;
   }

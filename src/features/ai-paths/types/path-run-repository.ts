@@ -10,6 +10,7 @@ import type {
 } from "@/shared/types/ai-paths";
 
 export type AiPathRunCreateInput = {
+  userId?: string | null;
   pathId: string;
   pathName?: string | null;
   triggerEvent?: string | null;
@@ -28,7 +29,7 @@ export type AiPathRunCreateInput = {
 export type AiPathRunUpdate = Partial<
   Omit<
     AiPathRunRecord,
-    "id" | "pathId" | "createdAt" | "graph" | "triggerContext"
+    "id" | "userId" | "pathId" | "createdAt" | "graph" | "triggerContext"
   >
 > & {
   status?: AiPathRunStatus;
@@ -55,9 +56,13 @@ export type AiPathRunEventListOptions = {
 };
 
 export type AiPathRunListOptions = {
+  userId?: string | null;
   pathId?: string;
   status?: AiPathRunStatus;
+  statuses?: AiPathRunStatus[];
   query?: string;
+  createdAfter?: Date | string | null;
+  createdBefore?: Date | string | null;
   limit?: number;
   offset?: number;
 };

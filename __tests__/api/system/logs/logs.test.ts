@@ -34,7 +34,7 @@ describe('System Logs API', () => {
     ]);
 
     const req = new NextRequest('http://localhost/api/system/logs?page=1&pageSize=10');
-    const res = await GET(req, { params: {} } as any);
+    const res = await GET(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -62,7 +62,7 @@ describe('System Logs API', () => {
       method: 'POST',
       body: JSON.stringify(logData),
     });
-    const res = await POST(req, { params: {} } as any);
+    const res = await POST(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -76,7 +76,7 @@ describe('System Logs API', () => {
     const req = new NextRequest('http://localhost/api/system/logs', {
       method: 'DELETE',
     });
-    const res = await DELETE(req, { params: {} } as any);
+    const res = await DELETE(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);

@@ -83,6 +83,7 @@ model ImageFile {
   size      Int
   width     Int?
   height    Int?
+  tags      String[]       @default([])
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   products  ProductImage[] // Relation to the join table
@@ -499,6 +500,18 @@ model Slug {
   pages     PageSlug[]
 }
 
+model CmsTheme {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  colors     Json
+  typography Json
+  spacing    Json
+  customCss  String?
+  pages      Page[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model Page {
   id             String          @id @default(cuid())
   name           String
@@ -509,6 +522,8 @@ model Page {
   seoOgImage     String?
   seoCanonical   String?
   robotsMeta     String?         @default("index,follow")
+  themeId        String?
+  theme          CmsTheme?       @relation(fields: [themeId], references: [id], onDelete: SetNull)
   slugs          PageSlug[]
   components     PageComponent[]
   blocks         PageBlock[]
@@ -896,6 +911,7 @@ model ProductAiJob {
 
 model AiPathRun {
   id            String         @id @default(cuid())
+  userId        String?
   pathId        String
   pathName      String?
   status        AiPathRunStatus @default(queued)
@@ -921,6 +937,7 @@ model AiPathRun {
   events  AiPathRunEvent[]
 
   @@index([pathId])
+  @@index([userId])
   @@index([status])
   @@index([createdAt])
   @@index([nextRetryAt])

@@ -13,78 +13,10 @@ I cannot hightlight text in Product list, the finger pointer is too spread, also
 
 unify Refresh button so that it's one component everywhere
 
-Collapsible Menu on the left in the Admin should be remembered if I left it collapsed or not
-Disconnecting the wire should clear the information in the connection socket (but not from the history of node input output)
-
----
-I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework
-Jobs system for the whole Path
-
-Polling
-
-Action logger
- 1. Persistent runtime engine (resume runs, track node status, replay/retry, audit history) <-
-  2. Execution scheduling (queue, concurrency limits, retries, backoff, dead-letter) <-
-     a. Add a dead‑letter review screen (filter + requeue from DLQ). <- 
-  b. Add per‑node retry controls in the Run Details modal. <-
-
-  3. Streaming + progress tracking (node-by-node status, live logs, timestamps)
-  4. Deterministic execution + caching (hash inputs, memoize node outputs)  <- done
-  5. Multi-tenant safety (per-user isolation, permissions, rate limits)
-  6. Visual runtime timeline (per-run trace + logs shown in UI)
-
-There is an error in the prompt node, when I first connected the EntityID output to Result input in the Prompt Node before any run was made, the result was shown in the output as prompt, it should not be the result there but be whatever is in the prompt field. If the prompt is empty, the prompt output should also be empty.
-
-* Each node should have an input output history, everything that goes in or out is to be recorder on a per node basis with timestap, which path executed it, which node did the information come from and which node did the information go to or whether a node failed or delayed passing the information.
-
-AI Paths should have a separate Job queue, meaning a separate Tab for job queue, job queue entries should contain maximum information about each run (timestamps, run history, which nodes participates, input and outputs. everything you can record about a job  run should be there)
-
-Animated wires, that show the signal path, if data is on the way to another node, the node that takes data is should have some visual signifier that the input has been loaded or that the output is out
-  describe everything in Docs
-
-* The whole AI Paths system is connected to MongoDB as this is the currently default Database
-  * Each Node connector is also an individual data container that retains data passed around. When I hover over a connector, I should be able to see the data that it currently holds that is to be passover, or the data from previous passes
+* Collapsible Menu on the left in the Admin should be remembered if I left it collapsed or not
+* Disconnecting the wire should clear the information in the connection socket (but not from the history of node input output)
 
 
----
-node module inputs and output should have a step by step logger, logging all the data that is coming in and that is coming out
-
----
-
-
-Generating Product updates via Database Query Node works if I click on Run, It works through trigger event as well, and goes through a complete signal path until it reaches the Database Query Node where it updates a product, but only if the ID is harcoded in the Query, like so:
-{
-  "id": "8f9c5c77-6c14-477a-9945-5ae41afdf908"
-}
-
-{ "$set":{"description_en": "test"}
-}
-Also, I need to hard refresh my PRoduct list to see the change, which is a proble,
-if I'm using a placeholder like this {{entityId}}, the Trigger event of Signal Path in AI Paths doesn't work. PRoducts are not updated via Database Query Node. Here's the query I used. 
-
-{
-  "id": "{{entityId}}"
-}
-
-{ "$set":{"description_en": "test"}
-}
-
----
-
-AI jobs are created even if the signal path in AI Paths doesn't have any AI model nodes connected, look at this job "36627686-61be-42be-aa1a-1985e3405e62"
-
----
-
-I need to define schemas for database
-
-
-
-
-I can't see the product immediately after product creation
-
-the mapper can assign the object {"fieldName": "{{value}}"}, this should also be helpful
-
-"{{result}}" (escaped JSON object) {{result}} (JSON object ) write it somewhere
 
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 

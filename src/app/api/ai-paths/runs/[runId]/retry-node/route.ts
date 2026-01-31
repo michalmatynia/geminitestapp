@@ -7,6 +7,13 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { retryPathRunNode } from "@/features/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
+import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { notFoundError } from "@/shared/errors/app-error";
+import {
+  assertAiPathRunAccess,
+  enforceAiPathsActionRateLimit,
+  requireAiPathsAccess,
+} from "@/features/ai-paths/server";
 
 const retrySchema = z.object({
   nodeId: z.string().trim().min(1),
@@ -18,12 +25,20 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    enforceAiPathsActionRateLimit(access, "run-retry");
     const parsed = await parseJsonBody(req, retrySchema, {
       logPrefix: "ai-paths.runs.retry-node",
     });
     if (!parsed.ok) return parsed.response;
 
     const runId: string = params.runId;
+    const repo = await getPathRunRepository();
+    const existing = await repo.findRunById(runId);
+    if (!existing) {
+      throw notFoundError("Run not found", { runId });
+    }
+    assertAiPathRunAccess(access, existing);
     const nodeId = parsed.data.nodeId;
     const run: unknown = await retryPathRunNode(runId, nodeId);
     startAiPathRunQueue();

@@ -115,14 +115,13 @@ export function RunHistoryPanel({
                       : run.status === "queued"
                         ? "text-amber-200"
                         : "text-gray-300";
-            const runHistory = (run.runtimeState?.history ?? undefined) as
-              | Record<string, RuntimeHistoryEntry[]>
-              | undefined;
+            const runHistory = (run.runtimeState?.history ?? undefined);
             const runHistoryOptions = buildHistoryNodeOptions(
               runHistory,
               null,
               run.graph?.nodes ?? null
             );
+            const isScheduledRun = run.triggerEvent === "scheduled_run";
             const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
             const selectedHistoryNodeId = runHistoryOptions.some(
               (option) => option.id === rawSelectedHistoryNodeId
@@ -144,6 +143,11 @@ export function RunHistoryPanel({
                     <div className={`text-[10px] uppercase ${statusClass}`}>
                       {run.status}
                     </div>
+                    {isScheduledRun ? (
+                      <div className="mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200">
+                        Scheduled
+                      </div>
+                    ) : null}
                     <div className="text-[11px] text-gray-400">
                       {new Date(run.createdAt).toLocaleString()}
                     </div>

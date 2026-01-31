@@ -4,6 +4,13 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { cancelPathRun } from "@/features/ai-paths/services/path-run-service";
+import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { notFoundError } from "@/shared/errors/app-error";
+import {
+  assertAiPathRunAccess,
+  enforceAiPathsActionRateLimit,
+  requireAiPathsAccess,
+} from "@/features/ai-paths/server";
 
 async function POST_handler(
   req: NextRequest,
@@ -11,7 +18,15 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    enforceAiPathsActionRateLimit(access, "run-cancel");
     const runId: string = params.runId;
+    const repo = await getPathRunRepository();
+    const existing = await repo.findRunById(runId);
+    if (!existing) {
+      throw notFoundError("Run not found", { runId });
+    }
+    assertAiPathRunAccess(access, existing);
     const run: unknown = await cancelPathRun(runId);
     return NextResponse.json({ run });
   } catch (error) {

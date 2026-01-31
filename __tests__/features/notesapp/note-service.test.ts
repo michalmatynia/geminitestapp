@@ -69,8 +69,8 @@ describe("NoteService", () => {
       });
 
       const notes = await noteService.getAll({ truncateContent: true });
-      expect(notes[0].content.length).toBeLessThan(500);
-      expect(notes[0].content.endsWith("...")).toBe(true);
+      expect(notes[0]!.content.length).toBeLessThan(500);
+      expect(notes[0]!.content.endsWith("...")).toBe(true);
     });
   });
 

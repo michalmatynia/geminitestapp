@@ -44,10 +44,13 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
         .collection(collectionName)
         .listIndexes()
         .toArray();
-      existing = existingIndexes.map((index) => ({
-        name: index.name,
-        key: index.key as IndexSpecification,
-      }));
+      existing = existingIndexes.map((index) => {
+        const doc = index as { name: string; key: IndexSpecification };
+        return {
+          name: doc.name,
+          key: doc.key,
+        };
+      });
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : "Failed to load indexes";
     }

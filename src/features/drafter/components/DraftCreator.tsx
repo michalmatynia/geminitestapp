@@ -266,7 +266,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     };
 
     void loadDraft();
-  }, [draftId, toast]);
+  }, [draftId]); // Removed toast from dependencies to prevent infinite loop
 
   const handleSave = async (): Promise<void> => {
     if (!name.trim()) {

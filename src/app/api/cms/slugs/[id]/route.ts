@@ -6,6 +6,15 @@ import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import {
+  getDomainSlugLinks,
+  getSlugForDomainById,
+  isSlugLinkedToAnyDomain,
+  removeDomainSlug,
+  resolveCmsDomainFromRequest,
+  resolveCmsDomainScopeById,
+  setDomainDefaultSlug,
+} from "@/features/cms/services/cms-domain";
 
 type Params = { id: string };
 
@@ -13,6 +22,18 @@ const slugUpdateSchema = z.object({
   slug: z.string().trim().min(1),
   isDefault: z.boolean().optional(),
 });
+
+const resolveDomainFromRequest = async (req: NextRequest) => {
+  const domainId = req.nextUrl.searchParams.get("domainId");
+  if (domainId) {
+    const domain = await resolveCmsDomainScopeById(domainId);
+    if (!domain) {
+      throw notFoundError("Domain not found");
+    }
+    return domain;
+  }
+  return resolveCmsDomainFromRequest(req);
+};
 
 /**
  * GET /api/cms/slugs/[id]
@@ -22,7 +43,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
   try {
     const { id } = params;
     const cmsRepository = await getCmsRepository();
-    const slug = await cmsRepository.getSlugById(id);
+    const domain = await resolveDomainFromRequest(req);
+    const slug = await getSlugForDomainById(domain.id, id, cmsRepository);
 
     if (!slug) {
       throw notFoundError("Slug not found");
@@ -46,8 +68,13 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
   try {
     const { id } = params;
     const cmsRepository = await getCmsRepository();
-    
-    await cmsRepository.deleteSlug(id);
+    const domain = await resolveDomainFromRequest(req);
+
+    await removeDomainSlug(domain.id, id);
+    const stillLinked = await isSlugLinkedToAnyDomain(id);
+    if (!stillLinked) {
+      await cmsRepository.deleteSlug(id);
+    }
 
     return new Response(null, { status: 204 });
   } catch (error) {
@@ -76,24 +103,31 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     const { slug, isDefault } = parsed.data;
 
     const cmsRepository = await getCmsRepository();
-    
-    if (isDefault) {
-      // In a real repo we might want a dedicated method for this, 
-      // but for now we'll handle it if needed.
-      // Slugs repository doesn't have unsetDefault yet, 
-      // but we can add it if needed.
-    }
+    const domain = await resolveDomainFromRequest(req);
 
     const updatedSlug = await cmsRepository.updateSlug(id, {
       slug,
-      isDefault,
+      // Default is domain-scoped, handled below.
     });
 
     if (!updatedSlug) {
       throw notFoundError("Slug not found");
     }
 
-    return NextResponse.json(updatedSlug);
+    if (typeof isDefault === "boolean") {
+      if (isDefault) {
+        await setDomainDefaultSlug(domain.id, id);
+      } else {
+        const links = await getDomainSlugLinks(domain.id);
+        const isCurrentDefault = links.some((link) => link.slugId === id && link.isDefault);
+        if (isCurrentDefault) {
+          await setDomainDefaultSlug(domain.id, null);
+        }
+      }
+    }
+
+    const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
+    return NextResponse.json(domainSlug ?? updatedSlug);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

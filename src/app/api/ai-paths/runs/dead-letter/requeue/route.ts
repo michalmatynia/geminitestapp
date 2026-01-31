@@ -8,6 +8,11 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { resumePathRun } from "@/features/ai-paths/services/path-run-service";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 import { startAiPathRunQueue } from "@/features/jobs/server";
+import {
+  assertAiPathRunAccess,
+  enforceAiPathsActionRateLimit,
+  requireAiPathsAccess,
+} from "@/features/ai-paths/server";
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),
@@ -19,6 +24,8 @@ const requeueSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
+    const access = await requireAiPathsAccess();
+    enforceAiPathsActionRateLimit(access, "run-requeue");
     const parsed = await parseJsonBody(req, requeueSchema, {
       logPrefix: "ai-paths.runs.dead-letter.requeue",
     });
@@ -35,6 +42,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (targetRunIds.length === 0) {
       const { runs } = await repo.listRuns({
+        ...(!access.isElevated ? { userId: access.userId } : {}),
         ...(pathId ? { pathId } : {}),
         ...(query ? { query } : {}),
         status: "dead_lettered",
@@ -55,6 +63,15 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         const run = await repo.findRunById(runId);
         if (!run) {
           errors.push({ runId, error: "Run not found" });
+          continue;
+        }
+        try {
+          assertAiPathRunAccess(access, run);
+        } catch (error) {
+          errors.push({
+            runId,
+            error: error instanceof Error ? error.message : "Run access denied",
+          });
           continue;
         }
         if (run.status !== "dead_lettered") {

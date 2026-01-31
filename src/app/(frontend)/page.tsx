@@ -1,5 +1,6 @@
 import { JSX } from "react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -9,6 +10,7 @@ import type { ProductWithImages } from "@/features/products";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
 import type { Slug } from "@/features/cms/types";
+import { getSlugsForDomain, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +64,8 @@ export default async function Home(): Promise<JSX.Element> {
   }
 
   const cmsRepository = await getCmsRepository();
-  const slugs = await cmsRepository.getSlugs();
+  const domain = await resolveCmsDomainFromHeaders(headers());
+  const slugs = await getSlugsForDomain(domain.id, cmsRepository);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
 
   type MaybeImages = {

@@ -52,6 +52,14 @@ export const palette: NodeDefinition[] = [
     outputs: TRIGGER_OUTPUT_PORTS,
   },
   {
+    type: "trigger",
+    title: "Trigger: Scheduled Run",
+    description: "Runs on a server schedule or cron.",
+    inputs: TRIGGER_INPUT_PORTS,
+    outputs: TRIGGER_OUTPUT_PORTS,
+    config: { trigger: { event: "scheduled_run" } },
+  },
+  {
     type: "simulation",
     title: "Simulation: Entity Modal",
     description: "Simulate a modal action by Entity ID.",

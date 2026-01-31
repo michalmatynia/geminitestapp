@@ -201,7 +201,7 @@ export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   const currentValue = getValueAtMappingPath(contextValue, targetPath);
   const rendered = renderTemplate(
     mutatorConfig.valueTemplate ?? "{{value}}",
-    contextValue,
+    { ...contextValue, ...nodeInputs } as Record<string, unknown>,
     currentValue
   );
   const updated = cloneValue(contextValue);

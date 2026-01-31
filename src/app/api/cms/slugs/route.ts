@@ -4,11 +4,31 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { notFoundError } from "@/shared/errors/app-error";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import {
+  ensureDomainSlug,
+  getSlugsForDomain,
+  getSlugForDomainById,
+  resolveCmsDomainFromRequest,
+  resolveCmsDomainScopeById,
+} from "@/features/cms/services/cms-domain";
 
 const slugSchema = z.object({
   slug: z.string().trim().min(1),
 });
+
+const resolveDomainFromRequest = async (req: NextRequest) => {
+  const domainId = req.nextUrl.searchParams.get("domainId");
+  if (domainId) {
+    const domain = await resolveCmsDomainScopeById(domainId);
+    if (!domain) {
+      throw notFoundError("Domain not found");
+    }
+    return domain;
+  }
+  return resolveCmsDomainFromRequest(req);
+};
 
 /**
  * GET /api/cms/slugs
@@ -17,7 +37,14 @@ const slugSchema = z.object({
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
   try {
     const cmsRepository = await getCmsRepository();
-    const slugs = await cmsRepository.getSlugs();
+    const scope = req.nextUrl.searchParams.get("scope");
+    if (scope === "all") {
+      await resolveCmsDomainFromRequest(req);
+      const slugs = await cmsRepository.getSlugs();
+      return NextResponse.json(slugs);
+    }
+    const domain = await resolveDomainFromRequest(req);
+    const slugs = await getSlugsForDomain(domain.id, cmsRepository);
     return NextResponse.json(slugs);
   } catch (_error) {
     return createErrorResponse(_error, {
@@ -42,8 +69,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
     const { slug } = parsed.data;
     const cmsRepository = await getCmsRepository();
-    const newSlug = await cmsRepository.createSlug({ slug });
-    return NextResponse.json(newSlug);
+    const domain = await resolveDomainFromRequest(req);
+    const existing = await cmsRepository.getSlugByValue(slug);
+    const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
+    await ensureDomainSlug(domain.id, record.id);
+    const domainSlug = await getSlugForDomainById(domain.id, record.id, cmsRepository);
+    return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

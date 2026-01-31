@@ -262,6 +262,12 @@ export default function Menu(): React.ReactNode {
       </Link>
       <CollapsibleMenu title="CMS" icon={<BookOpenIcon />}>
         <Link
+          href="/admin/cms/zones"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Zones
+        </Link>
+        <Link
           href="/admin/cms/slugs"
           className="block hover:bg-gray-700 p-2 rounded"
         >
@@ -278,6 +284,12 @@ export default function Menu(): React.ReactNode {
           className="block hover:bg-gray-700 p-2 rounded"
         >
           Pages
+        </Link>
+        <Link
+          href="/admin/cms/builder"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Page Builder
         </Link>
         <Button
           onClick={handleCreatePageClick}

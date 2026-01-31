@@ -2,7 +2,7 @@
 
 import { Button, Input, Label, SectionHeader } from "@/shared/ui";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 
@@ -13,6 +13,8 @@ export default function CreateSlugPage() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const domainId = searchParams.get("domainId") ?? undefined;
   const createSlug = useCreateSlug();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,8 +29,9 @@ export default function CreateSlugPage() {
     }
 
     try {
-      await createSlug.mutateAsync({ slug });
-      router.push("/admin/cms/slugs");
+      await createSlug.mutateAsync({ slug, domainId });
+      const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";
+      router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     }

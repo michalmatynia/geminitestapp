@@ -7,12 +7,9 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import type { Provider } from "next-auth/providers";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import bcrypt from "bcryptjs";
-import prisma from "@/shared/lib/db/prisma";
 import { getMongoClient } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
 import { findAuthUserByEmail, findAuthUserById } from "@/features/auth/services/auth-user-repository";
 import { getAuthAccessForUser } from "@/features/auth/services/auth-access";
 import {
@@ -62,7 +59,7 @@ const credentialsProvider = Credentials({
 
       if (challengeId) {
         const challenge = await consumeLoginChallenge({
-          id: challengeId,
+          id: challengeId as string,
           email,
           ip,
         });
@@ -107,8 +104,9 @@ const credentialsProvider = Credentials({
               const hashed = hashRecoveryCode(providedRecovery);
               if (security.recoveryCodes.includes(hashed)) {
                 const nextCodes = security.recoveryCodes.filter(
-                  (code) => code !== hashed
+                  (code: string) => code !== hashed
                 );
+
                 await updateAuthSecurityProfile(user.id, {
                   recoveryCodes: nextCodes,
                 });
@@ -136,7 +134,7 @@ const credentialsProvider = Credentials({
 
       await ErrorSystem.logInfo("[AUTH] Attempting to find user", { service: "auth", email });
       
-      // findAuthUserByEmail uses getAuthDataProvider() internally to choose DB
+      // findAuthUserByEmail reads from MongoDB-backed auth store
       const user = await findAuthUserByEmail(email);
 
       if (!user) {
@@ -191,8 +189,9 @@ const credentialsProvider = Credentials({
           const hashed = hashRecoveryCode(providedRecovery);
           if (security.recoveryCodes.includes(hashed)) {
             const nextCodes = security.recoveryCodes.filter(
-              (code) => code !== hashed
+              (code: string) => code !== hashed
             );
+
             await updateAuthSecurityProfile(user.id, {
               recoveryCodes: nextCodes,
             });
@@ -226,7 +225,7 @@ const credentialsProvider = Credentials({
   },
 });
 
-const buildProviders = () => {
+const buildProviders = (): Provider[] => {
   const providers: Provider[] = [credentialsProvider];
   
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -256,33 +255,17 @@ const buildProviders = () => {
   return providers;
 };
 
-const buildAuthConfig = async () => {
+const buildAuthConfig = async (): Promise<any> => {
   try {
     await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
-    const provider = await getAuthDataProvider();
-    console.log("[AUTH] Provider determined:", provider);
     const hasMongo = Boolean(process.env.MONGODB_URI);
-    const hasPrisma = Boolean(process.env.DATABASE_URL);
-
-    let adapter;
-    if (provider === "mongodb" && hasMongo) {
-      adapter = MongoDBAdapter(getMongoClient(), {
-        databaseName: process.env.MONGODB_DB ?? "app",
-      });
-    } else if (provider === "mongodb" && !hasMongo && hasPrisma) {
-      console.warn("[AUTH] MongoDB provider selected but MONGODB_URI missing. Falling back to Prisma.");
-      adapter = PrismaAdapter(prisma);
-    } else if (hasPrisma) {
-      adapter = PrismaAdapter(prisma);
-    } else {
-      adapter = undefined;
+    if (!hasMongo) {
+      throw new Error("MONGODB_URI is required for auth storage.");
     }
-
-    if (!adapter) {
-      console.warn("[AUTH] No adapter configured. Environment:", { hasMongo, hasPrisma, provider });
-    } else {
-      console.log(`[AUTH] Adapter configured for ${provider}.`);
-    }
+    const adapter = MongoDBAdapter(getMongoClient(), {
+      databaseName: process.env.MONGODB_DB ?? "app",
+    });
+    console.log("[AUTH] Adapter configured for mongodb.");
 
     return {
       ...authConfig,
@@ -290,9 +273,10 @@ const buildAuthConfig = async () => {
       providers: buildProviders(),
       callbacks: {
         ...(authConfig.callbacks ?? {}),
-        async jwt({ token, user }: { token: JWT; user?: User }) {
+        async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {
           const userId = user?.id ?? token.sub;
-          if (userId) {
+          if (!userId) return token;
+          try {
             const access = await getAuthAccessForUser(userId);
             token.role = access.roleId;
             token.permissions = access.permissions;
@@ -301,10 +285,16 @@ const buildAuthConfig = async () => {
             const security = await getAuthSecurityProfile(userId);
             token.accountDisabled = Boolean(security.disabledAt);
             token.accountBanned = Boolean(security.bannedAt);
+          } catch (error) {
+            await ErrorSystem.captureException(error, {
+              service: "auth",
+              action: "jwt_callback",
+              userId,
+            });
           }
           return token;
         },
-        session({ session, token }: { session: Session; token: JWT }) {
+        session({ session, token }: { session: Session; token: JWT }): Session {
           if (session.user) {
             if (token.sub) {
               session.user.id = token.sub;
@@ -321,7 +311,7 @@ const buildAuthConfig = async () => {
       },
       debug: true,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     await ErrorSystem.captureException(error, {
       service: "auth",
       action: "configuration",
@@ -331,11 +321,11 @@ const buildAuthConfig = async () => {
 };
 
 const AUTH_CONFIG_TTL_MS = 30_000;
-let cachedAuthConfig: Awaited<ReturnType<typeof buildAuthConfig>> | null = null;
+let cachedAuthConfig: any | null = null;
 let cachedAuthConfigAt = 0;
-let cachedAuthConfigPromise: Promise<Awaited<ReturnType<typeof buildAuthConfig>>> | null = null;
+let cachedAuthConfigPromise: Promise<any> | null = null;
 
-const getAuthConfig = async () => {
+const getAuthConfig = async (): Promise<any> => {
   const now = Date.now();
   if (cachedAuthConfig && now - cachedAuthConfigAt < AUTH_CONFIG_TTL_MS) {
     return cachedAuthConfig;
@@ -344,7 +334,7 @@ const getAuthConfig = async () => {
     return cachedAuthConfigPromise;
   }
   cachedAuthConfigPromise = buildAuthConfig()
-    .then((config) => {
+    .then((config: any) => {
       cachedAuthConfig = config;
       cachedAuthConfigAt = Date.now();
       return config;

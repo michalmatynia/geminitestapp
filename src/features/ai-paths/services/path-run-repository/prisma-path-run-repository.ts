@@ -41,6 +41,7 @@ const mapRun = (run: unknown): AiPathRunRecord => {
   const r = run as Record<string, unknown>;
   return {
     id: String(r.id),
+    userId: (r.userId as string) ?? null,
     pathId: (r.pathId as string) ?? null,
     pathName: (r.pathName as string) ?? null,
     prompt: (r.prompt as string) ?? null,
@@ -108,6 +109,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     ensureModels();
     const run = await prismaAny.aiPathRun!.create({
       data: {
+        userId: input.userId ?? null,
         pathId: input.pathId,
         pathName: input.pathName ?? null,
         status: "queued",
@@ -147,9 +149,30 @@ export const prismaPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     ensureModels();
     const query = options.query?.trim();
+    const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
+    const parseDate = (value: Date | string | null | undefined): Date | null => {
+      if (!value) return null;
+      const date = typeof value === "string" ? new Date(value) : value;
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+    const createdAfter = parseDate(options.createdAfter);
+    const createdBefore = parseDate(options.createdBefore);
     const where = {
+      ...(options.userId ? { userId: options.userId } : {}),
       ...(options.pathId ? { pathId: options.pathId } : {}),
-      ...(options.status ? { status: options.status } : {}),
+      ...(statuses.length > 0
+        ? { status: { in: statuses } }
+        : options.status
+          ? { status: options.status }
+          : {}),
+      ...((createdAfter || createdBefore)
+        ? {
+            createdAt: {
+              ...(createdAfter ? { gte: createdAfter } : {}),
+              ...(createdBefore ? { lte: createdBefore } : {}),
+            },
+          }
+        : {}),
       ...(query
         ? {
             OR: [
@@ -171,7 +194,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       }),
       prismaAny.aiPathRun!.count({ where }),
     ]);
-    return { runs: (runs as unknown[]).map(mapRun), total };
+    return { runs: (runs).map(mapRun), total };
   },
 
   async claimNextQueuedRun(): Promise<AiPathRunRecord | null> {
@@ -238,7 +261,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       where: { runId },
       orderBy: { createdAt: "asc" },
     });
-    return (nodes as unknown[]).map(mapNode);
+    return (nodes).map(mapNode);
   },
 
   async createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord> {
@@ -274,7 +297,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       orderBy: { createdAt: "asc" },
       ...(typeof options.limit === "number" ? { take: options.limit } : {}),
     });
-    return (events as unknown[]).map(mapEvent);
+    return (events).map(mapEvent);
   },
 
   async markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }> {

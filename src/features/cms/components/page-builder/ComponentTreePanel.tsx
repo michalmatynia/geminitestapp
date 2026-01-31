@@ -1,18 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { Layers, ChevronRight, ChevronDown } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui";
+import React, { useCallback, useState } from "react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import type { SectionInstance } from "../../types/page-builder";
 import type { PageZone } from "../../types/page-builder";
-import type { PageSummary } from "../../types";
-import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { SectionNodeItem } from "./ComponentTreeNodeItem";
 import { SectionPicker } from "./SectionPicker";
@@ -27,9 +18,6 @@ const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 
 export function ComponentTreePanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
-  const pagesQuery = useCmsPages();
-  const [selectedPageId, setSelectedPageId] = useState<string>("");
-  const pageQuery = useCmsPage(selectedPageId || undefined);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
 
@@ -38,22 +26,6 @@ export function ComponentTreePanel(): React.ReactNode {
   const [draggedFromSectionId, setDraggedFromSectionId] = useState<string | null>(null);
   const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
   const [draggedFromParentBlockId, setDraggedFromParentBlockId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (pagesQuery.data) {
-      dispatch({ type: "SET_PAGES", pages: pagesQuery.data });
-    }
-  }, [pagesQuery.data, dispatch]);
-
-  useEffect(() => {
-    if (pageQuery.data) {
-      dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
-    }
-  }, [pageQuery.data, dispatch]);
-
-  const handlePageChange = useCallback((value: string) => {
-    setSelectedPageId(value);
-  }, []);
 
   const handleSelectNode = useCallback(
     (nodeId: string) => {
@@ -177,6 +149,28 @@ export function ComponentTreePanel(): React.ReactNode {
     });
   }, []);
 
+  const handlePasteSection = useCallback(
+    (zone: PageZone) => {
+      dispatch({ type: "PASTE_SECTION", zone });
+    },
+    [dispatch]
+  );
+
+  const handleToggleSectionVisibility = useCallback(
+    (sectionId: string, isHidden: boolean) => {
+      dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } });
+    },
+    [dispatch]
+  );
+
+  const handleRemoveSection = useCallback(
+    (sectionId: string) => {
+      dispatch({ type: "REMOVE_SECTION", sectionId });
+    },
+    [dispatch]
+  );
+
+
   // Section drag-and-drop state
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
 
@@ -209,32 +203,10 @@ export function ComponentTreePanel(): React.ReactNode {
 
   return (
     <aside className="flex w-72 flex-col border-r border-border bg-gray-900">
-      {/* Page selector */}
-      <div className="border-b border-border p-4">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <Layers className="size-3.5" />
-          <span>Page</span>
-        </div>
-        <Select value={selectedPageId} onValueChange={handlePageChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a page..." />
-          </SelectTrigger>
-          <SelectContent>
-            {state.pages.map((page: PageSummary) => (
-              <SelectItem key={page.id} value={page.id}>
-                {page.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Zone groups */}
       <div className="flex-1 overflow-y-auto">
         {!state.currentPage ? (
-          <div className="p-4 text-center text-sm text-gray-500">
-            Select a page to start editing
-          </div>
+          <div className="p-4" />
         ) : (
           ZONE_ORDER.map((zone: PageZone) => {
             const isCollapsed = collapsedZones.has(zone);
@@ -250,6 +222,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 zoneSections={zoneSections}
                 selectedNodeId={state.selectedNodeId}
                 currentPage={state.currentPage}
+                clipboard={state.clipboard}
                 onSelectNode={handleSelectNode}
                 onAddSection={handleAddSection}
                 onAddBlock={handleAddBlock}
@@ -258,6 +231,9 @@ export function ComponentTreePanel(): React.ReactNode {
                 onDropBlockToColumn={handleDropBlockToColumn}
                 onAddElementToNestedBlock={handleAddElementToNestedBlock}
                 onDropSectionInZone={handleDropSectionInZone}
+                onPasteSection={handlePasteSection}
+                onToggleSectionVisibility={handleToggleSectionVisibility}
+                onRemoveSection={handleRemoveSection}
                 expandedIds={expandedIds}
                 onToggleExpand={handleToggleExpand}
                 draggedBlockId={draggedBlockId}
@@ -291,6 +267,7 @@ interface ZoneGroupProps {
   zoneSections: SectionInstance[];
   selectedNodeId: string | null;
   currentPage: unknown;
+  clipboard: { type: "section" | "block"; data: unknown } | null;
   onSelectNode: (nodeId: string) => void;
   onAddSection: (sectionType: string, zone: PageZone) => void;
   onAddBlock: (sectionId: string, blockType: string) => void;
@@ -299,6 +276,9 @@ interface ZoneGroupProps {
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
+  onPasteSection: (zone: PageZone) => void;
+  onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
+  onRemoveSection: (sectionId: string) => void;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -321,6 +301,7 @@ function ZoneGroup({
   zoneSections,
   selectedNodeId,
   currentPage,
+  clipboard,
   onSelectNode,
   onAddSection,
   onAddBlock,
@@ -329,6 +310,9 @@ function ZoneGroup({
   onDropBlockToColumn,
   onAddElementToNestedBlock,
   onDropSectionInZone,
+  onPasteSection,
+  onToggleSectionVisibility,
+  onRemoveSection,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
@@ -347,7 +331,7 @@ function ZoneGroup({
   return (
     <div className="border-b border-border/50">
       {/* Zone header */}
-      <div className="flex items-center justify-between px-4 py-2.5">
+      <div className="px-4 py-2.5">
         <button
           type="button"
           onClick={() => onToggleZone(zone)}
@@ -365,10 +349,6 @@ function ZoneGroup({
             </span>
           )}
         </button>
-        <SectionPicker
-          disabled={!currentPage}
-          onSelect={(sectionType: string) => onAddSection(sectionType, zone)}
-        />
       </div>
 
       {/* Zone sections */}
@@ -414,6 +394,8 @@ function ZoneGroup({
                   onDropBlockToColumn={onDropBlockToColumn}
                   onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
+                  onToggleSectionVisibility={onToggleSectionVisibility}
+                  onRemoveSection={onRemoveSection}
                   expandedIds={expandedIds}
                   onToggleExpand={onToggleExpand}
                   draggedBlockId={draggedBlockId}
@@ -438,6 +420,24 @@ function ZoneGroup({
               />
             </div>
           )}
+          {/* Add section + paste always at the bottom of the zone */}
+          <div className="mt-2 flex flex-wrap items-center gap-1">
+            {clipboard?.type === "section" && (
+              <button
+                type="button"
+                onClick={() => onPasteSection(zone)}
+                className="rounded px-1.5 py-0.5 text-[10px] text-gray-400 hover:bg-foreground/10 hover:text-gray-200 transition"
+                title="Paste section"
+              >
+                Paste
+              </button>
+            )}
+            <SectionPicker
+              disabled={!currentPage}
+              zone={zone}
+              onSelect={(sectionType: string) => onAddSection(sectionType, zone)}
+            />
+          </div>
         </div>
       )}
     </div>

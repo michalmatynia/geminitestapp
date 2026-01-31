@@ -1,9 +1,12 @@
 import { JSX } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
-import type { Page } from "@/features/cms/types";
+import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
+import type { Page, CmsTheme } from "@/features/cms/types";
+import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +15,21 @@ export const dynamic = "force-dynamic";
 // ---------------------------------------------------------------------------
 
 async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
-  const slugValue = slugSegments.join("/");
-  const cmsRepository = await getCmsRepository();
-  const page = await cmsRepository.getPageBySlug(slugValue);
-  if (!page) return null;
-  // Only render published pages on the frontend
-  if (page.status !== "published") return null;
-  return page;
+  try {
+    const slugValue = slugSegments.join("/");
+    const cmsRepository = await getCmsRepository();
+    const hdrs = await headers();
+    const domain = await resolveCmsDomainFromHeaders(hdrs);
+    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository);
+    if (!domainSlug) return null;
+    const page = await cmsRepository.getPageBySlug(slugValue);
+    if (!page) return null;
+    // Only render published pages on the frontend
+    if (page.status !== "published") return null;
+    return page;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -73,9 +84,17 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
     notFound();
   }
 
+  let theme: CmsTheme | null = null;
+  if (page.themeId) {
+    const cmsRepository = await getCmsRepository();
+    theme = await cmsRepository.getThemeById(page.themeId);
+  }
+
+  const content = <CmsPageRenderer components={page.components} />;
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <CmsPageRenderer components={page.components} />
+      {theme ? <ThemeProvider theme={theme}>{content}</ThemeProvider> : content}
     </div>
   );
 }

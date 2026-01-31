@@ -1,9 +1,11 @@
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
+import type { GsapAnimationConfig } from "@/features/gsap";
 import { getSectionStyles } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { FrontendImageWithTextBlock } from "./FrontendImageWithTextBlock";
 import { FrontendHeroBlock } from "./FrontendHeroBlock";
+import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 
 // Section-type blocks that need special rendering inside columns
 const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero"]);
@@ -48,16 +50,19 @@ export function FrontendGridSection({ settings, blocks }: FrontendGridSectionPro
 
 function ColumnRenderer({ column }: { column: BlockInstance }): React.ReactNode {
   const children = column.blocks ?? [];
+  const animConfig = column.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
 
   return (
-    <div className="space-y-4">
-      {children.map((block: BlockInstance) => {
-        if (SECTION_BLOCK_TYPES.has(block.type)) {
-          return <SectionBlockRenderer key={block.id} block={block} />;
-        }
-        return <FrontendBlockRenderer key={block.id} block={block} />;
-      })}
-    </div>
+    <GsapAnimationWrapper config={animConfig}>
+      <div className="space-y-4">
+        {children.map((block: BlockInstance) => {
+          if (SECTION_BLOCK_TYPES.has(block.type)) {
+            return <SectionBlockRenderer key={block.id} block={block} />;
+          }
+          return <FrontendBlockRenderer key={block.id} block={block} />;
+        })}
+      </div>
+    </GsapAnimationWrapper>
   );
 }
 
@@ -67,12 +72,21 @@ function ColumnRenderer({ column }: { column: BlockInstance }): React.ReactNode 
 
 function SectionBlockRenderer({ block }: { block: BlockInstance }): React.ReactNode {
   const children = block.blocks ?? [];
+  const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
 
   if (block.type === "ImageWithText") {
-    return <FrontendImageWithTextBlock settings={block.settings} blocks={children} />;
+    return (
+      <GsapAnimationWrapper config={animConfig}>
+        <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
+      </GsapAnimationWrapper>
+    );
   }
   if (block.type === "Hero") {
-    return <FrontendHeroBlock settings={block.settings} blocks={children} />;
+    return (
+      <GsapAnimationWrapper config={animConfig}>
+        <FrontendHeroBlock settings={block.settings} blocks={children} />
+      </GsapAnimationWrapper>
+    );
   }
 
   return null;

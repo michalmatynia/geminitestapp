@@ -1,0 +1,150 @@
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Layers } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui";
+import type { PageSummary } from "../../types";
+import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
+import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
+import { usePageBuilder } from "../../hooks/usePageBuilderContext";
+
+type UserPreferencesResponse = {
+  cmsLastPageId?: string | null;
+};
+
+const userPreferencesQueryKey = ["user-preferences"] as const;
+
+type PageSelectorBarProps = {
+  variant?: "bar" | "toolbar";
+};
+
+export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): React.ReactNode {
+  const isToolbar = variant === "toolbar";
+  const { state, dispatch } = usePageBuilder();
+  const { activeDomainId } = useCmsDomainSelection();
+  const pagesQuery = useCmsPages(activeDomainId);
+  const [selectedPageId, setSelectedPageId] = useState<string>("");
+  const lastSavedPageIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
+  const preferencesQuery = useQuery({
+    queryKey: userPreferencesQueryKey,
+    queryFn: async (): Promise<UserPreferencesResponse> => {
+      const res = await fetch("/api/user/preferences");
+      if (!res.ok) {
+        throw new Error("Failed to load user preferences");
+      }
+      return (await res.json()) as UserPreferencesResponse;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (payload: UserPreferencesResponse): Promise<void> => {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update user preferences");
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
+    },
+    onError: (error: Error) => {
+      console.warn("[CMS] Failed to persist page selection.", error);
+    },
+  });
+  const pageQuery = useCmsPage(selectedPageId || undefined);
+
+  useEffect(() => {
+    if (pagesQuery.data) {
+      dispatch({ type: "SET_PAGES", pages: pagesQuery.data });
+    }
+  }, [pagesQuery.data, dispatch]);
+
+  useEffect(() => {
+    if (!pagesQuery.data) return;
+    if (selectedPageId && !pagesQuery.data.some((page) => page.id === selectedPageId)) {
+      setSelectedPageId("");
+      dispatch({ type: "CLEAR_CURRENT_PAGE" });
+    }
+  }, [pagesQuery.data, selectedPageId, dispatch]);
+
+  useEffect(() => {
+    if (pageQuery.data) {
+      dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
+    }
+  }, [pageQuery.data, dispatch]);
+
+  useEffect(() => {
+    if (selectedPageId) return;
+    if (state.currentPage?.id) {
+      setSelectedPageId(state.currentPage.id);
+      return;
+    }
+    if (!pagesQuery.data) return;
+    const preferredId = preferencesQuery.data?.cmsLastPageId ?? null;
+    if (!preferredId) return;
+    if (pagesQuery.data.some((page) => page.id === preferredId)) {
+      setSelectedPageId(preferredId);
+    }
+  }, [selectedPageId, state.currentPage?.id, pagesQuery.data, preferencesQuery.data?.cmsLastPageId]);
+
+  useEffect(() => {
+    if (state.currentPage?.id && state.currentPage.id !== selectedPageId) {
+      setSelectedPageId(state.currentPage.id);
+    }
+  }, [state.currentPage?.id, selectedPageId]);
+
+  useEffect(() => {
+    if (!selectedPageId) return;
+    if (selectedPageId === preferencesQuery.data?.cmsLastPageId) {
+      lastSavedPageIdRef.current = selectedPageId;
+      return;
+    }
+    if (lastSavedPageIdRef.current === selectedPageId) return;
+    lastSavedPageIdRef.current = selectedPageId;
+    updatePreferencesMutation.mutate({ cmsLastPageId: selectedPageId });
+  }, [selectedPageId, preferencesQuery.data?.cmsLastPageId, updatePreferencesMutation]);
+
+  const handlePageChange = useCallback((value: string) => {
+    setSelectedPageId(value);
+  }, []);
+
+  return (
+    <div
+      className={
+        isToolbar
+          ? "flex items-center gap-2"
+          : "flex w-full items-center justify-center gap-3"
+      }
+    >
+      {!isToolbar && (
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+          <Layers className="size-3.5" />
+          <span>Page</span>
+        </div>
+      )}
+      <Select value={selectedPageId} onValueChange={handlePageChange}>
+        <SelectTrigger className={isToolbar ? "h-8 w-56" : "w-64"}>
+          <SelectValue placeholder="Select a page..." />
+        </SelectTrigger>
+        <SelectContent>
+          {state.pages.map((page: PageSummary) => (
+            <SelectItem key={page.id} value={page.id}>
+              {page.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

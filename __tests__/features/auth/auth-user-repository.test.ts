@@ -1,56 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { findAuthUserByEmail, findAuthUserById } from "@/features/auth/services/auth-user-repository";
-import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
-
-vi.mock("@/shared/lib/db/prisma", () => ({
-  default: {
-    user: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
 
 vi.mock("@/shared/lib/db/mongo-client", () => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock("@/features/auth/services/auth-provider", () => ({
-  getAuthDataProvider: vi.fn(),
-}));
-
 describe("Auth User Repository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://...";
+    vi.resetAllMocks();
     process.env.MONGODB_URI = "mongodb://...";
   });
 
   describe("findAuthUserByEmail", () => {
-    it("finds user via Prisma when provider is prisma", async () => {
-      vi.mocked(getAuthDataProvider).mockResolvedValue("prisma");
-      const mockUser = {
-        id: "u1",
-        email: "test@example.com",
-        name: "Test User",
-        passwordHash: "hashed",
-        image: null,
-        emailVerified: null,
-      };
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-
-      const result = await findAuthUserByEmail("TEST@example.com "); // Testing normalization
-      
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: "test@example.com" },
-        select: expect.anything(),
-      });
-      expect(result).toEqual(mockUser);
-    });
-
-    it("finds user via MongoDB when provider is mongodb", async () => {
-      vi.mocked(getAuthDataProvider).mockResolvedValue("mongodb");
+    it("finds user via MongoDB", async () => {
       const mockUser = {
         _id: { toString: () => "u1" },
         email: "test@example.com",
@@ -76,8 +39,13 @@ describe("Auth User Repository", () => {
     });
 
     it("returns null if user not found", async () => {
-      vi.mocked(getAuthDataProvider).mockResolvedValue("prisma");
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      const mockCollection = {
+        findOne: vi.fn().mockResolvedValue(null),
+      };
+      const mockDb = {
+        collection: vi.fn().mockReturnValue(mockCollection),
+      };
+      vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
 
       const result = await findAuthUserByEmail("unknown@example.com");
       expect(result).toBeNull();
@@ -85,21 +53,37 @@ describe("Auth User Repository", () => {
   });
 
   describe("findAuthUserById", () => {
-    it("finds user via Prisma", async () => {
-      vi.mocked(getAuthDataProvider).mockResolvedValue("prisma");
+    it("finds user via MongoDB", async () => {
       const mockUser = {
-        id: "u1",
+        _id: { toString: () => "u1" },
         email: "test@example.com",
         name: "Test User",
       };
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-
-      const result = await findAuthUserById("u1");
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: "u1" },
-        select: expect.anything(),
-      });
-      expect(result?.id).toBe("u1");
+      const mockCollection = {
+        findOne: vi.fn().mockResolvedValue(mockUser),
+      };
+      const mockDb = {
+        collection: vi.fn().mockReturnValue(mockCollection),
+      };
+      vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+      
+      // We need to mock ObjectId if the implementation imports it dynamically or uses a global
+      // The implementation does: const { ObjectId } = await import("mongodb");
+      // Since we are in node environment (vitest), actual mongodb import works.
+      // But we need to ensure the ID passed is compatible or mocked.
+      // Ideally we'd mock the dynamic import, but let's try with a valid mongo ID format string first, 
+      // or rely on the fact that findAuthUserById checks ObjectId.isValid.
+      
+      // Let's use a real-looking ObjectId string to pass validation
+      const validId = "507f1f77bcf86cd799439011";
+      
+      const result = await findAuthUserById(validId);
+      
+      expect(mockDb.collection).toHaveBeenCalledWith("users");
+      // check if findOne was called. We can't easily match the exact ObjectId instance in call arguments without more mocking,
+      // but we can check it was called.
+      expect(mockCollection.findOne).toHaveBeenCalled();
+      expect(result?.id).toBe(validId);
     });
   });
 });

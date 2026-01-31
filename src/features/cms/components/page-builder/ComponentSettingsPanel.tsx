@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Settings, Trash2, Globe, FileText } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
 import type { SettingsField } from "../../types/page-builder";
-import type { GsapAnimationConfig } from "../../types/animation";
-import type { PageStatus } from "../../types";
+import type { GsapAnimationConfig } from "@/features/gsap";
+import type { PageStatus, CmsTheme, Slug } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
+import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
+import { useCmsAllSlugs, useCmsSlugs, useCmsThemes } from "../../hooks/useCmsQueries";
+import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
@@ -43,6 +46,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleRemoveSection = useCallback(() => {
     if (!selectedSection) return;
     dispatch({ type: "REMOVE_SECTION", sectionId: selectedSection.id });
+  }, [selectedSection, dispatch]);
+
+  const handleCopySection = useCallback(() => {
+    if (!selectedSection) return;
+    dispatch({ type: "COPY_SECTION", sectionId: selectedSection.id });
+  }, [selectedSection, dispatch]);
+
+  const handleDuplicateSection = useCallback(() => {
+    if (!selectedSection) return;
+    dispatch({ type: "DUPLICATE_SECTION", sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
   // ---------------------------------------------------------------------------
@@ -228,6 +241,25 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   Section: {sectionDef.label}
                 </div>
 
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={handleCopySection}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Copy section
+                  </Button>
+                  <Button
+                    onClick={handleDuplicateSection}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Duplicate section
+                  </Button>
+                </div>
+
                 {sectionDef.settingsSchema.map((field: SettingsField) => (
                   <SettingsFieldRenderer
                     key={field.key}
@@ -339,7 +371,67 @@ const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
 function PageSettingsTab(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const page = state.currentPage;
+  const { activeDomainId } = useCmsDomainSelection();
+  const slugsQuery = useCmsSlugs(activeDomainId);
+  const allSlugsQuery = useCmsAllSlugs(Boolean(page));
+  const [search, setSearch] = useState("");
+  const [selectedSlugIds, setSelectedSlugIds] = useState<string[]>([]);
+  const initializedRef = useRef(false);
   if (!page) return null;
+
+  const allSlugs = allSlugsQuery.data ?? [];
+  const domainSlugs = slugsQuery.data ?? [];
+  const allSlugByValue = useMemo(() => {
+    const map = new Map<string, Slug>();
+    allSlugs.forEach((slug) => map.set(slug.slug, slug));
+    return map;
+  }, [allSlugs]);
+
+  useEffect(() => {
+    if (!allSlugs.length) return;
+    if (initializedRef.current) return;
+    const pageSlugValues = (page.slugs ?? []).map((s) => s.slug.slug);
+    const ids = pageSlugValues
+      .map((value) => allSlugByValue.get(value)?.id)
+      .filter((value): value is string => Boolean(value));
+    setSelectedSlugIds(ids);
+    initializedRef.current = true;
+  }, [allSlugs, allSlugByValue, page.id, page.slugs]);
+
+  useEffect(() => {
+    initializedRef.current = false;
+  }, [page.id, activeDomainId]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    const selectedSlugs = selectedSlugIds
+      .map((id) => allSlugs.find((slug) => slug.id === id))
+      .filter(Boolean) as Slug[];
+    dispatch({
+      type: "UPDATE_PAGE_SLUGS",
+      slugIds: selectedSlugIds,
+      slugValues: selectedSlugs.map((slug) => slug.slug),
+    });
+  }, [selectedSlugIds, allSlugs, dispatch]);
+
+  const domainSlugIds = useMemo(() => new Set(domainSlugs.map((slug) => slug.id)), [domainSlugs]);
+  const selectedSlugs = useMemo(() => {
+    const byId = new Map(allSlugs.map((slug) => [slug.id, slug]));
+    return selectedSlugIds
+      .map((idValue) => byId.get(idValue))
+      .filter((value): value is Slug => Boolean(value));
+  }, [allSlugs, selectedSlugIds]);
+
+  const crossZoneSlugs = useMemo(
+    () => selectedSlugs.filter((slug) => !domainSlugIds.has(slug.id)),
+    [selectedSlugs, domainSlugIds]
+  );
+
+  const filteredDomainSlugs = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return domainSlugs;
+    return domainSlugs.filter((slug) => slug.slug.toLowerCase().includes(term));
+  }, [domainSlugs, search]);
 
   const handleStatusChange = (status: PageStatus): void => {
     dispatch({ type: "SET_PAGE_STATUS", status });
@@ -362,6 +454,10 @@ function PageSettingsTab(): React.ReactNode {
           <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
             <FileText className="mr-1.5 inline size-3" />
             {page.name}
+          </div>
+
+          <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">
+            <CmsDomainSelector label="Zone" triggerClassName="h-8 w-full" />
           </div>
 
           {/* Status */}
@@ -391,6 +487,66 @@ function PageSettingsTab(): React.ReactNode {
               </p>
             )}
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Slugs for this zone</Label>
+            <Input
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              placeholder="Search slugs..."
+              className="h-8 text-xs"
+            />
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/40 bg-gray-900/40 p-2">
+              {filteredDomainSlugs.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-500">
+                  No slugs available for this zone.
+                </p>
+              ) : (
+                filteredDomainSlugs.map((slug) => {
+                  const checked = selectedSlugIds.includes(slug.id);
+                  return (
+                    <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => {
+                          setSelectedSlugIds((prev) =>
+                            checked ? prev.filter((idValue) => idValue !== slug.id) : [...prev, slug.id]
+                          );
+                        }}
+                      />
+                      /{slug.slug}
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            <p className="text-[10px] text-gray-500">{selectedSlugIds.length} selected</p>
+          </div>
+
+          {crossZoneSlugs.length > 0 ? (
+            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                Cross-zone slugs
+              </p>
+              <p className="mt-1 text-[10px] text-amber-200/80">
+                These slugs are not part of the current zone. Remove them or switch zones.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {crossZoneSlugs.map((slug) => (
+                  <button
+                    key={slug.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedSlugIds((prev) => prev.filter((idValue) => idValue !== slug.id))
+                    }
+                    className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
+                  >
+                    /{slug.slug} ×
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <p className="text-xs text-gray-500">
             Select a section or block from the tree to edit its settings.

@@ -2,7 +2,7 @@
 
 import { Button, Input, Label, Switch, SectionHeader } from "@/shared/ui";
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 
 
 
@@ -13,16 +13,26 @@ import type { Slug } from "@/features/cms/types";
 export default function EditSlugPageLoader() {
   const params = useParams();
   const id = params.id as string;
-  const slugQuery = useCmsSlug(id);
+  const searchParams = useSearchParams();
+  const domainId = searchParams.get("domainId") ?? undefined;
+  const slugQuery = useCmsSlug(id, domainId);
 
   if (slugQuery.isLoading || !slugQuery.data) {
     return <div>Loading...</div>;
   }
 
-  return <EditSlugForm initialSlug={slugQuery.data} id={id} />;
+  return <EditSlugForm initialSlug={slugQuery.data} id={id} domainId={domainId} />;
 }
 
-function EditSlugForm({ initialSlug, id }: { initialSlug: Slug; id: string }) {
+function EditSlugForm({
+  initialSlug,
+  id,
+  domainId,
+}: {
+  initialSlug: Slug;
+  id: string;
+  domainId?: string;
+}) {
   const [slug, setSlug] = useState<Slug>(initialSlug);
   const router = useRouter();
   const updateSlug = useUpdateSlug();
@@ -31,8 +41,9 @@ function EditSlugForm({ initialSlug, id }: { initialSlug: Slug; id: string }) {
     e.preventDefault();
     if (!slug) return;
 
-    await updateSlug.mutateAsync({ id, input: slug });
-    router.push("/admin/cms/slugs");
+    await updateSlug.mutateAsync({ id, input: slug, domainId });
+    const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";
+    router.push(next);
   };
 
   return (

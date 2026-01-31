@@ -1,7 +1,6 @@
 import "server-only";
 
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import prisma from "@/shared/lib/db/prisma";
 import {
   AUTH_SETTINGS_KEYS,
 } from "@/features/auth/utils/auth-management";
@@ -11,7 +10,6 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from "@/features/auth/utils/auth-security";
-import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { logSystemEvent } from "@/features/observability/server";
 
 type SettingRecord = { _id: string; key: string; value: string };
@@ -45,22 +43,6 @@ const ensureAuthSecurityIndexes = async () => {
   await indexesReady;
 };
 
-const canUsePrismaSettings = () =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
-
-const readPrismaSetting = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch {
-    return null;
-  }
-};
-
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
@@ -71,11 +53,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  const provider = await getAppDbProvider();
-  if (provider === "mongodb") {
-    return readMongoSetting(key);
-  }
-  return readPrismaSetting(key);
+  return readMongoSetting(key);
 };
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {

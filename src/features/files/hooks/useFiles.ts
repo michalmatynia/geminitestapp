@@ -34,3 +34,21 @@ export function useDeleteFile() {
     },
   });
 }
+
+export function useUpdateFileTags() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, tags }: { id: string; tags: string[] }) => {
+      const res = await fetch(`/api/files/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags }),
+      });
+      if (!res.ok) throw new Error("Failed to update file tags");
+      return (await res.json()) as ExpandedImageFile;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileKeys.all });
+    },
+  });
+}

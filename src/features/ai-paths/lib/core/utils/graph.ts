@@ -8,6 +8,11 @@ import {
   PORT_GAP,
   PORT_COMPATIBILITY,
 } from "../constants";
+import {
+  arePortTypesCompatible,
+  formatPortDataTypes,
+  getPortDataTypes,
+} from "./port-types";
 
 export const getPortOffsetY = (index: number, totalPorts: number): number => {
   const totalHeight = (totalPorts - 1) * PORT_GAP;
@@ -29,7 +34,11 @@ export const isValidConnection = (
   if (!to.inputs.includes(toPort)) return false;
 
   const allowed = PORT_COMPATIBILITY[fromPort];
-  return allowed?.includes(toPort) || fromPort === toPort;
+  const portCompatible = allowed?.includes(toPort) || fromPort === toPort;
+  if (!portCompatible) return false;
+  const fromTypes = getPortDataTypes(fromPort);
+  const toTypes = getPortDataTypes(toPort);
+  return arePortTypesCompatible(fromTypes, toTypes);
 };
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
@@ -109,11 +118,32 @@ export const validateConnection = (
   fromPort: string,
   toPort: string
 ): ConnectionValidation => {
-  const valid = isValidConnection(fromNode, toNode, fromPort, toPort);
-  if (!valid) {
+  if (!fromPort || !toPort) {
+    return { valid: false, message: "Invalid port selection." };
+  }
+  if (!fromNode.outputs.includes(fromPort)) {
+    return { valid: false, message: `Port ${fromPort} is not an output of this node.` };
+  }
+  if (!toNode.inputs.includes(toPort)) {
+    return { valid: false, message: `Port ${toPort} is not an input of this node.` };
+  }
+  const allowed = PORT_COMPATIBILITY[fromPort];
+  const portCompatible = allowed?.includes(toPort) || fromPort === toPort;
+  if (!portCompatible) {
     return {
       valid: false,
       message: `Port ${fromPort} cannot connect to ${toPort}.`,
+    };
+  }
+  const fromTypes = getPortDataTypes(fromPort);
+  const toTypes = getPortDataTypes(toPort);
+  const typeCompatible = arePortTypesCompatible(fromTypes, toTypes);
+  if (!typeCompatible) {
+    return {
+      valid: false,
+      message: `Type mismatch: ${fromPort} (${formatPortDataTypes(
+        fromTypes
+      )}) -> ${toPort} (${formatPortDataTypes(toTypes)}).`,
     };
   }
   return { valid: true };

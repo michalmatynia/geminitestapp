@@ -44,7 +44,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function AdminAiPathsDeadLetterPage() {
+export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const { toast } = useToast();
   const [pathId, setPathId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +74,7 @@ export function AdminAiPathsDeadLetterPage() {
 
   const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
     queryKey: ["ai-paths-dead-letter", normalizedPathId, normalizedQuery, page, pageSize],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ runs: AiPathRunRecord[]; total: number }> => {
       const response = await runsApi.list({
         status: "dead_lettered",
         ...(normalizedPathId ? { pathId: normalizedPathId } : {}),
@@ -93,26 +93,26 @@ export function AdminAiPathsDeadLetterPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data?.runs]);
 
-  useEffect(() => {
+  useEffect((): void => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
+  useEffect((): void => {
     setPage(1);
   }, [normalizedPathId, normalizedQuery, pageSize]);
 
-  useEffect(() => {
+  useEffect((): void => {
     setSelectedIds(new Set());
   }, [normalizedPathId, normalizedQuery]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!runsQuery.error) return;
     toast(
       runsQuery.error instanceof Error
@@ -122,13 +122,13 @@ export function AdminAiPathsDeadLetterPage() {
     );
   }, [runsQuery.error, toast]);
 
-  useEffect(() => {
+  useEffect((): void => {
     setExpandedNodeIds(new Set());
     setEventsOverflow(false);
     setEventsBatchLimit(null);
   }, [detail?.run?.id]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!detailOpen || !detail?.run?.id) {
       setStreamStatus("stopped");
       return;
@@ -150,17 +150,17 @@ export function AdminAiPathsDeadLetterPage() {
     const source = new EventSource(url);
     setStreamStatus("connecting");
 
-    const mergeEvents = (incoming: AiPathRunEventRecord[]) => {
-      setDetail((prev) => {
+    const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
+      setDetail((prev: typeof detail) => {
         if (!prev) return prev;
-        const existingIds = new Set(prev.events.map((event) => event.id));
+        const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
-        incoming.forEach((event) => {
+        incoming.forEach((event: AiPathRunEventRecord) => {
           if (!existingIds.has(event.id)) {
             merged.push(event);
           }
         });
-        merged.sort((a, b) => {
+        merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
           const aTime = new Date(a.createdAt).getTime();
           const bTime = new Date(b.createdAt).getTime();
           return aTime - bTime;
@@ -169,28 +169,28 @@ export function AdminAiPathsDeadLetterPage() {
       });
     };
 
-    source.addEventListener("ready", () => {
+    source.addEventListener("ready", (): void => {
       setStreamStatus("live");
     });
-    source.addEventListener("run", (event) => {
+    source.addEventListener("run", (event: MessageEvent): void => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunRecord;
-        setDetail((prev) => (prev ? { ...prev, run: payload } : prev));
+        const payload = JSON.parse(event.data as string) as AiPathRunRecord;
+        setDetail((prev: typeof detail) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
     });
-    source.addEventListener("nodes", (event) => {
+    source.addEventListener("nodes", (event: MessageEvent): void => {
       try {
-        const payload = JSON.parse(event.data) as AiPathRunNodeRecord[];
-        setDetail((prev) => (prev ? { ...prev, nodes: payload } : prev));
+        const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
+        setDetail((prev: typeof detail) => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }
     });
-    source.addEventListener("events", (event) => {
+    source.addEventListener("events", (event: MessageEvent): void => {
       try {
-        const payload = JSON.parse(event.data) as
+        const payload = JSON.parse(event.data as string) as
           | AiPathRunEventRecord[]
           | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
         if (Array.isArray(payload)) {
@@ -213,15 +213,15 @@ export function AdminAiPathsDeadLetterPage() {
         // ignore parse errors
       }
     });
-    source.addEventListener("done", () => {
+    source.addEventListener("done", (): void => {
       setStreamStatus("stopped");
       source.close();
     });
-    source.addEventListener("error", () => {
+    source.addEventListener("error", (): void => {
       setStreamStatus("stopped");
     });
 
-    return () => {
+    return (): void => {
       source.close();
       setStreamStatus("stopped");
     };
@@ -242,8 +242,8 @@ export function AdminAiPathsDeadLetterPage() {
           ? "indeterminate"
           : false;
 
-  const toggleSelected = (runId: string) => {
-    setSelectedIds((prev) => {
+  const toggleSelected = (runId: string): void => {
+    setSelectedIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(runId)) {
         next.delete(runId);
@@ -254,21 +254,21 @@ export function AdminAiPathsDeadLetterPage() {
     });
   };
 
-  const toggleSelectVisible = () => {
-    setSelectedIds((prev) => {
+  const toggleSelectVisible = (): void => {
+    setSelectedIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (allVisibleSelected) {
-        runs.forEach((run) => next.delete(run.id));
+        runs.forEach((run: AiPathRunRecord) => next.delete(run.id));
       } else {
-        runs.forEach((run) => next.add(run.id));
+        runs.forEach((run: AiPathRunRecord) => next.add(run.id));
       }
       return next;
     });
   };
 
-  const clearSelection = () => setSelectedIds(new Set());
+  const clearSelection = (): void => setSelectedIds(new Set());
   const hasFilters = normalizedPathId.length > 0 || searchQuery.trim().length > 0;
-  const clearFilters = () => {
+  const clearFilters = (): void => {
     setPathId("");
     setSearchQuery("");
     setDebouncedSearchQuery("");
@@ -277,7 +277,7 @@ export function AdminAiPathsDeadLetterPage() {
   const handleRequeueResult = (data: {
     requeued: number;
     errors?: Array<{ runId: string; error: string }>;
-  }) => {
+  }): void => {
     const modeLabel = requeueMode === "resume" ? "resume" : "replay";
     toast(`Requeued ${data.requeued} run(s) (${modeLabel}).`, { variant: "success" });
     const errorCount = data.errors?.length ?? 0;
@@ -290,7 +290,7 @@ export function AdminAiPathsDeadLetterPage() {
     { requeued: number; errors?: Array<{ runId: string; error: string }> },
     Error
   >({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
       const response = await runsApi.requeueDeadLetter({
         runIds: Array.from(selectedIds),
         mode: requeueMode,
@@ -300,12 +300,12 @@ export function AdminAiPathsDeadLetterPage() {
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
       handleRequeueResult(data);
       clearSelection();
       void runsQuery.refetch();
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       toast(error instanceof Error ? error.message : "Failed to requeue runs.", {
         variant: "error",
       });
@@ -316,7 +316,7 @@ export function AdminAiPathsDeadLetterPage() {
     { requeued: number; errors?: Array<{ runId: string; error: string }> },
     Error
   >({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
       const response = await runsApi.requeueDeadLetter({
         pathId: normalizedPathId || null,
         query: normalizedQuery || null,
@@ -327,19 +327,19 @@ export function AdminAiPathsDeadLetterPage() {
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
       handleRequeueResult(data);
       clearSelection();
       void runsQuery.refetch();
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       toast(error instanceof Error ? error.message : "Failed to requeue runs.", {
         variant: "error",
       });
     },
   });
 
-  const handleOpenDetail = async (runId: string) => {
+  const handleOpenDetail = async (runId: string): Promise<void> => {
     setDetailOpen(true);
     setDetailLoading(true);
     setStreamPaused(false);
@@ -355,7 +355,7 @@ export function AdminAiPathsDeadLetterPage() {
           events: AiPathRunEventRecord[];
         }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to load run details.", {
         variant: "error",
       });
@@ -365,16 +365,16 @@ export function AdminAiPathsDeadLetterPage() {
     }
   };
 
-  const paginationLabel = useMemo(() => {
+  const paginationLabel = useMemo((): string => {
     if (total === 0) return "0 results";
     const start = offset + 1;
     const end = Math.min(offset + pageSize, total);
     return `${start}-${end} of ${total}`;
   }, [offset, pageSize, total]);
 
-  const getLatestEventTimestamp = (events: AiPathRunEventRecord[]) => {
+  const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
     let max = 0;
-    events.forEach((event) => {
+    events.forEach((event: AiPathRunEventRecord) => {
       const time = new Date(event.createdAt).getTime();
       if (Number.isFinite(time) && time > max) {
         max = time;
@@ -383,8 +383,8 @@ export function AdminAiPathsDeadLetterPage() {
     return max > 0 ? new Date(max).toISOString() : null;
   };
 
-  const toggleNodeExpanded = (nodeId: string) => {
-    setExpandedNodeIds((prev) => {
+  const toggleNodeExpanded = (nodeId: string): void => {
+    setExpandedNodeIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(nodeId)) {
         next.delete(nodeId);
@@ -395,17 +395,17 @@ export function AdminAiPathsDeadLetterPage() {
     });
   };
 
-  const formatTimestamp = (value?: Date | string | null) => {
+  const formatTimestamp = (value?: Date | string | null): string => {
     if (!value) return "-";
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleString();
   };
 
-  const nodeStatusSummary = useMemo(() => {
+  const nodeStatusSummary = useMemo((): { counts: Record<string, number>; totalNodes: number; completed: number; progress: number } | null => {
     if (!detail) return null;
     const counts: Record<string, number> = {};
-    detail.nodes.forEach((node) => {
+    detail.nodes.forEach((node: AiPathRunNodeRecord) => {
       counts[node.status] = (counts[node.status] ?? 0) + 1;
     });
     const totalNodes = detail.nodes.length;
@@ -414,7 +414,7 @@ export function AdminAiPathsDeadLetterPage() {
     return { counts, totalNodes, completed, progress };
   }, [detail]);
 
-  const handleRequeueSingle = async (runId: string) => {
+  const handleRequeueSingle = async (runId: string): Promise<void> => {
     const response = await runsApi.resume(runId, requeueMode);
     if (!response.ok) {
       toast(response.error || "Failed to requeue run.", { variant: "error" });
@@ -431,31 +431,31 @@ export function AdminAiPathsDeadLetterPage() {
     Error,
     { runId: string; nodeId: string }
   >({
-    mutationFn: async ({ runId, nodeId }) => {
+    mutationFn: async ({ runId, nodeId }: { runId: string; nodeId: string }): Promise<{ run: unknown }> => {
       const response = await runsApi.retryNode(runId, nodeId);
       if (!response.ok) {
         throw new Error(response.error || "Failed to retry node.");
       }
       return response.data as { run: unknown };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: { run: unknown }, variables: { runId: string; nodeId: string }): void => {
       toast(`Node ${variables.nodeId} retry queued.`, { variant: "success" });
       void runsQuery.refetch();
       if (detail?.run?.id) {
         void handleOpenDetail(detail.run.id);
       }
     },
-    onError: (error) => {
+    onError: (error: Error): void => {
       toast(error instanceof Error ? error.message : "Failed to retry node.", {
         variant: "error",
       });
     },
   });
 
-  const handleRetryFailedNodes = async () => {
+  const handleRetryFailedNodes = async (): Promise<void> => {
     if (!detail || retryFailedPending) return;
     const retryableNodes = detail.nodes.filter(
-      (node) => node.status === "failed" || node.status === "blocked"
+      (node: AiPathRunNodeRecord) => node.status === "failed" || node.status === "blocked"
     );
     if (retryableNodes.length === 0) {
       toast("No failed or blocked nodes to retry.", { variant: "info" });
@@ -464,9 +464,9 @@ export function AdminAiPathsDeadLetterPage() {
     setRetryFailedPending(true);
     try {
       const results = await Promise.all(
-        retryableNodes.map((node) => runsApi.retryNode(detail.run.id, node.nodeId))
+        retryableNodes.map((node: AiPathRunNodeRecord) => runsApi.retryNode(detail.run.id, node.nodeId))
       );
-      const failed = results.filter((result) => !result.ok);
+      const failed = results.filter((result: { ok: boolean }) => !result.ok);
       const successCount = results.length - failed.length;
       if (successCount > 0) {
         toast(`Queued ${successCount} node(s) for retry.`, { variant: "success" });
@@ -478,7 +478,7 @@ export function AdminAiPathsDeadLetterPage() {
         void runsQuery.refetch();
         void handleOpenDetail(detail.run.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to retry nodes.", {
         variant: "error",
       });

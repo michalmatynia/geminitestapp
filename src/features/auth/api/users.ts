@@ -1,7 +1,7 @@
 import type { AuthUserSummary } from "../types";
 
 export type AuthUsersResponse = {
-  provider: "prisma" | "mongodb";
+  provider: "mongodb";
   users: AuthUserSummary[];
 };
 
@@ -36,7 +36,7 @@ export const updateAuthUser = async (
     email?: string | null;
     emailVerified?: boolean | null;
   }
-) => {
+): Promise<{ ok: boolean; payload: AuthUserSummary }> => {
   const res = await fetch(`/api/auth/users/${userId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -64,7 +64,7 @@ export const updateAuthUserSecurity = async (
     allowedIps?: string[];
     disableMfa?: boolean;
   }
-) => {
+): Promise<{ ok: boolean; payload: AuthUserSecurityProfile }> => {
   const res = await fetch(`/api/auth/users/${userId}/security`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -74,7 +74,7 @@ export const updateAuthUserSecurity = async (
   return { ok: res.ok, payload };
 };
 
-export const mockSignIn = async (input: { email: string; password: string }) => {
+export const mockSignIn = async (input: { email: string; password: string }): Promise<{ ok: boolean; payload: { ok?: boolean; message?: string } }> => {
   const res = await fetch("/api/auth/mock-signin", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

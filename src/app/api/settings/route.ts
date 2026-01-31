@@ -11,6 +11,7 @@ import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
+import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -38,6 +39,9 @@ const productSettingKeys = new Set([
 ]);
 
 const isProductSettingKey = (key: string) => productSettingKeys.has(key);
+const authSettingKeys = new Set(Object.values(AUTH_SETTINGS_KEYS));
+const isMongoPreferredSettingKey = (key: string) =>
+  isProductSettingKey(key) || authSettingKeys.has(key);
 
 const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
   provider === "prisma" && Boolean(process.env.DATABASE_URL) && "setting" in prisma;
@@ -98,11 +102,13 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       });
     } else {
       prismaSettings.forEach((setting: SettingRecord) => {
-        settingsMap.set(setting.key, setting);
+        if (!authSettingKeys.has(setting.key)) {
+          settingsMap.set(setting.key, setting);
+        }
       });
       mongoSettings.forEach((setting: SettingRecord) => {
         const shouldOverride =
-          isProductSettingKey(setting.key) || !settingsMap.has(setting.key);
+          isMongoPreferredSettingKey(setting.key) || !settingsMap.has(setting.key);
         if (shouldOverride) {
           settingsMap.set(setting.key, setting);
         }
@@ -148,9 +154,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const provider = await getAppDbProvider();
     const shouldWriteMongo =
       Boolean(process.env.MONGODB_URI) &&
-      (provider === "mongodb" || isProductSettingKey(key) || !canUsePrismaSettings(provider));
+      (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
+    const shouldWritePrisma =
+      canUsePrismaSettings(provider) && !authSettingKeys.has(key);
     const [prismaSetting, mongoSetting] = await Promise.all([
-      canUsePrismaSettings(provider)
+      shouldWritePrisma
         ? prisma.setting.upsert({
             where: { key },
             update: { value },

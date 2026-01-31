@@ -6,15 +6,15 @@ import { AiPathsSettings } from "../components/AiPathsSettings";
 
 
 
-export function AdminAiPathsPage() {
-  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
+export function AdminAiPathsPage(): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs" | "queue">(
     "canvas"
   );
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
+    return (): void => cancelAnimationFrame(id);
   }, []);
 
   return (
@@ -23,14 +23,15 @@ export function AdminAiPathsPage() {
         {mounted ? (
           <Tabs
             value={activeTab}
-            onValueChange={(value) =>
-              setActiveTab(value as "canvas" | "paths" | "docs")
+            onValueChange={(value: string) =>
+              setActiveTab(value as "canvas" | "paths" | "docs" | "queue")
             }
           >
             <TabsList className="bg-card/70">
               <TabsTrigger value="canvas">Canvas</TabsTrigger>
               <TabsTrigger value="paths">Paths</TabsTrigger>
               <TabsTrigger value="docs">Docs</TabsTrigger>
+              <TabsTrigger value="queue">Job Queue</TabsTrigger>
             </TabsList>
           </Tabs>
         ) : (
@@ -45,7 +46,7 @@ export function AdminAiPathsPage() {
         />
         <AiPathsSettings
           activeTab={activeTab}
-          renderActions={(actions) => (
+          renderActions={(actions: React.ReactNode) => (
             <div className="flex items-center gap-3">{actions}</div>
           )}
           onTabChange={setActiveTab}

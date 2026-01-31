@@ -182,7 +182,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
 
       const keyframes = getPreviewKeyframes(preset);
       if (keyframes) {
-        gsap.to(dots[0], {
+        gsap.to(dots[0]!, {
           ...keyframes,
           duration: 0.7,
           repeat: -1,
@@ -192,7 +192,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
       }
 
       const { from, to } = getPreviewVars(preset);
-      gsap.fromTo(dots[0] as HTMLElement, from, {
+      gsap.fromTo(dots[0]!, from, {
         ...to,
         repeat: -1,
         yoyo: true,

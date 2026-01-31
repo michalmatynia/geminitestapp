@@ -52,7 +52,7 @@ export function apiHandler(
     const context: ApiHandlerContext = {
       requestId,
       startTime,
-      getElapsedMs: () => Math.round(performance.now() - startTime),
+      getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
     try {

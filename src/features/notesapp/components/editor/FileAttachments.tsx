@@ -35,7 +35,7 @@ export function FileAttachments({
   onInsertFileReference,
   formatFileSize,
   isImageFile,
-}: FileAttachmentsProps) {
+}: FileAttachmentsProps): React.JSX.Element {
   const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
 
   if (!noteId) {
@@ -58,8 +58,8 @@ export function FileAttachments({
           return (
             <div
               className="relative h-20 w-20 rounded-md border bg-gray-800"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
+              onDragOver={(e: React.DragEvent): void => e.preventDefault()}
+              onDrop={(e: React.DragEvent): void => {
                 if (nextSlot === null) return;
                 e.preventDefault();
                 const file = e.dataTransfer.files[0];
@@ -84,13 +84,13 @@ export function FileAttachments({
                     {maxSlots - noteFiles.length} left
                   </span>
                   <Input
-                    ref={(el) => {
+                    ref={(el: HTMLInputElement | null): void => {
                       fileInputRefs.current[nextSlot] = el;
                     }}
                     type="file"
                     multiple
                     className="hidden"
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                       const files = e.target.files;
                       if (files && files.length > 0) {
                         void onMultiFileUpload(files);
@@ -104,7 +104,7 @@ export function FileAttachments({
           );
         })()}
 
-        {noteFiles.map((file) => (
+        {noteFiles.map((file: NoteFileRecord) => (
           <div
             key={file.slotIndex}
             className="relative h-20 w-24 rounded-md border bg-gray-800/70"
@@ -131,7 +131,7 @@ export function FileAttachments({
               <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button
                   type="button"
-                  onClick={() => onInsertFileReference(file)}
+                  onClick={(): void => onInsertFileReference(file)}
                   className="rounded-full bg-blue-600 p-1.5 text-white hover:bg-blue-700"
                   title="Insert into content"
                 >
@@ -139,7 +139,7 @@ export function FileAttachments({
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => { void onFileDelete(file.slotIndex); }}
+                  onClick={(): void => { void onFileDelete(file.slotIndex); }}
                   className="rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700"
                   title="Delete file"
                 >

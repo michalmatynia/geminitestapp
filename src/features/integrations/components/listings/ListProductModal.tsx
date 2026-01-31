@@ -24,19 +24,7 @@ type ListProductModalProps = {
 };
 
 import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
-
-type LocalIntegrationConnection = {
-  id: string;
-  name: string;
-  integrationId: string;
-};
-
-type LocalIntegration = {
-  id: string;
-  name: string;
-  slug: string;
-  connections: LocalIntegrationConnection[];
-};
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 
 export default function ListProductModal({
   product,
@@ -55,16 +43,7 @@ export default function ListProductModal({
     isBaseComIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId) as unknown as {
-    integrations: LocalIntegration[];
-    loading: boolean;
-    selectedIntegrationId: string;
-    selectedConnectionId: string;
-    selectedIntegration: LocalIntegration | null;
-    isBaseComIntegration: boolean;
-    setSelectedIntegrationId: (id: string) => void;
-    setSelectedConnectionId: (id: string) => void;
-  };
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
 
   // Base.com specific settings
   const {
@@ -89,8 +68,8 @@ export default function ListProductModal({
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  const selectedConnection = selectedIntegration?.connections?.find(
-    (connection: LocalIntegrationConnection) => connection.id === selectedConnectionId
+  const selectedConnection = (selectedIntegration?.connections as IntegrationConnectionBasic[] || []).find(
+    (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
@@ -205,7 +184,7 @@ export default function ListProductModal({
   };
 
   const integrationsWithConnections = integrations.filter(
-    (i: LocalIntegration) => i.connections.length > 0
+    (i: IntegrationWithConnections) => i.connections.length > 0
   );
 
   return (
@@ -328,8 +307,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {integrationsWithConnections
-                        .filter((integration: LocalIntegration): boolean => !!integration.id)
-                        .map((integration: LocalIntegration) => (
+                        .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                        .map((integration: IntegrationWithConnections) => (
                           <SelectItem key={integration.id} value={integration.id}>
                             {integration.name}
                           </SelectItem>
@@ -350,8 +329,8 @@ export default function ListProductModal({
                       </SelectTrigger>
                       <SelectContent>
                         {selectedIntegration.connections
-                          .filter((connection: LocalIntegrationConnection): boolean => !!connection.id)
-                          .map((connection: LocalIntegrationConnection) => (
+                          .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                          .map((connection: IntegrationConnectionBasic) => (
                             <SelectItem key={connection.id} value={connection.id}>
                               {connection.name}
                             </SelectItem>

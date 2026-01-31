@@ -172,11 +172,11 @@ export default function FileManager({
   const handleApplyTags = async (): Promise<void> => {
     const tags = parseTagInput(bulkTagInput);
     if (selectedFiles.length === 0) {
-      toast("Select at least one file to tag.", { variant: "warning" });
+      toast("Select at least one file to tag.", { variant: "info" });
       return;
     }
     if (tags.length === 0) {
-      toast("Enter at least one tag.", { variant: "warning" });
+      toast("Enter at least one tag.", { variant: "info" });
       return;
     }
     try {

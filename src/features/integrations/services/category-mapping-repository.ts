@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type {
   CategoryMapping,
   CategoryMappingWithDetails,
@@ -47,6 +47,13 @@ function mapToRecord(record: {
     updatedAt: record.updatedAt,
   };
 }
+
+type EnrichedCategoryMapping = Prisma.CategoryMappingGetPayload<{
+  include: {
+    externalCategory: true;
+    internalCategory: true;
+  };
+}>;
 
 export function getCategoryMappingRepository(): CategoryMappingRepository {
   return {
@@ -107,7 +114,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
         ],
       });
 
-      return records.map((r: any) => ({
+      return (records as EnrichedCategoryMapping[]).map((r: EnrichedCategoryMapping) => ({
         id: r.id,
         connectionId: r.connectionId,
         externalCategoryId: r.externalCategoryId,

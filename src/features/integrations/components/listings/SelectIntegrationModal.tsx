@@ -2,25 +2,12 @@
 
 import { AppModal, ModalShell, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Button, Label } from "@/shared/ui";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
+import Link from "next/link";
 
 type SelectIntegrationModalProps = {
   onClose: () => void;
   onSelect: (integrationId: string, connectionId: string) => void;
-};
-
-import Link from "next/link";
-
-type LocalIntegrationConnection = {
-  id: string;
-  name: string;
-  integrationId: string;
-};
-
-type LocalIntegration = {
-  id: string;
-  name: string;
-  slug: string;
-  connections: LocalIntegrationConnection[];
 };
 
 export default function SelectIntegrationModal({
@@ -35,15 +22,7 @@ export default function SelectIntegrationModal({
     selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection() as unknown as {
-    integrations: LocalIntegration[];
-    loading: boolean;
-    selectedIntegrationId: string;
-    selectedConnectionId: string;
-    selectedIntegration: LocalIntegration | undefined;
-    setSelectedIntegrationId: (id: string) => void;
-    setSelectedConnectionId: (id: string) => void;
-  };
+  } = useIntegrationSelection();
 
   // Note: We don't auto-select the integration on initial load
   // The user should manually select the integration, and then we auto-select the connection
@@ -88,8 +67,8 @@ export default function SelectIntegrationModal({
                 </SelectTrigger>
                 <SelectContent>
                   {integrations
-                    .filter((integration: LocalIntegration): boolean => !!integration.id)
-                    .map((integration: LocalIntegration) => (
+                    .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
+                    .map((integration: IntegrationWithConnections) => (
                       <SelectItem key={integration.id} value={integration.id}>
                         {integration.name}
                       </SelectItem>
@@ -112,8 +91,8 @@ export default function SelectIntegrationModal({
                   </SelectTrigger>
                   <SelectContent>
                     {selectedIntegration.connections
-                      .filter((connection: LocalIntegrationConnection): boolean => !!connection.id)
-                      .map((connection: LocalIntegrationConnection) => (
+                      .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
+                      .map((connection: IntegrationConnectionBasic) => (
                         <SelectItem key={connection.id} value={connection.id}>
                           {connection.name}
                         </SelectItem>

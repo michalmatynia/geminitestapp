@@ -1,9 +1,5 @@
 "use client";
 
-
-
-
-
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import type {
   AiNode,
@@ -91,7 +87,7 @@ export function PollNodeConfigSection({
         const value = fromOutput[fromPort];
         if (value === undefined) return current;
         if (current === undefined) return value;
-        if (Array.isArray(current)) return [...(current as unknown[]), value];
+        if (Array.isArray(current)) return [...current, value];
         return [current, value];
       }, undefined);
       if (merged !== undefined) {

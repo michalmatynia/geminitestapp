@@ -37,14 +37,14 @@ export default function DatabasesPage(): React.JSX.Element {
   });
   const data = backupsQuery.data ?? [];
 
-  const createBackup = useMutation({
+  const createBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType }>({
     mutationFn: async ({ dbType }: { dbType: DatabaseType }) => createDatabaseBackup(dbType),
-    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
+    onSuccess: (_data, variables): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
 
-  const restoreBackup = useMutation({
+  const restoreBackup = useMutation<{ ok: boolean; payload: DatabaseRestoreResponse }, Error, { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }>({
     mutationFn: async ({
       dbType,
       backupName,
@@ -59,12 +59,8 @@ export default function DatabasesPage(): React.JSX.Element {
         truncateBeforeRestore,
       }),
     onSuccess: (
-      _data: unknown,
-      variables: {
-        dbType: DatabaseType;
-        backupName: string;
-        truncateBeforeRestore: boolean;
-      }
+      _data,
+      variables
     ): void => {
       void queryClient.invalidateQueries({
         queryKey: ["database-backups", variables.dbType],
@@ -72,18 +68,18 @@ export default function DatabasesPage(): React.JSX.Element {
     },
   });
 
-  const uploadBackup = useMutation({
+  const uploadBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType; file: File }>({
     mutationFn: async ({ dbType, file }: { dbType: DatabaseType; file: File }) =>
       uploadDatabaseBackup(dbType, file),
-    onSuccess: (_data: unknown, variables: { dbType: DatabaseType; file: File }): void => {
+    onSuccess: (_data, variables): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
 
-  const deleteBackup = useMutation({
+  const deleteBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType; backupName: string }>({
     mutationFn: async ({ dbType, backupName }: { dbType: DatabaseType; backupName: string }) =>
       deleteDatabaseBackup(dbType, backupName),
-    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
+    onSuccess: (_data, variables): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });

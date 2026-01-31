@@ -5,7 +5,19 @@ import { useState } from "react";
 // - Color requires normalization and contrast calculation
 // - Pins/archives/favorites need reactive updates
 // Extracting prevents prop drilling and makes metadata updates testable.
-export function useNoteMetadata(note: { id?: string; title?: string; color?: string | null; isPinned?: boolean; isArchived?: boolean; isFavorite?: boolean } | null) {
+export function useNoteMetadata(note: { id?: string; title?: string; color?: string | null; isPinned?: boolean; isArchived?: boolean; isFavorite?: boolean } | null): {
+  title: string;
+  setTitle: (title: string) => void;
+  color: string;
+  setColor: (color: string) => void;
+  isPinned: boolean;
+  setIsPinned: (isPinned: boolean) => void;
+  isArchived: boolean;
+  setIsArchived: (isArchived: boolean) => void;
+  isFavorite: boolean;
+  setIsFavorite: (isFavorite: boolean) => void;
+  getReadableTextColor: (hex: string) => string;
+} {
   const [title, setTitle] = useState(note?.title || "");
   const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
@@ -24,7 +36,7 @@ export function useNoteMetadata(note: { id?: string; title?: string; color?: str
     setIsFavorite(note?.isFavorite || false);
   }
 
-  const getReadableTextColor = (hex: string) => {
+  const getReadableTextColor = (hex: string): string => {
     const normalized = hex.replace("#", "");
     if (normalized.length !== 6) return "#f8fafc";
     const num = parseInt(normalized, 16);

@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type {
   ExternalCategory,
   ExternalCategoryWithChildren,
@@ -80,6 +80,23 @@ function buildTree(
     .sort((a: ExternalCategoryWithChildren, b: ExternalCategoryWithChildren) => a.name.localeCompare(b.name));
 }
 
+type ExternalCategoryDoc = Prisma.ExternalCategoryGetPayload<Record<string, never>>;
+
+const toRecord = (doc: ExternalCategoryDoc): ExternalCategory => ({
+  id: doc.id,
+  connectionId: doc.connectionId,
+  externalId: doc.externalId,
+  name: doc.name,
+  parentExternalId: doc.parentExternalId,
+  path: doc.path,
+  depth: doc.depth,
+  isLeaf: doc.isLeaf,
+  metadata: doc.metadata as Record<string, unknown> | null,
+  fetchedAt: doc.fetchedAt,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
+
 export function getExternalCategoryRepository(): ExternalCategoryRepository {
   return {
     async syncFromBase(connectionId: string, categories: BaseCategory[]): Promise<number> {
@@ -144,20 +161,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         orderBy: [{ depth: "asc" }, { name: "asc" }],
       });
 
-      return records.map((r: any) => ({
-        id: r.id,
-        connectionId: r.connectionId,
-        externalId: r.externalId,
-        name: r.name,
-        parentExternalId: r.parentExternalId,
-        path: r.path,
-        depth: r.depth,
-        isLeaf: r.isLeaf,
-        metadata: r.metadata as Record<string, unknown> | null,
-        fetchedAt: r.fetchedAt,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      }));
+      return records.map((r: ExternalCategoryDoc) => toRecord(r));
     },
 
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
@@ -166,20 +170,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
         orderBy: [{ depth: "asc" }, { name: "asc" }],
       });
 
-      const categories: ExternalCategory[] = records.map((r: any) => ({
-        id: r.id,
-        connectionId: r.connectionId,
-        externalId: r.externalId,
-        name: r.name,
-        parentExternalId: r.parentExternalId,
-        path: r.path,
-        depth: r.depth,
-        isLeaf: r.isLeaf,
-        metadata: r.metadata as Record<string, unknown> | null,
-        fetchedAt: r.fetchedAt,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      }));
+      const categories: ExternalCategory[] = records.map((r: ExternalCategoryDoc) => toRecord(r));
 
       return buildTree(categories, null);
     },
@@ -191,20 +182,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
 
       if (!record) return null;
 
-      return {
-        id: record.id,
-        connectionId: record.connectionId,
-        externalId: record.externalId,
-        name: record.name,
-        parentExternalId: record.parentExternalId,
-        path: record.path,
-        depth: record.depth,
-        isLeaf: record.isLeaf,
-        metadata: record.metadata as Record<string, unknown> | null,
-        fetchedAt: record.fetchedAt,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
-      };
+      return toRecord(record);
     },
 
     async getByExternalId(
@@ -219,20 +197,7 @@ export function getExternalCategoryRepository(): ExternalCategoryRepository {
 
       if (!record) return null;
 
-      return {
-        id: record.id,
-        connectionId: record.connectionId,
-        externalId: record.externalId,
-        name: record.name,
-        parentExternalId: record.parentExternalId,
-        path: record.path,
-        depth: record.depth,
-        isLeaf: record.isLeaf,
-        metadata: record.metadata as Record<string, unknown> | null,
-        fetchedAt: record.fetchedAt,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
-      };
+      return toRecord(record);
     },
 
     async deleteByConnection(connectionId: string): Promise<number> {

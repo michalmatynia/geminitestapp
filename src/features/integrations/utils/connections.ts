@@ -8,7 +8,7 @@ export const coerceStatus = (value: unknown): TestStatus => {
 
 export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
-  return value.map((raw: any) => {
+  return value.map((raw: unknown): TestLogEntry => {
     const s =
       raw && typeof raw === "object"
         ? (raw as Record<string, unknown>)
@@ -28,7 +28,7 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
         typeof s?.timestamp === "string"
           ? s.timestamp
           : new Date().toISOString(),
-      ...(typeof s?.detail === "string" && { detail: s.detail }),
+      ...(typeof s?.detail === "string" && { detail: s.detail as string }),
     };
   });
 };

@@ -1,7 +1,3 @@
-src/app/api/products/ai-jobs/route.ts(12,21): error TS2339: Property 'count' does not exist on type 'number'.
-src/app/api/products/ai-jobs/route.ts(13,64): error TS2339: Property 'count' does not exist on type 'number'.
-src/app/api/products/ai-jobs/route.ts(45,63): error TS2339: Property 'count' does not exist on type 'number'.
-src/app/api/products/ai-jobs/route.ts(49,63): error TS2339: Property 'count' does not exist on type 'number'.
 src/features/cms/components/frontend/GsapAnimationWrapper.tsx(7,22): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Flip.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/flip.d.ts' only in casing.
   The file is in the program because:
     Referenced via 'flip.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
@@ -17,6 +13,7 @@ src/features/cms/components/frontend/GsapAnimationWrapper.tsx(10,26): error TS11
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(299,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1095,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1273,15): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/page-builder/MenuSettingsPanel.tsx(27,34): error TS6133: 'AnimationPreset' is declared but its value is never read.
 src/features/cms/services/cms-domain.ts(151,3): error TS2322: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
   Types of property 'createdAt' are incompatible.
     Type 'Date' is not assignable to type 'string'.
@@ -31,64 +28,20 @@ src/features/cms/services/cms-domain.ts(188,3): error TS2322: Type 'CmsDomainRec
   Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
     Types of property 'createdAt' are incompatible.
       Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(34,11): error TS2304: Cannot find name 'CmsThemeColors'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(35,15): error TS2304: Cannot find name 'CmsThemeTypography'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(36,12): error TS2304: Cannot find name 'CmsThemeSpacing'.
-src/features/cms/services/cms-repository/prisma-cms-repository.ts(197,17): error TS2352: Conversion of type 'CmsThemeColors' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type 'CmsThemeColors' is not comparable to type 'InputJsonObject'.
-    Index signature for type 'string' is missing in type 'CmsThemeColors'.
-src/features/cms/services/cms-repository/prisma-cms-repository.ts(198,21): error TS2352: Conversion of type 'CmsThemeTypography' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type 'CmsThemeTypography' is not comparable to type 'InputJsonObject'.
-    Index signature for type 'string' is missing in type 'CmsThemeTypography'.
-src/features/cms/services/cms-repository/prisma-cms-repository.ts(199,18): error TS2352: Conversion of type 'CmsThemeSpacing' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type 'CmsThemeSpacing' is not comparable to type 'InputJsonObject'.
-    Index signature for type 'string' is missing in type 'CmsThemeSpacing'.
-src/features/cms/types/theme-settings.ts(634,31): error TS2345: Argument of type 'ColorScheme | undefined' is not assignable to parameter of type 'ColorScheme'.
-  Type 'undefined' is not assignable to type 'ColorScheme'.
-src/features/data-import-export/pages/ImportsPage.tsx(221,88): error TS2322: Type 'string | boolean' is not assignable to type 'boolean'.
-  Type 'string' is not assignable to type 'boolean'.
-src/features/database/components/DatabaseColumns.tsx(54,60): error TS2322: Type 'string' is not assignable to type 'number'.
-src/features/database/components/DatabaseColumns.tsx(60,60): error TS2322: Type 'string' is not assignable to type 'number'.
-src/features/database/pages/DatabasesPage.tsx(48,5): error TS2322: Type '({ dbType, backupName, truncateBeforeRestore, }: { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean; }) => Promise<{ ok: boolean; payload: DatabaseRestoreResponse; }>' is not assignable to type 'MutationFunction<unknown, { dbType: DatabaseType; }>'.
-  Types of parameters '__0' and 'variables' are incompatible.
-    Type '{ dbType: DatabaseType; }' is missing the following properties from type '{ dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean; }': backupName, truncateBeforeRestore
-src/features/database/pages/DatabasesPage.tsx(67,5): error TS2322: Type '({ dbType, file }: { dbType: DatabaseType; file: File; }) => Promise<{ ok: boolean; payload: DatabaseBackupResponse; }>' is not assignable to type 'MutationFunction<unknown, { dbType: DatabaseType; }>'.
-  Types of parameters '__0' and 'variables' are incompatible.
-    Property 'file' is missing in type '{ dbType: DatabaseType; }' but required in type '{ dbType: DatabaseType; file: File; }'.
-src/features/database/pages/DatabasesPage.tsx(75,5): error TS2322: Type '({ dbType, backupName }: { dbType: DatabaseType; backupName: string; }) => Promise<{ ok: boolean; payload: DatabaseBackupResponse; }>' is not assignable to type 'MutationFunction<unknown, { dbType: DatabaseType; }>'.
-  Types of parameters '__0' and 'variables' are incompatible.
-    Property 'backupName' is missing in type '{ dbType: DatabaseType; }' but required in type '{ dbType: DatabaseType; backupName: string; }'.
-src/features/files/components/FileManager.tsx(175,51): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
-src/features/files/components/FileManager.tsx(179,42): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(43,9): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ImageFileCreateInput, ImageFileUncheckedCreateInput> & ImageFileUncheckedCreateInput) | (Without<...> & ImageFileCreateInput)'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(46,21): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(51,33): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(65,22): error TS2345: Argument of type '(imageFile: { id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }) => ImageFileRecord' is not assignable to parameter of type '(value: { size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }, index: number, array: { ...; }[]) => ImageFileRecord'.
-  Types of parameters 'imageFile' and 'value' are incompatible.
-    Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(73,22): error TS2345: Argument of type '(imageFile: { id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }) => ImageFileRecord' is not assignable to parameter of type '(value: { size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }, index: number, array: { ...; }[]) => ImageFileRecord'.
-  Types of parameters 'imageFile' and 'value' are incompatible.
-    Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(81,33): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(87,15): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ImageFileUpdateInput, ImageFileUncheckedUpdateInput> & ImageFileUncheckedUpdateInput) | (Without<...> & ImageFileUpdateInput)'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(89,33): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/files/services/image-file-repository/prisma-image-file-repository.ts(94,33): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/database/pages/DatabasesPage.tsx(116,15): error TS2339: Property 'ok' does not exist on type 'unknown'.
+src/features/database/pages/DatabasesPage.tsx(116,19): error TS2339: Property 'payload' does not exist on type 'unknown'.
+src/features/database/pages/DatabasesPage.tsx(189,11): error TS18046: 'result' is of type 'unknown'.
+src/features/database/pages/DatabasesPage.tsx(206,11): error TS18046: 'result' is of type 'unknown'.
 src/features/gsap/components/AnimationPreviewIcon.tsx(185,17): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
   Type 'undefined' is not assignable to type 'TweenTarget'.
-src/features/integrations/components/listings/ListProductModal.tsx(26,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
-src/features/integrations/components/listings/ListProductModal.tsx(26,28): error TS6196: 'IntegrationConnectionBasic' is declared but never used.
-src/features/integrations/components/listings/ListProductModal.tsx(187,27): error TS2339: Property 'connections' does not exist on type 'Integration'.
-src/features/integrations/components/listings/MassListProductModal.tsx(24,1): error TS6133: 'IntegrationConnectionBasic' is declared but its value is never read.
-src/features/integrations/components/listings/MassListProductModal.tsx(24,15): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
-src/features/integrations/components/listings/ProductListingsModal.tsx(223,12): error TS2304: Cannot find name 'Link'.
-src/features/integrations/components/listings/ProductListingsModal.tsx(225,13): error TS2304: Cannot find name 'Link'.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(16,1): error TS6192: All imports in import declaration are unused.
-src/features/integrations/components/listings/SelectIntegrationModal.tsx(16,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
+src/features/integrations/components/listings/ListProductModal.tsx(73,18): error TS2304: Cannot find name 'LocalIntegrationConnection'.
+src/features/integrations/components/listings/ListProductModal.tsx(188,9): error TS2304: Cannot find name 'LocalIntegration'.
+src/features/integrations/components/listings/ListProductModal.tsx(311,47): error TS2304: Cannot find name 'LocalIntegration'.
+src/features/integrations/components/listings/ListProductModal.tsx(312,44): error TS2304: Cannot find name 'LocalIntegration'.
+src/features/integrations/components/listings/ListProductModal.tsx(333,48): error TS2304: Cannot find name 'LocalIntegrationConnection'.
+src/features/integrations/components/listings/ListProductModal.tsx(334,45): error TS2304: Cannot find name 'LocalIntegrationConnection'.
+src/features/integrations/components/listings/MassListProductModal.tsx(21,1): error TS6192: All imports in import declaration are unused.
+src/features/integrations/components/listings/ProductListingsModal.tsx(548,7): error TS18004: No value exists in scope for the shorthand property 'allowDuplicateSku'. Either declare one or provide an initializer.
 src/features/integrations/components/listings/SelectProductForListingModal.tsx(204,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
   Type 'null' is not assignable to type 'string'.
 src/features/integrations/hooks/useIntegrationMutations.ts(32,5): error TS2322: Type '({ integrationId, connectionId, payload }: { integrationId: string; connectionId?: string | null; payload: Record<string, unknown>; }) => Promise<IntegrationConnection>' is not assignable to type 'MutationFunction<IntegrationConnection, { integrationId: string; }>'.
@@ -109,50 +62,37 @@ src/features/integrations/services/product-listing-repository.ts(325,3): error T
   Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
     Type 'boolean' is not assignable to type 'void'.
 src/features/jobs/server.ts(7,1): error TS2308: Module "./workers/chatbotJobQueue" has already exported a member named 'pollQueue'. Consider explicitly re-exporting to resolve the ambiguity.
-src/features/jobs/services/productAiService.ts(1,10): error TS2300: Duplicate identifier 'productService'.
-src/features/jobs/services/productAiService.ts(2,10): error TS2300: Duplicate identifier 'getProductAiJobRepository'.
-src/features/jobs/services/productAiService.ts(3,10): error TS2300: Duplicate identifier 'invalidStateError'.
-src/features/jobs/services/productAiService.ts(3,29): error TS2300: Duplicate identifier 'notFoundError'.
-src/features/jobs/services/productAiService.ts(4,15): error TS2300: Duplicate identifier 'ProductAiJobUpdate'.
-src/features/jobs/services/productAiService.ts(5,15): error TS2300: Duplicate identifier 'ProductAiJobType'.
-src/features/jobs/services/productAiService.ts(7,10): error TS2300: Duplicate identifier 'productService'.
-src/features/jobs/services/productAiService.ts(8,10): error TS2300: Duplicate identifier 'getProductAiJobRepository'.
-src/features/jobs/services/productAiService.ts(9,10): error TS2300: Duplicate identifier 'invalidStateError'.
-src/features/jobs/services/productAiService.ts(9,29): error TS2300: Duplicate identifier 'notFoundError'.
-src/features/jobs/services/productAiService.ts(10,15): error TS2300: Duplicate identifier 'ProductAiJobUpdate'.
-src/features/jobs/services/productAiService.ts(11,15): error TS2300: Duplicate identifier 'ProductAiJobType'.
-src/features/jobs/services/productAiService.ts(18,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+src/features/jobs/services/productAiService.ts(28,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
   Types of property 'result' are incompatible.
     Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(45,52): error TS2345: Argument of type '(j: ProductAiJob) => string' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => string'.
+src/features/jobs/services/productAiService.ts(55,52): error TS2345: Argument of type '(j: ProductAiJob) => string' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => string'.
   Types of parameters 'j' and 'value' are incompatible.
     Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
       Types of property 'result' are incompatible.
         Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(70,3): error TS2322: Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }[]' is not assignable to type '(ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; })[]'.
-  Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }' is not assignable to type 'ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; }'.
-    Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }' is not assignable to type 'ProductAiJob'.
+src/features/jobs/services/productAiService.ts(80,3): error TS2322: Type '{ product: ProductSummary | null; id: string; productId: string; status: "running" | "pending" | "failed" | "completed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }[]' is not assignable to type '(ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; })[]'.
+  Type '{ product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; ... 4 more ...; finishedAt: string | null; }' is not assignable to type 'ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; }'.
+    Type '{ product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; ... 4 more ...; finishedAt: string | null; }' is not assignable to type 'ProductAiJob'.
       Types of property 'product' are incompatible.
-        Type '{ name_en: any; sku: any; } | null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
+        Type 'ProductSummary | null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
           Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
-src/features/jobs/services/productAiService.ts(70,19): error TS2345: Argument of type '(job: ProductAiJob) => { product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; ... 5 more ...; finishedAt: string | null; }' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => { product: { name_en: any; sku: any; } | null; id: string; productId: string; ... 7 more ...; finishedAt: string | null; }'.
+src/features/jobs/services/productAiService.ts(80,19): error TS2345: Argument of type '(job: ProductAiJob) => { product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; ... 6 more ...; finishedAt: string | null; }' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => { product: ProductSummary | null; id: string; ... 8 more ...; finishedAt: string | null; }'.
   Types of parameters 'job' and 'value' are incompatible.
     Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
       Types of property 'result' are incompatible.
         Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(109,3): error TS2322: Type '{ product: ProductWithImages | null; id: string; productId: string; status: ProductAiJobStatus; type: string; payload: unknown; ... 4 more ...; finishedAt?: Date | null; }' is not assignable to type 'ProductAiJob & { product: any; }'.
-  Type '{ product: ProductWithImages | null; id: string; productId: string; status: ProductAiJobStatus; type: string; payload: unknown; ... 4 more ...; finishedAt?: Date | null; }' is not assignable to type 'ProductAiJob'.
-    Types of property 'result' are incompatible.
-      Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(117,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+src/features/jobs/services/productAiService.ts(122,5): error TS2322: Type 'Record<string, unknown> | null' is not assignable to type '{ name_en: string | null; sku: string | null; } & Record<string, unknown>'.
+  Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; } & Record<string, unknown>'.
+    Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; }'.
+src/features/jobs/services/productAiService.ts(128,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
   Types of property 'result' are incompatible.
     Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(131,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+src/features/jobs/services/productAiService.ts(142,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
   Types of property 'result' are incompatible.
     Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(144,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
-src/features/jobs/services/productAiService.ts(149,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
-src/features/jobs/services/productAiService.ts(154,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/jobs/services/productAiService.ts(155,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/jobs/services/productAiService.ts(160,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/jobs/services/productAiService.ts(165,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
 src/features/notesapp/api/useNoteMutations.ts(5,52): error TS2304: Cannot find name 'NoteWithRelations'.
 src/features/notesapp/api/useNoteMutations.ts(5,78): error TS2304: Cannot find name 'NoteCreateInput'.
 src/features/notesapp/api/useNoteMutations.ts(9,33): error TS2304: Cannot find name 'NoteCreateInput'.
@@ -226,13 +166,13 @@ src/features/notesapp/components/NoteForm.tsx(848,9): error TS2322: Type '(files
   Type 'void' is not assignable to type 'Promise<void>'.
 src/features/notesapp/components/NoteForm.tsx(849,9): error TS2322: Type '(slotIndex: number) => void' is not assignable to type '(slotIndex: number) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteListView.tsx(219,36): error TS2304: Cannot find name 'NoteWithRelations'.
 src/features/notesapp/pages/AdminNotesPage.tsx(345,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
   Types of parameters 'parentId' and 'parentId' are incompatible.
     Type 'string | null | undefined' is not assignable to type 'string | null'.
       Type 'undefined' is not assignable to type 'string | null'.
 src/features/notesapp/pages/AdminNotesPage.tsx(370,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesPage.tsx(370,45): error TS2322: Type 'Promise<void>' is not assignable to type 'void'.
 src/features/notesapp/pages/AdminNotesPage.tsx(397,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
 src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
@@ -301,7 +241,3 @@ src/features/products/components/settings/modals/LanguageModal.tsx(38,3): error 
 src/features/products/components/settings/modals/PriceGroupModal.tsx(37,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 src/features/products/components/settings/modals/PriceGroupModal.tsx(38,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 src/features/products/components/settings/modals/PriceGroupModal.tsx(51,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/services/product-repository/prisma-product-repository.ts(235,38): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/features/products/services/product-repository/prisma-product-repository.ts(279,38): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-  Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.

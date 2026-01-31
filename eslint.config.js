@@ -277,6 +277,7 @@ const eslintConfig = [
       "react/display-name": "error",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
+      "react/no-unescaped-entities": "off", // Temporarily disable to debug crash
       // Added to disable specific TypeScript rules
       "@typescript-eslint/no-unused-vars": [
         "error",

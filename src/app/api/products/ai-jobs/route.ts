@@ -26,7 +26,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const productId = searchParams.get("productId") || undefined;
     const jobs = await getProductAiJobs(productId);
     return NextResponse.json({ jobs });
-  } catch (error) {
+  } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "products.ai-jobs.GET",
@@ -50,7 +50,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     }
 
     throw badRequestError("Invalid scope");
-  } catch (error) {
+  } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
       source: "products.ai-jobs.DELETE",

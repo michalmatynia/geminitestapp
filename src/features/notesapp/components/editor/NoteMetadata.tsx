@@ -85,7 +85,7 @@ export function NoteMetadata({
   onSelectRelatedNote,
   effectiveTheme,
   noteId,
-}: NoteMetadataProps) {
+}: NoteMetadataProps): React.JSX.Element {
   const tagInputRef = React.useRef<HTMLInputElement>(null);
 
   const relatedNoteStyle = {
@@ -106,7 +106,7 @@ export function NoteMetadata({
             type="text"
             placeholder="Enter note title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
             className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
             required
           />
@@ -117,11 +117,11 @@ export function NoteMetadata({
         <Label className="mb-2 block text-sm font-medium text-white">Folder</Label>
         <select
           value={selectedFolderId}
-          onChange={(e) => setSelectedFolderId(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedFolderId(e.target.value)}
           className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
         >
           <option value="">No Folder</option>
-          {flatFolders.map((folder) => (
+          {flatFolders.map((folder: { id: string; name: string; level: number }) => (
             <option key={folder.id} value={folder.id}>
               {Array.from({ length: folder.level }).map(() => "- ").join("")}
               {folder.name}
@@ -136,12 +136,12 @@ export function NoteMetadata({
           <Input
             type="color"
             value={color}
-            onChange={(e) => setColor(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setColor(e.target.value)}
             className="h-10 w-full cursor-pointer rounded-lg border bg-gray-800"
           />
           <Button
             type="button"
-            onClick={() => setColor("#ffffff")}
+            onClick={(): void => setColor("#ffffff")}
             className="whitespace-nowrap rounded-lg border px-3 py-2 text-xs text-gray-200 hover:bg-muted/50"
             title="Use folder theme background"
           >
@@ -152,8 +152,8 @@ export function NoteMetadata({
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
-          {selectedTagIds.map((tagId) => {
-            const tag = availableTags.find((t) => t.id === tagId);
+          {selectedTagIds.map((tagId: string) => {
+            const tag = availableTags.find((t: TagRecord) => t.id === tagId);
             if (!tag) return null;
             return (
               <span
@@ -162,14 +162,14 @@ export function NoteMetadata({
               >
                 <Button
                   type="button"
-                  onClick={() => onTagClick?.(tag.id)}
+                  onClick={(): void => onTagClick?.(tag.id)}
                   className="hover:text-white"
                 >
                   {tag.name}
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => onRemoveTag(tag.id)}
+                  onClick={(): void => onRemoveTag(tag.id)}
                   className="hover:text-white"
                 >
                   <X size={12} />
@@ -185,12 +185,12 @@ export function NoteMetadata({
               type="text"
               placeholder={selectedTagIds.length === 0 ? "Tags" : "Add tag..."}
               value={tagInput}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                 setTagInput(e.target.value);
                 setIsTagDropdownOpen(true);
               }}
-              onFocus={() => setIsTagDropdownOpen(true)}
-              onKeyDown={(e) => {
+              onFocus={(): void => setIsTagDropdownOpen(true)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   if (tagInput.trim()) {
@@ -205,10 +205,10 @@ export function NoteMetadata({
           {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
             <div className="absolute z-10 mt-1 w-full rounded-md border bg-gray-800 shadow-lg">
               <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
-                {filteredTags.map((tag) => (
+                {filteredTags.map((tag: TagRecord) => (
                   <li
                     key={tag.id}
-                    onClick={() => onAddTag(tag)}
+                    onClick={(): void => onAddTag(tag)}
                     className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
                   >
                     {tag.name}
@@ -216,10 +216,10 @@ export function NoteMetadata({
                 ))}
                 {tagInput &&
                   !filteredTags.find(
-                    (t) => t.name.toLowerCase() === tagInput.toLowerCase()
+                    (t: TagRecord) => t.name.toLowerCase() === tagInput.toLowerCase()
                   ) && (
                     <li
-                      onClick={() => void onCreateTag()}
+                      onClick={(): void => { void onCreateTag(); }}
                       className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
                     >
                       Create &quot;{tagInput}&quot;
@@ -231,7 +231,7 @@ export function NoteMetadata({
           {isTagDropdownOpen && (
             <div
               className="fixed inset-0 z-0"
-              onClick={() => setIsTagDropdownOpen(false)}
+              onClick={(): void => setIsTagDropdownOpen(false)}
             />
           )}
         </div>
@@ -242,15 +242,15 @@ export function NoteMetadata({
           Related Notes
         </Label>
         <div className="flex flex-wrap gap-2">
-          {selectedRelatedNotes.map((related) => (
+          {selectedRelatedNotes.map((related: { id: string; title: string; color: string | null; content: string }) => (
             <div
               key={related.id}
               className="relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border p-2 text-left transition"
               style={relatedNoteStyle}
               role="button"
               tabIndex={0}
-              onClick={() => onSelectRelatedNote(related.id)}
-              onKeyDown={(event) => {
+              onClick={(): void => onSelectRelatedNote(related.id)}
+              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   onSelectRelatedNote(related.id);
@@ -265,10 +265,10 @@ export function NoteMetadata({
               </div>
               <Button
                 type="button"
-                onClick={(event) => {
+                onClick={(event: React.MouseEvent): void => {
                   event.stopPropagation();
-                  setSelectedRelatedNotes((prev) =>
-                    prev.filter((item) => item.id !== related.id)
+                  setSelectedRelatedNotes((prev: Array<{ id: string; title: string; color: string | null; content: string }>) =>
+                    prev.filter((item: { id: string }) => item.id !== related.id)
                   );
                 }}
                 className="absolute right-1 top-1 opacity-70 hover:opacity-100"
@@ -285,11 +285,11 @@ export function NoteMetadata({
               type="text"
               placeholder="Search notes to relate..."
               value={relatedNoteQuery}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                 setRelatedNoteQuery(e.target.value);
                 setIsRelatedDropdownOpen(true);
               }}
-              onFocus={() => setIsRelatedDropdownOpen(true)}
+              onFocus={(): void => setIsRelatedDropdownOpen(true)}
               className="flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
             />
           </div>
@@ -301,23 +301,23 @@ export function NoteMetadata({
                   <li className="px-4 py-2 text-gray-500">Searching...</li>
                 )}
                 {relatedNoteResults
-                  .filter((candidate) =>
+                  .filter((candidate: NoteWithRelations) =>
                     noteId ? candidate.id !== noteId : true
                   )
                   .filter(
-                    (candidate) =>
+                    (candidate: NoteWithRelations) =>
                       candidate.title
                         .toLowerCase()
                         .includes(relatedNoteQuery.toLowerCase()) &&
                       !selectedRelatedNotes.some(
-                        (selected) => selected.id === candidate.id
+                        (selected: { id: string }) => selected.id === candidate.id
                       )
                   )
-                  .map((candidate) => (
+                  .map((candidate: NoteWithRelations) => (
                     <li
                       key={candidate.id}
-                      onClick={() => {
-                        setSelectedRelatedNotes((prev) => [
+                      onClick={(): void => {
+                        setSelectedRelatedNotes((prev: Array<{ id: string; title: string; color: string | null; content: string }>) => [
                           ...prev,
                           {
                             id: candidate.id,
@@ -336,13 +336,13 @@ export function NoteMetadata({
                   ))}
                 {!isRelatedLoading &&
                   relatedNoteResults.filter(
-                    (candidate) =>
+                    (candidate: NoteWithRelations) =>
                       (noteId ? candidate.id !== noteId : true) &&
                       candidate.title
                         .toLowerCase()
                         .includes(relatedNoteQuery.toLowerCase()) &&
                       !selectedRelatedNotes.some(
-                        (selected) => selected.id === candidate.id
+                        (selected: { id: string }) => selected.id === candidate.id
                       )
                   ).length === 0 && (
                     <li className="px-4 py-2 text-gray-500">No matches</li>
@@ -353,7 +353,7 @@ export function NoteMetadata({
           {isRelatedDropdownOpen && (
             <div
               className="fixed inset-0 z-0"
-              onClick={() => setIsRelatedDropdownOpen(false)}
+              onClick={(): void => setIsRelatedDropdownOpen(false)}
             />
           )}
         </div>
@@ -362,21 +362,24 @@ export function NoteMetadata({
       <div className="flex gap-4">
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
-            checked={isPinned} onCheckedChange={(checked) => setIsPinned(Boolean(checked))}
+            checked={isPinned} 
+            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsPinned(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Pinned</span>
         </Label>
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
-            checked={isArchived} onCheckedChange={(checked) => setIsArchived(Boolean(checked))}
+            checked={isArchived} 
+            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsArchived(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Archived</span>
         </Label>
         <Label className="flex items-center gap-2 text-white">
           <Checkbox
-            checked={isFavorite} onCheckedChange={(checked) => setIsFavorite(Boolean(checked))}
+            checked={isFavorite} 
+            onCheckedChange={(checked: boolean | "indeterminate"): void => setIsFavorite(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Favorite</span>

@@ -2,10 +2,6 @@
 import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox } from "@/shared/ui";
 import { useEffect, useState } from "react";
 
-
-
-
-
 import type { ProductWithImages } from "@/features/products";
 import type {
   ImageRetryPreset,
@@ -65,7 +61,7 @@ export default function SelectProductForListingModal({
   const [logsOpen, setLogsOpen] = useState(false);
   const imageRetryPresets = useImageRetryPresets();
 
-  const connectionName = selectedIntegration?.connections.find(
+  const connectionName = (selectedIntegration?.connections as any[])?.find(
     (c: any) => c.id === selectedConnectionId
   )?.name || "";
 
@@ -78,7 +74,7 @@ export default function SelectProductForListingModal({
         if (!res.ok) throw new Error("Failed to fetch products");
         const data = (await res.json()) as ProductWithImages[];
         setProducts(data);
-      } catch (err) {
+      } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load products");
       } finally {
         setLoadingProducts(false);
@@ -172,7 +168,7 @@ export default function SelectProductForListingModal({
 
         onSuccess();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
     } finally {
       setSubmitting(false);
@@ -193,7 +189,7 @@ export default function SelectProductForListingModal({
         imageTransform: preset.transform,
       });
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setSubmitting(false);
@@ -222,7 +218,7 @@ export default function SelectProductForListingModal({
             Cancel
           </Button>
           <Button
-            onClick={() => void handleSubmit()}
+            onClick={(): void => { void handleSubmit(); }}
             disabled={
               submitting ||
               !selectedProductId ||
@@ -262,7 +258,7 @@ export default function SelectProductForListingModal({
                       {imageRetryPresets.map((preset: ImageRetryPreset) => (
                         <DropdownMenuItem
                           key={preset.id}
-                          onSelect={() => void handleImageRetry(preset)}
+                          onSelect={(): void => { void handleImageRetry(preset); }}
                           className="text-gray-200 focus:bg-gray-800/70"
                         >
                           <div className="flex flex-col">
@@ -333,8 +329,8 @@ export default function SelectProductForListingModal({
                       <SelectValue placeholder="Select inventory..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {inventories
-                        .filter((inventory: any) => inventory.id)
+                      {(inventories as any[])
+                        .filter((inventory: any): boolean => !!inventory.id)
                         .map((inventory: any) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
@@ -360,8 +356,8 @@ export default function SelectProductForListingModal({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
-                      {templates
-                        .filter((template: any) => template.id)
+                      {(templates as any[])
+                        .filter((template: any): boolean => !!template.id)
                         .map((template: any) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
@@ -377,7 +373,8 @@ export default function SelectProductForListingModal({
                 <div className="flex items-center gap-2 pt-2">
                   <Checkbox
                     id="allowDuplicateSku"
-                    checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
+                    checked={allowDuplicateSku} 
+                    onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                     className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

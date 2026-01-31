@@ -53,7 +53,7 @@ const ToolbarButton = ({
   disabled = false,
   title,
   children,
-}: ToolbarButtonProps) => (
+}: ToolbarButtonProps): React.JSX.Element => (
   <Button
     type="button"
     onClick={onClick}
@@ -85,7 +85,7 @@ export function WysiwygEditor({
   setContent,
   contentBackground,
   contentTextColor,
-}: WysiwygEditorProps) {
+}: WysiwygEditorProps): React.JSX.Element {
   const lastContentRef = useRef(content);
   
   const editor = useEditor({
@@ -124,7 +124,7 @@ export function WysiwygEditor({
           "prose prose-invert max-w-none min-h-[200px] focus:outline-none px-4 py-3",
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }): void => {
       // Convert HTML to markdown-like format for storage
       const html = editor.getHTML();
       if (html !== lastContentRef.current) {
@@ -135,7 +135,7 @@ export function WysiwygEditor({
   });
 
   // Update editor content when content prop changes externally
-  useEffect(() => {
+  useEffect((): void => {
     if (!editor || content === lastContentRef.current) {
       return;
     }
@@ -144,7 +144,7 @@ export function WysiwygEditor({
       try {
         lastContentRef.current = content;
         editor.commands.setContent(sanitized, { emitUpdate: false });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to set WYSIWYG content:", error);
         // Try to recover by clearing and setting plain text
         try {
@@ -152,14 +152,14 @@ export function WysiwygEditor({
           if (typeof content === 'string' && content.trim()) {
             editor.commands.insertContent(sanitizeContent(content));
           }
-        } catch (fallbackError) {
+        } catch (fallbackError: unknown) {
           console.error("Failed to recover from WYSIWYG error:", fallbackError);
         }
       }
     }
   }, [content, editor]);
 
-  const addLink = useCallback(() => {
+  const addLink = useCallback((): void => {
     if (!editor) return;
     const url = window.prompt("Enter URL:");
     if (url) {
@@ -167,7 +167,7 @@ export function WysiwygEditor({
     }
   }, [editor]);
 
-  const addImage = useCallback(() => {
+  const addImage = useCallback((): void => {
     if (!editor) return;
     const url = window.prompt("Enter image URL:");
     if (url) {
@@ -175,7 +175,7 @@ export function WysiwygEditor({
     }
   }, [editor]);
 
-  const addTable = useCallback(() => {
+  const addTable = useCallback((): void => {
     if (!editor) return;
     editor
       .chain()

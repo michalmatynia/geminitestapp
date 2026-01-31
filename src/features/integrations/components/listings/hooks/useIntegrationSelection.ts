@@ -71,7 +71,7 @@ export function useIntegrationSelection(
   if (selectedIntegrationId && integrations.length > 0) {
     const integration = integrations.find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
     if (integration) {
-      const connectionIds = integration.connections?.map((conn: { id: string }) => conn.id) ?? [];
+      const connectionIds = integration.connections?.map((conn: { id: string }): string => conn.id) ?? [];
       const selectedIsValid =
         Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
 

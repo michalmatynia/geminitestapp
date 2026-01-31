@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
-import type { NoteWithRelations } from "@/shared/types/notes";
+import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
 import type { NoteDetailViewProps } from "@/features/notesapp/types/notes-ui";
 
 export function NoteDetailView({
@@ -31,7 +31,7 @@ export function NoteDetailView({
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
-  const relatedNotes = useMemo((): any[] => {
+  const relatedNotes = useMemo((): RelatedNote[] => {
     if (!selectedNote) return [];
     if (selectedNote.relations && selectedNote.relations.length > 0) {
       return selectedNote.relations;
@@ -41,27 +41,27 @@ export function NoteDetailView({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ): { id: string; title: string; color: string | null } | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): RelatedNote | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
 
     const fromRelations = (selectedNote.relationsFrom ?? [])
-      .map((relation: any) =>
+      .map((relation: NoteRelationWithTarget) =>
         build(
-          relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.id ?? (relation as unknown as { targetNoteId?: string }).targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
       )
-      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     const toRelations = (selectedNote.relationsTo ?? [])
-      .map((relation: any) =>
+      .map((relation: NoteRelationWithSource) =>
         build(
-          relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.id ?? (relation as unknown as { sourceNoteId?: string }).sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )
       )
-      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     return [...fromRelations, ...toRelations];
   }, [selectedNote]);
@@ -69,7 +69,7 @@ export function NoteDetailView({
   const relationIds = useMemo(
     (): string[] =>
       relatedNotes
-        .map((rel: any) => rel.id)
+        .map((rel: RelatedNote) => rel.id)
         .filter(
           (id: string, index: number, array: string[]): boolean => array.findIndex((entry: string): boolean => entry === id) === index
         ),
@@ -139,7 +139,7 @@ export function NoteDetailView({
 
   const effectivePreviewTheme = selectedNoteTheme ?? fallbackTheme;
 
-  const previewStyle = (() => {
+  const previewStyle = (() : React.CSSProperties => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const color =
@@ -165,7 +165,7 @@ export function NoteDetailView({
     };
   })();
 
-  const previewTextColor = (() => {
+  const previewTextColor = (() : string => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const background =
@@ -242,7 +242,7 @@ export function NoteDetailView({
           selectedNote.categories[0]?.categoryId || null,
           selectedNote.title,
           folderTree
-        ).map((crumb: any, index: number, array: any[]) => (
+        ).map((crumb: { id: string; name: string; isNote?: boolean }, index: number, array: Array<{ id: string; name: string; isNote?: boolean }>) => (
           <React.Fragment key={index}>
             {crumb.isNote ? (
               <span className="text-gray-300">{crumb.name}</span>
@@ -366,21 +366,21 @@ export function NoteDetailView({
                   ? selectedNote.content
                   : renderMarkdownToHtml(selectedNote.content),
             }}
-            onMouseOver={(e) => {
+            onMouseOver={(e: React.MouseEvent<HTMLDivElement>) => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const wrapper = target.closest("[data-code]");
               const button = wrapper?.querySelector("[data-copy-code]");
               if (button instanceof HTMLElement) button.style.opacity = "1";
             }}
-            onMouseOut={(e) => {
+            onMouseOut={(e: React.MouseEvent<HTMLDivElement>) => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const wrapper = target.closest("[data-code]");
               const button = wrapper?.querySelector("[data-copy-code]");
               if (button instanceof HTMLElement) button.style.opacity = "0";
             }}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLDivElement>) => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const copyButton = target.closest("[data-copy-code]");
@@ -409,10 +409,10 @@ export function NoteDetailView({
                 <div className="flex flex-wrap gap-2">
                   {relatedNotes
                     .filter(
-                      (noteItem, index, array) =>
-                        array.findIndex((item) => item.id === noteItem.id) === index
+                      (noteItem: RelatedNote, index: number, array: RelatedNote[]) =>
+                        array.findIndex((item: RelatedNote) => item.id === noteItem.id) === index
                     )
-                    .map((related) => {
+                    .map((related: RelatedNote) => {
                       const relatedNote = relatedPreviewNotes[related.id];
                       return (
                         <div
@@ -422,7 +422,7 @@ export function NoteDetailView({
                           role="button"
                           tabIndex={0}
                           onClick={() => onSelectRelatedNote(related.id)}
-                          onKeyDown={(event) => {
+                          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
                             if (event.key === "Enter" || event.key === " ") {
                               event.preventDefault();
                               onSelectRelatedNote(related.id);
@@ -437,7 +437,7 @@ export function NoteDetailView({
                           </div>
                           <Button
                             type="button"
-                            onClick={(event) => {
+                            onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
                               event.stopPropagation();
                               void onUnlinkRelatedNote(related.id);
                             }}

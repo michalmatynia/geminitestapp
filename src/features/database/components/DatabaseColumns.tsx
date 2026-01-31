@@ -41,7 +41,7 @@ export const getDatabaseColumns = (options?: {
   {
     accessorKey: "size",
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Size", column),
-    sortingFn: (rowA: { getValue: (id: string) => string }, rowB: { getValue: (id: string) => string }, columnId: string): number => {
+    sortingFn: (rowA: any, rowB: any, columnId: string): number => {
       const toNumber = (value: string): number =>
         Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
       return (
@@ -53,18 +53,18 @@ export const getDatabaseColumns = (options?: {
     id: "createdAt",
     accessorFn: (row: DatabaseInfo): number => new Date(row.createdAt).getTime(),
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Created", column),
-    cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.created,
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.created,
   },
   {
     id: "lastModifiedAt",
     accessorFn: (row: DatabaseInfo): number => new Date(row.lastModifiedAt).getTime(),
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Last Modified", column),
-    cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.lastModified,
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastModified,
   },
   {
     accessorKey: "lastRestored",
     header: "Last Restored",
-    cell: ({ row }: { row: { original: DatabaseInfo } }): string => row.original.lastRestored || "Never",
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastRestored || "Never",
   },
   {
     id: "actions",

@@ -46,24 +46,24 @@ export function MarkdownEditor({
   const { toast } = useToast();
   const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>("");
 
-  React.useEffect(() => {
+  React.useEffect((): void | (() => void) => {
     if (!showPreview) return;
-    const timer = setTimeout(() => {
+    const timer = setTimeout((): void => {
       setDebouncedContentHtml(renderMarkdownToHtml(content));
     }, 150); // 150ms debounce
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [content, showPreview]);
 
-  React.useEffect(() => {
+  React.useEffect((): void => {
     if (!showPreview) return;
     const container = editorSplitRef.current;
     if (!container) return;
-    setEditorWidth((prev) => prev ?? Math.round(container.getBoundingClientRect().width / 2));
+    setEditorWidth((prev: number | null): number => prev ?? Math.round(container.getBoundingClientRect().width / 2));
   }, [showPreview, editorSplitRef, setEditorWidth]);
 
-  React.useEffect(() => {
+  React.useEffect((): void | (() => void) => {
     if (!isDraggingSplitter) return;
-    const handlePointerMove = (event: PointerEvent) => {
+    const handlePointerMove = (event: PointerEvent): void => {
       const container = editorSplitRef.current;
       if (!container) return;
       const rect = container.getBoundingClientRect();
@@ -72,12 +72,12 @@ export function MarkdownEditor({
       const nextWidth = Math.min(maxWidth, Math.max(minWidth, event.clientX - rect.left));
       setEditorWidth(nextWidth);
     };
-    const handlePointerUp = () => {
+    const handlePointerUp = (): void => {
       setIsDraggingSplitter(false);
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-    return () => {
+    return (): void => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
@@ -99,8 +99,8 @@ export function MarkdownEditor({
               ? "Enter code snippets using ```language blocks (e.g., ```javascript)"
               : "Enter note content (paste images directly!)"}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onPaste={(e) => { void onPaste(e); }}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setContent(e.target.value)}
+            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void onPaste(e); }}
             rows={12}
             className="w-full rounded-lg border px-4 py-2 font-mono"
             style={{
@@ -124,7 +124,7 @@ export function MarkdownEditor({
         <>
           <div
             className="mx-3 flex w-3 cursor-col-resize items-stretch"
-            onPointerDown={(event) => {
+            onPointerDown={(event: React.PointerEvent): void => {
               event.preventDefault();
               setIsDraggingSplitter(true);
             }}
@@ -146,21 +146,21 @@ export function MarkdownEditor({
               className="prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80"
               style={previewTypographyStyle}
               dangerouslySetInnerHTML={{ __html: debouncedContentHtml }}
-              onMouseOver={(e) => {
+              onMouseOver={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
                 const wrapper = target.closest("[data-code]");
                 const button = wrapper?.querySelector("[data-copy-code]");
                 if (button instanceof HTMLElement) button.style.opacity = "1";
               }}
-              onMouseOut={(e) => {
+              onMouseOut={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
                 const wrapper = target.closest("[data-code]");
                 const button = wrapper?.querySelector("[data-copy-code]");
                 if (button instanceof HTMLElement) button.style.opacity = "0";
               }}
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent): void => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
                 const copyButton = target.closest("[data-copy-code]");
@@ -171,13 +171,13 @@ export function MarkdownEditor({
                   const originalLabel = copyButton.textContent;
                   navigator.clipboard
                     .writeText(decodeURIComponent(encoded))
-                    .then(() => {
+                    .then((): void => {
                       copyButton.textContent = "Copied";
-                      window.setTimeout(() => {
+                      window.setTimeout((): void => {
                         copyButton.textContent = originalLabel ?? "Copy";
                       }, 1500);
                     })
-                    .catch(() => toast("Failed to copy code"));
+                    .catch((): void => { void toast("Failed to copy code"); });
                   return;
                 }
                 if (target instanceof HTMLImageElement && target.tagName === "IMG") {

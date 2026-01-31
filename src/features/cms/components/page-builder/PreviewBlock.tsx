@@ -2208,10 +2208,11 @@ function PreviewBlockItem({
     const presentation = buildImageElementPresentation(block.settings, mediaStyles);
     const hasSrc = Boolean(src);
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
-    const wrapperStyles = stretch
+    const fillHeight = stretch || (!showEditorChrome && Boolean(columnId));
+    const wrapperStyles = fillHeight
       ? { ...presentation.wrapperStyles, height: "100%" }
       : presentation.wrapperStyles;
-    const useFill = stretch ? true : presentation.useFill;
+    const useFill = fillHeight ? true : presentation.useFill;
 
     return (
       wrapBlock(
@@ -2364,10 +2365,11 @@ function PreviewBlockItem({
       ...(mediaStyles ?? {}),
       ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
     };
-    const wrapperStyles: React.CSSProperties = stretch
+    const fillHeight = stretch || (!showEditorChrome && Boolean(columnId));
+    const wrapperStyles: React.CSSProperties = fillHeight
       ? { width: `${width}%`, height: "100%", ...resolvedStyles }
       : { width: `${width}%`, ...resolvedStyles };
-    const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
+    const imageClassName = fillHeight ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
 
     return (
       wrapBlock(

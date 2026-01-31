@@ -26,7 +26,7 @@ export function NotesFilters({
   gridDensity,
   highlightTagId,
   buildBreadcrumbPath,
-}: NotesFiltersProps) {
+}: NotesFiltersProps): React.JSX.Element {
   const [isLayoutOpen, setIsLayoutOpen] = React.useState(false);
   const layoutLabel =
     viewMode === "list" ? "List" : gridDensity === 8 ? "Grid 8" : "Grid 4";
@@ -46,7 +46,7 @@ export function NotesFilters({
                 : "Search in All Notes..."
             }
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
           />
         </div>
@@ -54,7 +54,7 @@ export function NotesFilters({
         <div className="mt-2 flex gap-2 items-center">
           <div className="relative">
             <select
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
                 const val = e.target.value;
                 if (val && !filterTagIds.includes(val)) {
                   setFilterTagIds([...filterTagIds, val]);
@@ -65,16 +65,16 @@ export function NotesFilters({
             >
               <option value="">Filter by Tag...</option>
               {tags
-                .filter((t) => !filterTagIds.includes(t.id))
-                .map((tag) => (
+                .filter((t: any) => !filterTagIds.includes(t.id))
+                .map((tag: any) => (
                   <option key={tag.id} value={tag.id}>
                     {tag.name}
                   </option>
                 ))}
             </select>
           </div>
-          {filterTagIds.map((tagId) => {
-            const tag = tags.find((t) => t.id === tagId);
+          {filterTagIds.map((tagId: string) => {
+            const tag = tags.find((t: any) => t.id === tagId);
             if (!tag) return null;
             return (
               <span
@@ -85,8 +85,8 @@ export function NotesFilters({
               >
                 {tag.name}
                 <Button
-                  onClick={() =>
-                    setFilterTagIds(filterTagIds.filter((id) => id !== tag.id))
+                  onClick={(): void =>
+                    setFilterTagIds(filterTagIds.filter((id: string) => id !== tag.id))
                   }
                   className="hover:text-white"
                 >
@@ -99,7 +99,7 @@ export function NotesFilters({
 
         <div className="mt-2 flex gap-2">
           <Button
-            onClick={() => updateSettings({ searchScope: "both" })}
+            onClick={(): void => updateSettings({ searchScope: "both" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "both"
                 ? "bg-blue-600 text-white"
@@ -111,7 +111,7 @@ export function NotesFilters({
             <Heading size={14} />
           </Button>
           <Button
-            onClick={() => updateSettings({ searchScope: "title" })}
+            onClick={(): void => updateSettings({ searchScope: "title" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "title"
                 ? "bg-blue-600 text-white"
@@ -122,7 +122,7 @@ export function NotesFilters({
             <Heading size={14} />
           </Button>
           <Button
-            onClick={() => updateSettings({ searchScope: "content" })}
+            onClick={(): void => updateSettings({ searchScope: "content" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "content"
                 ? "bg-blue-600 text-white"
@@ -136,7 +136,7 @@ export function NotesFilters({
           <div className="ml-auto flex items-center gap-1">
             <span className="text-xs text-gray-500 mr-1">Sort:</span>
             <Button
-              onClick={() => updateSettings({ sortBy: "created" })}
+              onClick={(): void => updateSettings({ sortBy: "created" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "created"
                   ? "bg-blue-600 text-white"
@@ -147,7 +147,7 @@ export function NotesFilters({
               Date
             </Button>
             <Button
-              onClick={() => updateSettings({ sortBy: "updated" })}
+              onClick={(): void => updateSettings({ sortBy: "updated" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "updated"
                   ? "bg-blue-600 text-white"
@@ -158,7 +158,7 @@ export function NotesFilters({
               Modified
             </Button>
             <Button
-              onClick={() => updateSettings({ sortBy: "name" })}
+              onClick={(): void => updateSettings({ sortBy: "name" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "name"
                   ? "bg-blue-600 text-white"
@@ -169,7 +169,7 @@ export function NotesFilters({
               Name
             </Button>
             <Button
-              onClick={() =>
+              onClick={(): void =>
                 updateSettings({
                   sortOrder: sortOrder === "asc" ? "desc" : "asc",
                 })
@@ -188,7 +188,7 @@ export function NotesFilters({
           <div className="flex items-center gap-2 ml-2 pl-2 border-l border">
             <span className="text-xs text-gray-500">Show:</span>
             <Button
-              onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
+              onClick={(): void => updateSettings({ showTimestamps: !showTimestamps })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showTimestamps
                   ? "bg-blue-600 text-white"
@@ -200,7 +200,7 @@ export function NotesFilters({
               <span>Dates</span>
             </Button>
             <Button
-              onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
+              onClick={(): void => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showBreadcrumbs
                   ? "bg-blue-600 text-white"
@@ -212,7 +212,7 @@ export function NotesFilters({
               <span>Path</span>
             </Button>
             <Button
-              onClick={() => updateSettings({ showRelatedNotes: !showRelatedNotes })}
+              onClick={(): void => updateSettings({ showRelatedNotes: !showRelatedNotes })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showRelatedNotes
                   ? "bg-blue-600 text-white"
@@ -227,7 +227,7 @@ export function NotesFilters({
           <div className="relative flex items-center gap-2 ml-2 pl-2 border-l border">
             <Button
               type="button"
-              onClick={() => setIsLayoutOpen((prev) => !prev)}
+              onClick={(): void => setIsLayoutOpen((prev: boolean) => !prev)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
               title="Layout options"
             >
@@ -239,12 +239,12 @@ export function NotesFilters({
               <>
                 <div
                   className="fixed inset-0 z-40"
-                  onClick={() => setIsLayoutOpen(false)}
+                  onClick={(): void => setIsLayoutOpen(false)}
                 />
                 <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-gray-900 p-1 shadow-lg">
                   <Button
                     type="button"
-                    onClick={() => {
+                    onClick={(): void => {
                       updateSettings({ viewMode: "grid", gridDensity: 4 });
                       setIsLayoutOpen(false);
                     }}
@@ -256,7 +256,7 @@ export function NotesFilters({
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => {
+                    onClick={(): void => {
                       updateSettings({ viewMode: "grid", gridDensity: 8 });
                       setIsLayoutOpen(false);
                     }}
@@ -268,7 +268,7 @@ export function NotesFilters({
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => {
+                    onClick={(): void => {
                       updateSettings({ viewMode: "list" });
                       setIsLayoutOpen(false);
                     }}

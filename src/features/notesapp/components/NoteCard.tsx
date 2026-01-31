@@ -5,7 +5,7 @@ import { BreadcrumbScroller, Button } from "@/shared/ui";
 
 import Image from "next/image";
 import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
-import type { ThemeRecord } from "@/shared/types/notes";
+import type { ThemeRecord, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource, NoteFileRecord } from "@/shared/types/notes";
 import type { NoteCardProps } from "@/features/notesapp/types/notes-ui";
 
 import { darkenColor, renderMarkdownToHtml } from "../utils";
@@ -41,7 +41,7 @@ function NoteCardBase({
 }: NoteCardProps): React.JSX.Element {
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = theme ?? FALLBACK_THEME;
-  const [isCopied, setIsCopied] = React.useState(false);
+  const [isCopied, setIsCopied] = React.useState<boolean>(false);
   const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(
@@ -83,7 +83,7 @@ function NoteCardBase({
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
-  const relatedNotes = ((): any[] => {
+  const relatedNotes = ((): RelatedNote[] => {
     if (note.relations && note.relations.length > 0) {
       return note.relations;
     }
@@ -92,32 +92,32 @@ function NoteCardBase({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ): { id: string; title: string; color: string | null } | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): RelatedNote | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
 
     const fromRelations = (note.relationsFrom ?? [])
-      .map((relation: any) =>
+      .map((relation: NoteRelationWithTarget) =>
         build(
-          relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.id ?? (relation as unknown as { targetNoteId?: string }).targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
       )
-      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     const toRelations = (note.relationsTo ?? [])
-      .map((relation: any) =>
+      .map((relation: NoteRelationWithSource) =>
         build(
-          relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.id ?? (relation as unknown as { sourceNoteId?: string }).sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )
       )
-      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     return [...fromRelations, ...toRelations];
   })();
   const thumbnailFile = note.files?.find(
-    (file: any) => file.mimetype?.startsWith("image/") && file.filepath
+    (file: NoteFileRecord) => file.mimetype?.startsWith("image/") && file.filepath
   );
 
   const handleCopyCode = async (e: React.MouseEvent): Promise<void> => {
@@ -236,7 +236,7 @@ function NoteCardBase({
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
       <div className="flex flex-wrap gap-2">
-        {note.tags.map((nt: any) => (
+        {note.tags.map((nt: { tagId: string; tag: { color: string | null; name: string } }) => (
           <span
             key={nt.tagId}
             style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
@@ -259,7 +259,7 @@ function NoteCardBase({
               note.categories[0]?.categoryId || null,
               null,
               folderTree
-            ).map((crumb: any, index: number, array: any[]) => (
+            ).map((crumb: { id: string; name: string }, index: number, array: Array<{ id: string; name: string }>) => (
               <React.Fragment key={index}>
                 <Button
                   onClick={(e: React.MouseEvent): void => {
@@ -283,9 +283,9 @@ function NoteCardBase({
           <div className="mt-2">
             <div className="flex flex-wrap gap-2">
               {relatedNotes
-                .filter((item: any, index: number, array: any[]) => array.findIndex((entry: any) => entry.id === item.id) === index)
+                .filter((item: RelatedNote, index: number, array: RelatedNote[]) => array.findIndex((entry: RelatedNote) => entry.id === item.id) === index)
                 .slice(0, 4)
-                .map((related: any) => (
+                .map((related: RelatedNote) => (
                   <div
                     key={related.id}
                     className="w-24 cursor-pointer rounded-md px-2 py-1 text-[10px]"

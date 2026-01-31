@@ -26,14 +26,14 @@ export const fallbackCountries = defaultCountries.map((country: { code: string; 
   );
   const currencies = matchingMappings
     .map((mapping: { currencyCode: string }) => currencyByCode.get(mapping.currencyCode))
-    .filter(Boolean)
-    .map((currency: any) => ({
-      currencyId: currency!.code,
+    .filter((c: any): c is { code: string; name: string; symbol?: string | null } => !!c)
+    .map((currency: { code: string; name: string; symbol?: string | null }) => ({
+      currencyId: currency.code,
       currency: {
-        id: currency!.code,
-        code: currency!.code,
-        name: currency!.name,
-        symbol: currency!.symbol ?? null,
+        id: currency.code,
+        code: currency.code,
+        name: currency.name,
+        symbol: currency.symbol ?? null,
       },
     }));
 
@@ -51,13 +51,13 @@ export const fallbackLanguages = defaultLanguages.map((language: { code: string;
   );
   const countries = matchingMappings
     .map((mapping: { countryCode: string }) => countryByCode.get(mapping.countryCode))
-    .filter(Boolean)
-    .map((country: any) => ({
-      countryId: country!.code,
+    .filter((c: any): c is { code: string; name: string } => !!c)
+    .map((country: { code: string; name: string }) => ({
+      countryId: country.code,
       country: {
-        id: country!.code,
-        code: country!.code,
-        name: country!.name,
+        id: country.code,
+        code: country.code,
+        name: country.name,
       },
     }));
 

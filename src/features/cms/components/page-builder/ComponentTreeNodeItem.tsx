@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow, Plus } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
+import { getSectionDefinition } from "./section-registry";
 
 const SECTION_ICONS: Record<string, React.ElementType> = {
   AnnouncementBar: Megaphone,
@@ -56,12 +57,14 @@ interface SectionNodeItemProps {
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
+  onRemoveGridRow: (sectionId: string, rowId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
   onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSection: (sectionId: string, toIndex: number) => void;
   onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
   onRemoveSection: (sectionId: string) => void;
+  onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -89,12 +92,14 @@ export function SectionNodeItem({
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddGridRow,
+  onRemoveGridRow,
   onAddColumnToRow,
   onRemoveColumnFromRow,
   onAddElementToNestedBlock,
   onDropSection,
   onToggleSectionVisibility,
   onRemoveSection,
+  onConvertSectionToBlock,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
@@ -112,7 +117,10 @@ export function SectionNodeItem({
   onDropSectionToColumn,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
-  const isExpanded = expandedIds.has(section.id);
+  const isFileSection = section.type === "TextElement";
+  const isExpanded = !isFileSection && expandedIds.has(section.id);
+  const targetAllowsTextElement =
+    getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextElement") ?? false;
   const hasBlocks = section.blocks.length > 0;
   const Icon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
@@ -157,7 +165,7 @@ export function SectionNodeItem({
           e.stopPropagation();
           if (draggedSectionId && draggedSectionId !== section.id) {
             setIsSectionDragOver(true);
-          } else if (draggedBlockId) {
+          } else if (draggedBlockId && !isFileSection) {
             setIsDragOver(true);
           }
         }}
@@ -171,7 +179,9 @@ export function SectionNodeItem({
           setIsDragOver(false);
           setIsSectionDragOver(false);
           if (draggedSectionId && draggedSectionId !== section.id) {
-            if (section.type === "Grid") {
+            if (draggedSectionType === "TextElement" && targetAllowsTextElement) {
+              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
+            } else if (section.type === "Grid") {
               // Section dropped on a Grid — route to first column
               const CONVERTIBLE = ["ImageWithText", "RichText", "Hero"];
               if (CONVERTIBLE.includes(draggedSectionType ?? "")) {
@@ -188,7 +198,7 @@ export function SectionNodeItem({
             }
             setDraggedSectionId(null);
             setDraggedSectionType(null);
-          } else if (draggedBlockId && draggedFromSectionId) {
+          } else if (draggedBlockId && draggedFromSectionId && !isFileSection) {
             if (section.type === "Grid") {
               // Block dropped on a Grid — route to first column
               const firstColumn =
@@ -218,25 +228,30 @@ export function SectionNodeItem({
         }`}
       >
         <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/section:opacity-100 active:cursor-grabbing" />
-        <div
-          role="button"
-          tabIndex={-1}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onToggleExpand(section.id);
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation();
-              onToggleExpand(section.id);
-            }
-          }}
-          className="shrink-0"
-        >
-          {isExpanded ? (
-            <ChevronDown className="size-3.5" />
+        <div className="shrink-0">
+          {!isFileSection ? (
+            <div
+              role="button"
+              tabIndex={-1}
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onToggleExpand(section.id);
+              }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  onToggleExpand(section.id);
+                }
+              }}
+            >
+              {isExpanded ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronRight className="size-3.5" />
+              )}
+            </div>
           ) : (
-            <ChevronRight className="size-3.5" />
+            <span className="block size-3.5" />
           )}
         </div>
         <Icon className="size-4 shrink-0" />
@@ -286,6 +301,8 @@ export function SectionNodeItem({
                 sectionId={section.id}
                 selectedNodeId={selectedNodeId}
                 onSelect={onSelect}
+                rowCount={gridRows.length}
+                onRemoveGridRow={onRemoveGridRow}
                 onAddColumnToRow={onAddColumnToRow}
                 onRemoveColumnFromRow={onRemoveColumnFromRow}
                 onAddBlockToColumn={onAddBlockToColumn}
@@ -354,7 +371,7 @@ export function SectionNodeItem({
         </div>
       )}
 
-      {isExpanded && hasBlocks && section.type !== "Grid" && (
+      {isExpanded && hasBlocks && section.type !== "Grid" && !isFileSection && (
         <div className="ml-4 border-l border-border/30 pl-1">
           {section.blocks.map((block: BlockInstance, index: number) => (
             <BlockNodeItem
@@ -384,17 +401,16 @@ export function SectionNodeItem({
 interface RowNodeItemProps {
   row: BlockInstance;
   rowIndex: number;
+  rowCount: number;
   sectionId: string;
   selectedNodeId: string | null;
   onSelect: (nodeId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
+  onRemoveGridRow: (sectionId: string, rowId: string) => void;
   onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
-  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
-  rowId?: string;
-  rowColumnCount?: number;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -414,15 +430,16 @@ interface RowNodeItemProps {
 function RowNodeItem({
   row,
   rowIndex,
+  rowCount,
   sectionId,
   selectedNodeId,
   onSelect,
   onAddColumnToRow,
+  onRemoveGridRow,
   onRemoveColumnFromRow,
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddElementToNestedBlock,
-  onRemoveColumnFromRow,
   rowId,
   rowColumnCount,
   expandedIds,
@@ -444,6 +461,9 @@ function RowNodeItem({
   const isExpanded = expandedIds.has(row.id);
   const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
   const hasColumns = columns.length > 0;
+  const canRemoveRow = rowCount > 1;
+  const [isDragOver, setIsDragOver] = useState(false);
+  const firstColumn = columns[0] ?? null;
 
   return (
     <div>
@@ -461,8 +481,38 @@ function RowNodeItem({
             onSelect(row.id);
           }
         }}
+        onDragOver={(e: React.DragEvent) => {
+          if (!draggedBlockId || !draggedFromSectionId || !firstColumn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e: React.DragEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          if (!draggedBlockId || !draggedFromSectionId || !firstColumn) return;
+          onDropBlockToColumn(
+            draggedBlockId,
+            draggedFromSectionId,
+            draggedFromColumnId ?? undefined,
+            sectionId,
+            firstColumn.id,
+            (firstColumn.blocks ?? []).length,
+            draggedFromParentBlockId ?? undefined
+          );
+          setDraggedBlockId(null);
+          setDraggedFromSectionId(null);
+          setDraggedFromColumnId(null);
+          setDraggedFromParentBlockId(null);
+        }}
         className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
-          isSelected ? "bg-blue-600/80 text-white" : "text-gray-300 hover:bg-muted/40"
+          isDragOver
+            ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
+            : isSelected
+            ? "bg-blue-600/80 text-white"
+            : "text-gray-300 hover:bg-muted/40"
         }`}
       >
         <div
@@ -494,6 +544,19 @@ function RowNodeItem({
           title="Add column"
         >
           <Plus className="size-3" />
+        </button>
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!canRemoveRow) return;
+            onRemoveGridRow(sectionId, row.id);
+          }}
+          disabled={!canRemoveRow}
+          className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          title={canRemoveRow ? "Remove row" : "At least one row is required"}
+        >
+          <Trash2 className="size-3" />
         </button>
       </div>
 
@@ -548,6 +611,9 @@ interface ColumnNodeItemProps {
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
+  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
+  rowId?: string;
+  rowColumnCount?: number;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -573,6 +639,9 @@ function ColumnNodeItem({
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddElementToNestedBlock,
+  onRemoveColumnFromRow,
+  rowId,
+  rowColumnCount,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
@@ -731,12 +800,15 @@ function ColumnNodeItem({
                 selectedNodeId={selectedNodeId}
                 onSelect={onSelect}
                 onDropBlock={() => {}}
+                onDropBlockToColumn={onDropBlockToColumn}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
                 draggedFromSectionId={draggedFromSectionId}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 draggedFromColumnId={draggedFromColumnId}
                 setDraggedFromColumnId={setDraggedFromColumnId}
+                draggedFromParentBlockId={draggedFromParentBlockId}
+                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
               />
             )
           )}
@@ -929,6 +1001,7 @@ function SectionBlockNodeItem({
               selectedNodeId={selectedNodeId}
               onSelect={onSelect}
               onDropBlock={() => {}}
+              onDropBlockToColumn={onDropBlockToColumn}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
               draggedFromSectionId={draggedFromSectionId}
@@ -958,6 +1031,7 @@ interface BlockNodeItemProps {
   selectedNodeId: string | null;
   onSelect: (nodeId: string) => void;
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
+  onDropBlockToColumn?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
   draggedFromSectionId: string | null;
@@ -977,6 +1051,7 @@ function BlockNodeItem({
   selectedNodeId,
   onSelect,
   onDropBlock,
+  onDropBlockToColumn,
   draggedBlockId,
   setDraggedBlockId,
   draggedFromSectionId,
@@ -1023,6 +1098,23 @@ function BlockNodeItem({
         e.stopPropagation();
         setIsDragOver(false);
         if (!draggedBlockId || !draggedFromSectionId || draggedBlockId === block.id) return;
+        if (columnId && onDropBlockToColumn) {
+          onDropBlockToColumn(
+            draggedBlockId,
+            draggedFromSectionId,
+            draggedFromColumnId ?? undefined,
+            sectionId,
+            columnId,
+            index,
+            draggedFromParentBlockId ?? undefined,
+            parentBlockId
+          );
+          setDraggedBlockId(null);
+          setDraggedFromSectionId(null);
+          if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+          if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
+          return;
+        }
         onDropBlock(draggedBlockId, draggedFromSectionId, sectionId, index);
         setDraggedBlockId(null);
         setDraggedFromSectionId(null);

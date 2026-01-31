@@ -104,7 +104,6 @@ export interface InspectorSettings {
   showIdentifiers: boolean;
   showVisibilityInfo: boolean;
   showConnectionInfo: boolean;
-  detectHiddenElements: boolean;
 }
 
 export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
@@ -114,7 +113,6 @@ export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
   showIdentifiers: false,
   showVisibilityInfo: true,
   showConnectionInfo: true,
-  detectHiddenElements: true,
 };
 
 export interface PageBuilderState {
@@ -149,6 +147,7 @@ export type PageBuilderAction =
   | { type: "SET_GRID_COLUMNS"; sectionId: string; columnCount: number }
   | { type: "SET_GRID_ROWS"; sectionId: string; rowCount: number }
   | { type: "ADD_GRID_ROW"; sectionId: string }
+  | { type: "REMOVE_GRID_ROW"; sectionId: string; rowId: string }
   | { type: "ADD_COLUMN_TO_ROW"; sectionId: string; rowId: string }
   | { type: "REMOVE_COLUMN_FROM_ROW"; sectionId: string; columnId: string; rowId?: string }
   | { type: "ADD_BLOCK_TO_COLUMN"; sectionId: string; columnId: string; blockType: string }
@@ -156,6 +155,7 @@ export type PageBuilderAction =
   | { type: "UPDATE_COLUMN_SETTINGS"; sectionId: string; columnId: string; settings: Record<string, unknown> }
   | { type: "UPDATE_BLOCK_IN_COLUMN"; sectionId: string; columnId: string; blockId: string; settings: Record<string, unknown> }
   | { type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number }
+  | { type: "CONVERT_SECTION_TO_BLOCK"; sectionId: string; toSectionId: string; toIndex: number }
   | { type: "MOVE_SECTION_TO_COLUMN"; sectionId: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number }
   | { type: "ADD_ELEMENT_TO_NESTED_BLOCK"; sectionId: string; columnId: string; parentBlockId: string; elementType: string }
   | { type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK"; sectionId: string; columnId: string; parentBlockId: string; elementId: string }

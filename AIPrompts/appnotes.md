@@ -13,11 +13,6 @@ I cannot hightlight text in Product list, the finger pointer is too spread, also
 
 unify Refresh button so that it's one component everywhere
 
-* Collapsible Menu on the left in the Admin should be remembered if I left it collapsed or not
-* Disconnecting the wire should clear the information in the connection socket (but not from the history of node input output)
-
-
-
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
 When AI model generates content, it keeps on appearing in my prompt suggestion in Database, maybe for suggestions I need another  channel ?

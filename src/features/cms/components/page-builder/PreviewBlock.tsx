@@ -208,6 +208,7 @@ interface PreviewSectionProps {
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   onRemoveSection?: (sectionId: string) => void;
   onToggleSectionVisibility?: (sectionId: string, isHidden: boolean) => void;
+  onRemoveRow?: (sectionId: string, rowId: string) => void;
 }
 
 export function PreviewSection({
@@ -223,11 +224,12 @@ export function PreviewSection({
   onOpenMedia,
   onRemoveSection,
   onToggleSectionVisibility,
+  onRemoveRow,
 }: PreviewSectionProps): React.ReactNode {
   const isSectionSelected = selectedNodeId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = (section.settings["label"] as string | undefined) ?? section.type;
-  const inspectorActive = isInspecting && (!isHidden || inspectorSettings.detectHiddenElements);
+  const inspectorActive = isInspecting;
   const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
@@ -340,37 +342,7 @@ export function PreviewSection({
   };
 
   if (isHidden) {
-    const hiddenSelectedClass = isInspecting
-      ? "border-blue-500 bg-blue-500/10 ring-2 ring-inset ring-blue-500/40"
-      : "border-blue-500 bg-blue-500/5 ring-2 ring-inset ring-blue-500/20";
-    const hiddenHoverClass =
-      isSectionHovered && !isSectionSelected
-        ? "border-blue-500/70 ring-2 ring-inset ring-blue-500/30"
-        : "";
-    return (
-      wrapInspector(
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleSelect}
-          onKeyDown={(e: React.KeyboardEvent): void => {
-            if (e.key === "Enter" || e.key === " ") handleSelect();
-          }}
-          className={`relative w-full border border-dashed px-4 py-6 text-left transition cursor-pointer ${
-            isSectionSelected
-              ? hiddenSelectedClass
-              : "border-border/50 bg-transparent hover:border-border/70"
-          } ${hiddenHoverClass}`}
-        >
-          {renderSectionActions()}
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-            <EyeOff className="size-3.5" />
-            <span>Hidden section</span>
-          </div>
-          <div className="mt-2 text-sm text-gray-400">{label}</div>
-        </div>
-      )
-    );
+    return null;
   }
 
   if (section.type === "AnnouncementBar" || section.type === "Block") {
@@ -491,6 +463,8 @@ export function PreviewSection({
     const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
     const sectionGap = (section.settings["gap"] as string) || "medium";
     const sectionGapClass = getGapClass(sectionGap);
+    const rowCount = rowBlocks.length > 0 ? rowBlocks.length : directColumns.length > 0 ? 1 : 0;
+    const canRemoveRow = rowCount > 1;
     const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
       rowBlocks.length > 0
         ? rowBlocks.map((row: BlockInstance) => ({ row, virtual: false }))
@@ -525,9 +499,11 @@ export function PreviewSection({
               {rowsToRender.map(({ row, virtual }, rowIndex: number) => {
                 const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                 const columnCount = Math.max(1, rowColumns.length);
+                const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
+                const rowMinHeightClass = rowHasContent ? "" : "min-h-[80px]";
                 const isRowSelected = !virtual && selectedNodeId === row.id;
                 const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
-                const rowGapClass = getGapClass(rowGapValue);
+                const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
                 const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
                 const rowContainer = (
                   <div
@@ -546,13 +522,32 @@ export function PreviewSection({
                       }
                     }}
                     style={rowStyles}
-                    className={`rounded border border-dashed border-border/30 p-2 ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40 bg-blue-500/5" : ""}`}
+                    className={`relative rounded border border-dashed border-border/30 ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40 bg-blue-500/5" : ""}`}
                   >
-                    <div className={`grid ${rowGapClass}`} style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                    {!virtual && isRowSelected && onRemoveRow && (
+                      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            if (!canRemoveRow) return;
+                            onRemoveRow(section.id, row.id);
+                          }}
+                          disabled={!canRemoveRow}
+                          className="rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                          title={canRemoveRow ? "Remove row" : "At least one row is required"}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    <div
+                      className={`grid ${rowGapClass} ${rowMinHeightClass} items-stretch divide-x divide-dashed divide-border/40`}
+                      style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}
+                    >
                       {rowColumns.map((column: BlockInstance, colIndex: number) => {
                         const isColumnSelected = selectedNodeId === column.id;
                         const isColumnHovered = isInspecting && hoveredNodeId === column.id;
-                        const isLast = colIndex === rowColumns.length - 1;
                         const columnHoverClass =
                           isColumnHovered && !isColumnSelected
                             ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
@@ -638,9 +633,7 @@ export function PreviewSection({
                                   onSelect(column.id);
                                 }
                               }}
-                              className={`p-2 text-left transition cursor-pointer ${
-                                !isLast ? "border-r border-dashed border-border/40" : ""
-                              } ${
+                              className={`h-full text-left transition cursor-pointer ${
                                 isColumnSelected
                                   ? isInspecting
                                     ? "bg-blue-500/10"
@@ -649,7 +642,7 @@ export function PreviewSection({
                               } ${columnHoverClass}`}
                             >
                               {(column.blocks ?? []).length > 0 && (
-                                <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
+                                <div className={`space-y-1.5 p-2 ${isInspecting ? "" : "pointer-events-none"}`}>
                                   {(column.blocks ?? []).map((block: BlockInstance) => (
                                     <PreviewBlockItem
                                       key={block.id}
@@ -839,12 +832,12 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={getSectionStyles(section.settings, colorSchemes)}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2">
-            <p className="text-sm text-gray-200 line-clamp-4" style={typoStyles}>
+          <div className="rounded border border-dashed border-border/40 bg-gray-800/20">
+            <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
               {text}
             </p>
           </div>
@@ -1451,7 +1444,7 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+          className={`w-full rounded border p-0 text-left transition overflow-hidden ${
             contained ? "max-w-full" : ""
           } ${
             isSelected
@@ -1459,7 +1452,7 @@ function PreviewBlockItem({
               : "border-border/30 bg-gray-800/20 hover:border-border/50"
           } ${hoverFrameClass}`}
         >
-          <p className="text-sm text-gray-200 line-clamp-4" style={typoStyles}>
+          <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
             {text}
           </p>
         </button>

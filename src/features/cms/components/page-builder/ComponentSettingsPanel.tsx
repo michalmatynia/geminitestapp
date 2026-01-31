@@ -113,6 +113,18 @@ export function ComponentSettingsPanel(): React.ReactNode {
   } = usePageBuilder();
   const settingsQuery = useSettingsMap();
   const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
+  const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
+  const rowCount = useMemo(() => {
+    if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
+    return selectedParentSection.blocks.filter((b) => b.type === "Row").length;
+  }, [selectedParentSection]);
+  const canRemoveRow = rowCount > 1;
+  const rowIndex = useMemo(() => {
+    if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
+    const rows = selectedParentSection.blocks.filter((b) => b.type === "Row");
+    const idx = rows.findIndex((b) => b.id === selectedBlock.id);
+    return idx >= 0 ? idx + 1 : null;
+  }, [isRowBlock, selectedParentSection, selectedBlock]);
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -214,6 +226,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
       });
     }
   }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]);
+
+  const handleRemoveRow = useCallback(() => {
+    if (!isRowBlock || !selectedParentSection || !selectedBlock) return;
+    dispatch({
+      type: "REMOVE_GRID_ROW",
+      sectionId: selectedParentSection.id,
+      rowId: selectedBlock.id,
+    });
+  }, [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
 
   // ---------------------------------------------------------------------------
   // Column settings handlers
@@ -506,13 +527,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 Connection info
               </label>
             </div>
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={inspectorSettings.detectHiddenElements}
-                onCheckedChange={(value) => updateInspectorSetting({ detectHiddenElements: value === true })}
-              />
-              Detect hidden elements
-            </label>
           </div>
         </div>
       )}
@@ -607,7 +621,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
             ) : selectedBlock && blockDef ? (
               <div className="space-y-4">
                 <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                  Block: {blockDef.label}
+                  {isRowBlock && rowIndex ? (
+                    <>Row {rowIndex}</>
+                  ) : (
+                    <>Block: {blockDef.label}</>
+                  )}
                   {selectedParentBlock && (
                     <span className="ml-1 text-gray-500">
                       in {selectedParentBlock.type}
@@ -636,15 +654,28 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 )}
 
                 <div className="border-t border-border/30 pt-4">
-                  <Button
-                    onClick={handleRemoveBlock}
-                    variant="destructive"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Trash2 className="mr-2 size-4" />
-                    Remove block
-                  </Button>
+                  {isRowBlock ? (
+                    <Button
+                      onClick={handleRemoveRow}
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                      disabled={!canRemoveRow}
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Remove row
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleRemoveBlock}
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Trash2 className="mr-2 size-4" />
+                      Remove block
+                    </Button>
+                  )}
                 </div>
               </div>
             ) : null}

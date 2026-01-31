@@ -596,6 +596,9 @@ export function PagePreviewPanel(): React.ReactNode {
                             onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>
                               dispatch({ type: "UPDATE_SECTION_SETTINGS", sectionId, settings: { isHidden } })
                             }
+                            onRemoveRow={(sectionId: string, rowId: string) =>
+                              dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId })
+                            }
                           />
                         ))}
                       </div>

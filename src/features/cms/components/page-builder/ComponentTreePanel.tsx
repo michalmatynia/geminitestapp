@@ -123,6 +123,13 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleRemoveGridRow = useCallback(
+    (sectionId: string, rowId: string) => {
+      dispatch({ type: "REMOVE_GRID_ROW", sectionId, rowId });
+    },
+    [dispatch]
+  );
+
   const handleAddColumnToRow = useCallback(
     (sectionId: string, rowId: string) => {
       dispatch({ type: "ADD_COLUMN_TO_ROW", sectionId, rowId });
@@ -172,6 +179,18 @@ export function ComponentTreePanel(): React.ReactNode {
         next.add(toSectionId);
         next.add(toColumnId);
         if (toParentBlockId) next.add(toParentBlockId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
+  const handleConvertSectionToBlock = useCallback(
+    (sectionId: string, toSectionId: string, toIndex: number) => {
+      dispatch({ type: "CONVERT_SECTION_TO_BLOCK", sectionId, toSectionId, toIndex });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
         return next;
       });
     },
@@ -284,6 +303,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 onAddBlockToColumn={handleAddBlockToColumn}
                 onDropBlockToColumn={handleDropBlockToColumn}
                 onAddGridRow={handleAddGridRow}
+                onRemoveGridRow={handleRemoveGridRow}
                 onAddColumnToRow={handleAddColumnToRow}
                 onRemoveColumnFromRow={handleRemoveColumnFromRow}
                 onAddElementToNestedBlock={handleAddElementToNestedBlock}
@@ -306,6 +326,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 draggedSectionType={draggedSectionType}
                 setDraggedSectionType={setDraggedSectionType}
                 onDropSectionToColumn={handleDropSectionToColumn}
+                onConvertSectionToBlock={handleConvertSectionToBlock}
               />
             );
           })
@@ -335,6 +356,7 @@ interface ZoneGroupProps {
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
+  onRemoveGridRow: (sectionId: string, rowId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
   onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
@@ -357,6 +379,7 @@ interface ZoneGroupProps {
   draggedSectionType: string | null;
   setDraggedSectionType: (type: string | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
 }
 
 function ZoneGroup({
@@ -375,6 +398,7 @@ function ZoneGroup({
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddGridRow,
+  onRemoveGridRow,
   onAddColumnToRow,
   onRemoveColumnFromRow,
   onAddElementToNestedBlock,
@@ -397,6 +421,7 @@ function ZoneGroup({
   draggedSectionType,
   setDraggedSectionType,
   onDropSectionToColumn,
+  onConvertSectionToBlock,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
 
@@ -465,6 +490,7 @@ function ZoneGroup({
                   onAddBlockToColumn={onAddBlockToColumn}
                   onDropBlockToColumn={onDropBlockToColumn}
                   onAddGridRow={onAddGridRow}
+                  onRemoveGridRow={onRemoveGridRow}
                   onAddColumnToRow={onAddColumnToRow}
                   onRemoveColumnFromRow={onRemoveColumnFromRow}
                   onAddElementToNestedBlock={onAddElementToNestedBlock}
@@ -486,6 +512,7 @@ function ZoneGroup({
                   draggedSectionType={draggedSectionType}
                   setDraggedSectionType={setDraggedSectionType}
                   onDropSectionToColumn={onDropSectionToColumn}
+                  onConvertSectionToBlock={onConvertSectionToBlock}
                 />
               ))}
               {/* Drop target at end of zone */}

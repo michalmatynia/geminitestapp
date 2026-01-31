@@ -979,8 +979,24 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <RangeField label="Grid gutter" value={theme.gridGutter} onChange={(v) => update("gridGutter", v)} min={8} max={48} suffix="px" />
               <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={(v) => update("sectionSpacing", v)} min={16} max={128} suffix="px" />
               <RangeField label="Container padding" value={theme.containerPadding} onChange={(v) => update("containerPadding", v)} min={8} max={64} suffix="px" />
-              <RangeField label="Page padding" value={theme.pagePadding} onChange={(v) => update("pagePadding", v)} min={0} max={200} suffix="px" />
-              <RangeField label="Page margin" value={theme.pageMargin} onChange={(v) => update("pageMargin", v)} min={0} max={200} suffix="px" />
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page padding (px)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <NumberField label="Top" value={theme.pagePaddingTop} onChange={(v) => update("pagePaddingTop", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Right" value={theme.pagePaddingRight} onChange={(v) => update("pagePaddingRight", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Bottom" value={theme.pagePaddingBottom} onChange={(v) => update("pagePaddingBottom", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Left" value={theme.pagePaddingLeft} onChange={(v) => update("pagePaddingLeft", v)} suffix="px" min={0} max={200} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500">Page margin (px)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <NumberField label="Top" value={theme.pageMarginTop} onChange={(v) => update("pageMarginTop", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Right" value={theme.pageMarginRight} onChange={(v) => update("pageMarginRight", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Bottom" value={theme.pageMarginBottom} onChange={(v) => update("pageMarginBottom", v)} suffix="px" min={0} max={200} />
+                  <NumberField label="Left" value={theme.pageMarginLeft} onChange={(v) => update("pageMarginLeft", v)} suffix="px" min={0} max={200} />
+                </div>
+              </div>
               <RangeField label="Border radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={24} suffix="px" />
             </div>
           );

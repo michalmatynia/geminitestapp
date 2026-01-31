@@ -92,7 +92,7 @@ function TextElementBlock({ settings }: { settings: Record<string, unknown> }): 
   const text = (settings["textContent"] as string) || "";
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
-  return <p className="text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
+  return <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
 }
 
 function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {

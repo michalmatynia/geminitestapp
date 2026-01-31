@@ -642,6 +642,33 @@ export function basePageBuilderReducer(
       return { ...state, sections: updatedSections };
     }
 
+    case "REMOVE_GRID_ROW": {
+      let didRemove = false;
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId || s.type !== "Grid") return s;
+        const normalized = ensureGridRows(s);
+        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        if (rows.length <= 1) return normalized;
+        const nextRows = rows.filter((row: BlockInstance) => row.id !== action.rowId);
+        if (nextRows.length === rows.length) return normalized;
+        didRemove = true;
+        const maxColumns = Math.max(
+          1,
+          ...nextRows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length)
+        );
+        return {
+          ...normalized,
+          blocks: nextRows,
+          settings: { ...normalized.settings, rows: nextRows.length, columns: maxColumns },
+        };
+      });
+      return {
+        ...state,
+        sections: updatedSections,
+        selectedNodeId: didRemove && state.selectedNodeId === action.rowId ? null : state.selectedNodeId,
+      };
+    }
+
     case "ADD_COLUMN_TO_ROW": {
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
@@ -765,6 +792,35 @@ export function basePageBuilderReducer(
         };
       });
       return { ...state, sections: sectionsAfterInsert };
+    }
+
+    case "CONVERT_SECTION_TO_BLOCK": {
+      if (action.sectionId === action.toSectionId) return state;
+      const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
+      if (!sourceSection) return state;
+      if (sourceSection.type !== "TextElement") return state;
+      const targetSection = state.sections.find((s: SectionInstance) => s.id === action.toSectionId);
+      if (!targetSection) return state;
+
+      const blockDef = getBlockDefinition("TextElement");
+      const convertedBlock: BlockInstance = {
+        id: uid(),
+        type: "TextElement",
+        settings: {
+          ...(blockDef?.defaultSettings ?? {}),
+          ...sourceSection.settings,
+        },
+      };
+
+      const remaining = state.sections.filter((s: SectionInstance) => s.id !== action.sectionId);
+      const updatedSections = remaining.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        const nextBlocks = [...s.blocks];
+        nextBlocks.splice(action.toIndex, 0, convertedBlock);
+        return { ...s, blocks: nextBlocks };
+      });
+
+      return { ...state, sections: updatedSections, selectedNodeId: convertedBlock.id };
     }
 
     case "MOVE_SECTION_TO_COLUMN": {

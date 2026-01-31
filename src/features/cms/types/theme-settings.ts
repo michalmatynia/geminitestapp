@@ -42,6 +42,14 @@ export interface ThemeSettings {
   sectionSpacing: number;
   containerPadding: number;
   borderRadius: number;
+  pagePaddingTop: number;
+  pagePaddingRight: number;
+  pagePaddingBottom: number;
+  pagePaddingLeft: number;
+  pageMarginTop: number;
+  pageMarginRight: number;
+  pageMarginBottom: number;
+  pageMarginLeft: number;
   pagePadding: number;
   pageMargin: number;
   fullWidth: boolean;
@@ -355,6 +363,14 @@ export const DEFAULT_THEME: ThemeSettings = {
   sectionSpacing: 64,
   containerPadding: 24,
   borderRadius: 8,
+  pagePaddingTop: 16,
+  pagePaddingRight: 16,
+  pagePaddingBottom: 16,
+  pagePaddingLeft: 16,
+  pageMarginTop: 0,
+  pageMarginRight: 0,
+  pageMarginBottom: 0,
+  pageMarginLeft: 0,
   pagePadding: 16,
   pageMargin: 0,
   fullWidth: false,
@@ -589,6 +605,18 @@ export const normalizeThemeSettings = (
     ...DEFAULT_THEME,
     ...(input ?? {}),
   };
+
+  const fallbackPadding = typeof input?.pagePadding === "number" ? input.pagePadding : DEFAULT_THEME.pagePadding;
+  const fallbackMargin = typeof input?.pageMargin === "number" ? input.pageMargin : DEFAULT_THEME.pageMargin;
+
+  merged.pagePaddingTop = typeof input?.pagePaddingTop === "number" ? input.pagePaddingTop : fallbackPadding;
+  merged.pagePaddingRight = typeof input?.pagePaddingRight === "number" ? input.pagePaddingRight : fallbackPadding;
+  merged.pagePaddingBottom = typeof input?.pagePaddingBottom === "number" ? input.pagePaddingBottom : fallbackPadding;
+  merged.pagePaddingLeft = typeof input?.pagePaddingLeft === "number" ? input.pagePaddingLeft : fallbackPadding;
+  merged.pageMarginTop = typeof input?.pageMarginTop === "number" ? input.pageMarginTop : fallbackMargin;
+  merged.pageMarginRight = typeof input?.pageMarginRight === "number" ? input.pageMarginRight : fallbackMargin;
+  merged.pageMarginBottom = typeof input?.pageMarginBottom === "number" ? input.pageMarginBottom : fallbackMargin;
+  merged.pageMarginLeft = typeof input?.pageMarginLeft === "number" ? input.pageMarginLeft : fallbackMargin;
 
   merged.pagePadding = typeof input?.pagePadding === "number" ? input.pagePadding : DEFAULT_THEME.pagePadding;
   merged.pageMargin = typeof input?.pageMargin === "number" ? input.pageMargin : DEFAULT_THEME.pageMargin;

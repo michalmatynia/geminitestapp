@@ -65,7 +65,7 @@ describe("Agent Runtime - Planning", () => {
 
       expect(result.source).toBe("llm");
       expect(result.steps).toHaveLength(1);
-      expect(result.steps[0].title).toBe("Step 1");
+      expect(result.steps[0]?.title).toBe("Step 1");
       expect(result.decision.action).toBe("tool");
     });
 

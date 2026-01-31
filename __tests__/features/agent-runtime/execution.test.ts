@@ -145,7 +145,7 @@ describe("Agent Runtime - Execution", () => {
 
       expect(result.action).toBe("replan");
       expect(result.steps).toHaveLength(1);
-      expect(result.steps[0].title).toBe("New Step");
+      expect(result.steps[0]?.title).toBe("New Step");
     });
     
     it("should fallback on LLM failure", async () => {

@@ -1,0 +1,946 @@
+__tests__/features/agent-runtime/execution.test.ts(148,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agent-runtime/plan-init.test.ts(53,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agent-runtime/plan-init.test.ts(70,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agent-runtime/plan-init.test.ts(94,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agent-runtime/planning.test.ts(68,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agent-runtime/utils.test.ts(124,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/ai-paths/components/RunHistoryPanel.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(62,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(62,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(62,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(63,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(63,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(63,5): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/lib/core/runtime/engine.test.ts(168,41): error TS2379: Argument of type '{ nodes: AiNode[]; edges: never[]; seedOutputs: Record<string, RuntimePortValues>; seedHashes: Record<string, string> | undefined; onNodeStart: Mock<...>; activePathId: string; fetchEntityByType: Mock<...>; reportAiPathsError: Mock<...>; toast: Mock<...>; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(48,22): error TS2339: Property 'mutate' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(50,49): error TS2339: Property 'isSuccess' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(52,29): error TS2339: Property 'data' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(62,22): error TS2339: Property 'mutate' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(64,49): error TS2339: Property 'isSuccess' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(75,22): error TS2339: Property 'mutate' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(77,49): error TS2339: Property 'isSuccess' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(88,22): error TS2339: Property 'mutate' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx(90,49): error TS2339: Property 'isSuccess' does not exist on type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(46,49): error TS2339: Property 'isSuccess' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(47,29): error TS2339: Property 'data' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(58,49): error TS2339: Property 'isSuccess' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(59,29): error TS2339: Property 'data' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(70,49): error TS2339: Property 'isSuccess' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(71,29): error TS2339: Property 'data' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(84,49): error TS2339: Property 'isSuccess' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx(85,29): error TS2339: Property 'data' does not exist on type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+__tests__/features/chatbot/services/chatbot-job-repository.test.ts(87,56): error TS2345: Argument of type '{ sessionId: string; model: string; payload: { prompt: string; }; }' is not assignable to parameter of type 'Omit<ChatbotJob, "id" | "createdAt" | "status">'.
+  Types of property 'payload' are incompatible.
+    Type '{ prompt: string; }' is missing the following properties from type 'ChatbotJobPayload': messages, model
+__tests__/features/chatbot/services/chatbot-session-repository.test.ts(60,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/api-pages.test.ts(44,96): error TS2554: Expected 1 arguments, but got 2.
+__tests__/features/cms/api-pages.test.ts(83,41): error TS2554: Expected 1 arguments, but got 2.
+__tests__/features/cms/api-slugs.test.ts(36,86): error TS2554: Expected 1 arguments, but got 2.
+__tests__/features/cms/api-slugs.test.ts(57,41): error TS2554: Expected 1 arguments, but got 2.
+__tests__/features/cms/api-slugs.test.ts(71,41): error TS2554: Expected 1 arguments, but got 2.
+__tests__/features/cms/components/BlockPicker.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/CmsPageRenderer.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/ComponentSettingsPanel.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/ComponentTreePanel.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/FrontendBlockRenderer.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/SectionPicker.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/SectionPicker.test.tsx(34,32): error TS6133: '_onOpenChange' is declared but its value is never read.
+__tests__/features/cms/components/SectionTemplatePicker.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/SettingsFieldRenderer.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(61,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(62,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(80,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(86,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(87,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(87,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(88,21): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(88,21): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(94,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(126,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(136,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(146,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(147,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(147,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(150,70): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(153,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(154,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(164,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(177,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(178,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(189,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(190,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(196,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/usePageBuilderContext.test.tsx(197,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(68,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(69,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(70,43): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(77,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(83,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(84,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(84,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(85,39): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(85,39): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(91,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(101,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/page-builder-reducer.test.ts(109,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/pages/ThemesPage.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/data-import-export/utils/image-retry-presets.test.ts(13,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/data-import-export/utils/image-retry-presets.test.ts(32,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/data-import-export/utils/image-retry-presets.test.ts(33,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/data-import-export/utils/image-retry-presets.test.ts(44,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/data-import-export/utils/image-retry-presets.test.ts(51,48): error TS2345: Argument of type 'ImageRetryPreset | undefined' is not assignable to parameter of type 'ImageRetryPreset'.
+  Type 'undefined' is not assignable to type 'ImageRetryPreset'.
+__tests__/features/drafter/components/DraftCreator.test.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/drafter/services/draft-repository-mongo.test.ts(84,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/drafter/services/draft-repository.test.ts(42,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/drafter/services/draft-repository.test.ts(43,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/files/components/FileManager.test.tsx(107,21): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'Element | Node | Window | Document'.
+  Type 'undefined' is not assignable to type 'Element | Node | Window | Document'.
+__tests__/features/files/components/FileManager.test.tsx(122,23): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'Element | Node | Window | Document'.
+  Type 'undefined' is not assignable to type 'Element | Node | Window | Document'.
+__tests__/features/integrations/integration-repository.test.ts(140,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/integration-repository.test.ts(141,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/services/category-mapping-repository.test.ts(83,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/services/export-template-repository.test.ts(42,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/services/export-template-repository.test.ts(55,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/services/export-template-repository.test.ts(56,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/services/export-template-repository.test.ts(56,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(35,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(36,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(38,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(39,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(40,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(42,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/integrations/utils/connections.test.ts(43,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/jobs/workers/agentQueue.test.ts(23,13): error TS6133: 'target' is declared but its value is never read.
+__tests__/features/jobs/workers/agentQueue.test.ts(27,13): error TS6133: 'target' is declared but its value is never read.
+__tests__/features/jobs/workers/agentQueue.test.ts(43,64): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ id: string; createdAt: Date; updatedAt: Date; model: string | null; status: AgentRunStatus; prompt: string; tools: string[]; searchProvider: string | null; agentBrowser: string | null; ... 10 more ...; finishedAt: Date | null; }'.
+__tests__/features/notesapp/mongo-note-repository.test.ts(89,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/mongo-note-repository.test.ts(138,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/mongo-note-repository.test.ts(139,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/mongo-note-repository.test.ts(140,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/mongo-note-repository.test.ts(140,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/note-service.test.ts(51,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/note-service.test.ts(52,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/note-service.test.ts(61,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/utils/index.test.ts(40,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/utils/index.test.ts(41,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/utils/index.test.ts(42,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/utils/index.test.ts(48,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/notesapp/utils/index.test.ts(49,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/persona-utils.test.ts(21,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/persona-utils.test.ts(27,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/persona-utils.test.ts(33,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/utils/personas.test.ts(73,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/utils/personas.test.ts(79,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/utils/personas.test.ts(80,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/playwright/utils/personas.test.ts(81,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/products/productService.test.ts(82,14): error TS2532: Object is possibly 'undefined'.
+__tests__/lib/ai-paths/extensive-handlers.test.ts(506,13): error TS2739: Type '{ url: string; method: "GET"; headers: string; responseMode: "json"; }' is missing the following properties from type 'HttpConfig': bodyTemplate, responsePath
+__tests__/lib/ai-paths/extensive-handlers.test.ts(548,15): error TS2740: Type '{ mode: "preset"; preset: "by_productId"; collection: string; }' is missing the following properties from type 'DbQueryConfig': provider, field, idType, queryTemplate, and 4 more.
+__tests__/lib/ai-paths/extensive-handlers.test.ts(587,13): error TS2739: Type '{ modelId: string; waitForResult: false; }' is missing the following properties from type 'ModelConfig': temperature, maxTokens, vision
+__tests__/lib/ai-paths/extensive-handlers.test.ts(804,13): error TS2739: Type '{ formatAs: "text"; }' is missing the following properties from type 'DbSchemaConfig': mode, collections, includeFields, includeRelations
+__tests__/lib/ai-paths/extensive-handlers.test.ts(850,27): error TS2379: Argument of type '{ nodes: AiNode[]; edges: never[]; seedOutputs: Record<string, RuntimePortValues>; seedHashes: Record<string, string> | undefined; onNodeStart: Mock<...>; activePathId: string; fetchEntityByType: Mock<...>; reportAiPathsError: Mock<...>; toast: Mock<...>; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+__tests__/lib/ai-paths/extensive-handlers.test.ts(887,27): error TS2379: Argument of type '{ nodes: AiNode[]; edges: never[]; seedOutputs: Record<string, RuntimePortValues>; seedHashes: Record<string, string> | undefined; onNodeStart: Mock<...>; activePathId: string; fetchEntityByType: Mock<...>; reportAiPathsError: Mock<...>; toast: Mock<...>; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+__tests__/ui/notes-advanced.test.tsx(126,12): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/notes-advanced.test.tsx(127,12): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/notes-advanced.test.tsx(137,14): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/notes-advanced.test.tsx(138,14): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/notes-advanced.test.tsx(147,14): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/notes-advanced.test.tsx(148,14): error TS2532: Object is possibly 'undefined'.
+__tests__/ui/product-table-footer.test.tsx(27,30): error TS6133: 'content' is declared but its value is never read.
+e2e/observability.spec.ts(65,45): error TS2339: Property '__e2e_error_captured__' does not exist on type 'Window & typeof globalThis'.
+e2e/settings.spec.ts(2,6): error TS2339: Property 'describe' does not exist on type 'TestAPI'.
+e2e/settings.spec.ts(3,8): error TS2339: Property 'beforeEach' does not exist on type 'TestAPI'.
+e2e/settings.spec.ts(3,22): error TS7031: Binding element 'page' implicitly has an 'any' type.
+e2e/settings.spec.ts(7,52): error TS2339: Property 'page' does not exist on type 'TaskContext<Test<object>> & TestContext'.
+e2e/settings.spec.ts(13,54): error TS2339: Property 'page' does not exist on type 'TaskContext<Test<object>> & TestContext'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts(115,20): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { events: AiPathRunEventRecord[]; run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { events: AiPathRunEventRecord[]; run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts(139,22): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts(147,22): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { nodes: AiPathRunNodeRecord[]; run: AiPathRunRecord; events: AiPathRunEventRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { nodes: AiPathRunNodeRecord[]; run: AiPathRunRecord; events: AiPathRunEventRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts(250,7): error TS2322: Type 'ApiResponse<{ runs: unknown[]; total: number; }>' is not assignable to type '{ ok: boolean; data: { runs: AiPathRunRecord[]; }; }'.
+  Property 'data' is missing in type '{ ok: false; error: string; }' but required in type '{ ok: boolean; data: { runs: AiPathRunRecord[]; }; }'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts(252,13): error TS7022: 'parent' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts(255,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => value is unknown, thisArg?: any): unknown[]', gave the following error.
+    Argument of type '(child: Element) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => value is unknown'.
+      Types of parameters 'child' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type 'Element'.
+  Overload 2 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => unknown, thisArg?: any): unknown[]', gave the following error.
+    Argument of type '(child: Element) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => unknown'.
+      Types of parameters 'child' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type 'Element'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts(255,56): error TS18047: 'current' is possibly 'null'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts(449,40): error TS2379: Argument of type '{ nodes: AiNode[]; edges: Edge[]; activePathId: string | null; activePathName: string; triggerNodeId: string; triggerEvent: string; triggerContext: Record<string, unknown>; ... 6 more ...; toast: ToastFn; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHistory' are incompatible.
+    Type 'Record<string, RuntimeHistoryEntry[]> | undefined' is not assignable to type 'Record<string, RuntimeHistoryEntry[]>'.
+      Type 'undefined' is not assignable to type 'Record<string, RuntimeHistoryEntry[]>'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts(561,53): error TS2379: Argument of type '{ triggerContext: Record<string, unknown> | null; deferPoll: true; skipAiJobs: true; seedOutputs: Record<string, RuntimePortValues>; seedHashes: Record<...> | undefined; ... 10 more ...; activePathName: string; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(402,7): error TS2375: Type '{ inputs: { [x: string]: RuntimePortValues; }; outputs: { [x: string]: RuntimePortValues; }; hashes: { [x: string]: string; } | undefined; history: { ...; } | undefined; }' is not assignable to type 'RuntimeState' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hashes' are incompatible.
+    Type '{ [x: string]: string; } | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(455,5): error TS2322: Type '(message: string, options?: Partial<Omit<ToastItem, "id" | "message">> | undefined) => void' is not assignable to type 'ToastFn'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string; } | undefined' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">> | undefined'.
+      Type '{ variant?: string; }' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'variant' are incompatible.
+          Type 'string' is not assignable to type 'ToastVariant'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(504,5): error TS2322: Type '(message: string, options?: Partial<Omit<ToastItem, "id" | "message">> | undefined) => void' is not assignable to type 'ToastFn'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string; } | undefined' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">> | undefined'.
+      Type '{ variant?: string; }' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'variant' are incompatible.
+          Type 'string' is not assignable to type 'ToastVariant'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(561,5): error TS2322: Type '(message: string, options?: Partial<Omit<ToastItem, "id" | "message">> | undefined) => void' is not assignable to type 'ToastFn'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string; } | undefined' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">> | undefined'.
+      Type '{ variant?: string; }' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'variant' are incompatible.
+          Type 'string' is not assignable to type 'ToastVariant'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(592,44): error TS2322: Type '(message: string, options?: Partial<Omit<ToastItem, "id" | "message">> | undefined) => void' is not assignable to type 'ToastFn'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string; } | undefined' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">> | undefined'.
+      Type '{ variant?: string; }' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'variant' are incompatible.
+          Type 'string' is not assignable to type 'ToastVariant'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(616,5): error TS2322: Type '(message: string, options?: Partial<Omit<ToastItem, "id" | "message">> | undefined) => void' is not assignable to type 'ToastFn'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string; } | undefined' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">> | undefined'.
+      Type '{ variant?: string; }' is not assignable to type 'Partial<Omit<ToastItem, "id" | "message">>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'variant' are incompatible.
+          Type 'string' is not assignable to type 'ToastVariant'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(621,24): error TS2322: Type 'boolean' is not assignable to type 'void'.
+src/features/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(1052,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/features/ai-paths/components/canvas-board.tsx(125,3): error TS2339: Property '_onCompleteConnection' does not exist on type 'CanvasBoardProps'.
+src/features/ai-paths/components/canvas-board.tsx(125,3): error TS6133: '_onCompleteConnection' is declared but its value is never read.
+src/features/ai-paths/components/job-queue-panel.tsx(407,20): error TS2532: Object is possibly 'undefined'.
+src/features/ai-paths/components/job-queue-panel.tsx(764,64): error TS2375: Type '{ children: Element[]; value: string | undefined; onValueChange: (value: string) => void; }' is not assignable to type '{ value?: string; defaultValue?: string; onValueChange?(value: string): void; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'value' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx(1935,21): error TS2322: Type '{ value: string; }[]' is not assignable to type '{ label: string; value: string; }[]'.
+  Property 'label' is missing in type '{ value: string; }' but required in type '{ label: string; value: string; }'.
+src/features/ai-paths/components/node-config/dialog/ViewerNodeConfigSection.tsx(51,49): error TS2322: Type 'Set<string>' is not assignable to type 'boolean'.
+src/features/ai-paths/components/run-detail-dialog.tsx(167,20): error TS2375: Type '{ children: Element[]; value: string | undefined; onValueChange: (nodeId: string) => void; }' is not assignable to type '{ value?: string; defaultValue?: string; onValueChange?(value: string): void; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'value' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/ai-paths/components/run-history-panel.tsx(185,39): error TS2532: Object is possibly 'undefined'.
+src/features/ai-paths/components/run-history-panel.tsx(239,28): error TS2375: Type '{ children: Element[]; value: string | undefined; onValueChange: (value: string) => void; }' is not assignable to type '{ value?: string; defaultValue?: string; onValueChange?(value: string): void; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'value' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/ai-paths/components/run-timeline.tsx(144,18): error TS2379: Argument of type '{ id: string; timestamp: Date; label: string; description: string; status: AiPathNodeStatus; kind: "node"; meta: string | undefined; }' is not assignable to parameter of type 'TimelineItem' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/ai-paths/components/run-timeline.tsx(158,16): error TS2379: Argument of type '{ id: string; timestamp: Date; label: string; description: string; status: AiPathRunStatus; kind: "run"; meta: string | undefined; }' is not assignable to parameter of type 'TimelineItem' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/ai-paths/components/run-timeline.tsx(370,36): error TS18048: 'min' is possibly 'undefined'.
+src/features/ai-paths/components/run-timeline.tsx(371,36): error TS18048: 'max' is possibly 'undefined'.
+src/features/ai-paths/components/run-timeline.tsx(373,14): error TS2322: Type 'NodeDurationRow | undefined' is not assignable to type 'NodeDurationRow | null'.
+  Type 'undefined' is not assignable to type 'NodeDurationRow | null'.
+src/features/ai-paths/components/run-timeline.tsx(373,19): error TS2322: Type 'NodeDurationRow | undefined' is not assignable to type 'NodeDurationRow | null'.
+  Type 'undefined' is not assignable to type 'NodeDurationRow | null'.
+src/features/ai-paths/components/run-timeline.tsx(487,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<"count" | "total" | "alpha" | "avg">'.
+src/features/ai-paths/lib/core/normalization/index.ts(405,9): error TS2367: This comparison appears to be unintentional because the types 'NodeType' and '"db_query"' have no overlap.
+src/features/ai-paths/lib/core/normalization/index.ts(502,9): error TS2367: This comparison appears to be unintentional because the types 'NodeType' and '"updater"' have no overlap.
+src/features/ai-paths/lib/core/runtime/engine.ts(579,28): error TS2379: Argument of type '{ iteration: number; inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues>; hashes: { [k: string]: string; } | undefined; history: { ...; } | undefined; }' is not assignable to parameter of type '{ iteration: number; inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues>; hashes?: Record<string, string>; history?: Record<...>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hashes' are incompatible.
+    Type '{ [k: string]: string; } | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/ai-paths/lib/core/runtime/engine.ts(591,3): error TS2375: Type '{ inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues>; hashes: { [k: string]: string; } | undefined; history: { ...; } | undefined; }' is not assignable to type 'RuntimeState' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hashes' are incompatible.
+    Type '{ [k: string]: string; } | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/ai-paths/lib/legacy/helpers.ts(598,3): error TS2322: Type '(AiNode | { outputs: string[]; config: { parser: { mappings: Record<string, string>; outputMode: string; presetId: string; }; trigger?: TriggerConfig; simulation?: SimulationConfig; ... 21 more ...; runtime?: NodeRuntimeConfig; }; ... 5 more ...; position: { ...; }; } | { ...; } | { ...; })[]' is not assignable to type 'AiNode[]'.
+  Type 'AiNode | { outputs: string[]; config: { parser: { mappings: Record<string, string>; outputMode: string; presetId: string; }; trigger?: TriggerConfig; simulation?: SimulationConfig; ... 21 more ...; runtime?: NodeRuntimeConfig; }; ... 5 more ...; position: { ...; }; } | { ...; } | { ...; }' is not assignable to type 'AiNode' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ outputs: string[]; config: { parser: { mappings: Record<string, string>; outputMode: string; presetId: string; }; trigger?: TriggerConfig; simulation?: SimulationConfig; ... 21 more ...; runtime?: NodeRuntimeConfig; }; ... 5 more ...; position: { x: number; y: number; }; }' is not assignable to type 'AiNode'.
+      Type '{ outputs: string[]; config: { parser: { mappings: Record<string, string>; outputMode: string; presetId: string; }; trigger?: TriggerConfig; simulation?: SimulationConfig; ... 21 more ...; runtime?: NodeRuntimeConfig; }; ... 5 more ...; position: { x: number; y: number; }; }' is not assignable to type 'NodeDefinition'.
+        The types of 'config.parser.outputMode' are incompatible between these types.
+          Type 'string' is not assignable to type '"bundle" | "individual"'.
+src/features/ai-paths/lib/legacy/helpers.ts(1410,11): error TS2322: Type 'string | number | undefined' is not assignable to type 'string | number'.
+  Type 'undefined' is not assignable to type 'string | number'.
+src/features/ai-paths/lib/legacy/helpers.ts(1535,3): error TS2322: Type '{ light: string[]; medium: string[]; full: string[]; suggested: string[]; } | undefined' is not assignable to type '{ light: string[]; medium: string[]; full: string[]; suggested: string[]; }'.
+  Type 'undefined' is not assignable to type '{ light: string[]; medium: string[]; full: string[]; suggested: string[]; }'.
+src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx(100,12): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx(154,17): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { events: AiPathRunEventRecord[]; run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { events: AiPathRunEventRecord[]; run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx(179,19): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx(187,19): error TS2345: Argument of type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { nodes: AiPathRunNodeRecord[]; run: AiPathRunRecord; events: AiPathRunEventRecord[]; }' is not assignable to parameter of type 'SetStateAction<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null>'.
+  Type '(prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }) => { nodes: AiPathRunNodeRecord[]; run: AiPathRunRecord; events: AiPathRunEventRecord[]; }' is not assignable to type '(prevState: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null) => { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null'.
+    Types of parameters 'prev' and 'prevState' are incompatible.
+      Type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; } | null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+        Type 'null' is not assignable to type '{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[]; }'.
+src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx(229,50): error TS18047: 'detail' is possibly 'null'.
+src/features/ai-paths/services/path-run-executor.ts(220,45): error TS2379: Argument of type '{ seedOutputs: Record<string, RuntimePortValues>; seedHashes: Record<string, string> | undefined; seedHistory: Record<string, RuntimeHistoryEntry[]> | undefined; ... 16 more ...; activePathName: string | null; }' is not assignable to parameter of type 'EvaluateGraphOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'seedHashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/ai-paths/services/path-run-executor.ts(366,46): error TS2379: Argument of type '{ inputs: Record<string, RuntimePortValues>; outputs: Record<string, RuntimePortValues>; hashes: Record<string, string> | undefined; history: Record<...> | undefined; }' is not assignable to parameter of type 'RuntimeState' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hashes' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/auth/hooks/useAuthQueries.ts(72,5): error TS2322: Type '({ userId, input, }: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean; }; }) => Promise<AuthUserSecurityProfile>' is not assignable to type 'MutationFunction<AuthUserSecurityProfile, { userId: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Property 'input' is missing in type '{ userId: string; }' but required in type '{ userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean; }; }'.
+src/features/auth/hooks/useAuthQueries.ts(107,3): error TS2322: Type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>' is not assignable to type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }>'.
+  Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }>'.
+    Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>, { ...; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>, { ...; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>' is not assignable to type 'UseMutateFunction<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown> | undefined' is not assignable to type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown> | undefined'.
+                Type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>' is not assignable to type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type '{ email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }' is not assignable to type '{ email: string; password: string; name?: string; emailVerified?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                    Types of property 'name' are incompatible.
+                      Type 'string | undefined' is not assignable to type 'string'.
+                        Type 'undefined' is not assignable to type 'string'.
+src/features/auth/pages/admin/SettingsPage.tsx(300,21): error TS2345: Argument of type '([key, label]: [keyof AuthSecurityPolicy, string]) => JSX.Element' is not assignable to parameter of type '(value: readonly ["requireUppercase", "Uppercase"] | readonly ["requireLowercase", "Lowercase"] | readonly ["requireNumber", "Number"] | readonly ["requireSymbol", "Symbol"], index: number, array: readonly (readonly ["requireUppercase", "Uppercase"] | readonly [...] | readonly [...] | readonly [...])[]) => Element'.
+  Types of parameters '__0' and 'value' are incompatible.
+    Type 'readonly ["requireUppercase", "Uppercase"] | readonly ["requireLowercase", "Lowercase"] | readonly ["requireNumber", "Number"] | readonly ["requireSymbol", "Symbol"]' is not assignable to type '[keyof AuthSecurityPolicy, string]'.
+      The type 'readonly ["requireUppercase", "Uppercase"]' is 'readonly' and cannot be assigned to the mutable type '[keyof AuthSecurityPolicy, string]'.
+src/features/auth/pages/admin/UsersPage.tsx(246,59): error TS2379: Argument of type '{ email: string; password: string; name: string | undefined; }' is not assignable to parameter of type '{ email: string; password: string; name?: string; emailVerified?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/auth/pages/public/RegisterPage.tsx(51,63): error TS2379: Argument of type '{ name: string | undefined; email: string; password: string; }' is not assignable to parameter of type '{ email: string; password: string; name?: string; emailVerified?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(552,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(554,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(556,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(558,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(560,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(562,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(564,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(566,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotLogic.ts(568,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/chatbot/hooks/useChatbotMutations.ts(22,3): error TS2322: Type 'UseMutationResult<{ sessionId: string; session?: ChatSession; }, Error, { title?: string; settings?: { model?: string | undefined; webSearchEnabled?: boolean | undefined; useGlobalContext?: boolean | undefined; useLocalContext?: boolean | undefined; } | undefined; }, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<{ sessionId: string; session?: ChatSession; }, Error, { title?: string; settings?: { model?: string | undefined; webSearchEnabled?: boolean | undefined; useGlobalContext?: boolean | undefined; useLocalContext?: boolean | undefined; } | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<{ sessionId: string; session?: ChatSession; }, Error, { title?: string; settings?: { model?: string | undefined; webSearchEnabled?: boolean | undefined; useGlobalContext?: boolean | undefined; useLocalContext?: boolean | undefined; } | undefined; }, unknown>, { ...; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(36,3): error TS2322: Type 'UseMutationResult<ChatbotSessionListItem, Error, { sessionId: string; title: string; }, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<ChatbotSessionListItem, Error, { sessionId: string; title: string; }, unknown>, { mutate: UseMutateFunction<...>; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<ChatbotSessionListItem, Error, { sessionId: string; title: string; }, unknown>, { mutate: UseMutateFunction<...>; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(37,5): error TS2322: Type '({ sessionId, title }: { sessionId: string; title: string; }) => Promise<ChatbotSessionListItem>' is not assignable to type 'MutationFunction<unknown, { sessionId: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Property 'title' is missing in type '{ sessionId: string; }' but required in type '{ sessionId: string; title: string; }'.
+src/features/chatbot/hooks/useChatbotMutations.ts(52,3): error TS2322: Type 'UseMutationResult<unknown, Error, string, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<unknown, Error, string, unknown>, { mutate: UseMutateFunction<unknown, Error, string, unknown>; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<unknown, Error, string, unknown>, { mutate: UseMutateFunction<unknown, Error, string, unknown>; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(67,3): error TS2322: Type 'UseMutationResult<unknown, Error, string[], unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<unknown, Error, string[], unknown>, { mutate: UseMutateFunction<unknown, Error, string[], unknown>; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<unknown, Error, string[], unknown>, { mutate: UseMutateFunction<unknown, Error, string[], unknown>; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(85,3): error TS2322: Type 'UseMutationResult<void, Error, { sessionId: string; role: "user" | "system" | "assistant"; content: string; }, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, { sessionId: string; role: "user" | "system" | "assistant"; content: string; }, unknown>, { mutate: UseMutateFunction<void, Error, { ...; }, unknown>; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, { sessionId: string; role: "user" | "system" | "assistant"; content: string; }, unknown>, { mutate: UseMutateFunction<void, Error, { ...; }, unknown>; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(86,5): error TS2322: Type '({ sessionId, role, content, }: { sessionId: string; role: ChatMessage["role"]; content: string; }) => Promise<void>' is not assignable to type 'MutationFunction<unknown, { sessionId: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Type '{ sessionId: string; }' is missing the following properties from type '{ sessionId: string; role: "user" | "system" | "assistant"; content: string; }': role, content
+src/features/chatbot/hooks/useChatbotMutations.ts(105,3): error TS2322: Type 'UseMutationResult<{ message?: string; }, Error, { messages: ChatMessage[]; model: string; sessionId?: string | null; }, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<{ message?: string; }, Error, { messages: ChatMessage[]; model: string; sessionId?: string | null; }, unknown>, { ...; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<{ message?: string; }, Error, { messages: ChatMessage[]; model: string; sessionId?: string | null; }, unknown>, { ...; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(116,3): error TS2322: Type 'UseMutationResult<{ settings?: { settings?: ChatbotSettingsPayload; }; }, Error, { key: string; settings: ChatbotSettingsPayload; }, unknown>' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+  Type 'Override<MutationObserverIdleResult<{ settings?: { settings?: ChatbotSettingsPayload; }; }, Error, { key: string; settings: ChatbotSettingsPayload; }, unknown>, { ...; }> & { ...; }' is not assignable to type '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined) => UseMutationResult<...>'.
+    Type 'Override<MutationObserverIdleResult<{ settings?: { settings?: ChatbotSettingsPayload; }; }, Error, { key: string; settings: ChatbotSettingsPayload; }, unknown>, { ...; }> & { ...; }' provides no match for the signature '<TData = unknown, TError = Error, TVariables = void, TOnMutateResult = unknown>(options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>, queryClient?: QueryClient | undefined): UseMutationResult<...>'.
+src/features/chatbot/hooks/useChatbotMutations.ts(117,5): error TS2322: Type '({ key, settings }: { key: string; settings: ChatbotSettingsPayload; }) => Promise<{ settings?: { settings?: ChatbotSettingsPayload; }; }>' is not assignable to type 'MutationFunction<unknown, { key: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Property 'settings' is missing in type '{ key: string; }' but required in type '{ key: string; settings: ChatbotSettingsPayload; }'.
+src/features/chatbot/hooks/useChatbotQueries.ts(18,3): error TS2322: Type 'UseQueryResult<ChatbotSessionListItem[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<ChatbotSessionListItem[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<ChatbotSessionListItem[], Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(32,3): error TS2322: Type 'UseQueryResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<string[], Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(49,3): error TS2322: Type 'UseQueryResult<ChatSession | null, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<ChatSession | null, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<ChatSession | null, Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(63,3): error TS2322: Type 'UseQueryResult<{ settings?: { settings?: unknown; } | null; }, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<{ settings?: { settings?: unknown; } | null; }, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<{ settings?: { settings?: unknown; } | null; }, Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(74,3): error TS2322: Type 'UseQueryResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<string[], Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(93,3): error TS2322: Type 'UseQueryResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<string[], Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<string[], Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/hooks/useChatbotQueries.ts(105,3): error TS2322: Type 'UseQueryResult<unknown, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+  Type 'QueryObserverRefetchErrorResult<unknown, Error>' is not assignable to type '{ <TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>; <TQueryFnData = unknown, TError = Error, TData = TQueryFnDa...'.
+    Type 'QueryObserverRefetchErrorResult<unknown, Error>' provides no match for the signature '<TQueryFnData = unknown, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = readonly unknown[]>(options: DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>'.
+src/features/chatbot/pages/AdminChatbotMemoryPage.tsx(61,12): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/chatbot/pages/AdminChatbotPage.tsx(138,48): error TS2322: Type 'undefined' is not assignable to type 'Promise<void>'.
+src/features/chatbot/pages/AdminChatbotPage.tsx(139,61): error TS2322: Type 'undefined' is not assignable to type 'Promise<void>'.
+src/features/chatbot/pages/AdminChatbotSessionsPage.tsx(55,12): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/cms/components/CmsSideMenu.tsx(78,19): error TS2322: Type '(content: Record<string, string | undefined>) => void' is not assignable to type '(content: RichTextContent) => void'.
+  Types of parameters 'content' and 'content' are incompatible.
+    Type 'RichTextContent' is not assignable to type 'Record<string, string | undefined>'.
+      Index signature for type 'string' is missing in type 'RichTextContent'.
+src/features/cms/components/frontend/CmsMenu.tsx(9,1): error TS6133: 'getGsapFromVars' is declared but its value is never read.
+src/features/cms/components/frontend/CmsMenu.tsx(95,36): error TS2304: Cannot find name 'getPresetVars'.
+src/features/cms/components/frontend/CmsMenu.tsx(115,38): error TS2304: Cannot find name 'getPresetVars'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(87,6): error TS2375: Type '{ children: Element; value: CSSProperties | undefined; }' is not assignable to type '{ value?: CSSProperties; children: ReactNode; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'value' are incompatible.
+    Type 'CSSProperties | undefined' is not assignable to type 'CSSProperties'.
+      Type 'undefined' is not assignable to type 'Properties<string | number, string & {}>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(94,16): error TS2375: Type '{ children: Element; key: string; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(126,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendAnnouncementBarSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(128,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendBlockSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(132,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendHeroSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(134,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendImageWithTextSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(136,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendRichTextSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(138,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendGridSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(140,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendAccordionSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(142,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendTestimonialsSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(144,15): error TS2375: Type '{ settings: Record<string, unknown>; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { fullWidth?: boolean; } | undefined; }' is not assignable to type 'FrontendVideoSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(146,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendSlideshowSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(148,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendNewsletterSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(150,15): error TS2375: Type '{ settings: Record<string, unknown>; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { fullWidth?: boolean; } | undefined; }' is not assignable to type 'FrontendContactFormSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(7,22): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Flip.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/flip.d.ts' only in casing.
+  The file is in the program because:
+    Referenced via 'flip.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
+    Imported via "gsap/Flip" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Flip.d.ts@3.14.2'
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(8,27): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Draggable.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/draggable.d.ts' only in casing.
+  The file is in the program because:
+    Referenced via 'draggable.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
+    Imported via "gsap/Draggable" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Draggable.d.ts@3.14.2'
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(10,26): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Observer.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/observer.d.ts' only in casing.
+  The file is in the program because:
+    Referenced via 'observer.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
+    Imported via "gsap/Observer" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Observer.d.ts@3.14.2'
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(95,6): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(95,14): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(222,7): error TS2532: Object is possibly 'undefined'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(364,9): error TS2578: Unused '@ts-expect-error' directive.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(367,11): error TS2578: Unused '@ts-expect-error' directive.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(435,34): error TS2379: Argument of type '{ delay: number; repeat: number; yoyo: boolean; repeatDelay: number; defaults: { ease: string | gsap.EaseFunction; }; scrollTrigger: gsap.DOMTarget | ScrollTrigger.Vars | undefined; }' is not assignable to parameter of type 'TimelineVars' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'scrollTrigger' are incompatible.
+    Type 'DOMTarget | Vars | undefined' is not assignable to type 'DOMTarget | Vars'.
+      Type 'undefined' is not assignable to type 'DOMTarget | Vars'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(642,35): error TS2379: Argument of type '{ ease: "none"; scrollTrigger: { trigger: HTMLDivElement; start: string; end: string; scrub: number; }; scale?: (i: number) => number | undefined; }' is not assignable to parameter of type 'TweenVars' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'scale' are incompatible.
+    Type '(i: number) => number | undefined' is not assignable to type 'TweenValue'.
+      Type '(i: number) => number | undefined' is not assignable to type 'FunctionBasedValue<number>'.
+        Type 'number | undefined' is not assignable to type 'number'.
+          Type 'undefined' is not assignable to type 'number'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(676,27): error TS2322: Type '(index: number) => Record<string, unknown>' is not assignable to type 'string | number | SVGPathElement | FunctionBasedValue<number> | FunctionBasedValue<string> | Point2D[] | PathObject[] | Vars | undefined'.
+  Type '(index: number) => Record<string, unknown>' is not assignable to type 'FunctionBasedValue<number>'.
+    Type 'Record<string, unknown>' is not assignable to type 'number'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(687,15): error TS2578: Unused '@ts-expect-error' directive.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(775,21): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(978,47): error TS18048: 'closest' is possibly 'undefined'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(980,48): error TS2532: Object is possibly 'undefined'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(986,19): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/features/cms/components/frontend/GsapAnimationWrapper.tsx(1005,13): error TS2322: Type 'string' is not assignable to type 'DraggableType | undefined'.
+src/features/cms/components/frontend/sections/FrontendAccordionSection.tsx(41,50): error TS2379: Argument of type '{ fullWidth: boolean | undefined; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendAccordionSection.tsx(50,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendAnnouncementBarSection.tsx(33,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(28,6): error TS2375: Type '{ children: string | number | bigint | true | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...>; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(325,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
+src/features/cms/components/frontend/sections/FrontendBlockSection.tsx(33,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendContactFormSection.tsx(20,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(72,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(91,20): error TS2375: Type '{ key: string; column: BlockInstance; colorSchemes: Record<string, ColorSchemeColors> | undefined; rowHeightMode: string; rowHeight: number; }' is not assignable to type '{ column: BlockInstance; colorSchemes?: Record<string, ColorSchemeColors>; rowHeightMode?: string; rowHeight?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(137,6): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(146,18): error TS2375: Type '{ block: BlockInstance; colorSchemes: Record<string, ColorSchemeColors> | undefined; stretch: boolean; }' is not assignable to type '{ block: BlockInstance; colorSchemes?: Record<string, ColorSchemeColors>; stretch?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(181,8): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(190,8): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(200,8): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(228,8): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendGridSection.tsx(275,8): error TS2375: Type '{ children: Element; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'config' are incompatible.
+    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
+      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
+src/features/cms/components/frontend/sections/FrontendHeroSection.tsx(46,62): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; paddingClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendImageWithTextSection.tsx(35,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendNewsletterSection.tsx(20,51): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendRichTextSection.tsx(18,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendSlideshowSection.tsx(47,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendTestimonialsSection.tsx(29,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/sections/FrontendVideoSection.tsx(52,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'fullWidth' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/cms/components/frontend/theme-styles.ts(43,7): error TS2322: Type 'CSSProperties | undefined' is not assignable to type 'CSSProperties'.
+  Type 'undefined' is not assignable to type 'Properties<string | number, string & {}>'.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(5,74): error TS6133: 'Select' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(5,82): error TS6133: 'SelectContent' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(5,97): error TS6133: 'SelectItem' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(5,109): error TS6133: 'SelectTrigger' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(5,124): error TS6133: 'SelectValue' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(8,27): error TS6196: 'CmsTheme' is declared but never used.
+src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(11,39): error TS6133: 'useCmsThemes' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(280,15): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(466,3): error TS2339: Property 'rowId' does not exist on type 'RowNodeItemProps'.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(466,3): error TS6133: 'rowId' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(467,3): error TS2339: Property 'rowColumnCount' does not exist on type 'RowNodeItemProps'.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(467,3): error TS6133: 'rowColumnCount' is declared but its value is never read.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1078,15): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1213,12): error TS2552: Cannot find name 'draggedFromColumnId'. Did you mean 'setDraggedFromColumnId'?
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1215,12): error TS2552: Cannot find name 'draggedFromParentBlockId'. Did you mean 'setDraggedFromParentBlockId'?
+src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1254,15): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/page-builder/ComponentTreePanel.tsx(92,16): error TS2345: Argument of type '{ type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId: string | undefined; fromParentBlockId: string | undefined; toSectionId: string; toColumnId: string; toParentBlockId: string | undefined; toIndex: number; }' is not assignable to parameter of type 'PageBuilderAction'.
+  Type '{ type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId: string | undefined; fromParentBlockId: string | undefined; toSectionId: string; toColumnId: string; toParentBlockId: string | undefined; toIndex: number; }' is not assignable to type '{ type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'fromColumnId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/ComponentTreePanel.tsx(148,16): error TS2345: Argument of type '{ type: "REMOVE_COLUMN_FROM_ROW"; sectionId: string; columnId: string; rowId: string | undefined; }' is not assignable to parameter of type 'PageBuilderAction'.
+  Type '{ type: "REMOVE_COLUMN_FROM_ROW"; sectionId: string; columnId: string; rowId: string | undefined; }' is not assignable to type '{ type: "REMOVE_COLUMN_FROM_ROW"; sectionId: string; columnId: string; rowId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'rowId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/ComponentTreePanel.tsx(169,16): error TS2345: Argument of type '{ type: "MOVE_SECTION_TO_COLUMN"; sectionId: string; toSectionId: string; toColumnId: string; toParentBlockId: string | undefined; toIndex: number; }' is not assignable to parameter of type 'PageBuilderAction'.
+  Type '{ type: "MOVE_SECTION_TO_COLUMN"; sectionId: string; toSectionId: string; toColumnId: string; toParentBlockId: string | undefined; toIndex: number; }' is not assignable to type '{ type: "MOVE_SECTION_TO_COLUMN"; sectionId: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'toParentBlockId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/MenuSettingsPanel.tsx(902,63): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
+src/features/cms/components/page-builder/MenuSettingsPanel.tsx(908,63): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(32,7): error TS6133: 'ZONE_LABELS' is declared but its value is never read.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(137,28): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string | null>'.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(228,7): error TS2375: Type '{ showMenu: boolean; status: PageStatus; publishedAt: string | undefined; seoTitle: string | undefined; seoDescription: string | undefined; seoOgImage: string | undefined; ... 7 more ...; slugs?: PageSlugLink[]; }' is not assignable to type 'Page & { slugIds?: string[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ showMenu: boolean; status: PageStatus; publishedAt: string | undefined; seoTitle: string | undefined; seoDescription: string | undefined; seoOgImage: string | undefined; ... 7 more ...; slugs?: PageSlugLink[]; }' is not assignable to type 'Page' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'publishedAt' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(592,28): error TS2375: Type '{ key: string; section: SectionInstance; selectedNodeId: string | null; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null; ... 7 more ...; onRemoveRow: (sectionId: string, rowId: string) => void; }' is not assignable to type 'PreviewSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'colorSchemes' are incompatible.
+    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(3,28): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/cms/components/page-builder/PreviewBlock.tsx(345,6): error TS2375: Type '{ children: ReactNode; enabled: boolean; showTooltip: boolean; nodeId: string; onHover: ((nodeId: string | null) => void) | undefined; fallbackNodeId: null; content: Element; className: string; }' is not assignable to type '{ enabled: boolean; showTooltip?: boolean; nodeId: string; onHover?: (nodeId: string | null) => void; fallbackNodeId?: string | null; content?: ReactNode; children: ReactNode; className?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onHover' are incompatible.
+    Type '((nodeId: string | null) => void) | undefined' is not assignable to type '(nodeId: string | null) => void'.
+      Type 'undefined' is not assignable to type '(nodeId: string | null) => void'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(443,20): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(492,12): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(692,28): error TS2375: Type '{ children: Element; key: string; enabled: boolean; showTooltip: boolean; nodeId: string; onHover: ((nodeId: string | null) => void) | undefined; fallbackNodeId: string; content: Element; className: string; }' is not assignable to type '{ enabled: boolean; showTooltip?: boolean; nodeId: string; onHover?: (nodeId: string | null) => void; fallbackNodeId?: string | null; content?: ReactNode; children: ReactNode; className?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onHover' are incompatible.
+    Type '((nodeId: string | null) => void) | undefined' is not assignable to type '(nodeId: string | null) => void'.
+      Type 'undefined' is not assignable to type '(nodeId: string | null) => void'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(735,42): error TS2375: Type '{ block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; stretch: boolean; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(863,20): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(967,18): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1023,18): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1109,18): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1156,18): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1353,6): error TS2375: Type '{ children: ReactNode; enabled: boolean; showTooltip: boolean; nodeId: string; onHover: ((nodeId: string | null) => void) | undefined; fallbackNodeId: string; content: Element; className: string; }' is not assignable to type '{ enabled: boolean; showTooltip?: boolean; nodeId: string; onHover?: (nodeId: string | null) => void; fallbackNodeId?: string | null; content?: ReactNode; children: ReactNode; className?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onHover' are incompatible.
+    Type '((nodeId: string | null) => void) | undefined' is not assignable to type '(nodeId: string | null) => void'.
+      Type 'undefined' is not assignable to type '(nodeId: string | null) => void'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1400,18): error TS2375: Type '{ block: BlockInstance; selectedNodeId: string | null | undefined; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | ... 1 more ... | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewSectionBlockProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'selectedNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1418,18): error TS2375: Type '{ block: BlockInstance; selectedNodeId: string | null | undefined; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | ... 1 more ... | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewSectionBlockProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'selectedNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1436,18): error TS2375: Type '{ block: BlockInstance; selectedNodeId: string | null | undefined; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | ... 1 more ... | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewSectionBlockProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'selectedNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1454,18): error TS2375: Type '{ block: BlockInstance; selectedNodeId: string | null | undefined; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | ... 1 more ... | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewSectionBlockProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'selectedNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1472,18): error TS2375: Type '{ block: BlockInstance; selectedNodeId: string | null | undefined; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | ... 1 more ... | undefined; ... 8 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewSectionBlockProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'selectedNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1496,31): error TS2379: Argument of type '{ kind: "block"; sectionId: string; blockId: string; columnId: string | undefined; parentBlockId: string | undefined; key: string; }' is not assignable to parameter of type 'MediaReplaceTarget' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'columnId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(1824,31): error TS2379: Argument of type '{ kind: "block"; sectionId: string; blockId: string; columnId: string | undefined; parentBlockId: string | undefined; key: string; }' is not assignable to parameter of type 'MediaReplaceTarget' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'columnId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2079,14): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2145,14): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2201,12): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2269,14): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2353,12): error TS2375: Type '{ key: string; block: BlockInstance; isSelected: boolean; isInspecting: boolean; inspectorSettings: InspectorSettings; hoveredNodeId: string | null | undefined; ... 10 more ...; mediaStyles: CSSProperties | ... 1 more ... | undefined; }' is not assignable to type 'PreviewBlockItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'hoveredNodeId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/components/page-builder/PreviewBlock.tsx(2466,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
+src/features/cms/components/page-builder/section-registry.ts(775,3): error TS2741: Property 'allowedBlockTypes' is missing in type '{ type: string; label: string; icon: string; defaultSettings: { text: string; alignment: string; letterGap: number; lineGap: number; wrap: string; }; settingsSchema: ({ key: string; label: string; type: "text"; defaultValue: string; } | { ...; } | { ...; } | { ...; })[]; }' but required in type 'SectionDefinition'.
+src/features/cms/components/page-builder/section-registry.ts(808,3): error TS2741: Property 'allowedBlockTypes' is missing in type '{ type: string; label: string; icon: string; defaultSettings: { textContent: string; fontFamily: string; fontSize: number; fontWeight: string; fontStyle: string; lineHeight: number; letterSpacing: number; textColor: string; }; settingsSchema: ({ ...; } | ... 3 more ... | { ...; })[]; }' but required in type 'SectionDefinition'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(236,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<BulletListOptions> | undefined'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(237,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<OrderedListOptions> | undefined'.
+src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(238,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<ListItemOptions> | undefined'.
+src/features/cms/hooks/useBuilderKeyboardShortcuts.ts(53,20): error TS2345: Argument of type '{ type: "COPY_BLOCK"; sectionId: string; blockId: string; columnId: string | undefined; parentBlockId: string | undefined; }' is not assignable to parameter of type 'PageBuilderAction'.
+  Type '{ type: "COPY_BLOCK"; sectionId: string; blockId: string; columnId: string | undefined; parentBlockId: string | undefined; }' is not assignable to type '{ type: "COPY_BLOCK"; sectionId: string; blockId: string; columnId?: string; parentBlockId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'columnId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/hooks/useBuilderKeyboardShortcuts.ts(78,20): error TS2345: Argument of type '{ type: "PASTE_BLOCK"; sectionId: string; columnId: string | undefined; parentBlockId: string | undefined; }' is not assignable to parameter of type 'PageBuilderAction'.
+  Type '{ type: "PASTE_BLOCK"; sectionId: string; columnId: string | undefined; parentBlockId: string | undefined; }' is not assignable to type '{ type: "PASTE_BLOCK"; sectionId: string; columnId?: string; parentBlockId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'columnId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/cms/hooks/usePageBuilderContext.tsx(266,3): error TS2375: Type '{ blocks: BlockInstance[]; moved: BlockInstance | undefined; }' is not assignable to type '{ blocks: BlockInstance[]; moved?: BlockInstance; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'moved' are incompatible.
+    Type 'BlockInstance | undefined' is not assignable to type 'BlockInstance'.
+      Type 'undefined' is not assignable to type 'BlockInstance'.
+src/features/cms/hooks/usePageBuilderContext.tsx(352,28): error TS2375: Type '{ block: BlockInstance; section: SectionInstance; parentColumn: BlockInstance | undefined; parentBlock: BlockInstance | undefined; }' is not assignable to type '{ block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'parentColumn' are incompatible.
+    Type 'BlockInstance | undefined' is not assignable to type 'BlockInstance'.
+      Type 'undefined' is not assignable to type 'BlockInstance'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1072,9): error TS2375: Type '{ status: PageStatus; publishedAt: string | undefined; id: string; name: string; seoTitle?: string; seoDescription?: string; seoOgImage?: string; seoCanonical?: string; robotsMeta?: string; ... 4 more ...; slugIds?: string[]; }' is not assignable to type 'Page' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'publishedAt' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1229,9): error TS2375: Type '{ themeId: string | undefined; id: string; name: string; status: PageStatus; publishedAt?: string; seoTitle?: string; seoDescription?: string; seoOgImage?: string; ... 5 more ...; slugIds?: string[]; }' is not assignable to type 'Page' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'themeId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1276,20): error TS18048: 'previous' is possibly 'undefined'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1277,17): error TS18048: 'previous' is possibly 'undefined'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1290,20): error TS18048: 'next' is possibly 'undefined'.
+src/features/cms/hooks/usePageBuilderContext.tsx(1291,17): error TS18048: 'next' is possibly 'undefined'.
+src/features/cms/pages/slugs/CreateSlugPage.tsx(32,36): error TS2379: Argument of type '{ slug: string; domainId: string | undefined; }' is not assignable to parameter of type '{ slug: string; domainId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domainId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/pages/slugs/EditSlugPage.tsx(24,11): error TS2375: Type '{ initialSlug: Slug; id: string; domainId: string | undefined; }' is not assignable to type '{ initialSlug: Slug; id: string; domainId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domainId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/cms/pages/slugs/EditSlugPage.tsx(44,34): error TS2379: Argument of type '{ id: string; input: Slug; domainId: string | undefined; }' is not assignable to parameter of type '{ id: string; input: Partial<Slug>; domainId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domainId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/pages/slugs/SlugsPage.tsx(133,55): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/cms/pages/slugs/SlugsPage.tsx(166,27): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(61,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(62,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(151,3): error TS2375: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'createdAt' are incompatible.
+    Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(167,5): error TS2375: Type 'CmsDomain | WithId<CmsDomainRecord>' is not assignable to type 'CmsDomain' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'WithId<CmsDomainRecord>' is not assignable to type 'CmsDomain' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'createdAt' are incompatible.
+      Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(179,3): error TS2375: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'createdAt' are incompatible.
+    Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(188,3): error TS2322: Type 'CmsDomainRecord | null' is not assignable to type 'CmsDomain | null'.
+  Type 'CmsDomainRecord' is not assignable to type 'CmsDomain' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'createdAt' are incompatible.
+      Type 'Date' is not assignable to type 'string'.
+src/features/cms/services/cms-domain.ts(201,72): error TS2375: Type '{ id: string; domain: string; aliasOf: string | undefined; createdAt: string; updatedAt: string; }' is not assignable to type 'CmsDomainResponse' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'aliasOf' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(341,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }[]' to type 'CmsTheme[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' is not comparable to type 'CmsTheme'.
+    Types of property 'colors' are incompatible.
+      Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(357,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'colors' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(375,15): error TS2352: Conversion of type 'CmsThemeColors' to type 'Record<string, string>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'CmsThemeColors'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(376,19): error TS2352: Conversion of type 'CmsThemeTypography' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'CmsThemeTypography'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(377,16): error TS2352: Conversion of type 'CmsThemeSpacing' to type 'Record<string, string>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'CmsThemeSpacing'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(383,12): error TS2352: Conversion of type '{ id: `${string}-${string}-${string}-${string}-${string}`; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'colors' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(410,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'colors' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(426,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'colors' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/prisma-cms-repository.ts(197,17): error TS2352: Conversion of type 'CmsThemeColors' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'CmsThemeColors' is not comparable to type 'InputJsonObject'.
+    Index signature for type 'string' is missing in type 'CmsThemeColors'.
+src/features/cms/services/cms-repository/prisma-cms-repository.ts(198,21): error TS2352: Conversion of type 'CmsThemeTypography' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'CmsThemeTypography' is not comparable to type 'InputJsonObject'.
+    Index signature for type 'string' is missing in type 'CmsThemeTypography'.
+src/features/cms/services/cms-repository/prisma-cms-repository.ts(199,18): error TS2352: Conversion of type 'CmsThemeSpacing' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'CmsThemeSpacing' is not comparable to type 'InputJsonObject'.
+    Index signature for type 'string' is missing in type 'CmsThemeSpacing'.
+src/features/cms/types/theme-settings.ts(633,65): error TS2345: Argument of type 'ColorScheme | undefined' is not assignable to parameter of type 'ColorScheme'.
+  Type 'undefined' is not assignable to type 'ColorScheme'.
+src/features/data-import-export/pages/ImportsPage.tsx(221,88): error TS2322: Type 'string | boolean' is not assignable to type 'boolean'.
+  Type 'string' is not assignable to type 'boolean'.
+src/features/files/components/FileManager.tsx(172,51): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
+src/features/files/components/FileManager.tsx(176,42): error TS2322: Type '"warning"' is not assignable to type 'ToastVariant | undefined'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(43,9): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ImageFileCreateInput, ImageFileUncheckedCreateInput> & ImageFileUncheckedCreateInput) | (Without<...> & ImageFileCreateInput)'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(46,21): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(51,33): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(65,22): error TS2345: Argument of type '(imageFile: { id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }) => ImageFileRecord' is not assignable to parameter of type '(value: { id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }, index: number, array: { ...; }[]) => ImageFileRecord'.
+  Types of parameters 'imageFile' and 'value' are incompatible.
+    Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(73,22): error TS2345: Argument of type '(imageFile: { id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }) => ImageFileRecord' is not assignable to parameter of type '(value: { id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }, index: number, array: { ...; }[]) => ImageFileRecord'.
+  Types of parameters 'imageFile' and 'value' are incompatible.
+    Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(81,33): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(87,15): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ImageFileUpdateInput, ImageFileUncheckedUpdateInput> & ImageFileUncheckedUpdateInput) | (Without<...> & ImageFileUpdateInput)'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(89,33): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/files/services/image-file-repository/prisma-image-file-repository.ts(94,33): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/gsap/components/AnimationPreviewIcon.tsx(185,17): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
+  Type 'undefined' is not assignable to type 'TweenTarget'.
+src/features/gsap/components/AnimationPreviewIcon.tsx(195,19): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
+  Type 'undefined' is not assignable to type 'TweenTarget'.
+src/features/gsap/types/animation.ts(191,14): error TS2375: Type '{ preset: "none"; duration: number; delay: number; easing: "power2.out"; trigger: "load"; selector: string; staggerEach: number; staggerAmount: number; staggerFrom: "start"; parallaxPreset: "none"; ... 89 more ...; customEase: string; }' is not assignable to type 'GsapAnimationConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'textCountFrom' are incompatible.
+    Type 'undefined' is not assignable to type 'number'.
+src/features/gsap/utils/presets.ts(1,1): error TS6133: 'gsap' is declared but its value is never read.
+src/features/jobs/server.ts(7,1): error TS2308: Module "./workers/chatbotJobQueue" has already exported a member named 'pollQueue'. Consider explicitly re-exporting to resolve the ambiguity.
+src/features/notesapp/components/NoteForm.tsx(712,14): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/notesapp/components/NoteForm.tsx(827,13): error TS2322: Type '(e: React.ClipboardEvent<HTMLTextAreaElement>) => void' is not assignable to type '(e: ClipboardEvent<HTMLTextAreaElement>) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(847,9): error TS2322: Type '(slotIndex: number, file: File) => void' is not assignable to type '(slotIndex: number, file: File) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(848,9): error TS2322: Type '(files: FileList | File[]) => void' is not assignable to type '(files: FileList | File[]) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(849,9): error TS2322: Type '(slotIndex: number) => void' is not assignable to type '(slotIndex: number) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(345,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
+  Types of parameters 'parentId' and 'parentId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/notesapp/pages/AdminNotesPage.tsx(370,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(370,45): error TS2322: Type 'Promise<void>' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesPage.tsx(397,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(394,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(407,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(423,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(439,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(455,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(471,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(491,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(509,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(527,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(545,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts(800,11): error TS2375: Type '{ parentId: string | null | undefined; }' is not assignable to type 'MatchKeysAndValues<CategoryDocument>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ parentId: string | null | undefined; }' is not assignable to type 'Readonly<Partial<CategoryDocument>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'parentId' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/components/list/ProductColumns.tsx(328,13): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/features/products/components/list/ProductColumns.tsx(420,13): error TS2322: Type 'boolean | ""' is not assignable to type 'boolean | null'.
+  Type '""' is not assignable to type 'boolean | null'.
+src/features/products/components/list/ProductColumns.tsx(442,16): error TS18047: 'displayPrice' is possibly 'null'.
+src/features/products/services/product-repository/prisma-product-repository.ts(235,38): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/features/products/services/product-repository/prisma-product-repository.ts(279,38): error TS2345: Argument of type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+  Property 'tags' is missing in type '{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
+src/shared/lib/observability/system-log-repository.ts(335,40): error TS2694: Namespace '"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.prisma/client/index".Prisma' has no exported member 'SystemLog'.
+src/shared/lib/observability/system-logger.ts(69,5): error TS2375: Type '{ path: string; method: string; requestId: string | undefined; }' is not assignable to type '{ path?: string; method?: string; requestId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'requestId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.

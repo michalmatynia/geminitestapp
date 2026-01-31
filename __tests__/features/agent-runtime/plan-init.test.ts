@@ -50,7 +50,7 @@ describe("Agent Runtime - Plan Initialization", () => {
     expect(llmPlanning.buildPlanWithLLM).toHaveBeenCalled();
     expect(checkpointModule.persistCheckpoint).toHaveBeenCalled();
     expect(result.planSteps).toHaveLength(1);
-    expect(result.planSteps[0].title).toBe("New Step");
+    expect(result.planSteps[0]?.title).toBe("New Step");
   });
 
   it("should resume from checkpoint if it exists", async () => {
@@ -67,7 +67,7 @@ describe("Agent Runtime - Plan Initialization", () => {
 
     expect(llmPlanning.buildPlanWithLLM).not.toHaveBeenCalled();
     expect(result.planSteps).toHaveLength(1);
-    expect(result.planSteps[0].title).toBe("Checkpoint Step");
+    expect(result.planSteps[0]?.title).toBe("Checkpoint Step");
     expect(result.stepIndex).toBe(0);
   });
 
@@ -91,7 +91,7 @@ describe("Agent Runtime - Plan Initialization", () => {
     const result = await initializePlanState(inputWithResume);
 
     expect(llmPlanning.buildResumePlanReview).toHaveBeenCalled();
-    expect(result.planSteps[0].title).toBe("Resumed New Step");
+    expect(result.planSteps[0]?.title).toBe("Resumed New Step");
     expect(checkpointModule.persistCheckpoint).toHaveBeenCalledWith(expect.objectContaining({
         resumeProcessedAt: expect.any(String)
     }));

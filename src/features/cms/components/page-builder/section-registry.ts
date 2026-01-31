@@ -776,7 +776,6 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "TextAtom",
     label: "Text atoms",
     icon: "Folder",
-    allowedBlockTypes: ["TextAtomLetter"],
     defaultSettings: {
       text: "Text",
       alignment: "left",

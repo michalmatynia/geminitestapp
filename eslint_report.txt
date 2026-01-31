@@ -37,7 +37,7 @@
   119:31  error  Expected a type annotation                                                         @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx
-  363:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  357:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/AppEmbedsPanel.tsx
   24:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
@@ -150,12 +150,12 @@ Calling setState synchronously within an effect body causes cascading renders th
   1013:41   error    Expected slug to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx
-   456:3   error  'rowId' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
-   457:3   error  'rowColumnCount' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
-  1202:15  error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
-  1204:15  error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
-  1210:13  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
-  1214:13  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
+   466:3   error  'rowId' is defined but never used. Allowed unused args must match /^_/u                   @typescript-eslint/no-unused-vars
+   467:3   error  'rowColumnCount' is defined but never used. Allowed unused args must match /^_/u          @typescript-eslint/no-unused-vars
+  1212:15  error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  1214:15  error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  1220:13  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
+  1224:13  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/MediaLibraryPanel.tsx
    34:34  error  Expected file to have a type annotation                                            @typescript-eslint/typedef
@@ -795,7 +795,7 @@ Calling setState synchronously within an effect body causes cascading renders th
   1675:84   error    Expected v to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/section-registry.ts
-  1223:54  error  Expected type to have a type annotation  @typescript-eslint/typedef
+  1222:54  error  Expected type to have a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/section-templates.ts
   156:33  error  Expected tpl to have a type annotation  @typescript-eslint/typedef
@@ -884,11 +884,9 @@ Calling setState synchronously within an effect body causes cascading renders th
   278:8   error  Missing return type on function               @typescript-eslint/explicit-module-boundary-types
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/hooks/usePageBuilderContext.tsx
-    28:10   error  This assertion is unnecessary since it does not change the type of the expression        @typescript-eslint/no-unnecessary-type-assertion
-    33:58   error  This assertion is unnecessary since it does not change the type of the expression        @typescript-eslint/no-unnecessary-type-assertion
-    99:10   error  'applyTextAtomSettings' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  1098:41   error  Expected slug to have a type annotation                                                  @typescript-eslint/typedef
-  1384:173  error  `}` can be escaped with `&#125;`                                                         react/no-unescaped-entities
+    28:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+    33:58  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  1119:41  error  Expected slug to have a type annotation                                            @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/pages/CreatePagePage.tsx
   11:16  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
@@ -4067,10 +4065,17 @@ Calling setState synchronously within an effect body causes cascading renders th
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/transient-recovery/settings.ts
   63:61  error  Expected a type annotation  @typescript-eslint/typedef
 
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/app-modal.tsx
+  57:24  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  57:44  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  57:45  error  `>` can be escaped with `&gt;`                                   react/no-unescaped-entities
+  57:55  error  `}` can be escaped with `&#125;`                                 react/no-unescaped-entities
+  57:61  error  `>` can be escaped with `&gt;`                                   react/no-unescaped-entities
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts
   46:3  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
   50:3  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
 
-✖ 3257 problems (3219 errors, 38 warnings)
+✖ 3260 problems (3222 errors, 38 warnings)
   4 errors and 0 warnings potentially fixable with the `--fix` option.
 

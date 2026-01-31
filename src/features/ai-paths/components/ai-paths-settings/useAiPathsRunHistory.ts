@@ -112,7 +112,7 @@ export function useAiPathsRunHistory({
     setRunStreamStatus("connecting");
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setRunDetail((prev: typeof runDetail) => {
+      setRunDetail((prev) => {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];

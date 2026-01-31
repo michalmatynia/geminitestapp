@@ -45,7 +45,7 @@ export function AppModal({
   return (
     <Dialog open={open} {...(onOpenChange ? { onOpenChange } : {})}>
       <DialogContent
-        className={cn(DEFAULT_CONTENT_CLASS, contentClassName)}
+        className={cn(DEFAULT_CONTENT_CLASS, contentClassName, "pointer-events-none")}
         onInteractOutside={handleInteractOutside}
         onEscapeKeyDown={handleEscapeKeyDown}
       >
@@ -54,7 +54,7 @@ export function AppModal({
         >
           {title}
         </DialogTitle>
-        {children}
+        <div className="pointer-events-auto">{children}</div>
       </DialogContent>
     </Dialog>
   );

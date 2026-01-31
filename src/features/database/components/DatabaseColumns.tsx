@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/ui";
-import type { ColumnDef, Column } from "@tanstack/react-table";
+import type { ColumnDef, Column, Row } from "@tanstack/react-table";
 
 import type { DatabaseInfo } from "../types";
 
@@ -41,11 +41,11 @@ export const getDatabaseColumns = (options?: {
   {
     accessorKey: "size",
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Size", column),
-    sortingFn: (rowA: any, rowB: any, columnId: string): number => {
+    sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number => {
       const toNumber = (value: string): number =>
         Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
       return (
-        toNumber(rowA.getValue(columnId)) - toNumber(rowB.getValue(columnId))
+        toNumber(rowA.getValue<string>(columnId)) - toNumber(rowB.getValue<string>(columnId))
       );
     },
   },

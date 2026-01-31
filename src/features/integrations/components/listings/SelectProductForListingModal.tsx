@@ -6,6 +6,8 @@ import type { ProductWithImages } from "@/features/products";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,
+  Template,
+  BaseInventory,
 } from "@/features/data-import-export";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
@@ -61,8 +63,8 @@ export default function SelectProductForListingModal({
   const [logsOpen, setLogsOpen] = useState(false);
   const imageRetryPresets = useImageRetryPresets();
 
-  const connectionName = (selectedIntegration?.connections as any[])?.find(
-    (c: any) => c.id === selectedConnectionId
+  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
+    (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
 
   // Load products

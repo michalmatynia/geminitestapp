@@ -85,6 +85,7 @@ export function SettingsFieldRenderer({
   onChange,
 }: SettingsFieldRendererProps): React.ReactNode {
   const { theme } = useThemeSettings();
+  const isDisabled = Boolean(field.disabled);
   const colorSchemeOptions = useMemo<SettingsFieldOption[]>((): SettingsFieldOption[] => {
     const baseOptions =
       theme.colorSchemes.length === 0
@@ -118,7 +119,8 @@ export function SettingsFieldRenderer({
         <Input
           value={(value as string) ?? ""}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
-          className="text-sm"
+          className="text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={isDisabled}
         />
       )}
 
@@ -131,7 +133,8 @@ export function SettingsFieldRenderer({
           type="number"
           value={(value as number) ?? 0}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
-          className="text-sm"
+          className="text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={isDisabled}
         />
       )}
 
@@ -140,7 +143,7 @@ export function SettingsFieldRenderer({
           value={(value as string) ?? ""}
           onValueChange={(v: string): void => handleChange(v)}
         >
-          <SelectTrigger className="w-full text-sm">
+          <SelectTrigger className="w-full text-sm" disabled={isDisabled}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -171,6 +174,7 @@ export function SettingsFieldRenderer({
                 aria-pressed={isActive}
                 className={`w-full justify-center ${isActive ? "border-primary/60 bg-primary/10 text-primary" : "border-foreground/20"}`}
                 onClick={(): void => handleChange(opt.value)}
+                disabled={isDisabled}
               >
                 {opt.label}
               </Button>
@@ -187,7 +191,7 @@ export function SettingsFieldRenderer({
         >
           {(field.options ?? []).map((opt: SettingsFieldOption) => (
             <div key={opt.value} className="flex items-center gap-2">
-              <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} />
+              <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} disabled={isDisabled} />
               <Label htmlFor={`${field.key}-${opt.value}`} className="text-sm text-gray-300 cursor-pointer">
                 {opt.label}
               </Label>
@@ -252,7 +256,8 @@ export function SettingsFieldRenderer({
             max={field.max ?? 12}
             value={(value as number) ?? field.min ?? 1}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
-            className="flex-1 accent-blue-500"
+            className={`flex-1 accent-blue-500 ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={isDisabled}
           />
           <span className="w-8 text-center text-sm font-medium text-gray-300">
             {(value as number) ?? field.min ?? 1}

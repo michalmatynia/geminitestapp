@@ -750,7 +750,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={positionMode}
-                onChange={(v: string): void => update("positionMode", v as any)}
+                onChange={(v: string): void => update("positionMode", v as "static" | "sticky")}
                 options={[
                   { label: "Glued to top", value: "sticky" },
                   { label: "Top of page", value: "static" },
@@ -861,13 +861,13 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 label="Entry animation"
                 value={settings.menuEntryAnimation}
                 onChange={(v: string): void => update("menuEntryAnimation", v as AnimationPreset)}
-                options={ANIMATION_PRESETS as any}
+                options={ANIMATION_PRESETS}
               />
               <SelectField
                 label="Hover animation"
                 value={settings.menuHoverAnimation}
                 onChange={(v: string): void => update("menuHoverAnimation", v as AnimationPreset)}
-                options={ANIMATION_PRESETS as any}
+                options={ANIMATION_PRESETS}
               />
             </div>
           );

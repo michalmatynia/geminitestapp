@@ -140,6 +140,18 @@ export function ComponentSettingsPanel(): React.ReactNode {
     const idx = rows.findIndex((b: BlockInstance) => b.id === selectedBlock.id);
     return idx >= 0 ? idx + 1 : null;
   }, [isRowBlock, selectedParentSection, selectedBlock]);
+  const rowHeightMode = (selectedBlock?.settings?.["heightMode"] as string) || "inherit";
+  const rowSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
+    if (!isRowBlock || !selectedBlock) return null;
+    if (rowHeightMode !== "inherit") return selectedBlock.settings;
+    return { ...selectedBlock.settings, height: 0 };
+  }, [isRowBlock, selectedBlock, rowHeightMode]);
+  const columnHeightMode = (selectedColumn?.settings?.["heightMode"] as string) || "inherit";
+  const columnSettingsForRender = useMemo<Record<string, unknown> | null>(() => {
+    if (!selectedColumn) return null;
+    if (columnHeightMode !== "inherit") return selectedColumn.settings;
+    return { ...selectedColumn.settings, height: 0 };
+  }, [selectedColumn, columnHeightMode]);
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -179,6 +191,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleBlockSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedBlock || !selectedParentSection) return;
+      const shouldResetRowHeight = selectedBlock.type === "Row" && key === "heightMode" && value === "inherit";
+      const nextSettings = { [key]: value, ...(shouldResetRowHeight ? { height: 0 } : {}) };
 
       if (selectedParentBlock && selectedParentColumn) {
         // Element inside a section-type block inside a column
@@ -188,7 +202,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           columnId: selectedParentColumn.id,
           parentBlockId: selectedParentBlock.id,
           blockId: selectedBlock.id,
-          settings: { [key]: value },
+          settings: nextSettings,
         });
       } else if (selectedParentColumn) {
         // Block directly inside a column
@@ -197,7 +211,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           sectionId: selectedParentSection.id,
           columnId: selectedParentColumn.id,
           blockId: selectedBlock.id,
-          settings: { [key]: value },
+          settings: nextSettings,
         });
       } else {
         // Direct block inside a section
@@ -205,7 +219,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           type: "UPDATE_BLOCK_SETTINGS",
           sectionId: selectedParentSection.id,
           blockId: selectedBlock.id,
-          settings: { [key]: value },
+          settings: nextSettings,
         });
       }
     },
@@ -258,11 +272,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleColumnSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedColumn || !selectedColumnParentSection) return;
+      const nextSettings: Record<string, unknown> = { [key]: value };
+      if (key === "heightMode" && value === "inherit") {
+        nextSettings.height = 0;
+      }
       dispatch({
         type: "UPDATE_COLUMN_SETTINGS",
         sectionId: selectedColumnParentSection.id,
         columnId: selectedColumn.id,
-        settings: { [key]: value },
+        settings: nextSettings,
       });
     },
     [selectedColumn, selectedColumnParentSection, dispatch]
@@ -718,8 +736,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
                 {renderFieldGroups(
                   groupSettingsFields(prependManagementFields(columnDef.settingsSchema)),
-                  selectedColumn.settings,
+                  columnSettingsForRender ?? selectedColumn.settings,
                   handleColumnSettingChange,
+                  (field: SettingsField): SettingsField =>
+                    columnHeightMode === "inherit" && field.key === "height"
+                      ? { ...field, disabled: true }
+                      : field,
                 )}
               </div>
             ) : selectedBlock && blockDef ? (
@@ -749,12 +771,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
                 {renderFieldGroups(
                   groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-                  selectedBlock.settings,
+                  rowSettingsForRender ?? selectedBlock.settings,
                   handleBlockSettingChange,
                   (field: SettingsField): SettingsField =>
-                    selectedBlock.type === "AppEmbed" && field.key === "appId"
+                    (selectedBlock.type === "AppEmbed" && field.key === "appId")
                       ? { ...field, options: appEmbedOptions }
-                      : field,
+                      : (isRowBlock && rowHeightMode === "inherit" && field.key === "height")
+                        ? { ...field, disabled: true }
+                        : field,
                 )}
 
                 <div className="border-t border-border/30 pt-4">

@@ -18,7 +18,7 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
-import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
+import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
 
 export default function MassListProductModal({
   productIds,
@@ -56,8 +56,8 @@ export default function MassListProductModal({
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
 
-  const connectionName = (selectedIntegration?.connections as any[])?.find(
-    (c: any) => c.id === selectedConnectionId
+  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
+    (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
 
   const handleSubmit = async (): Promise<void> => {
@@ -219,9 +219,9 @@ export default function MassListProductModal({
                             <SelectValue placeholder="Select inventory..." />
                             </SelectTrigger>
                             <SelectContent>
-                            {(inventories as any[])
-                                .filter((inventory: any): boolean => !!inventory.id)
-                                .map((inventory: any) => (
+                            {inventories
+                                .filter((inventory: BaseInventory): boolean => !!inventory.id)
+                                .map((inventory: BaseInventory) => (
                                 <SelectItem key={inventory.id} value={inventory.id}>
                                     {inventory.name}
                                 </SelectItem>
@@ -246,9 +246,9 @@ export default function MassListProductModal({
                             </SelectTrigger>
                             <SelectContent>
                             <SelectItem value="none">No template</SelectItem>
-                            {(templates as any[])
-                                .filter((template: any): boolean => !!template.id)
-                                .map((template: any) => (
+                            {templates
+                                .filter((template: Template): boolean => !!template.id)
+                                .map((template: Template) => (
                                 <SelectItem key={template.id} value={template.id}>
                                     {template.name}
                                 </SelectItem>

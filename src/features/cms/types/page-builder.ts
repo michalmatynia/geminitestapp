@@ -34,6 +34,7 @@ export interface SettingsField {
   defaultValue?: unknown;
   min?: number;
   max?: number;
+  disabled?: boolean;
 }
 
 // ---------------------------------------------------------------------------

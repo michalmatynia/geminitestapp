@@ -1,13 +1,13 @@
 "use client";
 
 import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
 import { RestoreModal } from "../components/RestoreModal";
-import type { DatabaseInfo, DatabaseType } from "../types";
+import type { DatabaseInfo, DatabaseType, DatabaseBackupResponse, DatabaseRestoreResponse } from "../types";
 import {
   createDatabaseBackup,
   fetchDatabaseBackups,
@@ -16,7 +16,6 @@ import {
   deleteDatabaseBackup,
 } from "../api";
 
-import type { DatabaseBackupResponse, DatabaseRestoreResponse } from "@/shared/types/api";
 
 export default function DatabasesPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
@@ -112,23 +111,23 @@ export default function DatabasesPage(): React.JSX.Element {
         truncateBeforeRestore: truncate,
       });
       const { ok, payload } = result;
-      const log = (payload as any).log ?? "No log available.";
+      const log = payload.log ?? "No log available.";
 
       if (ok) {
         openLogModal(
-          `${(payload as any).message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
+          `${payload.message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
         );
       } else {
         const meta = [
-          (payload as any).errorId ? `Error ID: ${(payload as any).errorId}` : null,
-          (payload as any).stage ? `Stage: ${(payload as any).stage}` : null,
-          (payload as any).backupName ? `Backup: ${(payload as any).backupName}` : null,
+          payload.errorId ? `Error ID: ${payload.errorId}` : null,
+          payload.stage ? `Stage: ${payload.stage}` : null,
+          payload.backupName ? `Backup: ${payload.backupName}` : null,
         ]
           .filter(Boolean)
           .join("\n");
 
         openLogModal(
-          `${(payload as any).error ?? "Failed to restore backup."}${ 
+          `${payload.error ?? "Failed to restore backup."}${ 
             meta ? `\n\n${meta}` : "" 
           }\n\n---LOG---\n${log}`
         );
@@ -143,24 +142,24 @@ export default function DatabasesPage(): React.JSX.Element {
     try {
       const result = await createBackup.mutateAsync({ dbType: activeTab });
       const { ok, payload } = result;
-      const log = (payload as any).log ?? "No log available.";
+      const log = payload.log ?? "No log available.";
       if (ok) {
-        if ((payload as any).warning) {
+        if (payload.warning) {
           openLogModal(
-            `${(payload as any).message ?? "Backup created"}: ${ 
-              (payload as any).warning 
+            `${payload.message ?? "Backup created"}: ${ 
+              payload.warning 
             }\n\n---LOG---\n${log}`
           );
         } else {
           openLogModal(
             `${
-              (payload as any).message ?? "Backup created successfully."
+              payload.message ?? "Backup created successfully."
             }\n\n---LOG---\n${log}`
           );
         }
       } else {
         openLogModal(
-          `${(payload as any).error ?? "Failed to create backup."}\n\n---LOG---\n${log}`
+          `${payload.error ?? "Failed to create backup."}\n\n---LOG---\n${log}`
         );
       }
     } catch (error: unknown) {

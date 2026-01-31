@@ -32,6 +32,8 @@ export interface ThemeSettings {
   baseSize: number;
   headingWeight: string;
   bodyWeight: string;
+  headingSizeScale: number;
+  bodySizeScale: number;
   lineHeight: number;
   headingLineHeight: number;
   // Layout
@@ -40,11 +42,13 @@ export interface ThemeSettings {
   sectionSpacing: number;
   containerPadding: number;
   borderRadius: number;
+  fullWidth: boolean;
   // Animations
   enableAnimations: boolean;
   animationDuration: number;
   animationEasing: string;
   scrollReveal: boolean;
+  hoverEffect: string;
   hoverScale: number;
   // Buttons
   btnPaddingX: number;
@@ -57,6 +61,15 @@ export interface ThemeSettings {
   btnSecondaryBg: string;
   btnSecondaryText: string;
   btnOutlineBorder: string;
+  // Button Border
+  btnBorderWidth: number;
+  btnBorderOpacity: number;
+  btnBorderRadius: number;
+  // Button Shadow
+  btnShadowOpacity: number;
+  btnShadowX: number;
+  btnShadowY: number;
+  btnShadowBlur: number;
   // Variant Pills
   pillRadius: number;
   pillPaddingX: number;
@@ -66,51 +79,114 @@ export interface ThemeSettings {
   pillText: string;
   pillActiveBg: string;
   pillActiveText: string;
+  pillBorderColor: string;
+  pillBorderWidth: number;
+  pillBorderOpacity: number;
+  pillShadowOpacity: number;
+  pillShadowX: number;
+  pillShadowY: number;
+  pillShadowBlur: number;
   // Inputs
   inputHeight: number;
   inputRadius: number;
   inputBorderColor: string;
+  inputBorderWidth: number;
+  inputBorderOpacity: number;
   inputBg: string;
   inputText: string;
   inputFocusBorder: string;
   inputPlaceholder: string;
   inputFontSize: number;
+  inputShadowOpacity: number;
+  inputShadowX: number;
+  inputShadowY: number;
+  inputShadowBlur: number;
   // Product Cards
+  cardStyle: string;
   cardImageRatio: string;
+  cardImagePadding: number;
+  cardTextAlignment: string;
+  cardColorScheme: string;
   cardRadius: number;
   cardShadow: string;
   cardBg: string;
   cardHoverShadow: string;
   showBadge: boolean;
   showQuickAdd: boolean;
+  cardBorderWidth: number;
+  cardBorderOpacity: number;
+  cardBorderRadius: number;
+  cardShadowOpacity: number;
+  cardShadowX: number;
+  cardShadowY: number;
+  cardShadowBlur: number;
   // Collection Cards
   collectionRatio: string;
   collectionRadius: number;
+  collectionStyle: string;
+  collectionImagePadding: number;
   collectionOverlay: boolean;
   collectionOverlayColor: string;
   collectionTextAlign: string;
+  collectionColorScheme: string;
+  collectionBorderWidth: number;
+  collectionBorderOpacity: number;
+  collectionShadowOpacity: number;
+  collectionShadowX: number;
+  collectionShadowY: number;
+  collectionShadowBlur: number;
   // Blog Cards
+  blogStyle: string;
   blogRatio: string;
+  blogImagePadding: number;
+  blogTextAlignment: string;
+  blogColorScheme: string;
   blogRadius: number;
   blogShowDate: boolean;
   blogShowExcerpt: boolean;
   blogExcerptLines: number;
+  blogBorderWidth: number;
+  blogBorderOpacity: number;
+  blogBorderRadius: number;
+  blogShadowOpacity: number;
+  blogShadowX: number;
+  blogShadowY: number;
+  blogShadowBlur: number;
   // Content Containers
   containerBg: string;
   containerBorderColor: string;
   containerRadius: number;
   containerPaddingInner: number;
   containerShadow: string;
+  containerBorderWidth: number;
+  containerBorderOpacity: number;
+  containerBorderRadius: number;
+  containerShadowOpacity: number;
+  containerShadowX: number;
+  containerShadowY: number;
+  containerShadowBlur: number;
   // Media
   imageRadius: number;
   imageBorderColor: string;
+  imageBorderWidth: number;
+  imageBorderOpacity: number;
+  imageShadowOpacity: number;
+  imageShadowX: number;
+  imageShadowY: number;
+  imageShadowBlur: number;
   imagePlaceholderBg: string;
   videoRatio: string;
   // Dropdowns and pop-ups
   dropdownBg: string;
   dropdownBorder: string;
+  dropdownBorderWidth: number;
+  dropdownBorderOpacity: number;
   dropdownRadius: number;
   dropdownShadow: string;
+  dropdownShadowOpacity: number;
+  dropdownShadowX: number;
+  dropdownShadowY: number;
+  dropdownShadowBlur: number;
   popupOverlayColor: string;
   popupRadius: number;
   // Drawers
@@ -118,6 +194,10 @@ export interface ThemeSettings {
   drawerBg: string;
   drawerOverlayColor: string;
   drawerPosition: string;
+  drawerBorderColor: string;
+  drawerBorderWidth: number;
+  drawerBorderOpacity: number;
+  drawerRadius: number;
   // Badges
   badgeFontSize: number;
   badgeRadius: number;
@@ -240,6 +320,8 @@ export const DEFAULT_THEME: ThemeSettings = {
   baseSize: 16,
   headingWeight: "700",
   bodyWeight: "400",
+  headingSizeScale: 1,
+  bodySizeScale: 1,
   lineHeight: 1.6,
   headingLineHeight: 1.2,
   maxContentWidth: 1200,
@@ -247,10 +329,12 @@ export const DEFAULT_THEME: ThemeSettings = {
   sectionSpacing: 64,
   containerPadding: 24,
   borderRadius: 8,
+  fullWidth: false,
   enableAnimations: true,
   animationDuration: 300,
   animationEasing: "ease-out",
   scrollReveal: true,
+  hoverEffect: "vertical-lift",
   hoverScale: 1.02,
   btnPaddingX: 20,
   btnPaddingY: 10,
@@ -262,6 +346,13 @@ export const DEFAULT_THEME: ThemeSettings = {
   btnSecondaryBg: "#374151",
   btnSecondaryText: "#f3f4f6",
   btnOutlineBorder: "#4b5563",
+  btnBorderWidth: 1,
+  btnBorderOpacity: 100,
+  btnBorderRadius: 8,
+  btnShadowOpacity: 0,
+  btnShadowX: 0,
+  btnShadowY: 2,
+  btnShadowBlur: 4,
   pillRadius: 999,
   pillPaddingX: 12,
   pillPaddingY: 4,
@@ -270,50 +361,117 @@ export const DEFAULT_THEME: ThemeSettings = {
   pillText: "#d1d5db",
   pillActiveBg: "#3b82f6",
   pillActiveText: "#ffffff",
+  pillBorderColor: "#1f2937",
+  pillBorderWidth: 0,
+  pillBorderOpacity: 100,
+  pillShadowOpacity: 0,
+  pillShadowX: 0,
+  pillShadowY: 0,
+  pillShadowBlur: 0,
   inputHeight: 40,
   inputRadius: 8,
   inputBorderColor: "#374151",
+  inputBorderWidth: 1,
+  inputBorderOpacity: 100,
   inputBg: "#111827",
   inputText: "#f3f4f6",
   inputFocusBorder: "#3b82f6",
   inputPlaceholder: "#6b7280",
   inputFontSize: 14,
+  inputShadowOpacity: 0,
+  inputShadowX: 0,
+  inputShadowY: 0,
+  inputShadowBlur: 0,
+  cardStyle: "standard",
   cardImageRatio: "3:4",
+  cardImagePadding: 0,
+  cardTextAlignment: "left",
+  cardColorScheme: "scheme-1",
   cardRadius: 12,
   cardShadow: "small",
   cardBg: "#111827",
   cardHoverShadow: "medium",
   showBadge: true,
   showQuickAdd: true,
+  cardBorderWidth: 0,
+  cardBorderOpacity: 100,
+  cardBorderRadius: 12,
+  cardShadowOpacity: 0,
+  cardShadowX: 0,
+  cardShadowY: 2,
+  cardShadowBlur: 4,
   collectionRatio: "16:9",
   collectionRadius: 12,
+  collectionStyle: "standard",
+  collectionImagePadding: 0,
   collectionOverlay: true,
   collectionOverlayColor: "#00000066",
   collectionTextAlign: "center",
+  collectionColorScheme: "scheme-1",
+  collectionBorderWidth: 0,
+  collectionBorderOpacity: 100,
+  collectionShadowOpacity: 0,
+  collectionShadowX: 0,
+  collectionShadowY: 2,
+  collectionShadowBlur: 4,
+  blogStyle: "standard",
   blogRatio: "16:9",
+  blogImagePadding: 0,
+  blogTextAlignment: "left",
+  blogColorScheme: "scheme-1",
   blogRadius: 12,
   blogShowDate: true,
   blogShowExcerpt: true,
   blogExcerptLines: 2,
+  blogBorderWidth: 0,
+  blogBorderOpacity: 100,
+  blogBorderRadius: 12,
+  blogShadowOpacity: 0,
+  blogShadowX: 0,
+  blogShadowY: 2,
+  blogShadowBlur: 4,
   containerBg: "#111827",
   containerBorderColor: "#1f2937",
   containerRadius: 12,
   containerPaddingInner: 24,
   containerShadow: "none",
+  containerBorderWidth: 1,
+  containerBorderOpacity: 100,
+  containerBorderRadius: 12,
+  containerShadowOpacity: 0,
+  containerShadowX: 0,
+  containerShadowY: 2,
+  containerShadowBlur: 4,
   imageRadius: 8,
   imageBorderColor: "#1f2937",
+  imageBorderWidth: 0,
+  imageBorderOpacity: 100,
+  imageShadowOpacity: 0,
+  imageShadowX: 0,
+  imageShadowY: 0,
+  imageShadowBlur: 0,
   imagePlaceholderBg: "#1f2937",
   videoRatio: "16:9",
   dropdownBg: "#1f2937",
   dropdownBorder: "#374151",
+  dropdownBorderWidth: 1,
+  dropdownBorderOpacity: 100,
   dropdownRadius: 8,
   dropdownShadow: "medium",
+  dropdownShadowOpacity: 20,
+  dropdownShadowX: 0,
+  dropdownShadowY: 8,
+  dropdownShadowBlur: 24,
   popupOverlayColor: "#000000aa",
   popupRadius: 16,
   drawerWidth: 400,
   drawerBg: "#111827",
   drawerOverlayColor: "#000000aa",
   drawerPosition: "right",
+  drawerBorderColor: "#1f2937",
+  drawerBorderWidth: 0,
+  drawerBorderOpacity: 100,
+  drawerRadius: 16,
   badgeFontSize: 11,
   badgeRadius: 4,
   badgePaddingX: 8,
@@ -377,6 +535,9 @@ export const normalizeThemeSettings = (
     ...DEFAULT_THEME,
     ...(input ?? {}),
   };
+
+  merged.fullWidth = typeof input?.fullWidth === "boolean" ? input.fullWidth : DEFAULT_THEME.fullWidth;
+  merged.hoverEffect = typeof input?.hoverEffect === "string" ? input.hoverEffect : DEFAULT_THEME.hoverEffect;
 
   const fallbackSchemes = DEFAULT_THEME.colorSchemes;
   const rawSchemes = Array.isArray(input?.colorSchemes) ? input?.colorSchemes : merged.colorSchemes;

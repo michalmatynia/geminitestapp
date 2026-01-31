@@ -455,6 +455,7 @@ export const handleHttp: NodeHandler = async ({
 export const handleDatabase: NodeHandler = async ({ 
   node,
   nodeInputs,
+  prevOutputs,
   executed,
   reportAiPathsError,
   toast,

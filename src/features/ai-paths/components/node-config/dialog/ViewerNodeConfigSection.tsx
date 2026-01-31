@@ -24,7 +24,7 @@ export function ViewerNodeConfigSection({
   runtimeState,
   updateSelectedNodeConfig,
   clearRuntimeForNode,
-}: ViewerNodeConfigSectionProps) {
+}: ViewerNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "viewer") return null;
 
   const viewerConfig = selectedNode.config?.viewer ?? {
@@ -32,12 +32,12 @@ export function ViewerNodeConfigSection({
     showImagesAsJson: false,
   };
   const showImagesAsJson = viewerConfig.showImagesAsJson ?? false;
-  const connections = edges.filter((edge) => edge.to === selectedNode.id);
-  const isConnectedToTrigger = (() => {
-    const triggerIds = nodes.filter((node) => node.type === "trigger").map((node) => node.id);
+  const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
+  const isConnectedToTrigger = ((): boolean => {
+    const triggerIds = nodes.filter((node: AiNode): boolean => node.type === "trigger").map((node: AiNode): string => node.id);
     if (triggerIds.length === 0) return false;
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge) => {
+    edges.forEach((edge: Edge): void => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -48,13 +48,13 @@ export function ViewerNodeConfigSection({
     });
     const visited = new Set<string>();
     const queue = [...triggerIds];
-    triggerIds.forEach((id) => visited.add(id));
+    triggerIds.forEach((id: string): boolean => visited.add(id));
     while (queue.length) {
       const current = queue.shift();
       if (!current) continue;
       const neighbors = adjacency.get(current);
       if (!neighbors) continue;
-      neighbors.forEach((neighbor) => {
+      neighbors.forEach((neighbor: string): void => {
         if (visited.has(neighbor)) return;
         visited.add(neighbor);
         queue.push(neighbor);
@@ -64,16 +64,16 @@ export function ViewerNodeConfigSection({
   })();
   const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
   const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
-    (acc, input) => {
+    (acc: Record<string, unknown>, input: string): Record<string, unknown> => {
       const directValue = runtimeInputs[input];
       if (directValue !== undefined) {
         acc[input] = directValue;
         return acc;
       }
       const matchingEdges = connections.filter(
-        (edge) => edge.toPort === input || !edge.toPort
+        (edge: Edge): boolean => edge.toPort === input || !edge.toPort
       );
-      const merged = matchingEdges.reduce<unknown>((current, edge) => {
+      const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
         const fromOutput = runtimeState.outputs[edge.from];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
@@ -91,7 +91,7 @@ export function ViewerNodeConfigSection({
     },
     {}
   );
-  const outputValues = {
+  const outputValues: Record<string, string> = {
     ...createViewerOutputs(selectedNode.inputs),
     ...viewerConfig.outputs,
   };
@@ -105,7 +105,7 @@ export function ViewerNodeConfigSection({
         <Button
           type="button"
           className="rounded-md border text-xs text-gray-200 hover:bg-muted/60"
-          onClick={() => {
+          onClick={(): void => {
             updateSelectedNodeConfig({
               viewer: {
                 outputs: createViewerOutputs(selectedNode.inputs),
@@ -120,7 +120,7 @@ export function ViewerNodeConfigSection({
         <Button
           type="button"
           className="rounded-md border text-xs text-gray-200 hover:bg-muted/60"
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               viewer: {
                 ...viewerConfig,
@@ -138,11 +138,11 @@ export function ViewerNodeConfigSection({
           Connect it to the same path as a Trigger (directly or through other nodes).
         </div>
       )}
-      {selectedNode.inputs.map((input) => {
+      {selectedNode.inputs.map((input: string): React.JSX.Element => {
         const connectedSources = connections
-          .filter((edge) => !edge.toPort || edge.toPort === input)
-          .map((edge) => {
-            const fromNode = nodes.find((node) => node.id === edge.from);
+          .filter((edge: Edge): boolean => !edge.toPort || edge.toPort === input)
+          .map((edge: Edge): string | null => {
+            const fromNode = nodes.find((node: AiNode): boolean => node.id === edge.from);
             if (!fromNode) return null;
             const portLabel = edge.fromPort ? `:${edge.fromPort}` : "";
             return `${fromNode.title}${portLabel}`;
@@ -178,7 +178,7 @@ export function ViewerNodeConfigSection({
                       {imageUrls.length === 1 ? "" : "s"}
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
-                      {imageUrls.map((url, index) => (
+                      {imageUrls.map((url: string, index: number): React.JSX.Element => (
                         <div
                           key={`${url}-${index}`}
                           className="overflow-hidden rounded border border-emerald-500/30 bg-black/30"
@@ -204,7 +204,7 @@ export function ViewerNodeConfigSection({
             <Textarea
               className="min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={outputValues[input] ?? ""}
-              onChange={(event) =>
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 updateSelectedNodeConfig({
                   viewer: {
                     ...viewerConfig,

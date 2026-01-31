@@ -3,10 +3,35 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
 import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
 import type { Page, CmsTheme } from "@/features/cms/types";
 import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
+import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
+import { auth } from "@/features/auth/auth";
+import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
+
+const isAdminSession = (session: Awaited<ReturnType<typeof auth>>): boolean => {
+  if (!session?.user) return false;
+  if (session.user.isElevated) return true;
+  const role = session.user.role ?? "";
+  return ["admin", "super_admin", "superuser"].includes(role);
+};
+
+const canPreviewDrafts = async (
+  session: Awaited<ReturnType<typeof auth>>
+): Promise<boolean> => {
+  if (!isAdminSession(session)) return false;
+  const userId = session?.user?.id;
+  if (!userId) return false;
+  try {
+    const prefs = await getUserPreferences(userId);
+    return prefs.cmsPreviewEnabled === true;
+  } catch {
+    return false;
+  }
+};
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +42,8 @@ export const dynamic = "force-dynamic";
 async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
   try {
     const slugValue = slugSegments.join("/");
+    const session = await auth();
+    const allowDrafts = await canPreviewDrafts(session);
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
@@ -25,7 +52,7 @@ async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
     const page = await cmsRepository.getPageBySlug(slugValue);
     if (!page) return null;
     // Only render published pages on the frontend
-    if (page.status !== "published") return null;
+    if (!allowDrafts && page.status !== "published") return null;
     return page;
   } catch {
     return null;
@@ -90,7 +117,18 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
-  const content = <CmsPageRenderer components={page.components} />;
+  const themeSettings = await getCmsThemeSettings();
+  const colorSchemes = buildColorSchemeMap(themeSettings);
+  const layout = { fullWidth: themeSettings.fullWidth };
+  const content = (
+    <CmsPageRenderer
+      components={page.components}
+      colorSchemes={colorSchemes}
+      layout={layout}
+      hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
+      hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">

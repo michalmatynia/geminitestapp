@@ -1,16 +1,11 @@
 import type React from "react";
+import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
+
+export type { ColorSchemeColors };
 
 // ---------------------------------------------------------------------------
 // Color scheme mapping
 // ---------------------------------------------------------------------------
-
-export type ColorSchemeColors = {
-  background: string;
-  surface: string;
-  text: string;
-  accent: string;
-  border: string;
-};
 
 const COLOR_SCHEME_STYLES: Record<string, React.CSSProperties> = {
   "scheme-1": {},
@@ -49,6 +44,32 @@ export function getColorSchemeStyle(
 }
 
 // ---------------------------------------------------------------------------
+// Hover effect vars
+// ---------------------------------------------------------------------------
+
+export function getHoverEffectVars(
+  effect?: string,
+  scale?: number
+): React.CSSProperties {
+  if (!effect && !scale) return {};
+  const normalized = effect === "lift-3d" ? "lift-3d" : "vertical-lift";
+  const safeScale = typeof scale === "number" && scale > 0 ? scale : 1;
+  const transform = normalized === "lift-3d"
+    ? `translateY(-6px) rotateX(6deg) rotateY(-4deg) scale(${safeScale})`
+    : `translateY(-4px) scale(${safeScale})`;
+  const shadow = normalized === "lift-3d"
+    ? "0 18px 30px rgba(0, 0, 0, 0.35)"
+    : "0 12px 20px rgba(0, 0, 0, 0.25)";
+  const perspective = normalized === "lift-3d" ? "900px" : "none";
+
+  return {
+    ["--cms-hover-transform" as keyof React.CSSProperties]: transform,
+    ["--cms-hover-shadow" as keyof React.CSSProperties]: shadow,
+    ["--cms-hover-perspective" as keyof React.CSSProperties]: perspective,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Section / block inline styles from settings
 // ---------------------------------------------------------------------------
 
@@ -60,13 +81,21 @@ export function getSectionStyles(
 
   const pt = settings["paddingTop"];
   const pb = settings["paddingBottom"];
+  const pl = settings["paddingLeft"];
+  const pr = settings["paddingRight"];
   if (typeof pt === "number") styles.paddingTop = `${pt}px`;
   if (typeof pb === "number") styles.paddingBottom = `${pb}px`;
+  if (typeof pl === "number") styles.paddingLeft = `${pl}px`;
+  if (typeof pr === "number") styles.paddingRight = `${pr}px`;
 
   const mt = settings["marginTop"];
   const mb = settings["marginBottom"];
+  const ml = settings["marginLeft"];
+  const mr = settings["marginRight"];
   if (typeof mt === "number") styles.marginTop = `${mt}px`;
   if (typeof mb === "number") styles.marginBottom = `${mb}px`;
+  if (typeof ml === "number") styles.marginLeft = `${ml}px`;
+  if (typeof mr === "number") styles.marginRight = `${mr}px`;
 
   const colorSchemeStyles = getColorSchemeStyle(settings["colorScheme"], schemes);
   Object.assign(styles, colorSchemeStyles);
@@ -175,4 +204,21 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
     styles.backgroundColor = bgColor;
   }
   return styles;
+}
+
+// ---------------------------------------------------------------------------
+// Container helpers
+// ---------------------------------------------------------------------------
+
+export function getSectionContainerClass(options?: {
+  fullWidth?: boolean;
+  maxWidthClass?: string;
+  paddingClass?: string;
+}): string {
+  const padding = options?.paddingClass ?? "px-4 md:px-6";
+  if (options?.fullWidth) {
+    return `w-full ${padding}`;
+  }
+  const maxWidth = options?.maxWidthClass ? ` ${options.maxWidthClass}` : "";
+  return `container mx-auto${maxWidth} ${padding}`;
 }

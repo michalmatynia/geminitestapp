@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/shared/ui";
 
-import type { AiPathRunRecord, RuntimeHistoryEntry } from "@/features/ai-paths/lib";
+import type { AiPathRunRecord } from "@/features/ai-paths/lib";
 import { RunHistoryEntries } from "./RunHistoryEntries";
 import { buildHistoryNodeOptions } from "./run-history-utils";
 
@@ -53,15 +53,15 @@ export function RunHistoryPanel({
     if (runFilter === "all") return runs;
     if (runFilter === "active") {
       return runs.filter(
-        (run) => run.status === "queued" || run.status === "running"
+        (run: AiPathRunRecord): boolean => run.status === "queued" || run.status === "running"
       );
     }
     if (runFilter === "failed") {
       return runs.filter(
-        (run) => run.status === "failed" || run.status === "paused"
+        (run: AiPathRunRecord): boolean => run.status === "failed" || run.status === "paused"
       );
     }
-    return runs.filter((run) => run.status === "dead_lettered");
+    return runs.filter((run: AiPathRunRecord): boolean => run.status === "dead_lettered");
   }, [runFilter, runs]);
 
   return (
@@ -83,7 +83,7 @@ export function RunHistoryPanel({
           { id: "active", label: "Active" },
           { id: "failed", label: "Failed" },
           { id: "dead", label: "Dead-letter" },
-        ].map((filter) => (
+        ].map((filter: { id: string; label: string }): React.JSX.Element => (
           <Button
             key={filter.id}
             type="button"
@@ -92,7 +92,7 @@ export function RunHistoryPanel({
                 ? "border-emerald-500/50 text-emerald-200"
                 : "text-gray-300 hover:bg-muted/60"
             }`}
-            onClick={() => setRunFilter(filter.id as RunHistoryFilter)}
+            onClick={(): void => setRunFilter(filter.id as RunHistoryFilter)}
           >
             {filter.label}
           </Button>
@@ -102,7 +102,7 @@ export function RunHistoryPanel({
         <div className="text-[11px] text-gray-500">No runs yet.</div>
       ) : (
         <div className="space-y-2 text-xs text-gray-300">
-          {filteredRunList.slice(0, 6).map((run) => {
+          {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
             const statusClass =
               run.status === "completed"
                 ? "text-emerald-200"
@@ -124,7 +124,7 @@ export function RunHistoryPanel({
             const isScheduledRun = run.triggerEvent === "scheduled_run";
             const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
             const selectedHistoryNodeId = runHistoryOptions.some(
-              (option) => option.id === rawSelectedHistoryNodeId
+              (option: { id: string }) => option.id === rawSelectedHistoryNodeId
             )
               ? rawSelectedHistoryNodeId
               : runHistoryOptions[0]?.id ?? null;
@@ -167,20 +167,20 @@ export function RunHistoryPanel({
                     <Button
                       type="button"
                       className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                      onClick={() => onOpenRunDetail(run.id)}
+                      onClick={(): void => onOpenRunDetail(run.id)}
                     >
                       Details
                     </Button>
                     <Button
                       type="button"
                       className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-                      onClick={() => {
-                        setExpandedRunHistory((prev) => ({
+                      onClick={(): void => {
+                        setExpandedRunHistory((prev: Record<string, boolean>) => ({
                           ...prev,
                           [run.id]: !prev[run.id],
                         }));
                         if (!runHistorySelection[run.id] && runHistoryOptions[0]?.id) {
-                          setRunHistorySelection((prev) => ({
+                          setRunHistorySelection((prev: Record<string, string>) => ({
                             ...prev,
                             [run.id]: runHistoryOptions[0].id,
                           }));
@@ -193,7 +193,7 @@ export function RunHistoryPanel({
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
-                        onClick={() => onResumeRun(run.id, "resume")}
+                        onClick={(): void => onResumeRun(run.id, "resume")}
                       >
                         Resume
                       </Button>
@@ -201,7 +201,7 @@ export function RunHistoryPanel({
                     <Button
                       type="button"
                       className="rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10"
-                      onClick={() => onResumeRun(run.id, "replay")}
+                      onClick={(): void => onResumeRun(run.id, "replay")}
                     >
                       Replay
                     </Button>
@@ -209,7 +209,7 @@ export function RunHistoryPanel({
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
-                        onClick={() => onCancelRun(run.id)}
+                        onClick={(): void => onCancelRun(run.id)}
                       >
                         Cancel
                       </Button>
@@ -218,7 +218,7 @@ export function RunHistoryPanel({
                       <Button
                         type="button"
                         className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
-                        onClick={() => onRequeueDeadLetter(run.id)}
+                        onClick={(): void => onRequeueDeadLetter(run.id)}
                       >
                         Requeue
                       </Button>
@@ -238,8 +238,8 @@ export function RunHistoryPanel({
                         runHistoryOptions.length > 1 ? (
                           <Select
                             value={selectedHistoryNodeId ?? undefined}
-                            onValueChange={(value) =>
-                              setRunHistorySelection((prev) => ({
+                            onValueChange={(value: string): void =>
+                              setRunHistorySelection((prev: Record<string, string>) => ({
                                 ...prev,
                                 [run.id]: value,
                               }))
@@ -249,7 +249,7 @@ export function RunHistoryPanel({
                               <SelectValue placeholder="Select node" />
                             </SelectTrigger>
                             <SelectContent className="border-border bg-gray-900 text-white">
-                              {runHistoryOptions.map((option) => (
+                              {runHistoryOptions.map((option: { id: string; label: string }): React.JSX.Element => (
                                 <SelectItem key={option.id} value={option.id}>
                                   {option.label}
                                 </SelectItem>

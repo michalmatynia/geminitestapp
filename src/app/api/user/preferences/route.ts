@@ -30,6 +30,7 @@ const updatePreferencesSchema = z.object({
   cmsThemeOpenSections: z.array(z.string()).optional().nullable(),
   cmsThemeLogoWidth: z.number().int().min(50).max(300).optional().nullable(),
   cmsThemeLogoUrl: z.string().optional().nullable(),
+  cmsPreviewEnabled: z.boolean().optional().nullable(),
 });
 
 /**
@@ -58,6 +59,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         cmsThemeOpenSections: [],
         cmsThemeLogoWidth: null,
         cmsThemeLogoUrl: null,
+        cmsPreviewEnabled: false,
       });
     }
     const preferences = await getUserPreferences(userId);
@@ -116,6 +118,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
       ...(parsed.cmsThemeOpenSections !== undefined && { cmsThemeOpenSections: parsed.cmsThemeOpenSections ?? [] }),
       ...(parsed.cmsThemeLogoWidth !== undefined && { cmsThemeLogoWidth: parsed.cmsThemeLogoWidth }),
       ...(parsed.cmsThemeLogoUrl !== undefined && { cmsThemeLogoUrl: parsed.cmsThemeLogoUrl }),
+      ...(parsed.cmsPreviewEnabled !== undefined && { cmsPreviewEnabled: parsed.cmsPreviewEnabled }),
     };
 
     if (!isDatabaseConfigured) {

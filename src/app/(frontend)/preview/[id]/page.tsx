@@ -2,9 +2,11 @@ import { JSX } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
 import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
 import type { CmsTheme } from "@/features/cms/types";
+import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,18 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
-  const content = <CmsPageRenderer components={page.components} />;
+  const themeSettings = await getCmsThemeSettings();
+  const colorSchemes = buildColorSchemeMap(themeSettings);
+  const layout = { fullWidth: themeSettings.fullWidth };
+  const content = (
+    <CmsPageRenderer
+      components={page.components}
+      colorSchemes={colorSchemes}
+      layout={layout}
+      hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
+      hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">

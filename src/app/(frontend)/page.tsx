@@ -8,9 +8,34 @@ import { productService } from "@/features/products/server";
 import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
 import type { Slug } from "@/features/cms/types";
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
+import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
+import { auth } from "@/features/auth/auth";
+import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
+
+const isAdminSession = (session: Awaited<ReturnType<typeof auth>>): boolean => {
+  if (!session?.user) return false;
+  if (session.user.isElevated) return true;
+  const role = session.user.role ?? "";
+  return ["admin", "super_admin", "superuser"].includes(role);
+};
+
+const canPreviewDrafts = async (
+  session: Awaited<ReturnType<typeof auth>>
+): Promise<boolean> => {
+  if (!isAdminSession(session)) return false;
+  const userId = session?.user?.id;
+  if (!userId) return false;
+  try {
+    const prefs = await getUserPreferences(userId);
+    return prefs.cmsPreviewEnabled === true;
+  } catch {
+    return false;
+  }
+};
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +111,13 @@ export default async function Home(): Promise<JSX.Element> {
   if (defaultSlug) {
     // Try to load the published CMS page linked to this slug
     const cmsPage = await cmsRepository.getPageBySlug(defaultSlug.slug);
-    const hasCmsContent = cmsPage && cmsPage.status === "published" && cmsPage.components.length > 0;
+    const session = await auth();
+    const allowDrafts = await canPreviewDrafts(session);
+    const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
+
+    const themeSettings = hasCmsContent ? await getCmsThemeSettings() : null;
+    const colorSchemes = themeSettings ? buildColorSchemeMap(themeSettings) : undefined;
+    const layout = themeSettings ? { fullWidth: themeSettings.fullWidth } : undefined;
 
     return (
       <div className="flex min-h-screen flex-col">
@@ -111,7 +142,13 @@ export default async function Home(): Promise<JSX.Element> {
         </header>
         <main className="flex-1">
           {hasCmsContent ? (
-            <CmsPageRenderer components={cmsPage.components} />
+            <CmsPageRenderer
+              components={cmsPage.components}
+              colorSchemes={colorSchemes}
+              layout={layout}
+              hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}
+              hoverScale={themeSettings?.enableAnimations ? themeSettings.hoverScale : undefined}
+            />
           ) : (
             <section className="w-full py-12">
               <div className="container px-4 md:px-6">

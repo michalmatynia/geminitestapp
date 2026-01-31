@@ -1,12 +1,14 @@
 import React from "react";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendContactFormSectionProps {
   settings: Record<string, unknown>;
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendContactFormSection({ settings }: FrontendContactFormSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendContactFormSection({ settings, colorSchemes, layout }: FrontendContactFormSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const fields = ((settings["fields"] as string) || "name,email,message")
     .split(",")
     .map((f: string) => f.trim())
@@ -15,7 +17,7 @@ export function FrontendContactFormSection({ settings }: FrontendContactFormSect
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto max-w-xl px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-xl" })}>
         <form onSubmit={(e: React.FormEvent) => e.preventDefault()} className="space-y-4">
           {fields.map((field: string) => {
             const isTextarea = field.toLowerCase() === "message";
@@ -46,7 +48,7 @@ export function FrontendContactFormSection({ settings }: FrontendContactFormSect
           })}
           <button
             type="submit"
-            className="w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200"
+            className="cms-hover-button w-full rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-200"
           >
             {submitText}
           </button>

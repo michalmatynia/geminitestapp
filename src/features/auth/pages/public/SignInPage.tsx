@@ -13,7 +13,7 @@ import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 
 
-function SignInPageLoader() {
+function SignInPageLoader(): React.JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -33,7 +33,7 @@ function SignInPageLoader() {
   return <SignInForm allowSocialLogin={allowSocialLogin} />;
 }
 
-function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
+function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.JSX.Element {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const errorMessage =
@@ -52,7 +52,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const verifyCredentialsMutation = useVerifyCredentials();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
@@ -140,7 +140,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
             {errorMessage}
           </div>
         ) : null}
-        <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
+        <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">
             <Label className="text-sm text-gray-300" htmlFor="email">
               Email
@@ -150,7 +150,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
               type="email"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
               required
             />
           </div>
@@ -163,7 +163,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
               type="password"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
               required
             />
           </div>
@@ -178,7 +178,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
                   type="text"
                   className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                   value={otp}
-                  onChange={(event) => setOtp(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setOtp(event.target.value)}
                   placeholder="123456"
                 />
               </div>
@@ -191,7 +191,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
                   type="text"
                   className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                   value={recoveryCode}
-                  onChange={(event) => setRecoveryCode(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRecoveryCode(event.target.value)}
                   placeholder="ABCD-1234-EFGH"
                 />
               </div>
@@ -239,7 +239,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
   );
 }
 
-export default function SignInPage() {
+export default function SignInPage(): React.JSX.Element {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <SignInPageLoader />

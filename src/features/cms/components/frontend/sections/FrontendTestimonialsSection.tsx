@@ -1,15 +1,17 @@
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendTestimonialsSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendTestimonialsSection({ settings, blocks }: FrontendTestimonialsSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendTestimonialsSection({ settings, blocks, colorSchemes, layout }: FrontendTestimonialsSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const columns = (settings["columns"] as number) || 3;
 
   if (blocks.length === 0) {
@@ -24,7 +26,7 @@ export function FrontendTestimonialsSection({ settings, blocks }: FrontendTestim
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div
           className="grid gap-6"
           style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
@@ -32,7 +34,7 @@ export function FrontendTestimonialsSection({ settings, blocks }: FrontendTestim
           {blocks.map((block: BlockInstance) => (
             <div
               key={block.id}
-              className="rounded-xl border border-gray-700/50 bg-gray-800/30 p-6"
+              className="cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6"
             >
               <svg
                 className="mb-4 size-6 text-gray-500"

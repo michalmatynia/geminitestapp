@@ -33,6 +33,7 @@ export type UserPreferencesData = {
   cmsThemeOpenSections?: string[] | null;
   cmsThemeLogoWidth?: number | null;
   cmsThemeLogoUrl?: string | null;
+  cmsPreviewEnabled?: boolean | null;
 };
 
 export type UserPreferences = {
@@ -53,6 +54,7 @@ export type UserPreferences = {
   cmsThemeOpenSections: string[];
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
+  cmsPreviewEnabled: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -75,6 +77,7 @@ type UserPreferencesDocument = {
   cmsThemeOpenSections: string[];
   cmsThemeLogoWidth: number | null;
   cmsThemeLogoUrl: string | null;
+  cmsPreviewEnabled: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -99,6 +102,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
   cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null,
   cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
+  cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -120,6 +124,7 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
   cmsThemeOpenSections: [],
   cmsThemeLogoWidth: null,
   cmsThemeLogoUrl: null,
+  cmsPreviewEnabled: false,
 });
 
 /**

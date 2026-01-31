@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendSlideshowSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendSlideshowSection({ settings, blocks }: FrontendSlideshowSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendSlideshowSection({ settings, blocks, colorSchemes, layout }: FrontendSlideshowSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const transition = (settings["transition"] as string) || "fade";
   const autoplaySpeed = (settings["autoplaySpeed"] as number) || 5000;
   const showDots = (settings["showDots"] as string) !== "no";
@@ -42,7 +44,7 @@ export function FrontendSlideshowSection({ settings, blocks }: FrontendSlideshow
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div className="relative overflow-hidden rounded-lg min-h-[300px]">
           {blocks.map((block: BlockInstance, idx: number) => (
             <div

@@ -108,7 +108,43 @@ describe("prismaAsset3DRepository", () => {
     expect(updated?.category).toBe("new-cat");
   });
 
-  it("should delete an asset3d", async () => {
+  it("should update isPublic field", async () => {
+    const created = await prisma.asset3D.create({
+      data: {
+        filename: "test.glb",
+        filepath: "/uploads/test.glb",
+        mimetype: "model/gltf-binary",
+        size: 1024,
+        isPublic: false,
+      },
+    });
+
+    const updated = await prismaAsset3DRepository.updateAsset3D(created.id, {
+      isPublic: true,
+    });
+
+    expect(updated?.isPublic).toBe(true);
+  });
+
+  it("should handle tags update correctly", async () => {
+    const created = await prisma.asset3D.create({
+      data: {
+        filename: "test.glb",
+        filepath: "/uploads/test.glb",
+        mimetype: "model/gltf-binary",
+        size: 1024,
+        tags: ["old-tag"],
+      },
+    });
+
+    const updated = await prismaAsset3DRepository.updateAsset3D(created.id, {
+      tags: ["new-tag-1", "new-tag-2"],
+    });
+
+    expect(updated?.tags).toEqual(["new-tag-1", "new-tag-2"]);
+  });
+
+  it("should list assets3d with filters", async () => {
     const created = await prisma.asset3D.create({
       data: {
         filename: "test.glb",

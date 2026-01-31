@@ -2,16 +2,18 @@ import React from "react";
 import Image from "next/image";
 import { Image as ImageIcon } from "lucide-react";
 import type { BlockInstance } from "../../../types/page-builder";
-import { getSectionStyles, getVerticalAlign } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, getVerticalAlign, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 
 interface FrontendImageWithTextSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendImageWithTextSection({ settings, blocks }: FrontendImageWithTextSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendImageWithTextSection({ settings, blocks, colorSchemes, layout }: FrontendImageWithTextSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings["image"] as string | undefined;
   const placement = (settings["desktopImagePlacement"] as string) || "image-first";
   const imageFirst = placement !== "image-second";
@@ -26,7 +28,7 @@ export function FrontendImageWithTextSection({ settings, blocks }: FrontendImage
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"} ${verticalClass}`}>
           {/* Image */}
           <div className={`relative w-full md:w-1/2 ${imgHeightClass}`}>

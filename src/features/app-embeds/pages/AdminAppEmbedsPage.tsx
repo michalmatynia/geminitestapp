@@ -38,7 +38,7 @@ function AdminAppEmbedsContent({
   const options = useMemo(() => APP_EMBED_OPTIONS, []);
 
   const toggleOption = (id: AppEmbedId, checked: boolean): void => {
-    setEnabled((prev) => {
+    setEnabled((prev: Set<AppEmbedId>) => {
       const next = new Set(prev);
       if (checked) {
         next.add(id);
@@ -72,7 +72,7 @@ function AdminAppEmbedsContent({
 
       <SectionPanel className="p-6">
         <div className="space-y-4">
-          {options.map((option) => {
+          {options.map((option: typeof APP_EMBED_OPTIONS[number]) => {
             const isEnabled = enabled.has(option.id);
             return (
               <div
@@ -88,7 +88,7 @@ function AdminAppEmbedsContent({
                   <label className="flex items-center gap-2 text-xs text-gray-300">
                     <Checkbox
                       checked={isEnabled}
-                      onCheckedChange={(checked) => toggleOption(option.id, checked === true)}
+                      onCheckedChange={(checked: boolean | "indeterminate") => toggleOption(option.id, checked === true)}
                     />
                     Enable
                   </label>

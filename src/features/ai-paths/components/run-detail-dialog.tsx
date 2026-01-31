@@ -145,7 +145,7 @@ export function RunDetailDialog({
                   />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                  {Object.entries(runNodeSummary.counts).map(([status, count]) => (
+                  {Object.entries(runNodeSummary.counts).map(([status, count]: [string, number]): React.JSX.Element => (
                     <span key={status}>
                       {status}: {count}
                     </span>
@@ -172,7 +172,7 @@ export function RunDetailDialog({
                       <SelectValue placeholder="Select node" />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-gray-900 text-white">
-                      {historyOptions.map((option) => (
+                      {historyOptions.map((option: { id: string; label: string }): React.JSX.Element => (
                         <SelectItem key={option.id} value={option.id}>
                           {option.label}
                         </SelectItem>

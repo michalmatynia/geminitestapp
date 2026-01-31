@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
+  Checkbox,
   Select,
   SelectContent,
   SelectItem,
@@ -21,6 +23,8 @@ import { PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { PageSelectorBar } from "./PageSelectorBar";
 import { useThemeSettings } from "./ThemeSettingsContext";
+import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
+import { getHoverEffectVars } from "../frontend/theme-styles";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 1200;
@@ -30,6 +34,12 @@ const ZONE_LABELS: Record<PageZone, string> = {
   template: "Template",
   footer: "Footer",
 };
+
+type UserPreferencesResponse = {
+  cmsPreviewEnabled?: boolean | null;
+};
+
+const userPreferencesQueryKey = ["user-preferences"] as const;
 
 export function PagePreviewPanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
@@ -46,20 +56,49 @@ export function PagePreviewPanel(): React.ReactNode {
   const showEditButtonRef = useRef(false);
   const lastPointerMoveRef = useRef(0);
   const [selectedPreviewSlug, setSelectedPreviewSlug] = useState<string | null>(null);
+  const [previewDraftsEnabled, setPreviewDraftsEnabled] = useState(false);
+  const previewDraftsHydratedRef = useRef(false);
+  const queryClient = useQueryClient();
+  const preferencesQuery = useQuery({
+    queryKey: userPreferencesQueryKey,
+    queryFn: async (): Promise<UserPreferencesResponse> => {
+      const res = await fetch("/api/user/preferences");
+      if (!res.ok) {
+        throw new Error("Failed to load user preferences");
+      }
+      return (await res.json()) as UserPreferencesResponse;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (payload: UserPreferencesResponse): Promise<void> => {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update user preferences");
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
+    },
+    onError: (error: Error) => {
+      console.warn("[CMS] Failed to persist preview toggle.", error);
+    },
+  });
   const domainSlugSet = useMemo(
     () => ((slugsQuery.data ?? []).length ? new Set((slugsQuery.data ?? []).map((slug) => slug.slug)) : null),
     [slugsQuery.data]
   );
-  const colorSchemes = useMemo(() => {
-    if (!theme.colorSchemes.length) return undefined;
-    return theme.colorSchemes.reduce<Record<string, { background: string; surface: string; text: string; accent: string; border: string }>>(
-      (acc, scheme) => {
-        acc[scheme.id] = scheme.colors;
-        return acc;
-      },
-      {}
-    );
-  }, [theme.colorSchemes]);
+  const colorSchemes = useMemo(() => (
+    theme.colorSchemes.length ? buildColorSchemeMap(theme) : undefined
+  ), [theme]);
+  const hoverVars = useMemo(
+    () => getHoverEffectVars(theme.enableAnimations ? theme.hoverEffect : undefined, theme.enableAnimations ? theme.hoverScale : undefined),
+    [theme.enableAnimations, theme.hoverEffect, theme.hoverScale]
+  );
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
@@ -107,6 +146,19 @@ export function PagePreviewPanel(): React.ReactNode {
     return `${protocol}//${resolvedHost}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
 
+  const previewFallbackUrl = useMemo(() => {
+    if (!state.currentPage) return null;
+    if (typeof window === "undefined") return `/preview/${state.currentPage.id}`;
+    return `${window.location.origin}/preview/${state.currentPage.id}`;
+  }, [state.currentPage]);
+
+  useEffect(() => {
+    if (!preferencesQuery.isFetched) return;
+    if (previewDraftsHydratedRef.current) return;
+    setPreviewDraftsEnabled(Boolean(preferencesQuery.data?.cmsPreviewEnabled));
+    previewDraftsHydratedRef.current = true;
+  }, [preferencesQuery.data?.cmsPreviewEnabled, preferencesQuery.isFetched]);
+
   const previewTargetLabel = useMemo(() => {
     if (!selectedPreviewSlug) return "";
     const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
@@ -149,22 +201,34 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const handlePreview = useCallback(async () => {
     if (!state.currentPage) return;
+    const previewWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!previewWindow) {
+      toast("Popup blocked. Allow popups to open the preview.", { variant: "error" });
+      return;
+    }
     try {
       await handleSave();
       if (slugsQuery.isLoading) {
         toast("Loading zone slugs. Try again in a moment.", { variant: "error" });
+        previewWindow.close();
         return;
       }
-      if (!previewUrl) {
+      const isPublished = state.currentPage.status === "published";
+      const shouldUseSlug = Boolean(previewUrl) && (isPublished || previewDraftsEnabled);
+      const targetUrl = shouldUseSlug ? previewUrl : previewFallbackUrl;
+      if (!targetUrl) {
         toast("This page has no slug in the current zone.", { variant: "error" });
+        previewWindow.close();
         return;
       }
-      window.open(previewUrl, "_blank", "noopener,noreferrer");
+      previewWindow.location.href = targetUrl;
     } catch (error) {
       console.error("Failed to save before preview:", error);
       toast("Save before preview failed. Try again.", { variant: "error" });
+      previewWindow.close();
     }
-  }, [handleSave, state.currentPage, toast, previewUrl, slugsQuery.isLoading]);
+  }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled]);
+
 
   const handleOpenMedia = useCallback((target: MediaReplaceTarget) => {
     setMediaTarget(target);
@@ -304,7 +368,12 @@ export function PagePreviewPanel(): React.ReactNode {
   );
 
   const hasSections = state.sections.length > 0;
-  const previewWidthClass = state.previewMode === "mobile" ? "max-w-[420px]" : "max-w-3xl";
+  const previewWidthClass =
+    state.previewMode === "mobile"
+      ? "max-w-[420px]"
+      : theme.fullWidth
+        ? "max-w-none w-full"
+        : "max-w-3xl";
   const previewFrameClass =
     state.previewMode === "mobile"
       ? "rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
@@ -364,6 +433,17 @@ export function PagePreviewPanel(): React.ReactNode {
                   Cross-zone: {outOfZoneSlugs.map((slug) => `/${slug}`).join(", ")}
                 </div>
               )}
+              <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
+                <Checkbox
+                  checked={previewDraftsEnabled}
+                  onCheckedChange={(value) => {
+                    const next = value === true;
+                    setPreviewDraftsEnabled(next);
+                    updatePreferencesMutation.mutate({ cmsPreviewEnabled: next });
+                  }}
+                />
+                Draft preview
+              </label>
               <Button
                 onClick={handlePreview}
                 size="sm"
@@ -402,16 +482,18 @@ export function PagePreviewPanel(): React.ReactNode {
               </Button>
             </>
           )}
-          <Button
-            onClick={handleToggleViewing}
-            size="sm"
-            variant="outline"
-            className="text-gray-300 hover:text-white"
-            disabled={!state.currentPage}
-          >
-            <Maximize2 className="mr-2 size-4" />
-            Show
-          </Button>
+          {!isViewing && (
+            <Button
+              onClick={handleToggleViewing}
+              size="sm"
+              variant="outline"
+              className="text-gray-300 hover:text-white"
+              disabled={!state.currentPage}
+            >
+              <Maximize2 className="mr-2 size-4" />
+              Show
+            </Button>
+          )}
         </div>
       </div>
 
@@ -448,8 +530,11 @@ export function PagePreviewPanel(): React.ReactNode {
           </div>
         ) : (
           <>
-            <div className="p-6">
-              <div className={`mx-auto space-y-6 ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-4" : ""}`}>
+            <div className="p-3 md:p-4">
+              <div
+                className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""}`}
+                style={hoverVars}
+              >
                 {ZONE_ORDER.map((zone: PageZone) => {
                   const zoneSections = sectionsByZone[zone];
                   if (zoneSections.length === 0) return null;
@@ -457,7 +542,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   return (
                     <div key={zone}>
                       {/* Zone sections */}
-                      <div className="space-y-4">
+                      <div>
                         {zoneSections.map((section: SectionInstance) => (
                           <PreviewSection
                             key={section.id}

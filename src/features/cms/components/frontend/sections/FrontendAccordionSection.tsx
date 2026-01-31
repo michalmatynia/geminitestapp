@@ -3,15 +3,17 @@
 import React, { useState } from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendAccordionSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendAccordionSection({ settings, blocks }: FrontendAccordionSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendAccordionSection({ settings, blocks, colorSchemes, layout }: FrontendAccordionSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
 
   // Group blocks into pairs: Heading + Text = one accordion item
   const items: { heading: BlockInstance; text?: BlockInstance }[] = [];
@@ -36,7 +38,7 @@ export function FrontendAccordionSection({ settings, blocks }: FrontendAccordion
   if (items.length === 0) {
     return (
       <section style={sectionStyles}>
-        <div className="container mx-auto px-4 md:px-6">
+        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
           <p className="text-gray-500 text-center py-8">Add Heading and Text blocks to create accordion items</p>
         </div>
       </section>
@@ -45,7 +47,7 @@ export function FrontendAccordionSection({ settings, blocks }: FrontendAccordion
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto max-w-3xl px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
         <div className="divide-y divide-gray-700/50">
           {items.map((item: { heading: BlockInstance; text?: BlockInstance }, index: number) => (
             <AccordionItem key={item.heading.id} item={item} defaultOpen={index === 0} />

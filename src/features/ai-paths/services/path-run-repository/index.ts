@@ -4,7 +4,7 @@ import { mongoPathRunRepository } from "./mongo-path-run-repository";
 import { prismaPathRunRepository } from "./prisma-path-run-repository";
 import type { AiPathRunRepository } from "@/features/ai-paths/types/path-run-repository";
 
-export const getPathRunRepository = async (): Promise<AiPathRunRepository> => {
+export const getPathRunRepository = (): AiPathRunRepository => {
   if (process.env.DATABASE_URL) {
     return prismaPathRunRepository;
   }

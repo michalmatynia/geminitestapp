@@ -47,7 +47,7 @@ export function SimulationDialog({
             Set an Entity ID and simulate the connected trigger action.
           </DialogDescription>
         </DialogHeader>
-        {simulationNode ? (() => {
+        {simulationNode ? ((): React.JSX.Element => {
           const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
           const simulationEntityValue =
             simulationConfig.entityId?.trim()
@@ -60,7 +60,7 @@ export function SimulationDialog({
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                   value={simulationEntityValue}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     const value = event.target.value;
                     setNodes((prev: AiNode[]): AiNode[] =>
                       prev.map((node: AiNode): AiNode =>
@@ -88,7 +88,7 @@ export function SimulationDialog({
               <Button
                 className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
                 type="button"
-                onClick={() => onRunSimulation(simulationNode)}
+                onClick={(): void => onRunSimulation(simulationNode)}
               >
                 Simulate Trigger
               </Button>

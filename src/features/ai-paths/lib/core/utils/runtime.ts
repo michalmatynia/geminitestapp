@@ -71,7 +71,7 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
     });
     return normalized;
   }
-  return String(value);
+  return String(value as string | number | boolean | symbol | bigint);
 };
 
 export const stableStringify = (value: unknown): string => {

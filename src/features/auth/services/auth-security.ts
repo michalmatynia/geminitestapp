@@ -30,10 +30,10 @@ const ATTEMPTS_COLLECTION = "auth_security_attempts";
 const memoryAttempts = new Map<string, AttemptRecord>();
 let indexesReady: Promise<void> | null = null;
 
-const ensureAuthSecurityIndexes = async () => {
+const ensureAuthSecurityIndexes = async (): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   if (!indexesReady) {
-    indexesReady = (async () => {
+    indexesReady = (async (): Promise<void> => {
       const mongo = await getMongoDb();
       const collection = mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION);
       await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
@@ -86,7 +86,7 @@ export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
 export const validatePasswordStrength = (
   password: string,
   policy: AuthSecurityPolicy
-) => {
+): { ok: boolean; errors: string[] } => {
   const errors: string[] = [];
   if (password.length < policy.minPasswordLength) {
     errors.push(`Password must be at least ${policy.minPasswordLength} characters.`);
@@ -110,10 +110,10 @@ export const validatePasswordStrength = (
   return { ok: errors.length === 0, errors };
 };
 
-const normalizeKey = (value: string | null | undefined) =>
+const normalizeKey = (value: string | null | undefined): string =>
   value?.trim().toLowerCase() ?? "";
 
-const buildAttemptKey = (scope: "email" | "ip", value: string) =>
+const buildAttemptKey = (scope: "email" | "ip", value: string): string =>
   `${scope}:${value}`;
 
 const getMemoryAttempt = (key: string): AttemptRecord | null => {
@@ -122,11 +122,11 @@ const getMemoryAttempt = (key: string): AttemptRecord | null => {
   return record;
 };
 
-const setMemoryAttempt = (key: string, record: AttemptRecord) => {
+const setMemoryAttempt = (key: string, record: AttemptRecord): void => {
   memoryAttempts.set(key, record);
 };
 
-const clearMemoryAttempt = (key: string) => {
+const clearMemoryAttempt = (key: string): void => {
   memoryAttempts.delete(key);
 };
 
@@ -139,7 +139,7 @@ const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
   return doc ?? null;
 };
 
-const setMongoAttempt = async (record: AttemptRecord) => {
+const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   const mongo = await getMongoDb();
   await mongo
@@ -147,7 +147,7 @@ const setMongoAttempt = async (record: AttemptRecord) => {
     .updateOne({ _id: record._id }, { $set: record }, { upsert: true });
 };
 
-const clearMongoAttempt = async (key: string) => {
+const clearMongoAttempt = async (key: string): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   const mongo = await getMongoDb();
   await mongo
@@ -162,7 +162,7 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
   return getMemoryAttempt(key);
 };
 
-const saveAttempt = async (record: AttemptRecord) => {
+const saveAttempt = async (record: AttemptRecord): Promise<void> => {
   if (process.env.MONGODB_URI) {
     await setMongoAttempt(record);
     return;
@@ -170,7 +170,7 @@ const saveAttempt = async (record: AttemptRecord) => {
   setMemoryAttempt(record._id, record);
 };
 
-const clearAttempt = async (key: string) => {
+const clearAttempt = async (key: string): Promise<void> => {
   if (process.env.MONGODB_URI) {
     await clearMongoAttempt(key);
     return;
@@ -178,8 +178,8 @@ const clearAttempt = async (key: string) => {
   clearMemoryAttempt(key);
 };
 
-const isLocked = (record: AttemptRecord, now: Date) =>
-  record.lockedUntil && record.lockedUntil.getTime() > now.getTime();
+const isLocked = (record: AttemptRecord, now: Date): boolean =>
+  record.lockedUntil ? record.lockedUntil.getTime() > now.getTime() : false;
 
 const bumpAttempt = async (
   scope: "email" | "ip",
@@ -187,7 +187,7 @@ const bumpAttempt = async (
   maxAttempts: number,
   windowMinutes: number,
   lockDurationMinutes: number
-) => {
+): Promise<{ lockedUntil: Date | null; count: number }> => {
   await ensureAuthSecurityIndexes();
   const key = buildAttemptKey(scope, value);
   const now = new Date();
@@ -231,7 +231,7 @@ const bumpAttempt = async (
   return { lockedUntil, count: nextCount };
 };
 
-const resetAttempt = async (scope: "email" | "ip", value: string) => {
+const resetAttempt = async (scope: "email" | "ip", value: string): Promise<void> => {
   const key = buildAttemptKey(scope, value);
   await clearAttempt(key);
 };
@@ -239,7 +239,7 @@ const resetAttempt = async (scope: "email" | "ip", value: string) => {
 export const checkLoginAllowed = async (input: {
   email?: string | null;
   ip?: string | null;
-}) => {
+}): Promise<{ allowed: boolean; reason: string | null; lockedUntil: Date | null }> => {
   await ensureAuthSecurityIndexes();
   const emailKey = normalizeKey(input.email);
   const ipKey = normalizeKey(input.ip);
@@ -278,7 +278,7 @@ export const recordLoginFailure = async (input: {
   email?: string | null;
   ip?: string | null;
   request?: Request;
-}) => {
+}): Promise<void> => {
   await ensureAuthSecurityIndexes();
   const policy = await getAuthSecurityPolicy();
   const emailKey = normalizeKey(input.email);
@@ -336,7 +336,7 @@ export const recordLoginSuccess = async (input: {
   ip?: string | null;
   request?: Request;
   userId?: string | null;
-}) => {
+}): Promise<void> => {
   await ensureAuthSecurityIndexes();
   const emailKey = normalizeKey(input.email);
   const ipKey = normalizeKey(input.ip);
@@ -356,7 +356,7 @@ export const recordLoginSuccess = async (input: {
   });
 };
 
-export const extractClientIp = (request?: Request | null) => {
+export const extractClientIp = (request?: Request | null): string | null => {
   if (!request) return null;
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() ?? null;

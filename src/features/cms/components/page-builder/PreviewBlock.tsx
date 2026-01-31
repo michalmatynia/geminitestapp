@@ -37,6 +37,14 @@ function getColorSchemeBg(scheme: unknown): string {
   return "";
 }
 
+const getSpacingValue = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean => {
+  const mt = getSpacingValue(settings["marginTop"]);
+  const mb = getSpacingValue(settings["marginBottom"]);
+  return mt === 0 && mb === 0;
+};
+
 // ---------------------------------------------------------------------------
 // Top-level section preview
 // ---------------------------------------------------------------------------
@@ -65,6 +73,10 @@ export function PreviewSection({
   const isSectionSelected = selectedNodeId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = (section.settings["label"] as string | undefined) ?? section.type;
+  const showDivider = shouldShowSectionDivider(section.settings);
+  const divider = showDivider ? (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
+  ) : null;
 
   // Toggle: clicking an already-selected section deselects it
   const handleSelect = (): void => {
@@ -117,7 +129,7 @@ export function PreviewSection({
         onKeyDown={(e: React.KeyboardEvent): void => {
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
-        className={`relative w-full rounded-lg border border-dashed px-4 py-6 text-left transition cursor-pointer ${
+        className={`relative w-full border border-dashed px-4 py-6 text-left transition cursor-pointer ${
           isSectionSelected
             ? hiddenSelectedClass
             : "border-border/50 bg-transparent hover:border-border/70"
@@ -156,7 +168,7 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={announcementStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${
+        className={`relative w-full transition cursor-pointer ${
           isSectionSelected
             ? isInspecting
               ? "ring-2 ring-inset ring-blue-500/60"
@@ -165,24 +177,27 @@ export function PreviewSection({
         }`}
       >
         {renderSectionActions()}
-        <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
-          {section.blocks.length === 0 ? (
-            <p className="text-sm text-gray-400">Announcement bar</p>
-          ) : (
-            section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                isSelected={selectedNodeId === block.id}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                onOpenMedia={onOpenMedia}
-              />
-            ))
-          )}
+        {divider}
+        <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+          <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
+            {section.blocks.length === 0 ? (
+              <p className="text-sm text-gray-400">Announcement bar</p>
+            ) : (
+              section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  onOpenMedia={onOpenMedia}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
@@ -241,10 +256,13 @@ export function PreviewSection({
           ...sectionStyles,
           display: "grid",
           gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+          padding: 0,
+          margin: 0,
         }}
         className={`relative w-full min-h-[80px] border border-dashed border-border/50 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {gridColumns.length === 0 ? (
           <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
             No columns
@@ -318,9 +336,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer group ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer group ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {onOpenMedia && (
           <button
             type="button"
@@ -364,9 +383,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg text-left transition cursor-pointer group ${selectedRing}`}
+        className={`relative w-full text-left transition cursor-pointer group ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {onOpenMedia && (
           <button
             type="button"
@@ -418,9 +438,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {renderBlocks("Add blocks to rich text section")}
       </div>
     );
@@ -437,9 +458,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {section.blocks.length === 0 ? (
           <div className="space-y-1.5">
             {[1, 2, 3].map((n: number) => (
@@ -483,13 +505,14 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {section.blocks.length === 0 ? (
           <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, 3)}, 1fr)` }}>
             {Array.from({ length: Math.min(columns, 3) }).map((_val: unknown, idx: number) => (
-              <div key={idx} className="rounded border border-dashed border-border/40 p-3">
+              <div key={idx} className="cms-hover-card rounded border border-dashed border-border/40 p-3">
                 <Quote className="size-3 text-gray-600 mb-1" />
                 <div className="h-2 w-full rounded bg-gray-600/30 mb-1" />
                 <div className="h-2 w-2/3 rounded bg-gray-600/20" />
@@ -530,9 +553,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[100px]">
           <div className="flex flex-col items-center gap-2">
             <div className="flex size-10 items-center justify-center rounded-full bg-gray-600/50">
@@ -556,9 +580,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {section.blocks.length === 0 ? (
           <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[80px]">
             <div className="flex flex-col items-center gap-2">
@@ -605,9 +630,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         {section.blocks.length > 0 && (
           <div className="space-y-2 mb-3">
             {section.blocks.map((block: BlockInstance) => (
@@ -651,9 +677,10 @@ export function PreviewSection({
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
         style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
+        {divider}
         <div className="space-y-2">
           {fields.map((field: string) => (
             <div key={field} className="rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500 capitalize">
@@ -678,9 +705,10 @@ export function PreviewSection({
         if (e.key === "Enter" || e.key === " ") handleSelect();
       }}
       style={sectionStyles}
-      className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+      className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
     >
       {renderSectionActions()}
+      {divider}
       {renderBlocks("No blocks")}
     </div>
   );
@@ -797,7 +825,7 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
           e.stopPropagation();
           onSelect(block.id);
         }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+        className={`cms-hover-card w-full rounded border p-3 text-left transition overflow-hidden ${
           contained ? "max-w-full" : ""
         } ${
           isSelected
@@ -875,7 +903,7 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
           e.stopPropagation();
           onSelect(block.id);
         }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+        className={`cms-hover-button w-full rounded border p-3 text-left transition overflow-hidden ${
           contained ? "max-w-full" : ""
         } ${
           isSelected

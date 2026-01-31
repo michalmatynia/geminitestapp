@@ -17,6 +17,88 @@ import { useSettingsMap } from "@/shared/hooks/useSettings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
+const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
+const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
+
+interface FieldGroup {
+  kind: "single" | "padding" | "margin";
+  fields: SettingsField[];
+}
+
+/** Groups consecutive padding / margin number fields so they render compactly. */
+function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
+  const groups: FieldGroup[] = [];
+  let paddingBuf: SettingsField[] = [];
+  let marginBuf: SettingsField[] = [];
+
+  const flushPadding = () => {
+    if (paddingBuf.length) { groups.push({ kind: "padding", fields: paddingBuf }); paddingBuf = []; }
+  };
+  const flushMargin = () => {
+    if (marginBuf.length) { groups.push({ kind: "margin", fields: marginBuf }); marginBuf = []; }
+  };
+
+  for (const field of schema) {
+    if (PADDING_KEYS.has(field.key)) {
+      flushMargin();
+      paddingBuf.push(field);
+    } else if (MARGIN_KEYS.has(field.key)) {
+      flushPadding();
+      marginBuf.push(field);
+    } else {
+      flushPadding();
+      flushMargin();
+      groups.push({ kind: "single", fields: [field] });
+    }
+  }
+  flushPadding();
+  flushMargin();
+  return groups;
+}
+
+function renderFieldGroups(
+  groups: FieldGroup[],
+  settings: Record<string, unknown>,
+  onChange: (key: string, value: unknown) => void,
+  resolveField?: (field: SettingsField) => SettingsField,
+): React.ReactNode[] {
+  return groups.map((group) => {
+    if (group.kind === "single") {
+      const raw = group.fields[0]!;
+      const field = resolveField ? resolveField(raw) : raw;
+      return (
+        <SettingsFieldRenderer
+          key={field.key}
+          field={field}
+          value={settings[field.key]}
+          onChange={onChange}
+        />
+      );
+    }
+    const label = group.kind === "padding" ? "Padding" : "Margin";
+    return (
+      <div key={group.kind} className="space-y-1.5">
+        <Label className="text-xs text-gray-400">{label}</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {group.fields.map((field) => (
+            <div key={field.key} className="space-y-0.5">
+              <span className="text-[10px] text-gray-500 uppercase">
+                {field.key.replace(/^(padding|margin)/, "")}
+              </span>
+              <Input
+                type="number"
+                value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(field.key, Number(e.target.value))}
+                className="text-xs h-7 px-1.5"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  });
+}
+
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
     state,
@@ -413,14 +495,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   </Button>
                 </div>
 
-                {sectionDef.settingsSchema.map((field: SettingsField) => (
-                  <SettingsFieldRenderer
-                    key={field.key}
-                    field={field}
-                    value={selectedSection.settings[field.key]}
-                    onChange={handleSectionSettingChangeWithGridColumns}
-                  />
-                ))}
+                {renderFieldGroups(
+                  groupSettingsFields(sectionDef.settingsSchema),
+                  selectedSection.settings,
+                  handleSectionSettingChangeWithGridColumns,
+                )}
 
                 <div className="border-t border-border/30 pt-4">
                   <Button
@@ -445,14 +524,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   )}
                 </div>
 
-                {columnDef.settingsSchema.map((field: SettingsField) => (
-                  <SettingsFieldRenderer
-                    key={field.key}
-                    field={field}
-                    value={selectedColumn.settings[field.key]}
-                    onChange={handleColumnSettingChange}
-                  />
-                ))}
+                {renderFieldGroups(
+                  groupSettingsFields(columnDef.settingsSchema),
+                  selectedColumn.settings,
+                  handleColumnSettingChange,
+                )}
               </div>
             ) : selectedBlock && blockDef ? (
               <div className="space-y-4">
@@ -475,20 +551,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   )}
                 </div>
 
-                {blockDef.settingsSchema.map((field: SettingsField) => {
-                  const resolvedField =
+                {renderFieldGroups(
+                  groupSettingsFields(blockDef.settingsSchema),
+                  selectedBlock.settings,
+                  handleBlockSettingChange,
+                  (field) =>
                     selectedBlock.type === "AppEmbed" && field.key === "appId"
                       ? { ...field, options: appEmbedOptions }
-                      : field;
-                  return (
-                    <SettingsFieldRenderer
-                      key={resolvedField.key}
-                      field={resolvedField}
-                      value={selectedBlock.settings[resolvedField.key]}
-                      onChange={handleBlockSettingChange}
-                    />
-                  );
-                })}
+                      : field,
+                )}
 
                 <div className="border-t border-border/30 pt-4">
                   <Button

@@ -19,16 +19,16 @@ const CHALLENGE_TTL_MINUTES = 5;
 const memoryChallenges = new Map<string, ChallengeRecord>();
 let challengeIndexesReady: Promise<void> | null = null;
 
-const nowPlusMinutes = (minutes: number) =>
+const nowPlusMinutes = (minutes: number): Date =>
   new Date(Date.now() + minutes * 60 * 1000);
 
-const getMongoChallenge = async (id: string) => {
+const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
   return mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).findOne({ _id: id });
 };
 
-const setMongoChallenge = async (record: ChallengeRecord) => {
+const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   const mongo = await getMongoDb();
   await mongo
@@ -36,27 +36,27 @@ const setMongoChallenge = async (record: ChallengeRecord) => {
     .updateOne({ _id: record._id }, { $set: record }, { upsert: true });
 };
 
-const deleteMongoChallenge = async (id: string) => {
+const deleteMongoChallenge = async (id: string): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   const mongo = await getMongoDb();
   await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).deleteOne({ _id: id });
 };
 
-const getMemoryChallenge = (id: string) => memoryChallenges.get(id) ?? null;
-const setMemoryChallenge = (record: ChallengeRecord) => memoryChallenges.set(record._id, record);
-const deleteMemoryChallenge = (id: string) => memoryChallenges.delete(id);
+const getMemoryChallenge = (id: string): ChallengeRecord | null => memoryChallenges.get(id) ?? null;
+const setMemoryChallenge = (record: ChallengeRecord): void => { memoryChallenges.set(record._id, record); };
+const deleteMemoryChallenge = (id: string): boolean => memoryChallenges.delete(id);
 
-const getChallenge = async (id: string) => {
+const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   if (process.env.MONGODB_URI) {
     return getMongoChallenge(id);
   }
   return getMemoryChallenge(id);
 };
 
-const setChallenge = async (record: ChallengeRecord) => {
+const setChallenge = async (record: ChallengeRecord): Promise<void> => {
   if (process.env.MONGODB_URI) {
     if (!challengeIndexesReady) {
-      challengeIndexesReady = (async () => {
+      challengeIndexesReady = (async (): Promise<void> => {
         const mongo = await getMongoDb();
         const collection = mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION);
         await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
@@ -70,7 +70,7 @@ const setChallenge = async (record: ChallengeRecord) => {
   setMemoryChallenge(record);
 };
 
-const deleteChallenge = async (id: string) => {
+const deleteChallenge = async (id: string): Promise<void> => {
   if (process.env.MONGODB_URI) {
     await deleteMongoChallenge(id);
     return;
@@ -83,7 +83,7 @@ export const createLoginChallenge = async (input: {
   email: string;
   ip: string | null;
   mfaRequired: boolean;
-}) => {
+}): Promise<{ id: string; expiresAt: Date; mfaRequired: boolean }> => {
   const id = crypto.randomBytes(32).toString("hex");
   const record: ChallengeRecord = {
     _id: id,
@@ -102,7 +102,7 @@ export const consumeLoginChallenge = async (input: {
   id: string;
   email: string;
   ip: string | null;
-}) => {
+}): Promise<ChallengeRecord | null> => {
   const record = await getChallenge(input.id);
   if (!record) return null;
   await deleteChallenge(input.id);

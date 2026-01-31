@@ -123,7 +123,7 @@ const buildTimelineItems = (
     });
   }
 
-  nodes.forEach((node) => {
+  nodes.forEach((node: AiPathRunNodeRecord): void => {
     const nodeLabel = node.nodeTitle ?? node.nodeId;
     const nodeMeta = node.nodeType ? `${nodeLabel} (${node.nodeType})` : nodeLabel;
     const startAt = toDate(node.startedAt);
@@ -167,16 +167,16 @@ const buildTimelineItems = (
   }
 
   return items
-    .filter((item) => Number.isFinite(item.timestamp.getTime()))
-    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    .filter((item: TimelineItem): boolean => Number.isFinite(item.timestamp.getTime()))
+    .sort((a: TimelineItem, b: TimelineItem): number => a.timestamp.getTime() - b.timestamp.getTime());
 };
 
 const formatMetadata = (metadata?: Record<string, unknown> | null): string | null => {
   if (!metadata || Object.keys(metadata).length === 0) return null;
   try {
     return JSON.stringify(metadata, null, 2);
-  } catch {
-    return String(metadata);
+  } catch (error: unknown) {
+    return error instanceof Error ? error.message : String(error);
   }
 };
 
@@ -194,20 +194,20 @@ export function RunTimeline({
   eventsBatchLimit?: number | null;
 }): React.JSX.Element {
   const timelineItems = React.useMemo(
-    () => buildTimelineItems(run, nodes),
+    (): TimelineItem[] => buildTimelineItems(run, nodes),
     [run, nodes]
   );
 
   const sortedEvents = React.useMemo(
-    () =>
+    (): AiPathRunEventRecord[] =>
       [...events].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a: AiPathRunEventRecord, b: AiPathRunEventRecord): number => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
     [events]
   );
 
   const [visibleSections, setVisibleSections] = React.useState<Record<TimelineFilter, boolean>>(
-    () => {
+    (): Record<TimelineFilter, boolean> => {
       if (typeof window === "undefined") {
         return { run: true, node: true, event: true };
       }
@@ -225,29 +225,29 @@ export function RunTimeline({
     }
   );
 
-  React.useEffect(() => {
+  React.useEffect((): void => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(visibleSections));
   }, [visibleSections]);
 
   const filteredTimelineItems = React.useMemo(
-    () => timelineItems.filter((item) => visibleSections[item.kind]),
+    (): TimelineItem[] => timelineItems.filter((item: TimelineItem): boolean => visibleSections[item.kind]),
     [timelineItems, visibleSections]
   );
 
   const runEntryCount = React.useMemo(
-    () => timelineItems.filter((item) => item.kind === "run").length,
+    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === "run").length,
     [timelineItems]
   );
 
   const nodeEntryCount = React.useMemo(
-    () => timelineItems.filter((item) => item.kind === "node").length,
+    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === "node").length,
     [timelineItems]
   );
 
   const nodeDurationRows = React.useMemo<NodeDurationRow[]>(
-    () =>
-      nodes.map((node) => {
+    (): NodeDurationRow[] =>
+      nodes.map((node: AiPathRunNodeRecord): NodeDurationRow => {
         const nodeLabel = node.nodeTitle ?? node.nodeId;
         const nodeMeta = node.nodeType ? `${nodeLabel} (${node.nodeType})` : nodeLabel;
         const durationMs = getDurationMs(node.startedAt, node.finishedAt);
@@ -262,11 +262,11 @@ export function RunTimeline({
     [nodes]
   );
 
-  const durationStats = React.useMemo(() => {
+  const durationStats = React.useMemo((): { total: number; average: number | null; min: number | null; max: number | null; timedCount: number; totalCount: number } => {
     const durations = nodeDurationRows
-      .map((row) => row.durationMs)
-      .filter((duration): duration is number => typeof duration === "number");
-    const total = durations.reduce((acc, value) => acc + value, 0);
+      .map((row: NodeDurationRow): number | null => row.durationMs)
+      .filter((duration: number | null): duration is number => typeof duration === "number");
+    const total = durations.reduce((acc: number, value: number): number => acc + value, 0);
     const average = durations.length > 0 ? Math.round(total / durations.length) : null;
     const min = durations.length > 0 ? Math.min(...durations) : null;
     const max = durations.length > 0 ? Math.max(...durations) : null;
@@ -280,12 +280,12 @@ export function RunTimeline({
     };
   }, [nodeDurationRows]);
 
-  const durationByStatus = React.useMemo(() => {
+  const durationByStatus = React.useMemo((): Array<{ status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }> => {
     const buckets = new Map<
       string,
       { count: number; timedCount: number; totalMs: number; min: NodeDurationRow | null; max: NodeDurationRow | null }
     >();
-    nodeDurationRows.forEach((row) => {
+    nodeDurationRows.forEach((row: NodeDurationRow): void => {
       const key = row.status ?? "unknown";
       const bucket =
         buckets.get(key) ?? { count: 0, timedCount: 0, totalMs: 0, min: null, max: null };
@@ -303,7 +303,7 @@ export function RunTimeline({
       buckets.set(key, bucket);
     });
 
-    return Array.from(buckets.entries()).map(([status, data]) => ({
+    return Array.from(buckets.entries()).map(([status, data]: [string, { count: number; timedCount: number; totalMs: number; min: NodeDurationRow | null; max: NodeDurationRow | null }]) => ({
       status,
       count: data.count,
       timedCount: data.timedCount,
@@ -315,7 +315,7 @@ export function RunTimeline({
   }, [nodeDurationRows]);
 
   const [statusSort, setStatusSort] = React.useState<"count" | "avg" | "total" | "alpha">(
-    () => {
+    (): "count" | "avg" | "total" | "alpha" => {
       if (typeof window === "undefined") return "count";
       const saved = window.localStorage.getItem(STATUS_SORT_STORAGE_KEY);
       if (saved === "count" || saved === "avg" || saved === "total" || saved === "alpha") {
@@ -325,21 +325,21 @@ export function RunTimeline({
     }
   );
 
-  React.useEffect(() => {
+  React.useEffect((): void => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(STATUS_SORT_STORAGE_KEY, statusSort);
   }, [statusSort]);
 
-  const sortedDurationByStatus = React.useMemo(() => {
+  const sortedDurationByStatus = React.useMemo((): Array<{ status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }> => {
     const list = [...durationByStatus];
     if (statusSort === "count") {
-      list.sort((a, b) => {
+      list.sort((a: { count: number; status: string }, b: { count: number; status: string }): number => {
         if (b.count !== a.count) return b.count - a.count;
         return a.status.localeCompare(b.status);
       });
       return list;
     }
-    list.sort((a, b) => {
+    list.sort((a: { averageMs: number | null; totalMs: number; count: number; status: string }, b: { averageMs: number | null; totalMs: number; count: number; status: string }): number => {
       if (statusSort === "alpha") {
         return a.status.localeCompare(b.status);
       }
@@ -357,24 +357,24 @@ export function RunTimeline({
     return list;
   }, [durationByStatus, statusSort]);
 
-  const minMaxNodeDuration = React.useMemo(() => {
+  const minMaxNodeDuration = React.useMemo((): { min: NodeDurationRow | null; max: NodeDurationRow | null } => {
     const timed = nodeDurationRows.filter(
-      (row) => typeof row.durationMs === "number"
+      (row: NodeDurationRow): boolean => typeof row.durationMs === "number"
     );
     if (timed.length === 0) {
-      return { min: null, max: null } as const;
+      return { min: null, max: null };
     }
     let min = timed[0];
     let max = timed[0];
-    timed.forEach((row) => {
+    timed.forEach((row: NodeDurationRow): void => {
       if ((row.durationMs ?? 0) < (min.durationMs ?? 0)) min = row;
       if ((row.durationMs ?? 0) > (max.durationMs ?? 0)) max = row;
     });
-    return { min, max } as const;
+    return { min, max };
   }, [nodeDurationRows]);
 
   const toggleSection = (section: TimelineFilter): void => {
-    setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    setVisibleSections((prev: Record<TimelineFilter, boolean>): Record<TimelineFilter, boolean> => ({ ...prev, [section]: !prev[section] }));
   };
 
   return (
@@ -406,7 +406,7 @@ export function RunTimeline({
             { id: "run", label: `Run (${runEntryCount})` },
             { id: "node", label: `Nodes (${nodeEntryCount})` },
             { id: "event", label: `Events (${sortedEvents.length})` },
-          ].map((filter) => {
+          ].map((filter: { id: string; label: string }): React.JSX.Element => {
             const active = visibleSections[filter.id as TimelineFilter];
             return (
               <Button
@@ -473,7 +473,7 @@ export function RunTimeline({
                   { id: "avg", label: "Avg duration" },
                   { id: "total", label: "Total duration" },
                   { id: "alpha", label: "A-Z" },
-                ] as const).map((option) => {
+                ] as const).map((option: { id: string; label: string }): React.JSX.Element => {
                   const active = statusSort === option.id;
                   return (
                     <Button
@@ -492,7 +492,7 @@ export function RunTimeline({
                 })}
               </div>
               <div className="flex flex-wrap gap-2">
-                {sortedDurationByStatus.map((bucket) => {
+                {sortedDurationByStatus.map((bucket: { status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }): React.JSX.Element => {
                   const badgeClass =
                     statusBadgeStyles[bucket.status] ??
                     "border-border bg-card/40 text-gray-200";
@@ -553,7 +553,7 @@ export function RunTimeline({
             </div>
           ) : (
             <div className="mt-2 max-h-[200px] overflow-auto space-y-2">
-              {nodeDurationRows.map((row) => {
+              {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
                 const badgeClass =
                   statusBadgeStyles[row.status ?? ""] ??
                   "border-border bg-card/40 text-gray-200";
@@ -593,7 +593,7 @@ export function RunTimeline({
         ) : (
           <div className="mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4">
             <div className="relative border-l border-border/60 pl-4">
-              {filteredTimelineItems.map((item, index) => {
+              {filteredTimelineItems.map((item: TimelineItem, index: number): React.JSX.Element => {
                 const badgeClass =
                   statusBadgeStyles[item.status ?? ""] ??
                   "border-border bg-card/40 text-gray-200";
@@ -645,7 +645,7 @@ export function RunTimeline({
           ) : (
             <div className="mt-3 max-h-[360px] overflow-auto rounded-md border border-border bg-black/20">
               <div className="divide-y divide-border/70">
-                {sortedEvents.map((event) => {
+                {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
                   const badgeClass =
                     levelBadgeStyles[event.level] ??
                     "border-border bg-card/40 text-gray-200";

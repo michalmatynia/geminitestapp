@@ -35,7 +35,7 @@ type UnsupportedNodeConfigNoticeProps = {
 
 export function UnsupportedNodeConfigNotice({
   selectedNode,
-}: UnsupportedNodeConfigNoticeProps) {
+}: UnsupportedNodeConfigNoticeProps): React.JSX.Element | null {
   if (SUPPORTED_NODE_TYPES.has(selectedNode.type)) return null;
 
   return (

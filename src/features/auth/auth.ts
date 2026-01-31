@@ -1,7 +1,7 @@
 import "server-only";
 
 import { ErrorSystem } from "@/features/observability/server";
-import NextAuth, { type Session, type User } from "next-auth";
+import NextAuth, { type NextAuthConfig, type Session, type User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -255,7 +255,7 @@ const buildProviders = (): Provider[] => {
   return providers;
 };
 
-const buildAuthConfig = async (): Promise<any> => {
+const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
     await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
     const hasMongo = Boolean(process.env.MONGODB_URI);
@@ -321,11 +321,11 @@ const buildAuthConfig = async (): Promise<any> => {
 };
 
 const AUTH_CONFIG_TTL_MS = 30_000;
-let cachedAuthConfig: any | null = null;
+let cachedAuthConfig: NextAuthConfig | null = null;
 let cachedAuthConfigAt = 0;
-let cachedAuthConfigPromise: Promise<any> | null = null;
+let cachedAuthConfigPromise: Promise<NextAuthConfig> | null = null;
 
-const getAuthConfig = async (): Promise<any> => {
+const getAuthConfig = async (): Promise<NextAuthConfig> => {
   const now = Date.now();
   if (cachedAuthConfig && now - cachedAuthConfigAt < AUTH_CONFIG_TTL_MS) {
     return cachedAuthConfig;
@@ -334,7 +334,7 @@ const getAuthConfig = async (): Promise<any> => {
     return cachedAuthConfigPromise;
   }
   cachedAuthConfigPromise = buildAuthConfig()
-    .then((config: any) => {
+    .then((config: NextAuthConfig) => {
       cachedAuthConfig = config;
       cachedAuthConfigAt = Date.now();
       return config;

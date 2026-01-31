@@ -125,6 +125,27 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleDropSectionToColumn = useCallback(
+    (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => {
+      dispatch({
+        type: "MOVE_SECTION_TO_COLUMN",
+        sectionId,
+        toSectionId,
+        toColumnId,
+        toParentBlockId,
+        toIndex,
+      });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
+        next.add(toColumnId);
+        if (toParentBlockId) next.add(toParentBlockId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
   const handleToggleExpand = useCallback((nodeId: string) => {
     setExpandedIds((prev: Set<string>) => {
       const next = new Set(prev);
@@ -173,6 +194,7 @@ export function ComponentTreePanel(): React.ReactNode {
 
   // Section drag-and-drop state
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [draggedSectionType, setDraggedSectionType] = useState<string | null>(null);
 
   const handleDropSectionInZone = useCallback(
     (droppedSectionId: string, zone: PageZone, toIndex: number) => {
@@ -246,6 +268,9 @@ export function ComponentTreePanel(): React.ReactNode {
                 setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                 draggedSectionId={draggedSectionId}
                 setDraggedSectionId={setDraggedSectionId}
+                draggedSectionType={draggedSectionType}
+                setDraggedSectionType={setDraggedSectionType}
+                onDropSectionToColumn={handleDropSectionToColumn}
               />
             );
           })
@@ -291,6 +316,9 @@ interface ZoneGroupProps {
   setDraggedFromParentBlockId: (id: string | null) => void;
   draggedSectionId: string | null;
   setDraggedSectionId: (id: string | null) => void;
+  draggedSectionType: string | null;
+  setDraggedSectionType: (type: string | null) => void;
+  onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
 }
 
 function ZoneGroup({
@@ -325,6 +353,9 @@ function ZoneGroup({
   setDraggedFromParentBlockId,
   draggedSectionId,
   setDraggedSectionId,
+  draggedSectionType,
+  setDraggedSectionType,
+  onDropSectionToColumn,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
 
@@ -408,6 +439,9 @@ function ZoneGroup({
                   setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                   draggedSectionId={draggedSectionId}
                   setDraggedSectionId={setDraggedSectionId}
+                  draggedSectionType={draggedSectionType}
+                  setDraggedSectionType={setDraggedSectionType}
+                  onDropSectionToColumn={onDropSectionToColumn}
                 />
               ))}
               {/* Drop target at end of zone */}

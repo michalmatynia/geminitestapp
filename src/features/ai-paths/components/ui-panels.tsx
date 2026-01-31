@@ -19,7 +19,7 @@ export function PathsTabPanel({
   onSaveList,
   onEditPath,
   onDeletePath,
-}: PathsTabPanelProps) {
+}: PathsTabPanelProps): React.JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -61,13 +61,13 @@ export function PathsTabPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paths.map((path) => (
+            {paths.map((path: PathMeta): React.JSX.Element => (
               <TableRow key={path.id} className="border-border/50">
                 <TableCell className="text-sm text-white">
                   <button
                     type="button"
                     className="cursor-pointer text-left text-sm text-white transition hover:text-gray-200"
-                    onClick={() => onEditPath(path.id)}
+                    onClick={(): void => onEditPath(path.id)}
                   >
                     {path.name}
                   </button>
@@ -80,14 +80,14 @@ export function PathsTabPanel({
                     <Button
                       className="rounded-md border text-xs text-white hover:bg-muted/60"
                       type="button"
-                      onClick={() => onEditPath(path.id)}
+                      onClick={(): void => onEditPath(path.id)}
                     >
                       Edit
                     </Button>
                     <Button
                       className="rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10"
                       type="button"
-                      onClick={() => onDeletePath(path.id)}
+                      onClick={(): void => onDeletePath(path.id)}
                     >
                       Delete
                     </Button>
@@ -128,7 +128,7 @@ export function DocsTabPanel({
   onCopyDocsWiring,
   onCopyDocsDescription,
   onCopyDocsJobs,
-}: DocsTabPanelProps) {
+}: DocsTabPanelProps): React.JSX.Element {
   return (
     <div className="space-y-6 text-sm text-gray-300">
       <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">

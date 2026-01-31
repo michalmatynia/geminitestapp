@@ -42,18 +42,18 @@ export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
 let indexesReady = false;
 let indexesPromise: Promise<void> | null = null;
 
-const ensureIndexes = async () => {
+const ensureIndexes = async (): Promise<void> => {
   if (indexesReady) return;
   if (!indexesPromise) {
-    indexesPromise = (async () => {
+    indexesPromise = (async (): Promise<void> => {
       const db = await getMongoDb();
       await Promise.all(
-        AI_PATHS_MONGO_INDEXES.map((index) =>
+        AI_PATHS_MONGO_INDEXES.map((index: MongoIndexSpec) =>
           db.collection(index.collection).createIndex(index.key)
         )
       );
       indexesReady = true;
-    })().catch((error) => {
+    })().catch((error: unknown) => {
       indexesPromise = null;
       throw error;
     });
@@ -165,7 +165,7 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   createdAt: doc.createdAt,
 });
 
-const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {

@@ -573,34 +573,34 @@ const TRIGGER_EVENTS = [
   { id: "path_generate_description", label: "Path Generate Description" },
 ];
 
-const createParserMappings = (outputs: string[]) =>
-  outputs.reduce<Record<string, string>>((acc, output) => {
+const createParserMappings = (outputs: string[]): Record<string, string> =>
+  outputs.reduce<Record<string, string>>((acc: Record<string, string>, output: string): Record<string, string> => {
     acc[output] = "";
     return acc;
   }, {});
 
-const createViewerOutputs = (inputs: string[]) =>
-  inputs.reduce<Record<string, string>>((acc, input) => {
+const createViewerOutputs = (inputs: string[]): Record<string, string> =>
+  inputs.reduce<Record<string, string>>((acc: Record<string, string>, input: string): Record<string, string> => {
     acc[input] = "";
     return acc;
   }, {});
 
-const normalizePortName = (port: string) =>
+const normalizePortName = (port: string): string =>
   port === "productJson" ? "entityJson" : port;
 
-const ensureUniquePorts = (ports: string[], add: string[]) => {
+const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
   const set = new Set(ports.map(normalizePortName));
-  add.forEach((port) => set.add(normalizePortName(port)));
+  add.forEach((port: string) => set.add(normalizePortName(port)));
   return Array.from(set);
 };
 
-const normalizeNodes = (items: AiNode[]) =>
-  items.map((node) => {
-    const nodeType = node.type as string;
+const normalizeNodes = (items: AiNode[]): AiNode[] =>
+  items.map((node: AiNode) => {
+    const nodeType: string = node.type as string;
     if (node.type === "context") {
       const contextConfig = node.config?.context;
       const cleanedOutputs = (node.outputs ?? []).filter(
-        (port) => normalizePortName(port) !== "role"
+        (port: string): boolean => normalizePortName(port) !== "role"
       );
       return {
         ...node,
@@ -620,7 +620,7 @@ const normalizeNodes = (items: AiNode[]) =>
             excludePaths: contextConfig?.excludePaths ?? [],
           },
         },
-      };
+      } as AiNode;
     }
     if (node.type === "trigger") {
       return {
@@ -660,13 +660,13 @@ const normalizeNodes = (items: AiNode[]) =>
       const baseMappings =
         parserConfig?.mappings ??
         (node.outputs.length > 0 ? createParserMappings(node.outputs) : {});
-      const mappingKeys = Object.keys(baseMappings)
-        .map((key) => key.trim())
+      const mappingKeys: string[] = Object.keys(baseMappings)
+        .map((key: string): string => key.trim())
         .filter(Boolean);
-      const outputsFromMappings = mappingKeys.length > 0 ? mappingKeys : node.outputs;
-      const outputMode = parserConfig?.outputMode ?? "individual";
-      const hasImagesOutput = outputsFromMappings.some(
-        (key) => key.toLowerCase() === "images"
+      const outputsFromMappings: string[] = mappingKeys.length > 0 ? mappingKeys : node.outputs;
+      const outputMode: string = parserConfig?.outputMode ?? "individual";
+      const hasImagesOutput: boolean = outputsFromMappings.some(
+        (key: string): boolean => key.toLowerCase() === "images"
       );
       const outputs =
         outputMode === "bundle"
@@ -1087,6 +1087,7 @@ const getDefaultConfigForType = (
         entityIdSource: "simulation",
         entityId: "",
         scopeMode: "full",
+        scopeTarget: "entity",
         includePaths: [],
         excludePaths: [],
       },
@@ -1272,12 +1273,12 @@ const getDefaultConfigForType = (
   return undefined;
 };
 
-const toNumber = (value: string, fallback: number) => {
+const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const getPortOffsetY = (index: number, totalPorts: number) => {
+const getPortOffsetY = (index: number, totalPorts: number): number => {
   const totalHeight = (totalPorts - 1) * PORT_GAP;
   const startY = NODE_MIN_HEIGHT / 2 - totalHeight / 2;
   return startY + index * PORT_GAP;
@@ -1297,15 +1298,15 @@ function safeStringify(value: unknown): string {
   if (typeof value === "symbol" || typeof value === "function") {
     return value.toString();
   }
-  return String(value as string);
-};
+  return String(value as string | number | boolean | bigint | symbol);
+}
 
 const formatRuntimeValue = (value: unknown): string => {
   if (value === null || value === undefined) return "—";
   if (typeof value === "string") return value.trim() || "—";
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   try {
-    const json = JSON.stringify(value, null, 2);
+    const json: string = JSON.stringify(value, null, 2);
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
   } catch {
@@ -1313,13 +1314,13 @@ const formatRuntimeValue = (value: unknown): string => {
   }
 };
 
-const parsePathList = (value: string) =>
+const parsePathList = (value: string): string[] =>
   value
     .split("\n")
-    .map((line) => line.trim())
+    .map((line: string): string => line.trim())
     .filter(Boolean);
 
-const safeParseJson = (value: string) => {
+const safeParseJson = (value: string): { value: unknown; error: string } => {
   if (!value.trim()) return { value: null as unknown, error: "" };
   try {
     return { value: JSON.parse(value) as unknown, error: "" };
@@ -1328,12 +1329,12 @@ const safeParseJson = (value: string) => {
   }
 };
 
-const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
+const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathEntry[] => {
   const entries: JsonPathEntry[] = [];
-  const walk = (node: unknown, prefix: string, depth: number) => {
+  const walk = (node: unknown, prefix: string, depth: number): void => {
     if (node === null || node === undefined || depth < 0) return;
-    const isArray = Array.isArray(node);
-    const isObject = !isArray && typeof node === "object";
+    const isArray: boolean = Array.isArray(node);
+    const isObject: boolean = !isArray && typeof node === "object";
     if (prefix) {
       entries.push({
         path: prefix,
@@ -1342,13 +1343,13 @@ const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
     }
     if (isArray) {
       if ((node as unknown[]).length === 0) return;
-      const arrayPrefix = prefix ? `${prefix}[0]` : "[0]";
+      const arrayPrefix: string = prefix ? `${prefix}[0]` : "[0]";
       walk((node as unknown[])[0], arrayPrefix, depth - 1);
       return;
     }
     if (!isObject) return;
-    Object.entries(node as Record<string, unknown>).forEach(([key, child]) => {
-      const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    Object.entries(node as Record<string, unknown>).forEach(([key, child]: [string, unknown]): void => {
+      const nextPrefix: string = prefix ? `${prefix}.${key}` : key;
       walk(child, nextPrefix, depth - 1);
     });
   };
@@ -1356,11 +1357,11 @@ const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
   return entries;
 };
 
-const extractJsonPaths = (value: unknown, maxDepth = 2) => {
-  return extractJsonPathEntries(value, maxDepth).map((entry) => entry.path);
+const extractJsonPaths = (value: unknown, maxDepth: number = 2): string[] => {
+  return extractJsonPathEntries(value, maxDepth).map((entry: JsonPathEntry): string => entry.path);
 };
 
-const buildTopLevelMappings = (value: unknown) => {
+const buildTopLevelMappings = (value: unknown): Record<string, string> => {
   if (!value) return {} as Record<string, string>;
   let root: unknown = value;
   let prefix = "$.";
@@ -1370,7 +1371,7 @@ const buildTopLevelMappings = (value: unknown) => {
   }
   if (!root || typeof root !== "object") return {} as Record<string, string>;
   return Object.keys(root as Record<string, unknown>).reduce<Record<string, string>>(
-    (acc, key) => {
+    (acc: Record<string, string>, key: string): Record<string, string> => {
       acc[key] = `${prefix}${key}`;
       return acc;
     },
@@ -1383,20 +1384,20 @@ const buildFlattenedMappings = (
   depth: number,
   keyStyle: "path" | "leaf",
   includeContainers: boolean
-) => {
-  const entries = extractJsonPathEntries(value, depth).filter((entry) => {
+): Record<string, string> => {
+  const entries: JsonPathEntry[] = extractJsonPathEntries(value, depth).filter((entry: JsonPathEntry): boolean => {
     if (includeContainers) return true;
     return entry.type === "value" || entry.type === "array";
   });
   const mappings: Record<string, string> = {};
-  const used = new Set<string>();
-  entries.forEach((entry) => {
-    const path = entry.path;
-    const jsonPath = path.startsWith("[") ? `$${path}` : `$.${path}`;
-    const tokens = parsePathTokens(path);
+  const used: Set<string> = new Set<string>();
+  entries.forEach((entry: JsonPathEntry): void => {
+    const path: string = entry.path;
+    const jsonPath: string = path.startsWith("[") ? `$${path}` : `$.${path}`;
+    const tokens: Array<string | number> = parsePathTokens(path);
     if (tokens.length === 0) return;
-    const pathKey = tokens
-      .map((token) => (typeof token === "number" ? String(token) : token))
+    const pathKey: string = tokens
+      .map((token: string | number): string => (typeof token === "number" ? String(token) : token))
       .join("_");
     let leafKey = "";
     for (let index = tokens.length - 1; index >= 0; index -= 1) {
@@ -1406,17 +1407,17 @@ const buildFlattenedMappings = (
         break;
       }
     }
-    const lastToken = tokens[tokens.length - 1];
+    const lastToken: string | number = tokens[tokens.length - 1];
     if (leafKey && typeof lastToken === "number") {
       leafKey = `${leafKey}_${lastToken}`;
     }
-    let keyBase = keyStyle === "leaf" ? leafKey || pathKey : pathKey;
+    let keyBase: string = keyStyle === "leaf" ? leafKey || pathKey : pathKey;
     keyBase = keyBase.replace(/[^a-zA-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
     if (!keyBase) keyBase = "field";
     if (/^\d/.test(keyBase)) {
       keyBase = `field_${keyBase}`;
     }
-    let uniqueKey = keyBase;
+    let uniqueKey: string = keyBase;
     let counter = 1;
     while (used.has(uniqueKey)) {
       counter += 1;
@@ -1428,7 +1429,7 @@ const buildFlattenedMappings = (
   return mappings;
 };
 
-const looksLikeImageUrl = (value: string) =>
+const looksLikeImageUrl = (value: string): boolean =>
   /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
 
 const isImageLikeValue = (value: unknown): boolean => {
@@ -1437,11 +1438,11 @@ const isImageLikeValue = (value: unknown): boolean => {
     return looksLikeImageUrl(value);
   }
   if (Array.isArray(value)) {
-    return value.some((item) => isImageLikeValue(item));
+    return value.some((item: unknown): boolean => isImageLikeValue(item));
   }
   if (typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    const candidates = [
+    const record: Record<string, unknown> = value as Record<string, unknown>;
+    const candidates: string[] = [
       "url",
       "src",
       "thumbnail",
@@ -1460,14 +1461,14 @@ const isImageLikeValue = (value: unknown): boolean => {
       "gallery",
     ];
     if (
-      candidates.some((key) => {
-        const val = record[key];
+      candidates.some((key: string): boolean => {
+        const val: unknown = record[key];
         return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
       })
     ) {
       return true;
     }
-    return Object.entries(record).some(([key, val]) => {
+    return Object.entries(record).some(([key, val]: [string, unknown]): boolean => {
       if (typeof val === "string") {
         if (!looksLikeImageUrl(val)) return false;
         return /(url|path|file|image|media|photo|thumb|preview)/i.test(key);
@@ -1481,37 +1482,37 @@ const isImageLikeValue = (value: unknown): boolean => {
   return false;
 };
 
-const inferImageMappingPath = (value: unknown, depth: number) => {
+const inferImageMappingPath = (value: unknown, depth: number): string | null => {
   if (!value) return null;
   const keyword = /(image|img|photo|picture|media|gallery)/i;
-  const searchIn = (root: unknown, prefix: string) => {
+  const searchIn = (root: unknown, prefix: string): string | null => {
     if (!root) return null;
-    const entries = extractJsonPathEntries(root, depth);
-    const candidates = entries.filter((entry) => keyword.test(entry.path));
-    const resolveFullPath = (match: string) => {
+    const entries: JsonPathEntry[] = extractJsonPathEntries(root, depth);
+    const candidates: JsonPathEntry[] = entries.filter((entry: JsonPathEntry): boolean => keyword.test(entry.path));
+    const resolveFullPath = (match: string): string => {
       if (!prefix) return match;
-      const prefixPath = prefix.startsWith("$") ? prefix : `$.${prefix}`;
+      const prefixPath: string = prefix.startsWith("$") ? prefix : `$.${prefix}`;
       return `${prefixPath}${match.slice(1)}`;
     };
-    const checkEntry = (entry: JsonPathEntry) => {
-      const jsonPath = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
-      const resolved = getValueAtMappingPath(root, jsonPath);
+    const checkEntry = (entry: JsonPathEntry): string | null => {
+      const jsonPath: string = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
+      const resolved: unknown = getValueAtMappingPath(root, jsonPath);
       if (isImageLikeValue(resolved)) return resolveFullPath(jsonPath);
       return null;
     };
     for (const entry of candidates) {
-      const match = checkEntry(entry);
+      const match: string | null = checkEntry(entry);
       if (match) return match;
     }
     for (const entry of entries) {
-      const match = checkEntry(entry);
+      const match: string | null = checkEntry(entry);
       if (match) return match;
     }
     return null;
   };
-  const direct = searchIn(value, "");
+  const direct: string | null = searchIn(value, "");
   if (direct) return direct;
-  const wrapperPaths = [
+  const wrapperPaths: string[] = [
     "context.entity",
     "context.product",
     "simulation.entity",
@@ -1522,15 +1523,15 @@ const inferImageMappingPath = (value: unknown, depth: number) => {
     "data",
   ];
   for (const path of wrapperPaths) {
-    const wrapped = getValueAtMappingPath(value, path.startsWith("$") ? path : `$.${path}`);
-    const match = searchIn(wrapped, path);
+    const wrapped: unknown = getValueAtMappingPath(value, path.startsWith("$") ? path : `$.${path}`);
+    const match: string | null = searchIn(wrapped, path);
     if (match) return match;
   }
   return null;
 };
 
-const getContextPresetSet = (entityType?: string) => {
-  const key = entityType === "auto" ? "" : entityType ?? "";
+const getContextPresetSet = (entityType?: string): { light: string[]; medium: string[]; full: string[]; suggested: string[] } => {
+  const key: string = entityType === "auto" ? "" : entityType ?? "";
   return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default;
 };
 
@@ -1539,7 +1540,7 @@ const applyContextPreset = (
   preset: "light" | "medium" | "full" | "suggested"
 ): ContextConfig => {
   const set = getContextPresetSet(current.entityType);
-  const paths = set ? set[preset] ?? [] : [];
+  const paths: string[] = set ? set[preset] ?? [] : [];
   if (paths.length === 0) return { ...current, scopeMode: "full" };
   return {
     ...current,
@@ -1549,23 +1550,23 @@ const applyContextPreset = (
   };
 };
 
-const toggleContextTarget = (current: ContextConfig, field: string) => {
-  const isIncluded = (current.includePaths ?? []).includes(field);
+const toggleContextTarget = (current: ContextConfig, field: string): ContextConfig => {
+  const isIncluded: boolean = (current.includePaths ?? []).includes(field);
   if (current.scopeMode === "include") {
-    const includePaths = current.includePaths ?? [];
+    const includePaths: string[] = current.includePaths ?? [];
     return {
       ...current,
       includePaths: isIncluded
-        ? includePaths.filter((p: string) => p !== field)
+        ? includePaths.filter((p: string): boolean => p !== field)
         : [...includePaths, field],
     };
   }
-  const excludePaths = current.excludePaths ?? [];
-  const isExcluded = excludePaths.includes(field);
+  const excludePaths: string[] = current.excludePaths ?? [];
+  const isExcluded: boolean = excludePaths.includes(field);
   return {
     ...current,
     excludePaths: isExcluded
-      ? excludePaths.filter((p) => p !== field)
+      ? excludePaths.filter((p: string): boolean => p !== field)
       : [...excludePaths, field],
   };
 };
@@ -1581,24 +1582,24 @@ const cloneValue = <T,>(value: T): T => {
   }
 };
 
-const getValueAtPath = (obj: unknown, path: string) => {
-  return path.split(".").reduce<unknown>((acc, key) => {
+const getValueAtPath = (obj: unknown, path: string): unknown => {
+  return path.split(".").reduce<unknown>((acc: unknown, key: string): unknown => {
     if (!acc || typeof acc !== "object") return undefined;
     return (acc as Record<string, unknown>)[key];
   }, obj);
 };
 
-const normalizeMappingPath = (path: string, root?: unknown) => {
+const normalizeMappingPath = (path: string, root?: unknown): string => {
   if (!path) return "";
-  let next = path.trim();
+  let next: string = path.trim();
   if (next.startsWith("$.") ) {
     next = next.slice(2);
   } else if (next.startsWith("$")) {
     next = next.slice(1);
   }
   if (next.startsWith("context.")) {
-    const hasContext =
-      root && typeof root === "object" && "context" in (root as Record<string, unknown>);
+    const hasContext: boolean =
+      !!root && typeof root === "object" && "context" in (root as Record<string, unknown>);
     if (!hasContext) {
       next = next.slice("context.".length);
     }
@@ -1606,7 +1607,7 @@ const normalizeMappingPath = (path: string, root?: unknown) => {
   return next;
 };
 
-const parsePathTokens = (path: string) => {
+const parsePathTokens = (path: string): Array<string | number> => {
   const tokens: Array<string | number> = [];
   const regex = /([^[.\]]+)|\[(\d+)\]/g;
   let match: RegExpExecArray | null;
@@ -1663,9 +1664,9 @@ const renderTemplate = (
   template: string,
   context: Record<string, unknown>,
   currentValue: unknown
-) =>
+): string =>
   template
-    .replace(/{{\s*([^}]+)\s*}}/g, (_match, token) => {
+    .replace(/{{\s*([^}]+)\s*}}/g, (_match: string, token: string): string => {
       const key = String(token).trim();
       if (key === "value" || key === "current") {
         return safeStringify(currentValue);
@@ -1673,7 +1674,7 @@ const renderTemplate = (
       const resolved = getValueAtMappingPath(context, key);
       return safeStringify(resolved);
     })
-    .replace(/\[\s*([^\]]+)\s*\]/g, (_match, token) => {
+    .replace(/\[\s*([^\]]+)\s*\]/g, (_match: string, token: string): string => {
       const key = String(token).trim();
       if (key === "value" || key === "current") {
         return safeStringify(currentValue);
@@ -1682,10 +1683,10 @@ const renderTemplate = (
       return safeStringify(resolved);
     });
 
-const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown) => {
+const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown): void => {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
-  keys.forEach((key, index) => {
+  keys.forEach((key: string, index: number): void => {
     if (index === keys.length - 1) {
       current[key] = value;
       return;
@@ -1701,14 +1702,14 @@ const setValueAtMappingPath = (
   obj: Record<string, unknown>,
   path: string,
   value: unknown
-) => {
+): void => {
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return;
   const tokens = parsePathTokens(normalized);
   let current: Record<string, unknown> | unknown[] = obj;
   let parent: Record<string, unknown> | unknown[] | null = null;
   let parentKey: string | number | null = null;
-  tokens.forEach((token, index) => {
+  tokens.forEach((token: string | number, index: number): void => {
     const isLast = index === tokens.length - 1;
     if (isLast) {
       if (typeof token === "number") {
@@ -1761,9 +1762,9 @@ const setValueAtMappingPath = (
   });
 };
 
-const pickByPaths = (obj: Record<string, unknown>, paths: string[]) => {
+const pickByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
-  paths.forEach((path) => {
+  paths.forEach((path: string): void => {
     const value = getValueAtPath(obj, path);
     if (value !== undefined) {
       setValueAtPath(result, path, value);
@@ -1772,10 +1773,10 @@ const pickByPaths = (obj: Record<string, unknown>, paths: string[]) => {
   return result;
 };
 
-const deletePath = (obj: Record<string, unknown>, path: string) => {
+const deletePath = (obj: Record<string, unknown>, path: string): void => {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
-  keys.forEach((key, index) => {
+  keys.forEach((key: string, index: number): void => {
     if (!current || typeof current !== "object") return;
     if (index === keys.length - 1) {
       delete current[key];
@@ -1785,9 +1786,9 @@ const deletePath = (obj: Record<string, unknown>, path: string) => {
   });
 };
 
-const omitByPaths = (obj: Record<string, unknown>, paths: string[]) => {
+const omitByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
   const clone = cloneValue(obj);
-  paths.forEach((path) => deletePath(clone, path));
+  paths.forEach((path: string): void => deletePath(clone, path));
   return clone;
 };
 
@@ -1796,7 +1797,7 @@ const isValidConnection = (
   to: AiNode,
   fromPort?: string,
   toPort?: string
-) => {
+): boolean => {
   if (!fromPort || !toPort) return false;
   if (!from.outputs.includes(fromPort)) return false;
   if (!to.inputs.includes(toPort)) return false;
@@ -1804,14 +1805,14 @@ const isValidConnection = (
 };
 
 const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-  return edges.flatMap((edge) => {
+  const nodeMap: Map<string, AiNode> = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
+  return edges.flatMap((edge: Edge): Edge[] => {
     if (!edge.from || !edge.to) return [];
     const from = nodeMap.get(edge.from);
     const to = nodeMap.get(edge.to);
     if (!from || !to) return [];
-    const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
-    const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+    const fromPort: string | undefined = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
+    const toPort: string | undefined = edge.toPort ? normalizePortName(edge.toPort) : undefined;
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {
         return [
@@ -1842,9 +1843,9 @@ const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       }
       return [];
     }
-    const matches = from.outputs.filter((output) => to.inputs.includes(output));
+    const matches: string[] = from.outputs.filter((output: string): boolean => to.inputs.includes(output));
     if (matches.length !== 1) return [];
-    const port = matches[0];
+    const port: string | undefined = matches[0];
     if (!port) return [];
     return [
       {
@@ -2009,7 +2010,7 @@ const validateConnection = (
   }
 
   // Check port compatibility
-  const allowedPorts = PORT_COMPATIBILITY[fromPort];
+  const allowedPorts: string[] | undefined = PORT_COMPATIBILITY[fromPort];
   if (!allowedPorts || !allowedPorts.includes(toPort)) {
     return {
       valid: false,
@@ -2018,7 +2019,7 @@ const validateConnection = (
   }
 
   // Check node type compatibility
-  const allowedTypes = NODE_TYPE_COMPATIBILITY[fromNode.type] || [];
+  const allowedTypes: NodeType[] = NODE_TYPE_COMPATIBILITY[fromNode.type] || [];
   if (!allowedTypes.includes(toNode.type)) {
     return {
       valid: false,
@@ -2111,7 +2112,7 @@ const validateConnection = (
   return { valid: true };
 };
 
-const clampScale = (value: number) =>
+const clampScale = (value: number): number =>
   Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
 
 const clampTranslate = (
@@ -2119,14 +2120,14 @@ const clampTranslate = (
   y: number,
   scale: number,
   _viewport: DOMRect | null
-) => {
+): { x: number; y: number } => {
   // Use fixed bounds based on canvas size for predictable panning
   // min: allows panning to see the right/bottom of canvas (negative values)
   // max: allows panning to see the left/top of canvas (positive values)
-  const minX = -CANVAS_WIDTH * scale + 200;
-  const minY = -CANVAS_HEIGHT * scale + 200;
-  const maxX = 300;
-  const maxY = 300;
+  const minX: number = -CANVAS_WIDTH * scale + 200;
+  const minY: number = -CANVAS_HEIGHT * scale + 200;
+  const maxX: number = 300;
+  const maxY: number = 300;
 
   return {
     x: Math.min(maxX, Math.max(minX, x)),
@@ -2296,14 +2297,14 @@ const createPathMeta = (config: PathConfig): PathMeta => ({
   updatedAt: config.updatedAt,
 });
 
-const createPathId = () =>
+const createPathId = (): string =>
   `path_${Math.random().toString(36).slice(2, 8)}`;
 
-const createPresetId = () =>
+const createPresetId = (): string =>
   `preset_${Math.random().toString(36).slice(2, 8)}`;
 
 const createAiDescriptionPath = (id: string): PathConfig => {
-  const now = new Date().toISOString();
+  const now: string = new Date().toISOString();
   const nodes: AiNode[] = [
     {
       id: "node-context",
@@ -2445,7 +2446,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
     version: STORAGE_VERSION,
     name: "AI Description Path",
     description: "Generates product descriptions via AI and updates the product.",
-    trigger: triggers[0] ?? "Product Modal - Context Filter",
+    trigger: (triggers[0] as string) ?? "Product Modal - Context Filter",
     nodes,
     edges,
     updatedAt: now,

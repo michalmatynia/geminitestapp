@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -14,7 +14,8 @@ import {
   SelectValue,
   Checkbox,
 } from "@/shared/ui";
-import { useThemeSettings, type ColorSchemeColors } from "./ThemeSettingsContext";
+import { useThemeSettings } from "./ThemeSettingsContext";
+import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -65,6 +66,14 @@ const WEIGHT_OPTIONS = [
   { label: "800 – Extra Bold", value: "800" },
   { label: "900 – Black", value: "900" },
 ];
+
+const DEFAULT_SCHEME_COLORS: ColorSchemeColors = {
+  background: "#0b1220",
+  surface: "#111827",
+  text: "#f3f4f6",
+  accent: "#3b82f6",
+  border: "#1f2937",
+};
 
 // ---------------------------------------------------------------------------
 // Reusable field components
@@ -158,15 +167,11 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const { theme, setTheme, update } = useThemeSettings();
-  const [isAddingScheme, setIsAddingScheme] = useState(false);
+  const [schemeView, setSchemeView] = useState<"list" | "edit">("list");
+  const [editingSchemeId, setEditingSchemeId] = useState<string | null>(null);
   const [newSchemeName, setNewSchemeName] = useState("");
-  const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>({
-    background: "#0b1220",
-    surface: "#111827",
-    text: "#f3f4f6",
-    accent: "#3b82f6",
-    border: "#1f2937",
-  });
+  const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
+  const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
 
   // Logo-specific state (file picker)
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -265,63 +270,60 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     });
   }, []);
 
-  const schemeOptions = useMemo(
-    () => theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id })),
-    [theme.colorSchemes]
-  );
-
   const activeScheme = useMemo(() => {
     if (!theme.colorSchemes.length) return null;
     return theme.colorSchemes.find((scheme) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0];
   }, [theme.colorSchemes, theme.activeColorSchemeId]);
 
-  const updateSchemeName = useCallback((schemeId: string, name: string) => {
-    setTheme((prev) => ({
-      ...prev,
-      colorSchemes: prev.colorSchemes.map((scheme) =>
-        scheme.id === schemeId ? { ...scheme, name } : scheme
-      ),
-    }));
-  }, [setTheme]);
-
-  const updateSchemeColor = useCallback((schemeId: string, key: keyof ColorSchemeColors, value: string) => {
-    setTheme((prev) => ({
-      ...prev,
-      colorSchemes: prev.colorSchemes.map((scheme) =>
-        scheme.id === schemeId
-          ? { ...scheme, colors: { ...scheme.colors, [key]: value } }
-          : scheme
-      ),
-    }));
-  }, [setTheme]);
-
   const startAddScheme = useCallback(() => {
     setNewSchemeName("");
-    setNewSchemeColors(activeScheme?.colors ?? {
-      background: "#0b1220",
-      surface: "#111827",
-      text: "#f3f4f6",
-      accent: "#3b82f6",
-      border: "#1f2937",
-    });
-    setIsAddingScheme(true);
+    setNewSchemeColors(activeScheme?.colors ?? DEFAULT_SCHEME_COLORS);
+    setEditingSchemeId(null);
+    setSchemeView("edit");
   }, [activeScheme]);
 
-  const handleCreateScheme = useCallback(() => {
+  const startEditScheme = useCallback((schemeId: string) => {
+    const scheme = theme.colorSchemes.find((item) => item.id === schemeId);
+    if (!scheme) return;
+    setEditingSchemeId(schemeId);
+    setNewSchemeName(scheme.name);
+    setNewSchemeColors({ ...scheme.colors });
+    setSchemeView("edit");
+  }, [theme.colorSchemes]);
+
+  const handleSaveScheme = useCallback(() => {
     const trimmed = newSchemeName.trim();
-    const schemeName = trimmed || `Scheme ${theme.colorSchemes.length + 1}`;
-    const id = `custom-${Date.now().toString(36)}`;
-    setTheme((prev) => ({
-      ...prev,
-      colorSchemes: [
-        ...prev.colorSchemes,
-        { id, name: schemeName, colors: { ...newSchemeColors } },
-      ],
-      activeColorSchemeId: id,
-    }));
-    setIsAddingScheme(false);
+    const currentName = editingSchemeId
+      ? theme.colorSchemes.find((scheme) => scheme.id === editingSchemeId)?.name
+      : undefined;
+    const schemeName = trimmed || currentName || `Scheme ${theme.colorSchemes.length + 1}`;
+
+    if (editingSchemeId) {
+      setTheme((prev) => ({
+        ...prev,
+        colorSchemes: prev.colorSchemes.map((scheme) =>
+          scheme.id === editingSchemeId
+            ? { ...scheme, name: schemeName, colors: { ...newSchemeColors } }
+            : scheme
+        ),
+        activeColorSchemeId: editingSchemeId,
+      }));
+    } else {
+      const id = `custom-${Date.now().toString(36)}`;
+      setTheme((prev) => ({
+        ...prev,
+        colorSchemes: [
+          ...prev.colorSchemes,
+          { id, name: schemeName, colors: { ...newSchemeColors } },
+        ],
+        activeColorSchemeId: id,
+      }));
+    }
+
+    setSchemeView("list");
+    setEditingSchemeId(null);
     setNewSchemeName("");
-  }, [newSchemeColors, newSchemeName, theme.colorSchemes.length, setTheme]);
+  }, [editingSchemeId, newSchemeColors, newSchemeName, theme.colorSchemes, setTheme]);
 
   const handlePickLogo = useCallback(() => { fileInputRef.current?.click(); }, []);
   const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -370,81 +372,158 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-4">
               <div className="rounded border border-border/40 bg-gray-900/60 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500">Color schemes</div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={startAddScheme}
-                    className="h-7 px-2 text-[11px]"
-                  >
-                    Add scheme
-                  </Button>
-                </div>
-                {schemeOptions.length > 0 ? (
-                  <div className="mt-3 space-y-3">
-                    <SelectField
-                      label="Active scheme"
-                      value={theme.activeColorSchemeId}
-                      onChange={(value) => update("activeColorSchemeId", value)}
-                      options={schemeOptions}
-                    />
-                    {activeScheme && (
-                      <div className="space-y-2">
-                        <TextField
-                          label="Scheme name"
-                          value={activeScheme.name}
-                          onChange={(value) => updateSchemeName(activeScheme.id, value)}
-                        />
-                        <div className="grid grid-cols-2 gap-2">
-                          <ColorField
-                            label="Background"
-                            value={activeScheme.colors.background}
-                            onChange={(value) => updateSchemeColor(activeScheme.id, "background", value)}
-                          />
-                          <ColorField
-                            label="Surface"
-                            value={activeScheme.colors.surface}
-                            onChange={(value) => updateSchemeColor(activeScheme.id, "surface", value)}
-                          />
-                          <ColorField
-                            label="Text"
-                            value={activeScheme.colors.text}
-                            onChange={(value) => updateSchemeColor(activeScheme.id, "text", value)}
-                          />
-                          <ColorField
-                            label="Accent"
-                            value={activeScheme.colors.accent}
-                            onChange={(value) => updateSchemeColor(activeScheme.id, "accent", value)}
-                          />
-                          <ColorField
-                            label="Border"
-                            value={activeScheme.colors.border}
-                            onChange={(value) => updateSchemeColor(activeScheme.id, "border", value)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-3 text-xs text-gray-500">No schemes yet.</div>
-                )}
-              </div>
-
-              {isAddingScheme && (
-                <div className="rounded border border-border/40 bg-gray-900/60 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] uppercase tracking-wider text-gray-500">New scheme</div>
+                <div className="flex items-center justify-end">
+                  {schemeView === "list" ? (
+                    <div className="flex items-center gap-2">
+                      {activeScheme && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startEditScheme(activeScheme.id)}
+                          className="h-7 px-2 text-[11px]"
+                        >
+                          Edit scheme
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={startAddScheme}
+                        className="h-7 px-2 text-[11px]"
+                      >
+                        Add scheme
+                      </Button>
+                    </div>
+                  ) : (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setIsAddingScheme(false)}
+                      onClick={() => {
+                        setSchemeView("list");
+                        setEditingSchemeId(null);
+                      }}
                       className="h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200"
                     >
-                      Cancel
+                      <ArrowLeft className="mr-1 size-3" />
+                      Back to schemes
                     </Button>
-                  </div>
+                  )}
+                </div>
+                {schemeView === "list" ? (
+                  theme.colorSchemes.length > 0 ? (
+                    <div className="mt-3 flex flex-col gap-3">
+                      {theme.colorSchemes.map((scheme) => {
+                        const isActive = scheme.id === theme.activeColorSchemeId;
+                        return (
+                          <div
+                            key={scheme.id}
+                            className={`group rounded border p-2 text-left transition ${
+                              isActive
+                                ? "border-blue-500/60 bg-blue-500/10"
+                                : "border-border/40 bg-gray-900/40 hover:border-border/70"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => update("activeColorSchemeId", scheme.id)}
+                              className="w-full text-left"
+                            >
+                              <div className="mb-2 flex items-start justify-between gap-2 text-[11px] text-gray-300">
+                                <span className="whitespace-normal break-words">{scheme.name}</span>
+                                <div className="flex items-center gap-2">
+                                  {isActive && (
+                                    <span className="rounded-full border border-blue-500/40 bg-blue-500/20 px-2 py-0.5 text-[10px] text-blue-200">
+                                      Active
+                                    </span>
+                                  )}
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      startEditScheme(scheme.id);
+                                    }}
+                                    className="h-6 px-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-gray-200"
+                                  >
+                                    Edit
+                                  </Button>
+                                </div>
+                              </div>
+                              <div
+                                className="rounded border p-2"
+                                style={{ backgroundColor: scheme.colors.background, borderColor: scheme.colors.border }}
+                              >
+                                <div
+                                  className="overflow-hidden rounded border"
+                                  style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                                >
+                                  <div
+                                    className="flex items-center justify-between border-b px-2 py-1"
+                                    style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                                  >
+                                    <div
+                                      className="h-1.5 w-10 rounded"
+                                      style={{ backgroundColor: scheme.colors.text, opacity: 0.75 }}
+                                    />
+                                    <div
+                                      className="h-1.5 w-6 rounded"
+                                      style={{ backgroundColor: scheme.colors.accent }}
+                                    />
+                                  </div>
+                                  <div className="space-y-2 p-2">
+                                    <div
+                                      className="rounded border p-2"
+                                      style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                                    >
+                                      <div
+                                        className="h-2 w-4/5 rounded"
+                                        style={{ backgroundColor: scheme.colors.text, opacity: 0.8 }}
+                                      />
+                                      <div
+                                        className="mt-1 h-2 w-2/3 rounded"
+                                        style={{ backgroundColor: scheme.colors.text, opacity: 0.6 }}
+                                      />
+                                      <div className="mt-2 flex gap-2">
+                                        <div
+                                          className="h-2 w-8 rounded"
+                                          style={{ backgroundColor: scheme.colors.accent }}
+                                        />
+                                        <div
+                                          className="h-2 w-8 rounded"
+                                          style={{ backgroundColor: scheme.colors.text, opacity: 0.35 }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div
+                                      className="h-1 w-full rounded"
+                                      style={{ backgroundColor: scheme.colors.border, opacity: 0.7 }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-xs text-gray-500">No schemes yet.</div>
+                  )
+                ) : (
                   <div className="mt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-400">
+                        {editingSchemeId ? "Edit scheme" : "New scheme"}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveScheme}
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        {editingSchemeId ? "Save scheme" : "Create scheme"}
+                      </Button>
+                    </div>
                     <TextField
                       label="Scheme name"
                       value={newSchemeName}
@@ -478,33 +557,33 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                         onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, border: value }))}
                       />
                     </div>
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        onClick={handleCreateScheme}
-                        className="bg-blue-600 text-white hover:bg-blue-700"
-                      >
-                        Create scheme
-                      </Button>
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-gray-500">Global palette</div>
-                <div className="mt-3 space-y-3">
-                  <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
-                  <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
-                  <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
-                  <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
-                  <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
-                  <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
-                  <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
-                  <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
-                  <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
-                  <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsGlobalPaletteOpen((prev) => !prev)}
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                >
+                  <span className="text-[10px] uppercase tracking-wider text-gray-500">Global palette</span>
+                  <ChevronDown className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isGlobalPaletteOpen && (
+                  <div className="mt-3 space-y-3">
+                    <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
+                    <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
+                    <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
+                    <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
+                    <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
+                    <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
+                    <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
+                    <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
+                    <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
+                    <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -513,13 +592,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Typography":
           return (
             <div className="space-y-3">
-              <SelectField label="Heading font" value={theme.headingFont} onChange={(v) => update("headingFont", v)} options={FONT_OPTIONS} />
-              <SelectField label="Body font" value={theme.bodyFont} onChange={(v) => update("bodyFont", v)} options={FONT_OPTIONS} />
               <NumberField label="Base size" value={theme.baseSize} onChange={(v) => update("baseSize", v)} suffix="px" min={12} max={24} />
+              <SelectField label="Heading font" value={theme.headingFont} onChange={(v) => update("headingFont", v)} options={FONT_OPTIONS} />
+              <RangeField label="Heading size scale" value={theme.headingSizeScale} onChange={(v) => update("headingSizeScale", v)} min={0.5} max={2} step={0.05} suffix="x" />
               <SelectField label="Heading weight" value={theme.headingWeight} onChange={(v) => update("headingWeight", v)} options={WEIGHT_OPTIONS} />
+              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={(v) => update("headingLineHeight", v)} min={1} max={2} step={0.1} />
+              <SelectField label="Body font" value={theme.bodyFont} onChange={(v) => update("bodyFont", v)} options={FONT_OPTIONS} />
+              <RangeField label="Body size scale" value={theme.bodySizeScale} onChange={(v) => update("bodySizeScale", v)} min={0.5} max={2} step={0.05} suffix="x" />
               <SelectField label="Body weight" value={theme.bodyWeight} onChange={(v) => update("bodyWeight", v)} options={WEIGHT_OPTIONS} />
               <RangeField label="Body line height" value={theme.lineHeight} onChange={(v) => update("lineHeight", v)} min={1} max={2.5} step={0.1} />
-              <RangeField label="Heading line height" value={theme.headingLineHeight} onChange={(v) => update("headingLineHeight", v)} min={1} max={2} step={0.1} />
             </div>
           );
 
@@ -527,6 +608,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Layout":
           return (
             <div className="space-y-3">
+              <CheckboxField label="Full width page" checked={theme.fullWidth} onChange={(v) => update("fullWidth", v)} />
               <RangeField label="Max content width" value={theme.maxContentWidth} onChange={(v) => update("maxContentWidth", v)} min={800} max={1600} suffix="px" />
               <RangeField label="Grid gutter" value={theme.gridGutter} onChange={(v) => update("gridGutter", v)} min={8} max={48} suffix="px" />
               <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={(v) => update("sectionSpacing", v)} min={16} max={128} suffix="px" />
@@ -550,7 +632,36 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                     { label: "Linear", value: "linear" },
                     { label: "Spring", value: "cubic-bezier(.68,-0.55,.27,1.55)" },
                   ]} />
-                  <CheckboxField label="Scroll reveal" checked={theme.scrollReveal} onChange={(v) => update("scrollReveal", v)} />
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-gray-500">Reveal sections on scroll</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={theme.scrollReveal ? "secondary" : "outline"}
+                        onClick={() => update("scrollReveal", true)}
+                        className="h-7 flex-1 text-[11px]"
+                      >
+                        On
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={!theme.scrollReveal ? "secondary" : "outline"}
+                        onClick={() => update("scrollReveal", false)}
+                        className="h-7 flex-1 text-[11px]"
+                      >
+                        Off
+                      </Button>
+                    </div>
+                  </div>
+                  <SelectField
+                    label="Hover effect"
+                    value={theme.hoverEffect}
+                    onChange={(v) => update("hoverEffect", v)}
+                    options={[
+                      { label: "Vertical lift", value: "vertical-lift" },
+                      { label: "3D lift", value: "lift-3d" },
+                    ]}
+                  />
                   <RangeField label="Hover scale" value={theme.hoverScale} onChange={(v) => update("hoverScale", v)} min={1} max={1.2} step={0.01} suffix="x" />
                 </>
               )}
@@ -583,6 +694,25 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 </div>
               </div>
               <ColorField label="Outline border" value={theme.btnOutlineBorder} onChange={(v) => update("btnOutlineBorder", v)} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <NumberField label="Thickness" value={theme.btnBorderWidth} onChange={(v) => update("btnBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.btnBorderOpacity} onChange={(v) => update("btnBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.btnBorderRadius} onChange={(v) => update("btnBorderRadius", v)} suffix="px" min={0} max={48} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.btnShadowOpacity} onChange={(v) => update("btnShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.btnShadowX} onChange={(v) => update("btnShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.btnShadowY} onChange={(v) => update("btnShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.btnShadowBlur} onChange={(v) => update("btnShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -590,7 +720,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Variant Pills":
           return (
             <div className="space-y-3">
-              <NumberField label="Radius" value={theme.pillRadius} onChange={(v) => update("pillRadius", v)} suffix="px" min={0} max={999} />
+              <NumberField label="Corner radius" value={theme.pillRadius} onChange={(v) => update("pillRadius", v)} suffix="px" min={0} max={999} />
               <div className="grid grid-cols-2 gap-2">
                 <NumberField label="Padding X" value={theme.pillPaddingX} onChange={(v) => update("pillPaddingX", v)} suffix="px" min={4} max={32} />
                 <NumberField label="Padding Y" value={theme.pillPaddingY} onChange={(v) => update("pillPaddingY", v)} suffix="px" min={2} max={16} />
@@ -600,6 +730,25 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <ColorField label="Text" value={theme.pillText} onChange={(v) => update("pillText", v)} />
               <ColorField label="Active background" value={theme.pillActiveBg} onChange={(v) => update("pillActiveBg", v)} />
               <ColorField label="Active text" value={theme.pillActiveText} onChange={(v) => update("pillActiveText", v)} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <ColorField label="Border" value={theme.pillBorderColor} onChange={(v) => update("pillBorderColor", v)} />
+                  <NumberField label="Thickness" value={theme.pillBorderWidth} onChange={(v) => update("pillBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.pillBorderOpacity} onChange={(v) => update("pillBorderOpacity", v)} min={0} max={100} suffix="%" />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.pillShadowOpacity} onChange={(v) => update("pillShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.pillShadowX} onChange={(v) => update("pillShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.pillShadowY} onChange={(v) => update("pillShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.pillShadowBlur} onChange={(v) => update("pillShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -608,13 +757,31 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-3">
               <NumberField label="Height" value={theme.inputHeight} onChange={(v) => update("inputHeight", v)} suffix="px" min={28} max={56} />
-              <NumberField label="Radius" value={theme.inputRadius} onChange={(v) => update("inputRadius", v)} suffix="px" min={0} max={24} />
               <NumberField label="Font size" value={theme.inputFontSize} onChange={(v) => update("inputFontSize", v)} suffix="px" min={10} max={20} />
               <ColorField label="Background" value={theme.inputBg} onChange={(v) => update("inputBg", v)} />
               <ColorField label="Text" value={theme.inputText} onChange={(v) => update("inputText", v)} />
-              <ColorField label="Border" value={theme.inputBorderColor} onChange={(v) => update("inputBorderColor", v)} />
               <ColorField label="Focus border" value={theme.inputFocusBorder} onChange={(v) => update("inputFocusBorder", v)} />
               <ColorField label="Placeholder" value={theme.inputPlaceholder} onChange={(v) => update("inputPlaceholder", v)} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <ColorField label="Border" value={theme.inputBorderColor} onChange={(v) => update("inputBorderColor", v)} />
+                  <NumberField label="Thickness" value={theme.inputBorderWidth} onChange={(v) => update("inputBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.inputBorderOpacity} onChange={(v) => update("inputBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.inputRadius} onChange={(v) => update("inputRadius", v)} suffix="px" min={0} max={24} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.inputShadowOpacity} onChange={(v) => update("inputShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.inputShadowX} onChange={(v) => update("inputShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.inputShadowY} onChange={(v) => update("inputShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.inputShadowBlur} onChange={(v) => update("inputShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -622,12 +789,25 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Product Cards":
           return (
             <div className="space-y-3">
+              <SelectField label="Style" value={theme.cardStyle} onChange={(v) => update("cardStyle", v)} options={[
+                { label: "Standard", value: "standard" },
+                { label: "Card", value: "card" },
+              ]} />
               <SelectField label="Image ratio" value={theme.cardImageRatio} onChange={(v) => update("cardImageRatio", v)} options={[
                 { label: "1:1 Square", value: "1:1" },
                 { label: "3:4 Portrait", value: "3:4" },
                 { label: "4:3 Landscape", value: "4:3" },
                 { label: "16:9 Wide", value: "16:9" },
               ]} />
+              <RangeField label="Image padding" value={theme.cardImagePadding} onChange={(v) => update("cardImagePadding", v)} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.cardTextAlignment} onChange={(v) => update("cardTextAlignment", v)} options={[
+                { label: "Left", value: "left" },
+                { label: "Center", value: "center" },
+                { label: "Right", value: "right" },
+              ]} />
+              <SelectField label="Color scheme" value={theme.cardColorScheme} onChange={(v) => update("cardColorScheme", v)} options={
+                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              } />
               <NumberField label="Radius" value={theme.cardRadius} onChange={(v) => update("cardRadius", v)} suffix="px" min={0} max={24} />
               <ColorField label="Background" value={theme.cardBg} onChange={(v) => update("cardBg", v)} />
               <SelectField label="Shadow" value={theme.cardShadow} onChange={(v) => update("cardShadow", v)} options={[
@@ -638,6 +818,25 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               ]} />
               <CheckboxField label="Show badge" checked={theme.showBadge} onChange={(v) => update("showBadge", v)} />
               <CheckboxField label="Show quick-add button" checked={theme.showQuickAdd} onChange={(v) => update("showQuickAdd", v)} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <NumberField label="Thickness" value={theme.cardBorderWidth} onChange={(v) => update("cardBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.cardBorderOpacity} onChange={(v) => update("cardBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.cardBorderRadius} onChange={(v) => update("cardBorderRadius", v)} suffix="px" min={0} max={48} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.cardShadowOpacity} onChange={(v) => update("cardShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.cardShadowX} onChange={(v) => update("cardShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.cardShadowY} onChange={(v) => update("cardShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.cardShadowBlur} onChange={(v) => update("cardShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -645,17 +844,43 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Collection Cards":
           return (
             <div className="space-y-3">
+              <SelectField label="Style" value={theme.collectionStyle} onChange={(v) => update("collectionStyle", v)} options={[
+                { label: "Standard", value: "standard" },
+                { label: "Card", value: "card" },
+              ]} />
               <SelectField label="Image ratio" value={theme.collectionRatio} onChange={(v) => update("collectionRatio", v)} options={[
                 { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
               ]} />
-              <NumberField label="Radius" value={theme.collectionRadius} onChange={(v) => update("collectionRadius", v)} suffix="px" min={0} max={24} />
+              <RangeField label="Image padding" value={theme.collectionImagePadding} onChange={(v) => update("collectionImagePadding", v)} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={(v) => update("collectionTextAlign", v)} options={[
+                { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
+              ]} />
+              <SelectField label="Color scheme" value={theme.collectionColorScheme} onChange={(v) => update("collectionColorScheme", v)} options={
+                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              } />
               <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={(v) => update("collectionOverlay", v)} />
               {theme.collectionOverlay && (
                 <ColorField label="Overlay color" value={theme.collectionOverlayColor} onChange={(v) => update("collectionOverlayColor", v)} />
               )}
-              <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={(v) => update("collectionTextAlign", v)} options={[
-                { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
-              ]} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <NumberField label="Thickness" value={theme.collectionBorderWidth} onChange={(v) => update("collectionBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.collectionBorderOpacity} onChange={(v) => update("collectionBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.collectionRadius} onChange={(v) => update("collectionRadius", v)} suffix="px" min={0} max={24} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.collectionShadowOpacity} onChange={(v) => update("collectionShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.collectionShadowX} onChange={(v) => update("collectionShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.collectionShadowY} onChange={(v) => update("collectionShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.collectionShadowBlur} onChange={(v) => update("collectionShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -663,15 +888,47 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Blog Cards":
           return (
             <div className="space-y-3">
+              <SelectField label="Style" value={theme.blogStyle} onChange={(v) => update("blogStyle", v)} options={[
+                { label: "Standard", value: "standard" },
+                { label: "Card", value: "card" },
+              ]} />
               <SelectField label="Image ratio" value={theme.blogRatio} onChange={(v) => update("blogRatio", v)} options={[
                 { label: "1:1 Square", value: "1:1" }, { label: "3:4 Portrait", value: "3:4" }, { label: "4:3 Landscape", value: "4:3" }, { label: "16:9 Wide", value: "16:9" },
               ]} />
+              <RangeField label="Image padding" value={theme.blogImagePadding} onChange={(v) => update("blogImagePadding", v)} min={0} max={20} suffix="px" />
+              <SelectField label="Text alignment" value={theme.blogTextAlignment} onChange={(v) => update("blogTextAlignment", v)} options={[
+                { label: "Left", value: "left" },
+                { label: "Center", value: "center" },
+                { label: "Right", value: "right" },
+              ]} />
+              <SelectField label="Color scheme" value={theme.blogColorScheme} onChange={(v) => update("blogColorScheme", v)} options={
+                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              } />
               <NumberField label="Radius" value={theme.blogRadius} onChange={(v) => update("blogRadius", v)} suffix="px" min={0} max={24} />
               <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={(v) => update("blogShowDate", v)} />
               <CheckboxField label="Show excerpt" checked={theme.blogShowExcerpt} onChange={(v) => update("blogShowExcerpt", v)} />
               {theme.blogShowExcerpt && (
                 <NumberField label="Excerpt lines" value={theme.blogExcerptLines} onChange={(v) => update("blogExcerptLines", v)} min={1} max={5} />
               )}
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <NumberField label="Thickness" value={theme.blogBorderWidth} onChange={(v) => update("blogBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.blogBorderOpacity} onChange={(v) => update("blogBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.blogBorderRadius} onChange={(v) => update("blogBorderRadius", v)} suffix="px" min={0} max={48} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.blogShadowOpacity} onChange={(v) => update("blogShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.blogShadowX} onChange={(v) => update("blogShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.blogShadowY} onChange={(v) => update("blogShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.blogShadowBlur} onChange={(v) => update("blogShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -680,12 +937,31 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-3">
               <ColorField label="Background" value={theme.containerBg} onChange={(v) => update("containerBg", v)} />
-              <ColorField label="Border" value={theme.containerBorderColor} onChange={(v) => update("containerBorderColor", v)} />
+              <ColorField label="Border color" value={theme.containerBorderColor} onChange={(v) => update("containerBorderColor", v)} />
               <NumberField label="Radius" value={theme.containerRadius} onChange={(v) => update("containerRadius", v)} suffix="px" min={0} max={24} />
               <NumberField label="Inner padding" value={theme.containerPaddingInner} onChange={(v) => update("containerPaddingInner", v)} suffix="px" min={8} max={64} />
               <SelectField label="Shadow" value={theme.containerShadow} onChange={(v) => update("containerShadow", v)} options={[
                 { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
               ]} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <NumberField label="Thickness" value={theme.containerBorderWidth} onChange={(v) => update("containerBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.containerBorderOpacity} onChange={(v) => update("containerBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.containerBorderRadius} onChange={(v) => update("containerBorderRadius", v)} suffix="px" min={0} max={48} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.containerShadowOpacity} onChange={(v) => update("containerShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.containerShadowX} onChange={(v) => update("containerShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.containerShadowY} onChange={(v) => update("containerShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.containerShadowBlur} onChange={(v) => update("containerShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -693,12 +969,30 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Media":
           return (
             <div className="space-y-3">
-              <NumberField label="Image radius" value={theme.imageRadius} onChange={(v) => update("imageRadius", v)} suffix="px" min={0} max={24} />
-              <ColorField label="Image border" value={theme.imageBorderColor} onChange={(v) => update("imageBorderColor", v)} />
               <ColorField label="Placeholder bg" value={theme.imagePlaceholderBg} onChange={(v) => update("imagePlaceholderBg", v)} />
               <SelectField label="Video ratio" value={theme.videoRatio} onChange={(v) => update("videoRatio", v)} options={[
                 { label: "16:9", value: "16:9" }, { label: "4:3", value: "4:3" }, { label: "1:1", value: "1:1" }, { label: "9:16 Vertical", value: "9:16" },
               ]} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <ColorField label="Border color" value={theme.imageBorderColor} onChange={(v) => update("imageBorderColor", v)} />
+                  <NumberField label="Thickness" value={theme.imageBorderWidth} onChange={(v) => update("imageBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.imageBorderOpacity} onChange={(v) => update("imageBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.imageRadius} onChange={(v) => update("imageRadius", v)} suffix="px" min={0} max={48} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.imageShadowOpacity} onChange={(v) => update("imageShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.imageShadowX} onChange={(v) => update("imageShadowX", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Vertical" value={theme.imageShadowY} onChange={(v) => update("imageShadowY", v)} suffix="px" min={-20} max={20} />
+                    <NumberField label="Blur" value={theme.imageShadowBlur} onChange={(v) => update("imageShadowBlur", v)} suffix="px" min={0} max={40} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -707,13 +1001,33 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           return (
             <div className="space-y-3">
               <ColorField label="Dropdown bg" value={theme.dropdownBg} onChange={(v) => update("dropdownBg", v)} />
-              <ColorField label="Dropdown border" value={theme.dropdownBorder} onChange={(v) => update("dropdownBorder", v)} />
-              <NumberField label="Dropdown radius" value={theme.dropdownRadius} onChange={(v) => update("dropdownRadius", v)} suffix="px" min={0} max={24} />
-              <SelectField label="Dropdown shadow" value={theme.dropdownShadow} onChange={(v) => update("dropdownShadow", v)} options={[
-                { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
-              ]} />
               <ColorField label="Popup overlay" value={theme.popupOverlayColor} onChange={(v) => update("popupOverlayColor", v)} />
-              <NumberField label="Popup radius" value={theme.popupRadius} onChange={(v) => update("popupRadius", v)} suffix="px" min={0} max={32} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <ColorField label="Border color" value={theme.dropdownBorder} onChange={(v) => update("dropdownBorder", v)} />
+                  <NumberField label="Thickness" value={theme.dropdownBorderWidth} onChange={(v) => update("dropdownBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.dropdownBorderOpacity} onChange={(v) => update("dropdownBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <NumberField label="Dropdown radius" value={theme.dropdownRadius} onChange={(v) => update("dropdownRadius", v)} suffix="px" min={0} max={24} />
+                    <NumberField label="Popup radius" value={theme.popupRadius} onChange={(v) => update("popupRadius", v)} suffix="px" min={0} max={32} />
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <SelectField label="Preset" value={theme.dropdownShadow} onChange={(v) => update("dropdownShadow", v)} options={[
+                    { label: "None", value: "none" }, { label: "Small", value: "small" }, { label: "Medium", value: "medium" }, { label: "Large", value: "large" },
+                  ]} />
+                  <RangeField label="Opacity" value={theme.dropdownShadowOpacity} onChange={(v) => update("dropdownShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.dropdownShadowX} onChange={(v) => update("dropdownShadowX", v)} suffix="px" min={-30} max={30} />
+                    <NumberField label="Vertical" value={theme.dropdownShadowY} onChange={(v) => update("dropdownShadowY", v)} suffix="px" min={-30} max={30} />
+                    <NumberField label="Blur" value={theme.dropdownShadowBlur} onChange={(v) => update("dropdownShadowBlur", v)} suffix="px" min={0} max={60} />
+                  </div>
+                </div>
+              </div>
             </div>
           );
 
@@ -727,6 +1041,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField label="Position" value={theme.drawerPosition} onChange={(v) => update("drawerPosition", v)} options={[
                 { label: "Right", value: "right" }, { label: "Left", value: "left" },
               ]} />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Border</Label>
+                <div className="space-y-2">
+                  <ColorField label="Border color" value={theme.drawerBorderColor} onChange={(v) => update("drawerBorderColor", v)} />
+                  <NumberField label="Thickness" value={theme.drawerBorderWidth} onChange={(v) => update("drawerBorderWidth", v)} suffix="px" min={0} max={8} />
+                  <RangeField label="Opacity" value={theme.drawerBorderOpacity} onChange={(v) => update("drawerBorderOpacity", v)} min={0} max={100} suffix="%" />
+                  <NumberField label="Corner radius" value={theme.drawerRadius} onChange={(v) => update("drawerRadius", v)} suffix="px" min={0} max={32} />
+                </div>
+              </div>
             </div>
           );
 
@@ -863,21 +1186,20 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     },
     [
       activeScheme,
-      handleCreateScheme,
+      handleSaveScheme,
       handleLogoChange,
       handlePickLogo,
-      isAddingScheme,
+      editingSchemeId,
       logoFile?.name,
       logoPreviewUrl,
       logoWidth,
       newSchemeColors,
       newSchemeName,
-      schemeOptions,
       startAddScheme,
+      startEditScheme,
+      schemeView,
       theme,
       update,
-      updateSchemeColor,
-      updateSchemeName,
     ]
   );
 

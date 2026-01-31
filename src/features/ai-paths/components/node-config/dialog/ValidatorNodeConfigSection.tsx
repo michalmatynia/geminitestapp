@@ -15,7 +15,7 @@ type ValidatorNodeConfigSectionProps = {
 export function ValidatorNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: ValidatorNodeConfigSectionProps) {
+}: ValidatorNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "validator") return null;
 
   const validatorConfig = selectedNode.config?.validator ?? {
@@ -29,7 +29,7 @@ export function ValidatorNodeConfigSection({
         <Label className="text-xs text-gray-400">Validation Mode</Label>
         <Select
           value={validatorConfig.mode}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               validator: {
                 ...validatorConfig,
@@ -54,7 +54,7 @@ export function ValidatorNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={(validatorConfig.requiredPaths ?? []).join("\n")}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               validator: {
                 ...validatorConfig,

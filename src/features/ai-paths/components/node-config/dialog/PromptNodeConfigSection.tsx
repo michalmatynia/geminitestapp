@@ -26,39 +26,39 @@ export function PromptNodeConfigSection({
   updateSelectedNodeConfig,
   onSendToAi,
   sendingToAi,
-}: PromptNodeConfigSectionProps) {
+}: PromptNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "prompt") return null;
 
   const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
     template: "",
   };
-  const handleInsertPlaceholder = (placeholder: string) => {
+  const handleInsertPlaceholder = (placeholder: string): void => {
     const current = promptConfig.template ?? "";
     const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";
     const next = `${current}${separator}${placeholder}`;
     updateSelectedNodeConfig({ prompt: { template: next } });
   };
-  const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+  const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
   const inputPorts = incomingEdges
-    .map((edge) => edge.toPort)
-    .filter((port): port is string => Boolean(port));
+    .map((edge: Edge) => edge.toPort)
+    .filter((port: string | undefined): port is string => Boolean(port));
   const bundleKeys = new Set<string>();
-  incomingEdges.forEach((edge) => {
+  incomingEdges.forEach((edge: Edge) => {
     if (edge.toPort !== "bundle") return;
-    const fromNode = nodes.find((node) => node.id === edge.from);
+    const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
     if (!fromNode) return;
     if (fromNode.type === "parser") {
       const mappings =
         fromNode.config?.parser?.mappings ??
         createParserMappings(fromNode.outputs);
-      Object.keys(mappings).forEach((key) => {
+      Object.keys(mappings).forEach((key: string) => {
         const trimmed = key.trim();
         if (trimmed) bundleKeys.add(trimmed);
       });
       return;
     }
     if (fromNode.type === "bundle") {
-      fromNode.inputs.forEach((port) => {
+      fromNode.inputs.forEach((port: string) => {
         const trimmed = port.trim();
         if (trimmed) bundleKeys.add(trimmed);
       });
@@ -66,13 +66,13 @@ export function PromptNodeConfigSection({
     if (fromNode.type === "mapper") {
       const mapperOutputs =
         fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-      mapperOutputs.forEach((output) => {
+      mapperOutputs.forEach((output: string) => {
         const trimmed = output.trim();
         if (trimmed) bundleKeys.add(trimmed);
       });
     }
   });
-  const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
+  const directPlaceholders = inputPorts.filter((port: string) => port !== "bundle");
 
   return (
     <div className="space-y-4">
@@ -81,7 +81,7 @@ export function PromptNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={promptConfig.template}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
             updateSelectedNodeConfig({
               prompt: { template: event.target.value },
             })
@@ -100,14 +100,14 @@ export function PromptNodeConfigSection({
         <div className="text-gray-300">Available placeholders</div>
         {bundleKeys.size > 0 ? (
           <div className="mt-2 flex flex-wrap gap-2">
-            {Array.from(bundleKeys).map((key) => (
+            {Array.from(bundleKeys).map((key: string) => (
               <span
                 key={key}
                 role="button"
                 tabIndex={0}
                 className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
                 onClick={() => handleInsertPlaceholder(`{{${key}}}`)}
-                onKeyDown={(event) => {
+                onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     handleInsertPlaceholder(`{{${key}}}`);
@@ -128,21 +128,21 @@ export function PromptNodeConfigSection({
           <div className="mt-3 text-[11px] text-gray-500">
             Direct inputs:{" "}
             {directPlaceholders
-              .map((port) => formatPlaceholderLabel(port))
+              .map((port: string) => formatPlaceholderLabel(port))
               .join(", ")}
           </div>
         )}
       </div>
-      {(() => {
+      {(() : React.JSX.Element => {
         const outgoingEdges = edges.filter(
-          (edge) => edge.from === selectedNode.id
+          (edge: Edge) => edge.from === selectedNode.id
         );
-        const aiEdge = outgoingEdges.find((edge) => {
-          const targetNode = nodes.find((n) => n.id === edge.to);
+        const aiEdge = outgoingEdges.find((edge: Edge) => {
+          const targetNode = nodes.find((n: AiNode) => n.id === edge.to);
           return targetNode?.type === "model";
         });
         const aiNode = aiEdge
-          ? nodes.find((n) => n.id === aiEdge.to && n.type === "model")
+          ? nodes.find((n: AiNode) => n.id === aiEdge.to && n.type === "model")
           : null;
         const aiModelId = aiNode?.config?.model?.modelId;
         const hasPromptContent = promptConfig.template && promptConfig.template.trim().length > 0;
@@ -189,7 +189,7 @@ export function PromptNodeConfigSection({
           </div>
         );
       })()}
-      {(() => {
+      {(() : React.JSX.Element => {
         const resultValue = runtimeState.inputs[selectedNode.id]?.result
           ?? runtimeState.outputs[selectedNode.id]?.result;
         const hasResult = resultValue !== undefined && resultValue !== null;

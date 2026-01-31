@@ -13,7 +13,7 @@ import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 
 
-export default function RegisterPage() {
+export default function RegisterPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -33,7 +33,7 @@ export default function RegisterPage() {
   return <RegisterForm allowSignup={allowSignup} />;
 }
 
-function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
+function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Element {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +42,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
   
   const registerUserMutation = useRegisterUser();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
@@ -108,7 +108,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
             Self-service registration is disabled. Please contact an administrator.
           </div>
         ) : null}
-        <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
+        <form className="space-y-4" onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
           <div className="space-y-2">
             <Label className="text-sm text-gray-300" htmlFor="name">
               Name (optional)
@@ -118,7 +118,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
               type="text"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
               disabled={!allowSignup}
             />
           </div>
@@ -131,7 +131,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
               type="email"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
               required
               disabled={!allowSignup}
             />
@@ -145,7 +145,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
               type="password"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
               required
               minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
               disabled={!allowSignup}

@@ -79,7 +79,7 @@ describe("PathRunExecutor", () => {
   it("should update node records during execution", async () => {
     // Setup evaluateGraph to call onNodeStart and onNodeFinish
     (evaluateGraph as any).mockImplementation(async (options: any) => {
-      await options.onNodeStart({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {} });
+      options.onNodeStart({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {} });
       await options.onNodeFinish({ node: mockNodes[0], nodeInputs: {}, nextOutputs: { value: "done" }, iteration: 0 });
       return { outputs: { "node-1": { value: "done" } } };
     });

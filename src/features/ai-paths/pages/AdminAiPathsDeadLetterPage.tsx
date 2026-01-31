@@ -155,17 +155,18 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         if (!prev) return prev;
         const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
         const merged = [...prev.events];
-        incoming.forEach((event: AiPathRunEventRecord) => {
-          if (!existingIds.has(event.id)) {
-            merged.push(event);
-          }
-        });
-        merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-          const aTime = new Date(a.createdAt).getTime();
-          const bTime = new Date(b.createdAt).getTime();
-          return aTime - bTime;
-        });
-        return { ...prev, events: merged };
+                  incoming.forEach((event: AiPathRunEventRecord) => {
+                    if (!existingIds.has(event.id)) {
+                      merged.push(event);
+                    }
+                  });
+                  merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
+                    const aTime = new Date(a.createdAt).getTime();
+                    const bTime = new Date(b.createdAt).getTime();
+                    return aTime - bTime;
+                  });
+                  return { ...prev, events: merged };
+        
       });
     };
 
@@ -225,11 +226,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       source.close();
       setStreamStatus("stopped");
     };
-  }, [detailOpen, detail?.run?.id, streamPaused]);
+  }, [detailOpen, detail?.run?.id, streamPaused, detail.events]);
 
   const selectedCount = selectedIds.size;
   const visibleSelectedCount = useMemo(
-    () => runs.filter((run) => selectedIds.has(run.id)).length,
+    () => runs.filter((run: AiPathRunRecord) => selectedIds.has(run.id)).length,
     [runs, selectedIds]
   );
   const allVisibleSelected = runs.length > 0 && visibleSelectedCount === runs.length;
@@ -497,13 +498,13 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           <div className="flex flex-wrap items-center gap-2">
             <Input
               value={pathId}
-              onChange={(event) => setPathId(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPathId(event.target.value)}
               placeholder="Filter by path ID"
               className="h-9 w-[220px] border-border bg-card/70 text-sm text-white"
             />
             <Input
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(event.target.value)}
               placeholder="Search run/entity/error"
               className="h-9 w-[240px] border-border bg-card/70 text-sm text-white"
             />
@@ -552,7 +553,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             </Button>
             <Select
               value={requeueMode}
-              onValueChange={(value) => setRequeueMode(value as "resume" | "replay")}
+              onValueChange={(value: string) => setRequeueMode(value as "resume" | "replay")}
             >
               <SelectTrigger className="h-8 w-[160px] border-border bg-card/70 text-xs text-white">
                 <SelectValue placeholder="Requeue mode" />
@@ -601,7 +602,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {runs.map((run) => (
+              {runs.map((run: AiPathRunRecord) => (
                 <TableRow key={run.id} className="border-border/50">
                   <TableCell>
                     <Checkbox
@@ -669,7 +670,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
           <span>Page {page} of {totalPages}</span>
           <div className="flex items-center gap-2">
-            {PAGE_SIZES.map((size) => (
+            {PAGE_SIZES.map((size: number) => (
               <Button
                 key={size}
                 variant={size === pageSize ? "secondary" : "ghost"}
@@ -682,7 +683,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
               disabled={page === 1}
             >
               Previous
@@ -690,7 +691,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
               disabled={page >= totalPages}
             >
               Next
@@ -726,7 +727,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setStreamPaused((prev) => !prev)}
+                      onClick={() => setStreamPaused((prev: boolean) => !prev)}
                     >
                       {streamPaused ? "Resume stream" : "Pause stream"}
                     </Button>
@@ -794,13 +795,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                           style={{ width: `${nodeStatusSummary.progress}%` }}
                         />
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                        {Object.entries(nodeStatusSummary.counts).map(([status, count]) => (
-                          <span key={status}>
-                            {status}: {count}
-                          </span>
-                        ))}
-                      </div>
+                                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                                                {Object.entries(nodeStatusSummary.counts).map(([status, count]: [string, number]) => (
+                                                  <span key={status}>
+                                                    {status}: {count}
+                                                  </span>
+                                                ))}
+                                              </div>
+                      
                     </div>
                   ) : null}
                 </div>
@@ -811,42 +813,43 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   <span>Nodes</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-gray-500">{detail.nodes.length} total</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const hasAnyExpanded = detail.nodes.some((node) =>
-                          expandedNodeIds.has(node.nodeId)
-                        );
-                        if (hasAnyExpanded) {
-                          setExpandedNodeIds(new Set());
-                          return;
-                        }
-                        const next = new Set<string>();
-                        detail.nodes.forEach((node) => {
-                          if (node.inputs || node.outputs) {
-                            next.add(node.nodeId);
-                          }
-                        });
-                        setExpandedNodeIds(next);
-                      }}
-                      disabled={detail.nodes.every((node) => !node.inputs && !node.outputs)}
-                    >
-                      {detail.nodes.some((node) => expandedNodeIds.has(node.nodeId))
-                        ? "Collapse all"
-                        : "Expand all"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowRetryFailedConfirm(true)}
-                      disabled={
-                        retryFailedPending ||
-                        detail.nodes.every(
-                          (node) => node.status !== "failed" && node.status !== "blocked"
-                        )
-                      }
-                    >
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              const hasAnyExpanded = detail.nodes.some((node: AiPathRunNodeRecord) =>
+                                                expandedNodeIds.has(node.nodeId)
+                                              );
+                                              if (hasAnyExpanded) {
+                                                setExpandedNodeIds(new Set());
+                                                return;
+                                              }
+                                              const next = new Set<string>();
+                                              detail.nodes.forEach((node: AiPathRunNodeRecord) => {
+                                                if (node.inputs || node.outputs) {
+                                                  next.add(node.nodeId);
+                                                }
+                                              });
+                                              setExpandedNodeIds(next);
+                                            }}
+                                            disabled={detail.nodes.every((node: AiPathRunNodeRecord) => !node.inputs && !node.outputs)}
+                                          >
+                                            {detail.nodes.some((node: AiPathRunNodeRecord) => expandedNodeIds.has(node.nodeId))
+                                              ? "Collapse all"
+                                              : "Expand all"}
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowRetryFailedConfirm(true)}
+                                            disabled={
+                                              retryFailedPending ||
+                                              detail.nodes.every(
+                                                (node: AiPathRunNodeRecord) => node.status !== "failed" && node.status !== "blocked"
+                                              )
+                                            }
+                                          >
+                    
                       {retryFailedPending ? "Retrying..." : "Retry failed only"}
                     </Button>
                   </div>
@@ -865,7 +868,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {detail.nodes.map((node) => {
+                      {detail.nodes.map((node: AiPathRunNodeRecord) => {
                         const isRetryable = node.status === "failed" || node.status === "blocked";
                         const isRetrying =
                           retryNodeMutation.isPending &&
@@ -1016,7 +1019,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     <div className="text-xs text-gray-400">No events recorded.</div>
                   ) : (
                     <div className="space-y-2">
-                      {detail.events.map((event) => (
+                      {detail.events.map((event: AiPathRunEventRecord) => (
                         <div
                           key={event.id}
                           className="rounded-md border border-border/60 bg-black/30 px-3 py-2"

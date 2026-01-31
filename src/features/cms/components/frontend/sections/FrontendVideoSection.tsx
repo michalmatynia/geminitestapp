@@ -1,8 +1,10 @@
 import React from "react";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendVideoSectionProps {
   settings: Record<string, unknown>;
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
 function getEmbedUrl(url: string): string | null {
@@ -33,8 +35,8 @@ function getAspectPadding(ratio: string): string {
   }
 }
 
-export function FrontendVideoSection({ settings }: FrontendVideoSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendVideoSection({ settings, colorSchemes, layout }: FrontendVideoSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const videoUrl = (settings["videoUrl"] as string) || "";
   const aspectRatio = (settings["aspectRatio"] as string) || "16:9";
   const autoplay = (settings["autoplay"] as string) === "yes";
@@ -43,7 +45,7 @@ export function FrontendVideoSection({ settings }: FrontendVideoSectionProps): R
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto max-w-4xl px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-4xl" })}>
         {embedUrl ? (
           <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom: getAspectPadding(aspectRatio) }}>
             <iframe

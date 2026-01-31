@@ -1,15 +1,17 @@
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 
 interface FrontendHeroSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: FrontendHeroSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings["image"] as string | undefined;
   const imageHeight = (settings["imageHeight"] as string) || "large";
 
@@ -36,7 +38,13 @@ export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionPro
       )}
 
       {/* Content overlay */}
-      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
+      <div
+        className={`relative z-10 ${getSectionContainerClass({
+          fullWidth: layout?.fullWidth,
+          maxWidthClass: "max-w-3xl",
+          paddingClass: "px-6",
+        })} text-center`}
+      >
         <div className="space-y-4">
           {blocks.map((block: BlockInstance) => (
             <FrontendBlockRenderer key={block.id} block={block} />

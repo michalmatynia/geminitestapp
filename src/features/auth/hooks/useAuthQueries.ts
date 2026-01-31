@@ -10,8 +10,8 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from "@/features/auth/api/users";
-import { registerUser } from "@/features/auth/api/register";
-import { verifyCredentials } from "@/features/auth/api/credentials";
+import { registerUser, type RegisterResponse } from "@/features/auth/api/register";
+import { verifyCredentials, type VerifyCredentialsResponse } from "@/features/auth/api/credentials";
 import type { AuthUserSummary } from "../types";
 
 const authKeys = {
@@ -98,7 +98,11 @@ export function useMockSignIn(): UseMutationResult<{ ok: boolean; payload: { ok?
   });
 }
 
-export function useRegisterUser(): UseMutationResult<any, Error, any> {
+export function useRegisterUser(): UseMutationResult<
+  { ok: boolean; payload: RegisterResponse },
+  Error,
+  { email: string; password: string; name?: string; emailVerified?: boolean }
+> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: registerUser,
@@ -108,7 +112,11 @@ export function useRegisterUser(): UseMutationResult<any, Error, any> {
   });
 }
 
-export function useVerifyCredentials(): UseMutationResult<any, Error, any> {
+export function useVerifyCredentials(): UseMutationResult<
+  { ok: boolean; payload: VerifyCredentialsResponse },
+  Error,
+  { email: string; password: string }
+> {
   return useMutation({
     mutationFn: verifyCredentials,
   });

@@ -41,7 +41,7 @@ const buildDefaultProfile = (userId: string): AuthSecurityProfile => ({
   updatedAt: new Date(),
 });
 
-const normalizeProfile = (profile: AuthSecurityProfile) => ({
+const normalizeProfile = (profile: AuthSecurityProfile): AuthSecurityProfile => ({
   ...profile,
   recoveryCodes: Array.isArray(profile.recoveryCodes) ? profile.recoveryCodes : [],
   allowedIps: Array.isArray(profile.allowedIps) ? profile.allowedIps : [],

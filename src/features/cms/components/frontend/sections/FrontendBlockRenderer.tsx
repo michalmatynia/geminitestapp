@@ -112,7 +112,7 @@ function ButtonBlock({ settings }: { settings: Record<string, unknown> }): React
   const link = (settings["buttonLink"] as string) || "#";
   const style = (settings["buttonStyle"] as string) || "solid";
 
-  const baseClasses = "inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const baseClasses = "cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
 
   const customStyles: React.CSSProperties = {};
   const fontFamily = settings["fontFamily"] as string | undefined;
@@ -299,7 +299,7 @@ function AppEmbedBlock({ settings }: { settings: Record<string, unknown> }): Rea
   const appLabel = APP_EMBED_OPTIONS.find((option) => option.id === appId)?.label ?? "App";
 
   return (
-    <div className="w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">
+    <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">
       <div className="mb-3">
         <div className="text-sm font-semibold text-white">{title || appLabel}</div>
         <div className="text-[10px] uppercase tracking-wide text-gray-500">App embed</div>

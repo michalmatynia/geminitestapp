@@ -1,7 +1,7 @@
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
-import { getSectionStyles } from "../theme-styles";
+import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { FrontendImageWithTextBlock } from "./FrontendImageWithTextBlock";
 import { FrontendHeroBlock } from "./FrontendHeroBlock";
@@ -13,10 +13,12 @@ const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero"]);
 interface FrontendGridSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-export function FrontendGridSection({ settings, blocks }: FrontendGridSectionProps): React.ReactNode {
-  const sectionStyles = getSectionStyles(settings);
+export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
+  const sectionStyles = getSectionStyles(settings, colorSchemes);
   const columns = blocks.filter((b: BlockInstance) => b.type === "Column");
   const gap = (settings["gap"] as string) || "medium";
 
@@ -30,7 +32,7 @@ export function FrontendGridSection({ settings, blocks }: FrontendGridSectionPro
 
   return (
     <section style={sectionStyles}>
-      <div className="container mx-auto px-4 md:px-6">
+      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div
           className={`grid ${gapClass}`}
           style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}

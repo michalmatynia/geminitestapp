@@ -13,7 +13,7 @@ describe("PathRunService", () => {
   let repo: any;
 
   beforeEach(async () => {
-    repo = await getPathRunRepository();
+    repo = getPathRunRepository();
     // Direct prisma cleanup since repo doesn't have deleteMany
     await prisma.aiPathRunEvent.deleteMany();
     await prisma.aiPathRunNode.deleteMany();

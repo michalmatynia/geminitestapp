@@ -65,33 +65,33 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
   ]);
   const roleList = roles.length > 0 ? roles : DEFAULT_AUTH_ROLES;
   const validDefaultRoleId =
-    defaultRoleId && roleList.some((role) => role.id === defaultRoleId)
+    defaultRoleId && roleList.some((role: AuthRole) => role.id === defaultRoleId)
       ? defaultRoleId
       : null;
   const fallbackRoleId =
-    roleList.find((role) => role.id === "viewer")?.id ??
-    roleList.find((role) => !["super_admin", "superuser", "admin"].includes(role.id))
+    roleList.find((role: AuthRole) => role.id === "viewer")?.id ??
+    roleList.find((role: AuthRole) => !["super_admin", "superuser", "admin"].includes(role.id))
       ?.id ??
     roleList[0]?.id ??
     "admin";
 
   const assignedRoleId = userRoles[userId];
   const isAssignedValid = assignedRoleId
-    ? roleList.some((role) => role.id === assignedRoleId)
+    ? roleList.some((role: AuthRole) => role.id === assignedRoleId)
     : false;
   const effectiveRoleId = isAssignedValid
     ? (assignedRoleId as string)
     : validDefaultRoleId ?? fallbackRoleId;
 
   const role =
-    roleList.find((item) => item.id === effectiveRoleId) ??
+    roleList.find((item: AuthRole) => item.id === effectiveRoleId) ??
     roleList[0] ??
     DEFAULT_AUTH_ROLES[0]!;
 
   const roleLevel = role.level ?? 0;
   const denied = role.deniedPermissions ?? [];
   const permissions = (role.permissions ?? []).filter(
-    (permission) => !denied.includes(permission)
+    (permission: string) => !denied.includes(permission)
   );
 
   return {

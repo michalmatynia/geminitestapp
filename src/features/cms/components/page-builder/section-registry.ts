@@ -19,14 +19,18 @@ function colorSchemeField(key: string, label: string, defaultValue: string = "sc
 function paddingFields(): SettingsField[] {
   return [
     { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 36 },
+    { key: "paddingRight", label: "Right padding", type: "number", defaultValue: 24 },
     { key: "paddingBottom", label: "Bottom padding", type: "number", defaultValue: 36 },
+    { key: "paddingLeft", label: "Left padding", type: "number", defaultValue: 24 },
   ];
 }
 
 function marginFields(): SettingsField[] {
   return [
     { key: "marginTop", label: "Top margin", type: "number", defaultValue: 0 },
+    { key: "marginRight", label: "Right margin", type: "number", defaultValue: 0 },
     { key: "marginBottom", label: "Bottom margin", type: "number", defaultValue: 0 },
+    { key: "marginLeft", label: "Left margin", type: "number", defaultValue: 0 },
   ];
 }
 
@@ -360,6 +364,12 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       colorScheme: "scheme-2",
       paddingTop: 12,
       paddingBottom: 12,
+      paddingLeft: 0,
+      paddingRight: 0,
+      marginTop: 0,
+      marginBottom: 0,
+      marginLeft: 0,
+      marginRight: 0,
       contentAlignment: "center",
     },
     settingsSchema: [
@@ -376,6 +386,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         defaultValue: "center",
       },
       ...paddingFields(),
+      ...marginFields(),
       ...sectionStyleFields(),
     ],
   },

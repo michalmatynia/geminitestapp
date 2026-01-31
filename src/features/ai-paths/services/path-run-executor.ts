@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   AiNode,
+  AiPathRunNodeRecord,
   AiPathRunRecord,
   Edge,
   RuntimeHistoryEntry,
@@ -32,7 +33,7 @@ const parseRuntimeState = (value: unknown): RuntimeState => {
 
 const toJsonSafe = (value: unknown): unknown => {
   const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown) => {
+  const replacer = (_key: string, val: unknown): unknown => {
     if (typeof val === "bigint") return val.toString();
     if (val instanceof Date) return val.toISOString();
     if (val instanceof Set) return Array.from(val.values()) as unknown[];
@@ -189,11 +190,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const resolvedHistoryLimit =
     Number.isFinite(historyLimit) && historyLimit > 0 ? historyLimit : 50;
   const nodeRecords = await repo.listRunNodes(run.id);
-  const nodeStatusMap = new Map(
-    nodeRecords.map((record: any) => [record.nodeId, record.status])
+  const nodeStatusMap = new Map<string, string>(
+    nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
   );
-  const nodeAttemptMap = new Map(
-    nodeRecords.map((record: any) => [record.nodeId, record.attempt ?? 0])
+  const nodeAttemptMap = new Map<string, number>(
+    nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.attempt ?? 0])
   );
   const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
   const reportAiPathsError = async (error: unknown, meta: Record<string, unknown>, summary?: string): Promise<void> => {

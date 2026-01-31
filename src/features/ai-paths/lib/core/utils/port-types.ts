@@ -53,9 +53,9 @@ const TYPE_LABELS: Record<PortDataType, string> = {
   any: "any",
 };
 
-const expandTypes = (types: PortDataType[]): Set<string> => {
+export const expandTypes = (types: PortDataType[]): Set<string> => {
   const expanded = new Set<string>();
-  types.forEach((type) => {
+  types.forEach((type: PortDataType) => {
     if (type === "any") {
       expanded.add("any");
       return;
@@ -88,7 +88,7 @@ export const getPortDataTypes = (port: string): PortDataType[] => {
 
 export const formatPortDataTypes = (types: PortDataType[]): string => {
   if (types.includes("any")) return TYPE_LABELS.any;
-  return types.map((type) => TYPE_LABELS[type]).join(" | ");
+  return types.map((type: PortDataType) => TYPE_LABELS[type]).join(" | ");
 };
 
 export const getValueTypeLabel = (value: unknown): string => {

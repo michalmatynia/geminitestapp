@@ -1,5 +1,6 @@
 import React from "react";
 import type { PageComponent } from "../../types";
+import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import { FrontendAnnouncementBarSection } from "./sections/FrontendAnnouncementBarSection";
@@ -14,6 +15,7 @@ import { FrontendSlideshowSection } from "./sections/FrontendSlideshowSection";
 import { FrontendNewsletterSection } from "./sections/FrontendNewsletterSection";
 import { FrontendContactFormSection } from "./sections/FrontendContactFormSection";
 import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
+import { getHoverEffectVars } from "./theme-styles";
 
 // ---------------------------------------------------------------------------
 // Types for the section content stored in PageComponent.content
@@ -37,9 +39,14 @@ const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 
 interface CmsPageRendererProps {
   components: PageComponent[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
+  hoverEffect?: string;
+  hoverScale?: number;
 }
 
-export function CmsPageRenderer({ components }: CmsPageRendererProps): React.ReactNode {
+export function CmsPageRenderer({ components, colorSchemes, layout, hoverEffect, hoverScale }: CmsPageRendererProps): React.ReactNode {
+  const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   // Parse components into sections with zone info
   const sections = components.map((comp: PageComponent, idx: number) => {
     const content = comp.content as SectionContent;
@@ -64,7 +71,7 @@ export function CmsPageRenderer({ components }: CmsPageRendererProps): React.Rea
   }
 
   return (
-    <div className="cms-page">
+    <div className="cms-page cms-hover-scope" style={hoverVars}>
       {ZONE_ORDER.map((zone: PageZone) =>
         sectionsByZone[zone].map((section: typeof sections[number]) => {
           const animConfig = section.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
@@ -75,6 +82,8 @@ export function CmsPageRenderer({ components }: CmsPageRendererProps): React.Rea
                 type={section.type}
                 settings={section.settings}
                 blocks={section.blocks}
+                colorSchemes={colorSchemes}
+                layout={layout}
               />
             </GsapAnimationWrapper>
           );
@@ -92,32 +101,34 @@ interface SectionRendererProps {
   type: string;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
+  colorSchemes?: Record<string, ColorSchemeColors>;
+  layout?: { fullWidth?: boolean };
 }
 
-function SectionRenderer({ type, settings, blocks }: SectionRendererProps): React.ReactNode {
+function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {
   switch (type) {
     case "AnnouncementBar":
-      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} />;
+      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Hero":
-      return <FrontendHeroSection settings={settings} blocks={blocks} />;
+      return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ImageWithText":
-      return <FrontendImageWithTextSection settings={settings} blocks={blocks} />;
+      return <FrontendImageWithTextSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "RichText":
-      return <FrontendRichTextSection settings={settings} blocks={blocks} />;
+      return <FrontendRichTextSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Grid":
-      return <FrontendGridSection settings={settings} blocks={blocks} />;
+      return <FrontendGridSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Accordion":
-      return <FrontendAccordionSection settings={settings} blocks={blocks} />;
+      return <FrontendAccordionSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Testimonials":
-      return <FrontendTestimonialsSection settings={settings} blocks={blocks} />;
+      return <FrontendTestimonialsSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Video":
-      return <FrontendVideoSection settings={settings} />;
+      return <FrontendVideoSection settings={settings} colorSchemes={colorSchemes} layout={layout} />;
     case "Slideshow":
-      return <FrontendSlideshowSection settings={settings} blocks={blocks} />;
+      return <FrontendSlideshowSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "Newsletter":
-      return <FrontendNewsletterSection settings={settings} blocks={blocks} />;
+      return <FrontendNewsletterSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ContactForm":
-      return <FrontendContactFormSection settings={settings} />;
+      return <FrontendContactFormSection settings={settings} colorSchemes={colorSchemes} layout={layout} />;
     default:
       return null;
   }

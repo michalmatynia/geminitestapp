@@ -21,14 +21,14 @@ import {
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
 
-const slugify = (value: string) =>
+const slugify = (value: string): string =>
   value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-export default function AuthPermissionsPage() {
+export default function AuthPermissionsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
 
@@ -71,7 +71,7 @@ function AuthPermissionsForm({
 }: {
   initialPermissions: AuthPermission[];
   initialRoles: AuthRole[];
-}) {
+}): React.JSX.Element {
   const { toast } = useToast();
   const [dirty, setDirty] = useState(false);
   const [permissions, setPermissions] = useState<AuthPermission[]>(initialPermissions);
@@ -85,17 +85,17 @@ function AuthPermissionsForm({
   const [newRoleDescription, setNewRoleDescription] = useState("");
 
   const permissionIds = useMemo(
-    () => new Set(permissions.map((permission) => permission.id)),
+    () => new Set(permissions.map((permission: AuthPermission) => permission.id)),
     [permissions]
   );
 
-  const handleTogglePermission = (roleId: string, permissionId: string) => {
-    setRoles((prev) =>
-      prev.map((role) => {
+  const handleTogglePermission = (roleId: string, permissionId: string): void => {
+    setRoles((prev: AuthRole[]) =>
+      prev.map((role: AuthRole) => {
         if (role.id !== roleId) return role;
         const hasPermission = role.permissions.includes(permissionId);
         const nextPermissions = hasPermission
-          ? role.permissions.filter((id) => id !== permissionId)
+          ? role.permissions.filter((id: string) => id !== permissionId)
           : [...role.permissions, permissionId];
         return { ...role, permissions: nextPermissions };
       })
@@ -103,7 +103,7 @@ function AuthPermissionsForm({
     setDirty(true);
   };
 
-  const handleAddPermission = () => {
+  const handleAddPermission = (): void => {
     const id = newPermissionId.trim() || slugify(newPermissionName);
     if (!id || !newPermissionName.trim()) {
       toast("Provide a permission name", { variant: "error" });
@@ -113,7 +113,7 @@ function AuthPermissionsForm({
       toast("Permission ID already exists", { variant: "error" });
       return;
     }
-    setPermissions((prev) => [
+    setPermissions((prev: AuthPermission[]) => [
       ...prev,
       {
         id,
@@ -127,28 +127,28 @@ function AuthPermissionsForm({
     setDirty(true);
   };
 
-  const handleRemovePermission = (permissionId: string) => {
-    setPermissions((prev) => prev.filter((permission) => permission.id !== permissionId));
-    setRoles((prev) =>
-      prev.map((role) => ({
+  const handleRemovePermission = (permissionId: string): void => {
+    setPermissions((prev: AuthPermission[]) => prev.filter((permission: AuthPermission) => permission.id !== permissionId));
+    setRoles((prev: AuthRole[]) =>
+      prev.map((role: AuthRole) => ({
         ...role,
-        permissions: role.permissions.filter((id) => id !== permissionId),
+        permissions: role.permissions.filter((id: string) => id !== permissionId),
       }))
     );
     setDirty(true);
   };
 
-  const handleAddRole = () => {
+  const handleAddRole = (): void => {
     const id = slugify(newRoleName);
     if (!id || !newRoleName.trim()) {
       toast("Provide a role name", { variant: "error" });
       return;
     }
-    if (roles.some((role) => role.id === id)) {
+    if (roles.some((role: AuthRole) => role.id === id)) {
       toast("Role ID already exists", { variant: "error" });
       return;
     }
-    setRoles((prev) => [
+    setRoles((prev: AuthRole[]) => [
       ...prev,
       {
         id,
@@ -164,12 +164,12 @@ function AuthPermissionsForm({
     setDirty(true);
   };
 
-  const handleRemoveRole = (roleId: string) => {
+  const handleRemoveRole = (roleId: string): void => {
     if (roleId === "admin") {
       toast("Admin role cannot be removed", { variant: "error" });
       return;
     }
-    setRoles((prev) => prev.filter((role) => role.id !== roleId));
+    setRoles((prev: AuthRole[]) => prev.filter((role: AuthRole) => role.id !== roleId));
     setDirty(true);
   };
 
@@ -177,9 +177,9 @@ function AuthPermissionsForm({
     roleId: string,
     field: "name" | "description" | "level",
     value: string
-  ) => {
-    setRoles((prev) =>
-      prev.map((role) =>
+  ): void => {
+    setRoles((prev: AuthRole[]) =>
+      prev.map((role: AuthRole) =>
         role.id === roleId
           ? {
               ...role,
@@ -196,7 +196,7 @@ function AuthPermissionsForm({
     setDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     try {
       await saveSettingsMutation.mutateAsync([
         {
@@ -216,7 +216,7 @@ function AuthPermissionsForm({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setPermissions(DEFAULT_AUTH_PERMISSIONS);
     setRoles(DEFAULT_AUTH_ROLES);
     setDirty(true);
@@ -241,7 +241,7 @@ function AuthPermissionsForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              {permissions.map((permission) => (
+              {permissions.map((permission: AuthPermission) => (
                 <div
                   key={permission.id}
                   className="rounded-md border border-border bg-card/40 p-3"
@@ -278,7 +278,7 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-name"
                   value={newPermissionName}
-                  onChange={(event) => setNewPermissionName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionName(event.target.value)}
                   placeholder="Manage products"
                   className="bg-gray-900 border text-white"
                 />
@@ -290,7 +290,7 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-id"
                   value={newPermissionId}
-                  onChange={(event) => setNewPermissionId(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionId(event.target.value)}
                   placeholder="products.manage"
                   className="bg-gray-900 border text-white"
                 />
@@ -302,7 +302,7 @@ function AuthPermissionsForm({
                 <Input
                   id="permission-description"
                   value={newPermissionDescription}
-                  onChange={(event) => setNewPermissionDescription(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewPermissionDescription(event.target.value)}
                   placeholder="Create and edit product listings"
                   className="bg-gray-900 border text-white"
                 />
@@ -322,7 +322,7 @@ function AuthPermissionsForm({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {roles.map((role) => (
+            {roles.map((role: AuthRole) => (
               <div
                 key={role.id}
                 className="rounded-md border border-border bg-card/40 p-4 space-y-3"
@@ -332,13 +332,13 @@ function AuthPermissionsForm({
                     <Label className="text-xs text-gray-400">Role name</Label>
                     <Input
                       value={role.name}
-                      onChange={(event) => handleRoleFieldChange(role.id, "name", event.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleRoleFieldChange(role.id, "name", event.target.value)}
                       className="bg-gray-900 border text-white"
                     />
                     <Label className="text-xs text-gray-400">Description</Label>
                     <Input
                       value={role.description ?? ""}
-                      onChange={(event) =>
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                         handleRoleFieldChange(role.id, "description", event.target.value)
                       }
                       className="bg-gray-900 border text-white"
@@ -349,7 +349,7 @@ function AuthPermissionsForm({
                       min={0}
                       max={100}
                       value={role.level ?? 0}
-                      onChange={(event) =>
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                         handleRoleFieldChange(role.id, "level", event.target.value)
                       }
                       className="bg-gray-900 border text-white"
@@ -369,7 +369,7 @@ function AuthPermissionsForm({
                   </Button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {permissions.map((permission) => (
+                  {permissions.map((permission: AuthPermission) => (
                     <Label
                       key={permission.id}
                       className="flex items-start gap-2 text-xs text-gray-300"
@@ -397,7 +397,7 @@ function AuthPermissionsForm({
                 <Input
                   id="role-name"
                   value={newRoleName}
-                  onChange={(event) => setNewRoleName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoleName(event.target.value)}
                   placeholder="Editor"
                   className="bg-gray-900 border text-white"
                 />
@@ -409,7 +409,7 @@ function AuthPermissionsForm({
                 <Input
                   id="role-description"
                   value={newRoleDescription}
-                  onChange={(event) => setNewRoleDescription(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoleDescription(event.target.value)}
                   placeholder="Manage content and products"
                   className="bg-gray-900 border text-white"
                 />

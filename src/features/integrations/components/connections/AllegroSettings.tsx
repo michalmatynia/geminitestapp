@@ -21,7 +21,7 @@ export function AllegroSettings({
   onAuthorize,
   onDisconnect,
   onSandboxConnect,
-}: AllegroSettingsProps) {
+}: AllegroSettingsProps): React.JSX.Element {
   const allegroConnected = Boolean(activeConnection?.hasAllegroAccessToken);
   const allegroExpiresAt = activeConnection?.allegroExpiresAt
     ? new Date(activeConnection.allegroExpiresAt).toLocaleString()
@@ -46,7 +46,7 @@ export function AllegroSettings({
           </span>
           <Checkbox
             className="h-4 w-4 accent-emerald-400"
-            checked={Boolean(activeConnection?.allegroUseSandbox)} onCheckedChange={(checked) => onToggleSandbox(Boolean(checked))}
+            checked={Boolean(activeConnection?.allegroUseSandbox)} onCheckedChange={(checked: boolean) => onToggleSandbox(Boolean(checked))}
             disabled={!activeConnection || savingSandbox}
           />
         </Label>

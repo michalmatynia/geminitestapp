@@ -8,6 +8,7 @@ import type {
   BlockInstance,
   PageZone,
   PageBuilderSnapshot,
+  SettingsField,
 } from "../types/page-builder";
 import type { PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
@@ -77,6 +78,36 @@ function cloneSection(section: SectionInstance): SectionInstance {
   };
 }
 
+function applySettingsDefaults(
+  settings: Record<string, unknown>,
+  schema: SettingsField[],
+  base: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...base, ...settings };
+  for (const field of schema) {
+    if (merged[field.key] === undefined && field.defaultValue !== undefined) {
+      merged[field.key] = field.defaultValue;
+    }
+  }
+  return merged;
+}
+
+function buildSectionSettings(type: string, settings: Record<string, unknown>): Record<string, unknown> {
+  const def = getSectionDefinition(type);
+  if (!def) return settings;
+  const merged = applySettingsDefaults(settings, def.settingsSchema, def.defaultSettings);
+  if (type === "AnnouncementBar") {
+    const left = typeof merged.paddingLeft === "number" ? merged.paddingLeft : undefined;
+    const right = typeof merged.paddingRight === "number" ? merged.paddingRight : undefined;
+    return {
+      ...merged,
+      paddingLeft: left === 24 || left === undefined ? 0 : left,
+      paddingRight: right === 24 || right === undefined ? 0 : right,
+    };
+  }
+  return merged;
+}
+
 // ---------------------------------------------------------------------------
 // Reducer
 // ---------------------------------------------------------------------------
@@ -102,7 +133,7 @@ export function basePageBuilderReducer(
             id: `loaded-${idx}-${uid()}`,
             type: comp.type,
             zone: (content.zone as PageZone) ?? "template",
-            settings: content.settings ?? {},
+            settings: buildSectionSettings(comp.type, content.settings ?? {}),
             blocks: content.blocks ?? [],
           };
         }
@@ -147,7 +178,7 @@ export function basePageBuilderReducer(
         id: uid(),
         type: action.sectionType,
         zone: action.zone,
-        settings: { ...def.defaultSettings },
+        settings: buildSectionSettings(action.sectionType, {}),
         blocks: initialBlocks,
       };
       return {
@@ -402,6 +433,52 @@ export function basePageBuilderReducer(
         };
       });
       return { ...state, sections: sectionsAfterInsert };
+    }
+
+    case "MOVE_SECTION_TO_COLUMN": {
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero"];
+      const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
+      if (!sourceSection) return state;
+      if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
+      // Prevent dropping a Grid into its own columns
+      if (action.sectionId === action.toSectionId) return state;
+
+      const convertedBlock: BlockInstance = {
+        id: uid(),
+        type: sourceSection.type,
+        settings: { ...sourceSection.settings },
+        blocks: sourceSection.blocks.length > 0 ? [...sourceSection.blocks] : [],
+      };
+
+      // Remove section from sections array
+      const remaining = state.sections.filter((s: SectionInstance) => s.id !== action.sectionId);
+
+      // Insert the converted block into the target column
+      const updatedSections = remaining.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        return {
+          ...s,
+          blocks: s.blocks.map((col: BlockInstance) => {
+            if (col.id !== action.toColumnId) return col;
+            if (action.toParentBlockId) {
+              return {
+                ...col,
+                blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
+                  if (pb.id !== action.toParentBlockId) return pb;
+                  const newBlocks = [...(pb.blocks ?? [])];
+                  newBlocks.splice(action.toIndex, 0, convertedBlock);
+                  return { ...pb, blocks: newBlocks };
+                }),
+              };
+            }
+            const newBlocks = [...(col.blocks ?? [])];
+            newBlocks.splice(action.toIndex, 0, convertedBlock);
+            return { ...col, blocks: newBlocks };
+          }),
+        };
+      });
+
+      return { ...state, sections: updatedSections, selectedNodeId: convertedBlock.id };
     }
 
     case "UPDATE_BLOCK_IN_COLUMN": {

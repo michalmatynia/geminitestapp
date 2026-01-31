@@ -45,6 +45,14 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
+const resolveNodeLabel = (fallback: string, value: unknown): string => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return fallback;
+};
+
 // ---------------------------------------------------------------------------
 // Section node
 // ---------------------------------------------------------------------------
@@ -120,7 +128,9 @@ export function SectionNodeItem({
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
   const isFileSection = section.type === "TextElement";
-  const isExpanded = !isFileSection && expandedIds.has(section.id);
+  const hasChildren = section.blocks.length > 0;
+  const canToggle = !isFileSection && (section.type === "Grid" || hasChildren);
+  const isExpanded = canToggle && expandedIds.has(section.id);
   const targetAllowsTextElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextElement") ?? false;
   const hasBlocks = section.blocks.length > 0;
@@ -230,7 +240,7 @@ export function SectionNodeItem({
       >
         <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/section:opacity-100 active:cursor-grabbing" />
         <div className="shrink-0">
-          {!isFileSection ? (
+          {canToggle ? (
             <div
               role="button"
               tabIndex={-1}
@@ -257,7 +267,7 @@ export function SectionNodeItem({
         </div>
         <Icon className="size-4 shrink-0" />
         <span className="flex-1 truncate text-left">
-          {(section.settings["label"] as string | undefined) ?? section.type}
+          {resolveNodeLabel(section.type, section.settings["label"])}
         </span>
         {isSectionDragOver && (
           <span className="text-[10px] text-purple-300">Move here</span>
@@ -465,6 +475,7 @@ function RowNodeItem({
   const canRemoveRow = rowCount > 1;
   const [isDragOver, setIsDragOver] = useState(false);
   const firstColumn = columns[0] ?? null;
+  const rowLabel = resolveNodeLabel(`Row ${rowIndex + 1}`, row.settings["label"]);
 
   return (
     <div>
@@ -546,7 +557,7 @@ function RowNodeItem({
           {isExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
         </div>
         <GripVertical className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">Row {rowIndex + 1}</span>
+        <span className="flex-1 truncate text-left">{rowLabel}</span>
         <button
           type="button"
           onClick={(e: React.MouseEvent) => {
@@ -675,6 +686,7 @@ function ColumnNodeItem({
   const hasBlocks = (column.blocks ?? []).length > 0;
   const [isDragOver, setIsDragOver] = useState(false);
   const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
+  const columnLabel = resolveNodeLabel(`Column ${columnIndex + 1}`, column.settings["label"]);
 
   const handleColumnDragOver = (e: React.DragEvent): void => {
     const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
@@ -780,7 +792,7 @@ function ColumnNodeItem({
           )}
         </div>
         <Columns className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">Column {columnIndex + 1}</span>
+        <span className="flex-1 truncate text-left">{columnLabel}</span>
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
@@ -937,6 +949,7 @@ function SectionBlockNodeItem({
   const Icon = BLOCK_ICONS[block.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
+  const blockLabel = resolveNodeLabel(block.type, block.settings["label"]);
 
   return (
     <div
@@ -1048,7 +1061,7 @@ function SectionBlockNodeItem({
           )}
         </div>
         <Icon className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">{block.type}</span>
+        <span className="flex-1 truncate text-left">{blockLabel}</span>
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
@@ -1132,6 +1145,7 @@ function BlockNodeItem({
   const Icon = BLOCK_ICONS[block.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
+  const blockLabel = resolveNodeLabel(block.type, block.settings["label"]);
 
   return (
     <div
@@ -1221,7 +1235,7 @@ function BlockNodeItem({
       >
         <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover:opacity-100 active:cursor-grabbing" />
         <Icon className="size-3.5 shrink-0" />
-        <span className="truncate">{block.type}</span>
+        <span className="truncate">{blockLabel}</span>
         {isDragOver && (
           <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
         )}

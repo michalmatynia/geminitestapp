@@ -291,8 +291,16 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === "font-family" && (
+        (() => {
+          const fallback =
+            (typeof field.defaultValue === "string" && field.defaultValue.trim().length > 0
+              ? field.defaultValue
+              : theme.bodyFont) || "Inter, sans-serif";
+          const resolvedValue =
+            typeof value === "string" && value.trim().length > 0 ? value : fallback;
+          return (
         <Select
-          value={(value as string) ?? "Inter, sans-serif"}
+          value={resolvedValue}
           onValueChange={(v: string) => handleChange(v)}
         >
           <SelectTrigger className="w-full text-sm">
@@ -306,6 +314,8 @@ export function SettingsFieldRenderer({
             ))}
           </SelectContent>
         </Select>
+          );
+        })()
       )}
 
       {field.type === "font-weight" && (

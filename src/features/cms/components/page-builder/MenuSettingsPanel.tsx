@@ -244,6 +244,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const hasHydratedRef = useRef(false);
   const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
   const loadedKeyRef = useRef<string | null>(null);
+  const pendingSerializedRef = useRef<string | null>(null);
+  const settingsSerializedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
   const persistTimerRef = useRef<number | null>(null);
 
   const colorSchemeOptions = useMemo(() => {
@@ -283,62 +285,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   }, [menuKey, settingsQuery.data, zoningEnabled]);
 
   useEffect(() => {
-    if (settings.menuColorSchemeId === "custom") return;
-    const available = new Set((theme?.colorSchemes ?? []).map((scheme) => scheme.id));
-    if (!available.has(settings.menuColorSchemeId)) {
-      update("menuColorSchemeId", "custom");
-    }
-  }, [settings.menuColorSchemeId, theme?.colorSchemes, update]);
-
-  useEffect(() => {
-    if (!settingsQuery.isFetched) return;
-    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
-      settingsQuery.data?.get(menuKey),
-      null
-    );
-    let normalized = normalizeMenuSettings(stored);
-    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
-      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
-        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
-        null
-      );
-      normalized = normalizeMenuSettings(fallback);
-    }
-    setSettings(normalized);
-    lastSavedRef.current = serializeSetting(normalized);
-    loadedKeyRef.current = menuKey;
-    hasHydratedRef.current = true;
-  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
-
-  useEffect(() => {
-    if (!hasHydratedRef.current) return;
-    if (loadedKeyRef.current !== menuKey) return;
-    const nextSerialized = serializeSetting(settings);
-    if (nextSerialized === lastSavedRef.current) return;
-    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
-    persistTimerRef.current = window.setTimeout(() => {
-      lastSavedRef.current = nextSerialized;
-      updateSetting.mutate({ key: menuKey, value: nextSerialized });
-    }, 500);
-  }, [menuKey, settings, updateSetting]);
-
-  useEffect(() => {
-    return () => {
-      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
-    };
-  }, []);
-
-  const toggleSection = useCallback((section: string) => {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  }, []);
+    settingsSerializedRef.current = serializeSetting(settings);
+  }, [settings]);
 
   const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -368,6 +316,85 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       ...prev,
       items: prev.items.filter((item) => item.id !== id),
     }));
+  }, []);
+
+  useEffect(() => {
+    if (settings.menuColorSchemeId === "custom") return;
+    const available = new Set((theme?.colorSchemes ?? []).map((scheme) => scheme.id));
+    if (!available.has(settings.menuColorSchemeId)) {
+      update("menuColorSchemeId", "custom");
+    }
+  }, [settings.menuColorSchemeId, theme?.colorSchemes, update]);
+
+  useEffect(() => {
+    if (!settingsQuery.isFetched) return;
+    if (loadedKeyRef.current === menuKey && hasHydratedRef.current) {
+      const currentSerialized = settingsSerializedRef.current;
+      if (currentSerialized !== lastSavedRef.current) {
+        return;
+      }
+    }
+    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
+      settingsQuery.data?.get(menuKey),
+      null
+    );
+    let normalized = normalizeMenuSettings(stored);
+    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
+      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
+        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+        null
+      );
+      normalized = normalizeMenuSettings(fallback);
+    }
+    const normalizedSerialized = serializeSetting(normalized);
+    const currentSerialized = settingsSerializedRef.current;
+    if (loadedKeyRef.current === menuKey && normalizedSerialized === currentSerialized) {
+      lastSavedRef.current = normalizedSerialized;
+      pendingSerializedRef.current = null;
+      hasHydratedRef.current = true;
+      return;
+    }
+    pendingSerializedRef.current = normalizedSerialized;
+    setSettings(normalized);
+    lastSavedRef.current = normalizedSerialized;
+    loadedKeyRef.current = menuKey;
+    hasHydratedRef.current = true;
+  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current) return;
+    if (loadedKeyRef.current !== menuKey) return;
+    const nextSerialized = serializeSetting(settings);
+    if (pendingSerializedRef.current) {
+      if (pendingSerializedRef.current !== nextSerialized) {
+        return;
+      }
+      pendingSerializedRef.current = null;
+    }
+    if (nextSerialized === lastSavedRef.current) return;
+    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = window.setTimeout(() => {
+      lastSavedRef.current = nextSerialized;
+      updateSetting.mutate({ key: menuKey, value: nextSerialized });
+    }, 500);
+  }, [menuKey, settings, updateSetting]);
+
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    };
+  }, []);
+
+  const toggleSection = useCallback((section: string) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
   }, []);
 
   const renderSectionBody = useCallback(
@@ -759,14 +786,21 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         // Sticky Behaviour
         // ---------------------------------------------------------------
         case "Sticky Behaviour":
+          const positionMode =
+            settings.positionMode ?? (settings.stickyEnabled ? "sticky" : "static");
+          const isSticky = positionMode === "sticky";
           return (
             <div className="space-y-3">
-              <CheckboxField
-                label="Enable sticky"
-                checked={settings.stickyEnabled}
-                onChange={(v) => update("stickyEnabled", v)}
+              <SelectField
+                label="Menu position"
+                value={positionMode}
+                onChange={(v) => update("positionMode", v as MenuSettings["positionMode"])}
+                options={[
+                  { label: "Glued to top", value: "sticky" },
+                  { label: "Top of page", value: "static" },
+                ]}
               />
-              {settings.stickyEnabled && (
+              {isSticky && (
                 <>
                   <NumberField
                     label="Sticky offset"
@@ -785,6 +819,11 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                     label="Sticky background"
                     value={settings.stickyBackground}
                     onChange={(v) => update("stickyBackground", v)}
+                  />
+                  <CheckboxField
+                    label="Hide on scroll"
+                    checked={settings.hideOnScroll}
+                    onChange={(v) => update("hideOnScroll", v)}
                   />
                 </>
               )}

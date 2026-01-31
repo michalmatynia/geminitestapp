@@ -23,10 +23,45 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   const [collapsed, setCollapsed] = useState<boolean>(
     menu.collapsible ? menu.collapsedByDefault : false
   );
+  const positionMode = menu.positionMode ?? (menu.stickyEnabled ? "sticky" : "static");
+  const isSide = menu.menuPlacement === "left" || menu.menuPlacement === "right";
+  const isStickyMode = positionMode === "sticky";
+  const allowHideOnScroll = menu.hideOnScroll && (isSide || isStickyMode);
+  const [isHiddenOnScroll, setIsHiddenOnScroll] = useState<boolean>(false);
 
   useEffect(() => {
     setCollapsed(menu.collapsible ? menu.collapsedByDefault : false);
   }, [menu.collapsible, menu.collapsedByDefault, menu.menuPlacement]);
+
+  useEffect(() => {
+    setIsHiddenOnScroll(false);
+  }, [menu.menuPlacement, menu.hideOnScroll, positionMode]);
+
+  useEffect(() => {
+    if (!allowHideOnScroll) {
+      setIsHiddenOnScroll(false);
+      return;
+    }
+    let lastY = typeof window !== "undefined" ? window.scrollY : 0;
+    const threshold = 8;
+    const handleScroll = (): void => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+      if (Math.abs(delta) < threshold) return;
+      if (currentY <= 0) {
+        setIsHiddenOnScroll(false);
+      } else if (delta > 0) {
+        setIsHiddenOnScroll(true);
+      } else {
+        setIsHiddenOnScroll(false);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [allowHideOnScroll]);
 
   const resolvedColors = useMemo((): { background?: string; text?: string; border?: string; accent?: string } => {
     if (menu.menuColorSchemeId && menu.menuColorSchemeId !== "custom") {
@@ -120,8 +155,16 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
 
   if (!menu.showMenu) return null;
 
-  const isSide = menu.menuPlacement === "left" || menu.menuPlacement === "right";
   const width = collapsed && menu.collapsible ? menu.collapsedWidth : menu.sideWidth;
+  const hideTransform = isSide
+    ? menu.menuPlacement === "right"
+      ? "translateX(110%)"
+      : "translateX(-110%)"
+    : "translateY(-110%)";
+  const transitions = [
+    menu.collapsible ? "width 200ms ease" : null,
+    allowHideOnScroll ? "transform 220ms ease" : null,
+  ].filter(Boolean).join(", ");
 
   const navStyle: React.CSSProperties = {
     backgroundColor: resolvedColors.background,
@@ -138,14 +181,16 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     fontWeight: menu.fontWeight as React.CSSProperties["fontWeight"],
     letterSpacing: menu.letterSpacing ? `${menu.letterSpacing}px` : undefined,
     textTransform: menu.textTransform as React.CSSProperties["textTransform"],
-    position: menu.stickyEnabled && !isSide ? "sticky" : isSide ? "fixed" : "relative",
-    top: menu.stickyEnabled ? menu.stickyOffset : isSide ? 0 : undefined,
+    position: isSide ? "fixed" : isStickyMode ? "sticky" : "relative",
+    top: isSide ? 0 : isStickyMode ? menu.stickyOffset : undefined,
     bottom: isSide ? 0 : undefined,
     left: menu.menuPlacement === "left" ? 0 : undefined,
     right: menu.menuPlacement === "right" ? 0 : undefined,
-    zIndex: menu.stickyEnabled || isSide ? 50 : undefined,
+    zIndex: isStickyMode || isSide ? 50 : undefined,
     width: isSide ? width : "100%",
-    transition: menu.collapsible ? "width 200ms ease" : undefined,
+    transition: transitions || undefined,
+    transform: allowHideOnScroll && isHiddenOnScroll ? hideTransform : undefined,
+    pointerEvents: allowHideOnScroll && isHiddenOnScroll ? "none" : undefined,
   };
 
   const containerStyle: React.CSSProperties = {

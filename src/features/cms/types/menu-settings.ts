@@ -20,6 +20,7 @@ export interface MenuSettings {
   // Visibility
   showMenu: boolean;
   menuPlacement: "top" | "left" | "right";
+  positionMode: "sticky" | "static";
   collapsible: boolean;
   collapsedByDefault: boolean;
   sideWidth: number;
@@ -67,6 +68,7 @@ export interface MenuSettings {
   stickyOffset: number;
   shrinkOnScroll: boolean;
   stickyBackground: string;
+  hideOnScroll: boolean;
   // Active
   activeStyle: string;
   activeColor: string;
@@ -82,6 +84,7 @@ export interface MenuSettings {
 export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   showMenu: true,
   menuPlacement: "top",
+  positionMode: "sticky",
   collapsible: false,
   collapsedByDefault: false,
   sideWidth: 260,
@@ -125,6 +128,7 @@ export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   stickyOffset: 0,
   shrinkOnScroll: false,
   stickyBackground: "#111827",
+  hideOnScroll: false,
   activeStyle: "underline",
   activeColor: "#3b82f6",
   hoverStyle: "color-shift",
@@ -160,6 +164,12 @@ export const normalizeMenuSettings = (input?: Partial<MenuSettings> | null): Men
     input?.menuPlacement === "left" || input?.menuPlacement === "right" || input?.menuPlacement === "top"
       ? input.menuPlacement
       : DEFAULT_MENU_SETTINGS.menuPlacement;
+  merged.positionMode =
+    input?.positionMode === "sticky" || input?.positionMode === "static"
+      ? input.positionMode
+      : input?.stickyEnabled === false
+      ? "static"
+      : DEFAULT_MENU_SETTINGS.positionMode;
   merged.collapsible = typeof input?.collapsible === "boolean" ? input.collapsible : DEFAULT_MENU_SETTINGS.collapsible;
   merged.collapsedByDefault =
     typeof input?.collapsedByDefault === "boolean" ? input.collapsedByDefault : DEFAULT_MENU_SETTINGS.collapsedByDefault;
@@ -171,6 +181,8 @@ export const normalizeMenuSettings = (input?: Partial<MenuSettings> | null): Men
       : DEFAULT_MENU_SETTINGS.menuColorSchemeId;
   merged.showItemImages = typeof input?.showItemImages === "boolean" ? input.showItemImages : DEFAULT_MENU_SETTINGS.showItemImages;
   merged.itemImageSize = typeof input?.itemImageSize === "number" ? input.itemImageSize : DEFAULT_MENU_SETTINGS.itemImageSize;
+  merged.hideOnScroll = typeof input?.hideOnScroll === "boolean" ? input.hideOnScroll : DEFAULT_MENU_SETTINGS.hideOnScroll;
+  merged.stickyEnabled = merged.positionMode === "sticky";
   merged.menuEntryAnimation =
     normalizeAnimationPreset(input?.menuEntryAnimation, DEFAULT_MENU_SETTINGS.menuEntryAnimation);
   merged.menuHoverAnimation =

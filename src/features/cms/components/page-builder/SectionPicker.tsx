@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui";
+import { AppModal, Button, ModalShell } from "@/shared/ui";
 import type { PageZone, SectionDefinition } from "../../types/page-builder";
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
@@ -19,6 +19,19 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const sectionTypes = useMemo(() => getSectionTypesForZone(zone), [zone]);
   const groupedTemplates = useMemo(() => getTemplatesByCategory(zone), [zone]);
   const { dispatch } = usePageBuilder();
+  const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
+  const primitives = useMemo(
+    () => sectionTypes.filter((def) => primitiveTypes.has(def.type)),
+    [sectionTypes, primitiveTypes]
+  );
+  const elements = useMemo(
+    () => sectionTypes.filter((def) => def.type === "TextElement"),
+    [sectionTypes]
+  );
+  const templates = useMemo(
+    () => sectionTypes.filter((def) => !primitiveTypes.has(def.type) && def.type !== "TextElement"),
+    [sectionTypes, primitiveTypes]
+  );
 
   const handleSelect = useCallback(
     (type: string) => {
@@ -78,49 +91,123 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     types.length > 0 ? `Blocks: ${types.join(", ")}` : "No blocks";
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1.5 border-border/60 bg-card/40 text-xs text-gray-300 hover:bg-foreground/5 hover:text-gray-100"
-          disabled={disabled}
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 border-border/60 bg-card/40 text-xs text-gray-300 hover:bg-foreground/5 hover:text-gray-100"
+        disabled={disabled}
+        onClick={() => setIsOpen(true)}
+      >
+        <Plus className="size-3.5" />
+        Add section
+      </Button>
+      <AppModal open={isOpen} onOpenChange={setIsOpen} title="Add a section">
+        <ModalShell
+          title="Add a section"
+          onClose={() => setIsOpen(false)}
+          size="lg"
+          bodyClassName="h-[70vh]"
+          header={
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Add a section</h2>
+              <Button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="min-w-[100px] border border-white/20 hover:border-white/40"
+              >
+                Close
+              </Button>
+            </div>
+          }
         >
-          <Plus className="size-3.5" />
-          Add section
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Add a section</DialogTitle>
-        </DialogHeader>
-        <div className="max-h-[70vh] space-y-6 overflow-y-auto pr-1">
-          <div>
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-              Sections
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              {sectionTypes.map((def: SectionDefinition) => (
-                <button
-                  key={def.type}
-                  type="button"
-                  onClick={() => handleSelect(def.type)}
-                  className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-200">{def.label}</span>
-                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
-                      {def.type}
+          <div className="space-y-6">
+          {primitives.length > 0 && (
+            <div>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Primitives
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {primitives.map((def: SectionDefinition) => (
+                  <button
+                    key={def.type}
+                    type="button"
+                    onClick={() => handleSelect(def.type)}
+                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                        {def.type}
+                      </span>
+                    </div>
+                    {renderPreview(def.allowedBlockTypes)}
+                    <span className="text-xs text-gray-500">
+                      {renderAllowedBlocks(def.allowedBlockTypes)}
                     </span>
-                  </div>
-                  {renderPreview(def.allowedBlockTypes)}
-                  <span className="text-xs text-gray-500">
-                    {renderAllowedBlocks(def.allowedBlockTypes)}
-                  </span>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {elements.length > 0 && (
+            <div>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Elements
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {elements.map((def: SectionDefinition) => (
+                  <button
+                    key={def.type}
+                    type="button"
+                    onClick={() => handleSelect(def.type)}
+                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                        {def.type}
+                      </span>
+                    </div>
+                    {renderPreview(def.allowedBlockTypes)}
+                    <span className="text-xs text-gray-500">
+                      {renderAllowedBlocks(def.allowedBlockTypes)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {templates.length > 0 && (
+            <div>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Templates
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {templates.map((def: SectionDefinition) => (
+                  <button
+                    key={def.type}
+                    type="button"
+                    onClick={() => handleSelect(def.type)}
+                    className="flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-200">{def.label}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                        {def.type}
+                      </span>
+                    </div>
+                    {renderPreview(def.allowedBlockTypes)}
+                    <span className="text-xs text-gray-500">
+                      {renderAllowedBlocks(def.allowedBlockTypes)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {templatePreviewGroups.length > 0 && (
             <div>
@@ -157,8 +244,9 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
             </div>
           </div>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </ModalShell>
+      </AppModal>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
@@ -30,6 +31,27 @@ const resolveGapValue = (gap: unknown, fallback: string): string => {
   return fallback;
 };
 
+const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
+  Heading: 48,
+  Text: 64,
+  TextElement: 32,
+  Announcement: 32,
+  Button: 44,
+  ImageElement: 140,
+  Image: 140,
+  VideoEmbed: 160,
+  Divider: 12,
+  SocialLinks: 40,
+  Icon: 40,
+  AppEmbed: 180,
+  RichText: 140,
+  ImageWithText: 200,
+  Hero: 240,
+  Block: 120,
+};
+
+const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
+
 const getSpacingValue = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
 
 const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean => {
@@ -55,6 +77,14 @@ const formatSettingValue = (value: unknown): string => {
 
 type InspectorEntry = { label: string; value: string };
 type InspectorSection = { title: string; entries: InspectorEntry[] };
+
+const resolveNodeLabel = (fallback: string, value: unknown): string => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return fallback;
+};
 
 const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] => {
   return Object.entries(settings)
@@ -124,7 +154,9 @@ const InspectorHover = ({
   children: React.ReactNode;
   className?: string;
 }): React.ReactNode => {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const clearTimer = (): void => {
@@ -160,14 +192,52 @@ const InspectorHover = ({
     setOpen(false);
   };
 
+  const updateTooltipPosition = (): void => {
+    const canvas = typeof document !== "undefined"
+      ? (document.querySelector("[data-cms-canvas='true']") as HTMLElement | null)
+      : null;
+    const el = canvas ?? wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const margin = 12;
+    setTooltipPos({
+      top: rect.bottom - margin,
+      left: rect.right - margin,
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    updateTooltipPosition();
+    const handleScroll = (): void => updateTooltipPosition();
+    const handleResize = (): void => updateTooltipPosition();
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [open]);
+
   return (
-    <div className={`relative ${className ?? ""}`} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+    <div
+      ref={wrapperRef}
+      className={`relative ${className ?? ""}`}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
       {children}
-      {enabled && showTooltip && open && content && (
-        <div className="absolute z-[9999] left-1/2 -translate-x-1/2 -top-2 -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none">
-          {content}
-        </div>
-      )}
+      {enabled && showTooltip && open && content && tooltipPos && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none"
+              style={{ left: tooltipPos.left, top: tooltipPos.top }}
+            >
+              {content}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };
@@ -209,7 +279,7 @@ export function PreviewSection({
 }: PreviewSectionProps): React.ReactNode {
   const isSectionSelected = selectedNodeId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
-  const label = (section.settings["label"] as string | undefined) ?? section.type;
+  const label = resolveNodeLabel(section.type, section.settings["label"]);
   const inspectorActive = isInspecting;
   const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
@@ -452,6 +522,25 @@ export function PreviewSection({
         : directColumns.length > 0
         ? [{ row: { id: `row-virtual-${section.id}`, type: "Row", settings: {}, blocks: directColumns }, virtual: true }]
         : [];
+    const hasZeroSpacing = ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "marginTop", "marginBottom", "marginLeft", "marginRight"].every((key) => {
+      const value = section.settings[key] as number | undefined;
+      return !value || value === 0;
+    });
+    const isEmptyGrid = rowsToRender.length > 0 && rowsToRender.every(({ row }) => {
+      const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+      return columns.length > 0 && columns.every((column: BlockInstance) => (column.blocks ?? []).length === 0);
+    });
+    const hasFixedHeights = rowsToRender.some(({ row }) => {
+      const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
+      const rowHeight = (row.settings?.["height"] as number) || 0;
+      if (rowHeightMode === "fixed" && rowHeight > 0) return true;
+      const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+      return columns.some((column: BlockInstance) => {
+        const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
+        const columnHeight = (column.settings?.["height"] as number) || 0;
+        return columnHeightMode === "fixed" && columnHeight > 0;
+      });
+    });
 
     return (
       wrapInspector(
@@ -471,6 +560,8 @@ export function PreviewSection({
             <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
               No rows
             </div>
+          ) : isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
+            <div className="h-px w-full bg-border/40" />
           ) : (
             <div className={`flex flex-col ${sectionGapClass}`}>
               {rowsToRender.map(({ row, virtual }, rowIndex: number) => {
@@ -481,6 +572,10 @@ export function PreviewSection({
                 const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
                 const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
                 const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
+                const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
+                const rowHeight = (row.settings?.["height"] as number) || 0;
+                const rowHeightStyle =
+                  rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
                 const rowContainer = (
                   <div
                     role={!virtual ? "button" : undefined}
@@ -497,7 +592,7 @@ export function PreviewSection({
                         onSelect(row.id);
                       }
                     }}
-                    style={rowStyles}
+                    style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                     className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
                   >
                     {!virtual && isRowSelected && onRemoveRow && (
@@ -526,6 +621,14 @@ export function PreviewSection({
                         const isColumnHovered = isInspecting && hoveredNodeId === column.id;
                         const columnHoverClass =
                           isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
+                        const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
+                        const columnHeight = (column.settings?.["height"] as number) || 0;
+                        const columnStyle: React.CSSProperties = {};
+                        if (columnHeightMode === "fixed" && columnHeight > 0) {
+                          columnStyle.height = `${columnHeight}px`;
+                        } else if (rowHeightMode === "fixed" && rowHeight > 0) {
+                          columnStyle.height = "100%";
+                        }
                         const columnTooltip = (
                           <InspectorTooltip
                             title="Column"
@@ -607,34 +710,49 @@ export function PreviewSection({
                                   onSelect(column.id);
                                 }
                               }}
+                              style={columnStyle}
                               className={`h-full text-left transition cursor-pointer ${
                                 isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                               } ${columnHoverClass}`}
                             >
-                              {(column.blocks ?? []).length > 0 && (
-                                <div className={`space-y-4 ${isInspecting ? "" : "pointer-events-none"}`}>
-                                  {(column.blocks ?? []).map((block: BlockInstance) => (
-                                    <PreviewBlockItem
-                                      key={block.id}
-                                      block={block}
-                                      isSelected={selectedNodeId === block.id}
-                                      isInspecting={isInspecting}
-                                      inspectorSettings={inspectorSettings}
-                                      hoveredNodeId={hoveredNodeId}
-                                      onHoverNode={onHoverNode}
-                                      onSelect={onSelect}
-                                      contained
-                                      selectedNodeId={selectedNodeId}
-                                      sectionId={section.id}
-                                      sectionType={section.type}
-                                      sectionZone={section.zone}
-                                      columnId={column.id}
-                                      onOpenMedia={onOpenMedia}
-                                      mediaStyles={mediaStyles}
-                                    />
-                                  ))}
-                                </div>
-                              )}
+                              {(column.blocks ?? []).length > 0 && (() => {
+                                const columnBlocks = column.blocks ?? [];
+                                const isSingleBlock = columnBlocks.length === 1;
+                                const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
+                                return (
+                                  <div className={`flex flex-col ${shouldStretch ? "h-full" : "gap-4"} ${isInspecting ? "" : "pointer-events-none"}`}>
+                                    {columnBlocks.map((block: BlockInstance) => (
+                                      <div
+                                        key={block.id}
+                                        className={shouldStretch ? "flex-1" : ""}
+                                        style={{
+                                          minHeight: `${getBlockMinHeight(block.type)}px`,
+                                          ...(shouldStretch ? { height: "100%" } : {}),
+                                        }}
+                                      >
+                                        <PreviewBlockItem
+                                          block={block}
+                                          isSelected={selectedNodeId === block.id}
+                                          isInspecting={isInspecting}
+                                          inspectorSettings={inspectorSettings}
+                                          hoveredNodeId={hoveredNodeId}
+                                          onHoverNode={onHoverNode}
+                                          onSelect={onSelect}
+                                          contained
+                                          selectedNodeId={selectedNodeId}
+                                          sectionId={section.id}
+                                          sectionType={section.type}
+                                          sectionZone={section.zone}
+                                          columnId={column.id}
+                                          onOpenMedia={onOpenMedia}
+                                          mediaStyles={mediaStyles}
+                                          stretch={shouldStretch}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </InspectorHover>
                         );
@@ -1143,6 +1261,7 @@ interface PreviewBlockItemProps {
   onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   mediaStyles?: React.CSSProperties | null;
+  stretch?: boolean;
 }
 
 function PreviewBlockItem({
@@ -1162,6 +1281,7 @@ function PreviewBlockItem({
   onHoverNode,
   onOpenMedia,
   mediaStyles,
+  stretch = false,
 }: PreviewBlockItemProps): React.ReactNode {
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const selectedBorderClass = isInspecting
@@ -1181,8 +1301,9 @@ function PreviewBlockItem({
     : "";
   const canvasHoverClass = isHovered && !isSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
   const canvasFrameClass = `${canvasSelectedClass} ${canvasHoverClass}`.trim();
+  const stretchClass = stretch ? "h-full" : "";
   const buildContainerClass = (base: string, editor: string): string =>
-    `${base} ${isFaithful ? canvasFrameClass : `${editor} ${hoverFrameClass}`}`.trim();
+    `${base} ${stretchClass} ${isFaithful ? canvasFrameClass : `${editor} ${hoverFrameClass}`}`.trim();
   const metaEntries: InspectorEntry[] = [{ label: "Type", value: block.type }];
   if (inspectorSettings.showIdentifiers) {
     metaEntries.push({ label: "ID", value: block.id });
@@ -1234,10 +1355,21 @@ function PreviewBlockItem({
       onHover={onHoverNode}
       fallbackNodeId={fallbackNodeId}
       content={inspectorContent}
+      className={stretchClass}
     >
       {node}
     </InspectorHover>
   );
+  const handleSelect = (event: React.SyntheticEvent): void => {
+    event.stopPropagation();
+    onSelect(block.id);
+  };
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelect(event);
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // Section-type blocks (ImageWithText, Hero) — layout-aware preview
@@ -1247,12 +1379,11 @@ function PreviewBlockItem({
     return (
       wrapBlock(
         <div className="relative group">
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onSelect(block.id);
-            }}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleSelect}
+            onKeyDown={handleKeyDown}
             className={buildContainerClass(
               `w-full text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
               `rounded border-2 ${
@@ -1276,6 +1407,7 @@ function PreviewBlockItem({
                   sectionType={sectionType}
                   sectionZone={sectionZone}
                   columnId={columnId}
+                  stretch={stretch}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -1293,6 +1425,7 @@ function PreviewBlockItem({
                   sectionType={sectionType}
                   sectionZone={sectionZone}
                   columnId={columnId}
+                  stretch={stretch}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -1310,6 +1443,7 @@ function PreviewBlockItem({
                   sectionType={sectionType}
                   sectionZone={sectionZone}
                   columnId={columnId}
+                  stretch={stretch}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -1327,12 +1461,13 @@ function PreviewBlockItem({
                   sectionType={sectionType}
                   sectionZone={sectionZone}
                   columnId={columnId}
+                  stretch={stretch}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
               )}
             </div>
-          </button>
+          </div>
           {canReplaceImage && (
             <button
               type="button"
@@ -1369,12 +1504,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `cms-hover-card rounded border p-3 ${
@@ -1385,7 +1519,7 @@ function PreviewBlockItem({
           )}
         >
           <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
-        </button>
+        </div>
       )
     );
   }
@@ -1398,12 +1532,11 @@ function PreviewBlockItem({
       : "text-gray-200";
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             "flex w-full items-center gap-2 text-sm transition",
             `${
@@ -1416,7 +1549,7 @@ function PreviewBlockItem({
           <Megaphone className="size-3.5 text-gray-400" />
           <span className={textClass}>{text}</span>
           {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
-        </button>
+        </div>
       )
     );
   }
@@ -1427,12 +1560,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1447,7 +1579,7 @@ function PreviewBlockItem({
           ) : (
             <p className="text-sm italic text-gray-500">Add text content...</p>
           )}
-        </button>
+        </div>
       )
     );
   }
@@ -1459,12 +1591,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-0 ${
@@ -1477,7 +1608,49 @@ function PreviewBlockItem({
           <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
             {text}
           </p>
-        </button>
+        </div>
+      )
+    );
+  }
+
+  // Image element block
+  if (block.type === "ImageElement") {
+    const src = (block.settings["src"] as string) || "";
+    const alt = (block.settings["alt"] as string) || "Image";
+    const presentation = buildImageElementPresentation(block.settings, mediaStyles);
+
+    return (
+      wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-1 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
+        >
+          {src ? (
+            <div className="relative" style={presentation.wrapperStyles}>
+              <img src={src} alt={alt} style={presentation.imageStyles} />
+              {presentation.hasOverlay && (
+                <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
+              )}
+            </div>
+          ) : (
+            <div
+              className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+              style={presentation.wrapperStyles}
+            >
+              No image selected
+            </div>
+          )}
+        </div>
       )
     );
   }
@@ -1489,12 +1662,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `cms-hover-button rounded border p-3 ${
@@ -1513,7 +1685,7 @@ function PreviewBlockItem({
           >
             {label}
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1524,12 +1696,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1542,7 +1713,7 @@ function PreviewBlockItem({
           <div className="rounded-lg p-4 text-gray-400" data-color-scheme={colorScheme}>
             <p className="text-sm italic">Rich text content area</p>
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1561,12 +1732,11 @@ function PreviewBlockItem({
     return (
       wrapBlock(
         <div className="relative group">
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onSelect(block.id);
-            }}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleSelect}
+            onKeyDown={handleKeyDown}
             className={buildContainerClass(
               `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
               `rounded border p-1 ${
@@ -1595,7 +1765,7 @@ function PreviewBlockItem({
                 </div>
               </div>
             )}
-          </button>
+          </div>
           {onOpenMedia && (
             <button
               type="button"
@@ -1626,12 +1796,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1647,7 +1816,7 @@ function PreviewBlockItem({
               <span className="text-xs text-gray-500">{ratio}</span>
             </div>
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1660,12 +1829,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1685,7 +1853,7 @@ function PreviewBlockItem({
               <span className="text-[10px] uppercase">{appLabel}</span>
             </div>
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1698,12 +1866,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1714,7 +1881,7 @@ function PreviewBlockItem({
           )}
         >
           <hr style={{ borderStyle: style, borderTopWidth: `${thickness}px`, borderColor: color }} />
-        </button>
+        </div>
       )
     );
   }
@@ -1723,12 +1890,11 @@ function PreviewBlockItem({
   if (block.type === "SocialLinks") {
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1742,7 +1908,7 @@ function PreviewBlockItem({
             <Share2 className="size-4 text-gray-500" />
             <span className="text-xs text-gray-500">Social Links</span>
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1754,12 +1920,11 @@ function PreviewBlockItem({
 
     return (
       wrapBlock(
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
           className={buildContainerClass(
             `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
@@ -1773,7 +1938,7 @@ function PreviewBlockItem({
             <Star className="size-5" style={{ color: iconColor }} />
             <span className="text-xs text-gray-500">{iconName}</span>
           </div>
-        </button>
+        </div>
       )
     );
   }
@@ -1781,12 +1946,11 @@ function PreviewBlockItem({
   // Fallback for unknown block types
   return (
     wrapBlock(
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleSelect}
+        onKeyDown={handleKeyDown}
         className={buildContainerClass(
           `flex w-full items-center gap-2 text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
           `rounded border p-3 ${
@@ -1797,7 +1961,7 @@ function PreviewBlockItem({
         )}
       >
         <span className="flex-1 truncate text-gray-300">{block.type}</span>
-      </button>
+      </div>
     )
   );
 }
@@ -1817,6 +1981,7 @@ interface PreviewSectionBlockProps {
   sectionType?: string;
   sectionZone?: PageZone;
   columnId?: string;
+  stretch?: boolean;
   onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   mediaStyles?: React.CSSProperties | null;
@@ -1833,6 +1998,7 @@ function PreviewImageWithTextBlock({
   sectionType,
   sectionZone,
   columnId,
+  stretch = false,
   onHoverNode,
   onOpenMedia,
   mediaStyles,
@@ -1842,8 +2008,14 @@ function PreviewImageWithTextBlock({
   const children = block.blocks ?? [];
   const blockImage = block.settings["image"] as string | undefined;
 
+  const stretchClass = stretch ? "h-full" : "";
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
+
   return (
-    <div className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
+    <div
+      className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"} ${stretchClass}`}
+      style={stretchStyle}
+    >
       <div className="cms-media flex w-1/3 shrink-0 items-center justify-center bg-gray-700/40 min-h-[48px]" style={mediaStyles ?? undefined}>
         {blockImage ? (
           <img src={blockImage} alt="" className="size-full object-cover" />
@@ -1899,6 +2071,7 @@ function PreviewHeroBlock({
   sectionType,
   sectionZone,
   columnId,
+  stretch = false,
   onHoverNode,
   onOpenMedia,
   mediaStyles,
@@ -1909,10 +2082,12 @@ function PreviewHeroBlock({
     ? { backgroundImage: `url(${blockImage})`, backgroundSize: "cover", backgroundPosition: "center" }
     : {};
 
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
+
   return (
     <div
       className={`cms-media relative min-h-[80px] px-3 ${blockImage ? "" : "bg-gradient-to-br from-gray-700/30 to-gray-800/50"}`}
-      style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
+      style={{ ...heroBgStyle, ...(mediaStyles ?? {}), ...(stretchStyle ?? {}) }}
     >
       <div className="flex min-h-[80px] flex-col items-center justify-center gap-1">
         {children.length > 0 ? (
@@ -1960,15 +2135,17 @@ function PreviewRichTextBlock({
   sectionType,
   sectionZone,
   columnId,
+  stretch = false,
   onHoverNode,
   onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
 
   return (
-    <div style={blockStyles} className="space-y-4">
+    <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={`space-y-4 ${stretch ? "h-full" : ""}`}>
       {children.length > 0 ? (
         children.map((child: BlockInstance) => (
           <PreviewBlockItem
@@ -2015,6 +2192,7 @@ function PreviewBlockSectionBlock({
   sectionType,
   sectionZone,
   columnId,
+  stretch = false,
   onHoverNode,
   onOpenMedia,
   mediaStyles,
@@ -2024,6 +2202,7 @@ function PreviewBlockSectionBlock({
     ...getSectionStyles(block.settings),
     ...getTextAlign(block.settings["contentAlignment"]),
   };
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
   const alignment = (block.settings["contentAlignment"] as string) || "left";
   const alignmentClass =
     alignment === "center"
@@ -2033,7 +2212,7 @@ function PreviewBlockSectionBlock({
         : "justify-start";
 
   return (
-    <div style={blockStyles}>
+    <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
       <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
@@ -2065,4 +2244,176 @@ function PreviewBlockSectionBlock({
       </div>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Image element helpers
+// ---------------------------------------------------------------------------
+
+function buildImageElementPresentation(
+  settings: Record<string, unknown>,
+  mediaStyles?: React.CSSProperties | null
+): {
+  wrapperStyles: React.CSSProperties;
+  imageStyles: React.CSSProperties;
+  overlayStyles: React.CSSProperties;
+  hasOverlay: boolean;
+} {
+  const width = (settings["width"] as number) || 100;
+  const height = (settings["height"] as number) || 0;
+  const aspectRatio = (settings["aspectRatio"] as string) || "auto";
+  const objectFit = (settings["objectFit"] as string) || "cover";
+  const objectPosition = resolveObjectPosition((settings["objectPosition"] as string) || "center");
+  const opacity = clampNumber(settings["opacity"], 0, 100, 100);
+  const blur = clampNumber(settings["blur"], 0, 20, 0);
+  const grayscale = clampNumber(settings["grayscale"], 0, 100, 0);
+  const brightness = clampNumber(settings["brightness"], 0, 200, 100);
+  const contrast = clampNumber(settings["contrast"], 0, 200, 100);
+  const scale = clampNumber(settings["scale"], 50, 200, 100);
+  const rotate = clampNumber(settings["rotate"], -180, 180, 0);
+  const shape = (settings["shape"] as string) || "none";
+  const borderRadius = (settings["borderRadius"] as number) || 0;
+  const borderWidth = (settings["borderWidth"] as number) || 0;
+  const borderStyle = (settings["borderStyle"] as string) || "solid";
+  const borderColor = (settings["borderColor"] as string) || "#ffffff";
+  const overlayType = (settings["overlayType"] as string) || "none";
+  const overlayColor = (settings["overlayColor"] as string) || "#000000";
+  const overlayOpacity = clampNumber(settings["overlayOpacity"], 0, 100, 0) / 100;
+  const overlayGradientFrom = (settings["overlayGradientFrom"] as string) || "#000000";
+  const overlayGradientTo = (settings["overlayGradientTo"] as string) || "#ffffff";
+  const overlayGradientDirection = (settings["overlayGradientDirection"] as string) || "to-bottom";
+  const transparencyMode = (settings["transparencyMode"] as string) || "none";
+  const transparencyDirection = (settings["transparencyDirection"] as string) || "bottom";
+  const transparencyStrength = clampNumber(settings["transparencyStrength"], 0, 100, 0);
+
+  const wrapperStyles: React.CSSProperties = {
+    ...(mediaStyles ?? {}),
+    width: `${width}%`,
+  };
+  if (height > 0) wrapperStyles.height = `${height}px`;
+  if (aspectRatio !== "auto") wrapperStyles.aspectRatio = aspectRatio;
+  if (borderWidth > 0 && borderStyle !== "none") {
+    wrapperStyles.borderWidth = `${borderWidth}px`;
+    wrapperStyles.borderStyle = borderStyle;
+    wrapperStyles.borderColor = borderColor;
+  }
+  if (shape === "circle") {
+    wrapperStyles.borderRadius = "9999px";
+    wrapperStyles.overflow = "hidden";
+  } else if (shape === "rounded" && borderRadius > 0) {
+    wrapperStyles.borderRadius = `${borderRadius}px`;
+    wrapperStyles.overflow = "hidden";
+  }
+
+  const shadow = settings["imageShadow"] as Record<string, unknown> | undefined;
+  if (shadow) {
+    const x = (shadow.x as number) ?? 0;
+    const y = (shadow.y as number) ?? 0;
+    const blurShadow = (shadow.blur as number) ?? 0;
+    const spread = (shadow.spread as number) ?? 0;
+    const color = shadow.color as string | undefined;
+    if ((x || y || blurShadow || spread) && color) {
+      wrapperStyles.boxShadow = `${x}px ${y}px ${blurShadow}px ${spread}px ${color}`;
+    }
+  }
+
+  Object.assign(wrapperStyles, buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength));
+
+  const filters: string[] = [];
+  if (blur > 0) filters.push(`blur(${blur}px)`);
+  if (grayscale > 0) filters.push(`grayscale(${grayscale / 100})`);
+  if (brightness !== 100) filters.push(`brightness(${brightness / 100})`);
+  if (contrast !== 100) filters.push(`contrast(${contrast / 100})`);
+
+  const transforms: string[] = [];
+  if (scale !== 100) transforms.push(`scale(${scale / 100})`);
+  if (rotate !== 0) transforms.push(`rotate(${rotate}deg)`);
+
+  const imageStyles: React.CSSProperties = {
+    width: "100%",
+    height: height > 0 || aspectRatio !== "auto" ? "100%" : "auto",
+    objectFit,
+    objectPosition,
+    opacity: opacity / 100,
+    filter: filters.length ? filters.join(" ") : undefined,
+    transform: transforms.length ? transforms.join(" ") : undefined,
+  };
+
+  const overlayStyles: React.CSSProperties = {};
+  if (overlayType === "solid") {
+    overlayStyles.backgroundColor = overlayColor;
+    overlayStyles.opacity = overlayOpacity;
+  } else if (overlayType === "gradient") {
+    overlayStyles.backgroundImage = `linear-gradient(${resolveGradientDirection(overlayGradientDirection)}, ${overlayGradientFrom}, ${overlayGradientTo})`;
+    overlayStyles.opacity = overlayOpacity;
+  }
+  if (wrapperStyles.borderRadius) {
+    overlayStyles.borderRadius = wrapperStyles.borderRadius as string;
+  }
+
+  return {
+    wrapperStyles,
+    imageStyles,
+    overlayStyles,
+    hasOverlay: overlayType !== "none",
+  };
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
+  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
+}
+
+function resolveObjectPosition(value: string): string {
+  const map: Record<string, string> = {
+    center: "center",
+    top: "top",
+    bottom: "bottom",
+    left: "left",
+    right: "right",
+    "top-left": "left top",
+    "top-right": "right top",
+    "bottom-left": "left bottom",
+    "bottom-right": "right bottom",
+  };
+  return map[value] ?? "center";
+}
+
+function resolveGradientDirection(value: string): string {
+  const map: Record<string, string> = {
+    "to-top": "to top",
+    "to-bottom": "to bottom",
+    "to-left": "to left",
+    "to-right": "to right",
+    "to-top-left": "to top left",
+    "to-top-right": "to top right",
+    "to-bottom-left": "to bottom left",
+    "to-bottom-right": "to bottom right",
+  };
+  return map[value] ?? "to bottom";
+}
+
+function buildTransparencyMaskStyles(
+  mode: string,
+  direction: string,
+  strength: number
+): React.CSSProperties {
+  if (mode !== "gradient" || strength <= 0) return {};
+  const dirMap: Record<string, string> = {
+    top: "to bottom",
+    bottom: "to top",
+    left: "to right",
+    right: "to left",
+    "top-left": "to bottom right",
+    "top-right": "to bottom left",
+    "bottom-left": "to top right",
+    "bottom-right": "to top left",
+  };
+  const dir = dirMap[direction] ?? "to bottom";
+  const stop = Math.min(100, Math.max(0, strength));
+  const gradient = `linear-gradient(${dir}, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${stop}%, rgba(0,0,0,1) 100%)`;
+  return {
+    maskImage: gradient,
+    WebkitMaskImage: gradient,
+  };
 }

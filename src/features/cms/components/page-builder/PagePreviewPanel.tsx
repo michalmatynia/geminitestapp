@@ -567,6 +567,7 @@ export function PagePreviewPanel(): React.ReactNode {
           <>
             <div className="p-3 md:p-4">
               <div
+                data-cms-canvas="true"
                 className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
                   state.inspectorEnabled ? "cursor-crosshair" : ""
                 }`}

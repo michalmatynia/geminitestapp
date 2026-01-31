@@ -19,6 +19,16 @@ import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/fea
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
+const MANAGEMENT_FIELDS: SettingsField[] = [
+  { key: "label", label: "Label", type: "text", defaultValue: "" },
+  { key: "notes", label: "Internal notes", type: "text", defaultValue: "" },
+];
+
+function prependManagementFields(schema: SettingsField[]): SettingsField[] {
+  const existing = new Set(schema.map((field) => field.key));
+  const extra = MANAGEMENT_FIELDS.filter((field) => !existing.has(field.key));
+  return extra.length ? [...extra, ...schema] : schema;
+}
 
 interface FieldGroup {
   kind: "single" | "padding" | "margin";
@@ -584,7 +594,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 </div>
 
                 {renderFieldGroups(
-                  groupSettingsFields(sectionDef.settingsSchema),
+                  groupSettingsFields(
+                    selectedSection.type === "Grid"
+                      ? prependManagementFields(sectionDef.settingsSchema)
+                      : sectionDef.settingsSchema
+                  ),
                   selectedSection.settings,
                   handleSectionSettingChangeWithGridColumns,
                 )}
@@ -613,7 +627,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 </div>
 
                 {renderFieldGroups(
-                  groupSettingsFields(columnDef.settingsSchema),
+                  groupSettingsFields(prependManagementFields(columnDef.settingsSchema)),
                   selectedColumn.settings,
                   handleColumnSettingChange,
                 )}
@@ -644,7 +658,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 </div>
 
                 {renderFieldGroups(
-                  groupSettingsFields(blockDef.settingsSchema),
+                  groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
                   selectedBlock.settings,
                   handleBlockSettingChange,
                   (field) =>

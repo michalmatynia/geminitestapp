@@ -29,6 +29,27 @@ const resolveGapValue = (gap: unknown, fallback: string): string => {
   return fallback;
 };
 
+const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
+  Heading: 48,
+  Text: 64,
+  TextElement: 32,
+  Announcement: 32,
+  Button: 44,
+  ImageElement: 140,
+  Image: 140,
+  VideoEmbed: 160,
+  Divider: 12,
+  SocialLinks: 40,
+  Icon: 40,
+  AppEmbed: 180,
+  RichText: 140,
+  ImageWithText: 200,
+  Hero: 240,
+  Block: 120,
+};
+
+const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
+
 export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
@@ -55,14 +76,24 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
             const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
             const rowGapClass = getGapClass(rowGapValue);
             const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
+            const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
+            const rowHeight = (row.settings?.["height"] as number) || 0;
+            const rowHeightStyle =
+              rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
             return (
               <div
                 key={`grid-row-${row.id}-${rowIndex}`}
                 className={`grid ${rowGapClass}`}
-                style={{ ...rowStyles, gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)` }}
+                style={{ ...rowStyles, ...(rowHeightStyle ?? {}), gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)` }}
               >
                 {rowColumns.map((column: BlockInstance) => (
-                  <ColumnRenderer key={column.id} column={column} colorSchemes={colorSchemes} />
+                  <ColumnRenderer
+                    key={column.id}
+                    column={column}
+                    colorSchemes={colorSchemes}
+                    rowHeightMode={rowHeightMode}
+                    rowHeight={rowHeight}
+                  />
                 ))}
               </div>
             );
@@ -80,21 +111,46 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
 function ColumnRenderer({
   column,
   colorSchemes,
+  rowHeightMode,
+  rowHeight,
 }: {
   column: BlockInstance;
   colorSchemes?: Record<string, ColorSchemeColors>;
+  rowHeightMode?: string;
+  rowHeight?: number;
 }): React.ReactNode {
   const children = column.blocks ?? [];
   const animConfig = column.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const isSingleBlock = children.length === 1;
+  const columnHeightMode = (column.settings["heightMode"] as string) || "inherit";
+  const columnHeight = (column.settings["height"] as number) || 0;
+  const shouldStretch = isSingleBlock && (columnHeightMode === "fixed" || rowHeightMode === "fixed");
+  const columnStyle: React.CSSProperties = {};
+  if (columnHeightMode === "fixed" && columnHeight > 0) {
+    columnStyle.height = `${columnHeight}px`;
+  } else if (rowHeightMode === "fixed" && rowHeight && rowHeight > 0) {
+    columnStyle.height = "100%";
+  }
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      <div className="space-y-4">
+      <div className={`flex flex-col ${shouldStretch ? "h-full" : "gap-4"}`} style={columnStyle}>
         {children.map((block: BlockInstance) => {
+          const minHeight = getBlockMinHeight(block.type);
+          const wrapperStyle: React.CSSProperties = { minHeight: `${minHeight}px` };
+          if (shouldStretch) wrapperStyle.height = "100%";
           if (SECTION_BLOCK_TYPES.has(block.type)) {
-            return <SectionBlockRenderer key={block.id} block={block} colorSchemes={colorSchemes} />;
+            return (
+              <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
+                <SectionBlockRenderer block={block} colorSchemes={colorSchemes} stretch={shouldStretch} />
+              </div>
+            );
           }
-          return <FrontendBlockRenderer key={block.id} block={block} />;
+          return (
+            <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
+              <FrontendBlockRenderer block={block} />
+            </div>
+          );
         })}
       </div>
     </GsapAnimationWrapper>
@@ -108,24 +164,32 @@ function ColumnRenderer({
 function SectionBlockRenderer({
   block,
   colorSchemes,
+  stretch = false,
 }: {
   block: BlockInstance;
   colorSchemes?: Record<string, ColorSchemeColors>;
+  stretch?: boolean;
 }): React.ReactNode {
   const children = block.blocks ?? [];
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+  const stretchClass = stretch ? "h-full" : "";
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
 
   if (block.type === "ImageWithText") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
+        <div className={stretchClass} style={stretchStyle}>
+          <FrontendImageWithTextBlock settings={block.settings} blocks={children} />
+        </div>
       </GsapAnimationWrapper>
     );
   }
   if (block.type === "Hero") {
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <FrontendHeroBlock settings={block.settings} blocks={children} />
+        <div className={stretchClass} style={stretchStyle}>
+          <FrontendHeroBlock settings={block.settings} blocks={children} />
+        </div>
       </GsapAnimationWrapper>
     );
   }
@@ -133,7 +197,7 @@ function SectionBlockRenderer({
     const sectionStyles = getSectionStyles(block.settings, colorSchemes);
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div style={sectionStyles}>
+        <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
           <div className="space-y-4">
             {children.length > 0 ? (
               children.map((child: BlockInstance) => (
@@ -161,7 +225,7 @@ function SectionBlockRenderer({
           : "justify-start";
     return (
       <GsapAnimationWrapper config={animConfig}>
-        <div style={sectionStyles}>
+        <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
           <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
             {children.length > 0 ? (
               children.map((child: BlockInstance) => (

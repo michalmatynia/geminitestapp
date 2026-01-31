@@ -66,6 +66,8 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     icon: "GripVertical",
     defaultSettings: {
       gap: "inherit",
+      heightMode: "inherit",
+      height: 0,
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -90,6 +92,17 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "inherit",
       },
+      {
+        key: "heightMode",
+        label: "Row height",
+        type: "select",
+        options: [
+          { label: "Inherit from blocks", value: "inherit" },
+          { label: "Fixed height", value: "fixed" },
+        ],
+        defaultValue: "inherit",
+      },
+      { key: "height", label: "Row height (px)", type: "range", defaultValue: 0, min: 0, max: 1000 },
       ...paddingFields(),
       ...marginFields(),
       { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
@@ -116,6 +129,8 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       paddingRight: 0,
       marginTop: 0,
       marginBottom: 0,
+      heightMode: "inherit",
+      height: 0,
       colorScheme: "scheme-1",
       verticalAlignment: "top",
     },
@@ -126,6 +141,17 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "paddingRight", label: "Right padding", type: "number", defaultValue: 0 },
       { key: "marginTop", label: "Top margin", type: "number", defaultValue: 0 },
       { key: "marginBottom", label: "Bottom margin", type: "number", defaultValue: 0 },
+      {
+        key: "heightMode",
+        label: "Column height",
+        type: "select",
+        options: [
+          { label: "Inherit from blocks", value: "inherit" },
+          { label: "Fixed height", value: "fixed" },
+        ],
+        defaultValue: "inherit",
+      },
+      { key: "height", label: "Column height (px)", type: "range", defaultValue: 0, min: 0, max: 1000 },
       colorSchemeField("colorScheme", "Color scheme"),
       {
         key: "verticalAlignment",
@@ -219,7 +245,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     icon: "FileText",
     defaultSettings: {
       textContent: "Text element",
-      fontFamily: "",
+      fontFamily: "Inter, sans-serif",
       fontSize: 0,
       fontWeight: "400",
       fontStyle: "normal",
@@ -229,7 +255,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     },
     settingsSchema: [
       { key: "textContent", label: "Text", type: "text", defaultValue: "Text element" },
-      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "Inter, sans-serif" },
       { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
       { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
       {
@@ -718,7 +744,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     allowedBlockTypes: [],
     defaultSettings: {
       textContent: "Text element",
-      fontFamily: "",
+      fontFamily: "Inter, sans-serif",
       fontSize: 0,
       fontWeight: "400",
       fontStyle: "normal",
@@ -728,7 +754,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     },
     settingsSchema: [
       { key: "textContent", label: "Text", type: "text", defaultValue: "Text element" },
-      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "Inter, sans-serif" },
       { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
       { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
       {

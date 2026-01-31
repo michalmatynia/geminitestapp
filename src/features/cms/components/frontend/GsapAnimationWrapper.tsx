@@ -660,13 +660,15 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
       if (config.motionPathEnabled && config.motionPathPath) {
         const path = config.motionPathPath.trim();
         if (path) {
-          const motionPathBase: Record<string, unknown> = {
+          const baseStart = config.motionPathStart ?? 0;
+          const baseEnd = config.motionPathEnd ?? 1;
+          const motionPathBase: MotionPath.Vars = {
             path,
-            align: config.motionPathAlign ? path : undefined,
             autoRotate:
               config.motionPathAutoRotate ? config.motionPathRotateOffset ?? 0 : false,
-            start: config.motionPathStart ?? 0,
-            end: config.motionPathEnd ?? 1,
+            start: baseStart,
+            end: baseEnd,
+            ...(config.motionPathAlign ? { align: path } : {}),
           };
 
           const scrollTrigger = makeScrollTrigger(false);
@@ -674,19 +676,20 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           const spacing = config.motionPathSpacing ?? 0.08;
 
           if (follow && targetsArray.length > 1) {
+            const motionPathVars: MotionPath.Vars = {
+              ...motionPathBase,
+              start: (index: number): number => baseStart + index * spacing,
+              end: (index: number): number => baseEnd + index * spacing,
+            };
+
             gsap.to(targetsArray, {
-              motionPath: (index: number): Record<string, unknown> => ({
-                ...motionPathBase,
-                start: ((motionPathBase.start as number) ?? 0) + index * spacing,
-                end: ((motionPathBase.end as number) ?? 1) + index * spacing,
-              }),
+              motionPath: motionPathVars,
               duration,
               ease: finalEase,
               ...(scrollTrigger ? { scrollTrigger } : {}),
             });
           } else {
             gsap.to(targetsArray, {
-              // @ts-expect-error - GSAP MotionPath types
               motionPath: motionPathBase,
               duration,
               ease: finalEase,

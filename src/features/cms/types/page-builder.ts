@@ -104,6 +104,7 @@ export interface InspectorSettings {
   showIdentifiers: boolean;
   showVisibilityInfo: boolean;
   showConnectionInfo: boolean;
+  showEditorChrome: boolean;
 }
 
 export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
@@ -113,6 +114,7 @@ export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
   showIdentifiers: false,
   showVisibilityInfo: true,
   showConnectionInfo: true,
+  showEditorChrome: false,
 };
 
 export interface PageBuilderState {

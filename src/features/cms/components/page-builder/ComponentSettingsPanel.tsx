@@ -537,6 +537,22 @@ export function ComponentSettingsPanel(): React.ReactNode {
         </h3>
       </div>
 
+      <div className="border-b border-border px-4 py-3">
+        <div className="text-[10px] uppercase tracking-wider text-gray-400">Preview appearance</div>
+        <div className="mt-2 flex items-center justify-between text-xs text-gray-300">
+          <span>Edit chrome</span>
+          <Checkbox
+            checked={inspectorSettings.showEditorChrome}
+            onCheckedChange={(value: boolean | "indeterminate"): void =>
+              updateInspectorSetting({ showEditorChrome: value === true })
+            }
+          />
+        </div>
+        <p className="mt-1 text-[11px] text-gray-500">
+          Turn off for a faithful preview that matches the rendered page.
+        </p>
+      </div>
+
       {state.inspectorEnabled && (
         <div className="border-b border-border px-4 py-3">
           <div className="text-[10px] uppercase tracking-wider text-gray-400">Inspector options</div>

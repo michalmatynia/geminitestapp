@@ -292,6 +292,7 @@ export function PreviewSection({
   onRemoveRow,
 }: PreviewSectionProps): React.ReactNode {
   const isSectionSelected = selectedNodeId === section.id;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = resolveNodeLabel(section.type, section.settings["label"]);
   const inspectorActive = isInspecting;
@@ -813,7 +814,7 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          {onOpenMedia && (
+          {showEditorChrome && onOpenMedia && (
             <button
               type="button"
               onClick={(e: React.MouseEvent): void => {
@@ -897,7 +898,7 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          {onOpenMedia && (
+          {showEditorChrome && onOpenMedia && (
             <button
               type="button"
               onClick={(e: React.MouseEvent): void => {
@@ -1013,7 +1014,7 @@ export function PreviewSection({
     const text = (section.settings["textContent"] as string) || "";
     const typoStyles = getBlockTypographyStyles(section.settings);
     const hasText = text.trim().length > 0;
-    const showPlaceholder = !hasText && isInspecting;
+    const showPlaceholder = !hasText && showEditorChrome;
     return (
       wrapInspector(
         <div
@@ -1734,6 +1735,7 @@ function PreviewBlockItem({
   stretch = false,
 }: PreviewBlockItemProps): React.ReactNode {
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const selectedBorderClass = isInspecting
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
     : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
@@ -1743,7 +1745,7 @@ function PreviewBlockItem({
   const hoverFrameClass = isHovered && !isSelected
     ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
     : "";
-  const isFaithful = true;
+  const isFaithful = !showEditorChrome;
   const canvasSelectedClass = isSelected
     ? isInspecting
       ? "ring-2 ring-inset ring-blue-500/40"
@@ -1825,7 +1827,7 @@ function PreviewBlockItem({
   // Section-type blocks (ImageWithText, Hero) — layout-aware preview
   // ---------------------------------------------------------------------------
   if (isSectionType) {
-    const canReplaceImage = Boolean(onOpenMedia);
+    const canReplaceImage = showEditorChrome && Boolean(onOpenMedia);
     return (
       wrapBlock(
         <div className="relative group">
@@ -1999,11 +2001,38 @@ function PreviewBlockItem({
   }
 
   if (block.type === "Announcement") {
-    const text = (block.settings["text"] as string) || "Announcement";
+    const rawText = (block.settings["text"] as string) || "";
     const link = (block.settings["link"] as string) || "";
-    const textClass = link
-      ? "text-blue-300 underline decoration-blue-400/50"
-      : "text-gray-200";
+    const hasText = rawText.trim().length > 0;
+    const text = hasText ? rawText : "Announcement";
+    const typoStyles = getBlockTypographyStyles(block.settings);
+
+    if (!hasText && !showEditorChrome) {
+      return wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass("min-h-[1px] w-full", "")}
+        />
+      );
+    }
+
+    const content = link ? (
+      <a
+        href={link}
+        className="text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100"
+        style={typoStyles}
+      >
+        {text}
+      </a>
+    ) : (
+      <span className="text-sm text-gray-200" style={typoStyles}>
+        {text}
+      </span>
+    );
+
     return (
       wrapBlock(
         <div
@@ -2012,7 +2041,7 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            "flex w-full items-center gap-2 text-sm transition",
+            "inline-flex items-center gap-2 text-sm transition",
             `${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
@@ -2020,9 +2049,9 @@ function PreviewBlockItem({
             } rounded border px-2 py-1`
           )}
         >
-          <Megaphone className="size-3.5 text-gray-400" />
-          <span className={textClass}>{text}</span>
-          {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
+          {showEditorChrome ? <Megaphone className="size-3.5 text-gray-400" /> : null}
+          {content}
+          {showEditorChrome && link ? <Link2 className="size-3 text-blue-300/80" /> : null}
         </div>
       )
     );
@@ -2035,6 +2064,18 @@ function PreviewBlockItem({
     const hasText = text.trim().length > 0;
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
+    if (!hasText && !showEditorChrome) {
+      return wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass("min-h-[1px] w-full", "")}
+        />
+      );
+    }
+
     return (
       wrapBlock(
         <div
@@ -2043,15 +2084,19 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            hasText ? baseClasses : `${baseClasses} rounded border border-border/30 bg-gray-800/20`,
-            ""
+            baseClasses,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
           )}
         >
           {hasText ? (
             <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>
-          ) : (
+          ) : showEditorChrome ? (
             <p className="text-sm italic text-gray-500">Add text content...</p>
-          )}
+          ) : null}
         </div>
       )
     );
@@ -2064,6 +2109,18 @@ function PreviewBlockItem({
     const hasText = text.trim().length > 0;
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
+    if (!hasText && !showEditorChrome) {
+      return wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass("min-h-[1px] w-full", "")}
+        />
+      );
+    }
+
     return (
       wrapBlock(
         <div
@@ -2072,17 +2129,21 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            hasText ? baseClasses : `${baseClasses} rounded border border-border/30 bg-gray-800/20`,
-            ""
+            baseClasses,
+            `rounded border p-0 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
           )}
         >
           {hasText ? (
             <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>
               {text}
             </p>
-          ) : (
+          ) : showEditorChrome ? (
             <p className="m-0 p-0 text-sm italic text-gray-500">Text element</p>
-          )}
+          ) : null}
         </div>
       )
     );
@@ -2170,7 +2231,47 @@ function PreviewBlockItem({
   // Button block
   if (block.type === "Button") {
     const label = (block.settings["buttonLabel"] as string) || "Button";
+    const link = (block.settings["buttonLink"] as string) || "#";
     const style = (block.settings["buttonStyle"] as string) || "solid";
+
+    const baseButtonClasses = "cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+    const customStyles: React.CSSProperties = {};
+    const fontFamily = block.settings["fontFamily"] as string | undefined;
+    const fontSize = block.settings["fontSize"] as number | undefined;
+    const fontWeight = block.settings["fontWeight"] as string | undefined;
+    const textColor = block.settings["textColor"] as string | undefined;
+    const bgColor = block.settings["bgColor"] as string | undefined;
+    const borderColor = block.settings["borderColor"] as string | undefined;
+    const borderRadius = block.settings["borderRadius"] as number | undefined;
+    const borderWidth = block.settings["borderWidth"] as number | undefined;
+
+    if (fontFamily) customStyles.fontFamily = fontFamily;
+    if (fontSize && fontSize > 0) customStyles.fontSize = `${fontSize}px`;
+    if (fontWeight) customStyles.fontWeight = fontWeight;
+    if (textColor) customStyles.color = textColor;
+    if (bgColor) customStyles.backgroundColor = bgColor;
+    if (borderColor) customStyles.borderColor = borderColor;
+    if (borderRadius && borderRadius > 0) customStyles.borderRadius = `${borderRadius}px`;
+    if (borderWidth && borderWidth > 0) customStyles.borderWidth = `${borderWidth}px`;
+
+    const button =
+      style === "outline" ? (
+        <a
+          href={link}
+          className={`${baseButtonClasses} border-2 border-white text-white hover:bg-white hover:text-gray-900 focus:ring-white`}
+          style={customStyles}
+        >
+          {label}
+        </a>
+      ) : (
+        <a
+          href={link}
+          className={`${baseButtonClasses} bg-white text-gray-900 hover:bg-gray-200 focus:ring-white`}
+          style={customStyles}
+        >
+          {label}
+        </a>
+      );
 
     return (
       wrapBlock(
@@ -2180,7 +2281,7 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `inline-block ${contained ? "max-w-full" : ""}`,
             `cms-hover-button rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -2188,15 +2289,7 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div
-            className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
-              style === "outline"
-                ? "border border-gray-400 text-gray-300"
-                : "bg-gray-200 text-gray-900"
-            }`}
-          >
-            {label}
-          </div>
+          {button}
         </div>
       )
     );
@@ -2273,7 +2366,7 @@ function PreviewBlockItem({
               </div>
             )}
           </div>
-          {onOpenMedia && (
+          {showEditorChrome && onOpenMedia && (
             <button
               type="button"
               onClick={(e: React.MouseEvent): void => {
@@ -2299,7 +2392,26 @@ function PreviewBlockItem({
 
   // VideoEmbed block
   if (block.type === "VideoEmbed") {
+    const url = (block.settings["url"] as string) || "";
     const ratio = (block.settings["aspectRatio"] as string) || "16:9";
+    const autoplay = (block.settings["autoplay"] as string) === "yes";
+
+    let embedUrl: string | null = null;
+    if (url) {
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+      if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+      else {
+        const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+        if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+        else if (url.includes("embed") || url.includes("player")) embedUrl = url;
+      }
+    }
+
+    const paddingBottom = ratio === "4:3" ? "75%" : ratio === "1:1" ? "100%" : "56.25%";
+    const resolvedStyles: React.CSSProperties = {
+      ...(mediaStyles ?? {}),
+      paddingBottom,
+    };
 
     return (
       wrapBlock(
@@ -2317,12 +2429,24 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]" style={mediaStyles ?? undefined}>
-            <div className="flex items-center gap-2">
-              <Play className="size-5 text-gray-500" />
-              <span className="text-xs text-gray-500">{ratio}</span>
+          {embedUrl ? (
+            <div className="cms-media relative w-full" style={resolvedStyles}>
+              <iframe
+                className="absolute inset-0 h-full w-full"
+                src={`${embedUrl}${autoplay ? "?autoplay=1&mute=1" : ""}`}
+                title="Embedded video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
-          </div>
+          ) : (
+            <div
+              className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+              style={resolvedStyles}
+            >
+              Enter a video URL
+            </div>
+          )}
         </div>
       )
     );
@@ -2332,6 +2456,8 @@ function PreviewBlockItem({
   if (block.type === "AppEmbed") {
     const appId = (block.settings["appId"] as AppEmbedId) || "chatbot";
     const title = (block.settings["title"] as string) || "";
+    const embedUrl = (block.settings["embedUrl"] as string) || "";
+    const height = (block.settings["height"] as number) || 420;
     const appLabel = APP_EMBED_OPTIONS.find((option: AppEmbedOption) => option.id === appId)?.label ?? "App";
 
     return (
@@ -2350,15 +2476,26 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-sm font-medium text-gray-200">{title || appLabel}</div>
-              <div className="text-[10px] text-gray-500">App embed</div>
+          <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">
+            <div className="mb-3">
+              <div className="text-sm font-semibold text-white">{title || appLabel}</div>
+              <div className="text-[10px] uppercase tracking-wide text-gray-500">App embed</div>
             </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <AppWindow className="size-5" />
-              <span className="text-[10px] uppercase">{appLabel}</span>
-            </div>
+            {embedUrl ? (
+              <iframe
+                src={embedUrl}
+                title={title || appLabel}
+                className="w-full rounded-md border border-border/40 bg-black"
+                style={{ height }}
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400"
+                style={{ height }}
+              >
+                Provide an embed URL to render the {appLabel} app here.
+              </div>
+            )}
           </div>
         </div>
       )

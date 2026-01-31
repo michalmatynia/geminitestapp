@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import type { ExpandedImageFile } from "@/features/products";
 
 const fileKeys = {
@@ -8,10 +8,10 @@ const fileKeys = {
   list: (params: string) => ["files", "list", params] as const,
 };
 
-export function useFiles(params: string = "") {
+export function useFiles(params: string = ""): UseQueryResult<ExpandedImageFile[]> {
   return useQuery({
     queryKey: fileKeys.list(params),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExpandedImageFile[]> => {
       const res = await fetch(`/api/files?${params}`);
       if (!res.ok) throw new Error("Failed to load files");
       return (await res.json()) as ExpandedImageFile[];
@@ -19,26 +19,26 @@ export function useFiles(params: string = "") {
   });
 }
 
-export function useDeleteFile() {
+export function useDeleteFile(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (fileId: string) => {
+    mutationFn: async (fileId: string): Promise<string> => {
       const res = await fetch(`/api/files/${fileId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete file");
       return fileId;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: fileKeys.all });
     },
   });
 }
 
-export function useUpdateFileTags() {
+export function useUpdateFileTags(): UseMutationResult<ExpandedImageFile, Error, { id: string; tags: string[] }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, tags }: { id: string; tags: string[] }) => {
+    mutationFn: async ({ id, tags }: { id: string; tags: string[] }): Promise<ExpandedImageFile> => {
       const res = await fetch(`/api/files/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -47,7 +47,7 @@ export function useUpdateFileTags() {
       if (!res.ok) throw new Error("Failed to update file tags");
       return (await res.json()) as ExpandedImageFile;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: fileKeys.all });
     },
   });

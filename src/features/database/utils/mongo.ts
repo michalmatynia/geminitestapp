@@ -6,11 +6,11 @@ import { execFile } from "child_process";
 
 export const backupsDir = path.join(process.cwd(), "mongo", "backups");
 
-export const ensureBackupsDir = async () => {
+export const ensureBackupsDir = async (): Promise<void> => {
   await fs.mkdir(backupsDir, { recursive: true });
 };
 
-export const getMongoConnectionUrl = () => {
+export const getMongoConnectionUrl = (): string => {
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
     throw new Error("MONGODB_URI is not set.");
@@ -18,7 +18,7 @@ export const getMongoConnectionUrl = () => {
   return mongoUri;
 };
 
-export const getMongoDatabaseName = () => {
+export const getMongoDatabaseName = (): string => {
   const dbName = process.env.MONGODB_DB;
   if (!dbName) {
     throw new Error("MONGODB_DB is not set.");
@@ -26,10 +26,10 @@ export const getMongoDatabaseName = () => {
   return dbName;
 };
 
-export const getMongoDumpCommand = () =>
+export const getMongoDumpCommand = (): string =>
   process.env.MONGODUMP_PATH ?? "mongodump";
 
-export const getMongoRestoreCommand = () =>
+export const getMongoRestoreCommand = (): string =>
   process.env.MONGORESTORE_PATH ?? "mongorestore";
 
 export const execFileAsync = (
@@ -51,7 +51,7 @@ export const execFileAsync = (
     });
   });
 
-export const assertValidBackupName = (backupName: string) => {
+export const assertValidBackupName = (backupName: string): void => {
   const basename = path.basename(backupName);
   if (basename !== backupName) {
     throw new Error("Invalid backup name.");

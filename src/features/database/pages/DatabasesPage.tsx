@@ -21,7 +21,7 @@ import {
   deleteDatabaseBackup,
 } from "../api";
 
-export default function DatabasesPage() {
+export default function DatabasesPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -33,13 +33,13 @@ export default function DatabasesPage() {
 
   const backupsQuery = useQuery({
     queryKey: ["database-backups", activeTab],
-    queryFn: () => fetchDatabaseBackups(activeTab),
+    queryFn: async (): Promise<DatabaseInfo[]> => fetchDatabaseBackups(activeTab),
   });
   const data = backupsQuery.data ?? [];
 
   const createBackup = useMutation({
     mutationFn: async ({ dbType }: { dbType: DatabaseType }) => createDatabaseBackup(dbType),
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
@@ -58,7 +58,7 @@ export default function DatabasesPage() {
         backupName,
         truncateBeforeRestore,
       }),
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
@@ -66,7 +66,7 @@ export default function DatabasesPage() {
   const uploadBackup = useMutation({
     mutationFn: async ({ dbType, file }: { dbType: DatabaseType; file: File }) =>
       uploadDatabaseBackup(dbType, file),
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
@@ -74,29 +74,29 @@ export default function DatabasesPage() {
   const deleteBackup = useMutation({
     mutationFn: async ({ dbType, backupName }: { dbType: DatabaseType; backupName: string }) =>
       deleteDatabaseBackup(dbType, backupName),
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });
 
-  const openLogModal = (content: string) => {
+  const openLogModal = (content: string): void => {
     setLogModalContent(content);
     setIsLogModalOpen(true);
   };
 
-  const closeLogModal = () => {
+  const closeLogModal = (): void => {
     setIsLogModalOpen(false);
     setLogModalContent("");
     void queryClient.invalidateQueries({ queryKey: ["database-backups", activeTab] });
   };
 
 
-  const handleRestoreRequest = (backup: DatabaseInfo) => {
+  const handleRestoreRequest = (backup: DatabaseInfo): void => {
     setSelectedBackupForRestore(backup.name);
     setIsRestoreModalOpen(true);
   };
 
-  const handleRestoreConfirm = async (truncate: boolean) => {
+  const handleRestoreConfirm = async (truncate: boolean): Promise<void> => {
     const backupName = selectedBackupForRestore;
     setIsRestoreModalOpen(false);
     setSelectedBackupForRestore(null);
@@ -136,7 +136,7 @@ export default function DatabasesPage() {
     }
   };
 
-  const handleBackup = async () => {
+  const handleBackup = async (): Promise<void> => {
     try {
       const { ok, payload } = await createBackup.mutateAsync({ dbType: activeTab });
       const log = payload.log ?? "No log available.";
@@ -165,7 +165,7 @@ export default function DatabasesPage() {
     }
   };
 
-  const handleDeleteRequest = async (backupName: string) => {
+  const handleDeleteRequest = async (backupName: string): Promise<void> => {
     if (!window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) return;
     try {
       const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName });
@@ -180,7 +180,7 @@ export default function DatabasesPage() {
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -199,18 +199,18 @@ export default function DatabasesPage() {
     }
   };
 
-  const triggerFileUpload = () => {
+  const triggerFileUpload = (): void => {
     fileInputRef.current?.click();
   };
 
-  const handlePreview = (backupName: string) => {
+  const handlePreview = (backupName: string): void => {
     const url = `/admin/databases/preview?backup=${encodeURIComponent(
       backupName
     )}&type=${activeTab}`;
     window.location.assign(url);
   };
 
-  const handlePreviewCurrent = () => {
+  const handlePreviewCurrent = (): void => {
     window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
@@ -223,11 +223,11 @@ export default function DatabasesPage() {
       {isRestoreModalOpen && selectedBackupForRestore && (
         <RestoreModal
           backupName={selectedBackupForRestore}
-          onClose={() => {
+          onClose={(): void => {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(t) => void handleRestoreConfirm(t)}
+          onConfirm={(t: boolean) => void handleRestoreConfirm(t)}
         />
       )}
 
@@ -235,7 +235,7 @@ export default function DatabasesPage() {
       <div className="mb-6 border-b border">
         <div className="flex gap-4">
           <Button
-            onClick={() => setActiveTab("postgresql")}
+            onClick={(): void => setActiveTab("postgresql")}
             className={`px-4 py-2 font-medium transition ${
               activeTab === "postgresql"
                 ? "border-b-2 border-blue-500 text-blue-500"
@@ -245,7 +245,7 @@ export default function DatabasesPage() {
             PostgreSQL
           </Button>
           <Button
-            onClick={() => setActiveTab("mongodb")}
+            onClick={(): void => setActiveTab("mongodb")}
             className={`px-4 py-2 font-medium transition ${
               activeTab === "mongodb"
                 ? "border-b-2 border-blue-500 text-blue-500"
@@ -267,7 +267,7 @@ export default function DatabasesPage() {
         actions={
           <>
             <Button
-              onClick={() => {
+              onClick={(): void => {
                 void handleBackup();
               }}
             >
@@ -280,7 +280,7 @@ export default function DatabasesPage() {
             <Input
               type="file"
               ref={fileInputRef}
-              onChange={(e) => void handleUpload(e)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => void handleUpload(e)}
               className="hidden"
               accept={activeTab === "postgresql" ? ".dump" : ".archive"}
             />
@@ -293,7 +293,7 @@ export default function DatabasesPage() {
           columns={getDatabaseColumns({
             onPreview: handlePreview,
             onRestoreRequest: handleRestoreRequest,
-            onDeleteRequest: (name) => { void handleDeleteRequest(name); },
+            onDeleteRequest: (name: string) => { void handleDeleteRequest(name); },
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}

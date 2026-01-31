@@ -8,16 +8,18 @@ import { noteService } from "@/features/notesapp/server";
 import type { NoteFileRecord } from "@/shared/types/notes";
 import { ErrorSystem } from "@/features/observability/server";
 
+import type { ImageFileRecord } from "@/features/files/types/services/image-file-repository";
+
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const productsRoot = path.join(uploadsRoot, "products");
 const notesRoot = path.join(uploadsRoot, "notes");
 const tempFolderName = "temp";
 
-export function getDiskPathFromPublicPath(publicPath: string) {
+export function getDiskPathFromPublicPath(publicPath: string): string {
   return path.join(process.cwd(), "public", publicPath.replace(/^\/+/, ""));
 }
 
-function sanitizeSku(sku: string) {
+function sanitizeSku(sku: string): string {
   return sku.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
 }
 
@@ -29,7 +31,7 @@ function getUploadTarget({
   category?: "products" | "notes" | "cms" | undefined;
   sku?: string | null | undefined;
   noteId?: string | null | undefined;
-}) {
+}): { diskDir: string; publicDir: string } {
   if (category === "products") {
     const folderName = sku ? sanitizeSku(sku) : tempFolderName;
     const diskDir = path.join(productsRoot, folderName);
@@ -55,7 +57,7 @@ function getUploadTarget({
 export async function uploadFile(
   file: File,
   options?: { category?: "products" | "notes" | "cms" | undefined; sku?: string | null | undefined; noteId?: string | null | undefined }
-) {
+): Promise<ImageFileRecord> {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const filename = `${Date.now()}-${path.basename(file.name)}`;
   const { diskDir, publicDir } = getUploadTarget({

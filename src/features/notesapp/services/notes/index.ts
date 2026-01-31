@@ -46,11 +46,11 @@ const repoCall = async <K extends keyof NoteRepository>(
 // Helper: Build Relations
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
   const relations = [
-    ...(note.relationsFrom ?? []).map((rel) => rel.targetNote),
-    ...(note.relationsTo ?? []).map((rel) => rel.sourceNote),
+    ...(note.relationsFrom ?? []).map((rel: { targetNote: RelatedNote }) => rel.targetNote),
+    ...(note.relationsTo ?? []).map((rel: { sourceNote: RelatedNote }) => rel.sourceNote),
   ];
   const seen = new Set<string>();
-  return relations.filter((rel) => {
+  return relations.filter((rel: RelatedNote | null) => {
     if (!rel?.id || seen.has(rel.id)) return false;
     seen.add(rel.id);
     return true;
@@ -59,66 +59,70 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 
 // Helper: Populate relations on a note or list of notes
 const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | null>(data: T): T => {
-    if (!data) return data;
-    if (Array.isArray(data)) {
-        return data.map((note: NoteWithRelations) => ({
-            ...note,
-            relations: buildRelations(note)
-        })) as T;
-    }
-    return {
-        ...data,
-        relations: buildRelations(data)
-    } as T;
+  if (!data) return data;
+  if (Array.isArray(data)) {
+    const notes = data as NoteWithRelations[];
+    const result = notes.map((note: NoteWithRelations) => ({
+      ...note,
+      relations: buildRelations(note),
+    }));
+    return result as T;
+  }
+  const note = data as NoteWithRelations;
+  const result = {
+    ...note,
+    relations: buildRelations(note),
+  };
+  return result as T;
 };
 
 export const noteService: NoteRepository = {
   // Enhanced Methods with Business Logic
 
-  getAll: async (...args) => {
+  getAll: async (...args: Parameters<NoteRepository["getAll"]>): Promise<NoteWithRelations[]> => {
     const notes = await repoCall("getAll", ...args);
     return populateRelations(notes);
   },
 
-  getById: async (...args) => {
+  getById: async (...args: Parameters<NoteRepository["getById"]>): Promise<NoteWithRelations | null> => {
     const note = await repoCall("getById", ...args);
     return populateRelations(note);
   },
 
-  create: async (...args) => {
+  create: async (...args: Parameters<NoteRepository["create"]>): Promise<NoteWithRelations> => {
     const note = await repoCall("create", ...args);
     return populateRelations(note);
   },
 
-  update: async (id, data) => {
+  update: async (id: string, data: Parameters<NoteRepository["update"]>[1]): Promise<NoteWithRelations> => {
     const previousNote = await repoCall("getById", id);
     const note = await repoCall("update", id, data);
 
     // Sync Relations
     if (Array.isArray(data.relatedNoteIds) && previousNote) {
       const previousRelatedIds =
-        previousNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+        previousNote.relationsFrom?.map((rel: { targetNote: RelatedNote }) => rel.targetNote.id) || [];
       const nextRelatedIds = data.relatedNoteIds;
       const addedRelations = nextRelatedIds.filter(
-        (relId) => !previousRelatedIds.includes(relId) && relId !== id
+        (relId: string) => !previousRelatedIds.includes(relId) && relId !== id
       );
       const removedRelations = previousRelatedIds.filter(
-        (relId) => !nextRelatedIds.includes(relId) && relId !== id
+        (relId: string) => !nextRelatedIds.includes(relId) && relId !== id
       );
 
-      const syncRelatedNote = async (relatedId: string, shouldAdd: boolean) => {
+      const syncRelatedNote = async (relatedId: string, shouldAdd: boolean): Promise<void> => {
         try {
           const relatedNote = await repoCall("getById", relatedId);
           if (!relatedNote) return;
           
           const currentIds =
-            relatedNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+            relatedNote.relationsFrom?.map((rel: { targetNote: RelatedNote }) => rel.targetNote.id) || [];
           
           let nextIds: string[];
           if (shouldAdd) {
              nextIds = Array.from(new Set([...currentIds, id]));
           } else {
-             nextIds = currentIds.filter((relId) => relId !== id);
+             nextIds = currentIds.filter((relId: string) => relId !== id);
           }
           
           await repoCall("update", relatedId, { relatedNoteIds: nextIds });
@@ -132,19 +136,19 @@ export const noteService: NoteRepository = {
       };
 
       await Promise.all([
-        ...addedRelations.map((relId) => syncRelatedNote(relId, true)),
-        ...removedRelations.map((relId) => syncRelatedNote(relId, false)),
+        ...addedRelations.map((relId: string) => syncRelatedNote(relId, true)),
+        ...removedRelations.map((relId: string) => syncRelatedNote(relId, false)),
       ]);
     }
 
     return populateRelations(note);
   },
 
-  delete: async (id) => {
+  delete: async (id: string): Promise<boolean> => {
     try {
         const files = await repoCall("getNoteFiles", id);
         await Promise.all(
-            files.map(file => cleanupNoteFile(id, file.filepath))
+            files.map((file: { filepath: string }) => cleanupNoteFile(id, file.filepath))
         );
     } catch (error) {
         console.error("[noteService][delete] Failed to cleanup files", error);
@@ -153,29 +157,29 @@ export const noteService: NoteRepository = {
   },
 
   // Pass-through methods
-  getAllTags: (...args) => repoCall("getAllTags", ...args),
-  getTagById: (...args) => repoCall("getTagById", ...args),
-  createTag: (...args) => repoCall("createTag", ...args),
-  updateTag: (...args) => repoCall("updateTag", ...args),
-  deleteTag: (...args) => repoCall("deleteTag", ...args),
-  getAllCategories: (...args) => repoCall("getAllCategories", ...args),
-  getCategoryById: (...args) => repoCall("getCategoryById", ...args),
-  getCategoryTree: (...args) => repoCall("getCategoryTree", ...args),
-  createCategory: (...args) => repoCall("createCategory", ...args),
-  updateCategory: (...args) => repoCall("updateCategory", ...args),
-  deleteCategory: (...args) => repoCall("deleteCategory", ...args),
-  getAllNotebooks: (...args) => repoCall("getAllNotebooks", ...args),
-  getNotebookById: (...args) => repoCall("getNotebookById", ...args),
-  createNotebook: (...args) => repoCall("createNotebook", ...args),
-  updateNotebook: (...args) => repoCall("updateNotebook", ...args),
-  deleteNotebook: (...args) => repoCall("deleteNotebook", ...args),
-  getOrCreateDefaultNotebook: (...args) => repoCall("getOrCreateDefaultNotebook", ...args),
-  getAllThemes: (...args) => repoCall("getAllThemes", ...args),
-  getThemeById: (...args) => repoCall("getThemeById", ...args),
-  createTheme: (...args) => repoCall("createTheme", ...args),
-  updateTheme: (...args) => repoCall("updateTheme", ...args),
-  deleteTheme: (...args) => repoCall("deleteTheme", ...args),
-  createNoteFile: (...args) => repoCall("createNoteFile", ...args),
-  getNoteFiles: (...args) => repoCall("getNoteFiles", ...args),
-  deleteNoteFile: (...args) => repoCall("deleteNoteFile", ...args),
+  getAllTags: (...args: Parameters<NoteRepository["getAllTags"]>) => repoCall("getAllTags", ...args),
+  getTagById: (...args: Parameters<NoteRepository["getTagById"]>) => repoCall("getTagById", ...args),
+  createTag: (...args: Parameters<NoteRepository["createTag"]>) => repoCall("createTag", ...args),
+  updateTag: (...args: Parameters<NoteRepository["updateTag"]>) => repoCall("updateTag", ...args),
+  deleteTag: (...args: Parameters<NoteRepository["deleteTag"]>) => repoCall("deleteTag", ...args),
+  getAllCategories: (...args: Parameters<NoteRepository["getAllCategories"]>) => repoCall("getAllCategories", ...args),
+  getCategoryById: (...args: Parameters<NoteRepository["getCategoryById"]>) => repoCall("getCategoryById", ...args),
+  getCategoryTree: (...args: Parameters<NoteRepository["getCategoryTree"]>) => repoCall("getCategoryTree", ...args),
+  createCategory: (...args: Parameters<NoteRepository["createCategory"]>) => repoCall("createCategory", ...args),
+  updateCategory: (...args: Parameters<NoteRepository["updateCategory"]>) => repoCall("updateCategory", ...args),
+  deleteCategory: (...args: Parameters<NoteRepository["deleteCategory"]>) => repoCall("deleteCategory", ...args),
+  getAllNotebooks: (...args: Parameters<NoteRepository["getAllNotebooks"]>) => repoCall("getAllNotebooks", ...args),
+  getNotebookById: (...args: Parameters<NoteRepository["getNotebookById"]>) => repoCall("getNotebookById", ...args),
+  createNotebook: (...args: Parameters<NoteRepository["createNotebook"]>) => repoCall("createNotebook", ...args),
+  updateNotebook: (...args: Parameters<NoteRepository["updateNotebook"]>) => repoCall("updateNotebook", ...args),
+  deleteNotebook: (...args: Parameters<NoteRepository["deleteNotebook"]>) => repoCall("deleteNotebook", ...args),
+  getOrCreateDefaultNotebook: (...args: Parameters<NoteRepository["getOrCreateDefaultNotebook"]>) => repoCall("getOrCreateDefaultNotebook", ...args),
+  getAllThemes: (...args: Parameters<NoteRepository["getAllThemes"]>) => repoCall("getAllThemes", ...args),
+  getThemeById: (...args: Parameters<NoteRepository["getThemeById"]>) => repoCall("getThemeById", ...args),
+  createTheme: (...args: Parameters<NoteRepository["createTheme"]>) => repoCall("createTheme", ...args),
+  updateTheme: (...args: Parameters<NoteRepository["updateTheme"]>) => repoCall("updateTheme", ...args),
+  deleteTheme: (...args: Parameters<NoteRepository["deleteTheme"]>) => repoCall("deleteTheme", ...args),
+  createNoteFile: (...args: Parameters<NoteRepository["createNoteFile"]>) => repoCall("createNoteFile", ...args),
+  getNoteFiles: (...args: Parameters<NoteRepository["getNoteFiles"]>) => repoCall("getNoteFiles", ...args),
+  deleteNoteFile: (...args: Parameters<NoteRepository["deleteNoteFile"]>) => repoCall("deleteNoteFile", ...args),
 };

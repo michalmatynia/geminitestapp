@@ -84,7 +84,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .find(query)
       .toArray();
-    return docs.map((doc) => toRecord({ ...doc, _id: doc._id }));
+    return docs.map((doc: ImageFileDocument) => toRecord({ ...doc, _id: doc._id }));
   },
 
   async findImageFilesByIds(ids: string[]) {
@@ -94,7 +94,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .find({ $or: [{ _id: { $in: Array.from(ids) } }, { id: { $in: ids } }] })
       .toArray();
-    return docs.map((doc) => toRecord({ ...doc, _id: doc._id }));
+    return docs.map((doc: ImageFileDocument) => toRecord({ ...doc, _id: doc._id }));
   },
 
   async updateImageFilePath(id: string, filepath: string) {

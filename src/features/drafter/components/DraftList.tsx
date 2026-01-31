@@ -44,13 +44,15 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   sparkles: Sparkles,
 };
 
-export function DraftList({ onEdit, onCreateNew }: DraftListProps) {
+import type { Draft } from "@/features/drafter/types/draft";
+
+export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.Element {
   const { data: drafts = [], isLoading: loading } = useDrafts();
   const deleteDraftMutation = useDeleteDraft();
   const [deleting, setDeleting] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string): Promise<void> => {
     const confirmed = window.confirm("Are you sure you want to delete this draft?");
     if (!confirmed) return;
 
@@ -92,7 +94,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {drafts.map((draft) => (
+          {drafts.map((draft: Draft) => (
             <div
               key={draft.id}
               className="rounded-lg border border-border bg-card/50 p-4 transition-colors hover:border"
@@ -101,7 +103,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps) {
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     {draft.icon &&
-                      (() => {
+                      ((): React.JSX.Element | null => {
                         const IconComponent = iconMap[draft.icon];
                         return IconComponent ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400">

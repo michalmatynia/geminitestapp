@@ -47,7 +47,7 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
   EXTENSION: FileTextIcon,
 };
 
-function DatabasePreviewPageInner() {
+function DatabasePreviewPageInner(): React.JSX.Element {
   const searchParams = useSearchParams();
   const backupName = searchParams.get("backup") ?? "";
   const mode = searchParams.get("mode") ?? "backup";
@@ -73,7 +73,7 @@ function DatabasePreviewPageInner() {
 
   useEffect(() => {
     if (!backupName && previewMode !== "current") return;
-    const fetchPreview = async () => {
+    const fetchPreview = async (): Promise<void> => {
       setLoading(true);
       setError(null);
       setErrorMeta(null);
@@ -118,7 +118,7 @@ function DatabasePreviewPageInner() {
     void fetchPreview();
   }, [backupName, previewMode, page, pageSize, mode]);
 
-  const copyRaw = async () => {
+  const copyRaw = async (): Promise<void> => {
     if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
@@ -129,7 +129,7 @@ function DatabasePreviewPageInner() {
 
   const grouped = useMemo(
     () =>
-      groups.map((group) => ({
+      groups.map((group: DatabasePreviewGroup) => ({
         ...group,
         Icon: groupIconMap[group.type] ?? FileTextIcon,
       })),
@@ -140,9 +140,9 @@ function DatabasePreviewPageInner() {
     const query = groupQuery.trim().toLowerCase();
     if (!query) return grouped;
     return grouped
-      .map((group) => {
+      .map((group: (typeof grouped)[number]) => {
         const matchesType = group.type.toLowerCase().includes(query);
-        const objects = group.objects.filter((obj) =>
+        const objects = group.objects.filter((obj: string) =>
           obj.toLowerCase().includes(query)
         );
         if (!matchesType && objects.length === 0) return null;
@@ -150,20 +150,20 @@ function DatabasePreviewPageInner() {
           ? group
           : { ...group, objects };
       })
-      .filter((group): group is (typeof grouped)[number] => Boolean(group));
+      .filter((group: (typeof grouped)[number] | null): group is (typeof grouped)[number] => Boolean(group));
   }, [grouped, groupQuery]);
 
-  const toggleGroup = (type: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [type]: !prev[type] }));
+  const toggleGroup = (type: string): void => {
+    setExpandedGroups((prev: Record<string, boolean>) => ({ ...prev, [type]: !prev[type] }));
   };
 
-  const toggleTable = (name: string) => {
-    setExpandedTables((prev) => ({ ...prev, [name]: !prev[name] }));
+  const toggleTable = (name: string): void => {
+    setExpandedTables((prev: Record<string, boolean>) => ({ ...prev, [name]: !prev[name] }));
   };
 
   const maxPage = useMemo(() => {
     if (tableRows.length === 0) return 1;
-    const pages = tableRows.map((table) =>
+    const pages = tableRows.map((table: DatabasePreviewRow) =>
       Math.max(1, Math.ceil(table.totalRows / pageSize))
     );
     return Math.max(1, ...pages);
@@ -202,7 +202,7 @@ function DatabasePreviewPageInner() {
             <Input
               type="search"
               value={groupQuery}
-              onChange={(event) => setGroupQuery(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setGroupQuery(event.target.value)}
               placeholder="Filter objects or types..."
               className="h-8 w-full max-w-xs text-xs"
               aria-label="Filter schema objects"
@@ -251,7 +251,7 @@ function DatabasePreviewPageInner() {
           )}
           {!loading && !error && filteredGroups.length > 0 && (
             <div className="mt-4 space-y-2">
-              {filteredGroups.map((group) => {
+              {filteredGroups.map((group: (typeof filteredGroups)[number]) => {
                 const expanded = expandedGroups[group.type] ?? false;
                 return (
                   <div
@@ -260,7 +260,7 @@ function DatabasePreviewPageInner() {
                   >
                     <Button
                       type="button"
-                      onClick={() => toggleGroup(group.type)}
+                      onClick={(): void => toggleGroup(group.type)}
                       className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200"
                     >
                       <span className="flex items-center gap-2">
@@ -303,7 +303,7 @@ function DatabasePreviewPageInner() {
           )}
           {!loading && !error && tables.length > 0 && (
             <div className="mt-3 max-h-64 divide-y divide-border overflow-auto rounded-md border border-border bg-card/60">
-              {tables.map((table) => (
+              {tables.map((table: DatabasePreviewTable) => (
                 <div
                   key={table.name}
                   className="flex items-center justify-between px-3 py-2 text-xs"
@@ -332,13 +332,13 @@ function DatabasePreviewPageInner() {
                 <Label className="text-xs text-gray-400">Rows per table</Label>
                 <select
                   value={pageSize}
-                  onChange={(event) => {
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
                     setPage(1);
                     setPageSize(Number(event.target.value));
                   }}
                   className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200"
                 >
-                  {[10, 20, 50, 100].map((size) => (
+                  {[10, 20, 50, 100].map((size: number) => (
                     <option key={size} value={size}>
                       {size}
                     </option>
@@ -348,7 +348,7 @@ function DatabasePreviewPageInner() {
               <div className="flex items-center gap-1">
                 <Button
                   type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  onClick={(): void => setPage((prev: number) => Math.max(1, prev - 1))}
                   disabled={page <= 1}
                   className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
                 >
@@ -359,7 +359,7 @@ function DatabasePreviewPageInner() {
                 </span>
                 <Button
                   type="button"
-                  onClick={() => setPage((prev) => Math.min(maxPage, prev + 1))}
+                  onClick={(): void => setPage((prev: number) => Math.min(maxPage, prev + 1))}
                   disabled={page >= maxPage}
                   className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
                 >
@@ -375,7 +375,7 @@ function DatabasePreviewPageInner() {
           )}
           {!loading && !error && tableRows.length > 0 && (
             <div className="mt-4 space-y-2">
-              {tableRows.map((table) => {
+              {tableRows.map((table: DatabasePreviewRow) => {
                 const columns = table.rows[0]
                   ? Object.keys(table.rows[0])
                   : [];
@@ -387,7 +387,7 @@ function DatabasePreviewPageInner() {
                   >
                     <Button
                       type="button"
-                      onClick={() => toggleTable(table.name)}
+                      onClick={(): void => toggleTable(table.name)}
                       className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200"
                     >
                       <span className="flex items-center gap-2">
@@ -414,7 +414,7 @@ function DatabasePreviewPageInner() {
                             <table className="min-w-full text-xs text-gray-300">
                               <thead className="bg-gray-900/80 text-gray-400">
                                 <tr>
-                                  {columns.map((column) => (
+                                  {columns.map((column: string) => (
                                     <th
                                       key={column}
                                       className="whitespace-nowrap px-3 py-2 text-left font-semibold"
@@ -425,12 +425,12 @@ function DatabasePreviewPageInner() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {table.rows.map((row, rowIndex) => (
+                                {table.rows.map((row: Record<string, unknown>, rowIndex: number) => (
                                   <tr
                                     key={`${table.name}-${rowIndex}`}
                                     className="border-t border-border/60"
                                   >
-                                    {columns.map((column) => (
+                                    {columns.map((column: string) => (
                                       <td
                                         key={`${table.name}-${rowIndex}-${column}`}
                                         className="whitespace-nowrap px-3 py-2 align-top"
@@ -481,7 +481,7 @@ function DatabasePreviewPageInner() {
             </h2>
             <Button
               type="button"
-              onClick={() => void copyRaw()}
+              onClick={(): void => { void copyRaw(); }}
               className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
             >
               Copy
@@ -496,7 +496,7 @@ function DatabasePreviewPageInner() {
   );
 }
 
-export default function DatabasePreviewPage() {
+export default function DatabasePreviewPage(): React.JSX.Element {
   return (
     <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
       <DatabasePreviewPageInner />

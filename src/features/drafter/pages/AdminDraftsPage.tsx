@@ -8,29 +8,29 @@ import { DraftCreator } from "../components/DraftCreator";
 
 
 
-export function AdminDraftsPage() {
+export function AdminDraftsPage(): React.JSX.Element {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: string): void => {
     setEditingDraftId(id);
     setIsCreatorOpen(true);
   };
 
-  const handleCreateNew = () => {
+  const handleCreateNew = (): void => {
     setEditingDraftId(null);
     setIsCreatorOpen(true);
   };
 
-  const handleSaveSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
+  const handleSaveSuccess = (): void => {
+    setRefreshTrigger((prev: number): number => prev + 1);
     setEditingDraftId(null);
     setIsCreatorOpen(false);
   };
 
-  const handleCloseCreator = () => {
+  const handleCloseCreator = (): void => {
     setEditingDraftId(null);
     setIsCreatorOpen(false);
   };
@@ -42,7 +42,7 @@ export function AdminDraftsPage() {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => {
+          onClick={(): void => {
             if (formRef.current) {
               formRef.current.requestSubmit();
             }
@@ -79,7 +79,7 @@ export function AdminDraftsPage() {
 
       <AppModal
         open={isCreatorOpen}
-        onOpenChange={(open) => !open && handleCloseCreator()}
+        onOpenChange={(open: boolean): void => { if (!open) handleCloseCreator(); }}
         title={title}
       >
         <ModalShell title={title} onClose={handleCloseCreator} header={header}>

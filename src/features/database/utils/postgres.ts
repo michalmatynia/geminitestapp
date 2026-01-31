@@ -6,11 +6,11 @@ import { execFile } from "child_process";
 
 export const backupsDir = path.join(process.cwd(), "prisma", "backups");
 
-export const ensureBackupsDir = async () => {
+export const ensureBackupsDir = async (): Promise<void> => {
   await fs.mkdir(backupsDir, { recursive: true });
 };
 
-export const getDatabaseUrl = () => {
+export const getDatabaseUrl = (): string => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is not set.");
@@ -18,7 +18,7 @@ export const getDatabaseUrl = () => {
   return databaseUrl;
 };
 
-export const getPgConnectionUrl = () => {
+export const getPgConnectionUrl = (): string => {
   const databaseUrl = getDatabaseUrl();
   try {
     const url = new URL(databaseUrl);
@@ -29,7 +29,7 @@ export const getPgConnectionUrl = () => {
   }
 };
 
-export const getDatabaseName = (databaseUrl: string) => {
+export const getDatabaseName = (databaseUrl: string): string => {
   try {
     const url = new URL(databaseUrl);
     return url.pathname.replace(/^\//, "") || "database";
@@ -38,10 +38,10 @@ export const getDatabaseName = (databaseUrl: string) => {
   }
 };
 
-export const getPgDumpCommand = () =>
+export const getPgDumpCommand = (): string =>
   process.env.PG_DUMP_PATH ?? "pg_dump";
 
-export const getPgRestoreCommand = () =>
+export const getPgRestoreCommand = (): string =>
   process.env.PG_RESTORE_PATH ?? "pg_restore";
 
 export const execFileAsync = (
@@ -63,7 +63,7 @@ export const execFileAsync = (
     });
   });
 
-export const assertValidBackupName = (backupName: string) => {
+export const assertValidBackupName = (backupName: string): void => {
   const basename = path.basename(backupName);
   if (basename !== backupName) {
     throw new Error("Invalid backup name.");

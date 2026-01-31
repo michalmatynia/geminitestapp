@@ -36,23 +36,22 @@ export default function FileManager({
   defaultFolder,
   showBulkActions = false,
   showTagSearch = false,
-}: FileManagerProps) {
-  const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
+}: FileManagerProps): React.JSX.Element {
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
   const [tagSearch, setTagSearch] = useState("");
   const [bulkTagInput, setBulkTagInput] = useState("");
   const [bulkTagMode, setBulkTagMode] = useState<"add" | "replace">("add");
-  const [folderFilter, setFolderFilter] = useState("all");
+  const [localFolderFilter, setLocalFolderFilter] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ExpandedImageFile | null>(null);
   const { toast } = useToast();
   const deleteFileMutation = useDeleteFile();
   const updateTagsMutation = useUpdateFileTags();
 
   const enableTagSearch = showTagSearch || showBulkActions;
-  const tagSearchList = useMemo(() => parseTagInput(tagSearch), [tagSearch]);
+  const tagSearchList = useMemo((): string[] => parseTagInput(tagSearch), [tagSearch]);
 
-  const queryParams = useMemo(() => {
+  const queryParams = useMemo((): string => {
     const query = new URLSearchParams();
     if (filenameSearch) {
       query.append("filename", filenameSearch);
@@ -78,9 +77,9 @@ export default function FileManager({
     return parts[0] || "uploads";
   };
 
-  const folderOptions = useMemo(() => {
+  const folderOptions = useMemo((): string[] => {
     const folders = new Set<string>();
-    files.forEach((file) => {
+    files.forEach((file: ExpandedImageFile) => {
       if (file.filepath) {
         folders.add(resolveFolder(file.filepath));
       }
@@ -88,32 +87,35 @@ export default function FileManager({
     return ["all", ...Array.from(folders).sort()];
   }, [files]);
 
-  const tagOptions = useMemo(() => {
+  const initialFolderFilter = useMemo((): string => {
+    if (defaultFolder && folderOptions.includes(defaultFolder)) {
+      return defaultFolder;
+    }
+    return "all";
+  }, [defaultFolder, folderOptions]);
+
+  const folderFilter = localFolderFilter ?? initialFolderFilter;
+
+  const tagOptions = useMemo((): string[] => {
     const tags = new Set<string>();
-    files.forEach((file) => {
-      (file.tags ?? []).forEach((tag) => tags.add(tag));
+    files.forEach((file: ExpandedImageFile) => {
+      (file.tags ?? []).forEach((tag: string) => tags.add(tag));
     });
     return Array.from(tags).sort();
   }, [files]);
 
-  useEffect(() => {
-    if (!defaultFolder) return;
-    if (folderFilter !== "all") return;
-    if (folderOptions.includes(defaultFolder)) {
-      setFolderFilter(defaultFolder);
-    }
-  }, [defaultFolder, folderOptions, folderFilter]);
-
-  const filteredFiles = useMemo(() => {
+  const filteredFiles = useMemo((): ExpandedImageFile[] => {
     if (folderFilter === "all") return files;
-    return files.filter((file) => resolveFolder(file.filepath) === folderFilter);
+    return files.filter((file: ExpandedImageFile) => resolveFolder(file.filepath) === folderFilter);
   }, [files, folderFilter]);
 
-  const fileById = useMemo(() => {
-    return new Map(files.map((file) => [file.id, file]));
+  const fileById = useMemo((): Map<string, ExpandedImageFile> => {
+    return new Map(files.map((file: ExpandedImageFile) => [file.id, file]));
   }, [files]);
 
-  const handleClick = (file: ExpandedImageFile) => {
+  const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
+
+  const handleClick = (file: ExpandedImageFile): void => {
     if (mode === "select") {
       handleToggleSelect({ id: file.id, filepath: file.filepath });
     } else {
@@ -122,12 +124,12 @@ export default function FileManager({
   };
 
   // This function toggles the selection of a file.
-  const handleToggleSelect = (file: ImageFileSelection) => {
-    setSelectedFiles((prev) =>
+  const handleToggleSelect = (file: ImageFileSelection): void => {
+    setSelectedFiles((prev: ImageFileSelection[]) =>
       selectionMode === "single"
         ? [file]
-        : prev.some((f) => f.id === file.id)
-        ? prev.filter((f) => f.id !== file.id)
+        : prev.some((f: ImageFileSelection) => f.id === file.id)
+        ? prev.filter((f: ImageFileSelection) => f.id !== file.id)
         : [...prev, file]
     );
     if (selectionMode === "single" && autoConfirmSelection && onSelectFile) {
@@ -137,22 +139,22 @@ export default function FileManager({
 
   // This function is called when the user confirms their selection.
   // It calls the onSelectFile callback with the selected files.
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = (): void => {
     if (onSelectFile) {
       onSelectFile(selectedFiles);
     }
   };
 
-  const handleSelectAll = () => {
-    const toSelect = filteredFiles.map((file) => ({ id: file.id, filepath: file.filepath }));
+  const handleSelectAll = (): void => {
+    const toSelect = filteredFiles.map((file: ExpandedImageFile) => ({ id: file.id, filepath: file.filepath }));
     setSelectedFiles(toSelect);
   };
 
-  const handleClearSelection = () => {
+  const handleClearSelection = (): void => {
     setSelectedFiles([]);
   };
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = async (): Promise<void> => {
     if (selectedFiles.length === 0) return;
     if (!confirm(`Delete ${selectedFiles.length} selected file(s)?`)) return;
     try {
@@ -167,7 +169,7 @@ export default function FileManager({
     }
   };
 
-  const handleApplyTags = async () => {
+  const handleApplyTags = async (): Promise<void> => {
     const tags = parseTagInput(bulkTagInput);
     if (selectedFiles.length === 0) {
       toast("Select at least one file to tag.", { variant: "warning" });
@@ -179,7 +181,7 @@ export default function FileManager({
     }
     try {
       await Promise.all(
-        selectedFiles.map((file) => {
+        selectedFiles.map((file: ImageFileSelection) => {
           const existing = fileById.get(file.id)?.tags ?? [];
           const nextTags = bulkTagMode === "replace"
             ? tags
@@ -196,7 +198,7 @@ export default function FileManager({
   };
 
   // This function sends a DELETE request to the API to delete a file.
-  const handleDelete = async (fileId: string) => {
+  const handleDelete = async (fileId: string): Promise<void> => {
     if (confirm("Are you sure you want to delete this file?")) {
       try {
         await deleteFileMutation.mutateAsync(fileId);
@@ -223,14 +225,14 @@ export default function FileManager({
           type="text"
           placeholder="Search by filename"
           value={filenameSearch}
-          onChange={(e) => setFilenameSearch(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setFilenameSearch(e.target.value)}
           className="w-full md:w-64 p-2 bg-gray-800 rounded"
         />
         <Input
           type="text"
           placeholder="Search by product name"
           value={productNameSearch}
-          onChange={(e) => setProductNameSearch(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setProductNameSearch(e.target.value)}
           className="w-full md:w-64 p-2 bg-gray-800 rounded"
         />
         {enableTagSearch && (
@@ -238,17 +240,17 @@ export default function FileManager({
             type="text"
             placeholder="Search by tags (comma-separated)"
             value={tagSearch}
-            onChange={(e) => setTagSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTagSearch(e.target.value)}
             className="w-full md:w-64 p-2 bg-gray-800 rounded"
           />
         )}
         {showFolderFilter && (
-          <Select value={folderFilter} onValueChange={setFolderFilter}>
+          <Select value={folderFilter} onValueChange={(value: string): void => setLocalFolderFilter(value)}>
             <SelectTrigger className="w-full md:w-48 text-sm">
               <SelectValue placeholder="All folders" />
             </SelectTrigger>
             <SelectContent>
-              {folderOptions.map((folder) => (
+              {folderOptions.map((folder: string) => (
                 <SelectItem key={folder} value={folder}>
                   {folder === "all" ? "All folders" : folder}
                 </SelectItem>
@@ -264,7 +266,7 @@ export default function FileManager({
             <Button variant="outline" size="sm" onClick={handleClearSelection}>
               Clear
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => void handleDeleteSelected()}>
+            <Button variant="destructive" size="sm" onClick={(): void => { void handleDeleteSelected(); }}>
               Delete selected
             </Button>
           </div>
@@ -274,11 +276,11 @@ export default function FileManager({
         <div className="mb-4 space-y-2">
           {showFolderFilter && (
             <div className="flex flex-wrap gap-2">
-              {folderOptions.map((folder) => (
+              {folderOptions.map((folder: string) => (
                 <button
                   key={folder}
                   type="button"
-                  onClick={() => setFolderFilter(folder)}
+                  onClick={(): void => setLocalFolderFilter(folder)}
                   className={`rounded-full border px-3 py-1 text-[11px] font-medium transition ${
                     folderFilter === folder
                       ? "border-blue-500 bg-blue-500/10 text-blue-300"
@@ -292,11 +294,11 @@ export default function FileManager({
           )}
           {enableTagSearch && tagOptions.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {tagOptions.slice(0, 20).map((tag) => (
+              {tagOptions.slice(0, 20).map((tag: string) => (
                 <button
                   key={tag}
                   type="button"
-                  onClick={() => setTagSearch(tag)}
+                  onClick={(): void => setTagSearch(tag)}
                   className="rounded-full border border-border/40 bg-gray-900/40 px-2.5 py-0.5 text-[10px] text-gray-400 hover:border-border/60"
                 >
                   #{tag}
@@ -312,10 +314,10 @@ export default function FileManager({
             type="text"
             placeholder="Tags to apply (comma-separated)"
             value={bulkTagInput}
-            onChange={(e) => setBulkTagInput(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
             className="w-full md:w-72 p-2 bg-gray-800 rounded"
           />
-          <Select value={bulkTagMode} onValueChange={(value) => setBulkTagMode(value as "add" | "replace")}>
+          <Select value={bulkTagMode} onValueChange={(value: string): void => setBulkTagMode(value as "add" | "replace")}>
             <SelectTrigger className="w-full md:w-32 text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -326,7 +328,7 @@ export default function FileManager({
           </Select>
           <Button
             size="sm"
-            onClick={() => void handleApplyTags()}
+            onClick={(): void => { void handleApplyTags(); }}
             disabled={updateTagsMutation.isPending}
           >
             {updateTagsMutation.isPending ? "Saving..." : "Apply tags"}
@@ -334,15 +336,15 @@ export default function FileManager({
         </div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {filteredFiles.map((file) => (
+        {filteredFiles.map((file: ExpandedImageFile) => (
           <div
             key={file.id}
             className={`relative border-2 ${
-              selectedFiles.some((f) => f.id === file.id) && mode === "select"
+              selectedFiles.some((f: ImageFileSelection) => f.id === file.id) && mode === "select"
                 ? "border-blue-500"
                 : "border-transparent"
             }`}
-            onClick={() => handleClick(file)}
+            onClick={(): void => handleClick(file)}
           >
             <div className="absolute left-2 top-2 rounded bg-gray-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-300">
               {resolveFolder(file.filepath)}
@@ -357,7 +359,7 @@ export default function FileManager({
             <p className="text-center mt-2">{file.filename}</p>
             {(file.tags ?? []).length > 0 && (
               <div className="mt-1 flex flex-wrap justify-center gap-1">
-                {(file.tags ?? []).slice(0, 4).map((tag) => (
+                {(file.tags ?? []).slice(0, 4).map((tag: string) => (
                   <span key={tag} className="rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400">
                     #{tag}
                   </span>
@@ -365,7 +367,7 @@ export default function FileManager({
               </div>
             )}
             <div className="text-center text-xs text-gray-400">
-              {file.products.map(({ product }) => (
+              {file.products.map(({ product }: { product: { id: string; name: string } }) => (
                 <Link
                   key={product.id}
                   href={`/admin/products/${product.id}/edit`}
@@ -379,7 +381,7 @@ export default function FileManager({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   setPreviewFile(file);
                 }}
@@ -389,7 +391,7 @@ export default function FileManager({
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                   e.stopPropagation();
                   void handleDelete(file.id);
                 }}
@@ -403,11 +405,11 @@ export default function FileManager({
       {previewFile && (
         <FilePreviewModal
           file={previewFile}
-          onClose={() => setPreviewFile(null)}
+          onClose={(): void => setPreviewFile(null)}
         >
           <h3 className="text-xl font-bold mt-8 mb-4">Linked Products</h3>
           <div className="flex flex-wrap gap-2">
-            {previewFile.products.map(({ product }) => (
+            {previewFile.products.map(({ product }: { product: { id: string; name: string } }) => (
               <Link
                 key={product.id}
                 href={`/admin/products/${product.id}/edit`}

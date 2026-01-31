@@ -1,15 +1,29 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import React, { useRef, useEffect, type ReactNode } from "react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { Flip } from "gsap/Flip";
-import { Draggable } from "gsap/Draggable";
-import { CustomEase } from "gsap/CustomEase";
-import { Observer } from "gsap/Observer";
+import { ScrollTrigger as ScrollTriggerRaw } from "gsap/ScrollTrigger";
+import { MotionPathPlugin as MotionPathPluginRaw } from "gsap/MotionPathPlugin";
+import { Flip as FlipRaw } from "gsap/Flip";
+import { Draggable as DraggableRaw } from "gsap/Draggable";
+import { CustomEase as CustomEaseRaw } from "gsap/CustomEase";
+import { Observer as ObserverRaw } from "gsap/Observer";
+import type { ScrollTrigger as ScrollTriggerType } from "gsap/ScrollTrigger";
+import type { MotionPathPlugin as MotionPathPluginType } from "gsap/MotionPathPlugin";
+import type { Flip as FlipType } from "gsap/Flip";
+import type { Draggable as DraggableType } from "gsap/Draggable";
+import type { CustomEase as CustomEaseType } from "gsap/CustomEase";
+import type { Observer as ObserverType } from "gsap/Observer";
 import type { GsapAnimationConfig, RevealStyle, TextEffect } from "@/features/gsap";
 import { getGsapFromVars, getParallaxDefaults } from "@/features/gsap";
+
+const ScrollTrigger = ScrollTriggerRaw as ScrollTriggerType;
+const MotionPathPlugin = MotionPathPluginRaw as MotionPathPluginType;
+const Flip = FlipRaw as FlipType;
+const Draggable = DraggableRaw as DraggableType;
+const CustomEase = CustomEaseRaw as CustomEaseType;
+const Observer = ObserverRaw as ObserverType;
 
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin, Flip, Draggable, CustomEase, Observer);
 
@@ -1172,3 +1186,5 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
     </div>
   );
 }
+
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */

@@ -120,8 +120,7 @@ export const getTransientRecoverySettings = async (
     return cached.value;
   }
   const stored = await readSettingValue(TRANSIENT_RECOVERY_KEYS.settings);
-  const parsed = parseJsonSetting<TransientRecoverySettings | null>(stored, null);
-  const value = normalizeSettings(parsed);
+      const parsed: TransientRecoverySettings | null = parseJsonSetting<TransientRecoverySettings | null>(stored, null);  const value = normalizeSettings(parsed);
   cached = {
     value,
     expiresAt: now + CACHE_TTL_MS,

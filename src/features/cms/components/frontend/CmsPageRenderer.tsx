@@ -42,8 +42,8 @@ interface CmsPageRendererProps {
   components: PageComponent[];
   colorSchemes?: Record<string, ColorSchemeColors>;
   layout?: { fullWidth?: boolean };
-  hoverEffect?: string;
-  hoverScale?: number;
+  hoverEffect?: string | undefined;
+  hoverScale?: number | undefined;
   mediaVars?: React.CSSProperties;
   mediaStyles?: React.CSSProperties;
 }

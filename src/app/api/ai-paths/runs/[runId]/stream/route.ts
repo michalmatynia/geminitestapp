@@ -101,9 +101,9 @@ export async function GET(
         : null;
 
       while (!cancelled) {
-        const nextRun = await repo.findRunById(runId);
+        const nextRun = repo.findRunById(runId) as AiPathRunRecord;
         if (!nextRun) {
-          send("error", { message: "Run not found", runId });
+          send("error", { message: "Run not found", runId: runId as string });
           break;
         }
 
@@ -115,18 +115,16 @@ export async function GET(
           lastRunUpdatedAt = nextRunUpdatedAt;
         }
 
-        const nodes = await repo.listRunNodes(runId);
-        const maxNodeUpdatedAt = nodes.reduce<string | null>((max: string | null, node: AiPathRunNodeRecord) => {
-          const nodeUpdatedAt: Date | string | null | undefined = node.updatedAt;
-          const nodeCreatedAt: Date | string | null | undefined = node.createdAt;
-          const candidate = toISOStringSafe(nodeUpdatedAt ?? nodeCreatedAt);
+        const nodes = await repo.listRunNodes(runId) as AiPathRunNodeRecord[];
+        const maxNodeUpdatedAt = nodes.reduce<string | null>((max: string | null, node) => {
+          const candidate = toISOStringSafe((node as any).updatedAt ?? (node as any).createdAt);
           if (!candidate) return max;
           if (!max) return candidate;
           return candidate > max ? candidate : max;
         }, null);
-        if (maxNodeUpdatedAt && maxNodeUpdatedAt !== lastNodeUpdatedAt) {
+        if (maxNodeUpdatedAt && maxNodeUpdatedAt !== lastRunUpdatedAt) {
           send("nodes", nodes);
-          lastNodeUpdatedAt = maxNodeUpdatedAt;
+          lastRunUpdatedAt = maxNodeUpdatedAt;
         }
 
         const events = await repo.listRunEvents(runId, {
@@ -137,9 +135,8 @@ export async function GET(
           const overflow = events.length > EVENT_BATCH_LIMIT;
           const batch = overflow ? events.slice(0, EVENT_BATCH_LIMIT) : events;
           send("events", { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
-          const latestEventTime = batch.reduce<string | null>((max: string | null, event: AiPathRunEventRecord) => {
-            const eventCreatedAt: Date | string = event.createdAt;
-            const candidate = toISOStringSafe(eventCreatedAt);
+          const latestEventTime = batch.reduce<string | null>((max: string | null, event) => {
+            const candidate = toISOStringSafe((event as any).createdAt);
             if (!candidate) return max;
             if (!max) return candidate;
             return candidate > max ? candidate : max;
@@ -149,7 +146,7 @@ export async function GET(
           }
         }
 
-        if (TERMINAL_STATUSES.has(nextRun.status)) {
+        if (TERMINAL_STATUSES.has((nextRun as any).status)) {
           send("done", { runId, status: nextRun.status });
           break;
         }

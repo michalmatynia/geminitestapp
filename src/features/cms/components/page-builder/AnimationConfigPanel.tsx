@@ -20,7 +20,6 @@ import type {
   AnimationPreset,
   AnimationEasing,
   AnimationTrigger,
-  StaggerFrom,
   ParallaxPreset,
   ParallaxAxis,
   ParallaxPattern,
@@ -56,9 +55,6 @@ interface AnimationConfigPanelProps {
 export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelProps): React.ReactNode {
   const config = value ?? DEFAULT_ANIMATION_CONFIG;
   const selectorValue = config.selector ?? "";
-  const staggerEachValue = config.staggerEach ?? DEFAULT_ANIMATION_CONFIG.staggerEach ?? 0.12;
-  const staggerAmountValue = config.staggerAmount ?? 0;
-  const staggerFromValue = config.staggerFrom ?? DEFAULT_ANIMATION_CONFIG.staggerFrom ?? "start";
   const parallaxPresetValue = config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? "none";
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? "y";
   const parallaxOffsetValue =
@@ -126,10 +122,6 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const visualShadowToValue = config.visualShadowTo ?? DEFAULT_ANIMATION_CONFIG.visualShadowTo ?? "";
   const visualBackgroundFromValue = config.visualBackgroundFrom ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundFrom ?? "";
   const visualBackgroundToValue = config.visualBackgroundTo ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundTo ?? "";
-  const flipEnabledValue = config.flipEnabled ?? DEFAULT_ANIMATION_CONFIG.flipEnabled ?? false;
-  const flipSelectorValue = config.flipSelector ?? DEFAULT_ANIMATION_CONFIG.flipSelector ?? "";
-  const flipScaleValue = config.flipScale ?? DEFAULT_ANIMATION_CONFIG.flipScale ?? true;
-  const flipFadeValue = config.flipFade ?? DEFAULT_ANIMATION_CONFIG.flipFade ?? true;
   const draggableEnabledValue = config.draggableEnabled ?? DEFAULT_ANIMATION_CONFIG.draggableEnabled ?? false;
   const draggableTypeValue = config.draggableType ?? DEFAULT_ANIMATION_CONFIG.draggableType ?? "x,y";
   const draggableBoundsValue = config.draggableBounds ?? DEFAULT_ANIMATION_CONFIG.draggableBounds ?? "";
@@ -161,14 +153,6 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     { label: "Text", value: "p, li" },
     { label: "Buttons", value: "button, a" },
     { label: "Images", value: "img" },
-  ];
-
-  const staggerFromOptions: { label: string; value: StaggerFrom }[] = [
-    { label: "Start", value: "start" },
-    { label: "Center", value: "center" },
-    { label: "End", value: "end" },
-    { label: "Edges", value: "edges" },
-    { label: "Random", value: "random" },
   ];
 
   const parallaxAxisOptions: { label: string; value: ParallaxAxis }[] = [
@@ -242,33 +226,6 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const handleQuickSelector = useCallback(
     (selector: string) => {
       onChange({ ...config, selector });
-    },
-    [config, onChange]
-  );
-
-  const handleStaggerEachChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, staggerEach: Math.max(0.01, Math.min(2, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
-  const handleStaggerAmountChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, staggerAmount: Math.max(0, Math.min(5, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
-  const handleStaggerFromChange = useCallback(
-    (value: string) => {
-      onChange({ ...config, staggerFrom: value as StaggerFrom });
     },
     [config, onChange]
   );
@@ -758,34 +715,6 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
-  const handleFlipEnabledChange = useCallback(
-    (checked: boolean | "indeterminate") => {
-      onChange({ ...config, flipEnabled: checked === true });
-    },
-    [config, onChange]
-  );
-
-  const handleFlipSelectorChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...config, flipSelector: e.target.value });
-    },
-    [config, onChange]
-  );
-
-  const handleFlipScaleChange = useCallback(
-    (checked: boolean | "indeterminate") => {
-      onChange({ ...config, flipScale: checked === true });
-    },
-    [config, onChange]
-  );
-
-  const handleFlipFadeChange = useCallback(
-    (checked: boolean | "indeterminate") => {
-      onChange({ ...config, flipFade: checked === true });
-    },
-    [config, onChange]
-  );
-
   const handleDraggableEnabledChange = useCallback(
     (checked: boolean | "indeterminate") => {
       onChange({ ...config, draggableEnabled: checked === true });
@@ -858,13 +787,6 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const handleObserverEnabledChange = useCallback(
     (checked: boolean | "indeterminate") => {
       onChange({ ...config, observerEnabled: checked === true });
-    },
-    [config, onChange]
-  );
-
-  const handleObserverTypeChange = useCallback(
-    (value: string) => {
-      onChange({ ...config, observerType: value as ObserverType });
     },
     [config, onChange]
   );

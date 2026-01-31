@@ -79,34 +79,34 @@ const DEFAULT_SCHEME_COLORS: ColorSchemeColors = {
 // Reusable field components
 // ---------------------------------------------------------------------------
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }): React.ReactNode {
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }): React.JSX.Element {
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
       <div className="flex items-center gap-2">
         <label className="relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50">
-          <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
+          <input type="color" value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
           <div className="size-full rounded" style={{ backgroundColor: value }} />
         </label>
-        <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className="h-7 flex-1 bg-gray-800/40 text-xs" />
+        <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} className="h-7 flex-1 bg-gray-800/40 text-xs" />
       </div>
     </div>
   );
 }
 
-function NumberField({ label, value, onChange, suffix, min, max }: { label: string; value: number; onChange: (v: number) => void; suffix?: string; min?: number; max?: number }): React.ReactNode {
+function NumberField({ label, value, onChange, suffix, min, max }: { label: string; value: number; onChange: (v: number) => void; suffix?: string; min?: number; max?: number }): React.JSX.Element {
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
       <div className="flex items-center gap-1.5">
-        <Input type="number" value={value} min={min} max={max} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(Number(e.target.value))} className="h-7 flex-1 bg-gray-800/40 text-xs" />
+        <Input type="number" value={value} min={min} max={max} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))} className="h-7 flex-1 bg-gray-800/40 text-xs" />
         {suffix && <span className="text-[10px] text-gray-500">{suffix}</span>}
       </div>
     </div>
   );
 }
 
-function RangeField({ label, value, onChange, min, max, suffix, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string; step?: number }): React.ReactNode {
+function RangeField({ label, value, onChange, min, max, suffix, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string; step?: number }): React.JSX.Element {
   const safeValue = Number.isFinite(value) ? value : min;
   return (
     <div className="space-y-1">
@@ -114,12 +114,12 @@ function RangeField({ label, value, onChange, min, max, suffix, step }: { label:
         <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
         <span className="text-[11px] text-gray-300">{safeValue}{suffix}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={safeValue} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
+      <input type="range" min={min} max={max} step={step} value={safeValue} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }): React.ReactNode {
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }): React.JSX.Element {
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
@@ -128,7 +128,7 @@ function SelectField({ label, value, onChange, options }: { label: string; value
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {options.map((opt) => (
+          {options.map((opt: { label: string; value: string }): React.JSX.Element => (
             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
           ))}
         </SelectContent>
@@ -137,20 +137,20 @@ function SelectField({ label, value, onChange, options }: { label: string; value
   );
 }
 
-function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }): React.ReactNode {
+function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }): React.JSX.Element {
   return (
     <label className="flex items-center gap-2 cursor-pointer">
-      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <Checkbox checked={checked} onCheckedChange={(v: boolean | "indeterminate"): void => onChange(v === true)} />
       <span className="text-xs text-gray-300">{label}</span>
     </label>
   );
 }
 
-function TextField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }): React.ReactNode {
+function TextField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }): React.JSX.Element {
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} placeholder={placeholder} className="h-7 bg-gray-800/40 text-xs" />
+      <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} placeholder={placeholder} className="h-7 bg-gray-800/40 text-xs" />
     </div>
   );
 }
@@ -165,7 +165,7 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 // Panel
 // ---------------------------------------------------------------------------
 
-export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
+export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const { theme, setTheme, update } = useThemeSettings();
   const [schemeView, setSchemeView] = useState<"list" | "edit">("list");
@@ -206,23 +206,23 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       });
       if (!res.ok) throw new Error("Failed to update user preferences");
     },
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey }); },
-    onError: (error: Error) => { console.warn("[CMS] Failed to persist theme settings state.", error); },
+    onSuccess: (): void => { void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey }); },
+    onError: (error: Error): void => { console.warn("[CMS] Failed to persist theme settings state.", error); },
   });
 
-  useEffect(() => {
+  useEffect((): void => {
     if (hasHydratedRef.current) return;
     if (!preferencesQuery.isFetched) return;
     const saved = preferencesQuery.data?.cmsThemeOpenSections ?? [];
-    const filtered = saved.filter((item) => typeof item === "string");
+    const filtered = saved.filter((item: string): item is string => typeof item === "string");
     setOpenSections(new Set(filtered));
     lastSavedRef.current = JSON.stringify(filtered);
     hasHydratedRef.current = true;
   }, [preferencesQuery.data, preferencesQuery.isFetched]);
 
-  const openSectionsArray = useMemo(() => Array.from(openSections), [openSections]);
+  const openSectionsArray = useMemo((): string[] => Array.from(openSections), [openSections]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!hasHydratedRef.current) return;
     const nextSerialized = JSON.stringify(openSectionsArray);
     if (nextSerialized === lastSavedRef.current) return;
@@ -233,21 +233,21 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     }, 400);
   }, [openSectionsArray, updatePreferencesMutation]);
 
-  useEffect(() => {
-    return () => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
+  useEffect((): (() => void) => {
+    return (): void => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
   }, []);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!theme.colorSchemes.length) return;
-    if (theme.colorSchemes.some((scheme) => scheme.id === theme.activeColorSchemeId)) return;
-    setTheme((prev) => ({
+    if (theme.colorSchemes.some((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId)) return;
+    setTheme((prev: typeof theme) => ({
       ...prev,
       activeColorSchemeId: prev.colorSchemes[0]?.id ?? "",
     }));
   }, [theme.colorSchemes, theme.activeColorSchemeId, setTheme]);
 
   // Logo file preview
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!logoFile) {
       if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
       setLogoPreviewUrl(null);
@@ -257,13 +257,13 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     previewUrlRef.current = nextUrl;
     setLogoPreviewUrl(nextUrl);
-    return () => {
+    return (): void => {
       if (previewUrlRef.current === nextUrl) { URL.revokeObjectURL(nextUrl); previewUrlRef.current = null; }
     };
   }, [logoFile]);
 
-  const toggleSection = useCallback((section: string) => {
-    setOpenSections((prev) => {
+  const toggleSection = useCallback((section: string): void => {
+    setOpenSections((prev: Set<string>) => {
       if (!hasHydratedRef.current) hasHydratedRef.current = true;
       const next = new Set(prev);
       if (next.has(section)) { next.delete(section); } else { next.add(section); }
@@ -271,20 +271,20 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     });
   }, []);
 
-  const activeScheme = useMemo(() => {
+  const activeScheme = useMemo((): { id: string; name: string; colors: ColorSchemeColors } | null => {
     if (!theme.colorSchemes.length) return null;
-    return theme.colorSchemes.find((scheme) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0];
+    return theme.colorSchemes.find((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0]!;
   }, [theme.colorSchemes, theme.activeColorSchemeId]);
 
-  const startAddScheme = useCallback(() => {
+  const startAddScheme = useCallback((): void => {
     setNewSchemeName("");
     setNewSchemeColors(activeScheme?.colors ?? DEFAULT_SCHEME_COLORS);
     setEditingSchemeId(null);
     setSchemeView("edit");
   }, [activeScheme]);
 
-  const startEditScheme = useCallback((schemeId: string) => {
-    const scheme = theme.colorSchemes.find((item) => item.id === schemeId);
+  const startEditScheme = useCallback((schemeId: string): void => {
+    const scheme = theme.colorSchemes.find((item: { id: string }) => item.id === schemeId);
     if (!scheme) return;
     setEditingSchemeId(schemeId);
     setNewSchemeName(scheme.name);
@@ -292,17 +292,17 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setSchemeView("edit");
   }, [theme.colorSchemes]);
 
-  const handleSaveScheme = useCallback(() => {
+  const handleSaveScheme = useCallback((): void => {
     const trimmed = newSchemeName.trim();
     const currentName = editingSchemeId
-      ? theme.colorSchemes.find((scheme) => scheme.id === editingSchemeId)?.name
+      ? theme.colorSchemes.find((scheme: { id: string }) => scheme.id === editingSchemeId)?.name
       : undefined;
     const schemeName = trimmed || currentName || `Scheme ${theme.colorSchemes.length + 1}`;
 
     if (editingSchemeId) {
-      setTheme((prev) => ({
+      setTheme((prev: typeof theme) => ({
         ...prev,
-        colorSchemes: prev.colorSchemes.map((scheme) =>
+        colorSchemes: prev.colorSchemes.map((scheme: { id: string; name: string; colors: ColorSchemeColors }) =>
           scheme.id === editingSchemeId
             ? { ...scheme, name: schemeName, colors: { ...newSchemeColors } }
             : scheme
@@ -311,7 +311,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       }));
     } else {
       const id = `custom-${Date.now().toString(36)}`;
-      setTheme((prev) => ({
+      setTheme((prev: typeof theme) => ({
         ...prev,
         colorSchemes: [
           ...prev.colorSchemes,
@@ -326,8 +326,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setNewSchemeName("");
   }, [editingSchemeId, newSchemeColors, newSchemeName, theme.colorSchemes, setTheme]);
 
-  const handlePickLogo = useCallback(() => { fileInputRef.current?.click(); }, []);
-  const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePickLogo = useCallback((): void => { fileInputRef.current?.click(); }, []);
+  const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
     setLogoFile(event.target.files?.[0] ?? null);
     event.target.value = "";
   }, []);

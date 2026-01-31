@@ -70,21 +70,7 @@ const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   createdAt: record.createdAt instanceof Date ? record.createdAt : new Date(record.createdAt),
 });
 
-const toSystemLogRecord = (doc: {
-  _id?: string | ObjectId;
-  id?: string;
-  level?: string;
-  message?: string;
-  source?: string | null;
-  context?: Record<string, unknown> | null;
-  stack?: string | null;
-  path?: string | null;
-  method?: string | null;
-  statusCode?: number | null;
-  requestId?: string | null;
-  userId?: string | null;
-  createdAt?: Date;
-}): SystemLogRecord => ({
+const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   id: String(doc.id ?? doc._id ?? ""),
   level: (doc.level as SystemLogLevel) ?? "error",
   message: doc.message ?? "",
@@ -329,7 +315,7 @@ export async function listSystemLogs(
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray();
-    const logs = docs.map((doc) => normalizeLogRecord(toSystemLogRecord(doc)));
+    const logs = docs.map((doc: MongoSystemLogDoc) => normalizeLogRecord(toSystemLogRecord(doc)));
     return { logs, total, page, pageSize };
   }
 
@@ -346,7 +332,7 @@ export async function listSystemLogs(
       }),
     ]);
 
-    const logs = rows.map((row) =>
+    const logs = rows.map((row: Prisma.SystemLog) =>
       normalizeLogRecord({
         ...row,
         level: row.level as SystemLogLevel,
@@ -443,10 +429,10 @@ export async function getSystemLogMetrics(
 
     const topSources = (sourceGroups as Array<{ source: string | null; _count: { _all: number } }>)
       .filter((row) => row.source)
-      .map((row) => ({ source: row.source as string, count: row._count._all ?? 0 }));
+      .map((row: { source: string | null; _count: { _all: number } }) => ({ source: row.source as string, count: row._count._all ?? 0 }));
     const topPaths = (pathGroups as Array<{ path: string | null; _count: { _all: number } }>)
       .filter((row) => row.path)
-      .map((row) => ({ path: row.path as string, count: row._count._all ?? 0 }));
+      .map((row: { path: string | null; _count: { _all: number } }) => ({ path: row.path as string, count: row._count._all ?? 0 }));
 
     return {
       total,
@@ -466,7 +452,7 @@ export async function getSystemLogMetrics(
   }
 }
 
-export async function clearSystemLogs(before?: Date | null) {
+export async function clearSystemLogs(before?: Date | null): Promise<{ deleted: number }> {
   const provider = await getAppDbProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();

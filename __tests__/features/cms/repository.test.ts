@@ -4,13 +4,6 @@ import { prismaCmsRepository } from "@/features/cms/services/cms-repository/pris
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {
-    block: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
     page: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -63,7 +56,7 @@ describe("CMS Repository (Prisma)", () => {
     });
 
     it("should get page by id with inclusions", async () => {
-      const mockPage = { id: "1", name: "Home", components: [], slugs: [], blocks: [] };
+      const mockPage = { id: "1", name: "Home", components: [], slugs: [] };
       (prisma.page.findUnique as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.getPageById("1");

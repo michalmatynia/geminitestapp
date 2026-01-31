@@ -309,7 +309,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           return session;
         },
       },
-      debug: true,
+      debug: process.env.AUTH_DEBUG === "true",
     };
   } catch (error: unknown) {
     await ErrorSystem.captureException(error, {

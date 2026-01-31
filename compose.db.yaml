@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    # Defaults match .env's DATABASE_URL (postgresuser/stardb) and allow passwordless local dev.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stardb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgresuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-trust}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata_local:/var/lib/postgresql/data
+
+volumes:
+  pgdata_local:

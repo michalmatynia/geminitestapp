@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
   Input,
@@ -16,6 +16,8 @@ import {
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_MENU_SETTINGS_KEY, DEFAULT_MENU_SETTINGS, type MenuSettings, normalizeMenuSettings } from "@/features/cms/types/menu-settings";
+import { useThemeSettings } from "./ThemeSettingsContext";
+import { ANIMATION_PRESETS } from "@/features/gsap/types/animation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,8 +26,10 @@ import { CMS_MENU_SETTINGS_KEY, DEFAULT_MENU_SETTINGS, type MenuSettings, normal
 // Types imported from menu-settings.ts
 
 const MENU_SECTIONS = [
+  "Visibility & Placement",
   "Menu Layout",
   "Menu Items",
+  "Menu Images",
   "Typography",
   "Colors",
   "Spacing",
@@ -34,6 +38,11 @@ const MENU_SECTIONS = [
   "Sticky Behaviour",
   "Active State",
   "Hover Effects",
+  "Animations",
+];
+
+const COLOR_SCHEME_FALLBACK = [
+  { label: "Custom colors", value: "custom" },
 ];
 
 const FONT_FAMILY_OPTIONS = [
@@ -219,11 +228,30 @@ function CheckboxField({
 export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<MenuSettings>(DEFAULT_MENU_SETTINGS);
+  const { theme } = useThemeSettings();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
   const persistTimerRef = useRef<number | null>(null);
+
+  const colorSchemeOptions = useMemo(() => {
+    const options = [...COLOR_SCHEME_FALLBACK];
+    const schemes = theme?.colorSchemes ?? [];
+    schemes.forEach((scheme) => {
+      if (!scheme?.id) return;
+      options.push({ label: scheme.name || scheme.id, value: scheme.id });
+    });
+    return options;
+  }, [theme?.colorSchemes]);
+
+  useEffect(() => {
+    if (settings.menuColorSchemeId === "custom") return;
+    const available = new Set((theme?.colorSchemes ?? []).map((scheme) => scheme.id));
+    if (!available.has(settings.menuColorSchemeId)) {
+      update("menuColorSchemeId", "custom");
+    }
+  }, [settings.menuColorSchemeId, theme?.colorSchemes, update]);
 
   useEffect(() => {
     if (hasHydratedRef.current) return;
@@ -276,12 +304,12 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       ...prev,
       items: [
         ...prev.items,
-        { id: String(Date.now()), label: "New link", url: "/" },
+        { id: String(Date.now()), label: "New link", url: "/", imageUrl: "" },
       ],
     }));
   }, []);
 
-  const updateMenuItem = useCallback((id: string, field: "label" | "url", value: string) => {
+  const updateMenuItem = useCallback((id: string, field: "label" | "url" | "imageUrl", value: string) => {
     setSettings((prev) => ({
       ...prev,
       items: prev.items.map((item) =>
@@ -301,9 +329,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     (section: string): React.ReactNode => {
       switch (section) {
         // ---------------------------------------------------------------
-        // Menu Layout
+        // Visibility & Placement
         // ---------------------------------------------------------------
-        case "Menu Layout":
+        case "Visibility & Placement":
           return (
             <div className="space-y-3">
               <CheckboxField
@@ -311,6 +339,59 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 checked={settings.showMenu}
                 onChange={(v) => update("showMenu", v)}
               />
+              <SelectField
+                label="Menu position"
+                value={settings.menuPlacement}
+                onChange={(v) => update("menuPlacement", v as MenuSettings["menuPlacement"])}
+                options={[
+                  { label: "Top", value: "top" },
+                  { label: "Left", value: "left" },
+                  { label: "Right", value: "right" },
+                ]}
+              />
+              <CheckboxField
+                label="Collapsible menu"
+                checked={settings.collapsible}
+                onChange={(v) => update("collapsible", v)}
+              />
+              {settings.collapsible && (
+                <CheckboxField
+                  label="Collapsed by default"
+                  checked={settings.collapsedByDefault}
+                  onChange={(v) => update("collapsedByDefault", v)}
+                />
+              )}
+              {(settings.menuPlacement === "left" || settings.menuPlacement === "right") && (
+                <>
+                  <RangeField
+                    label="Side width"
+                    value={settings.sideWidth}
+                    onChange={(v) => update("sideWidth", v)}
+                    min={160}
+                    max={420}
+                    suffix="px"
+                  />
+                  {settings.collapsible && (
+                    <RangeField
+                      label="Collapsed width"
+                      value={settings.collapsedWidth}
+                      onChange={(v) => update("collapsedWidth", v)}
+                      min={48}
+                      max={120}
+                      suffix="px"
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        // Menu Layout
+        // ---------------------------------------------------------------
+        case "Menu Layout":
+          return (
+            <div className="space-y-3">
               <SelectField
                 label="Layout style"
                 value={settings.layoutStyle}
@@ -376,6 +457,16 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                       placeholder="URL"
                       className="h-7 bg-gray-800/40 text-xs"
                     />
+                    {settings.showItemImages && (
+                      <Input
+                        value={item.imageUrl ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateMenuItem(item.id, "imageUrl", e.target.value)
+                        }
+                        placeholder="Image URL"
+                        className="h-7 bg-gray-800/40 text-xs"
+                      />
+                    )}
                   </div>
                   <button
                     type="button"
@@ -396,6 +487,30 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 <Plus className="mr-1.5 size-3.5" />
                 Add menu item
               </Button>
+            </div>
+          );
+
+        // ---------------------------------------------------------------
+        // Menu Images
+        // ---------------------------------------------------------------
+        case "Menu Images":
+          return (
+            <div className="space-y-3">
+              <CheckboxField
+                label="Show item images"
+                checked={settings.showItemImages}
+                onChange={(v) => update("showItemImages", v)}
+              />
+              {settings.showItemImages && (
+                <RangeField
+                  label="Image size"
+                  value={settings.itemImageSize}
+                  onChange={(v) => update("itemImageSize", v)}
+                  min={12}
+                  max={48}
+                  suffix="px"
+                />
+              )}
             </div>
           );
 
@@ -452,26 +567,36 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         case "Colors":
           return (
             <div className="space-y-3">
-              <ColorField
-                label="Background"
-                value={settings.backgroundColor}
-                onChange={(v) => update("backgroundColor", v)}
+              <SelectField
+                label="Color scheme"
+                value={settings.menuColorSchemeId}
+                onChange={(v) => update("menuColorSchemeId", v)}
+                options={colorSchemeOptions}
               />
-              <ColorField
-                label="Text color"
-                value={settings.textColor}
-                onChange={(v) => update("textColor", v)}
-              />
-              <ColorField
-                label="Active item"
-                value={settings.activeItemColor}
-                onChange={(v) => update("activeItemColor", v)}
-              />
-              <ColorField
-                label="Border"
-                value={settings.borderColor}
-                onChange={(v) => update("borderColor", v)}
-              />
+              {settings.menuColorSchemeId === "custom" && (
+                <>
+                  <ColorField
+                    label="Background"
+                    value={settings.backgroundColor}
+                    onChange={(v) => update("backgroundColor", v)}
+                  />
+                  <ColorField
+                    label="Text color"
+                    value={settings.textColor}
+                    onChange={(v) => update("textColor", v)}
+                  />
+                  <ColorField
+                    label="Active item"
+                    value={settings.activeItemColor}
+                    onChange={(v) => update("activeItemColor", v)}
+                  />
+                  <ColorField
+                    label="Border"
+                    value={settings.borderColor}
+                    onChange={(v) => update("borderColor", v)}
+                  />
+                </>
+              )}
             </div>
           );
 
@@ -681,11 +806,32 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
+        // ---------------------------------------------------------------
+        // Animations
+        // ---------------------------------------------------------------
+        case "Animations":
+          return (
+            <div className="space-y-3">
+              <SelectField
+                label="Entry animation"
+                value={settings.menuEntryAnimation}
+                onChange={(v) => update("menuEntryAnimation", v)}
+                options={ANIMATION_PRESETS}
+              />
+              <SelectField
+                label="Hover animation"
+                value={settings.menuHoverAnimation}
+                onChange={(v) => update("menuHoverAnimation", v)}
+                options={ANIMATION_PRESETS}
+              />
+            </div>
+          );
+
         default:
           return <div className="text-xs text-gray-500">Settings coming soon.</div>;
       }
     },
-    [settings, update, addMenuItem, updateMenuItem, removeMenuItem]
+    [settings, update, addMenuItem, updateMenuItem, removeMenuItem, colorSchemeOptions]
   );
 
   return (

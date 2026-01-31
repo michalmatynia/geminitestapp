@@ -21,13 +21,16 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
+import type { IntegrationConnectionBasic } from "@/features/integrations/types/integrations-ui";
+import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
+
 export default function MassListProductModal({
   productIds,
   integrationId: initialIntegrationId,
   connectionId: initialConnectionId,
   onClose,
   onSuccess,
-}: MassListProductModalProps) {
+}: MassListProductModalProps): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
@@ -58,10 +61,10 @@ export default function MassListProductModal({
   const [logsOpen, setLogsOpen] = useState(false);
 
   const connectionName = selectedIntegration?.connections.find(
-    (c) => c.id === selectedConnectionId
+    (c: IntegrationConnectionBasic) => c.id === selectedConnectionId
   )?.name || "";
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (isBaseComIntegration && !selectedInventoryId) {
       setError("Please select a Base.com inventory");
       return;
@@ -79,7 +82,7 @@ export default function MassListProductModal({
     for (let i = 0; i < productIds.length; i++) {
         const productId = productIds[i];
         if (!productId) continue;
-        setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
+        setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, current: i + 1 } : null);
         
         try {
             if (isBaseComIntegration) {
@@ -117,12 +120,12 @@ export default function MassListProductModal({
                     errors++;
                 }
               }
-        } catch (e) {
+        } catch (e: unknown) {
             logger.error("Failed to list product", e);
             errors++;
         }
         
-        setProgress(prev => prev ? { ...prev, errors } : null);
+        setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, errors } : null);
     }
 
     setSubmitting(false);
@@ -154,7 +157,7 @@ export default function MassListProductModal({
                 Cancel
             </Button>
             <Button
-                onClick={() => void handleSubmit()}
+                onClick={(): void => { void handleSubmit(); }}
                 disabled={
                 submitting ||
                 (isBaseComIntegration && !selectedInventoryId)
@@ -221,8 +224,8 @@ export default function MassListProductModal({
                             </SelectTrigger>
                             <SelectContent>
                             {inventories
-                                .filter((inventory) => inventory.id)
-                                .map((inventory) => (
+                                .filter((inventory: InventoryOption) => inventory.id)
+                                .map((inventory: InventoryOption) => (
                                 <SelectItem key={inventory.id} value={inventory.id}>
                                     {inventory.name}
                                 </SelectItem>
@@ -248,8 +251,8 @@ export default function MassListProductModal({
                             <SelectContent>
                             <SelectItem value="none">No template</SelectItem>
                             {templates
-                                .filter((template) => template.id)
-                                .map((template) => (
+                                .filter((template: Template) => template.id)
+                                .map((template: Template) => (
                                 <SelectItem key={template.id} value={template.id}>
                                     {template.name}
                                 </SelectItem>
@@ -264,7 +267,7 @@ export default function MassListProductModal({
                         <div className="flex items-center gap-2 pt-2">
                         <Checkbox
                             id="allowDuplicateSku"
-                            checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
+                            checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                             className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                         />
                         <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

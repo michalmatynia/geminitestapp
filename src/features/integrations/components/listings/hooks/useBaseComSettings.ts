@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { Template, BaseInventory } from "@/features/data-import-export";
 
 // Why: Base.com has complex, interconnected setup:
@@ -6,7 +6,17 @@ import type { Template, BaseInventory } from "@/features/data-import-export";
 // - Inventories require warehouses to be loaded first
 // - Preferences persist across uses
 // Isolating this logic makes the modal cleaner and Base-specific code testable.
-export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: string) {
+export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: string): {
+  templates: Template[];
+  selectedTemplateId: string;
+  setSelectedTemplateId: Dispatch<SetStateAction<string>>;
+  inventories: BaseInventory[];
+  selectedInventoryId: string;
+  setSelectedInventoryId: Dispatch<SetStateAction<string>>;
+  loadingInventories: boolean;
+  allowDuplicateSku: boolean;
+  setAllowDuplicateSku: Dispatch<SetStateAction<boolean>>;
+} {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
@@ -27,7 +37,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (previousConnectionId.current === connectionId) return;
     previousConnectionId.current = connectionId;
 
-    void (async () => {
+    void (async (): Promise<void> => {
       try {
         const res = await fetch("/api/integrations/export-templates");
         if (!res.ok) throw new Error("Failed to load templates");
@@ -60,7 +70,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     }
 
     setLoadingInventories(true);
-    void (async () => {
+    void (async (): Promise<void> => {
       try {
         const res = await fetch("/api/integrations/imports/base", {
           method: "POST",
@@ -121,7 +131,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (selectedInventoryId) return;
     if (!inventories.length) return;
     if (loadingInventories) return;
-    if (preferredInventoryId && inventories.some((inv) => inv.id === preferredInventoryId)) {
+    if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
       setSelectedInventoryId(preferredInventoryId);
       return;
     }
@@ -131,7 +141,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Sync template preference when selected changes
   useEffect(() => {
     if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === "none") return;
-    void (async () => {
+    void (async (): Promise<void> => {
       try {
         await fetch("/api/integrations/exports/base/templates/preferred", {
           method: "POST",
@@ -147,7 +157,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Sync inventory preference when selected changes
   useEffect(() => {
     if (!isBaseComIntegration || !selectedInventoryId) return;
-    void (async () => {
+    void (async (): Promise<void> => {
       try {
         await fetch("/api/integrations/exports/base/inventories/preferred", {
           method: "POST",

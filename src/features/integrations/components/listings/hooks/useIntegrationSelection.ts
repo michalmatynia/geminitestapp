@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
@@ -10,14 +10,23 @@ import type { IntegrationWithConnections } from "@/features/integrations/types/l
 export function useIntegrationSelection(
   initialIntegrationId?: string | null,
   initialConnectionId?: string | null
-) {
+): {
+  integrations: IntegrationWithConnections[];
+  loading: boolean;
+  selectedIntegrationId: string;
+  selectedConnectionId: string;
+  selectedIntegration: IntegrationWithConnections | undefined;
+  isBaseComIntegration: boolean;
+  setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
+  setSelectedConnectionId: Dispatch<SetStateAction<string>>;
+} {
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
   const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
 
   const preferredConnectionQuery = useQuery({
     queryKey: ["integrations", "base", "default-connection"],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ connectionId?: string | null }> => {
       const res = await fetch("/api/integrations/exports/base/default-connection");
       if (!res.ok) {
         throw new Error("Failed to load preferred connection");
@@ -28,7 +37,7 @@ export function useIntegrationSelection(
 
   const integrationsQuery = useQuery({
     queryKey: ["integrations", "with-connections"],
-    queryFn: async () => {
+    queryFn: async (): Promise<IntegrationWithConnections[]> => {
       const res = await fetch("/api/integrations/with-connections");
       if (!res.ok) throw new Error("Failed to load integrations");
       return (await res.json()) as IntegrationWithConnections[];
@@ -36,9 +45,9 @@ export function useIntegrationSelection(
   });
 
   const loading = integrationsQuery.isPending;
-  const integrations = useMemo(() => {
+  const integrations = useMemo((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
-    return Array.isArray(data) ? data.filter((i) => i.connections.length > 0) : [];
+    return Array.isArray(data) ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0) : [];
   }, [integrationsQuery.data]);
 
   const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
@@ -60,9 +69,9 @@ export function useIntegrationSelection(
   // Auto-select preferred connection when integration is selected
   // Perform check and update during render
   if (selectedIntegrationId && integrations.length > 0) {
-    const integration = integrations.find((i) => i.id === selectedIntegrationId);
+    const integration = integrations.find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
     if (integration) {
-      const connectionIds = integration.connections?.map((conn) => conn.id) ?? [];
+      const connectionIds = integration.connections?.map((conn: { id: string }) => conn.id) ?? [];
       const selectedIsValid =
         Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
 
@@ -76,7 +85,7 @@ export function useIntegrationSelection(
     }
   }
 
-  const selectedIntegration = (integrations || []).find((i) => i.id === selectedIntegrationId);
+  const selectedIntegration = (integrations || []).find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     selectedIntegration?.slug ?? ""
   );

@@ -27,13 +27,16 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
+import type { Integration, IntegrationConnectionBasic } from "@/features/integrations/types/integrations-ui";
+import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
+
 export default function ListProductModal({
   product,
   onClose,
   onSuccess,
   initialIntegrationId,
   initialConnectionId,
-}: ListProductModalProps) {
+}: ListProductModalProps): React.JSX.Element {
   // Integration & connection selection
   const {
     integrations,
@@ -70,14 +73,14 @@ export default function ListProductModal({
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
   const selectedConnection = selectedIntegration?.connections.find(
-    (connection) => connection.id === selectedConnectionId
+    (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
   const exportToBase = async (options?: {
     imageBase64Mode?: "base-only" | "full-data-uri";
     imageTransform?: ImageTransformOptions | null;
-  }) => {
+  }): Promise<void> => {
     const payload: Record<string, unknown> = {
       connectionId: selectedConnectionId,
       inventoryId: selectedInventoryId,
@@ -117,7 +120,7 @@ export default function ListProductModal({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!selectedIntegrationId || !selectedConnectionId) {
       setError("Please select both a marketplace and an account");
       return;
@@ -163,7 +166,7 @@ export default function ListProductModal({
     }
   };
 
-  const handleImageRetry = async (preset: ImageRetryPreset) => {
+  const handleImageRetry = async (preset: ImageRetryPreset): Promise<void> => {
     if (!isBaseComIntegration || !selectedConnectionId || !selectedInventoryId) {
       return;
     }
@@ -185,7 +188,7 @@ export default function ListProductModal({
   };
 
   const integrationsWithConnections = integrations.filter(
-    (i) => i.connections.length > 0
+    (i: Integration) => i.connections.length > 0
   );
 
   return (
@@ -204,7 +207,7 @@ export default function ListProductModal({
             Cancel
           </Button>
           <Button
-            onClick={() => void handleSubmit()}
+            onClick={(): void => { void handleSubmit(); }}
             disabled={
               submitting ||
               !selectedIntegrationId ||
@@ -242,10 +245,10 @@ export default function ListProductModal({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-card border-border">
-                      {imageRetryPresets.map((preset) => (
+                      {imageRetryPresets.map((preset: ImageRetryPreset) => (
                         <DropdownMenuItem
                           key={preset.id}
-                          onSelect={() => void handleImageRetry(preset)}
+                          onSelect={(): void => { void handleImageRetry(preset); }}
                           className="text-gray-200 focus:bg-gray-800/70"
                         >
                           <div className="flex flex-col">
@@ -308,8 +311,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {integrationsWithConnections
-                        .filter((integration) => integration.id)
-                        .map((integration) => (
+                        .filter((integration: Integration) => integration.id)
+                        .map((integration: Integration) => (
                           <SelectItem key={integration.id} value={integration.id}>
                             {integration.name}
                           </SelectItem>
@@ -330,8 +333,8 @@ export default function ListProductModal({
                       </SelectTrigger>
                       <SelectContent>
                         {selectedIntegration.connections
-                          .filter((connection) => connection.id)
-                          .map((connection) => (
+                          .filter((connection: IntegrationConnectionBasic) => connection.id)
+                          .map((connection: IntegrationConnectionBasic) => (
                             <SelectItem key={connection.id} value={connection.id}>
                               {connection.name}
                             </SelectItem>
@@ -363,8 +366,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {inventories
-                        .filter((inventory) => inventory.id)
-                        .map((inventory) => (
+                        .filter((inventory: InventoryOption) => inventory.id)
+                        .map((inventory: InventoryOption) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -390,8 +393,8 @@ export default function ListProductModal({
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
                       {templates
-                        .filter((template) => template.id)
-                        .map((template) => (
+                        .filter((template: Template) => template.id)
+                        .map((template: Template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>
@@ -406,7 +409,7 @@ export default function ListProductModal({
                 <div className="flex items-center gap-2 pt-2">
                   <Checkbox
                     id="allowDuplicateSku"
-                    checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
+                    checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                     className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

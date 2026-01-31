@@ -31,7 +31,7 @@ export default function SelectProductForListingModal({
   connectionId: initialConnectionId,
   onClose,
   onSuccess,
-}: SelectProductForListingModalProps) {
+}: SelectProductForListingModalProps): React.JSX.Element {
   const [products, setProducts] = useState<ProductWithImages[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,12 +66,12 @@ export default function SelectProductForListingModal({
   const imageRetryPresets = useImageRetryPresets();
 
   const connectionName = selectedIntegration?.connections.find(
-    (c) => c.id === selectedConnectionId
+    (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
 
   // Load products
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProducts = async (): Promise<void> => {
       try {
         setLoadingProducts(true);
         const res = await fetch("/api/products");
@@ -90,7 +90,7 @@ export default function SelectProductForListingModal({
   const exportToBase = async (options?: {
     imageBase64Mode?: "base-only" | "full-data-uri";
     imageTransform?: ImageTransformOptions | null;
-  }) => {
+  }): Promise<void> => {
     const payload: Record<string, unknown> = {
       connectionId: selectedConnectionId,
       inventoryId: selectedInventoryId,
@@ -130,7 +130,7 @@ export default function SelectProductForListingModal({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!selectedProductId) {
       setError("Please select a product");
       return;
@@ -179,7 +179,7 @@ export default function SelectProductForListingModal({
     }
   };
 
-  const handleImageRetry = async (preset: ImageRetryPreset) => {
+  const handleImageRetry = async (preset: ImageRetryPreset): Promise<void> => {
     if (!selectedProductId || !isBaseComIntegration || !selectedInventoryId) {
       return;
     }
@@ -200,7 +200,7 @@ export default function SelectProductForListingModal({
     }
   };
 
-  const getProductDisplayName = (product: ProductWithImages) => {
+  const getProductDisplayName = (product: ProductWithImages): string => {
     return product.name_en || product.name_pl || product.name_de || product.sku;
   };
 
@@ -309,7 +309,7 @@ export default function SelectProductForListingModal({
                   <SelectValue placeholder="Select a product..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((product) => (
+                  {products.map((product: ProductWithImages) => (
                     <SelectItem key={product.id} value={product.id}>
                       {getProductDisplayName(product)} ({product.sku})
                     </SelectItem>
@@ -334,8 +334,8 @@ export default function SelectProductForListingModal({
                     </SelectTrigger>
                     <SelectContent>
                       {inventories
-                        .filter((inventory) => inventory.id)
-                        .map((inventory) => (
+                        .filter((inventory: InventoryOption) => inventory.id)
+                        .map((inventory: InventoryOption) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -361,8 +361,8 @@ export default function SelectProductForListingModal({
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
                       {templates
-                        .filter((template) => template.id)
-                        .map((template) => (
+                        .filter((template: Template) => template.id)
+                        .map((template: Template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>
@@ -377,7 +377,7 @@ export default function SelectProductForListingModal({
                 <div className="flex items-center gap-2 pt-2">
                   <Checkbox
                     id="allowDuplicateSku"
-                    checked={allowDuplicateSku} onCheckedChange={(checked: boolean) => setAllowDuplicateSku(Boolean(checked))}
+                    checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                     className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

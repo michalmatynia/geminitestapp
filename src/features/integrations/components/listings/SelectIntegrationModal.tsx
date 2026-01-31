@@ -12,10 +12,13 @@ type SelectIntegrationModalProps = {
   onSelect: (integrationId: string, connectionId: string) => void;
 };
 
+import Link from "next/link";
+import type { Integration, IntegrationConnectionBasic } from "@/features/integrations/types/integrations-ui";
+
 export default function SelectIntegrationModal({
   onClose,
   onSelect,
-}: SelectIntegrationModalProps) {
+}: SelectIntegrationModalProps): React.JSX.Element {
   const {
     integrations,
     loading,
@@ -29,7 +32,7 @@ export default function SelectIntegrationModal({
   // Note: We don't auto-select the integration on initial load
   // The user should manually select the integration, and then we auto-select the connection
 
-  const handleContinue = () => {
+  const handleContinue = (): void => {
     if (selectedIntegrationId && selectedConnectionId) {
       onSelect(selectedIntegrationId, selectedConnectionId);
     }
@@ -38,7 +41,7 @@ export default function SelectIntegrationModal({
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Select Marketplace / Integration"
     >
       <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="md">
@@ -49,9 +52,9 @@ export default function SelectIntegrationModal({
           <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-6 text-center">
             <p className="text-sm text-yellow-200">No connected integrations</p>
             <p className="mt-2 text-xs text-yellow-300/70">
-              <a href="/admin/integrations" className="underline hover:text-yellow-100">
+              <Link href="/admin/integrations" className="underline hover:text-yellow-100">
                 Set up an integration first
-              </a>
+              </Link>
             </p>
           </div>
         ) : (
@@ -62,15 +65,15 @@ export default function SelectIntegrationModal({
               </Label>
               <Select
                 value={selectedIntegrationId}
-                onValueChange={(value) => setSelectedIntegrationId(value)}
+                onValueChange={(value: string): void => setSelectedIntegrationId(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select an integration..." />
                 </SelectTrigger>
                 <SelectContent>
                   {integrations
-                    .filter((integration) => integration.id)
-                    .map((integration) => (
+                    .filter((integration: Integration) => integration.id)
+                    .map((integration: Integration) => (
                       <SelectItem key={integration.id} value={integration.id}>
                         {integration.name}
                       </SelectItem>
@@ -93,8 +96,8 @@ export default function SelectIntegrationModal({
                   </SelectTrigger>
                   <SelectContent>
                     {selectedIntegration.connections
-                      .filter((connection) => connection.id)
-                      .map((connection) => (
+                      .filter((connection: IntegrationConnectionBasic) => connection.id)
+                      .map((connection: IntegrationConnectionBasic) => (
                         <SelectItem key={connection.id} value={connection.id}>
                           {connection.name}
                         </SelectItem>

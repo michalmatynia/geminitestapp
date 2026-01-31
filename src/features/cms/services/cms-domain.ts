@@ -148,7 +148,7 @@ export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDo
     visited.add(next.id);
     current = next;
   }
-  return current;
+  return toDomainResponse(current);
 }
 
 export async function resolveCmsDomainByHost(hostHeader: string | null): Promise<CmsDomain> {
@@ -164,7 +164,7 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
     .findOne({ domain });
   if (existing) {
     const scoped = await resolveCmsDomainScopeById(existing.id);
-    return scoped ?? existing;
+    return scoped ?? toDomainResponse(existing);
   }
 
   const now = new Date();
@@ -176,7 +176,7 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
     updatedAt: now,
   };
   await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).insertOne(doc);
-  return doc;
+  return toDomainResponse(doc);
 }
 
 export async function getCmsDomainById(domainId: string): Promise<CmsDomain | null> {
@@ -185,7 +185,7 @@ export async function getCmsDomainById(domainId: string): Promise<CmsDomain | nu
     return buildDefaultDomain(null);
   }
   const doc = await getDomainRecordById(domainId);
-  return doc ?? null;
+  return doc ? toDomainResponse(doc) : null;
 }
 
 export async function getDomainSlugLinks(domainId: string): Promise<CmsDomainSlugLink[]> {

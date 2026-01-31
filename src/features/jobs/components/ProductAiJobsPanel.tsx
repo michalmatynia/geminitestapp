@@ -409,7 +409,7 @@ export default function ProductAiJobsPanel({
                   <div className="text-gray-400 font-bold text-xs uppercase mb-3">
                     Run Metadata
                   </div>
-                  {(() => {
+                  {((): React.ReactNode => {
                     const meta = getJobMeta(selectedJob);
                     const payload = meta.payload ?? {};
                     const modelId = (payload as { modelId?: string }).modelId;
@@ -581,15 +581,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                          {(selectedJob.result as any).analysisInitial || (selectedJob.result as any).analysis || 'N/A'}
+                          {selectedJob.result.analysisInitial || selectedJob.result.analysis || 'N/A'}
                         </div>
                       </div>
 
-                      {(selectedJob.result as any).analysisFinal && (
+                      {selectedJob.result.analysisFinal && (
                         <div className="space-y-2">
                           <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {(selectedJob.result as any).analysisFinal}
+                            {selectedJob.result.analysisFinal}
                           </div>
                         </div>
                       )}
@@ -599,15 +599,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                          {(selectedJob.result as any).descriptionInitial || (selectedJob.result as any).description || 'N/A'}
+                          {selectedJob.result.descriptionInitial || selectedJob.result.description || 'N/A'}
                         </div>
                       </div>
 
-                      {(selectedJob.result as any).descriptionFinal && (
+                      {selectedJob.result.descriptionFinal && (
                         <div className="space-y-2">
                           <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                            {(selectedJob.result as any).descriptionFinal}
+                            {selectedJob.result.descriptionFinal}
                           </div>
                         </div>
                       )}
@@ -617,23 +617,23 @@ export default function ProductAiJobsPanel({
                   <div className="space-y-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
 
-                    {(selectedJob.result as any).translationModel && (
+                    {selectedJob.result.translationModel && (
                       <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
-                            <div className="text-white font-mono text-sm">{(selectedJob.result as any).translationModel}</div>
+                            <div className="text-white font-mono text-sm">{selectedJob.result.translationModel}</div>
                           </div>
-                          {(selectedJob.result as any).sourceLanguage && (
+                          {selectedJob.result.sourceLanguage && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
-                              <div className="text-white text-sm">{(selectedJob.result as any).sourceLanguage}</div>
+                              <div className="text-white text-sm">{selectedJob.result.sourceLanguage}</div>
                             </div>
                           )}
-                          {(selectedJob.result as any).targetLanguages && (
+                          {selectedJob.result.targetLanguages && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
-                              <div className="text-white text-sm">{(selectedJob.result as any).targetLanguages.join(', ')}</div>
+                              <div className="text-white text-sm">{selectedJob.result.targetLanguages.join(', ')}</div>
                             </div>
                           )}
                         </div>
@@ -641,7 +641,7 @@ export default function ProductAiJobsPanel({
                     )}
 
                     <div className="space-y-4">
-                      {(selectedJob.result as any).translations && Object.entries((selectedJob.result as any).translations).map(([lang, trans]: [string, any]) => (
+                      {selectedJob.result.translations && Object.entries(selectedJob.result.translations).map(([lang, trans]: [string, { name?: string; description?: string }]) => (
                         <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
                           <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

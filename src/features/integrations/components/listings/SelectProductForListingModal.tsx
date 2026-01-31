@@ -307,7 +307,7 @@ export default function SelectProductForListingModal({
                   <SelectValue placeholder="Select a product..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((product: any) => (
+                  {products.map((product: ProductWithImages) => (
                     <SelectItem key={product.id} value={product.id}>
                       {getProductDisplayName(product)} ({product.sku})
                     </SelectItem>
@@ -331,9 +331,9 @@ export default function SelectProductForListingModal({
                       <SelectValue placeholder="Select inventory..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(inventories as any[])
-                        .filter((inventory: any): boolean => !!inventory.id)
-                        .map((inventory: any) => (
+                      {inventories
+                        .filter((inventory: BaseInventory): boolean => !!inventory.id)
+                        .map((inventory: BaseInventory) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -358,9 +358,9 @@ export default function SelectProductForListingModal({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
-                      {(templates as any[])
-                        .filter((template: any): boolean => !!template.id)
-                        .map((template: any) => (
+                      {templates
+                        .filter((template: Template): boolean => !!template.id)
+                        .map((template: Template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>

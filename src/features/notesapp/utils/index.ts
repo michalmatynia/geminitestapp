@@ -45,7 +45,7 @@ export const buildBreadcrumbPath = (
   categoryId: string | null,
   noteTitle: string | null,
   categories: CategoryWithChildren[]
-) => {
+): Array<{ id: string | null; name: string; isNote?: boolean }> => {
   const path: Array<{ id: string | null; name: string; isNote?: boolean }> = [];
 
   const findPath = (
@@ -85,7 +85,7 @@ const escapeHtml = (value: string): string =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-const preserveSpans = (value: string) => {
+const preserveSpans = (value: string): { withTokens: string; tokens: string[] } => {
   const tokens: string[] = [];
 
   const withTokens = value.replace(/<span\b[^>]*>[\s\S]*?<\/span>/gi, (match) => {
@@ -99,7 +99,7 @@ const preserveSpans = (value: string) => {
   return { withTokens, tokens };
 };
 
-const restoreSpans = (value: string, tokens: string[]) => {
+const restoreSpans = (value: string, tokens: string[]): string => {
   let restored = value;
 
   tokens.forEach((token, index) => {
@@ -109,7 +109,7 @@ const restoreSpans = (value: string, tokens: string[]) => {
   return restored;
 };
 
-const renderInlineMarkdown = (value: string) => {
+const renderInlineMarkdown = (value: string): string => {
   const { withTokens, tokens } = preserveSpans(value);
 
   const escaped = escapeHtml(withTokens);
@@ -138,7 +138,7 @@ const renderInlineMarkdown = (value: string) => {
   return restoreSpans(withEm, tokens);
 };
 
-const highlightCode = (value: string) => {
+const highlightCode = (value: string): string => {
   let escaped = escapeHtml(value);
 
   escaped = escaped.replace(

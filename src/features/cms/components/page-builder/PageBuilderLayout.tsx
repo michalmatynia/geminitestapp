@@ -38,16 +38,7 @@ function PageBuilderInner(): React.ReactNode {
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white">
-      <div
-        className="relative flex flex-1 overflow-hidden"
-        onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
-          const target = event.target as Node | null;
-          if (!target) return;
-          if (leftPanelRef.current?.contains(target)) return;
-          if (rightPanelRef.current?.contains(target)) return;
-          dispatch({ type: "SELECT_NODE", nodeId: null });
-        }}
-      >
+      <div className="relative flex flex-1 overflow-hidden">
         {/* Left panel toggle (shown when collapsed) */}
         {state.leftPanelCollapsed && !isViewing && (
           <Button

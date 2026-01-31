@@ -154,7 +154,7 @@ function IntegrationsContent(): React.JSX.Element {
     router.replace("/admin/integrations");
   }, [router, searchParams, toast]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!integrationsQuery.isError) return;
     const message =
       integrationsQuery.error instanceof Error
@@ -163,7 +163,7 @@ function IntegrationsContent(): React.JSX.Element {
     toast(message, { variant: "error" });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!connectionsQuery.isError) return;
     const message =
       connectionsQuery.error instanceof Error
@@ -178,13 +178,13 @@ function IntegrationsContent(): React.JSX.Element {
     setActiveIntegration(null);
   }, [activeIntegration, integrations]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!showPlaywrightSaved) return;
     const timeout = setTimeout(() => setShowPlaywrightSaved(false), 2500);
     return () => clearTimeout(timeout);
   }, [showPlaywrightSaved]);
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     let active = true;
     const loadPersonas = async (): Promise<void> => {
       try {

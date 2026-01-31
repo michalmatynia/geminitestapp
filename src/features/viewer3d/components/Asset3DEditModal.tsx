@@ -22,7 +22,7 @@ export function Asset3DEditModal({
   onSave,
   existingCategories = [],
   existingTags = [],
-}: Asset3DEditModalProps) {
+}: Asset3DEditModalProps): React.JSX.Element {
   const [name, setName] = useState(asset.name ?? "");
   const [description, setDescription] = useState(asset.description ?? "");
   const [category, setCategory] = useState(asset.category ?? "");
@@ -41,7 +41,7 @@ export function Asset3DEditModal({
     setError(null);
   }, [asset]);
 
-  const handleAddTag = () => {
+  const handleAddTag = (): void => {
     const trimmed = newTag.trim().toLowerCase();
     if (trimmed && !tags.includes(trimmed)) {
       setTags([...tags, trimmed]);
@@ -49,11 +49,11 @@ export function Asset3DEditModal({
     }
   };
 
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
+  const handleRemoveTag = (tag: string): void => {
+    setTags(tags.filter((t: string) => t !== tag));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     setError(null);
 
@@ -76,7 +76,7 @@ export function Asset3DEditModal({
     }
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
@@ -85,7 +85,7 @@ export function Asset3DEditModal({
   return (
     <AppModal
       open={open}
-      onOpenChange={(o) => !o && onClose()}
+      onOpenChange={(o: boolean): void => { if (!o) onClose(); }}
       title="Edit 3D Asset"
     >
       <div className="bg-gray-900 rounded-lg shadow-2xl w-[90vw] max-w-lg border border-gray-700">
@@ -119,7 +119,7 @@ export function Asset3DEditModal({
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
               placeholder="Enter asset name..."
               className="mt-1 bg-gray-800 border-gray-700"
             />
@@ -133,7 +133,7 @@ export function Asset3DEditModal({
             <textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
               placeholder="Enter description..."
               rows={3}
               className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -149,13 +149,13 @@ export function Asset3DEditModal({
               <Input
                 id="category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
                 placeholder="Enter category..."
                 list="categories-list"
                 className="bg-gray-800 border-gray-700 flex-1"
               />
               <datalist id="categories-list">
-                {existingCategories.map((cat) => (
+                {existingCategories.map((cat: string) => (
                   <option key={cat} value={cat} />
                 ))}
               </datalist>
@@ -168,8 +168,8 @@ export function Asset3DEditModal({
             <div className="mt-1 flex gap-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddTag();
@@ -181,8 +181,8 @@ export function Asset3DEditModal({
               />
               <datalist id="tags-list">
                 {existingTags
-                  .filter((t) => !tags.includes(t))
-                  .map((tag) => (
+                  .filter((t: string) => !tags.includes(t))
+                  .map((tag: string) => (
                     <option key={tag} value={tag} />
                   ))}
               </datalist>
@@ -197,7 +197,7 @@ export function Asset3DEditModal({
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {tags.map((tag) => (
+                {tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs"
@@ -222,7 +222,7 @@ export function Asset3DEditModal({
               <input
                 type="checkbox"
                 checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setIsPublic(e.target.checked)}
                 className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
               />
               <div>

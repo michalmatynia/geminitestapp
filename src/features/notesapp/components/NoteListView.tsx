@@ -10,6 +10,8 @@ import { buildBreadcrumbPath } from "../utils";
 import type { NoteListViewProps } from "@/features/notesapp/types/notes-ui";
 import type { NoteWithRelations, ThemeRecord } from "@/shared/types/notes";
 
+type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
+
 export function NoteListView({
   loading,
   sortedNotes,
@@ -188,11 +190,11 @@ export function NoteListView({
         {/* Breadcrumb */}
         {selectedFolderId && (
           <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
-            {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb: any, index: number, array: any[]) => (
+            {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
               <React.Fragment key={index}>
                 <Button
                   onClick={(): void => {
-                    setSelectedFolderId(crumb.id);
+                    if (crumb.id) setSelectedFolderId(crumb.id);
                     setSelectedNote(null);
                     setIsEditing(false);
                   }}

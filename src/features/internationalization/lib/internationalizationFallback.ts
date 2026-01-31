@@ -26,7 +26,7 @@ export const fallbackCountries = defaultCountries.map((country: { code: string; 
   );
   const currencies = matchingMappings
     .map((mapping: { currencyCode: string }) => currencyByCode.get(mapping.currencyCode))
-    .filter((c: any): c is { code: string; name: string; symbol?: string | null } => !!c)
+    .filter((c: { code: string; name: string; symbol?: string | null } | undefined): c is { code: string; name: string; symbol?: string | null } => !!c)
     .map((currency: { code: string; name: string; symbol?: string | null }) => ({
       currencyId: currency.code,
       currency: {
@@ -51,7 +51,7 @@ export const fallbackLanguages = defaultLanguages.map((language: { code: string;
   );
   const countries = matchingMappings
     .map((mapping: { countryCode: string }) => countryByCode.get(mapping.countryCode))
-    .filter((c: any): c is { code: string; name: string } => !!c)
+    .filter((c: { code: string; name: string } | undefined): c is { code: string; name: string } => !!c)
     .map((country: { code: string; name: string }) => ({
       countryId: country.code,
       country: {

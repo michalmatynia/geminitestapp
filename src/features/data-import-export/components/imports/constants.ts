@@ -50,7 +50,7 @@ export const PRODUCT_FIELDS = [
   { value: "images_all", label: "Images (All: slots + links)" },
 ] as const;
 
-export const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_, index) => `image_slot_${index + 1}`);
+export const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_: unknown, index: number) => `image_slot_${index + 1}`);
 
 export const ALL_IMAGE_KEYS = [
   ...IMAGE_SLOT_KEYS,
@@ -84,12 +84,12 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: "image_links_all", description: "All image links." },
   { key: "image_slots_all", description: "All image slots." },
   { key: "images_all", description: "All images (slots + links)." },
-  ...IMAGE_SLOT_KEYS.map((key, index) => ({
+  ...IMAGE_SLOT_KEYS.map((key: string, index: number) => ({
     key,
     description: `Image slot ${index + 1}.`,
   })),
 ];
 
 export const EXPORT_PARAMETER_KEYS = Array.from(
-  new Set(EXPORT_PARAMETER_DOCS.map((entry) => entry.key))
+  new Set(EXPORT_PARAMETER_DOCS.map((entry: ExportParameterDoc) => entry.key))
 );

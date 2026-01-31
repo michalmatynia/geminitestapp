@@ -6,16 +6,16 @@ import React, { useState } from 'react';
 
 
 
-const CSVImportPage = () => {
+const CSVImportPage = (): React.JSX.Element => {
   const [file, setFile] = useState<File | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files) {
       setFile(e.target.files[0] || null);
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!file) {
       return;
     }

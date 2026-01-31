@@ -23,7 +23,7 @@ const normalizeGroups = (
 ): DatabasePreviewGroup[] => {
   if (!groups) return [];
   if (Array.isArray(groups)) return groups;
-  return Object.entries(groups).map(([type, objects]) => ({
+  return Object.entries(groups).map(([type, objects]: [string, string[]]) => ({
     type,
     objects,
   }));
@@ -47,7 +47,7 @@ export const fetchDatabaseBackups = async (
   return res.json() as Promise<DatabaseInfo[]>;
 };
 
-export const createDatabaseBackup = async (dbType: DatabaseType) => {
+export const createDatabaseBackup = async (dbType: DatabaseType): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const res = await fetch(`/api/databases/backup?type=${dbType}`, {
     method: "POST",
   });
@@ -58,7 +58,7 @@ export const createDatabaseBackup = async (dbType: DatabaseType) => {
 export const restoreDatabaseBackup = async (
   dbType: DatabaseType,
   input: { backupName: string; truncateBeforeRestore: boolean }
-) => {
+): Promise<{ ok: boolean; payload: DatabaseRestoreResponse }> => {
   const res = await fetch(`/api/databases/restore?type=${dbType}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -74,7 +74,7 @@ export const restoreDatabaseBackup = async (
 export const uploadDatabaseBackup = async (
   dbType: DatabaseType,
   file: File
-) => {
+): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("type", dbType);
@@ -89,7 +89,7 @@ export const uploadDatabaseBackup = async (
 export const deleteDatabaseBackup = async (
   dbType: DatabaseType,
   backupName: string
-) => {
+): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => {
   const res = await fetch("/api/databases/delete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -104,7 +104,7 @@ export const fetchDatabasePreview = async (input: {
   mode?: DatabasePreviewMode | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
-}) => {
+}): Promise<{ ok: boolean; payload: DatabasePreviewPayload }> => {
   const res = await fetch("/api/databases/preview", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

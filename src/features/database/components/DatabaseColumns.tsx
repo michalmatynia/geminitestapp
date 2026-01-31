@@ -9,7 +9,7 @@ import type { DatabaseInfo } from "../types";
 const renderSortableHeader = <TData, TValue>(
   label: string,
   column: Column<TData, TValue>
-) => {
+): React.JSX.Element => {
   const direction = column.getIsSorted(); // false | "asc" | "desc"
   const handler = column.getToggleSortingHandler(); // ((event) => void) | undefined
 
@@ -36,13 +36,13 @@ export const getDatabaseColumns = (options?: {
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: "name",
-    header: ({ column }) => renderSortableHeader("Name", column),
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Name", column),
   },
   {
     accessorKey: "size",
-    header: ({ column }) => renderSortableHeader("Size", column),
-    sortingFn: (rowA, rowB, columnId) => {
-      const toNumber = (value: string) =>
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Size", column),
+    sortingFn: (rowA: { getValue: (id: string) => string }, rowB: { getValue: (id: string) => string }, columnId: string): number => {
+      const toNumber = (value: string): number =>
         Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
       return (
         toNumber(rowA.getValue(columnId)) - toNumber(rowB.getValue(columnId))
@@ -51,38 +51,38 @@ export const getDatabaseColumns = (options?: {
   },
   {
     id: "createdAt",
-    accessorFn: (row) => row.createdAt,
-    header: ({ column }) => renderSortableHeader("Created", column),
-    cell: ({ row }) => row.original.created,
+    accessorFn: (row: DatabaseInfo): number | undefined => row.createdAt,
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Created", column),
+    cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.created,
   },
   {
     id: "lastModifiedAt",
-    accessorFn: (row) => row.lastModifiedAt,
-    header: ({ column }) => renderSortableHeader("Last Modified", column),
-    cell: ({ row }) => row.original.lastModified,
+    accessorFn: (row: DatabaseInfo): number | undefined => row.lastModifiedAt,
+    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Last Modified", column),
+    cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.lastModified,
   },
   {
     accessorKey: "lastRestored",
     header: "Last Restored",
-    cell: ({ row }) => row.original.lastRestored || "Never",
+    cell: ({ row }: { row: { original: DatabaseInfo } }): string => row.original.lastRestored || "Never",
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => {
       const backup = row.original;
       return (
         <div className="flex space-x-2">
           {options?.onPreview && (
             <Button
               variant="secondary"
-              onClick={() => options.onPreview?.(backup.name)}
+              onClick={(): void => options.onPreview?.(backup.name)}
             >
               Preview
             </Button>
           )}
 
           <Button
-            onClick={() => {
+            onClick={(): void => {
               options?.onRestoreRequest?.(backup);
             }}
           >
@@ -91,7 +91,7 @@ export const getDatabaseColumns = (options?: {
 
           <Button
             variant="destructive"
-            onClick={() => {
+            onClick={(): void => {
               options?.onDeleteRequest?.(backup.name);
             }}
           >

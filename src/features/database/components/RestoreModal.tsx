@@ -16,13 +16,13 @@ export const RestoreModal = ({
   backupName,
   onClose,
   onConfirm,
-}: RestoreModalProps) => {
+}: RestoreModalProps): React.JSX.Element => {
   const [truncate, setTruncate] = useState(true);
 
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Restore Database"
     >
       <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 shadow-lg">
@@ -34,7 +34,7 @@ export const RestoreModal = ({
           <Checkbox
             className="size-4 accent-emerald-500"
             checked={truncate}
-            onCheckedChange={(checked) => setTruncate(Boolean(checked))}
+            onCheckedChange={(checked: boolean | "indeterminate"): void => setTruncate(Boolean(checked))}
           />
           <span className="text-sm text-gray-300">
             Truncate (delete) existing data before restore

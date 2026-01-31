@@ -1,66 +1,5 @@
-__tests__/ui/product-table-footer.test.tsx(27,30): error TS6133: 'content' is declared but its value is never read.
-e2e/observability.spec.ts(65,45): error TS2339: Property '__e2e_error_captured__' does not exist on type 'Window & typeof globalThis'.
-e2e/settings.spec.ts(2,6): error TS2339: Property 'describe' does not exist on type 'TestAPI'.
-e2e/settings.spec.ts(3,8): error TS2339: Property 'beforeEach' does not exist on type 'TestAPI'.
-e2e/settings.spec.ts(3,22): error TS7031: Binding element 'page' implicitly has an 'any' type.
-e2e/settings.spec.ts(7,52): error TS2339: Property 'page' does not exist on type 'TaskContext<Test<object>> & TestContext'.
-e2e/settings.spec.ts(13,54): error TS2339: Property 'page' does not exist on type 'TaskContext<Test<object>> & TestContext'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(90,6): error TS2375: Type '{ children: Element; value: CSSProperties | undefined; }' is not assignable to type '{ value?: CSSProperties; children: ReactNode; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'value' are incompatible.
-    Type 'CSSProperties | undefined' is not assignable to type 'CSSProperties'.
-      Type 'undefined' is not assignable to type 'Properties<string | number, string & {}>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(97,16): error TS2375: Type '{ children: Element; key: string; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'config' are incompatible.
-    Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
-      Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(129,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendAnnouncementBarSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(131,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendBlockSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(141,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendHeroSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(143,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendImageWithTextSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(145,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendRichTextSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(147,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendGridSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(149,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendAccordionSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(151,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendTestimonialsSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(153,15): error TS2375: Type '{ settings: Record<string, unknown>; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { fullWidth?: boolean; } | undefined; }' is not assignable to type 'FrontendVideoSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(155,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendSlideshowSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(157,15): error TS2375: Type '{ settings: Record<string, unknown>; blocks: BlockInstance[]; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { ...; } | undefined; }' is not assignable to type 'FrontendNewsletterSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-src/features/cms/components/frontend/CmsPageRenderer.tsx(159,15): error TS2375: Type '{ settings: Record<string, unknown>; colorSchemes: Record<string, ColorSchemeColors> | undefined; layout: { fullWidth?: boolean; } | undefined; }' is not assignable to type 'FrontendContactFormSectionProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'colorSchemes' are incompatible.
-    Type 'Record<string, ColorSchemeColors> | undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
-      Type 'undefined' is not assignable to type 'Record<string, ColorSchemeColors>'.
+src/features/cms/components/frontend/CmsPageRenderer.tsx(97,55): error TS2375: Type 'GsapAnimationConfig | {}' is not assignable to type 'GsapAnimationConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{}' is missing the following properties from type 'GsapAnimationConfig': preset, duration, delay, easing, trigger
 src/features/cms/components/frontend/GsapAnimationWrapper.tsx(7,22): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Flip.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/flip.d.ts' only in casing.
   The file is in the program because:
     Referenced via 'flip.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
@@ -113,11 +52,11 @@ src/features/cms/components/frontend/sections/FrontendAnnouncementBarSection.tsx
   Types of property 'fullWidth' are incompatible.
     Type 'boolean | undefined' is not assignable to type 'boolean'.
       Type 'undefined' is not assignable to type 'boolean'.
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(28,6): error TS2375: Type '{ children: string | number | bigint | true | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...>; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(27,6): error TS2375: Type '{ children: string | number | bigint | true | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...>; config: GsapAnimationConfig | undefined; }' is not assignable to type 'GsapAnimationWrapperProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'config' are incompatible.
     Type 'GsapAnimationConfig | undefined' is not assignable to type 'GsapAnimationConfig'.
       Type 'undefined' is not assignable to type 'GsapAnimationConfig'.
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(324,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
+src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(323,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
 src/features/cms/components/frontend/sections/FrontendBlockSection.tsx(34,48): error TS2379: Argument of type '{ fullWidth: boolean | undefined; maxWidthClass: string; }' is not assignable to parameter of type '{ fullWidth?: boolean; maxWidthClass?: string; paddingClass?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'fullWidth' are incompatible.
     Type 'boolean | undefined' is not assignable to type 'boolean'.

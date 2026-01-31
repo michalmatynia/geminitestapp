@@ -10,10 +10,10 @@ type LogModalProps = {
   onClose: () => void;
 };
 
-export const LogModal = ({ content, onClose }: LogModalProps) => (
+export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element => (
   <AppModal
     open={true}
-    onOpenChange={(open) => !open && onClose()}
+    onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
     title="Operation Log"
   >
     <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 shadow-lg">

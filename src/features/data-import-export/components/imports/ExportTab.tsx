@@ -503,7 +503,7 @@ export function ExportTab({
                     {debugWarehouses.inventoriesRaw.error ? (
                       <div>Error: {debugWarehouses.inventoriesRaw.error}</div>
                     ) : null}
-                    {(() => {
+                    {(() : React.JSX.Element | null => {
                       const payload = debugWarehouses.inventoriesRaw?.payload as Record<string, unknown> | null | undefined;
                       const inventories = payload
                         ? payload["inventories"]

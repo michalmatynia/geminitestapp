@@ -3,6 +3,7 @@ import type { PageComponent } from "../../types";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
+import { DEFAULT_ANIMATION_CONFIG } from "@/features/gsap";
 import { FrontendAnnouncementBarSection } from "./sections/FrontendAnnouncementBarSection";
 import { FrontendBlockSection } from "./sections/FrontendBlockSection";
 import { FrontendHeroSection } from "./sections/FrontendHeroSection";
@@ -91,10 +92,13 @@ export function CmsPageRenderer({
       <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
         {ZONE_ORDER.map((zone: PageZone) =>
           sectionsByZone[zone].map((section: typeof sections[number]) => {
-            const animConfig = section.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+            const rawAnimConfig = section.settings["gsapAnimation"] as Partial<GsapAnimationConfig> | undefined;
+            const animConfig = rawAnimConfig
+              ? { ...DEFAULT_ANIMATION_CONFIG, ...rawAnimConfig }
+              : undefined;
 
             return (
-              <GsapAnimationWrapper key={section.key} config={animConfig ?? {}}>
+              <GsapAnimationWrapper key={section.key} config={animConfig}>
                 <SectionRenderer
                   type={section.type}
                   settings={section.settings}

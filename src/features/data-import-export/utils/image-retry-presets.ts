@@ -29,7 +29,7 @@ export const DEFAULT_IMAGE_RETRY_PRESETS: ImageRetryPreset[] = [
   },
 ].map(clonePreset);
 
-export const getDefaultImageRetryPresets = () =>
+export const getDefaultImageRetryPresets = (): ImageRetryPreset[] =>
   DEFAULT_IMAGE_RETRY_PRESETS.map(clonePreset);
 
 export const buildImageRetryPresetLabel = (preset: ImageRetryPreset): string => {
@@ -85,10 +85,10 @@ export const normalizeImageRetryPresets = (
     return getDefaultImageRetryPresets();
   }
   const defaults = getDefaultImageRetryPresets();
-  const byId = new Map(defaults.map((preset) => [preset.id, preset]));
+  const byId = new Map(defaults.map((preset: ImageRetryPreset) => [preset.id, preset]));
   const normalized = value
-    .filter((entry) => entry && typeof entry === "object")
-    .map((entry) => {
+    .filter((entry: unknown) => entry && typeof entry === "object")
+    .map((entry: unknown) => {
       const record = entry as Partial<ImageRetryPreset> & {
         transform?: Partial<ImageRetryPreset["transform"]>;
       };
@@ -115,7 +115,7 @@ export const normalizeImageRetryPresets = (
       };
       return withImageRetryPresetLabels(preset);
     })
-    .filter((entry): entry is ImageRetryPreset => Boolean(entry));
+    .filter((entry: ImageRetryPreset | null): entry is ImageRetryPreset => Boolean(entry));
 
   return normalized.length > 0 ? normalized : defaults;
 };

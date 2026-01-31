@@ -15,7 +15,7 @@ type MathNodeConfigSectionProps = {
 export function MathNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: MathNodeConfigSectionProps) {
+}: MathNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "math") return null;
 
   const mathConfig = selectedNode.config?.math ?? {
@@ -29,7 +29,7 @@ export function MathNodeConfigSection({
         <Label className="text-xs text-gray-400">Operation</Label>
         <Select
           value={mathConfig.operation}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               math: {
                 ...mathConfig,
@@ -59,7 +59,7 @@ export function MathNodeConfigSection({
           step="0.1"
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mathConfig.operand}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               math: {
                 ...mathConfig,

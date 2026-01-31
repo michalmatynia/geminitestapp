@@ -59,7 +59,7 @@ export function DatabaseQueryValidatorPanel({
           ))}
         </div>
       )}
-      {queryValidation.status === "error" && (() => {
+      {queryValidation.status === "error" && ((): React.JSX.Element | null => {
         const aiPromptEdges = edges.filter(
           (edge: Edge): boolean => edge.from === selectedNode.id && edge.fromPort === "aiPrompt"
         );

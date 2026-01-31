@@ -20,7 +20,7 @@ export function AnimationPresetPicker({
   const [hoveredPreset, setHoveredPreset] = useState<AnimationPreset | null>(null);
 
   return (
-    <div className={cn("grid grid-cols-2 gap-2", className)} role="radiogroup">
+    <div className={cn("grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4", className)} role="radiogroup">
       {ANIMATION_PRESETS.map((preset) => {
         const isActive = value === preset.value;
         const isPreviewing = isActive || hoveredPreset === preset.value;
@@ -34,6 +34,8 @@ export function AnimationPresetPicker({
             onClick={(): void => onChange(preset.value)}
             onMouseEnter={(): void => setHoveredPreset(preset.value)}
             onMouseLeave={(): void => setHoveredPreset(null)}
+            onFocus={(): void => setHoveredPreset(preset.value)}
+            onBlur={(): void => setHoveredPreset(null)}
             className={cn(
               "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition",
               isActive

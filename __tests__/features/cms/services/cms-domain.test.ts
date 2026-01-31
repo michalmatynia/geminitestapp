@@ -1,0 +1,90 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("crypto")>();
+  return {
+    ...actual,
+    randomUUID: vi.fn(() => "mock-domain-uuid"),
+  };
+});
+
+import { resolveCmsDomainByHost, resolveCmsDomainScopeById } from "@/features/cms/services/cms-domain";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+
+vi.mock("@/shared/lib/db/mongo-client", () => ({
+  getMongoDb: vi.fn(),
+}));
+
+describe("CMS Domain Service", () => {
+  const mockCollection = {
+    findOne: vi.fn(),
+    insertOne: vi.fn(),
+    find: vi.fn().mockReturnThis(),
+    toArray: vi.fn(),
+    updateMany: vi.fn(),
+    updateOne: vi.fn(),
+    deleteOne: vi.fn(),
+    deleteMany: vi.fn(),
+  };
+
+  const mockDb = {
+    collection: vi.fn().mockReturnValue(mockCollection),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
+    process.env.MONGODB_URI = "mongodb://localhost";
+  });
+
+  describe("resolveCmsDomainByHost", () => {
+    it("creates a new domain if it doesn't exist", async () => {
+      mockCollection.findOne.mockResolvedValue(null);
+      mockCollection.insertOne.mockResolvedValue({ insertedId: "mock-domain-uuid" });
+
+      const domain = await resolveCmsDomainByHost("test.com");
+
+      expect(domain.domain).toBe("test.com");
+      expect(mockCollection.insertOne).toHaveBeenCalled();
+    });
+
+    it("returns existing domain if found", async () => {
+      const existing = { id: "d1", domain: "existing.com", aliasOf: null };
+      mockCollection.findOne.mockResolvedValue(existing);
+
+      const domain = await resolveCmsDomainByHost("existing.com");
+
+      expect(domain.id).toBe("d1");
+      expect(mockCollection.insertOne).not.toHaveBeenCalled();
+    });
+
+    it("resolves alias to canonical domain", async () => {
+      const alias = { id: "d2", domain: "alias.com", aliasOf: "d1" };
+      const canonical = { id: "d1", domain: "canonical.com", aliasOf: null };
+      
+      mockCollection.findOne
+        .mockResolvedValueOnce(alias) // Initial find by host
+        .mockResolvedValueOnce(alias) // Inside resolveCmsDomainScopeById (getDomainRecordById)
+        .mockResolvedValueOnce(canonical); // Next iteration of while loop
+
+      const domain = await resolveCmsDomainByHost("alias.com");
+
+      expect(domain.id).toBe("d1");
+      expect(domain.domain).toBe("canonical.com");
+    });
+  });
+
+  describe("resolveCmsDomainScopeById", () => {
+    it("handles circular aliases gracefully", async () => {
+      const d1 = { id: "d1", domain: "d1.com", aliasOf: "d2" };
+      const d2 = { id: "d2", domain: "d2.com", aliasOf: "d1" };
+
+      mockCollection.findOne
+        .mockResolvedValueOnce(d1)
+        .mockResolvedValueOnce(d2);
+
+      const domain = await resolveCmsDomainScopeById("d1");
+      expect(domain?.id).toBe("d2"); // Stops when it sees d1 again
+    });
+  });
+});

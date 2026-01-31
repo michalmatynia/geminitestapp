@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu } from "lucide-react";
+import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow } from "lucide-react";
 import { Button } from "@/shared/ui";
 import { useAdminLayout } from "@/features/admin";
 import { PageBuilderProvider, usePageBuilder } from "../../hooks/usePageBuilderContext";
@@ -10,14 +10,24 @@ import { ComponentTreePanel } from "./ComponentTreePanel";
 import { PagePreviewPanel } from "./PagePreviewPanel";
 import { ComponentSettingsPanel } from "./ComponentSettingsPanel";
 import { ThemeSettingsPanel } from "./ThemeSettingsPanel";
+import { ThemeSettingsProvider } from "./ThemeSettingsContext";
 import { MenuSettingsPanel } from "./MenuSettingsPanel";
+import { AppEmbedsPanel } from "./AppEmbedsPanel";
 
 function PageBuilderInner(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayout();
   useBuilderKeyboardShortcuts();
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
-  const [leftPanelMode, setLeftPanelMode] = useState<"sections" | "theme" | "menu">("sections");
+  const [leftPanelMode, setLeftPanelMode] = useState<"sections" | "theme" | "menu" | "app-embeds">("sections");
+  const leftPanelLabel =
+    leftPanelMode === "sections"
+      ? "Sections"
+      : leftPanelMode === "theme"
+      ? "Theme settings"
+      : leftPanelMode === "menu"
+      ? "Menu settings"
+      : "App embeds";
 
   useEffect((): (() => void) => {
     setIsProgrammaticallyCollapsed(true);
@@ -46,63 +56,85 @@ function PageBuilderInner(): React.ReactNode {
             state.leftPanelCollapsed ? "w-0 opacity-0 -translate-x-2 pointer-events-none" : "w-72 opacity-100 translate-x-0"
           }`}
         >
-          {leftPanelMode === "sections" && <ComponentTreePanel />}
-          {leftPanelMode === "theme" && <ThemeSettingsPanel />}
-          {leftPanelMode === "menu" && <MenuSettingsPanel />}
-          <div className="absolute right-8 top-1 flex items-center gap-1">
-            <Button
-              onClick={() => setLeftPanelMode("sections")}
-              size="sm"
-              variant="ghost"
-              className={`h-6 w-6 p-0 ${
-                leftPanelMode === "sections"
-                  ? "text-gray-500/70"
-                  : "text-blue-300 hover:text-blue-200"
-              }`}
-              title="Back to sections"
-              aria-label="Back to sections"
-              disabled={leftPanelMode === "sections"}
-            >
-              <ArrowLeft className="size-3.5" />
-            </Button>
-            <Button
-              onClick={() => setLeftPanelMode("menu")}
-              size="sm"
-              variant="ghost"
-              className={`h-6 w-6 p-0 ${
-                leftPanelMode === "menu"
-                  ? "text-blue-300 hover:text-blue-200"
-                  : "text-gray-500 hover:text-gray-300"
-              }`}
-              title="Menu settings"
-              aria-label="Menu settings"
-            >
-              <Menu className="size-3.5" />
-            </Button>
-            <Button
-              onClick={() => setLeftPanelMode("theme")}
-              size="sm"
-              variant="ghost"
-              className={`h-6 w-6 p-0 ${
-                leftPanelMode === "theme"
-                  ? "text-blue-300 hover:text-blue-200"
-                  : "text-gray-500 hover:text-gray-300"
-              }`}
-              title="Theme settings"
-              aria-label="Theme settings"
-            >
-              <Settings className="size-3.5" />
-            </Button>
+          <div className="flex w-72 min-h-0 flex-col border-r border-border bg-gray-900">
+            <div className="border-b border-border px-4 py-2">
+              <div className="flex items-center justify-end gap-1">
+                <Button
+                  onClick={() => setLeftPanelMode("sections")}
+                  size="icon"
+                  variant="ghost"
+                  className={`h-6 w-6 p-0 ${
+                    leftPanelMode === "sections"
+                      ? "text-gray-500/70"
+                      : "text-blue-300 hover:text-blue-200"
+                  }`}
+                  title="Back to sections"
+                  aria-label="Back to sections"
+                  disabled={leftPanelMode === "sections"}
+                >
+                  <ArrowLeft className="size-3.5" />
+                </Button>
+                <Button
+                  onClick={() => setLeftPanelMode("menu")}
+                  size="icon"
+                  variant="ghost"
+                  className={`h-6 w-6 p-0 ${
+                    leftPanelMode === "menu"
+                      ? "text-blue-300 hover:text-blue-200"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                  title="Menu settings"
+                  aria-label="Menu settings"
+                >
+                  <Menu className="size-3.5" />
+                </Button>
+                <Button
+                  onClick={() => setLeftPanelMode("app-embeds")}
+                  size="icon"
+                  variant="ghost"
+                  className={`h-6 w-6 p-0 ${
+                    leftPanelMode === "app-embeds"
+                      ? "text-blue-300 hover:text-blue-200"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                  title="App embeds"
+                  aria-label="App embeds"
+                >
+                  <AppWindow className="size-3.5" />
+                </Button>
+                <Button
+                  onClick={() => setLeftPanelMode("theme")}
+                  size="icon"
+                  variant="ghost"
+                  className={`h-6 w-6 p-0 ${
+                    leftPanelMode === "theme"
+                      ? "text-blue-300 hover:text-blue-200"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                  title="Theme settings"
+                  aria-label="Theme settings"
+                >
+                  <Settings className="size-3.5" />
+                </Button>
+                <Button
+                  onClick={() => dispatch({ type: "TOGGLE_LEFT_PANEL" })}
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+                  aria-label="Hide left panel"
+                >
+                  <PanelLeftClose className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="px-4 py-2 text-right">
+              <h3 className="text-sm font-semibold text-white">{leftPanelLabel}</h3>
+            </div>
+            {leftPanelMode === "sections" && <ComponentTreePanel />}
+            {leftPanelMode === "theme" && <ThemeSettingsPanel showHeader={false} />}
+            {leftPanelMode === "menu" && <MenuSettingsPanel showHeader={false} />}
+            {leftPanelMode === "app-embeds" && <AppEmbedsPanel showHeader={false} />}
           </div>
-          <Button
-            onClick={() => dispatch({ type: "TOGGLE_LEFT_PANEL" })}
-            size="sm"
-            variant="ghost"
-            className="absolute right-1 top-1 h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-            aria-label="Hide left panel"
-          >
-            <PanelLeftClose className="size-3.5" />
-          </Button>
         </div>
 
         {/* Center panel: Preview */}
@@ -127,15 +159,6 @@ function PageBuilderInner(): React.ReactNode {
             state.rightPanelCollapsed ? "w-0 opacity-0 translate-x-2 pointer-events-none" : "w-80 opacity-100 translate-x-0"
           }`}
         >
-          <Button
-            onClick={() => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
-            size="sm"
-            variant="ghost"
-            className="absolute left-1 top-1 h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
-            aria-label="Hide right panel"
-          >
-            <PanelRightClose className="size-3.5" />
-          </Button>
           <ComponentSettingsPanel />
         </div>
       </div>
@@ -146,7 +169,9 @@ function PageBuilderInner(): React.ReactNode {
 export function PageBuilderLayout(): React.ReactNode {
   return (
     <PageBuilderProvider>
-      <PageBuilderInner />
+      <ThemeSettingsProvider>
+        <PageBuilderInner />
+      </ThemeSettingsProvider>
     </PageBuilderProvider>
   );
 }

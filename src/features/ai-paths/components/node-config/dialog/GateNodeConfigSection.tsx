@@ -14,7 +14,7 @@ type GateNodeConfigSectionProps = {
 export function GateNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: GateNodeConfigSectionProps) {
+}: GateNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "gate") return null;
 
   const gateConfig: GateConfig = selectedNode.config?.gate ?? {
@@ -28,7 +28,7 @@ export function GateNodeConfigSection({
         <Label className="text-xs text-gray-400">Mode</Label>
         <Select
           value={gateConfig.mode}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               gate: {
                 ...gateConfig,
@@ -51,7 +51,7 @@ export function GateNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={gateConfig.failMessage ?? ""}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               gate: { ...gateConfig, failMessage: event.target.value },
             })

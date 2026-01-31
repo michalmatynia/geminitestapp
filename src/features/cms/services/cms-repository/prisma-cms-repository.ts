@@ -3,7 +3,7 @@ import "server-only";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
 import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Block, Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
+import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
 
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
@@ -17,48 +17,6 @@ function removeUndefined<T extends object>(obj: T): T {
 }
 
 export const prismaCmsRepository: CmsRepository = {
-  // Blocks
-  async getBlocks(): Promise<Block[]> {
-    const blocks = await prisma.block.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    return blocks as unknown as Block[];
-  },
-
-  async getBlockById(id: string): Promise<Block | null> {
-    const block = await prisma.block.findUnique({ where: { id } });
-    return block as unknown as Block | null;
-  },
-
-  async getBlockByName(name: string): Promise<Block | null> {
-    const block = await prisma.block.findUnique({ where: { name } });
-    return block as unknown as Block | null;
-  },
-
-  async createBlock(data: { name: string; content: unknown }): Promise<Block> {
-    const block = await prisma.block.create({
-      data: {
-        name: data.name,
-        content: data.content as Prisma.InputJsonValue,
-      },
-    });
-    return block as unknown as Block;
-  },
-
-  async updateBlock(id: string, data: { name?: string | undefined; content?: unknown }): Promise<Block | null> {
-    const cleanData = removeUndefined(data);
-    const block = await prisma.block.update({
-      where: { id },
-      data: cleanData as Prisma.BlockUpdateInput,
-    });
-    return block as unknown as Block | null;
-  },
-
-  async deleteBlock(id: string): Promise<Block | null> {
-    const block = await prisma.block.delete({ where: { id } });
-    return block as unknown as Block | null;
-  },
-
   // Pages
   async getPages(): Promise<Page[]> {
     const pages = await prisma.page.findMany({
@@ -81,11 +39,6 @@ export const prismaCmsRepository: CmsRepository = {
         slugs: {
           include: {
             slug: true,
-          },
-        },
-        blocks: {
-          include: {
-            block: true,
           },
         },
         components: true,
@@ -218,26 +171,6 @@ export const prismaCmsRepository: CmsRepository = {
         pageId_slugId: {
           pageId,
           slugId,
-        },
-      },
-    });
-  },
-
-  async addBlockToPage(pageId: string, blockId: string): Promise<void> {
-    await prisma.pageBlock.create({
-      data: {
-        pageId,
-        blockId,
-      },
-    });
-  },
-
-  async removeBlockFromPage(pageId: string, blockId: string): Promise<void> {
-    await prisma.pageBlock.delete({
-      where: {
-        pageId_blockId: {
-          pageId,
-          blockId,
         },
       },
     });

@@ -10,13 +10,6 @@ import {
   updatePage,
 } from "@/features/cms/api/pages";
 import {
-  createBlock,
-  deleteBlock,
-  fetchBlock,
-  fetchBlocks,
-  updateBlock,
-} from "@/features/cms/api/blocks";
-import {
   createSlug,
   deleteSlug,
   fetchSlug,
@@ -41,8 +34,6 @@ import {
 const cmsKeys = {
   pages: ["cms-pages"] as const,
   page: (id: string) => ["cms-page", id] as const,
-  blocks: ["cms-blocks"] as const,
-  block: (id: string) => ["cms-block", id] as const,
   slugs: ["cms-slugs"] as const,
   slugsAll: ["cms-slugs", "all"] as const,
   slug: (id: string) => ["cms-slug", id] as const,
@@ -105,64 +96,6 @@ export function useDeletePage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.pages });
-    },
-  });
-}
-
-export function useCmsBlocks() {
-  return useQuery({
-    queryKey: cmsKeys.blocks,
-    queryFn: fetchBlocks,
-  });
-}
-
-export function useCmsBlock(id?: string) {
-  return useQuery({
-    queryKey: id ? cmsKeys.block(id) : cmsKeys.block(""),
-    queryFn: () => fetchBlock(id as string),
-    enabled: !!id,
-  });
-}
-
-export function useCreateBlock() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { name: string; content: unknown }) => {
-      const { ok, payload } = await createBlock(input);
-      if (!ok) throw new Error("Failed to create block");
-      return payload;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.blocks });
-    },
-  });
-}
-
-export function useUpdateBlock() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: { name: string; content: unknown } }) => {
-      const { ok, payload } = await updateBlock(id, input);
-      if (!ok) throw new Error("Failed to update block");
-      return payload;
-    },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.blocks });
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.block(variables.id) });
-    },
-  });
-}
-
-export function useDeleteBlock() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { ok } = await deleteBlock(id);
-      if (!ok) throw new Error("Failed to delete block");
-      return id;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: cmsKeys.blocks });
     },
   });
 }

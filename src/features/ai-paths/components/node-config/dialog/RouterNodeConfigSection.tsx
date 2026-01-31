@@ -14,7 +14,7 @@ type RouterNodeConfigSectionProps = {
 export function RouterNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: RouterNodeConfigSectionProps) {
+}: RouterNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "router") return null;
 
   const routerConfig = selectedNode.config?.router ?? {
@@ -29,7 +29,7 @@ export function RouterNodeConfigSection({
         <Label className="text-xs text-gray-400">Match Source</Label>
         <Select
           value={routerConfig.mode}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               router: {
                 ...routerConfig,
@@ -51,7 +51,7 @@ export function RouterNodeConfigSection({
         <Label className="text-xs text-gray-400">Match Mode</Label>
         <Select
           value={routerConfig.matchMode}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               router: {
                 ...routerConfig,
@@ -76,7 +76,7 @@ export function RouterNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={routerConfig.compareTo}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               router: {
                 ...routerConfig,

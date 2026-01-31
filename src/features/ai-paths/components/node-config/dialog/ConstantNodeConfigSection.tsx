@@ -15,7 +15,7 @@ type ConstantNodeConfigSectionProps = {
 export function ConstantNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: ConstantNodeConfigSectionProps) {
+}: ConstantNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "constant") return null;
 
   const constantConfig = selectedNode.config?.constant ?? {
@@ -30,7 +30,7 @@ export function ConstantNodeConfigSection({
         <Label className="text-xs text-gray-400">Value Type</Label>
         <Select
           value={constantConfig.valueType}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               constant: {
                 ...constantConfig,
@@ -56,7 +56,7 @@ export function ConstantNodeConfigSection({
           <Textarea
             className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={constantConfig.value}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateSelectedNodeConfig({
                 constant: { ...constantConfig, value: event.target.value },
               })
@@ -66,7 +66,7 @@ export function ConstantNodeConfigSection({
           <Input
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={constantConfig.value}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
                 constant: { ...constantConfig, value: event.target.value },
               })

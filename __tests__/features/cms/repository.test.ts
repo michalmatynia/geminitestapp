@@ -97,6 +97,20 @@ describe("CMS Repository (Prisma)", () => {
       expect(result).toEqual(mockPage);
     });
 
+    it("should update a page", async () => {
+      const mockPage = { id: "1", name: "Updated" };
+      (prisma.page.update as any).mockResolvedValue(mockPage);
+      (prisma.page.findUnique as any).mockResolvedValue(mockPage);
+
+      const result = await prismaCmsRepository.updatePage("1", { name: "Updated" });
+
+      expect(prisma.page.update).toHaveBeenCalledWith({
+        where: { id: "1" },
+        data: expect.objectContaining({ name: "Updated" }),
+      });
+      expect(result).toEqual(mockPage);
+    });
+
     it("should replace page components", async () => {
       const pageId = "page-1";
       const components = [

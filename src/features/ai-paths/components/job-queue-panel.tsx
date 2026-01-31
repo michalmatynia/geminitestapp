@@ -45,6 +45,8 @@ type QueueStatus = {
   timeSinceLastPoll: number;
 };
 
+type StreamMessageEvent = Event & { data: string };
+
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 const AUTO_REFRESH_ENABLED_KEY = "ai-paths-job-queue-auto-refresh-enabled";
@@ -87,9 +89,9 @@ const safePrettyJson = (value: unknown): string => {
   }
 };
 
-const getLatestEventTimestamp = (events: AiPathRunEventRecord[]) => {
+const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
   let max = 0;
-  events.forEach((event) => {
+  events.forEach((event: AiPathRunEventRecord) => {
     const time = new Date(event.createdAt).getTime();
     if (Number.isFinite(time) && time > max) {
       max = time;
@@ -138,7 +140,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [searchQuery]);
 
   React.useEffect(() => {
@@ -201,22 +203,23 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const queueStatus = queueStatusQuery.data?.status;
 
   React.useEffect(() => {
-    return () => {
-      streamSourcesRef.current.forEach((source) => source.close());
-      streamSourcesRef.current.clear();
+    const sources = streamSourcesRef.current;
+    return (): void => {
+      sources.forEach((source: EventSource) => source.close());
+      sources.clear();
     };
   }, []);
 
   React.useEffect(() => {
-    streamSourcesRef.current.forEach((source, runId) => {
+    streamSourcesRef.current.forEach((source: EventSource, runId: string) => {
       if (!expandedRunIds.has(runId)) {
         source.close();
         streamSourcesRef.current.delete(runId);
-        setStreamStatuses((prev) => ({ ...prev, [runId]: "stopped" }));
+        setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
       }
     });
 
-    expandedRunIds.forEach((runId) => {
+    expandedRunIds.forEach((runId: string) => {
       if (streamSourcesRef.current.has(runId)) return;
       if (pausedStreams.has(runId)) return;
       const existing = runDetails[runId];
@@ -228,140 +231,138 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
         : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
       const source = new EventSource(url);
       streamSourcesRef.current.set(runId, source);
-      setStreamStatuses((prev) => ({ ...prev, [runId]: "connecting" }));
+      setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "connecting" }));
 
-      const mergeEvents = (incoming: AiPathRunEventRecord[]) => {
-        setRunDetails((prev) => {
+      const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
+        setRunDetails((prev: Record<string, RunDetail | null>) => {
           const current = prev[runId];
           if (!current) {
             return prev;
           }
-          const existingIds = new Set(current.events.map((event) => event.id));
-          const merged = [...current.events];
-          incoming.forEach((event) => {
-            if (!existingIds.has(event.id)) {
-              merged.push(event);
-            }
-          });
-          merged.sort((a, b) => {
-            const aTime = new Date(a.createdAt).getTime();
-            const bTime = new Date(b.createdAt).getTime();
-            return aTime - bTime;
-          });
-          return { ...prev, [runId]: { ...current, events: merged } };
-        });
-      };
-
-      source.addEventListener("ready", () => {
-        setStreamStatuses((prev) => ({ ...prev, [runId]: "live" }));
-      });
-      source.addEventListener("run", (event) => {
-        try {
-          const payload = JSON.parse(event.data) as AiPathRunRecord;
-          setRunDetails((prev) => {
-            const current = prev[runId];
-            if (current) {
-              return { ...prev, [runId]: { ...current, run: payload } };
-            }
-            return { ...prev, [runId]: { run: payload, nodes: [], events: [] } };
-          });
-        } catch {
-          // ignore parse errors
-        }
-      });
-      source.addEventListener("nodes", (event) => {
-        try {
-          const payload = JSON.parse(event.data) as AiPathRunNodeRecord[];
-          setRunDetails((prev) => {
-            const current = prev[runId];
-            if (!current) return prev;
-            return { ...prev, [runId]: { ...current, nodes: payload } };
-          });
-        } catch {
-          // ignore parse errors
-        }
-      });
-      source.addEventListener("events", (event) => {
-        try {
-          const payload = JSON.parse(event.data) as
-            | AiPathRunEventRecord[]
-            | { events?: AiPathRunEventRecord[] };
-          if (Array.isArray(payload)) {
-            mergeEvents(payload);
-            return;
-          }
-          const events = Array.isArray(payload.events) ? payload.events : [];
-          mergeEvents(events);
-        } catch {
-          // ignore parse errors
-        }
-      });
-      source.addEventListener("done", () => {
-        setStreamStatuses((prev) => ({ ...prev, [runId]: "stopped" }));
-        source.close();
-        streamSourcesRef.current.delete(runId);
-      });
-      source.addEventListener("error", () => {
-        setStreamStatuses((prev) => ({ ...prev, [runId]: "stopped" }));
-        source.close();
-        streamSourcesRef.current.delete(runId);
-      });
-    });
-  }, [expandedRunIds, pausedStreams, runDetails]);
-
-  const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
-    setRunDetailErrors((prev) => {
-      const next = { ...prev };
-      delete next[runId];
-      return next;
-    });
-    setRunDetailLoading((prev) => new Set(prev).add(runId));
-    try {
-      const response = await runsApi.get(runId);
-      if (!response.ok) {
-        throw new Error(response.error || "Failed to load run details.");
-      }
-      const data = response.data as RunDetail;
-      setRunDetails((prev) => ({ ...prev, [runId]: data }));
-    } catch (error) {
-      setRunDetailErrors((prev) => ({
-        ...prev,
-        [runId]: error instanceof Error ? error.message : "Failed to load run details.",
-      }));
-    } finally {
-      setRunDetailLoading((prev) => {
-        const next = new Set(prev);
-        next.delete(runId);
-        return next;
-      });
-    }
-  }, []);
-
-  const toggleRun = (runId: string): void => {
-    setExpandedRunIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(runId)) {
-        next.delete(runId);
-      } else {
-        next.add(runId);
-      }
-      return next;
-    });
-    if (!runDetails[runId]) {
+                      const existingIds = new Set(current.events.map((event: AiPathRunEventRecord) => event.id));
+                      const merged = [...current.events];
+                      incoming.forEach((event: AiPathRunEventRecord) => {
+                        if (!existingIds.has(event.id)) {
+                          merged.push(event);
+                        }
+                      });
+                      merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
+                        const aTime = new Date(a.createdAt).getTime();
+                        const bTime = new Date(b.createdAt).getTime();
+                        return aTime - bTime;
+                      });
+                      return { ...prev, [runId]: { ...current, events: merged } };
+                    });
+                  };
+          
+                  source.addEventListener("ready", () => {
+                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "live" }));
+                  });
+                          source.addEventListener("run", (event: Event) => {
+                            try {
+                              const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunRecord;
+                              setRunDetails((prev: Record<string, RunDetail | null>) => {
+                                const current = prev[runId];
+                                if (current) {
+                                  return { ...prev, [runId]: { ...current, run: payload } };
+                                }
+                                return { ...prev, [runId]: { run: payload, nodes: [], events: [] } };
+                              });
+                            } catch {
+                              // ignore parse errors
+                            }
+                          });
+                          source.addEventListener("nodes", (event: Event) => {
+                            try {
+                              const payload = JSON.parse((event as StreamMessageEvent).data) as AiPathRunNodeRecord[];
+                              setRunDetails((prev: Record<string, RunDetail | null>) => {
+                                const current = prev[runId];
+                                if (!current) return prev;
+                                return { ...prev, [runId]: { ...current, nodes: payload } };
+                              });
+                            } catch {
+                              // ignore parse errors
+                            }
+                          });
+                          source.addEventListener("events", (event: Event) => {
+                            try {
+                              const payload = JSON.parse((event as StreamMessageEvent).data) as
+                                | AiPathRunEventRecord[]
+                                | { events?: AiPathRunEventRecord[] };                      if (Array.isArray(payload)) {
+                        mergeEvents(payload);
+                        return;
+                      }
+                      const events = Array.isArray(payload.events) ? payload.events : [];
+                      mergeEvents(events);
+                    } catch {
+                      // ignore parse errors
+                    }
+                  });
+                  source.addEventListener("done", () => {
+                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
+                    source.close();
+                    streamSourcesRef.current.delete(runId);
+                  });
+                  source.addEventListener("error", () => {
+                    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...prev, [runId]: "stopped" }));
+                    source.close();
+                    streamSourcesRef.current.delete(runId);
+                  });
+                });
+              }, [expandedRunIds, pausedStreams, runDetails]);
+          
+              const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
+                setRunDetailErrors((prev: Record<string, string>) => {
+                  const next = { ...prev };
+                  delete next[runId];
+                  return next;
+                });
+                setRunDetailLoading((prev: Set<string>) => new Set(prev).add(runId));
+                try {
+                  const response = await runsApi.get(runId);
+                  if (!response.ok) {
+                    throw new Error(response.error || "Failed to load run details.");
+                  }
+                  const data = response.data as RunDetail;
+                  setRunDetails((prev: Record<string, RunDetail | null>) => ({ ...prev, [runId]: data }));
+                } catch (error) {
+                  setRunDetailErrors((prev: Record<string, string>) => ({
+                    ...prev,
+                    [runId]: error instanceof Error ? error.message : "Failed to load run details.",
+                  }));
+                } finally {
+                  setRunDetailLoading((prev: Set<string>) => {
+                    const next = new Set(prev);
+                    next.delete(runId);
+                    return next;
+                  });
+                }
+              }, []);
+          
+              const toggleRun = (runId: string): void => {
+                setExpandedRunIds((prev: Set<string>) => {
+                  const next = new Set(prev);
+                  if (next.has(runId)) {
+                    next.delete(runId);
+                  } else {
+                    next.add(runId);
+                  }
+                  return next;
+                });    if (!runDetails[runId]) {
       void loadRunDetail(runId);
     }
   };
 
   const toggleStream = (runId: string): void => {
     const source = streamSourcesRef.current.get(runId);
-    setPausedStreams((prev) => {
+    setPausedStreams((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(runId)) {
         next.delete(runId);
-        setStreamStatuses((statusPrev) => ({ ...statusPrev, [runId]: "connecting" }));
+        setStreamStatuses((statusPrev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...statusPrev, [runId]: "connecting" }));
       } else {
         next.add(runId);
-        setStreamStatuses((statusPrev) => ({ ...statusPrev, [runId]: "paused" }));
+        setStreamStatuses((statusPrev: Record<string, "connecting" | "live" | "stopped" | "paused">) => ({ ...statusPrev, [runId]: "paused" }));
       }
       return next;
     });
@@ -375,11 +376,11 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     const expandedIds = Array.from(expandedRunIds);
     if (expandedIds.length === 0) return;
     setPausedStreams(() => new Set(expandedIds));
-    streamSourcesRef.current.forEach((source) => source.close());
+    streamSourcesRef.current.forEach((source: EventSource) => source.close());
     streamSourcesRef.current.clear();
-    setStreamStatuses((prev) => {
+    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => {
       const next = { ...prev };
-      expandedIds.forEach((id) => {
+      expandedIds.forEach((id: string) => {
         next[id] = "paused";
       });
       return next;
@@ -389,9 +390,9 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   const resumeAllStreams = (): void => {
     if (expandedRunIds.size === 0) return;
     setPausedStreams(new Set());
-    setStreamStatuses((prev) => {
+    setStreamStatuses((prev: Record<string, "connecting" | "live" | "stopped" | "paused">) => {
       const next = { ...prev };
-      expandedRunIds.forEach((id) => {
+      expandedRunIds.forEach((id: string) => {
         next[id] = "connecting";
       });
       return next;
@@ -399,13 +400,12 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   };
 
   const ensureHistorySelection = React.useCallback(
-    (runId: string, options: { id: string }[]): string | null => {
-      if (!options.length) return null;
-      const existing = historySelection[runId];
-      if (existing && options.some((option) => option.id === existing)) return existing;
-      return options[0].id;
-    },
-    [historySelection]
+          (runId: string, options: { id: string }[]): string | null => {
+            if (!options.length) return null;
+            const existing = historySelection[runId];
+            if (existing && options.some((option: { id: string }) => option.id === existing)) return existing;
+            return options[0].id;
+          },    [historySelection]
   );
 
   return (
@@ -433,30 +433,29 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
               ? "border-emerald-500/50 text-emerald-200"
               : "text-gray-300 hover:bg-muted/60"
           }`}
-          onClick={() => setAutoRefreshEnabled((prev) => !prev)}
-        >
-          {autoRefreshEnabled ? "Auto-refresh on" : "Auto-refresh off"}
-        </Button>
-        <div className="flex items-center gap-2">
-          <Label className="text-[10px] uppercase text-gray-500">Interval</Label>
-          <Select
-            value={String(autoRefreshInterval)}
-            onValueChange={(value) => setAutoRefreshInterval(Number.parseInt(value, 10))}
-            disabled={!autoRefreshEnabled}
-          >
-            <SelectTrigger className="h-7 w-[110px] border-border bg-card/70 text-[11px] text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900 text-white">
-              {[2000, 5000, 10000, 30000].map((value) => (
-                <SelectItem key={value} value={String(value)}>
-                  {value / 1000}s
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button
+                      onClick={() => setAutoRefreshEnabled((prev: boolean) => !prev)}
+                    >
+                      {autoRefreshEnabled ? "Auto-refresh on" : "Auto-refresh off"}
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[10px] uppercase text-gray-500">Interval</Label>
+                      <Select
+                        value={String(autoRefreshInterval)}
+                        onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
+                        disabled={!autoRefreshEnabled}
+                      >
+                        <SelectTrigger className="h-7 w-[110px] border-border bg-card/70 text-[11px] text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="border-border bg-gray-900 text-white">
+                          {[2000, 5000, 10000, 30000].map((value: number) => (
+                            <SelectItem key={value} value={String(value)}>
+                              {value / 1000}s
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>        <Button
           type="button"
           className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={pauseAllStreams}
@@ -543,79 +542,76 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             placeholder="Run ID, path name, entity, error..."
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-[10px] uppercase text-gray-500">Page size</Label>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(value) => setPageSize(Number.parseInt(value, 10))}
-          >
-            <SelectTrigger className="h-9 w-[110px] border-border bg-card/70 text-[11px] text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-border bg-gray-900 text-white">
-              {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((filter) => {
-          const active = statusFilter === filter.id;
-          return (
-            <Button
-              key={filter.id}
-              type="button"
-              className={`rounded-md border px-2 py-1 text-[10px] ${
-                active ? "border-emerald-500/50 text-emerald-200" : "text-gray-300 hover:bg-muted/60"
-              }`}
-              onClick={() => setStatusFilter(filter.id)}
-            >
-              {filter.label}
-            </Button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
-        <span>
-          Showing {runs.length} of {total} runs
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-          >
-            Prev
-          </Button>
-          <span>
-            Page {page} / {totalPages}
-          </span>
-          <Button
-            type="button"
-            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-
-      {runs.length === 0 ? (
-        <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
-          No runs found for the current filters.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {runs.map((run) => {
-            const isExpanded = expandedRunIds.has(run.id);
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-gray-500">Page size</Label>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
+                    >
+                      <SelectTrigger className="h-9 w-[110px] border-border bg-card/70 text-[11px] text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-gray-900 text-white">
+                        {PAGE_SIZES.map((size: number) => (
+                          <SelectItem key={size} value={String(size)}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>                    </div>
+            
+                            <div className="flex flex-wrap gap-2">
+                              {STATUS_FILTERS.map((filter: (typeof STATUS_FILTERS)[number]) => {
+                                const active = statusFilter === filter.id;
+                                return (
+                                  <Button
+                                    key={filter.id}
+                                    type="button"
+                                    className={`rounded-md border px-2 py-1 text-[10px] ${
+                                      active ? "border-emerald-500/50 text-emerald-200" : "text-gray-300 hover:bg-muted/60"
+                                    }`}
+                                    onClick={() => setStatusFilter(filter.id)}
+                                  >
+                                    {filter.label}
+                                  </Button>
+                                );
+                              })}
+                            </div>            
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+                      <span>
+                        Showing {runs.length} of {total} runs
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                          onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
+                          disabled={page <= 1}
+                        >
+                          Prev
+                        </Button>
+                        <span>
+                          Page {page} / {totalPages}
+                        </span>
+                        <Button
+                          type="button"
+                          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                          onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
+                          disabled={page >= totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+            
+                    {runs.length === 0 ? (
+                      <div className="rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400">
+                        No runs found for the current filters.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
             const detail = runDetails[run.id];
             const detailLoading = runDetailLoading.has(run.id);
             const detailError = runDetailErrors[run.id];
@@ -765,24 +761,23 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                               <Label className="text-[10px] uppercase text-gray-500">
                                 Node
                               </Label>
-                              <Select
-                                value={selectedHistoryNodeId ?? undefined}
-                                onValueChange={(value) =>
-                                  setHistorySelection((prev) => ({ ...prev, [run.id]: value }))
-                                }
-                              >
-                                <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
-                                  <SelectValue placeholder="Select node" />
-                                </SelectTrigger>
-                                <SelectContent className="border-border bg-gray-900 text-white">
-                                  {historyOptions.map((option) => (
-                                    <SelectItem key={option.id} value={option.id}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                                                              <Select
+                                                                value={selectedHistoryNodeId ?? undefined}
+                                                                onValueChange={(value: string) =>
+                                                                  setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
+                                                                }
+                                                              >
+                                                                <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">
+                                                                  <SelectValue placeholder="Select node" />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="border-border bg-gray-900 text-white">
+                                                                  {historyOptions.map((option: { id: string; label: string }) => (
+                                                                    <SelectItem key={option.id} value={option.id}>
+                                                                      {option.label}
+                                                                    </SelectItem>
+                                                                  ))}
+                                                                </SelectContent>
+                                                              </Select>                            </div>
                           ) : (
                             <div className="mt-2 text-[11px] text-gray-500">
                               {historyOptions[0]?.label ?? "No history nodes"}
@@ -805,14 +800,13 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                             <div className="mt-2 text-[11px] text-gray-500">
                               No nodes recorded for this run.
                             </div>
-                          ) : (
-                            <div className="mt-3 space-y-2">
-                              {nodes.map((node) => (
-                                <details
-                                  key={node.id}
-                                  className="rounded-md border border-border/60 bg-black/30 p-3"
-                                >
-                                  <summary className="cursor-pointer text-[11px] text-gray-300">
+                                                      ) : (
+                                                        <div className="mt-3 space-y-2">
+                                                          {nodes.map((node: AiPathRunNodeRecord) => (
+                                                            <details
+                                                              key={node.id}
+                                                              className="rounded-md border border-border/60 bg-black/30 p-3"
+                                                            >                                  <summary className="cursor-pointer text-[11px] text-gray-300">
                                     {node.nodeTitle ?? node.nodeId}{" "}
                                     {node.nodeType ? `(${node.nodeType})` : ""}
                                     <span className="ml-2 text-gray-500">
@@ -872,11 +866,10 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                           </summary>
                           {events.length === 0 ? (
                             <div className="mt-2 text-[11px] text-gray-500">No events.</div>
-                          ) : (
-                            <div className="mt-3 divide-y divide-border/70">
-                              {events.map((event) => (
-                                <div key={event.id} className="py-2">
-                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
+                                                      ) : (
+                                                        <div className="mt-3 divide-y divide-border/70">
+                                                          {events.map((event: AiPathRunEventRecord) => (
+                                                            <div key={event.id} className="py-2">                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
                                     <span>{formatDate(event.createdAt)}</span>
                                     <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-300">
                                       {event.level}

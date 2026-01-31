@@ -311,7 +311,7 @@ function CheckboxField({
 // Panel
 // ---------------------------------------------------------------------------
 
-export function MenuSettingsPanel(): React.ReactNode {
+export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<MenuSettings>(DEFAULT_SETTINGS);
 
@@ -744,15 +744,17 @@ export function MenuSettingsPanel(): React.ReactNode {
   );
 
   return (
-    <aside className="flex w-72 flex-col border-r border-border bg-gray-900">
-      <div className="border-b border-border px-4 py-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Menu settings
+    <div className="flex min-h-0 flex-1 flex-col">
+      {showHeader && (
+        <div className="border-b border-border px-4 py-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Menu settings
+          </div>
+          <p className="mt-1 text-[11px] text-gray-500">
+            Configure the look and behaviour of your page navigation.
+          </p>
         </div>
-        <p className="mt-1 text-[11px] text-gray-500">
-          Configure the look and behaviour of your page navigation.
-        </p>
-      </div>
+      )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-2">
           {MENU_SECTIONS.map((section) => {
@@ -779,6 +781,6 @@ export function MenuSettingsPanel(): React.ReactNode {
           })}
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

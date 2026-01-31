@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
-import { Settings, Trash2, Globe, FileText } from "lucide-react";
+import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
 import type { SettingsField } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
@@ -13,6 +13,9 @@ import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
 export function ComponentSettingsPanel(): React.ReactNode {
   const {
@@ -26,6 +29,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
     selectedParentBlock,
     dispatch,
   } = usePageBuilder();
+  const settingsQuery = useSettingsMap();
+  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -191,6 +196,23 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return undefined;
   }, [selectedSection, selectedBlock, selectedColumn]);
 
+  const enabledAppEmbeds = useMemo<AppEmbedId[]>(() => {
+    if (!settingsQuery.data) return [];
+    return parseJsonSetting<AppEmbedId[]>(
+      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      []
+    );
+  }, [settingsQuery.data]);
+
+  const appEmbedOptions = useMemo(() => {
+    const options = APP_EMBED_OPTIONS.filter((option) => enabledAppEmbeds.includes(option.id)).map((option) => ({
+      label: option.label,
+      value: option.id,
+    }));
+    if (options.length > 0) return options;
+    return [{ label: "No app embeds enabled", value: "" }];
+  }, [enabledAppEmbeds]);
+
   // ---------------------------------------------------------------------------
   // Determine what to show
   // ---------------------------------------------------------------------------
@@ -200,12 +222,134 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const columnDef = selectedColumn ? getBlockDefinition("Column") : null;
 
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
+  const showConnectionsTab = state.inspectorEnabled;
+
+  const selectedLabel = useMemo(() => {
+    if (selectedSection) return sectionDef?.label ?? selectedSection.type;
+    if (selectedColumn) return "Column";
+    if (selectedBlock) return blockDef?.label ?? selectedBlock.type;
+    return "";
+  }, [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
+
+  const connectionSettings = useMemo(() => {
+    const settings = selectedSection
+      ? selectedSection.settings
+      : selectedColumn
+      ? selectedColumn.settings
+      : selectedBlock
+      ? selectedBlock.settings
+      : null;
+    const raw = (settings?.connection ?? {}) as {
+      enabled?: boolean;
+      source?: string;
+      path?: string;
+      fallback?: string;
+    };
+    return {
+      enabled: raw.enabled ?? false,
+      source: raw.source ?? "",
+      path: raw.path ?? "",
+      fallback: raw.fallback ?? "",
+    };
+  }, [selectedSection, selectedColumn, selectedBlock]);
+
+  const updateConnectionSetting = useCallback(
+    (patch: Partial<{ enabled: boolean; source: string; path: string; fallback: string }>) => {
+      const next = { ...connectionSettings, ...patch };
+      if (selectedSection && !selectedBlock && !selectedColumn) {
+        handleSectionSettingChange("connection", next);
+        return;
+      }
+      if (selectedColumn) {
+        handleColumnSettingChange("connection", next);
+        return;
+      }
+      if (selectedBlock) {
+        handleBlockSettingChange("connection", next);
+      }
+    },
+    [
+      connectionSettings,
+      selectedSection,
+      selectedColumn,
+      selectedBlock,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+      handleBlockSettingChange,
+    ]
+  );
+
+  useEffect(() => {
+    if (state.inspectorEnabled) {
+      setActiveTab((prev) => (prev === "connections" ? prev : "connections"));
+      return;
+    }
+    setActiveTab((prev) => (prev === "connections" ? "settings" : prev));
+  }, [state.inspectorEnabled]);
 
   return (
     <aside className="flex w-80 flex-col border-l border-border bg-gray-900">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <Settings className="size-4 text-gray-400" />
+      <div className="border-b border-border px-4 py-2">
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
+            aria-label="Hide right panel"
+            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
+          >
+            <PanelRightClose className="size-3.5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => dispatch({ type: "TOGGLE_INSPECTOR" })}
+            title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
+            aria-label="Toggle inspector"
+            className={`h-6 w-6 p-0 ${
+              state.inspectorEnabled
+                ? "text-blue-300 bg-blue-500/10"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <MousePointer2 className="size-3.5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
+            title="Desktop preview"
+            aria-label="Desktop preview"
+            className={`h-6 w-6 p-0 ${
+              state.previewMode === "desktop"
+                ? "text-blue-300 bg-blue-500/10"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <Monitor className="size-3.5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
+            title="Mobile preview"
+            aria-label="Mobile preview"
+            className={`h-6 w-6 p-0 ${
+              state.previewMode === "mobile"
+                ? "text-blue-300 bg-blue-500/10"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <Smartphone className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+      <div className="px-4 py-2">
         <h3 className="text-sm font-semibold text-white">
           {selectedSection
             ? `${sectionDef?.label ?? selectedSection.type}`
@@ -227,10 +371,19 @@ export function ComponentSettingsPanel(): React.ReactNode {
       ) : !hasSelection ? (
         <PageSettingsTab />
       ) : (
-        <Tabs defaultValue="settings" className="flex flex-1 flex-col overflow-hidden">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab((prev) => (prev === value ? prev : (value as "settings" | "animation" | "connections")))
+          }
+          className="flex flex-1 flex-col overflow-hidden"
+        >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
             <TabsTrigger value="animation" className="flex-1 text-xs">Animation</TabsTrigger>
+            {showConnectionsTab && (
+              <TabsTrigger value="connections" className="flex-1 text-xs">Connections</TabsTrigger>
+            )}
           </TabsList>
 
           {/* ---- Settings tab ---- */}
@@ -322,14 +475,20 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   )}
                 </div>
 
-                {blockDef.settingsSchema.map((field: SettingsField) => (
-                  <SettingsFieldRenderer
-                    key={field.key}
-                    field={field}
-                    value={selectedBlock.settings[field.key]}
-                    onChange={handleBlockSettingChange}
-                  />
-                ))}
+                {blockDef.settingsSchema.map((field: SettingsField) => {
+                  const resolvedField =
+                    selectedBlock.type === "AppEmbed" && field.key === "appId"
+                      ? { ...field, options: appEmbedOptions }
+                      : field;
+                  return (
+                    <SettingsFieldRenderer
+                      key={resolvedField.key}
+                      field={resolvedField}
+                      value={selectedBlock.settings[resolvedField.key]}
+                      onChange={handleBlockSettingChange}
+                    />
+                  );
+                })}
 
                 <div className="border-t border-border/30 pt-4">
                   <Button
@@ -353,6 +512,61 @@ export function ComponentSettingsPanel(): React.ReactNode {
               onChange={handleAnimationChange}
             />
           </TabsContent>
+          {showConnectionsTab && (
+            <TabsContent value="connections" className="flex-1 overflow-y-auto p-4 mt-0">
+              {!hasSelection ? (
+                <div className="text-xs text-gray-500">Select an element to configure connections.</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+                    Connection settings for <span className="text-gray-200">{selectedLabel}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-gray-400">Data source</Label>
+                    <Input
+                      value={connectionSettings.source}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateConnectionSetting({ source: e.target.value })
+                      }
+                      placeholder="e.g. product, collection, hero"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-gray-400">Key path</Label>
+                    <Input
+                      value={connectionSettings.path}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateConnectionSetting({ path: e.target.value })
+                      }
+                      placeholder="e.g. title, hero.text"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-gray-400">Fallback</Label>
+                    <Input
+                      value={connectionSettings.fallback}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateConnectionSetting({ fallback: e.target.value })
+                      }
+                      placeholder="Optional fallback text"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-gray-400">
+                    <Checkbox
+                      checked={connectionSettings.enabled}
+                      onCheckedChange={(value) =>
+                        updateConnectionSetting({ enabled: value === true })
+                      }
+                    />
+                    Enable data connection
+                  </label>
+                </div>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       )}
     </aside>

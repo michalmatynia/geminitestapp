@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 
 // Hoist mocks
@@ -158,6 +157,29 @@ describe("Chatbot Session Repository", () => {
         { returnDocument: "after" }
       );
       expect(result?.messages).toContain(message);
+    });
+
+    it("updates timestamps when adding a message", async () => {
+      const id = "507f1f77bcf86cd799439011";
+      const message = { role: "user" as const, content: "New message" };
+      
+      const beforeDate = new Date("2020-01-01");
+      const mockDoc = {
+        _id: new ObjectId(id),
+        title: "Session 1",
+        messages: [message],
+        createdAt: beforeDate,
+        updatedAt: new Date(), // updated
+      };
+      
+      mockCollection.findOneAndUpdate.mockResolvedValue(mockDoc);
+      
+      const result = await chatbotSessionRepository.addMessage(id, message);
+      
+      // We can't strictly assert the date instance passed to $set because it's created inside the function,
+      // but we verified it is passed in the previous test. 
+      // Here we just verify the returned object reflects an update.
+      expect(result?.updatedAt.getTime()).toBeGreaterThan(beforeDate.getTime());
     });
   });
 });

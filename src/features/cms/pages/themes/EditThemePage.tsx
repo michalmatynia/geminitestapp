@@ -1,48 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Input, Label, SectionHeader } from "@/shared/ui";
 import { useRouter, useParams } from "next/navigation";
 import { useCmsTheme, useUpdateTheme } from "@/features/cms/hooks/useCmsQueries";
-import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from "@/features/cms/types";
+import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsTheme } from "@/features/cms/types";
 
-export default function EditThemePage(): React.ReactNode {
+function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
-  const themeQuery = useCmsTheme(id);
   const updateTheme = useUpdateTheme();
 
-  const [name, setName] = useState("");
-  const [colors, setColors] = useState<CmsThemeColors>({
-    primary: "#3b82f6",
-    secondary: "#6366f1",
-    accent: "#f59e0b",
-    background: "#0f172a",
-    surface: "#1e293b",
-    text: "#f8fafc",
-    muted: "#94a3b8",
-  });
-  const [typography, setTypography] = useState<CmsThemeTypography>({
-    headingFont: "Inter, sans-serif",
-    bodyFont: "Inter, sans-serif",
-    baseSize: 16,
-    headingWeight: 700,
-    bodyWeight: 400,
-  });
-  const [spacing, setSpacing] = useState<CmsThemeSpacing>({
-    sectionPadding: "64px",
-    containerMaxWidth: "1200px",
-  });
-
-  useEffect(() => {
-    if (themeQuery.data) {
-      setName(themeQuery.data.name);
-      setColors(themeQuery.data.colors);
-      setTypography(themeQuery.data.typography);
-      setSpacing(themeQuery.data.spacing);
-    }
-  }, [themeQuery.data]);
+  const [name, setName] = useState<string>(() => theme.name);
+  const [colors, setColors] = useState<CmsThemeColors>(() => theme.colors);
+  const [typography, setTypography] = useState<CmsThemeTypography>(() => theme.typography);
+  const [spacing, setSpacing] = useState<CmsThemeSpacing>(() => theme.spacing);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -53,14 +24,6 @@ export default function EditThemePage(): React.ReactNode {
   const updateColor = (key: keyof CmsThemeColors, value: string): void => {
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
-
-  if (themeQuery.isLoading) {
-    return (
-      <div className="container mx-auto py-10">
-        <p className="text-gray-500">Loading theme...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto max-w-2xl py-10">
@@ -172,4 +135,28 @@ export default function EditThemePage(): React.ReactNode {
       </form>
     </div>
   );
+}
+
+export default function EditThemePage(): React.JSX.Element {
+  const params = useParams();
+  const id = params.id as string;
+  const themeQuery = useCmsTheme(id);
+
+  if (themeQuery.isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <p className="text-gray-500">Loading theme...</p>
+      </div>
+    );
+  }
+
+  if (!themeQuery.data) {
+    return (
+      <div className="container mx-auto py-10">
+        <p className="text-red-500">Theme not found.</p>
+      </div>
+    );
+  }
+
+  return <ThemeEditor theme={themeQuery.data} id={id} />;
 }

@@ -2,7 +2,15 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from "lucide-react";
-import { Button, useToast } from "@/shared/ui";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from "@/shared/ui";
 import { CmsDomainSelector } from "@/features/cms";
 import type { SectionInstance } from "../../types/page-builder";
 import type { PageZone } from "../../types/page-builder";
@@ -12,6 +20,7 @@ import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { PreviewSection, type MediaReplaceTarget } from "./PreviewBlock";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { PageSelectorBar } from "./PageSelectorBar";
+import { useThemeSettings } from "./ThemeSettingsContext";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 1200;
@@ -24,7 +33,8 @@ const ZONE_LABELS: Record<PageZone, string> = {
 
 export function PagePreviewPanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
-  const { activeDomainId } = useCmsDomainSelection();
+  const { theme } = useThemeSettings();
+  const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const updatePage = useUpdatePage();
   const [mediaTarget, setMediaTarget] = useState<MediaReplaceTarget | null>(null);
@@ -35,16 +45,74 @@ export function PagePreviewPanel(): React.ReactNode {
   const [showEditButton, setShowEditButton] = useState(false);
   const showEditButtonRef = useRef(false);
   const lastPointerMoveRef = useRef(0);
+  const [selectedPreviewSlug, setSelectedPreviewSlug] = useState<string | null>(null);
   const domainSlugSet = useMemo(
     () => ((slugsQuery.data ?? []).length ? new Set((slugsQuery.data ?? []).map((slug) => slug.slug)) : null),
     [slugsQuery.data]
   );
+  const colorSchemes = useMemo(() => {
+    if (!theme.colorSchemes.length) return undefined;
+    return theme.colorSchemes.reduce<Record<string, { background: string; surface: string; text: string; accent: string; border: string }>>(
+      (acc, scheme) => {
+        acc[scheme.id] = scheme.colors;
+        return acc;
+      },
+      {}
+    );
+  }, [theme.colorSchemes]);
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
     const values = slugs.map((link) => link.slug.slug);
     return values.filter((value) => !domainSlugSet.has(value));
   }, [state.currentPage?.slugs, domainSlugSet]);
+
+  const zoneSlugValues = useMemo(() => {
+    const page = state.currentPage;
+    const domainSlugs = slugsQuery.data ?? [];
+    if (!page || domainSlugs.length === 0) return [];
+    if (page.slugIds?.length) {
+      const slugById = new Map(domainSlugs.map((slug) => [slug.id, slug.slug]));
+      const ordered = page.slugIds
+        .map((id) => slugById.get(id))
+        .filter((value): value is string => Boolean(value));
+      if (ordered.length) return ordered;
+    }
+    if (!domainSlugSet) return [];
+    const values = (page.slugs ?? []).map((link) => link.slug.slug);
+    return values.filter((value) => domainSlugSet.has(value));
+  }, [state.currentPage, slugsQuery.data, domainSlugSet]);
+
+  useEffect(() => {
+    if (!state.currentPage || zoneSlugValues.length === 0) {
+      setSelectedPreviewSlug(null);
+      return;
+    }
+    if (selectedPreviewSlug && zoneSlugValues.includes(selectedPreviewSlug)) {
+      return;
+    }
+    setSelectedPreviewSlug(zoneSlugValues[0]);
+  }, [state.currentPage?.id, selectedPreviewSlug, zoneSlugValues]);
+
+  const previewUrl = useMemo(() => {
+    if (!selectedPreviewSlug) return null;
+    if (typeof window === "undefined") return `/${selectedPreviewSlug}`;
+
+    const protocol = window.location.protocol;
+    const currentHost = window.location.host;
+    const currentHostname = window.location.hostname;
+    const targetHost = activeDomain?.domain ?? currentHostname;
+    const resolvedHost = targetHost === currentHostname ? currentHost : targetHost;
+    const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    return `${protocol}//${resolvedHost}${path}`;
+  }, [selectedPreviewSlug, activeDomain]);
+
+  const previewTargetLabel = useMemo(() => {
+    if (!selectedPreviewSlug) return "";
+    const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    const host = activeDomain?.domain ?? "current";
+    return `${host}${path}`;
+  }, [selectedPreviewSlug, activeDomain]);
 
   const handleSelectNode = useCallback(
     (nodeId: string) => {
@@ -83,13 +151,20 @@ export function PagePreviewPanel(): React.ReactNode {
     if (!state.currentPage) return;
     try {
       await handleSave();
-      const url = `/preview/${state.currentPage.id}`;
-      window.open(url, "_blank", "noopener,noreferrer");
+      if (slugsQuery.isLoading) {
+        toast("Loading zone slugs. Try again in a moment.", { variant: "error" });
+        return;
+      }
+      if (!previewUrl) {
+        toast("This page has no slug in the current zone.", { variant: "error" });
+        return;
+      }
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Failed to save before preview:", error);
       toast("Save before preview failed. Try again.", { variant: "error" });
     }
-  }, [handleSave, state.currentPage, toast]);
+  }, [handleSave, state.currentPage, toast, previewUrl, slugsQuery.isLoading]);
 
   const handleOpenMedia = useCallback((target: MediaReplaceTarget) => {
     setMediaTarget(target);
@@ -229,6 +304,11 @@ export function PagePreviewPanel(): React.ReactNode {
   );
 
   const hasSections = state.sections.length > 0;
+  const previewWidthClass = state.previewMode === "mobile" ? "max-w-[420px]" : "max-w-3xl";
+  const previewFrameClass =
+    state.previewMode === "mobile"
+      ? "rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
+      : "";
 
   return (
     <div className="relative flex flex-1 flex-col bg-gray-950">
@@ -243,8 +323,42 @@ export function PagePreviewPanel(): React.ReactNode {
         <div className="flex items-center justify-end gap-2 px-6 py-3">
           {!isViewing && (
             <>
-              <CmsDomainSelector label="" triggerClassName="h-8 w-[180px]" />
+              <CmsDomainSelector label="" triggerClassName="h-8 w-[200px]" />
               <PageSelectorBar variant="toolbar" />
+              {slugsQuery.isLoading ? (
+                <div className="rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300">
+                  Loading zone slugs…
+                </div>
+              ) : zoneSlugValues.length > 1 ? (
+                <Select
+                  value={selectedPreviewSlug ?? ""}
+                  onValueChange={(value) =>
+                    setSelectedPreviewSlug((prev) => (prev === value ? prev : value))
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[200px] text-xs">
+                    <SelectValue placeholder="Preview slug" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zoneSlugValues.map((slug) => (
+                      <SelectItem key={slug} value={slug}>
+                        /{slug}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : zoneSlugValues.length === 1 ? (
+                <div
+                  className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200"
+                  title={previewTargetLabel}
+                >
+                  Preview: /{zoneSlugValues[0]}
+                </div>
+              ) : (
+                <div className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200">
+                  No slug in zone
+                </div>
+              )}
               {outOfZoneSlugs.length > 0 && (
                 <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200">
                   Cross-zone: {outOfZoneSlugs.map((slug) => `/${slug}`).join(", ")}
@@ -335,21 +449,13 @@ export function PagePreviewPanel(): React.ReactNode {
         ) : (
           <>
             <div className="p-6">
-              <div className="mx-auto max-w-3xl space-y-6">
+              <div className={`mx-auto space-y-6 ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-4" : ""}`}>
                 {ZONE_ORDER.map((zone: PageZone) => {
                   const zoneSections = sectionsByZone[zone];
                   if (zoneSections.length === 0) return null;
 
                   return (
                     <div key={zone}>
-                      {/* Zone label */}
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
-                          {ZONE_LABELS[zone]}
-                        </span>
-                        <div className="h-px flex-1 bg-border/30" />
-                      </div>
-
                       {/* Zone sections */}
                       <div className="space-y-4">
                         {zoneSections.map((section: SectionInstance) => (
@@ -357,6 +463,8 @@ export function PagePreviewPanel(): React.ReactNode {
                             key={section.id}
                             section={section}
                             selectedNodeId={state.selectedNodeId}
+                            isInspecting={state.inspectorEnabled}
+                            colorSchemes={colorSchemes}
                             onSelect={handleSelectNode}
                             onOpenMedia={handleOpenMedia}
                             onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}

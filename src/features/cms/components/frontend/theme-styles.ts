@@ -4,6 +4,14 @@ import type React from "react";
 // Color scheme mapping
 // ---------------------------------------------------------------------------
 
+export type ColorSchemeColors = {
+  background: string;
+  surface: string;
+  text: string;
+  accent: string;
+  border: string;
+};
+
 const COLOR_SCHEME_STYLES: Record<string, React.CSSProperties> = {
   "scheme-1": {},
   "scheme-2": { backgroundColor: "rgba(59,130,246,0.06)" },
@@ -12,9 +20,30 @@ const COLOR_SCHEME_STYLES: Record<string, React.CSSProperties> = {
   "scheme-5": { backgroundColor: "rgba(245,158,11,0.06)" },
 };
 
-export function getColorSchemeStyle(scheme: unknown): React.CSSProperties {
-  if (typeof scheme === "string" && scheme in COLOR_SCHEME_STYLES) {
-    return COLOR_SCHEME_STYLES[scheme];
+function buildSchemeStyle(colors: ColorSchemeColors): React.CSSProperties {
+  return {
+    backgroundColor: colors.background,
+    color: colors.text,
+    borderColor: colors.border,
+    ["--scheme-background" as keyof React.CSSProperties]: colors.background,
+    ["--scheme-surface" as keyof React.CSSProperties]: colors.surface,
+    ["--scheme-text" as keyof React.CSSProperties]: colors.text,
+    ["--scheme-accent" as keyof React.CSSProperties]: colors.accent,
+    ["--scheme-border" as keyof React.CSSProperties]: colors.border,
+  };
+}
+
+export function getColorSchemeStyle(
+  scheme: unknown,
+  schemes?: Record<string, ColorSchemeColors>
+): React.CSSProperties {
+  if (typeof scheme === "string") {
+    if (schemes?.[scheme]) {
+      return buildSchemeStyle(schemes[scheme]);
+    }
+    if (scheme in COLOR_SCHEME_STYLES) {
+      return COLOR_SCHEME_STYLES[scheme];
+    }
   }
   return {};
 }
@@ -23,7 +52,10 @@ export function getColorSchemeStyle(scheme: unknown): React.CSSProperties {
 // Section / block inline styles from settings
 // ---------------------------------------------------------------------------
 
-export function getSectionStyles(settings: Record<string, unknown>): React.CSSProperties {
+export function getSectionStyles(
+  settings: Record<string, unknown>,
+  schemes?: Record<string, ColorSchemeColors>
+): React.CSSProperties {
   const styles: React.CSSProperties = {};
 
   const pt = settings["paddingTop"];
@@ -36,7 +68,7 @@ export function getSectionStyles(settings: Record<string, unknown>): React.CSSPr
   if (typeof mt === "number") styles.marginTop = `${mt}px`;
   if (typeof mb === "number") styles.marginBottom = `${mb}px`;
 
-  const colorSchemeStyles = getColorSchemeStyle(settings["colorScheme"]);
+  const colorSchemeStyles = getColorSchemeStyle(settings["colorScheme"], schemes);
   Object.assign(styles, colorSchemeStyles);
 
   // Per-section style overrides

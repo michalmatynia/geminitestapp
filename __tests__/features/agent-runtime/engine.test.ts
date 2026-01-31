@@ -163,4 +163,37 @@ describe("Agent Runtime - Engine", () => {
         data: expect.objectContaining({ status: "failed", errorMessage: "Browser Fail" })
     }));
   });
+
+  it("should set status to waiting_human if requested", async () => {
+    (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
+    (browserModule.launchBrowser as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
+    (browserModule.createBrowserContext as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
+    (contextModule.prepareRunContext as any).mockResolvedValue({
+        settings: {}, preferences: {}, memoryContext: [], resolvedModel: "llama3"
+    });
+    (memoryCheckpointModule.parseCheckpoint as any).mockReturnValue({});
+    
+    (planModule.initializePlanState as any).mockResolvedValue({
+        planSteps: [{ id: "step-1" }],
+        decision: { action: "tool" },
+        stepIndex: 0,
+        summaryCheckpoint: 0,
+    });
+
+    (stepRunnerModule.runPlanStepLoop as any).mockResolvedValue({
+        requiresHuman: true,
+        overallOk: true,
+        planSteps: [{ id: "step-1", status: "completed" }],
+        stepIndex: 1,
+    });
+
+    (memoryCheckpointModule.buildCheckpointState as any).mockReturnValue({});
+
+    await runAgentControlLoop(mockRunId);
+
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: mockRunId },
+        data: expect.objectContaining({ status: "waiting_human" })
+    }));
+  });
 });

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 
 // Hoist mocks

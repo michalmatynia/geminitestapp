@@ -476,7 +476,7 @@ export function DatabaseConstructorTab({
               </div>
               {((): React.JSX.Element | null => {
                 const currentColl = fetchedDbSchema.collections.find(
-                  (c) => c.name === queryConfig.collection
+                  (c: CollectionSchema) => c.name === queryConfig.collection
                 );
                 if (!currentColl?.fields?.length) return null;
                 return (

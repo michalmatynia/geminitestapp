@@ -2,17 +2,34 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ComponentSettingsPanel } from "@/features/cms/components/page-builder/ComponentSettingsPanel";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
-import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
+import { useCmsThemes, useCmsDomains, useCmsSlugs, useCmsAllSlugs } from "@/features/cms/hooks/useCmsQueries";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a new QueryClient for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 // Mock hooks
 vi.mock("@/features/cms/hooks/usePageBuilderContext", () => ({
   usePageBuilder: vi.fn(),
 }));
 
-vi.mock("@/features/cms/hooks/useCmsQueries", () => ({
-  useCmsThemes: vi.fn(),
-}));
+vi.mock("@/features/cms/hooks/useCmsQueries", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useCmsThemes: vi.fn(),
+    useCmsDomains: vi.fn(),
+    useCmsSlugs: vi.fn(),
+    useCmsAllSlugs: vi.fn(),
+  };
+});
 
 vi.mock("@/features/cms/components/page-builder/section-registry", () => ({
   getSectionDefinition: (type: string) => {
@@ -29,7 +46,6 @@ vi.mock("@/features/cms/components/page-builder/section-registry", () => ({
           { key: "sectionBorder", label: "Border", type: "border" },
           { key: "sectionShadow", label: "Shadow", type: "shadow" },
         ],
-        // The real component doesn't have this in the definition, but it renders a button
       };
     }
     return null;
@@ -92,6 +108,9 @@ describe("ComponentSettingsPanel Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
+    (useCmsDomains as any).mockReturnValue({ data: [], isLoading: false });
+    (useCmsSlugs as any).mockReturnValue({ data: [], isLoading: false });
+    (useCmsAllSlugs as any).mockReturnValue({ data: [], isLoading: false });
   });
 
   it("should show 'Select a page' message when no page is set", () => {
@@ -100,7 +119,12 @@ describe("ComponentSettingsPanel Component", () => {
       dispatch: mockDispatch,
     });
 
-    render(<ComponentSettingsPanel />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComponentSettingsPanel />
+      </QueryClientProvider>
+    );
     expect(screen.getByText(/Select a page first/i)).toBeInTheDocument();
   });
 
@@ -113,7 +137,12 @@ describe("ComponentSettingsPanel Component", () => {
       dispatch: mockDispatch,
     });
 
-    render(<ComponentSettingsPanel />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComponentSettingsPanel />
+      </QueryClientProvider>
+    );
     expect(screen.getAllByText("Test Page").length).toBeGreaterThan(0);
     expect(screen.getByText("Status")).toBeInTheDocument();
     
@@ -136,7 +165,12 @@ describe("ComponentSettingsPanel Component", () => {
       dispatch: mockDispatch,
     });
 
-    render(<ComponentSettingsPanel />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComponentSettingsPanel />
+      </QueryClientProvider>
+    );
     
     expect(screen.getByText(/Section: Hero banner/i)).toBeInTheDocument();
     expect(screen.getByText("Image height")).toBeInTheDocument();
@@ -153,7 +187,12 @@ describe("ComponentSettingsPanel Component", () => {
       dispatch: mockDispatch,
     });
 
-    render(<ComponentSettingsPanel />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComponentSettingsPanel />
+      </QueryClientProvider>
+    );
     
     const removeBtn = screen.getByRole("button", { name: /Remove section/i });
     fireEvent.click(removeBtn);
@@ -173,7 +212,12 @@ describe("ComponentSettingsPanel Component", () => {
       dispatch: mockDispatch,
     });
 
-    render(<ComponentSettingsPanel />);
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComponentSettingsPanel />
+      </QueryClientProvider>
+    );
     
     const seoTab = screen.getByRole("tab", { name: /SEO/i });
     fireEvent.click(seoTab);

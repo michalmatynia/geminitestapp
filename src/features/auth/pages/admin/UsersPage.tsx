@@ -414,7 +414,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                       )}
                     </TableCell>
                     <TableCell className="min-w-[180px]">
-                      {(() => {
+                      {(() : React.ReactNode => {
                         const currentRoleId = userRoles[user.id];
                         const isValidRole = currentRoleId && roles.some((r: AuthRole) => r.id === currentRoleId);
                         const selectValue = isValidRole ? currentRoleId : "none";
@@ -436,7 +436,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                             </SelectContent>
                           </Select>
                         );
-                      })() as React.ReactNode}
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
@@ -573,7 +573,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 id="create-name"
                 value={createForm.name}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev) => ({ ...prev, name: event.target.value }))
+                  setCreateForm((prev: CreateUserForm) => ({ ...prev, name: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
               />
@@ -586,7 +586,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 id="create-email"
                 value={createForm.email}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev) => ({ ...prev, email: event.target.value }))
+                  setCreateForm((prev: CreateUserForm) => ({ ...prev, email: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
               />
@@ -600,7 +600,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 type="password"
                 value={createForm.password}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setCreateForm((prev) => ({ ...prev, password: event.target.value }))
+                  setCreateForm((prev: CreateUserForm) => ({ ...prev, password: event.target.value }))
                 }
                 className="bg-gray-900 border text-white"
               />
@@ -612,7 +612,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               <Select
                 value={createForm.roleId}
                 onValueChange={(value: string) =>
-                  setCreateForm((prev) => ({ ...prev, roleId: value }))
+                  setCreateForm((prev: CreateUserForm) => ({ ...prev, roleId: value }))
                 }
               >
                 <SelectTrigger className="bg-gray-900 border text-white">
@@ -632,7 +632,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               <Checkbox
                 id="create-verified"
                 checked={createForm.verified} onCheckedChange={(checked: boolean | "indeterminate") =>
-                  setCreateForm((prev) => ({
+                  setCreateForm((prev: CreateUserForm) => ({
                     ...prev,
                     verified: Boolean(checked),
                   }))

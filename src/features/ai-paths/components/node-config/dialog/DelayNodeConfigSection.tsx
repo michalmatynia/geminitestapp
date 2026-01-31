@@ -14,7 +14,7 @@ type DelayNodeConfigSectionProps = {
 export function DelayNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: DelayNodeConfigSectionProps) {
+}: DelayNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "delay") return null;
 
   const delayConfig = selectedNode.config?.delay ?? { ms: 300 };
@@ -28,7 +28,7 @@ export function DelayNodeConfigSection({
           step="50"
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={delayConfig.ms}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               delay: {
                 ms: toNumber(event.target.value, delayConfig.ms),

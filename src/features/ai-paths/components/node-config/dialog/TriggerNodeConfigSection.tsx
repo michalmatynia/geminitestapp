@@ -14,7 +14,7 @@ type TriggerNodeConfigSectionProps = {
 export function TriggerNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: TriggerNodeConfigSectionProps) {
+}: TriggerNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "trigger") return null;
 
   const triggerConfig = selectedNode.config?.trigger ?? {
@@ -28,7 +28,7 @@ export function TriggerNodeConfigSection({
         <Label className="text-xs text-gray-400">Trigger Action</Label>
         <Select
           value={triggerConfig.event}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               trigger: { event: value },
             })
@@ -38,7 +38,7 @@ export function TriggerNodeConfigSection({
             <SelectValue placeholder="Select action" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900">
-            {TRIGGER_EVENTS.map((event) => (
+            {TRIGGER_EVENTS.map((event: { id: string; label: string }): React.JSX.Element => (
               <SelectItem key={event.id} value={event.id}>
                 {event.label}
               </SelectItem>

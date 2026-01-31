@@ -14,288 +14,7 @@ import {
   SelectValue,
   Checkbox,
 } from "@/shared/ui";
-
-// ---------------------------------------------------------------------------
-// Theme settings state
-// ---------------------------------------------------------------------------
-
-interface ThemeSettings {
-  // Colors
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  surfaceColor: string;
-  textColor: string;
-  mutedTextColor: string;
-  borderColor: string;
-  errorColor: string;
-  successColor: string;
-  // Typography
-  headingFont: string;
-  bodyFont: string;
-  baseSize: number;
-  headingWeight: string;
-  bodyWeight: string;
-  lineHeight: number;
-  headingLineHeight: number;
-  // Layout
-  maxContentWidth: number;
-  gridGutter: number;
-  sectionSpacing: number;
-  containerPadding: number;
-  borderRadius: number;
-  // Animations
-  enableAnimations: boolean;
-  animationDuration: number;
-  animationEasing: string;
-  scrollReveal: boolean;
-  hoverScale: number;
-  // Buttons
-  btnPaddingX: number;
-  btnPaddingY: number;
-  btnFontSize: number;
-  btnFontWeight: string;
-  btnRadius: number;
-  btnPrimaryBg: string;
-  btnPrimaryText: string;
-  btnSecondaryBg: string;
-  btnSecondaryText: string;
-  btnOutlineBorder: string;
-  // Variant Pills
-  pillRadius: number;
-  pillPaddingX: number;
-  pillPaddingY: number;
-  pillFontSize: number;
-  pillBg: string;
-  pillText: string;
-  pillActiveBg: string;
-  pillActiveText: string;
-  // Inputs
-  inputHeight: number;
-  inputRadius: number;
-  inputBorderColor: string;
-  inputBg: string;
-  inputText: string;
-  inputFocusBorder: string;
-  inputPlaceholder: string;
-  inputFontSize: number;
-  // Product Cards
-  cardImageRatio: string;
-  cardRadius: number;
-  cardShadow: string;
-  cardBg: string;
-  cardHoverShadow: string;
-  showBadge: boolean;
-  showQuickAdd: boolean;
-  // Collection Cards
-  collectionRatio: string;
-  collectionRadius: number;
-  collectionOverlay: boolean;
-  collectionOverlayColor: string;
-  collectionTextAlign: string;
-  // Blog Cards
-  blogRatio: string;
-  blogRadius: number;
-  blogShowDate: boolean;
-  blogShowExcerpt: boolean;
-  blogExcerptLines: number;
-  // Content Containers
-  containerBg: string;
-  containerBorderColor: string;
-  containerRadius: number;
-  containerPaddingInner: number;
-  containerShadow: string;
-  // Media
-  imageRadius: number;
-  imageBorderColor: string;
-  imagePlaceholderBg: string;
-  videoRatio: string;
-  // Dropdowns and pop-ups
-  dropdownBg: string;
-  dropdownBorder: string;
-  dropdownRadius: number;
-  dropdownShadow: string;
-  popupOverlayColor: string;
-  popupRadius: number;
-  // Drawers
-  drawerWidth: number;
-  drawerBg: string;
-  drawerOverlayColor: string;
-  drawerPosition: string;
-  // Badges
-  badgeFontSize: number;
-  badgeRadius: number;
-  badgePaddingX: number;
-  badgePaddingY: number;
-  badgeDefaultBg: string;
-  badgeDefaultText: string;
-  badgeSaleBg: string;
-  badgeSaleText: string;
-  // Brand Information
-  brandName: string;
-  brandTagline: string;
-  brandEmail: string;
-  brandPhone: string;
-  brandAddress: string;
-  // Social Media
-  socialFacebook: string;
-  socialInstagram: string;
-  socialTwitter: string;
-  socialLinkedin: string;
-  socialYoutube: string;
-  socialTiktok: string;
-  // Search Behaviour
-  searchPlaceholder: string;
-  searchMinChars: number;
-  searchShowSuggestions: boolean;
-  searchMaxResults: number;
-  // Currency Format
-  currencyCode: string;
-  currencySymbol: string;
-  currencyPosition: string;
-  thousandsSeparator: string;
-  decimalSeparator: string;
-  decimalPlaces: number;
-  // Cart
-  cartStyle: string;
-  cartIconStyle: string;
-  showCartCount: boolean;
-  cartEmptyText: string;
-  // Custom CSS
-  customCss: string;
-  // Theme Style
-  themePreset: string;
-  darkMode: boolean;
-}
-
-const DEFAULT_THEME: ThemeSettings = {
-  primaryColor: "#3b82f6",
-  secondaryColor: "#6366f1",
-  accentColor: "#f59e0b",
-  backgroundColor: "#030712",
-  surfaceColor: "#111827",
-  textColor: "#f3f4f6",
-  mutedTextColor: "#9ca3af",
-  borderColor: "#1f2937",
-  errorColor: "#ef4444",
-  successColor: "#22c55e",
-  headingFont: "Inter, sans-serif",
-  bodyFont: "Inter, sans-serif",
-  baseSize: 16,
-  headingWeight: "700",
-  bodyWeight: "400",
-  lineHeight: 1.6,
-  headingLineHeight: 1.2,
-  maxContentWidth: 1200,
-  gridGutter: 24,
-  sectionSpacing: 64,
-  containerPadding: 24,
-  borderRadius: 8,
-  enableAnimations: true,
-  animationDuration: 300,
-  animationEasing: "ease-out",
-  scrollReveal: true,
-  hoverScale: 1.02,
-  btnPaddingX: 20,
-  btnPaddingY: 10,
-  btnFontSize: 14,
-  btnFontWeight: "600",
-  btnRadius: 8,
-  btnPrimaryBg: "#3b82f6",
-  btnPrimaryText: "#ffffff",
-  btnSecondaryBg: "#374151",
-  btnSecondaryText: "#f3f4f6",
-  btnOutlineBorder: "#4b5563",
-  pillRadius: 999,
-  pillPaddingX: 12,
-  pillPaddingY: 4,
-  pillFontSize: 12,
-  pillBg: "#1f2937",
-  pillText: "#d1d5db",
-  pillActiveBg: "#3b82f6",
-  pillActiveText: "#ffffff",
-  inputHeight: 40,
-  inputRadius: 8,
-  inputBorderColor: "#374151",
-  inputBg: "#111827",
-  inputText: "#f3f4f6",
-  inputFocusBorder: "#3b82f6",
-  inputPlaceholder: "#6b7280",
-  inputFontSize: 14,
-  cardImageRatio: "3:4",
-  cardRadius: 12,
-  cardShadow: "small",
-  cardBg: "#111827",
-  cardHoverShadow: "medium",
-  showBadge: true,
-  showQuickAdd: true,
-  collectionRatio: "16:9",
-  collectionRadius: 12,
-  collectionOverlay: true,
-  collectionOverlayColor: "#00000066",
-  collectionTextAlign: "center",
-  blogRatio: "16:9",
-  blogRadius: 12,
-  blogShowDate: true,
-  blogShowExcerpt: true,
-  blogExcerptLines: 2,
-  containerBg: "#111827",
-  containerBorderColor: "#1f2937",
-  containerRadius: 12,
-  containerPaddingInner: 24,
-  containerShadow: "none",
-  imageRadius: 8,
-  imageBorderColor: "#1f2937",
-  imagePlaceholderBg: "#1f2937",
-  videoRatio: "16:9",
-  dropdownBg: "#1f2937",
-  dropdownBorder: "#374151",
-  dropdownRadius: 8,
-  dropdownShadow: "medium",
-  popupOverlayColor: "#000000aa",
-  popupRadius: 16,
-  drawerWidth: 400,
-  drawerBg: "#111827",
-  drawerOverlayColor: "#000000aa",
-  drawerPosition: "right",
-  badgeFontSize: 11,
-  badgeRadius: 4,
-  badgePaddingX: 8,
-  badgePaddingY: 2,
-  badgeDefaultBg: "#374151",
-  badgeDefaultText: "#d1d5db",
-  badgeSaleBg: "#ef4444",
-  badgeSaleText: "#ffffff",
-  brandName: "",
-  brandTagline: "",
-  brandEmail: "",
-  brandPhone: "",
-  brandAddress: "",
-  socialFacebook: "",
-  socialInstagram: "",
-  socialTwitter: "",
-  socialLinkedin: "",
-  socialYoutube: "",
-  socialTiktok: "",
-  searchPlaceholder: "Search...",
-  searchMinChars: 2,
-  searchShowSuggestions: true,
-  searchMaxResults: 8,
-  currencyCode: "USD",
-  currencySymbol: "$",
-  currencyPosition: "before",
-  thousandsSeparator: ",",
-  decimalSeparator: ".",
-  decimalPlaces: 2,
-  cartStyle: "drawer",
-  cartIconStyle: "bag",
-  showCartCount: true,
-  cartEmptyText: "Your cart is empty",
-  customCss: "",
-  themePreset: "default",
-  darkMode: true,
-};
+import { useThemeSettings, type ColorSchemeColors } from "./ThemeSettingsContext";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -436,9 +155,18 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 // Panel
 // ---------------------------------------------------------------------------
 
-export function ThemeSettingsPanel(): React.ReactNode {
+export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-  const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+  const { theme, setTheme, update } = useThemeSettings();
+  const [isAddingScheme, setIsAddingScheme] = useState(false);
+  const [newSchemeName, setNewSchemeName] = useState("");
+  const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>({
+    background: "#0b1220",
+    surface: "#111827",
+    text: "#f3f4f6",
+    accent: "#3b82f6",
+    border: "#1f2937",
+  });
 
   // Logo-specific state (file picker)
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -503,6 +231,15 @@ export function ThemeSettingsPanel(): React.ReactNode {
     return () => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
   }, []);
 
+  useEffect(() => {
+    if (!theme.colorSchemes.length) return;
+    if (theme.colorSchemes.some((scheme) => scheme.id === theme.activeColorSchemeId)) return;
+    setTheme((prev) => ({
+      ...prev,
+      activeColorSchemeId: prev.colorSchemes[0]?.id ?? "",
+    }));
+  }, [theme.colorSchemes, theme.activeColorSchemeId, setTheme]);
+
   // Logo file preview
   useEffect(() => {
     if (!logoFile) {
@@ -528,9 +265,63 @@ export function ThemeSettingsPanel(): React.ReactNode {
     });
   }, []);
 
-  const update = useCallback(<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
-    setTheme((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const schemeOptions = useMemo(
+    () => theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id })),
+    [theme.colorSchemes]
+  );
+
+  const activeScheme = useMemo(() => {
+    if (!theme.colorSchemes.length) return null;
+    return theme.colorSchemes.find((scheme) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0];
+  }, [theme.colorSchemes, theme.activeColorSchemeId]);
+
+  const updateSchemeName = useCallback((schemeId: string, name: string) => {
+    setTheme((prev) => ({
+      ...prev,
+      colorSchemes: prev.colorSchemes.map((scheme) =>
+        scheme.id === schemeId ? { ...scheme, name } : scheme
+      ),
+    }));
+  }, [setTheme]);
+
+  const updateSchemeColor = useCallback((schemeId: string, key: keyof ColorSchemeColors, value: string) => {
+    setTheme((prev) => ({
+      ...prev,
+      colorSchemes: prev.colorSchemes.map((scheme) =>
+        scheme.id === schemeId
+          ? { ...scheme, colors: { ...scheme.colors, [key]: value } }
+          : scheme
+      ),
+    }));
+  }, [setTheme]);
+
+  const startAddScheme = useCallback(() => {
+    setNewSchemeName("");
+    setNewSchemeColors(activeScheme?.colors ?? {
+      background: "#0b1220",
+      surface: "#111827",
+      text: "#f3f4f6",
+      accent: "#3b82f6",
+      border: "#1f2937",
+    });
+    setIsAddingScheme(true);
+  }, [activeScheme]);
+
+  const handleCreateScheme = useCallback(() => {
+    const trimmed = newSchemeName.trim();
+    const schemeName = trimmed || `Scheme ${theme.colorSchemes.length + 1}`;
+    const id = `custom-${Date.now().toString(36)}`;
+    setTheme((prev) => ({
+      ...prev,
+      colorSchemes: [
+        ...prev.colorSchemes,
+        { id, name: schemeName, colors: { ...newSchemeColors } },
+      ],
+      activeColorSchemeId: id,
+    }));
+    setIsAddingScheme(false);
+    setNewSchemeName("");
+  }, [newSchemeColors, newSchemeName, theme.colorSchemes.length, setTheme]);
 
   const handlePickLogo = useCallback(() => { fileInputRef.current?.click(); }, []);
   const handleLogoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -577,17 +368,144 @@ export function ThemeSettingsPanel(): React.ReactNode {
         // ---------------------------------------------------------------
         case "Colors":
           return (
-            <div className="space-y-3">
-              <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
-              <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
-              <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
-              <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
-              <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
-              <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
-              <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
-              <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
-              <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
-              <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
+            <div className="space-y-4">
+              <div className="rounded border border-border/40 bg-gray-900/60 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] uppercase tracking-wider text-gray-500">Color schemes</div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={startAddScheme}
+                    className="h-7 px-2 text-[11px]"
+                  >
+                    Add scheme
+                  </Button>
+                </div>
+                {schemeOptions.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    <SelectField
+                      label="Active scheme"
+                      value={theme.activeColorSchemeId}
+                      onChange={(value) => update("activeColorSchemeId", value)}
+                      options={schemeOptions}
+                    />
+                    {activeScheme && (
+                      <div className="space-y-2">
+                        <TextField
+                          label="Scheme name"
+                          value={activeScheme.name}
+                          onChange={(value) => updateSchemeName(activeScheme.id, value)}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <ColorField
+                            label="Background"
+                            value={activeScheme.colors.background}
+                            onChange={(value) => updateSchemeColor(activeScheme.id, "background", value)}
+                          />
+                          <ColorField
+                            label="Surface"
+                            value={activeScheme.colors.surface}
+                            onChange={(value) => updateSchemeColor(activeScheme.id, "surface", value)}
+                          />
+                          <ColorField
+                            label="Text"
+                            value={activeScheme.colors.text}
+                            onChange={(value) => updateSchemeColor(activeScheme.id, "text", value)}
+                          />
+                          <ColorField
+                            label="Accent"
+                            value={activeScheme.colors.accent}
+                            onChange={(value) => updateSchemeColor(activeScheme.id, "accent", value)}
+                          />
+                          <ColorField
+                            label="Border"
+                            value={activeScheme.colors.border}
+                            onChange={(value) => updateSchemeColor(activeScheme.id, "border", value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-3 text-xs text-gray-500">No schemes yet.</div>
+                )}
+              </div>
+
+              {isAddingScheme && (
+                <div className="rounded border border-border/40 bg-gray-900/60 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] uppercase tracking-wider text-gray-500">New scheme</div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsAddingScheme(false)}
+                      className="h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    <TextField
+                      label="Scheme name"
+                      value={newSchemeName}
+                      onChange={setNewSchemeName}
+                      placeholder="e.g. Midnight"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <ColorField
+                        label="Background"
+                        value={newSchemeColors.background}
+                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, background: value }))}
+                      />
+                      <ColorField
+                        label="Surface"
+                        value={newSchemeColors.surface}
+                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, surface: value }))}
+                      />
+                      <ColorField
+                        label="Text"
+                        value={newSchemeColors.text}
+                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, text: value }))}
+                      />
+                      <ColorField
+                        label="Accent"
+                        value={newSchemeColors.accent}
+                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, accent: value }))}
+                      />
+                      <ColorField
+                        label="Border"
+                        value={newSchemeColors.border}
+                        onChange={(value) => setNewSchemeColors((prev) => ({ ...prev, border: value }))}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={handleCreateScheme}
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        Create scheme
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded border border-border/40 bg-gray-900/40 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-gray-500">Global palette</div>
+                <div className="mt-3 space-y-3">
+                  <ColorField label="Primary" value={theme.primaryColor} onChange={(v) => update("primaryColor", v)} />
+                  <ColorField label="Secondary" value={theme.secondaryColor} onChange={(v) => update("secondaryColor", v)} />
+                  <ColorField label="Accent" value={theme.accentColor} onChange={(v) => update("accentColor", v)} />
+                  <ColorField label="Background" value={theme.backgroundColor} onChange={(v) => update("backgroundColor", v)} />
+                  <ColorField label="Surface" value={theme.surfaceColor} onChange={(v) => update("surfaceColor", v)} />
+                  <ColorField label="Text" value={theme.textColor} onChange={(v) => update("textColor", v)} />
+                  <ColorField label="Muted text" value={theme.mutedTextColor} onChange={(v) => update("mutedTextColor", v)} />
+                  <ColorField label="Border" value={theme.borderColor} onChange={(v) => update("borderColor", v)} />
+                  <ColorField label="Error" value={theme.errorColor} onChange={(v) => update("errorColor", v)} />
+                  <ColorField label="Success" value={theme.successColor} onChange={(v) => update("successColor", v)} />
+                </div>
+              </div>
             </div>
           );
 
@@ -943,19 +861,38 @@ export function ThemeSettingsPanel(): React.ReactNode {
           return <div className="text-xs text-gray-500">Settings coming soon.</div>;
       }
     },
-    [handleLogoChange, handlePickLogo, logoFile?.name, logoPreviewUrl, logoWidth, theme, update]
+    [
+      activeScheme,
+      handleCreateScheme,
+      handleLogoChange,
+      handlePickLogo,
+      isAddingScheme,
+      logoFile?.name,
+      logoPreviewUrl,
+      logoWidth,
+      newSchemeColors,
+      newSchemeName,
+      schemeOptions,
+      startAddScheme,
+      theme,
+      update,
+      updateSchemeColor,
+      updateSchemeName,
+    ]
   );
 
   return (
-    <aside className="flex w-72 flex-col border-r border-border bg-gray-900">
-      <div className="border-b border-border px-4 py-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Theme settings
+    <div className="flex min-h-0 flex-1 flex-col">
+      {showHeader && (
+        <div className="border-b border-border px-4 py-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Theme settings
+          </div>
+          <p className="mt-1 text-[11px] text-gray-500">
+            Configure global styles and storefront components.
+          </p>
         </div>
-        <p className="mt-1 text-[11px] text-gray-500">
-          Configure global styles and storefront components.
-        </p>
-      </div>
+      )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-2">
           {THEME_SECTIONS.map((section) => {
@@ -979,6 +916,6 @@ export function ThemeSettingsPanel(): React.ReactNode {
           })}
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

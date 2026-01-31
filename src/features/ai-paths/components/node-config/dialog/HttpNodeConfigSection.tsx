@@ -15,7 +15,7 @@ type HttpNodeConfigSectionProps = {
 export function HttpNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: HttpNodeConfigSectionProps) {
+}: HttpNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "http") return null;
 
   const httpConfig: HttpConfig = selectedNode.config?.http ?? {
@@ -34,7 +34,7 @@ export function HttpNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.url}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               http: { ...httpConfig, url: event.target.value },
             })
@@ -46,7 +46,7 @@ export function HttpNodeConfigSection({
           <Label className="text-xs text-gray-400">Method</Label>
           <Select
             value={httpConfig.method}
-            onValueChange={(value) =>
+            onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
                 http: { ...httpConfig, method: value as HttpConfig["method"] },
               })
@@ -68,7 +68,7 @@ export function HttpNodeConfigSection({
           <Label className="text-xs text-gray-400">Response Mode</Label>
           <Select
             value={httpConfig.responseMode}
-            onValueChange={(value) =>
+            onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
                 http: {
                   ...httpConfig,
@@ -93,7 +93,7 @@ export function HttpNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.headers}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               http: { ...httpConfig, headers: event.target.value },
             })
@@ -105,7 +105,7 @@ export function HttpNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.bodyTemplate}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               http: { ...httpConfig, bodyTemplate: event.target.value },
             })
@@ -117,7 +117,7 @@ export function HttpNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.responsePath}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               http: { ...httpConfig, responsePath: event.target.value },
             })

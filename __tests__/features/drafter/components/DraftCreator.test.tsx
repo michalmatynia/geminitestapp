@@ -54,7 +54,7 @@ describe("DraftCreator Component", () => {
     expect(nameInput).toHaveValue("My New Draft");
   });
 
-  it("should show validation error if saving without a name", async () => {
+  it("should show validation error if saving without a name", () => {
     const onSaveSuccess = vi.fn();
     const { container } = render(<DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />);
     

@@ -1,5 +1,14 @@
 "use client";
-import { Button, ListPanel, SectionHeader } from "@/shared/ui";
+import {
+  Button,
+  ListPanel,
+  SectionHeader,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui";
 import Link from "next/link";
 
 import { useAdminLayout } from "@/features/admin";
@@ -9,6 +18,7 @@ import { CmsDomainSelector } from "@/features/cms";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { PageStatus, PageSummary, PageSlugLink } from "@/features/cms/types";
 import { useMemo, useState } from "react";
+import { Eye } from "lucide-react";
 
 const STATUS_BADGE_CLASSES: Record<PageStatus, string> = {
   draft: "bg-gray-600/20 text-gray-400 border-gray-600/40",
@@ -34,11 +44,12 @@ const STATUS_FILTERS: Array<{ label: string; value: StatusFilter }> = [
 export default function PagesPage(): React.ReactNode {
   const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
-  const { activeDomainId } = useCmsDomainSelection();
+  const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const pagesQuery = useCmsPages(activeDomainId);
   const slugsQuery = useCmsSlugs(activeDomainId);
   const deletePage = useDeletePage();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
 
   const pages = pagesQuery.data ?? [];
   const domainSlugs = slugsQuery.data ?? [];
@@ -61,6 +72,17 @@ export default function PagesPage(): React.ReactNode {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
     router.push("/admin/cms/pages/create");
+  };
+
+  const handlePreview = (slug: string): void => {
+    if (typeof window === "undefined") return;
+    const protocol = window.location.protocol;
+    const currentHost = window.location.host;
+    const currentHostname = window.location.hostname;
+    const targetHost = activeDomain?.domain ?? currentHostname;
+    const resolvedHost = targetHost === currentHostname ? currentHost : targetHost;
+    const path = slug.startsWith("/") ? slug : `/${slug}`;
+    window.open(`${protocol}//${resolvedHost}${path}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -101,6 +123,21 @@ export default function PagesPage(): React.ReactNode {
             const outOfZone = domainSlugSet
               ? slugValues.filter((value) => !domainSlugSet.has(value))
               : [];
+            const zoneSlugs = domainSlugSet
+              ? slugValues.filter((value) => domainSlugSet.has(value))
+              : [];
+            const selectedSlugCandidate = previewSelections[page.id];
+            const previewSlug = zoneSlugs.length
+              ? (selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
+                  ? selectedSlugCandidate
+                  : zoneSlugs[0])
+              : null;
+            const previewPath = previewSlug ? (previewSlug.startsWith("/") ? previewSlug : `/${previewSlug}`) : "";
+            const previewTitle = slugsQuery.isLoading
+              ? "Loading zone slugs..."
+              : previewSlug
+                ? `Preview ${activeDomain?.domain ?? "current"}${previewPath}`
+                : "No slug in current zone";
             return (
               <li key={page.id} className="flex justify-between items-center py-2 border-b border">
                 <div className="flex items-center gap-3">
@@ -127,8 +164,46 @@ export default function PagesPage(): React.ReactNode {
                       Out of zone: {outOfZone.map((slug) => `/${slug}`).join(", ")}
                     </span>
                   )}
+                  {zoneSlugs.length > 1 ? (
+                    <Select
+                      value={previewSlug ?? ""}
+                      onValueChange={(value) =>
+                        setPreviewSelections((prev) => ({ ...prev, [page.id]: value }))
+                      }
+                      disabled={slugsQuery.isLoading}
+                    >
+                      <SelectTrigger className="h-8 w-[170px] text-xs">
+                        <SelectValue placeholder="Preview slug" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zoneSlugs.map((slug) => (
+                          <SelectItem key={slug} value={slug}>
+                            /{slug}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : zoneSlugs.length === 1 ? (
+                    <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200">
+                      Preview: {activeDomain?.domain ?? "current"}/{zoneSlugs[0]}
+                    </div>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!previewSlug || slugsQuery.isLoading}
+                    title={previewTitle}
+                    onClick={() => {
+                      if (previewSlug) handlePreview(previewSlug);
+                    }}
+                  >
+                    <Eye className="mr-2 size-4" />
+                    Preview
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => { void handleDelete(page.id); }}>
+                    Delete
+                  </Button>
                 </div>
-                <Button variant="destructive" onClick={() => { void handleDelete(page.id); }}>Delete</Button>
               </li>
             );
           })}

@@ -53,13 +53,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   useEffect(() => {
     let active = true;
     const userId = session?.user?.id ?? null;
-    if (status === "loading") return () => {
+    if (status === "loading") return (): void => {
       active = false;
     };
-    if (!userId) return () => {
+    if (!userId) return (): void => {
       active = false;
     };
-    if (userId && hydratedUserRef.current === userId) return () => {
+    if (userId && hydratedUserRef.current === userId) return (): void => {
       active = false;
     };
     const hydrate = async (): Promise<void> => {

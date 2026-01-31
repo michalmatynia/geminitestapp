@@ -575,6 +575,12 @@ export function basePageBuilderReducer(
       };
     }
 
+    case "TOGGLE_INSPECTOR":
+      return { ...state, inspectorEnabled: !state.inspectorEnabled };
+
+    case "SET_PREVIEW_MODE":
+      return { ...state, previewMode: action.mode };
+
     case "TOGGLE_LEFT_PANEL":
       return { ...state, leftPanelCollapsed: !state.leftPanelCollapsed };
 
@@ -690,6 +696,8 @@ const HISTORY_IGNORED_ACTIONS = new Set<PageBuilderAction["type"]>([
   "COPY_SECTION",
   "COPY_BLOCK",
   "UPDATE_PAGE_SLUGS",
+  "TOGGLE_INSPECTOR",
+  "SET_PREVIEW_MODE",
 ]);
 
 function makeSnapshot(state: PageBuilderState): PageBuilderSnapshot {
@@ -762,6 +770,8 @@ export const initialState: PageBuilderState = {
   currentPage: null,
   sections: [],
   selectedNodeId: null,
+  inspectorEnabled: false,
+  previewMode: "desktop",
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
   clipboard: null,

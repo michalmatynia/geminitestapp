@@ -202,7 +202,7 @@ export function ComponentTreePanel(): React.ReactNode {
   );
 
   return (
-    <aside className="flex w-72 flex-col border-r border-border bg-gray-900">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Zone groups */}
       <div className="flex-1 overflow-y-auto">
         {!state.currentPage ? (
@@ -251,7 +251,7 @@ export function ComponentTreePanel(): React.ReactNode {
           })
         )}
       </div>
-    </aside>
+    </div>
   );
 }
 

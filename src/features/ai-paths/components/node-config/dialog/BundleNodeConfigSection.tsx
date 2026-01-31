@@ -15,7 +15,7 @@ type BundleNodeConfigSectionProps = {
 export function BundleNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: BundleNodeConfigSectionProps) {
+}: BundleNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "bundle") return null;
 
   const bundleConfig = selectedNode.config?.bundle ?? {
@@ -31,7 +31,7 @@ export function BundleNodeConfigSection({
         <Button
           type="button"
           className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               bundle: { includePorts: selectedNode.inputs },
             })
@@ -43,7 +43,7 @@ export function BundleNodeConfigSection({
       <Textarea
         className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
         value={(bundleConfig.includePorts ?? []).join("\n")}
-        onChange={(event) =>
+        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
           updateSelectedNodeConfig({
             bundle: { includePorts: parsePathList(event.target.value) },
           })

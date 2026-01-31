@@ -101,6 +101,8 @@ export interface PageBuilderState {
   currentPage: Page | null;
   sections: SectionInstance[];
   selectedNodeId: string | null;
+  inspectorEnabled: boolean;
+  previewMode: "desktop" | "mobile";
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   clipboard: ClipboardData | null;
@@ -136,6 +138,8 @@ export type PageBuilderAction =
   | { type: "SET_PAGE_STATUS"; status: PageStatus }
   | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
   | { type: "UPDATE_PAGE_SLUGS"; slugIds: string[]; slugValues: string[] }
+  | { type: "TOGGLE_INSPECTOR" }
+  | { type: "SET_PREVIEW_MODE"; mode: "desktop" | "mobile" }
   | { type: "TOGGLE_LEFT_PANEL" }
   | { type: "TOGGLE_RIGHT_PANEL" }
   | { type: "COPY_SECTION"; sectionId: string }

@@ -22,7 +22,7 @@ export function ModelNodeConfigSection({
   edges,
   modelOptions,
   updateSelectedNodeConfig,
-}: ModelNodeConfigSectionProps) {
+}: ModelNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "model") return null;
 
   const modelConfig: ModelConfig = selectedNode.config?.model ?? {
@@ -36,10 +36,10 @@ export function ModelNodeConfigSection({
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)
       ? [modelConfig.modelId, ...modelOptions]
       : modelOptions;
-  const hasPollConsumer = edges.some((edge) => {
+  const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== selectedNode.id) return false;
     if (edge.fromPort !== "jobId") return false;
-    const targetNode = nodes.find((node) => node.id === edge.to);
+    const targetNode = nodes.find((node: AiNode): boolean => node.id === edge.to);
     return targetNode?.type === "poll";
   });
 
@@ -49,7 +49,7 @@ export function ModelNodeConfigSection({
         <Label className="text-xs text-gray-400">Model</Label>
         <Select
           value={modelConfig.modelId}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               model: { ...modelConfig, modelId: value },
             })
@@ -59,7 +59,7 @@ export function ModelNodeConfigSection({
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900">
-            {mergedModelOptions.map((model) => (
+            {mergedModelOptions.map((model: string): React.JSX.Element => (
               <SelectItem key={model} value={model}>
                 {model}
               </SelectItem>
@@ -75,7 +75,7 @@ export function ModelNodeConfigSection({
             step="0.1"
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={modelConfig.temperature}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
                 model: {
                   ...modelConfig,
@@ -95,7 +95,7 @@ export function ModelNodeConfigSection({
             step="50"
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={modelConfig.maxTokens}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
                 model: {
                   ...modelConfig,
@@ -118,7 +118,7 @@ export function ModelNodeConfigSection({
               ? "text-emerald-200 hover:bg-emerald-500/10"
               : "text-gray-300 hover:bg-muted/50"
           }`}
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               model: { ...modelConfig, vision: !modelConfig.vision },
             })
@@ -136,7 +136,7 @@ export function ModelNodeConfigSection({
               ? "text-emerald-200 hover:bg-emerald-500/10"
               : "text-gray-300 hover:bg-muted/50"
           }`}
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               model: {
                 ...modelConfig,

@@ -29,7 +29,7 @@ import { disableMfa, setupMfa, verifyMfa } from "@/features/auth/api/mfa";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { useMutation } from "@tanstack/react-query";
 
-export default function AuthSettingsPage() {
+export default function AuthSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { data: session } = useSession();
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
@@ -61,7 +61,7 @@ export default function AuthSettingsPage() {
 
   const roleOptions = useMemo(
     () =>
-      mergeDefaultRoles(roles).map((role) => ({
+      mergeDefaultRoles(roles).map((role: AuthRole) => ({
         id: role.id,
         name: role.name,
       })),
@@ -79,9 +79,9 @@ export default function AuthSettingsPage() {
     setRoles(storedRoles);
     const storedDefault = settingsQuery.data.get(AUTH_SETTINGS_KEYS.defaultRole);
     const nextDefault =
-      storedDefault && storedRoles.some((role) => role.id === storedDefault)
+      storedDefault && storedRoles.some((role: AuthRole) => role.id === storedDefault)
         ? storedDefault
-        : storedRoles.find((role) => role.id === "viewer")?.id ??
+        : storedRoles.find((role: AuthRole) => role.id === "viewer")?.id ??
           storedRoles[0]?.id ??
           "viewer";
     setDefaultRole(nextDefault);
@@ -89,7 +89,7 @@ export default function AuthSettingsPage() {
 
     const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
     const parsedPolicy = storedPolicyRaw
-      ? normalizeAuthSecurityPolicy(parseJsonSetting(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY))
+      ? normalizeAuthSecurityPolicy(parseJsonSetting<Partial<AuthSecurityPolicy>>(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY))
       : DEFAULT_AUTH_SECURITY_POLICY;
     setSecurityPolicy(parsedPolicy);
     setSecurityDirty(false);
@@ -100,7 +100,7 @@ export default function AuthSettingsPage() {
     setMfaEnabled(Boolean(userSecurityQuery.data.mfaEnabled));
   }, [userSecurityQuery.data]);
 
-  const saveDefaultRole = async () => {
+  const saveDefaultRole = async (): Promise<void> => {
     try {
       await updateDefaultRole.mutateAsync({
         key: AUTH_SETTINGS_KEYS.defaultRole,
@@ -116,7 +116,7 @@ export default function AuthSettingsPage() {
     }
   };
 
-  const saveSecurityPolicy = async () => {
+  const saveSecurityPolicy = async (): Promise<void> => {
     try {
       await updateSecurityPolicy.mutateAsync({
         key: AUTH_SETTINGS_KEYS.securityPolicy,
@@ -132,14 +132,14 @@ export default function AuthSettingsPage() {
     }
   };
 
-  const handleMfaSetup = async () => {
+  const handleMfaSetup = async (): Promise<void> => {
     try {
       setMfaSecret(null);
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
       const res = await mfaSetupMutation.mutateAsync();
       if (!res.ok) throw new Error("Failed to start MFA setup.");
-      const payload = res.payload as { secret?: string; otpauthUrl?: string };
+      const payload = res.payload;
       setMfaSecret(payload.secret ?? null);
       setMfaOtpAuth(payload.otpauthUrl ?? null);
       toast("MFA setup started. Enter the code from your authenticator app.", {
@@ -153,21 +153,18 @@ export default function AuthSettingsPage() {
     }
   };
 
-  const handleMfaVerify = async () => {
+  const handleMfaVerify = async (): Promise<void> => {
     if (!mfaToken.trim()) {
       toast("Enter the MFA code from your authenticator app.", { variant: "error" });
       return;
     }
     try {
       const res = await mfaVerifyMutation.mutateAsync(mfaToken.trim());
-      const payload = res.payload as {
-        recoveryCodes?: string[];
-        error?: string;
-      } | null;
+      const payload = res.payload;
       if (!res.ok) {
-        throw new Error(payload?.error ?? "Failed to verify MFA.");
+        throw new Error(payload.message ?? "Failed to verify MFA.");
       }
-      setRecoveryCodes(payload?.recoveryCodes ?? []);
+      setRecoveryCodes(payload.recoveryCodes ?? []);
       setMfaEnabled(true);
       setMfaToken("");
       toast("MFA enabled. Save your recovery codes.", { variant: "success" });
@@ -178,7 +175,7 @@ export default function AuthSettingsPage() {
     }
   };
 
-  const handleMfaDisable = async () => {
+  const handleMfaDisable = async (): Promise<void> => {
     if (!mfaDisableCode.trim()) {
       toast("Enter a code to disable MFA.", { variant: "error" });
       return;
@@ -188,9 +185,9 @@ export default function AuthSettingsPage() {
         token: mfaDisableCode.trim(),
         recoveryCode: mfaDisableCode.trim(),
       });
-      const payload = res.payload as { error?: string } | null;
+      const payload = res.payload;
       if (!res.ok) {
-        throw new Error(payload?.error ?? "Failed to disable MFA.");
+        throw new Error(payload.message ?? "Failed to disable MFA.");
       }
       setMfaEnabled(false);
       setMfaSecret(null);
@@ -221,7 +218,7 @@ export default function AuthSettingsPage() {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Select
             value={defaultRole}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               setDefaultRole(value);
               setDefaultDirty(true);
             }}
@@ -231,7 +228,7 @@ export default function AuthSettingsPage() {
               <SelectValue placeholder="Select default role" />
             </SelectTrigger>
             <SelectContent>
-              {roleOptions.map((role) => (
+              {roleOptions.map((role: { id: string; name: string }) => (
                 <SelectItem key={role.id} value={role.id}>
                   {role.name}
                 </SelectItem>
@@ -262,8 +259,8 @@ export default function AuthSettingsPage() {
               min={6}
               max={64}
               value={securityPolicy.minPasswordLength}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   minPasswordLength: Number(event.target.value),
                 }));
@@ -276,8 +273,8 @@ export default function AuthSettingsPage() {
             <Label className="text-xs text-gray-300">Require strong password</Label>
             <div className="flex items-center gap-3">
               <Checkbox
-                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked) => {
-                  setSecurityPolicy((prev) => ({
+                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked: boolean | "indeterminate") => {
+                  setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                     ...prev,
                     requireStrongPassword: Boolean(checked),
                   }));
@@ -300,11 +297,11 @@ export default function AuthSettingsPage() {
                   ["requireNumber", "Number"],
                   ["requireSymbol", "Symbol"],
                 ] as const
-              ).map(([key, label]) => (
+              ).map(([key, label]: [keyof AuthSecurityPolicy, string]) => (
                 <Label key={key} className="flex items-center gap-2">
                   <Checkbox
-                    checked={securityPolicy[key]} onCheckedChange={(checked) => {
-                      setSecurityPolicy((prev) => ({
+                    checked={securityPolicy[key] as boolean} onCheckedChange={(checked: boolean | "indeterminate") => {
+                      setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                         ...prev,
                         [key]: Boolean(checked),
                       }));
@@ -324,8 +321,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={50}
               value={securityPolicy.lockoutMaxAttempts}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   lockoutMaxAttempts: Number(event.target.value),
                 }));
@@ -341,8 +338,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={120}
               value={securityPolicy.lockoutWindowMinutes}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   lockoutWindowMinutes: Number(event.target.value),
                 }));
@@ -358,8 +355,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={120}
               value={securityPolicy.lockoutDurationMinutes}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   lockoutDurationMinutes: Number(event.target.value),
                 }));
@@ -375,8 +372,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={200}
               value={securityPolicy.ipRateLimitMaxAttempts}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   ipRateLimitMaxAttempts: Number(event.target.value),
                 }));
@@ -392,8 +389,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={120}
               value={securityPolicy.ipRateLimitWindowMinutes}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   ipRateLimitWindowMinutes: Number(event.target.value),
                 }));
@@ -409,8 +406,8 @@ export default function AuthSettingsPage() {
               min={1}
               max={120}
               value={securityPolicy.ipRateLimitDurationMinutes}
-              onChange={(event) => {
-                setSecurityPolicy((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
                   ...prev,
                   ipRateLimitDurationMinutes: Number(event.target.value),
                 }));
@@ -456,7 +453,7 @@ export default function AuthSettingsPage() {
                 <Label className="text-xs text-gray-300">Enter MFA code</Label>
                 <Input
                   value={mfaToken}
-                  onChange={(event) => setMfaToken(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMfaToken(event.target.value)}
                   className="bg-gray-900 border text-white"
                   placeholder="123456"
                 />
@@ -469,7 +466,7 @@ export default function AuthSettingsPage() {
               <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
                 <div className="font-semibold">Recovery codes (save these now)</div>
                 <div className="mt-2 grid gap-1">
-                  {recoveryCodes.map((code) => (
+                  {recoveryCodes.map((code: string) => (
                     <div key={code}>{code}</div>
                   ))}
                 </div>
@@ -481,7 +478,7 @@ export default function AuthSettingsPage() {
             <Label className="text-xs text-gray-300">Disable MFA (enter code)</Label>
             <Input
               value={mfaDisableCode}
-              onChange={(event) => setMfaDisableCode(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMfaDisableCode(event.target.value)}
               className="bg-gray-900 border text-white"
               placeholder="MFA code or recovery code"
             />

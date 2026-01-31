@@ -334,6 +334,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       source.close();
       setRunStreamStatus("stopped");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runDetailOpen, runDetail?.run?.id, runStreamPaused]);
 
   useEffect(() => {
@@ -1531,7 +1532,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     [connecting, nodes]
   );
 
-  const getPortPosition = (
+  const getPortPosition = useCallback((
     node: AiNode,
     portName: string | undefined,
     side: "input" | "output"
@@ -1542,7 +1543,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const x = node.position.x + (side === "output" ? NODE_WIDTH : 0);
     const y = node.position.y + getPortOffsetY(safeIndex, ports.length);
     return { x, y };
-  };
+  }, []);
 
   const handleReconnectInput = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string): void => {

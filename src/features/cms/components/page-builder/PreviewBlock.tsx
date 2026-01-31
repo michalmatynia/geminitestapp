@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { LayoutGrid, Columns, Image as ImageIcon, Play, Share2, Star, ListCollapse, Quote, GalleryHorizontal, Mail, Send, Eye, EyeOff, Trash2, Megaphone, Link2 } from "lucide-react";
+import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
-import { getSectionStyles, getTextAlign } from "../frontend/theme-styles";
+import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
+import { getSectionStyles, getTextAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 
 export type MediaReplaceTarget = {
   kind: "section" | "block";
@@ -43,6 +44,8 @@ function getColorSchemeBg(scheme: unknown): string {
 interface PreviewSectionProps {
   section: SectionInstance;
   selectedNodeId: string | null;
+  isInspecting?: boolean;
+  colorSchemes?: Record<string, ColorSchemeColors>;
   onSelect: (nodeId: string) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   onRemoveSection?: (sectionId: string) => void;
@@ -52,6 +55,8 @@ interface PreviewSectionProps {
 export function PreviewSection({
   section,
   selectedNodeId,
+  isInspecting = false,
+  colorSchemes,
   onSelect,
   onOpenMedia,
   onRemoveSection,
@@ -101,6 +106,9 @@ export function PreviewSection({
   };
 
   if (isHidden) {
+    const hiddenSelectedClass = isInspecting
+      ? "border-blue-500 bg-blue-500/10 ring-2 ring-inset ring-blue-500/40"
+      : "border-blue-500 bg-blue-500/5 ring-2 ring-inset ring-blue-500/20";
     return (
       <div
         role="button"
@@ -111,7 +119,7 @@ export function PreviewSection({
         }}
         className={`relative w-full rounded-lg border border-dashed px-4 py-6 text-left transition cursor-pointer ${
           isSectionSelected
-            ? "border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20"
+            ? hiddenSelectedClass
             : "border-border/50 bg-transparent hover:border-border/70"
         }`}
       >
@@ -135,7 +143,7 @@ export function PreviewSection({
           : "justify-center text-center";
 
     const announcementStyles: React.CSSProperties = {
-      ...getSectionStyles(section.settings),
+      ...getSectionStyles(section.settings, colorSchemes),
       ...getTextAlign(section.settings["contentAlignment"]),
     };
 
@@ -150,8 +158,10 @@ export function PreviewSection({
         style={announcementStyles}
         className={`relative w-full px-4 text-left transition cursor-pointer ${
           isSectionSelected
-            ? "ring-2 ring-blue-500/40"
-            : "hover:ring-1 hover:ring-border/40"
+            ? isInspecting
+              ? "ring-2 ring-inset ring-blue-500/60"
+              : "ring-2 ring-inset ring-blue-500/40"
+            : "hover:ring-1 hover:ring-inset hover:ring-border/40"
         }`}
       >
         {renderSectionActions()}
@@ -164,6 +174,7 @@ export function PreviewSection({
                 key={block.id}
                 block={block}
                 isSelected={selectedNodeId === block.id}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 contained
                 selectedNodeId={selectedNodeId}
@@ -180,10 +191,12 @@ export function PreviewSection({
   // ---------------------------------------------------------------------------
   // Shared section wrapper — uses getSectionStyles for real inline styles
   // ---------------------------------------------------------------------------
-  const sectionStyles = getSectionStyles(section.settings);
+  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
   const selectedRing = isSectionSelected
-    ? "ring-2 ring-blue-500/40"
-    : "hover:ring-1 hover:ring-border/40";
+    ? isInspecting
+      ? "ring-2 ring-inset ring-blue-500/60"
+      : "ring-2 ring-inset ring-blue-500/40"
+    : "hover:ring-1 hover:ring-inset hover:ring-border/40";
 
   const sectionImage = section.settings["image"] as string | undefined;
 
@@ -200,6 +213,7 @@ export function PreviewSection({
             key={block.id}
             block={block}
             isSelected={selectedNodeId === block.id}
+            isInspecting={isInspecting}
             onSelect={onSelect}
             contained
             selectedNodeId={selectedNodeId}
@@ -212,6 +226,9 @@ export function PreviewSection({
 
   // Grid sections
   if (section.type === "Grid") {
+    const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+    const colCount = gridColumns.length || 1;
+
     return (
       <div
         role="button"
@@ -220,20 +237,69 @@ export function PreviewSection({
         onKeyDown={(e: React.KeyboardEvent): void => {
           if (e.key === "Enter" || e.key === " ") handleSelect();
         }}
-        style={sectionStyles}
-        className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
+        style={{
+          ...sectionStyles,
+          display: "grid",
+          gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+        }}
+        className={`relative w-full min-h-[80px] border border-dashed border-border/50 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <LayoutGrid className="size-3.5" />
-          <span>Grid</span>
-        </div>
-        <PreviewGridContent
-          section={section}
-          selectedNodeId={selectedNodeId}
-          onSelect={onSelect}
-          onOpenMedia={onOpenMedia}
-        />
+        {gridColumns.length === 0 ? (
+          <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
+            No columns
+          </div>
+        ) : (
+          gridColumns.map((column: BlockInstance, colIndex: number) => {
+            const isColumnSelected = selectedNodeId === column.id;
+            const isLast = colIndex === gridColumns.length - 1;
+            return (
+              <div
+                key={column.id}
+                role="button"
+                tabIndex={0}
+                onClick={(e: React.MouseEvent): void => {
+                  e.stopPropagation();
+                  onSelect(column.id);
+                }}
+                onKeyDown={(e: React.KeyboardEvent): void => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    onSelect(column.id);
+                  }
+                }}
+                className={`p-2 text-left transition cursor-pointer ${
+                  !isLast ? "border-r border-dashed border-border/40" : ""
+                } ${
+                  isColumnSelected
+                    ? isInspecting
+                      ? "bg-blue-500/10"
+                      : "bg-blue-500/5"
+                    : "hover:bg-gray-800/30"
+                }`}
+              >
+                {(column.blocks ?? []).length > 0 && (
+                  <div className="space-y-1.5 pointer-events-none">
+                    {(column.blocks ?? []).map((block: BlockInstance) => (
+                      <PreviewBlockItem
+                        key={block.id}
+                        block={block}
+                        isSelected={selectedNodeId === block.id}
+                        isInspecting={isInspecting}
+                        onSelect={onSelect}
+                        contained
+                        selectedNodeId={selectedNodeId}
+                        sectionId={section.id}
+                        columnId={column.id}
+                        onOpenMedia={onOpenMedia}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     );
   }
@@ -326,6 +392,7 @@ export function PreviewSection({
                   key={block.id}
                   block={block}
                   isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
@@ -373,10 +440,6 @@ export function PreviewSection({
         className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <ListCollapse className="size-3.5" />
-          <span>Accordion</span>
-        </div>
         {section.blocks.length === 0 ? (
           <div className="space-y-1.5">
             {[1, 2, 3].map((n: number) => (
@@ -393,6 +456,7 @@ export function PreviewSection({
                 key={block.id}
                 block={block}
                 isSelected={selectedNodeId === block.id}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 contained
                 selectedNodeId={selectedNodeId}
@@ -422,10 +486,6 @@ export function PreviewSection({
         className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <Quote className="size-3.5" />
-          <span>Testimonials</span>
-        </div>
         {section.blocks.length === 0 ? (
           <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, 3)}, 1fr)` }}>
             {Array.from({ length: Math.min(columns, 3) }).map((_val: unknown, idx: number) => (
@@ -443,6 +503,7 @@ export function PreviewSection({
                 key={block.id}
                 block={block}
                 isSelected={selectedNodeId === block.id}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 contained
                 selectedNodeId={selectedNodeId}
@@ -498,10 +559,6 @@ export function PreviewSection({
         className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <GalleryHorizontal className="size-3.5" />
-          <span>Slideshow</span>
-        </div>
         {section.blocks.length === 0 ? (
           <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[80px]">
             <div className="flex flex-col items-center gap-2">
@@ -520,6 +577,7 @@ export function PreviewSection({
                 key={block.id}
                 block={block}
                 isSelected={selectedNodeId === block.id}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 contained
                 selectedNodeId={selectedNodeId}
@@ -550,10 +608,6 @@ export function PreviewSection({
         className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <Mail className="size-3.5" />
-          <span>Newsletter</span>
-        </div>
         {section.blocks.length > 0 && (
           <div className="space-y-2 mb-3">
             {section.blocks.map((block: BlockInstance) => (
@@ -561,6 +615,7 @@ export function PreviewSection({
                 key={block.id}
                 block={block}
                 isSelected={selectedNodeId === block.id}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 contained
                 selectedNodeId={selectedNodeId}
@@ -599,10 +654,6 @@ export function PreviewSection({
         className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
       >
         {renderSectionActions()}
-        <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          <Send className="size-3.5" />
-          <span>Contact Form</span>
-        </div>
         <div className="space-y-2">
           {fields.map((field: string) => (
             <div key={field} className="rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500 capitalize">
@@ -630,94 +681,11 @@ export function PreviewSection({
       className={`relative w-full rounded-lg px-4 text-left transition cursor-pointer ${selectedRing}`}
     >
       {renderSectionActions()}
-      <div className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-        {section.type}
-      </div>
       {renderBlocks("No blocks")}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Grid preview content (columns side by side)
-// ---------------------------------------------------------------------------
-
-interface PreviewGridContentProps {
-  section: SectionInstance;
-  selectedNodeId: string | null;
-  onSelect: (nodeId: string) => void;
-  onOpenMedia?: (target: MediaReplaceTarget) => void;
-}
-
-function PreviewGridContent({ section, selectedNodeId, onSelect, onOpenMedia }: PreviewGridContentProps): React.ReactNode {
-  const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
-  const gap = section.settings["gap"] as string | undefined;
-  const gapClass = gap === "none" ? "gap-0" : gap === "small" ? "gap-2" : gap === "large" ? "gap-6" : "gap-4";
-
-  if (columns.length === 0) {
-    return (
-      <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 bg-gray-800/30 text-sm text-gray-500">
-        No columns
-      </div>
-    );
-  }
-
-  return (
-    <div className={`grid ${gapClass}`} style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}>
-      {columns.map((column: BlockInstance, colIndex: number) => {
-        const isColumnSelected = selectedNodeId === column.id;
-        return (
-          <div
-            key={column.id}
-            role="button"
-            tabIndex={0}
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onSelect(column.id);
-            }}
-            onKeyDown={(e: React.KeyboardEvent): void => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.stopPropagation();
-                onSelect(column.id);
-              }
-            }}
-            className={`rounded border-2 border-dashed p-2 text-left transition overflow-hidden cursor-pointer ${
-              isColumnSelected
-                ? "border-blue-400 bg-blue-500/5 ring-1 ring-blue-400/30"
-                : "border-border/40 bg-gray-900/20 hover:border-border/60"
-            }`}
-          >
-            <div className="mb-1.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-gray-500">
-              <Columns className="size-3" />
-              <span>Col {colIndex + 1}</span>
-            </div>
-            {(column.blocks ?? []).length === 0 ? (
-              <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
-                Empty
-              </div>
-            ) : (
-              <div className="space-y-1.5 overflow-hidden">
-                {(column.blocks ?? []).map((block: BlockInstance) => (
-                  <PreviewBlockItem
-                    key={block.id}
-                    block={block}
-                    isSelected={selectedNodeId === block.id}
-                    onSelect={onSelect}
-                    contained
-                    selectedNodeId={selectedNodeId}
-                    sectionId={section.id}
-                    columnId={column.id}
-                    onOpenMedia={onOpenMedia}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Block preview item (nested inside section or column preview)
@@ -726,6 +694,7 @@ function PreviewGridContent({ section, selectedNodeId, onSelect, onOpenMedia }: 
 interface PreviewBlockItemProps {
   block: BlockInstance;
   isSelected: boolean;
+  isInspecting?: boolean;
   onSelect: (nodeId: string) => void;
   sectionId: string;
   columnId?: string;
@@ -735,8 +704,12 @@ interface PreviewBlockItemProps {
   onOpenMedia?: (target: MediaReplaceTarget) => void;
 }
 
-function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNodeId, sectionId, columnId, parentBlockId, onOpenMedia }: PreviewBlockItemProps): React.ReactNode {
+function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, contained, selectedNodeId, sectionId, columnId, parentBlockId, onOpenMedia }: PreviewBlockItemProps): React.ReactNode {
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
+  const selectedBorderClass = isInspecting
+    ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
+    : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
+  const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
 
   // ---------------------------------------------------------------------------
   // Section-type blocks (ImageWithText, Hero) — layout-aware preview
@@ -751,19 +724,20 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border-2 text-left text-sm transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
-              : "border-border/30 bg-gray-800/30 hover:border-border/50"
-          }`}
-        >
+        className={`w-full rounded border-2 text-left text-sm transition overflow-hidden ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? `${selectedBorderClass} ${selectedSoftBg}`
+            : "border-border/30 bg-gray-800/30 hover:border-border/50"
+        }`}
+      >
           <div className="p-2.5 overflow-hidden">
             {block.type === "ImageWithText" && (
               <PreviewImageWithTextBlock
                 block={block}
                 selectedNodeId={selectedNodeId}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 sectionId={sectionId}
                 columnId={columnId}
@@ -774,6 +748,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
               <PreviewHeroBlock
                 block={block}
                 selectedNodeId={selectedNodeId}
+                isInspecting={isInspecting}
                 onSelect={onSelect}
                 sectionId={sectionId}
                 columnId={columnId}
@@ -826,7 +801,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -839,9 +814,16 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
     const text = (block.settings["text"] as string) || "Announcement";
     const link = (block.settings["link"] as string) || "";
     return (
-      <div
-        className={`flex items-center gap-2 rounded px-2 py-1 text-sm transition ${
-          isSelected ? "bg-blue-500/10 text-blue-200" : "text-gray-300"
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-sm transition ${
+          isSelected
+            ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
+            : "border-transparent text-gray-300 hover:border-border/30"
         }`}
       >
         <Megaphone className="size-3.5 text-gray-400" />
@@ -849,7 +831,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           {text}
         </span>
         {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
-      </div>
+      </button>
     );
   }
 
@@ -868,7 +850,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -897,7 +879,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -930,7 +912,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -962,7 +944,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
             contained ? "max-w-full" : ""
           } ${
             isSelected
-              ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+              ? `${selectedBorderClass} ${selectedSoftBg}`
               : "border-transparent hover:border-border/30"
           }`}
         >
@@ -1020,7 +1002,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -1028,6 +1010,41 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           <div className="flex items-center gap-2">
             <Play className="size-5 text-gray-500" />
             <span className="text-xs text-gray-500">{ratio}</span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  // AppEmbed block
+  if (block.type === "AppEmbed") {
+    const appId = (block.settings["appId"] as AppEmbedId) || "chatbot";
+    const title = (block.settings["title"] as string) || "";
+    const appLabel = APP_EMBED_OPTIONS.find((option) => option.id === appId)?.label ?? "App";
+
+    return (
+      <button
+        type="button"
+        onClick={(e: React.MouseEvent): void => {
+          e.stopPropagation();
+          onSelect(block.id);
+        }}
+        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+          contained ? "max-w-full" : ""
+        } ${
+          isSelected
+            ? `${selectedBorderClass} ${selectedSoftBg}`
+            : "border-border/30 bg-gray-800/20 hover:border-border/50"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-gray-200">{title || appLabel}</div>
+            <div className="text-[10px] text-gray-500">App embed</div>
+          </div>
+          <div className="flex items-center gap-2 text-gray-500">
+            <AppWindow className="size-5" />
+            <span className="text-[10px] uppercase">{appLabel}</span>
           </div>
         </div>
       </button>
@@ -1051,7 +1068,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -1073,7 +1090,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -1101,7 +1118,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
           contained ? "max-w-full" : ""
         } ${
           isSelected
-            ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+            ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
@@ -1125,7 +1142,7 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
         contained ? "max-w-full" : ""
       } ${
         isSelected
-          ? "border-blue-400 bg-blue-500/10 ring-1 ring-blue-400/30"
+          ? `${selectedBorderClass} ${selectedSoftBg}`
           : "border-border/30 bg-gray-800/20 hover:border-border/50"
       }`}
     >
@@ -1141,13 +1158,14 @@ function PreviewBlockItem({ block, isSelected, onSelect, contained, selectedNode
 interface PreviewSectionBlockProps {
   block: BlockInstance;
   selectedNodeId?: string | null;
+  isInspecting?: boolean;
   onSelect: (nodeId: string) => void;
   sectionId: string;
   columnId?: string;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
 }
 
-function PreviewImageWithTextBlock({ block, selectedNodeId, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
+function PreviewImageWithTextBlock({ block, selectedNodeId, isInspecting = false, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
   const placement = block.settings["desktopImagePlacement"] as string | undefined;
   const imageFirst = placement !== "image-second";
   const children = block.blocks ?? [];
@@ -1169,6 +1187,7 @@ function PreviewImageWithTextBlock({ block, selectedNodeId, onSelect, sectionId,
               key={child.id}
               block={child}
               isSelected={selectedNodeId === child.id}
+              isInspecting={isInspecting}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
@@ -1192,7 +1211,7 @@ function PreviewImageWithTextBlock({ block, selectedNodeId, onSelect, sectionId,
 // Hero block preview (inside columns)
 // ---------------------------------------------------------------------------
 
-function PreviewHeroBlock({ block, selectedNodeId, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
+function PreviewHeroBlock({ block, selectedNodeId, isInspecting = false, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
   const children = block.blocks ?? [];
   const blockImage = block.settings["image"] as string | undefined;
   const heroBgStyle: React.CSSProperties = blockImage
@@ -1211,6 +1230,7 @@ function PreviewHeroBlock({ block, selectedNodeId, onSelect, sectionId, columnId
               key={child.id}
               block={child}
               isSelected={selectedNodeId === child.id}
+              isInspecting={isInspecting}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}

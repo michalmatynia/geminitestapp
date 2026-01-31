@@ -68,4 +68,19 @@ describe("DraftRepository (Prisma)", () => {
     const retrieved = await getDraft("non-existent");
     expect(retrieved).toBeNull();
   });
+
+  it("should handle array fields like catalogIds correctly", async () => {
+    const input = {
+      name: "Draft with Arrays",
+      catalogIds: ["cat1", "cat2"],
+      categoryIds: ["tag1"],
+    };
+
+    const created = await createDraft(input);
+    expect(created.catalogIds).toEqual(["cat1", "cat2"]);
+    expect(created.categoryIds).toEqual(["tag1"]);
+
+    const updated = await updateDraft(created.id, { catalogIds: ["cat3"] });
+    expect(updated?.catalogIds).toEqual(["cat3"]);
+  });
 });

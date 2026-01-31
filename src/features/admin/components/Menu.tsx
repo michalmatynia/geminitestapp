@@ -16,6 +16,7 @@ import {
   GitBranchIcon,
   Plug,
   Box,
+  AppWindow,
 } from "lucide-react";
 import CollapsibleMenu from "@/features/admin/components/CollapsibleMenu";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
@@ -297,19 +298,14 @@ export default function Menu(): React.ReactNode {
         >
           Create Page
         </Button>
-        <Link
-          href="/admin/cms/blocks"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          Blocks
-        </Link>
-        <Link
-          href="/admin/cms/blocks/create"
-          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
-        >
-          Create Block
-        </Link>
       </CollapsibleMenu>
+      <Link
+        href="/admin/app-embeds"
+        className="flex items-center hover:bg-gray-700 p-2 rounded"
+      >
+        <AppWindow className="mr-2" />
+        {!isMenuCollapsed && "App Embeds"}
+      </Link>
       <CollapsibleMenu title="Settings" icon={<SettingsIcon />}>
         <Link
           href="/admin/settings"

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
 import type { BlockDefinition } from "../../types/page-builder";
 import { getAllowedBlockTypes } from "./section-registry";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
 interface BlockPickerProps {
   sectionType: string;
@@ -12,7 +15,19 @@ interface BlockPickerProps {
 
 export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
-  const blockTypes = getAllowedBlockTypes(sectionType);
+  const settingsQuery = useSettingsMap();
+  const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
+    if (!settingsQuery.data) return [];
+    return parseJsonSetting<AppEmbedId[]>(
+      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      []
+    );
+  }, [settingsQuery.data]);
+  const hasAppEmbeds = enabledEmbeds.length > 0;
+  const blockTypes = getAllowedBlockTypes(sectionType).filter((def: BlockDefinition) => {
+    if (def.type !== "AppEmbed") return true;
+    return hasAppEmbeds;
+  });
 
   const handleSelect = useCallback(
     (type: string) => {

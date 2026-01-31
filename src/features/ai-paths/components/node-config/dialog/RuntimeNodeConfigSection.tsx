@@ -12,7 +12,7 @@ type RuntimeNodeConfigSectionProps = {
 export function RuntimeNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: RuntimeNodeConfigSectionProps) {
+}: RuntimeNodeConfigSectionProps): React.JSX.Element {
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? "auto";
@@ -24,7 +24,7 @@ export function RuntimeNodeConfigSection({
         <Label className="text-xs text-gray-400">Execution cache</Label>
         <Select
           value={cacheMode}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               runtime: {
                 ...runtimeConfig,

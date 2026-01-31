@@ -64,6 +64,25 @@ describe("productService", () => {
     });
   });
 
+  describe("getProducts", () => {
+    it("should return all products when no filters are provided", async () => {
+      await createMockProduct({ name_en: "Product 1" });
+      await createMockProduct({ name_en: "Product 2" });
+
+      const products = await productService.getProducts({});
+      expect(products.length).toBe(2);
+    });
+
+    it("should filter products by search term", async () => {
+      await createMockProduct({ name_en: "Apple" });
+      await createMockProduct({ name_en: "Banana" });
+
+      const products = await productService.getProducts({ search: "Apple" });
+      expect(products.length).toBe(1);
+      expect(products[0].name_en).toBe("Apple");
+    });
+  });
+
   describe("createProduct", () => {
     it("should successfully create a product from FormData", async () => {
       const formData = new FormData();

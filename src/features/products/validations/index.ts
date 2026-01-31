@@ -4,9 +4,11 @@ import { z } from 'zod';
 const emptyStringToUndefined = z.preprocess(
   (value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    return value;
+    const num = Number(value);
+    if (isNaN(num)) return undefined;
+    return num;
   },
-  z.coerce.number().int()
+  z.number().int().optional()
 );
 
 const optionalSku = z.preprocess(
@@ -15,7 +17,7 @@ const optionalSku = z.preprocess(
     if (typeof value === "string" && value.trim() === "") return undefined;
     return value;
   },
-  z.string().trim().min(1, { message: "SKU is required" })
+  z.string().trim().min(1, { message: "SKU is required" }).optional()
 );
 
 const imageLinksSchema = z.preprocess((value: unknown): string[] => {
@@ -67,28 +69,28 @@ const productBaseSchema = z.object({
   name_en: z.string().nullish(),
   name_pl: z.string().nullish(),
   name_de: z.string().nullish(),
-  price: emptyStringToUndefined.nullish(),
+  price: emptyStringToUndefined,
   description_en: z.string().nullish(),
   description_pl: z.string().nullish(),
   description_de: z.string().nullish(),
   supplierName: z.string().nullish(),
   supplierLink: z.string().nullish(),
   priceComment: z.string().nullish(),
-  stock: emptyStringToUndefined.nullish(),
-  sizeLength: emptyStringToUndefined.nullish(),
-  sizeWidth: emptyStringToUndefined.nullish(),
-  weight: emptyStringToUndefined.nullish(),
-  length: emptyStringToUndefined.nullish(),
+  stock: emptyStringToUndefined,
+  sizeLength: emptyStringToUndefined,
+  sizeWidth: emptyStringToUndefined,
+  weight: emptyStringToUndefined,
+  length: emptyStringToUndefined,
   imageLinks: imageLinksSchema.optional(),
   parameters: parametersSchema.optional(),
 });
 
 export const productCreateSchema = productBaseSchema.extend({
-  sku: optionalSku.optional(),
+  sku: optionalSku,
 });
 
 export const productUpdateSchema = productBaseSchema.extend({
-  sku: optionalSku.optional(),
+  sku: optionalSku,
 });
 
 export type ProductCreateData = z.infer<typeof productCreateSchema>;

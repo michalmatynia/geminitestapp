@@ -1,17 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("crypto")>();
+  return {
+    ...actual,
+    randomUUID: () => "mock-uuid",
+  };
+});
+
 import { processAgentQueue, stopAgentQueue } from "@/features/jobs/workers/agentQueue";
 import prisma from "@/shared/lib/db/prisma";
 import { runAgentControlLoop, logAgentAudit } from "@/features/agent-runtime/server";
 
-vi.mock("@/shared/lib/db/prisma", () => ({
-  default: {
-    chatbotAgentRun: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-    },
-  },
-}));
+vi.mock("@/shared/lib/db/prisma", () => {
+  const mockChatbotAgentRun = {
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+  };
+  return {
+    default: new Proxy({}, {
+      get: (target, prop) => {
+        if (prop === "chatbotAgentRun") return mockChatbotAgentRun;
+        return undefined;
+      },
+      has: (target, prop) => prop === "chatbotAgentRun",
+    }),
+  };
+});
 
 vi.mock("@/features/agent-runtime/server", () => ({
   runAgentControlLoop: vi.fn(),

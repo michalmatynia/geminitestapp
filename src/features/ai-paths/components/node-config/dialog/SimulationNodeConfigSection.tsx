@@ -18,7 +18,7 @@ export function SimulationNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
   handleRunSimulation,
-}: SimulationNodeConfigSectionProps) {
+}: SimulationNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "simulation") return null;
 
   const simulationConfig = selectedNode.config?.simulation ?? {
@@ -37,7 +37,7 @@ export function SimulationNodeConfigSection({
         <Label className="text-xs text-gray-400">Collection Type</Label>
         <Select
           value={simulationConfig.entityType ?? "products"}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               simulation: {
                 ...simulationConfig,
@@ -50,7 +50,7 @@ export function SimulationNodeConfigSection({
             <SelectValue placeholder="Select collection" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
-            {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+            {DB_COLLECTION_OPTIONS.filter((opt: { value: string }): boolean => opt.value !== "custom").map((option: { label: string; value: string }): React.JSX.Element => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -63,7 +63,7 @@ export function SimulationNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={simulationEntityValue}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               simulation: {
                 ...simulationConfig,
@@ -80,7 +80,7 @@ export function SimulationNodeConfigSection({
       <Button
         className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
         type="button"
-        onClick={() => handleRunSimulation(selectedNode)}
+        onClick={(): void => handleRunSimulation(selectedNode)}
       >
         Run Simulation
       </Button>

@@ -41,6 +41,31 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
+// Polyfill for global.crypto.randomUUID if missing (for JSDOM)
+if (!global.crypto) {
+  // @ts-ignore
+  global.crypto = {};
+}
+if (!global.crypto.randomUUID) {
+  // @ts-ignore
+  global.crypto.randomUUID = () => "mock-random-uuid";
+}
+
+// Polyfill for window.matchMedia (GSAP needs this)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 /**
  * MSW Server Setup for Vitest
  * Establishes request mocking for all tests

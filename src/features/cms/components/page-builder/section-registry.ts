@@ -42,7 +42,7 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
   Announcement: {
@@ -327,6 +327,23 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "iconColor", label: "Color", type: "color", defaultValue: "#ffffff" },
     ],
   },
+  AppEmbed: {
+    type: "AppEmbed",
+    label: "App embed",
+    icon: "AppWindow",
+    defaultSettings: {
+      appId: "chatbot",
+      title: "",
+      embedUrl: "",
+      height: 420,
+    },
+    settingsSchema: [
+      { key: "appId", label: "App", type: "select", options: [], defaultValue: "chatbot" },
+      { key: "title", label: "Title", type: "text", defaultValue: "" },
+      { key: "embedUrl", label: "Embed URL (iframe)", type: "text", defaultValue: "" },
+      { key: "height", label: "Height (px)", type: "number", defaultValue: 420 },
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -338,7 +355,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "AnnouncementBar",
     label: "Announcement bar",
     icon: "Megaphone",
-    allowedBlockTypes: ["Announcement", "Text", "Button", "Icon"],
+    allowedBlockTypes: ["Announcement", "Text", "Button", "Icon", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-2",
       paddingTop: 12,
@@ -366,7 +383,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "ImageWithText",
     label: "Image with text",
     icon: "ImageIcon",
-    allowedBlockTypes: ["Heading", "Text", "Button"],
+    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "medium",
       desktopImageWidth: "medium",
@@ -469,7 +486,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "RichText",
     label: "Rich text",
     icon: "FileText",
-    allowedBlockTypes: ["Heading", "Text", "Button"],
+    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -521,7 +538,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Hero",
     label: "Hero banner",
     icon: "LayoutTemplate",
-    allowedBlockTypes: ["Heading", "Text", "Button"],
+    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "large",
       colorScheme: "scheme-1",
@@ -552,7 +569,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Accordion",
     label: "Accordion",
     icon: "ListCollapse",
-    allowedBlockTypes: ["Heading", "Text"],
+    allowedBlockTypes: ["Heading", "Text", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -569,7 +586,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Testimonials",
     label: "Testimonials",
     icon: "Quote",
-    allowedBlockTypes: ["Heading", "Text", "Image"],
+    allowedBlockTypes: ["Heading", "Text", "Image", "AppEmbed"],
     defaultSettings: {
       layout: "grid",
       columns: 3,
@@ -641,7 +658,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["Image", "Heading", "Text", "Button"],
+    allowedBlockTypes: ["Image", "Heading", "Text", "Button", "AppEmbed"],
     defaultSettings: {
       transition: "fade",
       autoplaySpeed: 5000,
@@ -682,7 +699,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Newsletter",
     label: "Newsletter",
     icon: "Mail",
-    allowedBlockTypes: ["Heading", "Text"],
+    allowedBlockTypes: ["Heading", "Text", "AppEmbed"],
     defaultSettings: {
       buttonText: "Subscribe",
       placeholder: "Enter your email",

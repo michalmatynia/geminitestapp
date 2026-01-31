@@ -65,12 +65,6 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const pageQuery = useCmsPage(selectedPageId || undefined);
 
   useEffect(() => {
-    if (pagesQuery.data) {
-      dispatch({ type: "SET_PAGES", pages: pagesQuery.data });
-    }
-  }, [pagesQuery.data, dispatch]);
-
-  useEffect(() => {
     if (!pagesQuery.data) return;
     if (selectedPageId && !pagesQuery.data.some((page) => page.id === selectedPageId)) {
       setSelectedPageId("");
@@ -79,10 +73,11 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   }, [pagesQuery.data, selectedPageId, dispatch]);
 
   useEffect(() => {
-    if (pageQuery.data) {
-      dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
-    }
-  }, [pageQuery.data, dispatch]);
+    if (!pageQuery.data) return;
+    if (pageQuery.data.id !== selectedPageId) return;
+    if (state.currentPage?.id === pageQuery.data.id) return;
+    dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
+  }, [pageQuery.data, selectedPageId, state.currentPage?.id, dispatch]);
 
   useEffect(() => {
     if (selectedPageId) return;
@@ -99,12 +94,6 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   }, [selectedPageId, state.currentPage?.id, pagesQuery.data, preferencesQuery.data?.cmsLastPageId]);
 
   useEffect(() => {
-    if (state.currentPage?.id && state.currentPage.id !== selectedPageId) {
-      setSelectedPageId(state.currentPage.id);
-    }
-  }, [state.currentPage?.id, selectedPageId]);
-
-  useEffect(() => {
     if (!selectedPageId) return;
     if (selectedPageId === preferencesQuery.data?.cmsLastPageId) {
       lastSavedPageIdRef.current = selectedPageId;
@@ -116,7 +105,7 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   }, [selectedPageId, preferencesQuery.data?.cmsLastPageId, updatePreferencesMutation]);
 
   const handlePageChange = useCallback((value: string) => {
-    setSelectedPageId(value);
+    setSelectedPageId((prev) => (prev === value ? prev : value));
   }, []);
 
   return (
@@ -138,7 +127,7 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
           <SelectValue placeholder="Select a page..." />
         </SelectTrigger>
         <SelectContent>
-          {state.pages.map((page: PageSummary) => (
+          {(pagesQuery.data ?? []).map((page: PageSummary) => (
             <SelectItem key={page.id} value={page.id}>
               {page.name}
             </SelectItem>

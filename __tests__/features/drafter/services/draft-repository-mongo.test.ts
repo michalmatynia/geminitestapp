@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { validId } = vi.hoisted(() => ({
-  validId: "507f1f77bcf86cd799439011",
-}));
+const validId = "507f1f77bcf86cd799439011";
 
-vi.mock("crypto", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("crypto")>();
+vi.mock("crypto", () => {
+  const mockRandomUUID = () => "507f1f77bcf86cd799439011";
   return {
-    ...actual,
-    randomUUID: vi.fn().mockReturnValue(validId),
-  };
-});
-
-vi.mock("mongodb", async () => {
-  const actual = await vi.importActual("mongodb");
-  return {
-    ...actual,
-    ObjectId: vi.fn().mockImplementation((id: string) => ({
-      toString: () => id,
-      equals: (other: any) => other.toString() === id,
-    })),
+    randomUUID: mockRandomUUID,
+    default: {
+      randomUUID: mockRandomUUID,
+    },
   };
 });
 
@@ -31,7 +20,17 @@ import {
   deleteDraft 
 } from "@/features/drafter/services/draft-repository";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/server";
+
+vi.mock("mongodb", async () => {
+  const actual = await vi.importActual("mongodb");
+  return {
+    ...actual,
+    ObjectId: vi.fn().mockImplementation((id: string) => ({
+      toString: () => id,
+      equals: (other: any) => other.toString() === id,
+    })),
+  };
+});
 
 vi.mock("@/shared/lib/db/mongo-client", () => ({
   getMongoDb: vi.fn(),

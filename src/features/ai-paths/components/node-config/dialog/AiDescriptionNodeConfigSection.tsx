@@ -12,7 +12,7 @@ type AiDescriptionNodeConfigSectionProps = {
 export function AiDescriptionNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: AiDescriptionNodeConfigSectionProps) {
+}: AiDescriptionNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "ai_description") return null;
 
   const descriptionConfig = selectedNode.config?.description ?? {
@@ -31,7 +31,7 @@ export function AiDescriptionNodeConfigSection({
               ? "text-emerald-200 hover:bg-emerald-500/10"
               : "text-gray-300 hover:bg-muted/50"
           }`}
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               description: {
                 ...descriptionConfig,
@@ -52,7 +52,7 @@ export function AiDescriptionNodeConfigSection({
               ? "text-emerald-200 hover:bg-emerald-500/10"
               : "text-gray-300 hover:bg-muted/50"
           }`}
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               description: {
                 ...descriptionConfig,

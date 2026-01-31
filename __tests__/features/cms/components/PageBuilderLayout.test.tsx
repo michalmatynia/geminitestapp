@@ -28,6 +28,18 @@ vi.mock("@/features/cms/components/page-builder/ComponentSettingsPanel", () => (
   ComponentSettingsPanel: () => <div data-testid="component-settings-panel">Settings</div>,
 }));
 
+vi.mock("@/features/cms/components/page-builder/ThemeSettingsPanel", () => ({
+  ThemeSettingsPanel: () => <div data-testid="theme-settings-panel">Theme</div>,
+}));
+
+vi.mock("@/features/cms/components/page-builder/MenuSettingsPanel", () => ({
+  MenuSettingsPanel: () => <div data-testid="menu-settings-panel">Menu</div>,
+}));
+
+vi.mock("@/features/cms/components/page-builder/AppEmbedsPanel", () => ({
+  AppEmbedsPanel: () => <div data-testid="app-embeds-panel">App Embeds</div>,
+}));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -56,8 +68,8 @@ describe("PageBuilderLayout Component", () => {
   it("should toggle left panel", () => {
     render(<PageBuilderLayout />, { wrapper });
     
-    // Default: visible
-    const leftPanel = screen.getByTestId("component-tree-panel").parentElement!;
+    // The animated container is the grandparent of the tree panel's content wrapper
+    const leftPanel = screen.getByTestId("component-tree-panel").parentElement!.parentElement!;
     expect(leftPanel).toHaveClass("w-72");
     
     const hideBtn = screen.getByLabelText("Hide left panel");
@@ -73,11 +85,15 @@ describe("PageBuilderLayout Component", () => {
   it("should toggle right panel", () => {
     render(<PageBuilderLayout />, { wrapper });
     
-    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!;
+    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!.parentElement!;
     expect(rightPanel).toHaveClass("w-80");
     
     const hideBtn = screen.getByLabelText("Hide right panel");
     fireEvent.click(hideBtn);
     expect(rightPanel).toHaveClass("w-0");
+    
+    const showBtn = screen.getByLabelText("Show right panel");
+    fireEvent.click(showBtn);
+    expect(rightPanel).toHaveClass("w-80");
   });
 });

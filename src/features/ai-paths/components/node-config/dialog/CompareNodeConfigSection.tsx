@@ -15,7 +15,7 @@ type CompareNodeConfigSectionProps = {
 export function CompareNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: CompareNodeConfigSectionProps) {
+}: CompareNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "compare") return null;
 
   const compareConfig = selectedNode.config?.compare ?? {
@@ -31,7 +31,7 @@ export function CompareNodeConfigSection({
         <Label className="text-xs text-gray-400">Operator</Label>
         <Select
           value={compareConfig.operator}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               compare: {
                 ...compareConfig,
@@ -63,7 +63,7 @@ export function CompareNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={compareConfig.compareTo}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               compare: {
                 ...compareConfig,
@@ -82,7 +82,7 @@ export function CompareNodeConfigSection({
               ? "text-emerald-200 hover:bg-emerald-500/10"
               : "text-gray-300 hover:bg-muted/50"
           }`}
-          onClick={() =>
+          onClick={(): void =>
             updateSelectedNodeConfig({
               compare: {
                 ...compareConfig,
@@ -99,7 +99,7 @@ export function CompareNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={compareConfig.message ?? "Comparison failed"}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               compare: {
                 ...compareConfig,

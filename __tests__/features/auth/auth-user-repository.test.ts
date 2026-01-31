@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { findAuthUserByEmail, findAuthUserById } from "@/features/auth/services/auth-user-repository";
+import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from "@/features/auth/services/auth-user-repository";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 
 vi.mock("@/shared/lib/db/mongo-client", () => ({
@@ -84,6 +84,17 @@ describe("Auth User Repository", () => {
       // but we can check it was called.
       expect(mockCollection.findOne).toHaveBeenCalled();
       expect(result?.id).toBe(validId);
+    });
+
+    it("returns null for invalid ObjectId", async () => {
+      const result = await findAuthUserById("invalid-id");
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("normalizeAuthEmail", () => {
+    it("trims and lowercases email", () => {
+      expect(normalizeAuthEmail("  Test@Example.COM  ")).toBe("test@example.com");
     });
   });
 });

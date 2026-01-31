@@ -4,7 +4,6 @@
 
 
 
-
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import type {
   AiNode,
@@ -28,7 +27,7 @@ export function PollNodeConfigSection({
   edges,
   runtimeState,
   updateSelectedNodeConfig,
-}: PollNodeConfigSectionProps) {
+}: PollNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "poll") return null;
 
   const defaultQuery: DbQueryConfig = {
@@ -60,11 +59,11 @@ export function PollNodeConfigSection({
   };
   const queryConfig = resolvedPollConfig.dbQuery!;
   const collectionOption = DB_COLLECTION_OPTIONS.some(
-    (option) => option.value === queryConfig.collection
+    (option: { label: string; value: string }) => option.value === queryConfig.collection
   )
     ? queryConfig.collection
     : "custom";
-  const updatePollConfig = (patch: Partial<typeof resolvedPollConfig>) =>
+  const updatePollConfig = (patch: Partial<PollConfig>): void =>
     updateSelectedNodeConfig({
       poll: {
         ...resolvedPollConfig,
@@ -72,9 +71,9 @@ export function PollNodeConfigSection({
       },
     });
 
-  const connections = edges.filter((edge) => edge.to === selectedNode.id);
+  const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
   const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
-    (acc, input) => {
+    (acc: Record<string, unknown>, input: string): Record<string, unknown> => {
       const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
       const directValue = runtimeInputs[input];
       if (directValue !== undefined) {
@@ -82,9 +81,9 @@ export function PollNodeConfigSection({
         return acc;
       }
       const matchingEdges = connections.filter(
-        (edge) => edge.toPort === input || !edge.toPort
+        (edge: Edge): boolean => edge.toPort === input || !edge.toPort
       );
-      const merged = matchingEdges.reduce<unknown>((current, edge) => {
+      const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
         const fromOutput = runtimeState.outputs[edge.from];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
@@ -118,7 +117,7 @@ export function PollNodeConfigSection({
         <Label className="text-xs text-gray-400">Mode</Label>
         <Select
           value={resolvedPollConfig.mode!}
-          onValueChange={(value) =>
+          onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as "job" | "database" })
           }
         >
@@ -139,7 +138,7 @@ export function PollNodeConfigSection({
             step="100"
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={resolvedPollConfig.intervalMs}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
                 intervalMs: toNumber(
                   event.target.value,
@@ -156,7 +155,7 @@ export function PollNodeConfigSection({
             step="1"
             className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={resolvedPollConfig.maxAttempts}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
                 maxAttempts: toNumber(
                   event.target.value,
@@ -179,7 +178,7 @@ export function PollNodeConfigSection({
               <Label className="text-xs text-gray-400">Provider</Label>
               <Select
                 value={queryConfig.provider}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -201,7 +200,7 @@ export function PollNodeConfigSection({
               <Label className="text-xs text-gray-400">Collection</Label>
               <Select
                 value={collectionOption}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -214,7 +213,7 @@ export function PollNodeConfigSection({
                   <SelectValue placeholder="Select collection" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                  {DB_COLLECTION_OPTIONS.map((option) => (
+                  {DB_COLLECTION_OPTIONS.map((option: { label: string; value: string }): React.JSX.Element => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -230,7 +229,7 @@ export function PollNodeConfigSection({
               <Input
                 className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.collection}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -255,7 +254,7 @@ export function PollNodeConfigSection({
               <Label className="text-xs text-gray-400">Query mode</Label>
               <Select
                 value={queryConfig.mode}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -277,7 +276,7 @@ export function PollNodeConfigSection({
               <Label className="text-xs text-gray-400">ID type</Label>
               <Select
                 value={queryConfig.idType}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -302,7 +301,7 @@ export function PollNodeConfigSection({
                 <Label className="text-xs text-gray-400">Preset</Label>
                 <Select
                   value={queryConfig.preset}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string): void =>
                     updatePollConfig({
                       dbQuery: {
                         ...queryConfig,
@@ -328,7 +327,7 @@ export function PollNodeConfigSection({
                   className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                   value={queryConfig.field}
                   disabled={queryConfig.preset !== "by_field"}
-                  onChange={(event) =>
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     updatePollConfig({
                       dbQuery: {
                         ...queryConfig,
@@ -346,7 +345,7 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.queryTemplate}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -368,7 +367,7 @@ export function PollNodeConfigSection({
                 step="1"
                 className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.limit}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -382,12 +381,11 @@ export function PollNodeConfigSection({
               <span>Single result</span>
               <Button
                 type="button"
-                className={`rounded border px-3 py-1 text-xs ${
-                  queryConfig.single
+                className={`rounded border px-3 py-1 text-xs ${ queryConfig.single
                     ? "text-emerald-200 hover:bg-emerald-500/10"
                     : "text-gray-300 hover:bg-muted/50"
                 }`}
-                onClick={() =>
+                onClick={(): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -406,7 +404,7 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.sort}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -421,7 +419,7 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.projection}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -438,7 +436,7 @@ export function PollNodeConfigSection({
               <Input
                 className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={resolvedPollConfig.successPath}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successPath: event.target.value })
                 }
               />
@@ -447,7 +445,7 @@ export function PollNodeConfigSection({
               <Label className="text-xs text-gray-400">Success operator</Label>
               <Select
                 value={resolvedPollConfig.successOperator ?? "equals"}
-                onValueChange={(value) =>
+                onValueChange={(value: string): void =>
                   updatePollConfig({
                     successOperator:
                       value as "truthy" | "equals" | "contains" | "notEquals",
@@ -472,7 +470,7 @@ export function PollNodeConfigSection({
               <Input
                 className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={resolvedPollConfig.successValue}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successValue: event.target.value })
                 }
               />
@@ -482,7 +480,7 @@ export function PollNodeConfigSection({
               <Input
                 className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={resolvedPollConfig.resultPath}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ resultPath: event.target.value })
                 }
               />

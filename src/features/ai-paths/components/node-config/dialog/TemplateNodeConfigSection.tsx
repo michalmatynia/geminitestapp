@@ -13,7 +13,7 @@ type TemplateNodeConfigSectionProps = {
 export function TemplateNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: TemplateNodeConfigSectionProps) {
+}: TemplateNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "template") return null;
 
   const templateConfig: TemplateConfig = selectedNode.config?.template ?? {
@@ -27,7 +27,7 @@ export function TemplateNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={templateConfig.template}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               template: { template: event.target.value },
             })

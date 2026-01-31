@@ -122,7 +122,7 @@ export function CanvasBoard({
   onPointerMoveNode,
   onPointerUpNode,
   onStartConnection,
-  onCompleteConnection,
+  _onCompleteConnection,
   onDrop,
   onDragOver,
   onPanStart,
@@ -173,7 +173,7 @@ export function CanvasBoard({
     }
   };
 
-  const buildDiffLines = (prev: string, next: string, limit = 120): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
+  const buildDiffLines = (prev: string, next: string, limit: number = 120): { lines: Array<{ type: "add" | "remove" | "same"; text: string }>; truncated: boolean } => {
     const prevLines = prev.split("\n");
     const nextLines = next.split("\n");
     const max = Math.max(prevLines.length, nextLines.length);
@@ -868,7 +868,7 @@ export function CanvasBoard({
                     }}
                     onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey("input", node.id, input))}
                     onMouseLeave={() =>
-                      setHoveredConnectorKey((prev) =>
+                      setHoveredConnectorKey((prev: string | null) =>
                         prev === buildConnectorKey("input", node.id, input) ? null : prev
                       )
                     }
@@ -1017,13 +1017,12 @@ export function CanvasBoard({
                                 onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) =>
                                   onStartConnection(event, node, output)
                                 }
-                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                  event.stopPropagation();
-                                  setPinnedConnectorKey((prev) =>
-                                    prev === connectorKey ? null : connectorKey
-                                  );
-                                }}
-                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                                                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                                                    event.stopPropagation();
+                                                                    setPinnedConnectorKey((prev: string | null) =>
+                                                                      prev === connectorKey ? null : connectorKey
+                                                                    );
+                                                                  }}                                onContextMenu={(event: React.MouseEvent<HTMLButtonElement>) => {
                                   event.preventDefault();
                                   event.stopPropagation();
                                   onDisconnectPort("output", node.id, output);

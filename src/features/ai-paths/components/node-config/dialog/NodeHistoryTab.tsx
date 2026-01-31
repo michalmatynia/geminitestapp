@@ -1,5 +1,5 @@
 "use client";
-import type { AiNode, RuntimeHistoryEntry, RuntimeState } from "@/features/ai-paths/lib";
+import type { AiNode, RuntimeState } from "@/features/ai-paths/lib";
 import { RunHistoryEntries } from "@/features/ai-paths/components/RunHistoryEntries";
 
 type NodeHistoryTabProps = {
@@ -10,7 +10,7 @@ type NodeHistoryTabProps = {
 export function NodeHistoryTab({
   selectedNode,
   runtimeState,
-}: NodeHistoryTabProps) {
+}: NodeHistoryTabProps): React.JSX.Element {
   const history = (runtimeState.history?.[selectedNode.id] ?? []);
   return (
     <RunHistoryEntries

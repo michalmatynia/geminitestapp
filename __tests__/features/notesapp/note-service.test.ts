@@ -72,6 +72,36 @@ describe("NoteService", () => {
       expect(notes[0]!.content.length).toBeLessThan(500);
       expect(notes[0]!.content.endsWith("...")).toBe(true);
     });
+
+    it("searches notes by title or content", async () => {
+      await noteService.create({ title: "Specific Title", content: "..." });
+      await noteService.create({ title: "...", content: "Specific Content" });
+      await noteService.create({ title: "Other", content: "..." });
+
+      const byTitle = await noteService.getAll({ search: "Specific Title" });
+      expect(byTitle).toHaveLength(1);
+
+      const byContent = await noteService.getAll({ search: "Specific Content" });
+      expect(byContent).toHaveLength(1);
+    });
+  });
+
+  describe("Notebook Management", () => {
+    it("creates and retrieves notebooks", async () => {
+      const nb = await noteService.createNotebook({ name: "Work" });
+      expect(nb.name).toBe("Work");
+
+      const all = await noteService.getAllNotebooks();
+      expect(all.some(n => n.id === nb.id)).toBe(true);
+    });
+
+    it("gets or creates default notebook", async () => {
+      const nb = await noteService.getOrCreateDefaultNotebook();
+      expect(nb.name).toBe("Default");
+
+      const sameNb = await noteService.getOrCreateDefaultNotebook();
+      expect(sameNb.id).toBe(nb.id);
+    });
   });
 
   describe("Relation Syncing", () => {

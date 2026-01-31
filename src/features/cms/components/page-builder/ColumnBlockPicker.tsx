@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
 import type { BlockDefinition } from "../../types/page-builder";
 import { getColumnAllowedBlockTypes } from "./section-registry";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];
 
@@ -13,7 +16,19 @@ interface ColumnBlockPickerProps {
 
 export function ColumnBlockPicker({ onSelect }: ColumnBlockPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
-  const allTypes = getColumnAllowedBlockTypes();
+  const settingsQuery = useSettingsMap();
+  const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
+    if (!settingsQuery.data) return [];
+    return parseJsonSetting<AppEmbedId[]>(
+      settingsQuery.data.get(APP_EMBED_SETTING_KEY),
+      []
+    );
+  }, [settingsQuery.data]);
+  const hasAppEmbeds = enabledEmbeds.length > 0;
+  const allTypes = getColumnAllowedBlockTypes().filter((def: BlockDefinition) => {
+    if (def.type !== "AppEmbed") return true;
+    return hasAppEmbeds;
+  });
   const elementTypes = allTypes.filter((d: BlockDefinition) => !SECTION_BLOCK_TYPES.includes(d.type));
   const sectionTypes = allTypes.filter((d: BlockDefinition) => SECTION_BLOCK_TYPES.includes(d.type));
 

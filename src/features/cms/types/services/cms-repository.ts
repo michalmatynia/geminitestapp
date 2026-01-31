@@ -1,4 +1,4 @@
-import type { Block, Page, Slug, PageComponent, PageStatus, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "@/features/cms/types";
+import type { Page, Slug, PageComponent, PageStatus, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "@/features/cms/types";
 
 export interface PageUpdateData {
   name?: string | undefined;
@@ -14,14 +14,6 @@ export interface PageUpdateData {
 }
 
 export type CmsRepository = {
-  // Blocks
-  getBlocks(): Promise<Block[]>;
-  getBlockById(id: string): Promise<Block | null>;
-  getBlockByName(name: string): Promise<Block | null>;
-  createBlock(data: { name: string; content: unknown }): Promise<Block>;
-  updateBlock(id: string, data: { name?: string; content?: unknown }): Promise<Block | null>;
-  deleteBlock(id: string): Promise<Block | null>;
-
   // Pages
   getPages(): Promise<Page[]>;
   getPageById(id: string): Promise<Page | null>;
@@ -43,8 +35,6 @@ export type CmsRepository = {
   // Relationships
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
   removeSlugFromPage(pageId: string, slugId: string): Promise<void>;
-  addBlockToPage(pageId: string, blockId: string): Promise<void>;
-  removeBlockFromPage(pageId: string, blockId: string): Promise<void>;
 
   // Themes
   getThemes(): Promise<CmsTheme[]>;

@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { pollQueue, resetProductAiJobQueue } from "@/features/jobs/workers/productAiQueue";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import { generateProductDescription, translateProduct, getProductRepository } from "@/features/products/server";
 import { ErrorSystem } from "@/features/observability/server";
+import OpenAI from "openai";
+
+vi.mock("openai");
 
 vi.mock("@/features/jobs/services/product-ai-job-repository", () => ({
   getProductAiJobRepository: vi.fn(),
@@ -38,11 +41,20 @@ describe("Product AI Job Queue Worker", () => {
     updateProduct: vi.fn(),
   };
 
+  const mockOpenAI = {
+    chat: {
+      completions: {
+        create: vi.fn(),
+      },
+    },
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetProductAiJobQueue();
     vi.mocked(getProductAiJobRepository).mockResolvedValue(mockJobRepo as any);
     vi.mocked(getProductRepository).mockResolvedValue(mockProductRepo as any);
+    vi.mocked(OpenAI).mockImplementation(() => mockOpenAI as any);
   });
 
   describe("pollQueue", () => {
@@ -95,6 +107,30 @@ describe("Product AI Job Queue Worker", () => {
       expect(translateProduct).toHaveBeenCalled();
       expect(mockProductRepo.updateProduct).toHaveBeenCalledWith("p2", expect.objectContaining({ name_pl: "Name PL" }));
       expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-2", expect.objectContaining({ status: "completed" }));
+    });
+
+    it("processes a graph_model job", async () => {
+      const mockJob = {
+        id: "job-4",
+        type: "graph_model",
+        status: "pending",
+        productId: "p4",
+        payload: { prompt: "Tell me a joke", vision: false },
+        createdAt: new Date(),
+      };
+      mockJobRepo.claimNextPendingJob.mockResolvedValue(mockJob);
+      
+      mockOpenAI.chat.completions.create.mockResolvedValue({
+        choices: [{ message: { content: "Haha" } }],
+      });
+
+      await pollQueue();
+
+      expect(mockOpenAI.chat.completions.create).toHaveBeenCalled();
+      expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-4", expect.objectContaining({ 
+        status: "completed",
+        result: expect.objectContaining({ result: "Haha" })
+      }));
     });
 
     it("handles errors and captures exception", async () => {

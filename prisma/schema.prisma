@@ -526,7 +526,6 @@ model Page {
   theme          CmsTheme?       @relation(fields: [themeId], references: [id], onDelete: SetNull)
   slugs          PageSlug[]
   components     PageComponent[]
-  blocks         PageBlock[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
@@ -551,26 +550,6 @@ model PageComponent {
   page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model Block {
-  id        String      @id @default(cuid())
-  name      String      @unique
-  content   Json
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  pages     PageBlock[]
-}
-
-model PageBlock {
-  pageId     String
-  blockId    String
-  assignedAt DateTime @default(now())
-
-  page  Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  block Block @relation(fields: [blockId], references: [id], onDelete: Cascade)
-
-  @@id([pageId, blockId])
 }
 
 model Note {

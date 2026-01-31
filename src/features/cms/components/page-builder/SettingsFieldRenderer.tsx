@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Input,
   Label,
@@ -24,6 +24,7 @@ import { useCmsSlugs } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import type { Slug } from "../../types";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
+import { useThemeSettings } from "./ThemeSettingsContext";
 
 const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
   { label: "Inter", value: "Inter, sans-serif" },
@@ -81,6 +82,11 @@ export function SettingsFieldRenderer({
   value,
   onChange,
 }: SettingsFieldRendererProps): React.ReactNode {
+  const { theme } = useThemeSettings();
+  const colorSchemeOptions = useMemo<SettingsFieldOption[]>(() => {
+    if (theme.colorSchemes.length === 0) return COLOR_SCHEME_OPTIONS;
+    return theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }));
+  }, [theme.colorSchemes]);
   const handleChange = useCallback(
     (newValue: unknown) => {
       onChange(field.key, newValue);
@@ -226,7 +232,7 @@ export function SettingsFieldRenderer({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {COLOR_SCHEME_OPTIONS.map((opt: SettingsFieldOption) => (
+            {colorSchemeOptions.map((opt: SettingsFieldOption) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>

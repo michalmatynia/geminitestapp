@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 
@@ -33,6 +33,7 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
   Divider: Minus,
   SocialLinks: Share2,
   Icon: Smile,
+  AppEmbed: AppWindow,
 };
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];

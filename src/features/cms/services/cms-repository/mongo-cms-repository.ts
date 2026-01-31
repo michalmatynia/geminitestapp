@@ -5,20 +5,11 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
 import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Block, Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
+import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
 
-const blocksCollection = "cms_blocks";
 const pagesCollection = "cms_pages";
 const slugsCollection = "cms_slugs";
 const themesCollection = "cms_themes";
-
-interface BlockDocument {
-  id: string;
-  name: string;
-  content: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 interface PageDocument {
   id: string;
@@ -83,87 +74,6 @@ function buildIdFilter<T extends { id: string }>(id: string): Filter<T> {
 }
 
 export const mongoCmsRepository: CmsRepository = {
-  // Blocks
-  async getBlocks(): Promise<Block[]> {
-    const db = await getMongoDb();
-    const docs = await db.collection<BlockDocument>(blocksCollection).find().sort({ createdAt: -1 }).toArray();
-    return docs.map(doc => ({
-      id: doc.id,
-      name: doc.name,
-      content: doc.content,
-    })) as Block[];
-  },
-
-  async getBlockById(id: string): Promise<Block | null> {
-    const db = await getMongoDb();
-    const doc = await db.collection<BlockDocument>(blocksCollection).findOne(buildIdFilter<BlockDocument>(id));
-    if (!doc) return null;
-    return {
-      id: doc.id,
-      name: doc.name,
-      content: doc.content,
-    } as Block;
-  },
-
-  async getBlockByName(name: string): Promise<Block | null> {
-    const db = await getMongoDb();
-    const doc = await db.collection<BlockDocument>(blocksCollection).findOne({ name });
-    if (!doc) return null;
-    return {
-      id: doc.id,
-      name: doc.name,
-      content: doc.content,
-    } as Block;
-  },
-
-  async createBlock(data: { name: string; content: unknown }): Promise<Block> {
-    const db = await getMongoDb();
-    const id = randomUUID();
-    const doc: BlockDocument = {
-      id,
-      name: data.name,
-      content: data.content,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await db.collection<BlockDocument>(blocksCollection).insertOne(doc);
-    return { id, name: doc.name, content: doc.content } as Block;
-  },
-
-  async updateBlock(id: string, data: { name?: string | undefined; content?: unknown }): Promise<Block | null> {
-    const db = await getMongoDb();
-    const update = removeUndefined({
-      name: data.name,
-      content: data.content,
-      updatedAt: new Date(),
-    }) as Partial<BlockDocument>;
-
-    const result = await db.collection<BlockDocument>(blocksCollection).findOneAndUpdate(
-      buildIdFilter<BlockDocument>(id),
-      { $set: update },
-      { returnDocument: "after" }
-    );
-    if (!result) return null;
-    const doc = result;
-    return {
-      id: doc.id,
-      name: doc.name,
-      content: doc.content,
-    } as Block;
-  },
-
-  async deleteBlock(id: string): Promise<Block | null> {
-    const db = await getMongoDb();
-    const doc = await db.collection<BlockDocument>(blocksCollection).findOneAndDelete(buildIdFilter<BlockDocument>(id));
-    if (!doc) return null;
-    const deleted = doc;
-    return {
-      id: deleted.id,
-      name: deleted.name,
-      content: deleted.content,
-    } as Block;
-  },
-
   // Pages
   async getPages(): Promise<Page[]> {
     const db = await getMongoDb();
@@ -273,7 +183,6 @@ export const mongoCmsRepository: CmsRepository = {
     
     // Also cleanup relationships
     await db.collection("cms_page_slugs").deleteMany({ pageId: id });
-    await db.collection("cms_page_blocks").deleteMany({ pageId: id });
 
     return {
       id: deleted.id,
@@ -407,20 +316,6 @@ export const mongoCmsRepository: CmsRepository = {
   async removeSlugFromPage(pageId: string, slugId: string): Promise<void> {
     const db = await getMongoDb();
     await db.collection("cms_page_slugs").deleteOne({ pageId, slugId });
-  },
-
-  async addBlockToPage(pageId: string, blockId: string): Promise<void> {
-    const db = await getMongoDb();
-    await db.collection("cms_page_blocks").updateOne(
-      { pageId, blockId },
-      { $set: { pageId, blockId, assignedAt: new Date() } },
-      { upsert: true }
-    );
-  },
-
-  async removeBlockFromPage(pageId: string, blockId: string): Promise<void> {
-    const db = await getMongoDb();
-    await db.collection("cms_page_blocks").deleteOne({ pageId, blockId });
   },
 
   // Themes

@@ -12,6 +12,7 @@
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx seed-admin.ts",
     "cleanup:db-providers": "tsx scripts/cleanup-db-provider-settings.ts",
+    "cleanup:cms-blocks": "tsx scripts/drop-cms-blocks.ts",
     "check:api-error-sources": "tsx scripts/check-api-error-sources.ts",
     "auth:indexes": "tsx scripts/ensure-auth-indexes.ts",
     "debug": "tsx debug-script.ts",

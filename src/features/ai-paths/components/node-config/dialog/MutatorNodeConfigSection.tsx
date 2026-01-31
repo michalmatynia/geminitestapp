@@ -14,7 +14,7 @@ type MutatorNodeConfigSectionProps = {
 export function MutatorNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
-}: MutatorNodeConfigSectionProps) {
+}: MutatorNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "mutator") return null;
 
   const mutatorConfig = selectedNode.config?.mutator ?? {
@@ -29,7 +29,7 @@ export function MutatorNodeConfigSection({
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mutatorConfig.path}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               mutator: { ...mutatorConfig, path: event.target.value },
             })
@@ -41,7 +41,7 @@ export function MutatorNodeConfigSection({
         <Textarea
           className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mutatorConfig.valueTemplate}
-          onChange={(event) =>
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
               mutator: {
                 ...mutatorConfig,

@@ -2,6 +2,16 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BlockPicker } from "@/features/cms/components/page-builder/BlockPicker";
 import { vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a new QueryClient for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 // Mock the registry
 vi.mock("@/features/cms/components/page-builder/section-registry", () => ({
@@ -18,13 +28,23 @@ vi.mock("@/features/cms/components/page-builder/section-registry", () => ({
 
 describe("BlockPicker Component", () => {
   it("should render nothing if no blocks are allowed for the section type", () => {
-    const { container } = render(<BlockPicker sectionType="EmptySection" onSelect={vi.fn()} />);
+    const queryClient = createTestQueryClient();
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BlockPicker sectionType="EmptySection" onSelect={vi.fn()} />
+      </QueryClientProvider>
+    );
     expect(container.firstChild).toBeNull();
   });
 
   it("should toggle the block menu when clicking the plus button", () => {
+    const queryClient = createTestQueryClient();
     const onSelect = vi.fn();
-    render(<BlockPicker sectionType="RichText" onSelect={onSelect} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BlockPicker sectionType="RichText" onSelect={onSelect} />
+      </QueryClientProvider>
+    );
 
     const plusButton = screen.getByLabelText("Add block");
     
@@ -42,8 +62,13 @@ describe("BlockPicker Component", () => {
   });
 
   it("should call onSelect and close when a block is clicked", () => {
+    const queryClient = createTestQueryClient();
     const onSelect = vi.fn();
-    render(<BlockPicker sectionType="RichText" onSelect={onSelect} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BlockPicker sectionType="RichText" onSelect={onSelect} />
+      </QueryClientProvider>
+    );
 
     fireEvent.click(screen.getByLabelText("Add block"));
     fireEvent.click(screen.getByText("Heading"));

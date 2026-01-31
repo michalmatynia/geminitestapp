@@ -55,6 +55,21 @@ describe("PathRunService", () => {
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: any) => e.message === "Run queued.")).toBe(true);
     });
+
+    it("should pass meta options like backoffMs to the run", async () => {
+      const run = await enqueuePathRun({
+        pathId: "test-path-meta",
+        nodes: mockNodes,
+        edges: [],
+        backoffMs: 5000,
+        meta: { custom: "value" }
+      });
+
+      expect(run.meta).toEqual(expect.objectContaining({
+        backoffMs: 5000,
+        custom: "value"
+      }));
+    });
   });
 
   describe("resumePathRun", () => {

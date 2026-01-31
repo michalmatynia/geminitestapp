@@ -59,7 +59,7 @@ const credentialsProvider = Credentials({
 
       if (challengeId) {
         const challenge = await consumeLoginChallenge({
-          id: challengeId as string,
+          id: challengeId,
           email,
           ip,
         });

@@ -17,10 +17,10 @@ export function TestErrorModal({
   testError,
   testErrorMeta,
   onClose,
-}: TestErrorModalProps) {
+}: TestErrorModalProps): React.JSX.Element | null {
   if (!testError) return null;
 
-  const handleCopyTestError = async () => {
+  const handleCopyTestError = async (): Promise<void> => {
     if (!testError) return;
     try {
       const metaLines = [
@@ -66,7 +66,7 @@ export function TestErrorModal({
     <Button
       className="border border-white/20 hover:border-white/40"
       type="button"
-      onClick={() => { void handleCopyTestError(); }}
+      onClick={(): void => { void handleCopyTestError(); }}
     >
       Copy Error
     </Button>
@@ -75,7 +75,7 @@ export function TestErrorModal({
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Playwright Error"
     >
       <ModalShell title="Playwright Error" onClose={onClose} size="lg" footer={footer}>

@@ -23,13 +23,13 @@ export const NoteItem = React.memo(function NoteItem({
   onRelateNotes,
   draggedNoteId,
   setDraggedNoteId,
-}: NoteItemProps) {
+}: NoteItemProps): React.JSX.Element {
   const { toast } = useToast();
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(note.title);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const getDraggedNoteId = (event: React.DragEvent) =>
+  const getDraggedNoteId = (event: React.DragEvent): string =>
     event.dataTransfer.getData("noteId") ||
     event.dataTransfer.getData("text/plain") ||
     draggedNoteId ||
@@ -45,7 +45,7 @@ export const NoteItem = React.memo(function NoteItem({
     }
   }, [isRenaming, note.title]);
 
-  const handleRenameSubmit = () => {
+  const handleRenameSubmit = (): void => {
     const nextTitle = renameValueRef.current.trim();
     if (nextTitle && nextTitle !== note.title) {
       onRenameNote(note.id, nextTitle);
@@ -53,7 +53,7 @@ export const NoteItem = React.memo(function NoteItem({
     onCancelRename();
   };
 
-  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+  const handleRenameKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleRenameSubmit();
@@ -71,7 +71,7 @@ export const NoteItem = React.memo(function NoteItem({
     <div
       draggable={!isRenaming}
       data-note-id={note.id}
-      onDragOver={(e) => {
+      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         const types = Array.from(e.dataTransfer.types);
         const isNoteDrag =
           types.includes("noteId") ||
@@ -83,10 +83,10 @@ export const NoteItem = React.memo(function NoteItem({
         e.dataTransfer.dropEffect = "move";
         setIsDragOver(true);
       }}
-      onDragLeave={() => {
+      onDragLeave={(): void => {
         setIsDragOver(false);
       }}
-      onDrop={(e) => {
+      onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         const noteId = getDraggedNoteId(e);
         e.preventDefault();
         e.stopPropagation();
@@ -99,7 +99,7 @@ export const NoteItem = React.memo(function NoteItem({
         }
         onRelateNotes(noteId, note.id);
       }}
-      onDragStart={(e) => {
+      onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
         if (isRenaming) {
           e.preventDefault();
           return;
@@ -112,12 +112,12 @@ export const NoteItem = React.memo(function NoteItem({
         target.style.opacity = "0.5";
         setDraggedNoteId(note.id);
       }}
-      onDragEnd={(e) => {
+      onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "1";
         setDraggedNoteId(null);
       }}
-      onClick={(e) => {
+      onClick={(e: React.MouseEvent<HTMLDivElement>): void => {
         e.stopPropagation();
         if (!isRenaming) {
           onSelectNote(note.id);
@@ -138,12 +138,12 @@ export const NoteItem = React.memo(function NoteItem({
           ref={renameInputRef}
           type="text"
           defaultValue={note.title}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
             renameValueRef.current = e.target.value;
           }}
           onKeyDown={handleRenameKeyDown}
           onBlur={handleRenameSubmit}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
           className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
         />
       ) : (
@@ -157,7 +157,7 @@ export const NoteItem = React.memo(function NoteItem({
       {!isRenaming && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onCreateNote(folderId);
             }}
@@ -167,7 +167,7 @@ export const NoteItem = React.memo(function NoteItem({
             <FilePlus className="size-3" />
           </Button>
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onStartRename(note.id);
             }}
@@ -177,7 +177,7 @@ export const NoteItem = React.memo(function NoteItem({
             <Edit2 className="size-3" />
           </Button>
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onDuplicateNote(note.id);
             }}
@@ -187,7 +187,7 @@ export const NoteItem = React.memo(function NoteItem({
             <Copy className="size-3" />
           </Button>
           <Button
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
               e.stopPropagation();
               onDeleteNote(note.id);
             }}

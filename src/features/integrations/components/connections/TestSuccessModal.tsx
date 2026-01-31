@@ -7,13 +7,13 @@ type TestSuccessModalProps = {
   onClose: () => void;
 };
 
-export function TestSuccessModal({ message, onClose }: TestSuccessModalProps) {
+export function TestSuccessModal({ message, onClose }: TestSuccessModalProps): React.JSX.Element | null {
   if (!message) return null;
 
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Playwright Test"
     >
       <ModalShell title="Playwright Test" onClose={onClose} size="md">

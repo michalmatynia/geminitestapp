@@ -140,13 +140,13 @@ async function processDirectoryEntry(
 function readDirectory(
   dirEntry: FileSystemDirectoryEntry
 ): Promise<FileSystemEntry[]> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve: (value: FileSystemEntry[]) => void, reject: (reason?: unknown) => void) => {
     const reader = dirEntry.createReader();
     const entries: FileSystemEntry[] = [];
 
-    const readEntries = () => {
+    const readEntries = (): void => {
       reader.readEntries(
-        (results) => {
+        (results: FileSystemEntry[]) => {
           if (results.length === 0) {
             resolve(entries);
           } else {
@@ -154,7 +154,7 @@ function readDirectory(
             readEntries(); // Continue reading in batches
           }
         },
-        (error) => reject(error)
+        (error: DOMException) => reject(error)
       );
     };
 
@@ -163,10 +163,10 @@ function readDirectory(
 }
 
 function getFile(fileEntry: FileSystemFileEntry): Promise<File> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve: (value: File) => void, reject: (reason?: unknown) => void) => {
     fileEntry.file(
-      (file) => resolve(file),
-      (error) => reject(error)
+      (file: File) => resolve(file),
+      (error: DOMException) => reject(error)
     );
   });
 }

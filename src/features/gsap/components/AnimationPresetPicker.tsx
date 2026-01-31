@@ -21,7 +21,7 @@ export function AnimationPresetPicker({
 
   return (
     <div className={cn("grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4", className)} role="radiogroup">
-      {ANIMATION_PRESETS.map((preset) => {
+      {ANIMATION_PRESETS.map((preset: { value: AnimationPreset; label: string }) => {
         const isActive = value === preset.value;
         const isPreviewing = isActive || hoveredPreset === preset.value;
 

@@ -39,7 +39,7 @@ export function AllegroApiConsole({
   response,
   onRequest,
   isConnected,
-}: AllegroApiConsoleProps) {
+}: AllegroApiConsoleProps): React.JSX.Element {
   const allegroApiPresets = [
     { label: "Categories", method: "GET", path: "/sale/categories" },
     { label: "Offers", method: "GET", path: "/sale/offers?limit=10" },
@@ -59,12 +59,12 @@ export function AllegroApiConsole({
         </p>
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
-        {allegroApiPresets.map((preset) => (
+        {allegroApiPresets.map((preset: { label: string; method: string; path: string }) => (
           <Button
             key={preset.label}
             type="button"
             className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
-            onClick={() => {
+            onClick={(): void => {
               setMethod(preset.method);
               setPath(preset.path);
               setBody("{}");
@@ -85,9 +85,9 @@ export function AllegroApiConsole({
           <select
             className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
             value={method}
-            onChange={(event) => setMethod(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setMethod(event.target.value)}
           >
-            {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
+            {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m: string) => (
               <option key={m} value={m}>
                 {m}
               </option>
@@ -100,7 +100,7 @@ export function AllegroApiConsole({
             className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
             placeholder="/sale/categories"
             value={path}
-            onChange={(event) => setPath(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setPath(event.target.value)}
           />
         </div>
       </div>
@@ -109,7 +109,7 @@ export function AllegroApiConsole({
         <Textarea
           className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => setBody(event.target.value)}
         />
       </div>
       <div className="mt-3 flex items-center gap-3">

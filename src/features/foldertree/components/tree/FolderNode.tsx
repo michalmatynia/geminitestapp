@@ -9,6 +9,8 @@ import type { FolderNodeProps } from "@/features/foldertree/types/folder-tree-ui
 import { NoteItem } from "./NoteItem";
 
 
+import type { NoteRecord } from "@/shared/types/notes";
+
 export const FolderNode = React.memo(function FolderNode({
   folder,
   level,
@@ -40,7 +42,7 @@ export const FolderNode = React.memo(function FolderNode({
   onCancelNoteRename,
   expandedFolderIds,
   onToggleExpand,
-}: FolderNodeProps) {
+}: FolderNodeProps): React.JSX.Element {
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +63,7 @@ export const FolderNode = React.memo(function FolderNode({
     }
   }, [isRenaming, folder.name]);
 
-  const handleRenameSubmit = () => {
+  const handleRenameSubmit = (): void => {
     const nextName = renameValueRef.current.trim();
     if (nextName && nextName !== folder.name) {
       onRename(folder.id, nextName);
@@ -69,7 +71,7 @@ export const FolderNode = React.memo(function FolderNode({
     onCancelRename();
   };
 
-  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+  const handleRenameKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleRenameSubmit();
@@ -95,7 +97,7 @@ export const FolderNode = React.memo(function FolderNode({
 
     const isDescendantOf = (checkFolder: CategoryWithChildren, targetId: string): boolean => {
       if (checkFolder.id === targetId) return true;
-      return checkFolder.children.some((child) => isDescendantOf(child, targetId));
+      return checkFolder.children.some((child: CategoryWithChildren) => isDescendantOf(child, targetId));
     };
 
     if (!draggedFolderId) return true;
@@ -109,21 +111,21 @@ export const FolderNode = React.memo(function FolderNode({
 
   const sortedNotes = useMemo(() => {
     if (!folder.notes || folder.notes.length === 0) return [];
-    return folder.notes.slice().sort((a, b) => a.title.localeCompare(b.title));
+    return folder.notes.slice().sort((a: NoteRecord, b: NoteRecord) => a.title.localeCompare(b.title));
   }, [folder.notes]);
 
   return (
     <div
-      onDragOver={(e) => {
+      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(true);
       }}
-      onDragLeave={() => {
+      onDragLeave={(): void => {
         setIsDragOver(false);
       }}
-      onDrop={(e) => {
+      onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
         e.stopPropagation();
@@ -137,7 +139,7 @@ export const FolderNode = React.memo(function FolderNode({
     >
       <div
         draggable
-        onDragStart={(e) => {
+        onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
           e.stopPropagation();
           e.dataTransfer.setData("folderId", folder.id);
           e.dataTransfer.effectAllowed = "move";
@@ -145,7 +147,7 @@ export const FolderNode = React.memo(function FolderNode({
           const target = e.currentTarget as HTMLElement;
           target.style.opacity = "0.5";
         }}
-        onDragEnd={(e) => {
+        onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
           const target = e.currentTarget as HTMLElement;
           target.style.opacity = "1";
           onDragEndProp();
@@ -158,18 +160,18 @@ export const FolderNode = React.memo(function FolderNode({
             : "text-gray-300 hover:bg-muted/50"
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
-        onDragOver={(e) => {
+        onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
           e.preventDefault();
           e.stopPropagation();
           if (canDropHere) {
             setIsDragOver(true);
           }
         }}
-        onDragLeave={(e) => {
+        onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
           e.stopPropagation();
           setIsDragOver(false);
         }}
-        onDrop={(e) => {
+        onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
@@ -200,7 +202,7 @@ export const FolderNode = React.memo(function FolderNode({
       >
         {hasChildren || hasNotes ? (
           <Button
-            onClick={() => onToggleExpand(folder.id)}
+            onClick={(): void => onToggleExpand(folder.id)}
             className="p-0.5 hover:bg-gray-700 rounded"
             aria-label={isExpanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
           >
@@ -215,7 +217,7 @@ export const FolderNode = React.memo(function FolderNode({
         )}
 
         <div
-          onClick={() => !isRenaming && onSelect(folder.id)}
+          onClick={(): void => { if (!isRenaming) onSelect(folder.id); }}
           className="flex items-center gap-2 flex-1 min-w-0"
         >
           {isExpanded || !hasChildren ? (
@@ -228,12 +230,12 @@ export const FolderNode = React.memo(function FolderNode({
               ref={renameInputRef}
               type="text"
               defaultValue={folder.name}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                 renameValueRef.current = e.target.value;
               }}
               onKeyDown={handleRenameKeyDown}
               onBlur={handleRenameSubmit}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent<HTMLInputElement>): void => e.stopPropagation()}
               className="text-sm bg-gray-800 border border-blue-500 rounded px-1 py-0.5 text-white outline-none flex-1 min-w-0"
             />
           ) : (
@@ -244,7 +246,7 @@ export const FolderNode = React.memo(function FolderNode({
         {!isRenaming && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
             <Button
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onCreateNote(folder.id);
               }}
@@ -254,7 +256,7 @@ export const FolderNode = React.memo(function FolderNode({
               <FilePlus className="size-3" />
             </Button>
             <Button
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onCreateSubfolder(folder.id);
               }}
@@ -264,7 +266,7 @@ export const FolderNode = React.memo(function FolderNode({
               <FolderPlus className="size-3" />
             </Button>
             <Button
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onStartRename(folder.id);
               }}
@@ -274,7 +276,7 @@ export const FolderNode = React.memo(function FolderNode({
               <Edit2 className="size-3" />
             </Button>
             <Button
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
                 e.stopPropagation();
                 onDelete(folder.id);
               }}
@@ -289,7 +291,7 @@ export const FolderNode = React.memo(function FolderNode({
 
       {isExpanded && (
         <div>
-          {folder.children.map((child) => (
+          {folder.children.map((child: CategoryWithChildren) => (
             <FolderNode
               key={child.id}
               folder={child}
@@ -324,7 +326,7 @@ export const FolderNode = React.memo(function FolderNode({
               onToggleExpand={onToggleExpand}
             />
           ))}
-          {sortedNotes.map((note) => {
+          {sortedNotes.map((note: NoteRecord) => {
             const isNoteSelected = selectedNoteId === note.id;
             const isNoteRenaming = renamingNoteId === note.id;
             return (

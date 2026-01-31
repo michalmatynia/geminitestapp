@@ -16,8 +16,8 @@ type IntegrationListProps = {
 export function IntegrationList({
   integrations,
   onIntegrationClick,
-}: IntegrationListProps) {
-  const integrationSlugs = integrations.map((integration) => integration.slug);
+}: IntegrationListProps): React.JSX.Element {
+  const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
   const hasIntegrations = integrations.length > 0;
 
   return (

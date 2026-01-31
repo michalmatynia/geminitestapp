@@ -95,7 +95,7 @@ export function CmsPageRenderer({
             const rawAnimConfig = section.settings["gsapAnimation"] as Partial<GsapAnimationConfig> | undefined;
             const animConfig = rawAnimConfig
               ? { ...DEFAULT_ANIMATION_CONFIG, ...rawAnimConfig }
-              : undefined;
+              : DEFAULT_ANIMATION_CONFIG;
 
             return (
               <GsapAnimationWrapper key={section.key} config={animConfig}>

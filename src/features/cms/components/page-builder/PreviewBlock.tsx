@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { getSectionStyles, getTextAlign, getBlockTypographyStyles, type ColorSchemeColors } from "../frontend/theme-styles";
+import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, type ColorSchemeColors } from "../frontend/theme-styles";
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 
@@ -266,6 +266,7 @@ interface PreviewSectionProps {
   hoveredNodeId?: string | null;
   colorSchemes?: Record<string, ColorSchemeColors>;
   mediaStyles?: React.CSSProperties | null;
+  layout?: { fullWidth?: boolean };
   onSelect: (nodeId: string) => void;
   onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
@@ -282,6 +283,7 @@ export function PreviewSection({
   hoveredNodeId,
   colorSchemes,
   mediaStyles,
+  layout,
   onSelect,
   onHoverNode,
   onOpenMedia,
@@ -443,7 +445,7 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-6xl" })}>
             <div
               className={`flex flex-wrap items-center ${section.type === "Block" ? "" : "gap-3"} ${alignmentClasses}`}
               style={section.type === "Block" ? { gap: `${blockGap}px` } : undefined}
@@ -577,38 +579,39 @@ export function PreviewSection({
           ) : isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
             <div className="h-px w-full bg-border/40" />
           ) : (
-            <div className={`flex flex-col ${sectionGapClass}`}>
-              {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
-                const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
-                const columnCount = Math.max(1, rowColumns.length);
-                const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
-                const isRowSelected = !virtual && selectedNodeId === row.id;
-                const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
-                const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
-                const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
-                const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
-                const rowHeight = (row.settings?.["height"] as number) || 0;
-                const rowHeightStyle =
-                  rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
-                const rowContainer = (
-                  <div
-                    role={!virtual ? "button" : undefined}
-                    tabIndex={!virtual ? 0 : undefined}
-                    onClick={(e: React.MouseEvent): void => {
-                      if (virtual) return;
-                      e.stopPropagation();
-                      onSelect(row.id);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent): void => {
-                      if (virtual) return;
-                      if (e.key === "Enter" || e.key === " ") {
+            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+              <div className={`flex flex-col ${sectionGapClass}`}>
+                {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
+                  const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+                  const columnCount = Math.max(1, rowColumns.length);
+                  const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
+                  const isRowSelected = !virtual && selectedNodeId === row.id;
+                  const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+                  const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
+                  const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
+                  const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
+                  const rowHeight = (row.settings?.["height"] as number) || 0;
+                  const rowHeightStyle =
+                    rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
+                  const rowContainer = (
+                    <div
+                      role={!virtual ? "button" : undefined}
+                      tabIndex={!virtual ? 0 : undefined}
+                      onClick={(e: React.MouseEvent): void => {
+                        if (virtual) return;
                         e.stopPropagation();
                         onSelect(row.id);
-                      }
-                    }}
-                    style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                    className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
-                  >
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent): void => {
+                        if (virtual) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          onSelect(row.id);
+                        }
+                      }}
+                      style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
+                      className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
+                    >
                     {!virtual && isRowSelected && onRemoveRow && (
                       <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
                         <button
@@ -772,10 +775,11 @@ export function PreviewSection({
                         );
                       })}
                     </div>
-                  </div>
-                );
-                return <div key={row.id}>{rowContainer}</div>;
-              })}
+                    </div>
+                  );
+                  return <div key={row.id}>{rowContainer}</div>;
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -910,11 +914,36 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          {renderBlocks("Add blocks to rich text section")}
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
+            <div className="space-y-4">
+              {section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+              {section.blocks.length === 0 && (
+                <p className="text-gray-500">Rich text section</p>
+              )}
+            </div>
+          </div>
         </div>
       )
     );

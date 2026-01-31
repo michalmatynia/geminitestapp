@@ -134,14 +134,14 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
   }
 }
 
-export function AnimationPreviewIcon({ preset, active = false, className }: AnimationPreviewIconProps): React.ReactNode {
+export function AnimationPreviewIcon({ preset, active = false, className }: AnimationPreviewIconProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((): void => {
       const dots = root.querySelectorAll<HTMLElement>("[data-dot]");
       if (!dots.length) return;
 
@@ -192,7 +192,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
       }
 
       const { from, to } = getPreviewVars(preset);
-      gsap.fromTo(dots[0], from, {
+      gsap.fromTo(dots[0] as HTMLElement, from, {
         ...to,
         repeat: -1,
         yoyo: true,
@@ -200,7 +200,7 @@ export function AnimationPreviewIcon({ preset, active = false, className }: Anim
       });
     }, root);
 
-    return () => ctx.revert();
+    return (): void => ctx.revert();
   }, [active, preset]);
 
   const isStagger = preset === "stagger";

@@ -35,7 +35,7 @@ export function ConnectionManager({
   isTesting,
   testLog,
   onShowLog,
-}: ConnectionManagerProps) {
+}: ConnectionManagerProps): React.JSX.Element {
   const integrationSlug = activeIntegration.slug;
   const isTradera = integrationSlug === "tradera";
   const isAllegro = integrationSlug === "allegro";
@@ -79,8 +79,8 @@ export function ConnectionManager({
               className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
               placeholder={connectionNamePlaceholder}
               value={connectionForm.name}
-              onChange={(event) =>
-                setConnectionForm((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setConnectionForm((prev: { name: string; username: string; password: string }) => ({
                   ...prev,
                   name: event.target.value,
                 }))
@@ -93,8 +93,8 @@ export function ConnectionManager({
               className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
               placeholder={usernamePlaceholder}
               value={connectionForm.username}
-              onChange={(event) =>
-                setConnectionForm((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setConnectionForm((prev: { name: string; username: string; password: string }) => ({
                   ...prev,
                   username: event.target.value,
                 }))
@@ -116,8 +116,8 @@ export function ConnectionManager({
                   : "Tradera password"
               }
               value={connectionForm.password}
-              onChange={(event) =>
-                setConnectionForm((prev) => ({
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setConnectionForm((prev: { name: string; username: string; password: string }) => ({
                   ...prev,
                   password: event.target.value,
                 }))
@@ -140,7 +140,7 @@ export function ConnectionManager({
           <p className="mt-3 text-sm text-gray-400">No connections yet.</p>
         ) : (
           <div className="mt-3 space-y-3">
-            {connections.slice(0, 1).map((connection) => (
+            {connections.slice(0, 1).map((connection: IntegrationConnection) => (
               <div
                 key={connection.id}
                 className="flex items-center justify-between rounded-md border border-border bg-card/70 px-3 py-2"
@@ -161,7 +161,7 @@ export function ConnectionManager({
                         : "text-sky-300 hover:text-sky-200"
                     }`}
                     type="button"
-                    onClick={() => onTest(connection)}
+                    onClick={(): void => onTest(connection)}
                     disabled={isTesting}
                   >
                     {isTesting ? "Testing..." : "Test"}
@@ -169,7 +169,7 @@ export function ConnectionManager({
                   <Button
                     className="text-xs text-red-400 hover:text-red-300"
                     type="button"
-                    onClick={() => onDelete(connection)}
+                    onClick={(): void => onDelete(connection)}
                   >
                     Remove
                   </Button>
@@ -195,7 +195,7 @@ export function ConnectionManager({
               </p>
             ) : (
               <div className="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400">
-                {testLog.map((entry, index) => (
+                {testLog.map((entry: TestLogEntry, index: number) => (
                   <div
                     key={`${entry.step}-${index}`}
                     className="flex items-center justify-between gap-3"
@@ -209,7 +209,7 @@ export function ConnectionManager({
                             ? "bg-emerald-500/20 text-emerald-200"
                             : "bg-red-500/20 text-red-200"
                         }`}
-                        onClick={() => onShowLog(entry)}
+                        onClick={(): void => onShowLog(entry)}
                       >
                         {entry.status === "ok" ? "OK" : "FAILED"}
                       </Button>

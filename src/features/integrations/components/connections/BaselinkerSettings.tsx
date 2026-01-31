@@ -15,7 +15,7 @@ export function BaselinkerSettings({
   activeConnection,
   onTest,
   isTesting,
-}: BaselinkerSettingsProps) {
+}: BaselinkerSettingsProps): React.JSX.Element {
   const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
@@ -26,13 +26,13 @@ export function BaselinkerSettings({
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadSyncInterval = async () => {
+    const loadSyncInterval = async (): Promise<void> => {
       try {
         setLoadingSyncInterval(true);
         const res = await fetch("/api/settings");
         if (!res.ok) return;
         const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const found = settings.find((setting) => setting.key === "base_sync_poll_interval_minutes");
+        const found = settings.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
         if (found?.value) {
           setSyncIntervalMinutes(found.value);
         }
@@ -45,7 +45,7 @@ export function BaselinkerSettings({
     void loadSyncInterval();
   }, []);
 
-  const handleSaveSyncInterval = async () => {
+  const handleSaveSyncInterval = async (): Promise<void> => {
     const parsed = Number(syncIntervalMinutes);
     if (!Number.isFinite(parsed) || parsed <= 0) {
       setSyncMessage("Enter a valid number of minutes.");
@@ -127,12 +127,12 @@ export function BaselinkerSettings({
                 type="number"
                 min="1"
                 value={syncIntervalMinutes}
-                onChange={(event) => setSyncIntervalMinutes(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSyncIntervalMinutes(event.target.value)}
                 className="w-32 rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
               />
               <Button
                 type="button"
-                onClick={() => { void handleSaveSyncInterval(); }}
+                onClick={(): void => { void handleSaveSyncInterval(); }}
                 disabled={savingSyncInterval}
                 className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
               >

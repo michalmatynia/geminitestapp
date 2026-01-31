@@ -34,11 +34,11 @@ export function SessionModal({
   origins,
   updatedAt,
   onClose,
-}: SessionModalProps) {
+}: SessionModalProps): React.JSX.Element {
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Session cookies"
     >
       <ModalShell title="Session cookies" onClose={onClose} size="lg">
@@ -63,7 +63,7 @@ export function SessionModal({
                     No cookies stored.
                   </div>
                 ) : (
-                  cookies.map((cookie, index) => (
+                  cookies.map((cookie: SessionCookie, index: number) => (
                     <div
                       key={`${cookie.name || "cookie"}-${index}`}
                       className="rounded-md border border-border bg-card/60 p-3"

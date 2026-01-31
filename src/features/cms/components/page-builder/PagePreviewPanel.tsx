@@ -571,6 +571,7 @@ export function PagePreviewPanel(): React.ReactNode {
                           <PreviewSection
                             key={section.id}
                             section={section}
+                            layout={{ fullWidth: theme.fullWidth }}
                             selectedNodeId={state.selectedNodeId}
                             isInspecting={state.inspectorEnabled}
                             inspectorSettings={state.inspectorSettings}

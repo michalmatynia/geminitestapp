@@ -21,41 +21,41 @@ export function ExportLogViewer({
   logs,
   isOpen = true,
   onToggle,
-}: ExportLogViewerProps) {
+}: ExportLogViewerProps): React.JSX.Element | null {
   const [copied, setCopied] = useState(false);
   const imagePayloadSummary = useMemo(() => {
     const entries = logs
-      .map((log) => log.context)
-      .filter((context): context is Record<string, unknown> => !!context)
+      .map((log: ExportLog) => log.context)
+      .filter((context: Record<string, unknown> | undefined): context is Record<string, unknown> => !!context)
       .filter(
-        (context) =>
+        (context: Record<string, unknown>) =>
           typeof context.outputBytes === "number" ||
           typeof context.originalBytes === "number" ||
           typeof context.base64Length === "number"
       );
     if (entries.length === 0) return null;
-    const sum = (key: "outputBytes" | "originalBytes" | "base64Length") =>
+    const sum = (key: "outputBytes" | "originalBytes" | "base64Length"): number =>
       entries.reduce(
-        (total, entry) =>
-          total + (typeof entry[key] === "number" ? entry[key] : 0),
+        (total: number, entry: Record<string, unknown>) =>
+          total + (typeof entry[key] === "number" ? (entry[key] as number) : 0),
         0
       );
     const outputModes = new Set(
       entries
-        .map((entry) =>
+        .map((entry: Record<string, unknown>) =>
           typeof entry.outputMode === "string" ? entry.outputMode : null
         )
         .filter(Boolean)
     );
     const outputFormats = new Set(
       entries
-        .map((entry) =>
+        .map((entry: Record<string, unknown>) =>
           typeof entry.outputFormat === "string" ? entry.outputFormat : null
         )
         .filter(Boolean)
     );
-    const convertedCount = entries.filter((entry) => entry.converted === true).length;
-    const resizedCount = entries.filter((entry) => entry.resized === true).length;
+    const convertedCount = entries.filter((entry: Record<string, unknown>) => entry.converted === true).length;
+    const resizedCount = entries.filter((entry: Record<string, unknown>) => entry.resized === true).length;
     return {
       count: entries.length,
       totalOriginalBytes: sum("originalBytes"),
@@ -74,9 +74,9 @@ export function ExportLogViewer({
     };
   }, [logs]);
 
-  const handleCopy = () => {
+  const handleCopy = (): void => {
     const logText = logs
-      .map((log) => {
+      .map((log: ExportLog) => {
         const contextStr = log.context
           ? `\n    ${JSON.stringify(log.context, null, 2)}`
           : "";
@@ -92,7 +92,7 @@ export function ExportLogViewer({
     return null;
   }
 
-  const formatBytes = (bytes: number) => {
+  const formatBytes = (bytes: number): string => {
     if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
     const units = ["B", "KB", "MB", "GB"];
     let value = bytes;
@@ -111,8 +111,8 @@ export function ExportLogViewer({
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}
-        onClick={() => onToggle?.(!isOpen)}
-        onKeyDown={(event) => {
+        onClick={(): void => onToggle?.(!isOpen)}
+        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             onToggle?.(!isOpen);
@@ -133,7 +133,7 @@ export function ExportLogViewer({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
             e.stopPropagation();
             handleCopy();
           }}
@@ -178,7 +178,7 @@ export function ExportLogViewer({
             </div>
           )}
           <div className="space-y-2 font-mono text-xs">
-            {logs.map((log, index) => {
+            {logs.map((log: ExportLog, index: number) => {
               const bgColor =
                 log.level === "error"
                   ? "bg-red-900/10 text-red-300"

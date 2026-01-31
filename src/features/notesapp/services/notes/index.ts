@@ -66,14 +66,14 @@ const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | n
       ...note,
       relations: buildRelations(note),
     }));
-    return result as T;
+    return result as any;
   }
   const note = data as NoteWithRelations;
   const result = {
     ...note,
     relations: buildRelations(note),
   };
-  return result as T;
+  return result as any;
 };
 
 export const noteService: NoteRepository = {

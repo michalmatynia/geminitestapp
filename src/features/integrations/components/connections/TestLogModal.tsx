@@ -9,13 +9,13 @@ type TestLogModalProps = {
   onClose: () => void;
 };
 
-export function TestLogModal({ selectedStep, onClose }: TestLogModalProps) {
+export function TestLogModal({ selectedStep, onClose }: TestLogModalProps): React.JSX.Element | null {
   if (!selectedStep) return null;
 
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title="Playwright Log"
     >
       <ModalShell title="Playwright Log" onClose={onClose} size="md">

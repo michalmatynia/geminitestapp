@@ -198,7 +198,7 @@ export function IntegrationModal({
   allegroApiError,
   allegroApiResponse,
   onAllegroApiRequest,
-}: IntegrationModalProps) {
+}: IntegrationModalProps): React.JSX.Element {
   const [activeTab, setActiveTab] = useState("connections");
   const integrationSlug = activeIntegration.slug;
   const isTradera = integrationSlug === "tradera";
@@ -209,7 +209,7 @@ export function IntegrationModal({
   const showBaseConsole = isBaselinker;
   const activeConnection = connections[0] || null;
   const selectedPersona =
-    playwrightPersonas.find((persona) => persona.id === playwrightPersonaId) ??
+    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
     null;
 
   const header = (
@@ -255,7 +255,7 @@ export function IntegrationModal({
   return (
     <AppModal
       open={true}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open: boolean): void => { if (!open) onClose(); }}
       title={`${activeIntegration.name} Integration`}
     >
       <ModalShell
@@ -306,7 +306,7 @@ export function IntegrationModal({
                 setConnectionForm={setConnectionForm}
                 onSave={onSaveConnection}
                 onDelete={onDeleteConnection}
-                onTest={(conn) => {
+                onTest={(conn: IntegrationConnection): void => {
                   if (isBaselinker) onBaselinkerTest(conn);
                   else if (isAllegro) onAllegroTest(conn);
                   else onTestConnection(conn);
@@ -330,9 +330,9 @@ export function IntegrationModal({
               ) : isBaselinker ? (
                 <BaselinkerSettings
                   activeConnection={activeConnection}
-                  onTest={() =>
-                    activeConnection && onBaselinkerTest(activeConnection)
-                  }
+                  onTest={(): void => {
+                    if (activeConnection) onBaselinkerTest(activeConnection);
+                  }}
                   isTesting={isTesting}
                 />
               ) : (
@@ -457,7 +457,7 @@ export function IntegrationModal({
                         </Label>
                         <Select
                           value={playwrightPersonaId ?? "custom"}
-                          onValueChange={(value) =>
+                          onValueChange={(value: string): void =>
                             onSelectPlaywrightPersona(
                               value === "custom" ? null : value
                             )
@@ -468,7 +468,7 @@ export function IntegrationModal({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="custom">Custom</SelectItem>
-                            {playwrightPersonas.map((persona) => (
+                            {playwrightPersonas.map((persona: PlaywrightPersona) => (
                               <SelectItem key={persona.id} value={persona.id}>
                                 {persona.name}
                               </SelectItem>

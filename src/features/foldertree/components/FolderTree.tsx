@@ -37,7 +37,7 @@ function FolderTreeBase({
   undoHistory,
   onUndoAtIndex,
   onRefreshFolders,
-}: FolderTreeProps) {
+}: FolderTreeProps): React.JSX.Element {
   const { toast } = useToast();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
@@ -49,10 +49,10 @@ function FolderTreeBase({
   const [isImporting, setIsImporting] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
 
-  const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]) => {
+  const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]): string[] => {
     const ids: string[] = [];
-    const walk = (nodes: CategoryWithChildren[]) => {
-      nodes.forEach((node) => {
+    const walk = (nodes: CategoryWithChildren[]): void => {
+      nodes.forEach((node: CategoryWithChildren) => {
         ids.push(node.id);
         if (node.children.length > 0) {
           walk(node.children);
@@ -62,32 +62,6 @@ function FolderTreeBase({
     walk(foldersToScan);
     return ids;
   }, []);
-
-  /*
-  const findFolderPathIds = useCallback(
-    (foldersToScan: CategoryWithChildren[], targetId: string) => {
-      const path: string[] = [];
-      const walk = (nodes: CategoryWithChildren[]): boolean => {
-        for (const node of nodes) {
-          if (node.id === targetId) {
-            path.push(node.id);
-            return true;
-          }
-          if (node.children.length > 0) {
-            if (walk(node.children)) {
-              path.unshift(node.id);
-              return true;
-            }
-          }
-        }
-        return false;
-      };
-      walk(foldersToScan);
-      return path;
-    },
-    []
-  );
-  */
 
   const findFolderById = useCallback(
     function findFolderById(
@@ -115,16 +89,16 @@ function FolderTreeBase({
     hasInitiallyExpandedRef.current = true;
   }, [folders, collectFolderIds]);
 
-  const handleFolderDragStart = useCallback((folderId: string) => {
+  const handleFolderDragStart = useCallback((folderId: string): void => {
     setDraggedFolderId(folderId);
   }, []);
 
-  const handleFolderDragEnd = useCallback(() => {
+  const handleFolderDragEnd = useCallback((): void => {
     setDraggedFolderId(null);
   }, []);
 
-  const handleToggleExpand = useCallback((folderId: string) => {
-    setExpandedFolderIds((prev) => {
+  const handleToggleExpand = useCallback((folderId: string): void => {
+    setExpandedFolderIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(folderId)) {
         next.delete(folderId);
@@ -135,32 +109,32 @@ function FolderTreeBase({
     });
   }, []);
 
-  const handleToggleSelectedCollapse = useCallback(() => {
+  const handleToggleSelectedCollapse = useCallback((): void => {
     if (!selectedFolderId) return;
     const target = findFolderById(folders, selectedFolderId);
     if (!target) return;
     const targetIds = [target.id, ...collectFolderIds(target.children)];
-    setExpandedFolderIds((prev) => {
+    setExpandedFolderIds((prev: Set<string>) => {
       const next = new Set(prev);
-      const allExpanded = targetIds.every((id) => next.has(id));
+      const allExpanded = targetIds.every((id: string) => next.has(id));
       if (allExpanded) {
-        targetIds.forEach((id) => next.delete(id));
+        targetIds.forEach((id: string) => next.delete(id));
       } else {
-        targetIds.forEach((id) => next.add(id));
+        targetIds.forEach((id: string) => next.add(id));
       }
       return next;
     });
   }, [selectedFolderId, folders, collectFolderIds, findFolderById]);
 
-  const isSelectedSubtreeExpanded = useMemo(() => {
+  const isSelectedSubtreeExpanded = useMemo((): boolean => {
     if (!selectedFolderId) return false;
     const target = findFolderById(folders, selectedFolderId);
     if (!target) return false;
     const targetIds = [target.id, ...collectFolderIds(target.children)];
-    return targetIds.every((id) => expandedFolderIds.has(id));
+    return targetIds.every((id: string) => expandedFolderIds.has(id));
   }, [selectedFolderId, folders, collectFolderIds, findFolderById, expandedFolderIds]);
 
-  const handleFolderImport = useCallback(async (e: React.DragEvent) => {
+  const handleFolderImport = useCallback(async (e: React.DragEvent): Promise<void> => {
     e.preventDefault();
     setIsDropzoneActive(false);
 
@@ -182,7 +156,7 @@ function FolderTreeBase({
 
       const counts = countMultipleFolders(structures);
 
-      const folderNames = structures.map(s => s.name).join(", ");
+      const folderNames = structures.map((s: { name: string }) => s.name).join(", ");
       const displayName = structures.length === 1
         ? `folder "${structures[0]!.name}"`
         : `${structures.length} folders (${folderNames})`;
@@ -225,13 +199,13 @@ function FolderTreeBase({
     }
   }, [selectedNotebookId, toast, onRefreshFolders]);
 
-  const handleDropzoneDragOver = useCallback((e: React.DragEvent) => {
+  const handleDropzoneDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     e.stopPropagation();
     setIsDropzoneActive(true);
   }, []);
 
-  const handleDropzoneDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDropzoneDragLeave = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     e.stopPropagation();
     setIsDropzoneActive(false);
@@ -239,7 +213,7 @@ function FolderTreeBase({
 
   const folderNodes = useMemo(
     () =>
-      folders.map((folder) => (
+      folders.map((folder: CategoryWithChildren) => (
         <FolderNode
           key={folder.id}
           folder={folder}
@@ -266,10 +240,10 @@ function FolderTreeBase({
           allFolders={folders}
           renamingFolderId={renamingFolderId}
           onStartRename={setRenamingFolderId}
-          onCancelRename={() => setRenamingFolderId(null)}
+          onCancelRename={(): void => setRenamingFolderId(null)}
           renamingNoteId={renamingNoteId}
           onStartNoteRename={setRenamingNoteId}
-          onCancelNoteRename={() => setRenamingNoteId(null)}
+          onCancelNoteRename={(): void => setRenamingNoteId(null)}
           expandedFolderIds={expandedFolderIds}
           onToggleExpand={handleToggleExpand}
         />
@@ -305,16 +279,16 @@ function FolderTreeBase({
   return (
     <div
       className="flex h-full flex-col bg-gray-900 border-r border-border"
-      onDragEnterCapture={(e) => {
+      onDragEnterCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
       }}
-      onDragOverCapture={(e) => {
+      onDragOverCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       }}
-      onDropCapture={(e) => {
+      onDropCapture={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
         const target = (e.target as HTMLElement).closest("[data-note-id]");
@@ -329,11 +303,11 @@ function FolderTreeBase({
         }
         onRelateNotes(draggedNoteId, targetId);
       }}
-      onDragOver={(e) => {
+      onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
       }}
-      onDrop={(e) => {
+      onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
         if (!draggedNoteId) return;
         e.preventDefault();
         const target = (e.target as HTMLElement).closest("[data-note-id]");
@@ -354,7 +328,7 @@ function FolderTreeBase({
           <h2 className="text-sm font-semibold text-white">Folders</h2>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setShowDropzone(!showDropzone)}
+              onClick={(): void => setShowDropzone(!showDropzone)}
               size="sm"
               variant="outline"
               className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
@@ -365,7 +339,7 @@ function FolderTreeBase({
               <Upload className="size-4" />
             </Button>
             <Button
-              onClick={() => onCreateFolder(null)}
+              onClick={(): void => onCreateFolder(null)}
               size="sm"
               className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
               aria-label="Add folder"
@@ -374,7 +348,7 @@ function FolderTreeBase({
             </Button>
             {onUndo && (
               <Button
-                onClick={onUndo}
+                onClick={(): void => onUndo()}
                 size="sm"
                 variant="outline"
                 className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
@@ -399,7 +373,7 @@ function FolderTreeBase({
             </Button>
             {onToggleCollapse && (
               <Button
-                onClick={onToggleCollapse}
+                onClick={(): void => onToggleCollapse()}
                 size="sm"
                 variant="outline"
                 className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
@@ -411,15 +385,15 @@ function FolderTreeBase({
           </div>
         </div>
         <Button
-          onClick={() => onSelectFolder(null)}
-          onDragOver={(e) => {
+          onClick={(): void => onSelectFolder(null)}
+          onDragOver={(e: React.DragEvent<HTMLButtonElement>): void => {
             e.preventDefault();
             setIsAllNotesDragOver(true);
           }}
-          onDragLeave={() => {
+          onDragLeave={(): void => {
             setIsAllNotesDragOver(false);
           }}
-          onDrop={(e) => {
+          onDrop={(e: React.DragEvent<HTMLButtonElement>): void => {
             e.preventDefault();
             setIsAllNotesDragOver(false);
             const noteId =
@@ -449,7 +423,7 @@ function FolderTreeBase({
         </Button>
         {onToggleFavorites && (
           <Button
-            onClick={() => onToggleFavorites()}
+            onClick={(): void => onToggleFavorites()}
             className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
               isFavoritesActive
                 ? "bg-yellow-500/20 text-yellow-200"
@@ -463,7 +437,7 @@ function FolderTreeBase({
         {undoHistory && undoHistory.length > 0 && (
           <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
             <Button
-              onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+              onClick={(): void => setIsHistoryExpanded(!isHistoryExpanded)}
               className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
             >
               <span>History</span>
@@ -475,11 +449,11 @@ function FolderTreeBase({
             </Button>
             {isHistoryExpanded && (
               <div className="space-y-1">
-                {undoHistory.slice(0, 10).map((entry, index) => (
+                {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
                   <Button
                     key={`${entry.label}-${index}`}
                     type="button"
-                    onClick={() => onUndoAtIndex?.(index)}
+                    onClick={(): void => onUndoAtIndex?.(index)}
                     className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
                   >
                     <span className="truncate">{entry.label}</span>
@@ -501,7 +475,7 @@ function FolderTreeBase({
           } ${isImporting ? "opacity-50 pointer-events-none" : ""}`}
           onDragOver={handleDropzoneDragOver}
           onDragLeave={handleDropzoneDragLeave}
-          onDrop={(e) => { void handleFolderImport(e); }}
+          onDrop={(e: React.DragEvent<HTMLDivElement>): void => { void handleFolderImport(e); }}
         >
           <div className="p-4 text-center">
             <Upload

@@ -351,9 +351,16 @@ function ImageElementBlock({
     );
   }
 
+  const useFill = height > 0 || aspectRatio !== "auto";
+
   return (
     <div className="relative" style={wrapperStyles}>
-      <NextImage src={src} alt={alt} style={imageStyles} fill unoptimized />
+      {useFill ? (
+        <NextImage src={src} alt={alt} style={imageStyles} fill unoptimized />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={alt} style={{ ...imageStyles, height: "auto" }} />
+      )}
       {overlayType !== "none" && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
       )}

@@ -5,7 +5,7 @@ import { Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
 import { FileManager } from "@/features/files";
-import type { ImageFileSelection } from "@/shared/types/files";
+import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 
 interface MediaLibraryPanelProps {
   open: boolean;
@@ -39,7 +39,7 @@ export function MediaLibraryPanel({
     }
   };
 
-  const uploadSingleFile = async (file: File): Promise<void> => {
+  const uploadSingleFile = async (file: File): Promise<ImageFileRecord> => {
     if (file.size > MAX_FILE_SIZE) {
       throw new Error("File exceeds 10MB limit");
     }
@@ -52,6 +52,7 @@ export function MediaLibraryPanel({
     if (!res.ok) {
       throw new Error("Failed to upload image");
     }
+    return (await res.json()) as ImageFileRecord;
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -62,11 +63,20 @@ export function MediaLibraryPanel({
     setUploading(true);
     try {
       const list = Array.from(files);
+      const uploaded: ImageFileRecord[] = [];
       for (const file of list) {
-        await uploadSingleFile(file);
+        uploaded.push(await uploadSingleFile(file));
       }
       toast("Upload complete.", { variant: "success" });
       await queryClient.invalidateQueries({ queryKey: ["files"] });
+      if (shouldAutoConfirm && uploaded.length > 0) {
+        const selections = uploaded
+          .map((file) => ({ id: file.id, filepath: file.filepath }))
+          .filter((file) => file.filepath);
+        if (selections.length > 0) {
+          handleSelect(selections);
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
       toast(message, { variant: "error" });

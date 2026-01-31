@@ -970,7 +970,12 @@ export function PreviewSection({
           {divider}
           {src ? (
             <div className="relative" style={presentation.wrapperStyles}>
-              <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
+              {presentation.useFill ? (
+                <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt={alt} style={{ ...presentation.imageStyles, height: "auto" }} />
+              )}
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
@@ -1816,7 +1821,12 @@ function PreviewBlockItem({
         >
           {src ? (
             <div className="relative" style={presentation.wrapperStyles}>
-              <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
+              {presentation.useFill ? (
+                <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt={alt} style={{ ...presentation.imageStyles, height: "auto" }} />
+              )}
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
@@ -2515,6 +2525,7 @@ function buildImageElementPresentation(
   imageStyles: React.CSSProperties;
   overlayStyles: React.CSSProperties;
   hasOverlay: boolean;
+  useFill: boolean;
 } {
   const width = (settings["width"] as number) || 100;
   const height = (settings["height"] as number) || 0;
@@ -2588,7 +2599,6 @@ function buildImageElementPresentation(
 
   const imageStyles: React.CSSProperties = {
     width: "100%",
-    height: height > 0 || aspectRatio !== "auto" ? "100%" : "auto",
     objectFit,
     objectPosition,
     opacity: opacity / 100,
@@ -2613,6 +2623,7 @@ function buildImageElementPresentation(
     imageStyles,
     overlayStyles,
     hasOverlay: overlayType !== "none",
+    useFill: height > 0 || aspectRatio !== "auto",
   };
 }
 

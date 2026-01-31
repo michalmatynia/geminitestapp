@@ -508,6 +508,8 @@ describe("AI Paths Extensive Handlers", () => {
               method: "GET",
               headers: "{}",
               responseMode: "json",
+              bodyTemplate: "",
+              responsePath: "$",
             },
           },
         },
@@ -546,9 +548,17 @@ describe("AI Paths Extensive Handlers", () => {
             database: {
               operation: "query",
               query: {
+                provider: "auto",
                 mode: "preset",
                 preset: "by_productId",
                 collection: "products",
+                field: "id",
+                idType: "string",
+                queryTemplate: "{}",
+                limit: 10,
+                sort: "{}",
+                projection: "{}",
+                single: false,
               },
             },
           },
@@ -587,6 +597,9 @@ describe("AI Paths Extensive Handlers", () => {
             model: {
               modelId: "gpt-4o",
               waitForResult: false,
+              temperature: 0.7,
+              maxTokens: 1000,
+              vision: false,
             },
           },
         },
@@ -801,7 +814,13 @@ describe("AI Paths Extensive Handlers", () => {
           outputs: ["schema", "context"],
           position: { x: 0, y: 0 },
           config: {
-            db_schema: { formatAs: "text" },
+            db_schema: {
+              mode: "all",
+              collections: [],
+              includeFields: true,
+              includeRelations: true,
+              formatAs: "text",
+            },
           },
         },
       ];

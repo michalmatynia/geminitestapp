@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MenuSettings } from "@/features/cms/types/menu-settings";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
-import type { gsap } from "gsap";
 import { getGsapFromVars } from "@/features/gsap/utils/presets";
 
 const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);
@@ -99,15 +98,16 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
-      const vars: gsap.TweenVars = getGsapFromVars(menu.menuEntryAnimation);
+      const vars: GSAPTweenVars = getGsapFromVars(menu.menuEntryAnimation);
       if (!vars) return;
+      const entryVars: GSAPTweenVars = {
+        ...vars,
+        duration: 0.6,
+        ease: "power3.out",
+        stagger: menu.menuEntryAnimation === "stagger" ? 0.06 : 0,
+      };
       ctx = gsap.context(() => {
-        gsap.from(items, {
-          ...vars,
-          duration: 0.6,
-          ease: "power3.out",
-          stagger: menu.menuEntryAnimation === "stagger" ? 0.06 : 0,
-        });
+        gsap.from(items, entryVars);
       }, itemsRef);
     });
     return (): void => {
@@ -119,7 +119,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   useEffect(() => {
     if (!animationsEnabled) return;
     if (menu.menuHoverAnimation === "none") return;
-    const fromVars: gsap.TweenVars = getGsapFromVars(menu.menuHoverAnimation);
+    const fromVars: GSAPTweenVars = getGsapFromVars(menu.menuHoverAnimation);
     if (!fromVars) return;
     let cancelled = false;
     const cleanups: Array<() => void> = [];
@@ -128,7 +128,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
-      const resetVars: gsap.TweenVars = {
+      const resetVars: GSAPTweenVars = {
         opacity: 1,
         x: 0,
         y: 0,
@@ -142,10 +142,13 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       };
       items.forEach((item: Element) => {
         const onEnter = (): void => {
-          gsap.fromTo(item, { ...fromVars }, { ...resetVars, duration: 0.3, ease: "power2.out" });
+          const hoverFromVars: GSAPTweenVars = { ...fromVars };
+          const hoverToVars: GSAPTweenVars = { ...resetVars, duration: 0.3, ease: "power2.out" };
+          gsap.fromTo(item, hoverFromVars, hoverToVars);
         };
         const onLeave = (): void => {
-          gsap.to(item, { ...resetVars, duration: 0.2, ease: "power2.out" });
+          const hoverLeaveVars: GSAPTweenVars = { ...resetVars, duration: 0.2, ease: "power2.out" };
+          gsap.to(item, hoverLeaveVars);
         };
         item.addEventListener("mouseenter", onEnter);
         item.addEventListener("mouseleave", onLeave);

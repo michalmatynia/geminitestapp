@@ -2,7 +2,7 @@ import { gsap } from "gsap";
 import type { AnimationPreset, ParallaxPreset } from "../types/animation";
 import { PARALLAX_DEFAULTS } from "../types/animation";
 
-export function getGsapFromVars(preset: AnimationPreset): gsap.TweenVars {
+export function getGsapFromVars(preset: AnimationPreset): GSAPTweenVars {
   switch (preset) {
     case "fadeIn":
       return { opacity: 0 };

@@ -993,6 +993,58 @@ export function PreviewSection({
     );
   }
 
+  // Button element section
+  if (section.type === "ButtonElement") {
+    const label = (section.settings["buttonLabel"] as string) || "Button";
+    const style = (section.settings["buttonStyle"] as string) || "solid";
+    const customStyles: React.CSSProperties = {};
+    const fontFamily = section.settings["fontFamily"] as string | undefined;
+    const fontSize = section.settings["fontSize"] as number | undefined;
+    const fontWeight = section.settings["fontWeight"] as string | undefined;
+    const textColor = section.settings["textColor"] as string | undefined;
+    const bgColor = section.settings["bgColor"] as string | undefined;
+    const borderColor = section.settings["borderColor"] as string | undefined;
+    const borderRadius = section.settings["borderRadius"] as number | undefined;
+    const borderWidth = section.settings["borderWidth"] as number | undefined;
+
+    if (fontFamily) customStyles.fontFamily = fontFamily;
+    if (fontSize && fontSize > 0) customStyles.fontSize = `${fontSize}px`;
+    if (fontWeight) customStyles.fontWeight = fontWeight;
+    if (textColor) customStyles.color = textColor;
+    if (bgColor) customStyles.backgroundColor = bgColor;
+    if (borderColor) customStyles.borderColor = borderColor;
+    if (borderRadius && borderRadius > 0) customStyles.borderRadius = `${borderRadius}px`;
+    if (borderWidth && borderWidth > 0) customStyles.borderWidth = `${borderWidth}px`;
+
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={getSectionStyles(section.settings, colorSchemes)}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div
+            className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
+              style === "outline"
+                ? "border border-gray-400 text-gray-300"
+                : "bg-gray-200 text-gray-900"
+            }`}
+            style={customStyles}
+          >
+            {label}
+          </div>
+        </div>
+      )
+    );
+  }
+
   // Text atom section
   if (section.type === "TextAtom") {
     const text = (section.settings["text"] as string) || "";

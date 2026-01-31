@@ -31,7 +31,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const groupedTemplates = useMemo(() => getTemplatesByCategory(zone), [zone]);
   const { dispatch } = usePageBuilder();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
-  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement"]), []);
+  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "ButtonElement"]), []);
   const primitives = useMemo(
     () => sectionTypes.filter((def: SectionDefinition) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]

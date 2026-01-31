@@ -3,7 +3,7 @@
 import { Button } from "@/shared/ui";
 import * as React from "react";
 
-import RichTextBlock from "./RichTextBlock";
+import RichTextBlock, { type RichTextContent } from "./RichTextBlock";
 import type { PageComponent, Page } from "@/features/cms/types";
 
 interface CmsSideMenuProps {
@@ -27,7 +27,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
     });
   };
 
-  const handleContentChange = (index: number, content: Record<string, unknown>): void => {
+  const handleContentChange = (index: number, content: RichTextContent): void => {
     setPage((prev: Page | null) => {
       if (!prev) return prev;
       const nextComponents = [...(prev.components ?? [])];
@@ -35,7 +35,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
       if (!nextComponents[index]) return prev; // out of range safety
       nextComponents[index] = {
         ...nextComponents[index],
-        content,
+        content: { ...content },
       };
 
       return {
@@ -74,8 +74,8 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.
               return (
                 <RichTextBlock
                   key={index}
-                  content={component.content as Record<string, string | undefined>}
-                  onChange={(content: Record<string, string | undefined>) => handleContentChange(index, content as Record<string, unknown>)}
+                  content={component.content as RichTextContent}
+                  onChange={(content: RichTextContent): void => handleContentChange(index, content)}
                 />
               );
             }

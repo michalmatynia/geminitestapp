@@ -21,6 +21,7 @@ import { MediaStylesProvider } from "./media-styles-context";
 import { FrontendTextElementSection } from "./sections/FrontendTextElementSection";
 import { FrontendImageElementSection } from "./sections/FrontendImageElementSection";
 import { FrontendTextAtomSection } from "./sections/FrontendTextAtomSection";
+import { FrontendButtonElementSection } from "./sections/FrontendButtonElementSection";
 
 // ---------------------------------------------------------------------------
 // Types for the section content stored in PageComponent.content
@@ -134,6 +135,10 @@ function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: Secti
       return <FrontendTextAtomSection settings={settings} blocks={blocks} />;
     case "ImageElement":
       return <FrontendImageElementSection settings={settings} />;
+    case "ButtonElement":
+      return <FrontendButtonElementSection settings={settings} />;
+    case "ButtonElement":
+      return <FrontendButtonElementSection settings={settings} />;
     case "Hero":
       return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ImageWithText":

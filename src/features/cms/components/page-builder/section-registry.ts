@@ -858,6 +858,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     defaultSettings: { ...BLOCK_DEFINITIONS.ImageElement.defaultSettings },
     settingsSchema: [...BLOCK_DEFINITIONS.ImageElement.settingsSchema],
   },
+  ButtonElement: {
+    type: "ButtonElement",
+    label: "Button element",
+    icon: "MousePointerClick",
+    allowedBlockTypes: [],
+    defaultSettings: { ...BLOCK_DEFINITIONS.Button.defaultSettings },
+    settingsSchema: [...BLOCK_DEFINITIONS.Button.settingsSchema],
+  },
   ImageWithText: {
     type: "ImageWithText",
     label: "Image with text",
@@ -1238,9 +1246,9 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "ButtonElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
   template: Object.keys(SECTION_DEFINITIONS).filter((type: string) => type !== "AnnouncementBar"),
-  footer: ["Block", "TextElement", "TextAtom", "ImageElement", "RichText", "Grid", "Newsletter", "ContactForm"],
+  footer: ["Block", "TextElement", "TextAtom", "ImageElement", "ButtonElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {

@@ -923,12 +923,14 @@ export function basePageBuilderReducer(
       if (
         sourceSection.type !== "TextElement" &&
         sourceSection.type !== "ImageElement" &&
+        sourceSection.type !== "ButtonElement" &&
         sourceSection.type !== TEXT_ATOM_BLOCK_TYPE
       ) return state;
       const targetSection = state.sections.find((s: SectionInstance) => s.id === action.toSectionId);
       if (!targetSection) return state;
 
-      const blockDef = getBlockDefinition(sourceSection.type);
+      const resolvedBlockType = sourceSection.type === "ButtonElement" ? "Button" : sourceSection.type;
+      const blockDef = getBlockDefinition(resolvedBlockType);
       const baseSettings = {
         ...(blockDef?.defaultSettings ?? {}),
         ...sourceSection.settings,
@@ -942,7 +944,7 @@ export function basePageBuilderReducer(
           : undefined;
       const convertedBlock: BlockInstance = {
         id: uid(),
-        type: sourceSection.type,
+        type: resolvedBlockType,
         settings: baseSettings,
         ...(textAtomBlocks ? { blocks: textAtomBlocks } : {}),
       };
@@ -959,16 +961,17 @@ export function basePageBuilderReducer(
     }
 
     case "MOVE_SECTION_TO_COLUMN": {
-      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom"];
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
       // Prevent dropping a Grid into its own columns
       if (action.sectionId === action.toSectionId) return state;
 
+      const resolvedBlockType = sourceSection.type === "ButtonElement" ? "Button" : sourceSection.type;
       const convertedBlock: BlockInstance = {
         id: uid(),
-        type: sourceSection.type,
+        type: resolvedBlockType,
         settings: { ...sourceSection.settings },
         blocks: sourceSection.blocks.length > 0 ? [...sourceSection.blocks] : [],
       };

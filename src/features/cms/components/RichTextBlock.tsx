@@ -3,7 +3,7 @@
 
 
 
-interface RichTextContent {
+export interface RichTextContent {
   heading?: string;
   text?: string;
   buttonText?: string;

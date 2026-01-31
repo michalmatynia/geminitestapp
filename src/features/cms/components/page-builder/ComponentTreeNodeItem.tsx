@@ -12,6 +12,7 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   TextElement: FileText,
   TextAtom: Folder,
   ImageElement: ImageIcon,
+  ButtonElement: MousePointerClick,
   ImageWithText: Layers,
   RichText: AlignLeft,
   Hero: Layers,
@@ -47,7 +48,7 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
 };
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
-const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom"];
+const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {
   if (typeof value === "string") {
@@ -141,7 +142,11 @@ export function SectionNodeItem({
   onDropSectionToColumn,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
-  const isFileSection = section.type === "TextElement" || section.type === "TextAtom" || section.type === "ImageElement";
+  const isFileSection =
+    section.type === "TextElement" ||
+    section.type === "TextAtom" ||
+    section.type === "ImageElement" ||
+    section.type === "ButtonElement";
   const hasChildren = section.blocks.length > 0;
   const canToggle = !isFileSection && (section.type === "Grid" || hasChildren);
   const isExpanded = canToggle && expandedIds.has(section.id);
@@ -151,6 +156,8 @@ export function SectionNodeItem({
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextAtom") ?? false;
   const targetAllowsImageElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("ImageElement") ?? false;
+  const targetAllowsButton =
+    getSectionDefinition(section.type)?.allowedBlockTypes?.includes("Button") ?? false;
   const hasBlocks = section.blocks.length > 0;
   const Icon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
@@ -214,6 +221,8 @@ export function SectionNodeItem({
             } else if (draggedSectionType === "TextAtom" && targetAllowsTextAtom) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
             } else if (draggedSectionType === "ImageElement" && targetAllowsImageElement) {
+              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
+            } else if (draggedSectionType === "ButtonElement" && targetAllowsButton) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
             } else if (section.type === "Grid") {
               // Section dropped on a Grid — route to first column

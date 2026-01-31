@@ -93,7 +93,7 @@ export function ImportTab({
   allVisibleSelected,
   isSomeVisibleSelected,
   lastResult,
-}: ImportTabProps) {
+}: ImportTabProps): React.JSX.Element {
   return (
     <>
       <div className="rounded-md border border-border bg-gray-900 p-4">
@@ -113,7 +113,7 @@ export function ImportTab({
         <div className="mt-4 space-y-4">
           <div className="flex flex-wrap items-end gap-3">
             <Button
-              onClick={() => void handleLoadInventories()}
+              onClick={(): void => { void handleLoadInventories(); }}
               disabled={loadingInventories}
               className="mt-6"
             >
@@ -124,13 +124,13 @@ export function ImportTab({
               <select
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={inventoryId}
-                onChange={(event) => setInventoryId(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setInventoryId(event.target.value)}
                 disabled={inventories.length === 0}
               >
                 {inventories.length === 0 ? (
                   <option value="">Load inventories first</option>
                 ) : (
-                  inventories.map((inventory) => (
+                  inventories.map((inventory: InventoryOption) => (
                     <option key={inventory.id} value={inventory.id}>
                       {inventory.name}
                     </option>
@@ -141,7 +141,7 @@ export function ImportTab({
             <Button
               type="button"
               variant="secondary"
-              onClick={() => void handleClearInventory()}
+              onClick={(): void => { void handleClearInventory(); }}
               disabled={!inventoryId}
               className="mt-6"
             >
@@ -152,7 +152,7 @@ export function ImportTab({
               <select
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={limit}
-                onChange={(event) => setLimit(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setLimit(event.target.value)}
               >
                 <option value="1">1</option>
                 <option value="5">5</option>
@@ -170,7 +170,7 @@ export function ImportTab({
               <select
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={catalogId}
-                onChange={(event) => setCatalogId(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setCatalogId(event.target.value)}
                 disabled={loadingCatalogs || catalogs.length === 0}
               >
                 {catalogs.length === 0 ? (
@@ -178,7 +178,7 @@ export function ImportTab({
                     {loadingCatalogs ? "Loading catalogs..." : "No catalogs"}
                   </option>
                 ) : (
-                  catalogs.map((catalog) => (
+                  catalogs.map((catalog: CatalogOption) => (
                     <option key={catalog.id} value={catalog.id}>
                       {catalog.name}
                       {catalog.isDefault ? " (Default)" : ""}
@@ -192,11 +192,11 @@ export function ImportTab({
               <select
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={importTemplateId}
-                onChange={(event) => setImportTemplateId(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => setImportTemplateId(event.target.value)}
                 disabled={loadingImportTemplates || importTemplates.length === 0}
               >
                 <option value="">No template</option>
-                {importTemplates.map((template) => (
+                {importTemplates.map((template: Template) => (
                   <option key={template.id} value={template.id}>
                     {template.name}
                   </option>
@@ -211,7 +211,7 @@ export function ImportTab({
               <select
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={imageMode}
-                onChange={(event) =>
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
                   setImageMode(
                     event.target.value === "download" ? "download" : "links"
                   )
@@ -230,7 +230,7 @@ export function ImportTab({
               <div className="mt-2 flex items-center gap-2">
                 <Checkbox
                   id="allowDuplicateSku"
-                  checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
+                  checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                   className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                 />
                 <Label htmlFor="allowDuplicateSku" className="text-sm text-white">
@@ -247,7 +247,7 @@ export function ImportTab({
             <p className="text-xs text-gray-500">
               Default catalog and price group must be configured before import.
             </p>
-            <Button onClick={() => void handleImport()} disabled={importing}>
+            <Button onClick={(): void => { void handleImport(); }} disabled={importing}>
               {importing ? "Importing..." : "Import products"}
             </Button>
           </div>
@@ -267,14 +267,14 @@ export function ImportTab({
           <div className="flex flex-wrap items-center gap-2">
             <Input
               value={importSearch}
-              onChange={(event) => setImportSearch(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setImportSearch(event.target.value)}
               placeholder="Search products..."
               className="h-8 w-48 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
             <select
               className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
               value={uniqueOnly ? "unique" : "all"}
-              onChange={(event) =>
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
                 setUniqueOnly(event.target.value === "unique")
               }
             >
@@ -282,7 +282,7 @@ export function ImportTab({
               <option value="all">All products</option>
             </select>
             <Button
-              onClick={() => void handleLoadImportList()}
+              onClick={(): void => { void handleLoadImportList(); }}
               disabled={loadingImportList}
             >
               {loadingImportList ? "Loading..." : "Load import list"}
@@ -311,19 +311,19 @@ export function ImportTab({
                 <Checkbox
                   aria-label="Select all visible products"
                   checked={allVisibleSelected || (isSomeVisibleSelected && "indeterminate")}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={(checked: boolean | "indeterminate"): void => {
                     if (Boolean(checked)) {
-                      setSelectedImportIds((prev) => {
+                      setSelectedImportIds((prev: Set<string>) => {
                         const next = new Set(prev);
-                        filteredImportList.forEach((item) => {
+                        filteredImportList.forEach((item: ImportListItem) => {
                           if (item.baseProductId) next.add(item.baseProductId);
                         });
                         return next;
                       });
                     } else {
-                      setSelectedImportIds((prev) => {
+                      setSelectedImportIds((prev: Set<string>) => {
                         const next = new Set(prev);
-                        filteredImportList.forEach((item) => {
+                        filteredImportList.forEach((item: ImportListItem) => {
                           if (item.baseProductId) next.delete(item.baseProductId);
                         });
                         return next;
@@ -341,7 +341,7 @@ export function ImportTab({
               <span>Qty</span>
               <span>Status</span>
             </div>
-            {filteredImportList.map((item) => (
+            {filteredImportList.map((item: ImportListItem) => (
               <div
                 key={item.baseProductId}
                 className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
@@ -352,9 +352,9 @@ export function ImportTab({
               >
                 <Checkbox
                   checked={selectedImportIds.has(item.baseProductId)}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={(checked: boolean | "indeterminate"): void => {
                     const isChecked = Boolean(checked);
-                    setSelectedImportIds((prev) => {
+                    setSelectedImportIds((prev: Set<string>) => {
                       const next = new Set(prev);
                       if (isChecked) {
                         next.add(item.baseProductId);
@@ -447,7 +447,7 @@ export function ImportTab({
           ) : null}
           {lastResult.errors?.length ? (
             <div className="mt-3 space-y-1 text-xs text-gray-400">
-              {lastResult.errors.map((error, index) => (
+              {lastResult.errors.map((error: string, index: number) => (
                 <p key={`${error}-${index}`}>• {error}</p>
               ))}
             </div>

@@ -1,4 +1,3 @@
-import { gsap } from "gsap";
 import type { AnimationPreset, ParallaxPreset } from "../types/animation";
 import { PARALLAX_DEFAULTS } from "../types/animation";
 

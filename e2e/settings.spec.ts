@@ -1,4 +1,6 @@
 
+import { test, expect } from "@playwright/test";
+
 test.describe('Settings - Notifications', () => {
   test.beforeEach(({ page }) => {
     page.goto('/admin/settings/notifications');

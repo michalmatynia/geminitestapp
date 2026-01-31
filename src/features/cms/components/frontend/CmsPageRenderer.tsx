@@ -50,7 +50,7 @@ interface CmsPageRendererProps {
   hoverEffect?: string | undefined;
   hoverScale?: number | undefined;
   mediaVars?: React.CSSProperties | undefined;
-  mediaStyles?: React.CSSProperties | undefined;
+  mediaStyles?: React.CSSProperties | null | undefined;
 }
 
 export function CmsPageRenderer({
@@ -87,20 +87,20 @@ export function CmsPageRenderer({
   }
 
   return (
-    <MediaStylesProvider value={mediaStyles}>
+    <MediaStylesProvider value={mediaStyles ?? null}>
       <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
         {ZONE_ORDER.map((zone: PageZone) =>
           sectionsByZone[zone].map((section: typeof sections[number]) => {
             const animConfig = section.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
 
             return (
-              <GsapAnimationWrapper key={section.key} config={animConfig}>
+              <GsapAnimationWrapper key={section.key} config={animConfig ?? {}}>
                 <SectionRenderer
                   type={section.type}
                   settings={section.settings}
                   blocks={section.blocks}
-                  colorSchemes={colorSchemes}
-                  layout={layout}
+                  colorSchemes={colorSchemes ?? {}}
+                  layout={layout ?? {}}
                 />
               </GsapAnimationWrapper>
             );
@@ -119,8 +119,8 @@ interface SectionRendererProps {
   type: string;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  layout?: { fullWidth?: boolean } | undefined;
+  colorSchemes: Record<string, ColorSchemeColors>;
+  layout: { fullWidth?: boolean };
 }
 
 function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {

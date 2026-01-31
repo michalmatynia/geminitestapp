@@ -24,7 +24,7 @@ describe("ProductTableFooter Component", () => {
         <ProductTableFooter {...mockProps} />
       </ToastProvider>
     );
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === "0 of 100 row(s) selected.";
     })).toBeInTheDocument();
   });

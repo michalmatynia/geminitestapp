@@ -1,7 +1,6 @@
 "use client";
 
 
-import NextImage from "next/image";
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
@@ -355,12 +354,16 @@ function ImageElementBlock({
 
   return (
     <div className="relative" style={wrapperStyles}>
-      {useFill ? (
-        <NextImage src={src} alt={alt} style={imageStyles} fill unoptimized />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} style={{ ...imageStyles, height: "auto" }} />
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          ...imageStyles,
+          display: "block",
+          height: useFill ? "100%" : "auto",
+        }}
+      />
       {overlayType !== "none" && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
       )}
@@ -397,13 +400,8 @@ function ImageBlock({
 
   return (
     <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
-      <NextImage
-        src={src}
-        alt={alt}
-        width={800}
-        height={600}
-        className="h-auto w-full"
-      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="block h-auto w-full object-cover" />
     </div>
   );
 }

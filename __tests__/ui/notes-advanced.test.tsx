@@ -123,8 +123,8 @@ describe("Notes Advanced UI", () => {
 
     // Default sort is by Date (created desc usually). Banana (Jan 2) before Apple (Jan 1).
     const cards = await screen.findAllByRole("heading", { level: 3 });
-    expect(cards[0].textContent).toBe("Banana");
-    expect(cards[1].textContent).toBe("Apple");
+    expect(cards[0]!.textContent).toBe("Banana");
+    expect(cards[1]!.textContent).toBe("Apple");
 
     // Change sort to name (ascending is usually default or we can toggle order)
     const sortByNameBtn = screen.getByTitle("Sort by name");
@@ -134,8 +134,8 @@ describe("Notes Advanced UI", () => {
     // Banana (B) comes before Apple (A) in DESC order.
     await waitFor(async () => {
       const cardsAfterSort = await screen.findAllByRole("heading", { level: 3 });
-      expect(cardsAfterSort[0].textContent).toBe("Banana");
-      expect(cardsAfterSort[1].textContent).toBe("Apple");
+      expect(cardsAfterSort[0]!.textContent).toBe("Banana");
+      expect(cardsAfterSort[1]!.textContent).toBe("Apple");
     });
 
     // Toggle to ASC
@@ -144,8 +144,8 @@ describe("Notes Advanced UI", () => {
 
     await waitFor(async () => {
       const cardsAfterSort = await screen.findAllByRole("heading", { level: 3 });
-      expect(cardsAfterSort[0].textContent).toBe("Apple");
-      expect(cardsAfterSort[1].textContent).toBe("Banana");
+      expect(cardsAfterSort[0]!.textContent).toBe("Apple");
+      expect(cardsAfterSort[1]!.textContent).toBe("Banana");
     });
   });
 

@@ -8,7 +8,7 @@ export function MediaStylesProvider({
   value,
   children,
 }: {
-  value?: React.CSSProperties;
+  value: React.CSSProperties | null;
   children: React.ReactNode;
 }): React.ReactNode {
   return (

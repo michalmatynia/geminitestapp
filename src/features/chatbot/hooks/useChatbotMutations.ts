@@ -80,17 +80,24 @@ export function useDeleteChatbotSessions(): UseMutationResult<unknown, Error, st
 /**
  * Mutation hook for persisting a message to a session
  */
-export function usePersistSessionMessage(): UseMutationResult<
-  void,
-  Error,
-  { sessionId: string; role: ChatMessage["role"]; content: string }
-> {
+type PersistSessionMessageVariables = {
+  sessionId: string;
+  role: ChatMessage["role"];
+  content: string;
+};
+
+type SaveChatbotSettingsVariables = {
+  key: string;
+  settings: ChatbotSettingsPayload;
+};
+
+export function usePersistSessionMessage(): UseMutationResult<void, Error, PersistSessionMessageVariables> {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { sessionId: string; role: ChatMessage["role"]; content: string }>({
-    mutationFn: ({ sessionId, role, content }) =>
+  return useMutation<void, Error, PersistSessionMessageVariables>({
+    mutationFn: ({ sessionId, role, content }: PersistSessionMessageVariables): Promise<void> =>
       persistSessionMessage(sessionId, role, content),
-    onSuccess: (_data, { sessionId }): Promise<void> => {
+    onSuccess: (_data: void, { sessionId }: PersistSessionMessageVariables): Promise<void> => {
       return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
   });
@@ -108,13 +115,17 @@ export function useSendChatMessage(): UseMutationResult<{ message?: string }, Er
 /**
  * Mutation hook for saving chatbot settings
  */
-export function useSaveChatbotSettings(): UseMutationResult<{ settings?: { settings?: ChatbotSettingsPayload } }, Error, { key: string; settings: ChatbotSettingsPayload }> {
+export function useSaveChatbotSettings(): UseMutationResult<
+  { settings?: { settings?: ChatbotSettingsPayload } },
+  Error,
+  SaveChatbotSettingsVariables
+> {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ key, settings }: { key: string; settings: ChatbotSettingsPayload }) =>
+  return useMutation<{ settings?: { settings?: ChatbotSettingsPayload } }, Error, SaveChatbotSettingsVariables>({
+    mutationFn: ({ key, settings }: SaveChatbotSettingsVariables): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> =>
       saveChatbotSettings(key, settings),
-    onSuccess: (_data: unknown, { key }: { key: string }): Promise<void> => {
+    onSuccess: (_data: { settings?: { settings?: ChatbotSettingsPayload } }, { key }: SaveChatbotSettingsVariables): Promise<void> => {
       return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.settings(key) });
     },
   });

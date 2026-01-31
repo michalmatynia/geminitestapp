@@ -321,7 +321,6 @@ function ImageElementBlock({
 
   const imageStyles: React.CSSProperties = {
     width: "100%",
-    height: height > 0 || aspectRatio !== "auto" ? "100%" : "auto",
     objectFit,
     objectPosition,
     opacity: opacity / 100,

@@ -463,6 +463,20 @@ export function basePageBuilderReducer(
     case "ADD_BLOCK": {
       const def = getBlockDefinition(action.blockType);
       if (!def) return state;
+      if (action.blockType === "Row") {
+        const updatedSections = state.sections.map((s: SectionInstance) => {
+          if (s.id !== action.sectionId) return s;
+          if (s.type !== "Grid") return s;
+          const normalized = ensureGridRows(s);
+          const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+          const columnsPerRow =
+            (normalized.settings["columns"] as number) ??
+            Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
+          const nextRows = [...rows, createRowBlock(columnsPerRow)];
+          return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow } };
+        });
+        return { ...state, sections: updatedSections };
+      }
       const newBlock: BlockInstance = {
         id: uid(),
         type: action.blockType,

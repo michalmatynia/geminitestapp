@@ -102,7 +102,7 @@ export async function GET(
         : null;
 
       while (!cancelled) {
-        const nextRun: AiPathRunRecord | null = repo.findRunById(runId);
+        const nextRun: AiPathRunRecord | null = await repo.findRunById(runId);
         if (!nextRun) {
           send("error", { message: "Run not found", runId });
           break;

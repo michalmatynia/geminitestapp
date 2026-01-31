@@ -107,13 +107,14 @@ function NumberField({ label, value, onChange, suffix, min, max }: { label: stri
 }
 
 function RangeField({ label, value, onChange, min, max, suffix, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string; step?: number }): React.ReactNode {
+  const safeValue = Number.isFinite(value) ? value : min;
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-        <span className="text-[11px] text-gray-300">{value}{suffix}</span>
+        <span className="text-[11px] text-gray-300">{safeValue}{suffix}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
+      <input type="range" min={min} max={max} step={step} value={safeValue} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
     </div>
   );
 }
@@ -613,6 +614,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <RangeField label="Grid gutter" value={theme.gridGutter} onChange={(v) => update("gridGutter", v)} min={8} max={48} suffix="px" />
               <RangeField label="Section spacing" value={theme.sectionSpacing} onChange={(v) => update("sectionSpacing", v)} min={16} max={128} suffix="px" />
               <RangeField label="Container padding" value={theme.containerPadding} onChange={(v) => update("containerPadding", v)} min={8} max={64} suffix="px" />
+              <RangeField label="Page padding" value={theme.pagePadding} onChange={(v) => update("pagePadding", v)} min={0} max={200} suffix="px" />
+              <RangeField label="Page margin" value={theme.pageMargin} onChange={(v) => update("pageMargin", v)} min={0} max={200} suffix="px" />
               <RangeField label="Border radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={24} suffix="px" />
             </div>
           );
@@ -1048,6 +1051,17 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                   <NumberField label="Thickness" value={theme.drawerBorderWidth} onChange={(v) => update("drawerBorderWidth", v)} suffix="px" min={0} max={8} />
                   <RangeField label="Opacity" value={theme.drawerBorderOpacity} onChange={(v) => update("drawerBorderOpacity", v)} min={0} max={100} suffix="%" />
                   <NumberField label="Corner radius" value={theme.drawerRadius} onChange={(v) => update("drawerRadius", v)} suffix="px" min={0} max={32} />
+                </div>
+              </div>
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Shadow</Label>
+                <div className="space-y-2">
+                  <RangeField label="Opacity" value={theme.drawerShadowOpacity} onChange={(v) => update("drawerShadowOpacity", v)} min={0} max={100} suffix="%" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumberField label="Horizontal" value={theme.drawerShadowX} onChange={(v) => update("drawerShadowX", v)} suffix="px" min={-30} max={30} />
+                    <NumberField label="Vertical" value={theme.drawerShadowY} onChange={(v) => update("drawerShadowY", v)} suffix="px" min={-30} max={30} />
+                    <NumberField label="Blur" value={theme.drawerShadowBlur} onChange={(v) => update("drawerShadowBlur", v)} suffix="px" min={0} max={60} />
+                  </div>
                 </div>
               </div>
             </div>

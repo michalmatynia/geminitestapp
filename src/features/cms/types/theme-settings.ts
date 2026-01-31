@@ -42,6 +42,8 @@ export interface ThemeSettings {
   sectionSpacing: number;
   containerPadding: number;
   borderRadius: number;
+  pagePadding: number;
+  pageMargin: number;
   fullWidth: boolean;
   // Animations
   enableAnimations: boolean;
@@ -198,6 +200,10 @@ export interface ThemeSettings {
   drawerBorderWidth: number;
   drawerBorderOpacity: number;
   drawerRadius: number;
+  drawerShadowOpacity: number;
+  drawerShadowX: number;
+  drawerShadowY: number;
+  drawerShadowBlur: number;
   // Badges
   badgeFontSize: number;
   badgeRadius: number;
@@ -329,6 +335,8 @@ export const DEFAULT_THEME: ThemeSettings = {
   sectionSpacing: 64,
   containerPadding: 24,
   borderRadius: 8,
+  pagePadding: 16,
+  pageMargin: 0,
   fullWidth: false,
   enableAnimations: true,
   animationDuration: 300,
@@ -472,6 +480,10 @@ export const DEFAULT_THEME: ThemeSettings = {
   drawerBorderWidth: 0,
   drawerBorderOpacity: 100,
   drawerRadius: 16,
+  drawerShadowOpacity: 0,
+  drawerShadowX: 0,
+  drawerShadowY: 8,
+  drawerShadowBlur: 24,
   badgeFontSize: 11,
   badgeRadius: 4,
   badgePaddingX: 8,
@@ -536,6 +548,8 @@ export const normalizeThemeSettings = (
     ...(input ?? {}),
   };
 
+  merged.pagePadding = typeof input?.pagePadding === "number" ? input.pagePadding : DEFAULT_THEME.pagePadding;
+  merged.pageMargin = typeof input?.pageMargin === "number" ? input.pageMargin : DEFAULT_THEME.pageMargin;
   merged.fullWidth = typeof input?.fullWidth === "boolean" ? input.fullWidth : DEFAULT_THEME.fullWidth;
   merged.hoverEffect = typeof input?.hoverEffect === "string" ? input.hoverEffect : DEFAULT_THEME.hoverEffect;
 

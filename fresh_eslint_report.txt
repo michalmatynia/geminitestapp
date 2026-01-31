@@ -1,0 +1,25 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 9.39.2
+
+TypeError: Cannot read properties of undefined (reading 'length')
+Occurred while linting /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx:1167
+Rule: "react/no-unescaped-entities"
+    at reportInvalidEntity (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint-plugin-react/lib/rules/no-unescaped-entities.js:94:27)
+    at Literal, JSXText (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint-plugin-react/lib/rules/no-unescaped-entities.js:152:11)
+    at ruleErrorHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:1173:33)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-visitor.js:76:46
+    at Array.forEach (<anonymous>)
+    at SourceCodeVisitor.callSync (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-visitor.js:76:30)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-traverser.js:291:18
+    at Array.forEach (<anonymous>)
+    at SourceCodeTraverser.traverseSync (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-traverser.js:290:10)
+    at runRules (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:1214:12)
+    at #flatVerifyWithoutProcessors (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:2115:4)
+    at Linter._verifyWithFlatConfigArrayAndWithoutProcessors (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:2203:43)
+    at Linter._verifyWithFlatConfigArray (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:2306:15)
+    at Linter.verify (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:1677:10)
+    at Linter.verifyAndFix (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:2571:20)
+    at verifyText (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/eslint/eslint-helpers.js:1180:45)
+    at readAndVerifyFile (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/eslint/eslint-helpers.js:1321:10)

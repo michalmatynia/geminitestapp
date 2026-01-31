@@ -11,7 +11,7 @@ const TERMINAL_STATUSES = new Set([
   "canceled",
   "dead_lettered",
 ]);
-const normalizeLimit = (value: number, fallback: number) => {
+const normalizeLimit = (value: number, fallback: number): number => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.floor(value);
 };
@@ -20,9 +20,9 @@ const EVENT_BATCH_LIMIT = normalizeLimit(
   200
 );
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-const toISOStringSafe = (value?: Date | string | null) => {
+const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
   if (typeof value === "string") return value;
   return value.toISOString();
@@ -55,7 +55,7 @@ export async function GET(
       fallbackMessage: "Unauthorized.",
     });
   }
-  const repo = await getPathRunRepository();
+  const repo = getPathRunRepository();
   const initialRun = await repo.findRunById(runId);
   if (!initialRun) {
     return createErrorResponse(notFoundError("Run not found", { runId }), {
@@ -84,7 +84,7 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: unknown) => {
+      const send = (event: string, data: unknown): void => {
         const payload = `event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(payload));
       };
@@ -116,8 +116,10 @@ export async function GET(
         }
 
         const nodes = await repo.listRunNodes(runId);
-        const maxNodeUpdatedAt = nodes.reduce<string | null>((max, node) => {
-          const candidate = toISOStringSafe(node.updatedAt ?? node.createdAt);
+        const maxNodeUpdatedAt = nodes.reduce<string | null>((max: string | null, node: AiPathRunNodeRecord) => {
+          const nodeUpdatedAt: Date | string | null | undefined = node.updatedAt;
+          const nodeCreatedAt: Date | string | null | undefined = node.createdAt;
+          const candidate = toISOStringSafe(nodeUpdatedAt ?? nodeCreatedAt);
           if (!candidate) return max;
           if (!max) return candidate;
           return candidate > max ? candidate : max;
@@ -135,8 +137,9 @@ export async function GET(
           const overflow = events.length > EVENT_BATCH_LIMIT;
           const batch = overflow ? events.slice(0, EVENT_BATCH_LIMIT) : events;
           send("events", { events: batch, overflow, limit: EVENT_BATCH_LIMIT });
-          const latestEventTime = batch.reduce<string | null>((max, event) => {
-            const candidate = toISOStringSafe(event.createdAt);
+          const latestEventTime = batch.reduce<string | null>((max: string | null, event: AiPathRunEventRecord) => {
+            const eventCreatedAt: Date | string = event.createdAt;
+            const candidate = toISOStringSafe(eventCreatedAt);
             if (!candidate) return max;
             if (!max) return candidate;
             return candidate > max ? candidate : max;

@@ -1,12 +1,19 @@
 import { z } from 'zod';
 
-// Helper: preprocess empty strings to undefined before coercing to number
+// Helper: preprocess empty strings to undefined, but keep invalid values to trigger schema errors
 const emptyStringToUndefined = z.preprocess(
   (value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const num = Number(value);
-    if (isNaN(num)) return undefined;
-    return num;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      const num = Number(trimmed);
+      return Number.isFinite(num) ? num : value;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : value;
+    }
+    return value;
   },
   z.number().int().optional()
 );

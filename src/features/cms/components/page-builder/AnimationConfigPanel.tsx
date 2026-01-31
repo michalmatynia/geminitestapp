@@ -1035,7 +1035,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               className="text-sm"
             />
             <div className="flex flex-wrap gap-1.5">
-              {quickSelectors.map((option) => (
+              {quickSelectors.map((option: { label: string; value: string }) => (
                 <Button
                   key={option.label}
                   type="button"
@@ -1148,7 +1148,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {timelineModeOptions.map((option) => (
+                  {timelineModeOptions.map((option: { label: string; value: TimelineMode }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -1312,7 +1312,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {scrollModeOptions.map((option) => (
+                  {scrollModeOptions.map((option: { label: string; value: ScrollMode }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -1358,7 +1358,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {revealStyleOptions.map((option) => (
+                        {revealStyleOptions.map((option: { label: string; value: RevealStyle }) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -1436,7 +1436,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PARALLAX_PRESETS.map((option) => (
+                  {PARALLAX_PRESETS.map((option: { label: string; value: ParallaxPreset }) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -1457,7 +1457,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {PARALLAX_PATTERNS.map((option) => (
+                        {PARALLAX_PATTERNS.map((option: { label: string; value: ParallaxPattern }) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -1481,7 +1481,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {parallaxAxisOptions.map((option) => (
+                      {parallaxAxisOptions.map((option: { label: string; value: ParallaxAxis }) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -1799,7 +1799,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TEXT_EFFECTS.map((option) => (
+                {TEXT_EFFECTS.map((option: { label: string; value: TextEffect }) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -1987,7 +1987,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {VELOCITY_EFFECTS.map((option) => (
+                {VELOCITY_EFFECTS.map((option: { label: string; value: VelocityEffect }) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -1998,9 +1998,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Strength
-                    </Label>
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Strength</Label>
                     <Input
                       type="number"
                       min={0.01}
@@ -2012,9 +2010,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Max
-                    </Label>
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Max limit</Label>
                     <Input
                       type="number"
                       min={1}
@@ -2026,10 +2022,103 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-500">
-                  Works with scroll, drag, and observer inputs.
-                </p>
               </>
+            )}
+          </div>
+
+          {/* Draggable */}
+          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                Draggable
+              </Label>
+              <Checkbox checked={draggableEnabledValue} onCheckedChange={handleDraggableEnabledChange} />
+            </div>
+
+            {draggableEnabledValue && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+                  <Select value={draggableTypeValue} onValueChange={handleDraggableTypeChange}>
+                    <SelectTrigger className="w-full text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Bounds selector</Label>
+                  <Input
+                    value={draggableBoundsValue}
+                    onChange={handleDraggableBoundsChange}
+                    placeholder="e.g. .container"
+                    className="text-sm"
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Snap (px)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={200}
+                      step={1}
+                      value={draggableSnapValue}
+                      onChange={handleDraggableSnapChange}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Momentum factor</Label>
+                    <Input
+                      type="number"
+                      min={0.1}
+                      max={2}
+                      step={0.05}
+                      value={draggableMomentumFactorValue}
+                      onChange={handleDraggableMomentumFactorChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-xs text-gray-300">
+                    <Checkbox checked={draggableMomentumValue} onCheckedChange={handleDraggableMomentumChange} />
+                    Enable momentum
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-gray-300">
+                    <Checkbox checked={draggableCarouselValue} onCheckedChange={handleDraggableCarouselChange} />
+                    Carousel mode
+                  </label>
+                </div>
+
+                {draggableCarouselValue && (
+                  <div className="space-y-3 pl-2 border-l border-border/40">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Track selector</Label>
+                      <Input
+                        value={draggableCarouselSelectorValue}
+                        onChange={handleDraggableCarouselSelectorChange}
+                        placeholder="e.g. .track"
+                        className="text-sm"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-gray-300">
+                      <Checkbox checked={draggableCarouselSnapValue} onCheckedChange={handleDraggableCarouselSnapChange} />
+                      Snap to items
+                    </label>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -2037,55 +2126,77 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
           <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Observer
+                Observer (Events)
               </Label>
               <Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />
             </div>
+
             {observerEnabledValue && (
-              <>
-                <Select value={observerTypeValue} onValueChange={handleObserverTypeChange}>
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OBSERVER_TYPES.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={observerAxisValue} onValueChange={handleObserverAxisChange}>
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DRAG_AXES.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Speed multiplier
-                  </Label>
+                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Event types</Label>
                   <Input
-                    type="number"
-                    min={0.1}
-                    max={5}
-                    step={0.1}
-                    value={observerSpeedValue}
-                    onChange={handleObserverSpeedChange}
+                    value={observerTypeValue}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
+                    placeholder="wheel,touch,pointer"
                     className="text-sm"
                   />
+                  <div className="flex flex-wrap gap-1.5">
+                    {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
+                      <Button
+                        key={option.label}
+                        type="button"
+                        size="sm"
+                        variant={observerTypeValue.includes(option.value) ? "secondary" : "outline"}
+                        onClick={(): void => {
+                          const types = observerTypeValue.split(",").map((t: string) => t.trim()).filter(Boolean);
+                          const next = types.includes(option.value)
+                            ? types.filter((t: string) => t !== option.value)
+                            : [...types, option.value];
+                          onChange({ ...config, observerType: next.join(",") as ObserverType });
+                        }}
+                        className="h-7 px-2 text-[10px]"
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+                    <Select value={observerAxisValue} onValueChange={handleObserverAxisChange}>
+                      <SelectTrigger className="w-full text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Speed</Label>
+                    <Input
+                      type="number"
+                      min={0.1}
+                      max={5}
+                      step={0.1}
+                      value={observerSpeedValue}
+                      onChange={handleObserverSpeedChange}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Magnet */}
+          {/* Magnet effect */}
           <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -2093,25 +2204,12 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
               </Label>
               <Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />
             </div>
+
             {magnetEnabledValue && (
-              <>
-                <Select value={magnetAxisValue} onValueChange={handleMagnetAxisChange}>
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DRAG_AXES.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Strength
-                    </Label>
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Strength</Label>
                     <Input
                       type="number"
                       min={0.05}
@@ -2123,9 +2221,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Radius (px)
-                    </Label>
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Radius (px)</Label>
                     <Input
                       type="number"
                       min={40}
@@ -2137,310 +2233,41 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Return duration (s)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0.05}
-                    max={2}
-                    step={0.05}
-                    value={magnetReturnValue}
-                    onChange={handleMagnetReturnChange}
-                    className="text-sm"
-                  />
-                </div>
-              </>
-            )}
-          </div>
 
-          {/* Flip transitions */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Layout Flip
-              </Label>
-              <Checkbox checked={flipEnabledValue} onCheckedChange={handleFlipEnabledChange} />
-            </div>
-            {flipEnabledValue && (
-              <>
-                <Input
-                  value={flipSelectorValue}
-                  onChange={handleFlipSelectorChange}
-                  placeholder="Selector (leave empty for direct children)"
-                  className="text-sm"
-                />
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-gray-300">
-                    <Checkbox checked={flipScaleValue} onCheckedChange={handleFlipScaleChange} />
-                    Scale
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-gray-300">
-                    <Checkbox checked={flipFadeValue} onCheckedChange={handleFlipFadeChange} />
-                    Fade
-                  </label>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Gestures */}
-          <div className="space-y-2 rounded-lg border border-border/30 bg-gray-900/30 p-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                Gestures (Draggable)
-              </Label>
-              <Checkbox checked={draggableEnabledValue} onCheckedChange={handleDraggableEnabledChange} />
-            </div>
-            {draggableEnabledValue && (
-              <>
-                <Select value={draggableTypeValue} onValueChange={handleDraggableTypeChange}>
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DRAG_AXES.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={draggableBoundsValue}
-                  onChange={handleDraggableBoundsChange}
-                  placeholder="Bounds selector (optional)"
-                  className="text-sm"
-                />
-                <label className="flex items-center gap-2 text-xs text-gray-300">
-                  <Checkbox checked={draggableMomentumValue} onCheckedChange={handleDraggableMomentumChange} />
-                  Momentum
-                </label>
-                {draggableMomentumValue && (
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Momentum factor
-                    </Label>
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Axis</Label>
+                    <Select value={magnetAxisValue} onValueChange={handleMagnetAxisChange}>
+                      <SelectTrigger className="w-full text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DRAG_AXES.map((option: { label: string; value: DragAxis }) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">Return speed</Label>
                     <Input
                       type="number"
-                      min={0.1}
+                      min={0.05}
                       max={2}
-                      step={0.1}
-                      value={draggableMomentumFactorValue}
-                      onChange={handleDraggableMomentumFactorChange}
+                      step={0.05}
+                      value={magnetReturnValue}
+                      onChange={handleMagnetReturnChange}
                       className="text-sm"
                     />
                   </div>
-                )}
-                <label className="flex items-center gap-2 text-xs text-gray-300">
-                  <Checkbox checked={draggableCarouselValue} onCheckedChange={handleDraggableCarouselChange} />
-                  Carousel mode (snap to slides)
-                </label>
-                {draggableCarouselValue && (
-                  <>
-                    <Input
-                      value={draggableCarouselSelectorValue}
-                      onChange={handleDraggableCarouselSelectorChange}
-                      placeholder="Carousel track selector (optional)"
-                      className="text-sm"
-                    />
-                    <label className="flex items-center gap-2 text-xs text-gray-300">
-                      <Checkbox checked={draggableCarouselSnapValue} onCheckedChange={handleDraggableCarouselSnapChange} />
-                      Snap to child positions
-                    </label>
-                  </>
-                )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Snap (px)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={200}
-                    step={1}
-                    value={draggableSnapValue}
-                    onChange={handleDraggableSnapChange}
-                    className="text-sm"
-                  />
                 </div>
-              </>
+              </div>
             )}
           </div>
-
-          {/* Stagger hint */}
-          {config.preset === "stagger" && (
-            <>
-              <div className="rounded border border-border/30 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
-                Stagger animates each target element in sequence. Amount overrides Each when set above 0.
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Stagger each (seconds)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0.01}
-                    max={2}
-                    step={0.01}
-                    value={staggerEachValue}
-                    onChange={handleStaggerEachChange}
-                    className="text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Stagger amount (seconds)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={5}
-                    step={0.05}
-                    value={staggerAmountValue}
-                    onChange={handleStaggerAmountChange}
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Stagger from
-                </Label>
-                <Select value={staggerFromValue} onValueChange={handleStaggerFromChange}>
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {staggerFromOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
         </>
       )}
-      <div className="space-y-3 rounded-lg border border-border/30 bg-gray-900/30 p-3">
-        <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-          GSAP playbook
-        </Label>
-        <div className="space-y-2 text-xs text-gray-400">
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Layout transitions / FLIP
-            </div>
-            <ul className="space-y-0.5">
-              <li>Super efektowne plynne przejscia ukladu:</li>
-              <li>sortowanie gridu</li>
-              <li>przejscie karta -&gt; fullscreen</li>
-              <li>filtr galerii bez &quot;skakania&quot; layoutu</li>
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              SVG: morphing, rysowanie, maski
-            </div>
-            <ul className="space-y-0.5">
-              <li>Morphing ksztaltow (MorphSVG) - logo, ikony, plynne przejscia</li>
-              <li>&quot;Draw on&quot; (DrawSVG) - rysowanie linii/obrysow</li>
-              <li>Maski / reveal w SVG: wycinanki, wipe&#39;y, spotlight</li>
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Tekst: kinetyczna typografia
-            </div>
-            <ul className="space-y-0.5">
-              <li>SplitText: animowanie liter/slow/wierszy (wejscia, fale, rozpad)</li>
-              <li>ScrambleText: &quot;hakowanie&quot;, glitch tekstowy</li>
-              <li>Typing/cursor (latwe do zrobienia timeline&#39;em)</li>
-              <li>Count-up w liczbach (liczniki, KPI, statystyki)</li>
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Efekty wizualne bez WebGL (CSS/SVG)
-            </div>
-            <ul className="space-y-0.5">
-              <li>hue-rotate, saturate, contrast, brightness</li>
-              <li>drop-shadow (pulsujace cienie)</li>
-              <li>clip-path (reveal, &quot;zamykanie&quot; w ksztalt, dynamiczne wyciecia)</li>
-              <li>border-radius (morph box -&gt; pill -&gt; circle)</li>
-              <li>gradienty (da sie, choc czasem wygodniej przez SVG/stop colors)</li>
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Interakcje i gesty (Draggable / Observer / Inertia)
-            </div>
-            <ul className="space-y-0.5">
-              <li>Drag &amp; drop, swipe, &quot;rzuty&quot; z bezwladnoscia (momentum)</li>
-              <li>&quot;Magnetyczne&quot; przyciaganie do punktow</li>
-              <li>Carousel sterowany gestami</li>
-              <li>Ruch zalezny od predkosci scrolla/drag (velocity-based)</li>
-            </ul>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Canvas / WebGL / Pixi
-            </div>
-            <ul className="space-y-0.5">
-              <li>GSAP swietnie steruje:</li>
-              <li>animacjami na <span className="font-mono text-gray-300">&lt;canvas&gt;</span></li>
-              <li>scenami WebGL (np. PixiJS przez PixiPlugin)</li>
-              <li>parametrami shaderow (gdy masz do nich dostep w JS)</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-              Mini-przyklady (dla wyobrazenia)
-            </div>
-            <div className="space-y-1">
-              <p className="text-[11px] text-gray-300">Stagger &quot;fala&quot; na kafelkach:</p>
-              <pre className="rounded border border-border/40 bg-gray-950/60 p-2 text-[11px] text-gray-200">
-{`gsap.from(".card", {
-  y: 30,
-  opacity: 0,
-  duration: 0.6,
-  stagger: 0.06,
-  ease: "power3.out"
-});`}
-              </pre>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[11px] text-gray-300">ScrollTrigger: pin + scrub (storytelling):</p>
-              <pre className="rounded border border-border/40 bg-gray-950/60 p-2 text-[11px] text-gray-200">
-{`gsap.to(".panel", {
-  xPercent: -100,
-  ease: "none",
-  scrollTrigger: {
-    trigger: ".wrap",
-    start: "top top",
-    end: "+=1500",
-    scrub: true,
-    pin: true
-  }
-});`}
-              </pre>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

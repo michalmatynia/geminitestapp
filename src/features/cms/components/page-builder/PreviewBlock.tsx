@@ -54,6 +54,7 @@ interface PreviewSectionProps {
   selectedNodeId: string | null;
   isInspecting?: boolean;
   colorSchemes?: Record<string, ColorSchemeColors>;
+  mediaStyles?: React.CSSProperties | null;
   onSelect: (nodeId: string) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   onRemoveSection?: (sectionId: string) => void;
@@ -65,6 +66,7 @@ export function PreviewSection({
   selectedNodeId,
   isInspecting = false,
   colorSchemes,
+  mediaStyles,
   onSelect,
   onOpenMedia,
   onRemoveSection,
@@ -194,6 +196,7 @@ export function PreviewSection({
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
                   onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
                 />
               ))
             )}
@@ -234,6 +237,7 @@ export function PreviewSection({
             selectedNodeId={selectedNodeId}
             sectionId={section.id}
             onOpenMedia={onOpenMedia}
+            mediaStyles={mediaStyles}
           />
         ))}
       </div>
@@ -310,6 +314,7 @@ export function PreviewSection({
                         sectionId={section.id}
                         columnId={column.id}
                         onOpenMedia={onOpenMedia}
+                        mediaStyles={mediaStyles}
                       />
                     ))}
                   </div>
@@ -353,7 +358,7 @@ export function PreviewSection({
           </button>
         )}
         <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
-          <div className="flex w-2/5 shrink-0 items-center justify-center rounded-md bg-gray-700/30 min-h-[100px] overflow-hidden">
+          <div className="cms-media flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
             {sectionImage ? (
               <img src={sectionImage} alt="" className="size-full object-cover" />
             ) : (
@@ -400,8 +405,8 @@ export function PreviewSection({
           </button>
         )}
         <div
-          className={`relative min-h-[140px] rounded-md px-6 ${sectionImage ? "" : "bg-gradient-to-br from-gray-700/40 to-gray-800/60"}`}
-          style={heroBgStyle}
+          className={`cms-media relative min-h-[140px] px-6 ${sectionImage ? "" : "bg-gradient-to-br from-gray-700/40 to-gray-800/60"}`}
+          style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
         >
           <div className="flex min-h-[140px] flex-col items-center justify-center gap-2">
             {section.blocks.length === 0 ? (
@@ -418,6 +423,7 @@ export function PreviewSection({
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
                   onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
                 />
               ))
             )}
@@ -484,6 +490,7 @@ export function PreviewSection({
                 selectedNodeId={selectedNodeId}
                 sectionId={section.id}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             ))}
           </div>
@@ -532,6 +539,7 @@ export function PreviewSection({
                 selectedNodeId={selectedNodeId}
                 sectionId={section.id}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             ))}
           </div>
@@ -557,7 +565,7 @@ export function PreviewSection({
       >
         {renderSectionActions()}
         {divider}
-        <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[100px]">
+        <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
           <div className="flex flex-col items-center gap-2">
             <div className="flex size-10 items-center justify-center rounded-full bg-gray-600/50">
               <Play className="size-5 text-gray-300" />
@@ -608,6 +616,7 @@ export function PreviewSection({
                 selectedNodeId={selectedNodeId}
                 sectionId={section.id}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             ))}
           </div>
@@ -647,6 +656,7 @@ export function PreviewSection({
                 selectedNodeId={selectedNodeId}
                 sectionId={section.id}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             ))}
           </div>
@@ -730,9 +740,22 @@ interface PreviewBlockItemProps {
   contained?: boolean;
   selectedNodeId?: string | null;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
+  mediaStyles?: React.CSSProperties | null;
 }
 
-function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, contained, selectedNodeId, sectionId, columnId, parentBlockId, onOpenMedia }: PreviewBlockItemProps): React.ReactNode {
+function PreviewBlockItem({
+  block,
+  isSelected,
+  isInspecting = false,
+  onSelect,
+  contained,
+  selectedNodeId,
+  sectionId,
+  columnId,
+  parentBlockId,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewBlockItemProps): React.ReactNode {
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const selectedBorderClass = isInspecting
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
@@ -770,6 +793,7 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
                 sectionId={sectionId}
                 columnId={columnId}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             )}
             {block.type === "Hero" && (
@@ -781,6 +805,7 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
                 sectionId={sectionId}
                 columnId={columnId}
                 onOpenMedia={onOpenMedia}
+                mediaStyles={mediaStyles}
               />
             )}
           </div>
@@ -959,6 +984,10 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
     const alt = (block.settings["alt"] as string) || "Image";
     const width = (block.settings["width"] as number) || 100;
     const borderRadius = (block.settings["borderRadius"] as number) || 0;
+    const resolvedStyles: React.CSSProperties = {
+      ...(mediaStyles ?? {}),
+      ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
+    };
 
     return (
       <div className="relative group">
@@ -977,14 +1006,18 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
           }`}
         >
           {src ? (
-            <img
-              src={src}
-              alt={alt}
-              className="block max-w-full object-cover"
-              style={{ width: `${width}%`, borderRadius: borderRadius > 0 ? `${borderRadius}px` : undefined }}
-            />
+            <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
+              <img
+                src={src}
+                alt={alt}
+                className="block h-auto w-full object-cover"
+              />
+            </div>
           ) : (
-            <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[60px]" style={{ width: `${width}%` }}>
+            <div
+              className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
+              style={{ width: `${width}%`, ...resolvedStyles }}
+            >
               <div className="flex flex-col items-center gap-1">
                 <ImageIcon className="size-6 text-gray-500" />
                 <span className="text-xs text-gray-500 truncate max-w-[120px]">{alt}</span>
@@ -1034,7 +1067,7 @@ function PreviewBlockItem({ block, isSelected, isInspecting = false, onSelect, c
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
         }`}
       >
-        <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[60px]">
+        <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]" style={mediaStyles ?? undefined}>
           <div className="flex items-center gap-2">
             <Play className="size-5 text-gray-500" />
             <span className="text-xs text-gray-500">{ratio}</span>
@@ -1191,9 +1224,19 @@ interface PreviewSectionBlockProps {
   sectionId: string;
   columnId?: string;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
+  mediaStyles?: React.CSSProperties | null;
 }
 
-function PreviewImageWithTextBlock({ block, selectedNodeId, isInspecting = false, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
+function PreviewImageWithTextBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  onSelect,
+  sectionId,
+  columnId,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
   const placement = block.settings["desktopImagePlacement"] as string | undefined;
   const imageFirst = placement !== "image-second";
   const children = block.blocks ?? [];
@@ -1201,7 +1244,7 @@ function PreviewImageWithTextBlock({ block, selectedNodeId, isInspecting = false
 
   return (
     <div className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
-      <div className="flex w-1/3 shrink-0 items-center justify-center rounded bg-gray-700/40 min-h-[48px] overflow-hidden">
+      <div className="cms-media flex w-1/3 shrink-0 items-center justify-center bg-gray-700/40 min-h-[48px]" style={mediaStyles ?? undefined}>
         {blockImage ? (
           <img src={blockImage} alt="" className="size-full object-cover" />
         ) : (
@@ -1223,6 +1266,7 @@ function PreviewImageWithTextBlock({ block, selectedNodeId, isInspecting = false
               columnId={columnId}
               parentBlockId={block.id}
               onOpenMedia={onOpenMedia}
+              mediaStyles={mediaStyles}
             />
           ))
         ) : (
@@ -1239,7 +1283,16 @@ function PreviewImageWithTextBlock({ block, selectedNodeId, isInspecting = false
 // Hero block preview (inside columns)
 // ---------------------------------------------------------------------------
 
-function PreviewHeroBlock({ block, selectedNodeId, isInspecting = false, onSelect, sectionId, columnId, onOpenMedia }: PreviewSectionBlockProps): React.ReactNode {
+function PreviewHeroBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  onSelect,
+  sectionId,
+  columnId,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
   const children = block.blocks ?? [];
   const blockImage = block.settings["image"] as string | undefined;
   const heroBgStyle: React.CSSProperties = blockImage
@@ -1248,8 +1301,8 @@ function PreviewHeroBlock({ block, selectedNodeId, isInspecting = false, onSelec
 
   return (
     <div
-      className={`relative min-h-[80px] rounded px-3 ${blockImage ? "" : "bg-gradient-to-br from-gray-700/30 to-gray-800/50"}`}
-      style={heroBgStyle}
+      className={`cms-media relative min-h-[80px] px-3 ${blockImage ? "" : "bg-gradient-to-br from-gray-700/30 to-gray-800/50"}`}
+      style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
     >
       <div className="flex min-h-[80px] flex-col items-center justify-center gap-1">
         {children.length > 0 ? (
@@ -1266,6 +1319,7 @@ function PreviewHeroBlock({ block, selectedNodeId, isInspecting = false, onSelec
               columnId={columnId}
               parentBlockId={block.id}
               onOpenMedia={onOpenMedia}
+              mediaStyles={mediaStyles}
             />
           ))
         ) : (

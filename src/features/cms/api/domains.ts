@@ -16,7 +16,7 @@ export const fetchDomains = async (): Promise<CmsDomain[]> => {
   return res.json() as Promise<CmsDomain[]>;
 };
 
-export const createDomain = async (input: { domain: string }) => {
+export const createDomain = async (input: { domain: string }): Promise<{ ok: boolean; payload: CmsDomain }> => {
   const res = await fetch("/api/cms/domains", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -26,14 +26,14 @@ export const createDomain = async (input: { domain: string }) => {
   return { ok: res.ok, payload };
 };
 
-export const deleteDomain = async (id: string) => {
+export const deleteDomain = async (id: string): Promise<{ ok: boolean }> => {
   const res = await fetch(`/api/cms/domains/${id}`, {
     method: "DELETE",
   });
   return { ok: res.ok };
 };
 
-export const updateDomain = async (id: string, input: { aliasOf?: string | null }) => {
+export const updateDomain = async (id: string, input: { aliasOf?: string | null }): Promise<{ ok: boolean; payload: CmsDomain }> => {
   const res = await fetch(`/api/cms/domains/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

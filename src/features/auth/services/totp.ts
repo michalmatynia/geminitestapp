@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-const base32Encode = (buffer: Buffer) => {
+const base32Encode = (buffer: Buffer): string => {
   let bits = 0;
   let value = 0;
   let output = "";
@@ -22,7 +22,7 @@ const base32Encode = (buffer: Buffer) => {
   return output;
 };
 
-const base32Decode = (input: string) => {
+const base32Decode = (input: string): Buffer => {
   const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, "");
   let bits = 0;
   let value = 0;
@@ -40,7 +40,7 @@ const base32Decode = (input: string) => {
   return Buffer.from(output);
 };
 
-export const generateTotpSecret = () => {
+export const generateTotpSecret = (): string => {
   const buffer = crypto.randomBytes(20);
   return base32Encode(buffer);
 };
@@ -49,13 +49,13 @@ export const buildOtpAuthUrl = (params: {
   secret: string;
   label: string;
   issuer: string;
-}) => {
+}): string => {
   const label = encodeURIComponent(params.label);
   const issuer = encodeURIComponent(params.issuer);
   return `otpauth://totp/${label}?secret=${params.secret}&issuer=${issuer}`;
 };
 
-const generateTotp = (secret: string, timestamp: number, digits = 6, step = 30) => {
+const generateTotp = (secret: string, timestamp: number, digits: number = 6, step: number = 30): string => {
   const counter = Math.floor(timestamp / 1000 / step);
   const buffer = Buffer.alloc(8);
   buffer.writeBigInt64BE(BigInt(counter));
@@ -74,8 +74,8 @@ const generateTotp = (secret: string, timestamp: number, digits = 6, step = 30) 
 export const verifyTotpToken = (
   secret: string,
   token: string,
-  window = 1
-) => {
+  window: number = 1
+): boolean => {
   const clean = token.replace(/\s+/g, "");
   const now = Date.now();
   for (let offset = -window; offset <= window; offset += 1) {
@@ -87,17 +87,17 @@ export const verifyTotpToken = (
   return false;
 };
 
-export const generateRecoveryCodes = (count = 8) => {
-  return Array.from({ length: count }, () => {
+export const generateRecoveryCodes = (count: number = 8): string[] => {
+  return Array.from({ length: count }, (): string => {
     const raw = crypto.randomBytes(6).toString("hex").toUpperCase();
     return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
   });
 };
 
-export const normalizeRecoveryCode = (code: string) =>
+export const normalizeRecoveryCode = (code: string): string =>
   code.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-export const hashRecoveryCode = (code: string) => {
+export const hashRecoveryCode = (code: string): string => {
   const normalized = normalizeRecoveryCode(code);
   return crypto.createHash("sha256").update(normalized).digest("hex");
 };

@@ -17,7 +17,7 @@ type MongoUserDoc = {
   emailVerified?: Date | null;
 };
 
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 export const findAuthUserByEmail = async (
   email: string

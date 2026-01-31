@@ -163,6 +163,37 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       lastError = stepRunResult.lastError;
       requiresHuman = stepRunResult.requiresHuman;
 
+      if (requiresHuman) {
+        await prisma.chatbotAgentRun.update({
+          where: { id: run.id },
+          data: {
+            status: "waiting_human",
+            requiresHumanIntervention: true,
+            activeStepId: planSteps[stepIndex]?.id ?? null,
+            planState: buildCheckpointState({
+              steps: planSteps,
+              activeStepId: planSteps[stepIndex]?.id ?? null,
+              lastError,
+              taskType,
+              approvalRequestedStepId: null,
+              approvalGrantedStepId: null,
+              summaryCheckpoint,
+              settings,
+              preferences,
+            }),
+            checkpointedAt: new Date(),
+            logLines: {
+              push: `[${new Date().toISOString()}] Waiting for human input.`,
+            },
+          },
+        });
+        await logAgentAudit(run.id, "warning", "Waiting for human input.", {
+          result: "waiting_human",
+          error: lastError,
+        });
+        return;
+      }
+
       if (planSteps.length === 0) {
         if (!sharedBrowser || !sharedContext) {
           throw new Error("Browser context is not available.");
@@ -382,14 +413,10 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       }
       await logAgentAudit(
         run.id,
-        overallOk ? "info" : requiresHuman ? "warning" : "error",
+        overallOk ? "info" : "error",
         "Playwright tool finished.",
         {
-          result: overallOk
-            ? "completed"
-            : requiresHuman
-              ? "waiting_human"
-              : "failed",
+          result: overallOk ? "completed" : "failed",
           error: lastError,
         }
       );

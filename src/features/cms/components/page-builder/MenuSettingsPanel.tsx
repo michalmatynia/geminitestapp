@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
   Input,
@@ -13,110 +13,15 @@ import {
   Checkbox,
   Button,
 } from "@/shared/ui";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { CMS_MENU_SETTINGS_KEY, DEFAULT_MENU_SETTINGS, type MenuSettings, normalizeMenuSettings } from "@/features/cms/types/menu-settings";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface MenuItem {
-  id: string;
-  label: string;
-  url: string;
-}
-
-interface MenuSettings {
-  // Layout
-  layoutStyle: string;
-  alignment: string;
-  maxWidth: number;
-  fullWidth: boolean;
-  // Items
-  items: MenuItem[];
-  // Typography
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: string;
-  letterSpacing: number;
-  textTransform: string;
-  // Colors
-  backgroundColor: string;
-  textColor: string;
-  activeItemColor: string;
-  borderColor: string;
-  // Spacing
-  paddingTop: number;
-  paddingRight: number;
-  paddingBottom: number;
-  paddingLeft: number;
-  itemGap: number;
-  // Mobile
-  mobileBreakpoint: string;
-  mobileAnimation: string;
-  hamburgerColor: string;
-  mobileOverlay: boolean;
-  // Dropdown
-  dropdownBg: string;
-  dropdownTextColor: string;
-  dropdownRadius: number;
-  dropdownShadow: string;
-  dropdownMinWidth: number;
-  // Sticky
-  stickyEnabled: boolean;
-  stickyOffset: number;
-  shrinkOnScroll: boolean;
-  stickyBackground: string;
-  // Active
-  activeStyle: string;
-  activeColor: string;
-  // Hover
-  hoverStyle: string;
-  hoverColor: string;
-  transitionSpeed: number;
-}
-
-const DEFAULT_SETTINGS: MenuSettings = {
-  layoutStyle: "horizontal",
-  alignment: "left",
-  maxWidth: 1200,
-  fullWidth: false,
-  items: [
-    { id: "1", label: "Home", url: "/" },
-    { id: "2", label: "About", url: "/about" },
-    { id: "3", label: "Contact", url: "/contact" },
-  ],
-  fontFamily: "Inter, sans-serif",
-  fontSize: 14,
-  fontWeight: "500",
-  letterSpacing: 0,
-  textTransform: "none",
-  backgroundColor: "#111827",
-  textColor: "#d1d5db",
-  activeItemColor: "#3b82f6",
-  borderColor: "#1f2937",
-  paddingTop: 12,
-  paddingRight: 24,
-  paddingBottom: 12,
-  paddingLeft: 24,
-  itemGap: 16,
-  mobileBreakpoint: "768",
-  mobileAnimation: "slide-left",
-  hamburgerColor: "#d1d5db",
-  mobileOverlay: true,
-  dropdownBg: "#1f2937",
-  dropdownTextColor: "#d1d5db",
-  dropdownRadius: 8,
-  dropdownShadow: "medium",
-  dropdownMinWidth: 200,
-  stickyEnabled: true,
-  stickyOffset: 0,
-  shrinkOnScroll: false,
-  stickyBackground: "#111827",
-  activeStyle: "underline",
-  activeColor: "#3b82f6",
-  hoverStyle: "color-shift",
-  hoverColor: "#ffffff",
-  transitionSpeed: 200,
-};
+// Types imported from menu-settings.ts
 
 const MENU_SECTIONS = [
   "Menu Layout",
@@ -313,7 +218,42 @@ function CheckboxField({
 
 export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-  const [settings, setSettings] = useState<MenuSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<MenuSettings>(DEFAULT_MENU_SETTINGS);
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const hasHydratedRef = useRef(false);
+  const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
+  const persistTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (hasHydratedRef.current) return;
+    if (!settingsQuery.isFetched) return;
+    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
+      settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+      null
+    );
+    const normalized = normalizeMenuSettings(stored);
+    setSettings(normalized);
+    lastSavedRef.current = serializeSetting(normalized);
+    hasHydratedRef.current = true;
+  }, [settingsQuery.data, settingsQuery.isFetched]);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current) return;
+    const nextSerialized = serializeSetting(settings);
+    if (nextSerialized === lastSavedRef.current) return;
+    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = window.setTimeout(() => {
+      lastSavedRef.current = nextSerialized;
+      updateSetting.mutate({ key: CMS_MENU_SETTINGS_KEY, value: nextSerialized });
+    }, 500);
+  }, [settings, updateSetting]);
+
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    };
+  }, []);
 
   const toggleSection = useCallback((section: string) => {
     setOpenSections((prev) => {
@@ -366,6 +306,11 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         case "Menu Layout":
           return (
             <div className="space-y-3">
+              <CheckboxField
+                label="Show menu"
+                checked={settings.showMenu}
+                onChange={(v) => update("showMenu", v)}
+              />
               <SelectField
                 label="Layout style"
                 value={settings.layoutStyle}

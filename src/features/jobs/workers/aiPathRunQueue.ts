@@ -60,7 +60,7 @@ export const processRun = async (run: AiPathRunRecord) => {
     if (retryCount < maxAttempts) {
       const delayMs = computeBackoffMs(retryCount - 1, run.meta ?? undefined);
       const nextRetryAt = new Date(Date.now() + delayMs);
-      await (await getPathRunRepository()).updateRun(run.id, {
+      await (getPathRunRepository()).updateRun(run.id, {
         status: "queued",
         retryCount,
         nextRetryAt,
@@ -68,21 +68,21 @@ export const processRun = async (run: AiPathRunRecord) => {
         startedAt: null,
         finishedAt: null,
       });
-      await (await getPathRunRepository()).createRunEvent({
+      await (getPathRunRepository()).createRunEvent({
         runId: run.id,
         level: "warning",
         message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
         metadata: { retryCount, nextRetryAt },
       });
     } else {
-      await (await getPathRunRepository()).updateRun(run.id, {
+      await (getPathRunRepository()).updateRun(run.id, {
         status: "dead_lettered",
         retryCount,
         finishedAt: new Date(),
         deadLetteredAt: new Date(),
         errorMessage: message,
       });
-      await (await getPathRunRepository()).createRunEvent({
+      await (getPathRunRepository()).createRunEvent({
         runId: run.id,
         level: "error",
         message: "Run moved to dead-letter after max retries.",
@@ -96,7 +96,7 @@ const pollQueue = async () => {
   lastPollTime = Date.now();
   const concurrency = normalizeNumber(DEFAULT_CONCURRENCY, 1, 1);
   if (activeRuns >= concurrency) return;
-  const repo = await getPathRunRepository();
+  const repo = getPathRunRepository();
   while (activeRuns < concurrency) {
     const run = await repo.claimNextQueuedRun();
     if (!run) break;
@@ -134,7 +134,7 @@ export const getAiPathRunQueueStatus = () => ({
 });
 
 export const processSingleRun = async (runId: string) => {
-  const repo = await getPathRunRepository();
+  const repo = getPathRunRepository();
   const run = await repo.findRunById(runId);
   if (!run) {
     throw new Error("Run not found");

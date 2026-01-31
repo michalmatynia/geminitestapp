@@ -5,7 +5,7 @@ import crypto from "crypto";
 const AUTH_KEY_ENV = "AUTH_ENCRYPTION_KEY";
 const FALLBACK_KEY_ENV = "INTEGRATION_ENCRYPTION_KEY";
 
-const getKey = () => {
+const getKey = (): Buffer => {
   const raw = process.env[AUTH_KEY_ENV] || process.env[FALLBACK_KEY_ENV];
   if (!raw) {
     throw new Error(`${AUTH_KEY_ENV} (or ${FALLBACK_KEY_ENV}) is required for auth secrets`);
@@ -17,7 +17,7 @@ const getKey = () => {
   return key;
 };
 
-export const encryptAuthSecret = (value: string) => {
+export const encryptAuthSecret = (value: string): string => {
   const key = getKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
@@ -30,7 +30,7 @@ export const encryptAuthSecret = (value: string) => {
   ].join(":");
 };
 
-export const decryptAuthSecret = (payload: string) => {
+export const decryptAuthSecret = (payload: string): string => {
   const key = getKey();
   const [ivB64, tagB64, dataB64] = payload.split(":");
   if (!ivB64 || !tagB64 || !dataB64) {

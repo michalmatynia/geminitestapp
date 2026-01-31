@@ -121,4 +121,14 @@
     transform: var(--cms-hover-transform, translateY(-4px));
     box-shadow: var(--cms-hover-shadow, 0 12px 20px rgba(0, 0, 0, 0.25));
   }
+
+  .cms-media {
+    border-radius: var(--cms-media-radius, 0px);
+    border-width: var(--cms-media-border-width, 0px);
+    border-style: solid;
+    border-color: var(--cms-media-border-color, transparent);
+    box-shadow: var(--cms-media-shadow, none);
+    overflow: hidden;
+    background-clip: padding-box;
+  }
 }

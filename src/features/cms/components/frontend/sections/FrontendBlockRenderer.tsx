@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import NextImage from "next/image";
 import type { BlockInstance } from "../../../types/page-builder";
@@ -5,6 +7,7 @@ import type { GsapAnimationConfig } from "@/features/gsap";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 import { getBlockTypographyStyles } from "../theme-styles";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
+import { useMediaStyles } from "../media-styles-context";
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -16,7 +19,8 @@ interface FrontendBlockRendererProps {
 
 export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): React.ReactNode {
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
-  const content = renderBlockContent(block);
+  const mediaStyles = useMediaStyles();
+  const content = renderBlockContent(block, mediaStyles);
 
   if (!content) return null;
 
@@ -27,7 +31,7 @@ export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): Re
   );
 }
 
-function renderBlockContent(block: BlockInstance): React.ReactNode {
+function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperties | null): React.ReactNode {
   switch (block.type) {
     case "Heading":
       return <HeadingBlock settings={block.settings} />;
@@ -40,9 +44,9 @@ function renderBlockContent(block: BlockInstance): React.ReactNode {
     case "RichText":
       return <RichTextBlock settings={block.settings} />;
     case "Image":
-      return <ImageBlock settings={block.settings} />;
+      return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} />;
     case "VideoEmbed":
-      return <VideoEmbedBlock settings={block.settings} />;
+      return <VideoEmbedBlock settings={block.settings} mediaStyles={mediaStyles} />;
     case "Divider":
       return <DividerBlock settings={block.settings} />;
     case "SocialLinks":
@@ -169,35 +173,53 @@ function RichTextBlock({ settings }: { settings: Record<string, unknown> }): Rea
   );
 }
 
-function ImageBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function ImageBlock({
+  settings,
+  mediaStyles,
+}: {
+  settings: Record<string, unknown>;
+  mediaStyles: React.CSSProperties | null;
+}): React.ReactNode {
   const src = (settings["src"] as string) || "";
   const alt = (settings["alt"] as string) || "";
   const width = (settings["width"] as number) || 100;
   const borderRadius = (settings["borderRadius"] as number) || 0;
+  const resolvedStyles: React.CSSProperties = {
+    ...(mediaStyles ?? {}),
+    ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
+  };
 
   if (!src) {
     return (
-      <div className="flex items-center justify-center rounded-lg bg-gray-800/50 py-8 text-gray-500 text-sm">
+      <div
+        className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+        style={{ width: `${width}%`, ...resolvedStyles }}
+      >
         No image selected
       </div>
     );
   }
 
   return (
-    <div style={{ width: `${width}%` }}>
+    <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
       <NextImage
         src={src}
         alt={alt}
         width={800}
         height={600}
         className="h-auto w-full"
-        style={{ borderRadius: `${borderRadius}px` }}
       />
     </div>
   );
 }
 
-function VideoEmbedBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+function VideoEmbedBlock({
+  settings,
+  mediaStyles,
+}: {
+  settings: Record<string, unknown>;
+  mediaStyles: React.CSSProperties | null;
+}): React.ReactNode {
   const url = (settings["url"] as string) || "";
   const aspectRatio = (settings["aspectRatio"] as string) || "16:9";
   const autoplay = (settings["autoplay"] as string) === "yes";
@@ -215,16 +237,21 @@ function VideoEmbedBlock({ settings }: { settings: Record<string, unknown> }): R
 
   const paddingBottom = aspectRatio === "4:3" ? "75%" : aspectRatio === "1:1" ? "100%" : "56.25%";
 
+  const resolvedStyles: React.CSSProperties = {
+    ...(mediaStyles ?? {}),
+    paddingBottom,
+  };
+
   if (!embedUrl) {
     return (
-      <div className="flex items-center justify-center rounded-lg bg-gray-800/50 py-8 text-gray-500 text-sm">
+      <div className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm" style={resolvedStyles}>
         Enter a video URL
       </div>
     );
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom }}>
+    <div className="cms-media relative w-full" style={resolvedStyles}>
       <iframe
         className="absolute inset-0 h-full w-full"
         src={`${embedUrl}${autoplay ? "?autoplay=1&mute=1" : ""}`}
@@ -296,7 +323,7 @@ function AppEmbedBlock({ settings }: { settings: Record<string, unknown> }): Rea
   const title = (settings["title"] as string) || "";
   const embedUrl = (settings["embedUrl"] as string) || "";
   const height = (settings["height"] as number) || 420;
-  const appLabel = APP_EMBED_OPTIONS.find((option) => option.id === appId)?.label ?? "App";
+  const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? "App";
 
   return (
     <div className="cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4">

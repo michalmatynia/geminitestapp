@@ -24,7 +24,7 @@ import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { PageSelectorBar } from "./PageSelectorBar";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
-import { getHoverEffectVars } from "../frontend/theme-styles";
+import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 1200;
@@ -99,6 +99,8 @@ export function PagePreviewPanel(): React.ReactNode {
     () => getHoverEffectVars(theme.enableAnimations ? theme.hoverEffect : undefined, theme.enableAnimations ? theme.hoverScale : undefined),
     [theme.enableAnimations, theme.hoverEffect, theme.hoverScale]
   );
+  const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
+  const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
@@ -145,6 +147,17 @@ export function PagePreviewPanel(): React.ReactNode {
     const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
     return `${protocol}//${resolvedHost}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
+
+  const previewHostMatches = useMemo(() => {
+    if (typeof window === "undefined") return true;
+    if (!previewUrl) return true;
+    try {
+      const url = new URL(previewUrl);
+      return url.host === window.location.host;
+    } catch {
+      return true;
+    }
+  }, [previewUrl]);
 
   const previewFallbackUrl = useMemo(() => {
     if (!state.currentPage) return null;
@@ -201,33 +214,39 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const handlePreview = useCallback(async () => {
     if (!state.currentPage) return;
-    const previewWindow = window.open("", "_blank", "noopener,noreferrer");
+    const initialTarget = previewFallbackUrl ?? "about:blank";
+    const previewWindow = window.open(initialTarget, "_blank");
     if (!previewWindow) {
       toast("Popup blocked. Allow popups to open the preview.", { variant: "error" });
       return;
     }
     try {
+      previewWindow.opener = null;
+    } catch {
+      // ignore cross-origin or browser restrictions
+    }
+    try {
       await handleSave();
       if (slugsQuery.isLoading) {
         toast("Loading zone slugs. Try again in a moment.", { variant: "error" });
-        previewWindow.close();
         return;
       }
       const isPublished = state.currentPage.status === "published";
-      const shouldUseSlug = Boolean(previewUrl) && (isPublished || previewDraftsEnabled);
+      const shouldUseSlug = Boolean(previewUrl) && (isPublished || previewDraftsEnabled) && previewHostMatches;
       const targetUrl = shouldUseSlug ? previewUrl : previewFallbackUrl;
       if (!targetUrl) {
         toast("This page has no slug in the current zone.", { variant: "error" });
-        previewWindow.close();
         return;
+      }
+      if (!previewHostMatches && previewUrl) {
+        toast("Previewing on current host (domain mismatch).", { variant: "info" });
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
       console.error("Failed to save before preview:", error);
       toast("Save before preview failed. Try again.", { variant: "error" });
-      previewWindow.close();
     }
-  }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled]);
+  }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
 
 
   const handleOpenMedia = useCallback((target: MediaReplaceTarget) => {
@@ -533,7 +552,7 @@ export function PagePreviewPanel(): React.ReactNode {
             <div className="p-3 md:p-4">
               <div
                 className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""}`}
-                style={hoverVars}
+                style={{ ...hoverVars, ...mediaVars }}
               >
                 {ZONE_ORDER.map((zone: PageZone) => {
                   const zoneSections = sectionsByZone[zone];
@@ -550,6 +569,7 @@ export function PagePreviewPanel(): React.ReactNode {
                             selectedNodeId={state.selectedNodeId}
                             isInspecting={state.inspectorEnabled}
                             colorSchemes={colorSchemes}
+                            mediaStyles={mediaStyles}
                             onSelect={handleSelectNode}
                             onOpenMedia={handleOpenMedia}
                             onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}

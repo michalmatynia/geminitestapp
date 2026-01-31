@@ -17,9 +17,89 @@ import { getSectionDefinition, getBlockDefinition } from "../components/page-bui
 // Helpers
 // ---------------------------------------------------------------------------
 
-let nextId = 1000;
+const GLOBAL_ID_KEY = "__cmsNextId";
+
+function getNextId(): number {
+  const globalScope = globalThis as { [GLOBAL_ID_KEY]?: number };
+  if (typeof globalScope[GLOBAL_ID_KEY] !== "number") {
+    globalScope[GLOBAL_ID_KEY] = 1000;
+  }
+  return globalScope[GLOBAL_ID_KEY] as number;
+}
+
+function bumpNextId(target: number): void {
+  const globalScope = globalThis as { [GLOBAL_ID_KEY]?: number };
+  if (typeof globalScope[GLOBAL_ID_KEY] !== "number" || (globalScope[GLOBAL_ID_KEY] as number) < target) {
+    globalScope[GLOBAL_ID_KEY] = target;
+  }
+}
+
 function uid(): string {
-  return `node-${nextId++}`;
+  const current = getNextId();
+  bumpNextId(current + 1);
+  return `node-${current}`;
+}
+
+const NODE_ID_REGEX = /node-(\d+)/;
+
+function syncNextIdFromSections(sections: SectionInstance[]): void {
+  let maxId = 999;
+  const stack: Array<SectionInstance | BlockInstance> = [...sections];
+  while (stack.length) {
+    const item = stack.pop();
+    if (!item) continue;
+    const id = typeof item.id === "string" ? item.id : "";
+    const match = NODE_ID_REGEX.exec(id);
+    if (match) {
+      const value = Number(match[1]);
+      if (Number.isFinite(value)) {
+        maxId = Math.max(maxId, value);
+      }
+    }
+    const blocks = "blocks" in item ? item.blocks : undefined;
+    if (blocks && blocks.length > 0) {
+      stack.push(...blocks);
+    }
+  }
+  bumpNextId(maxId + 1);
+}
+
+function ensureUniqueId(id: unknown, seen: Set<string>): string {
+  let nextId = typeof id === "string" && id.length > 0 ? id : uid();
+  if (!seen.has(nextId)) {
+    seen.add(nextId);
+    return nextId;
+  }
+  do {
+    nextId = uid();
+  } while (seen.has(nextId));
+  seen.add(nextId);
+  return nextId;
+}
+
+function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInstance[] {
+  return blocks.map((block: BlockInstance): BlockInstance => {
+    const normalizedId = ensureUniqueId(block.id, seen);
+    const nested = block.blocks ? normalizeBlocks(block.blocks, seen) : undefined;
+    return {
+      ...block,
+      id: normalizedId,
+      ...(nested ? { blocks: nested } : {}),
+    };
+  });
+}
+
+function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
+  const seen = new Set<string>();
+  return sections.map((section: SectionInstance): SectionInstance => {
+    const normalizedId = ensureUniqueId(section.id, seen);
+    const normalizedBlocks = normalizeBlocks(section.blocks ?? [], seen);
+    return {
+      ...section,
+      id: normalizedId,
+      blocks: normalizedBlocks,
+    };
+  });
 }
 
 function findSection(sections: SectionInstance[], nodeId: string): SectionInstance | null {
@@ -80,13 +160,15 @@ function cloneSection(section: SectionInstance): SectionInstance {
 
 function applySettingsDefaults(
   settings: Record<string, unknown>,
-  schema: SettingsField[],
+  schema: SettingsField[] | undefined,
   base: Record<string, unknown>
 ): Record<string, unknown> {
   const merged: Record<string, unknown> = { ...base, ...settings };
-  for (const field of schema) {
-    if (merged[field.key] === undefined && field.defaultValue !== undefined) {
-      merged[field.key] = field.defaultValue;
+  if (Array.isArray(schema)) {
+    for (const field of schema) {
+      if (merged[field.key] === undefined && field.defaultValue !== undefined) {
+        merged[field.key] = field.defaultValue;
+      }
     }
   }
   return merged;
@@ -138,10 +220,12 @@ export function basePageBuilderReducer(
           };
         }
       );
+      const normalizedSections = normalizeSections(reconstructedSections);
+      syncNextIdFromSections(normalizedSections);
       return {
         ...state,
         currentPage: action.page,
-        sections: reconstructedSections,
+        sections: normalizedSections,
         selectedNodeId: null,
       };
     }
@@ -735,10 +819,11 @@ export function basePageBuilderReducer(
     }
 
     case "INSERT_TEMPLATE_SECTION": {
+      const cloned = cloneSection(action.section);
       return {
         ...state,
-        sections: [...state.sections, action.section],
-        selectedNodeId: action.section.id,
+        sections: [...state.sections, cloned],
+        selectedNodeId: cloned.id,
       };
     }
 

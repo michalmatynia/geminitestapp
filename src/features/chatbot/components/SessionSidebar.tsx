@@ -24,7 +24,7 @@ export function SessionSidebar({
     <div className="flex h-full flex-col bg-gray-900 border-r border-border">
       <div className="p-4 border-b border-border">
         <Button
-          onClick={onNewSession}
+          onClick={() => { void onNewSession(); }}
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
           <Plus className="mr-2 size-4" />
@@ -61,7 +61,7 @@ export function SessionSidebar({
                 <Button
                   onClick={(e: React.MouseEvent): void => {
                     e.stopPropagation();
-                    onDeleteSession(session.id);
+                    void onDeleteSession(session.id);
                   }}
                   className="opacity-0 group-hover:opacity-100 transition p-1 hover:bg-red-600 rounded"
                   aria-label="Delete session"

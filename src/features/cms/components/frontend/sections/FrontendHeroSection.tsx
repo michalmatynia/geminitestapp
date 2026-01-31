@@ -1,7 +1,10 @@
+"use client";
+
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { useMediaStyles } from "../media-styles-context";
 
 interface FrontendHeroSectionProps {
   settings: Record<string, unknown>;
@@ -14,6 +17,7 @@ export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: 
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings["image"] as string | undefined;
   const imageHeight = (settings["imageHeight"] as string) || "large";
+  const mediaStyles = useMediaStyles();
 
   const heightClass =
     imageHeight === "small" ? "min-h-[300px]"
@@ -22,8 +26,8 @@ export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: 
 
   return (
     <section
-      className={`relative w-full ${heightClass} flex items-center justify-center overflow-hidden`}
-      style={sectionStyles}
+      className={`cms-media relative w-full ${heightClass} flex items-center justify-center overflow-hidden`}
+      style={{ ...sectionStyles, ...(mediaStyles ?? {}) }}
     >
       {/* Background image or gradient */}
       {image ? (

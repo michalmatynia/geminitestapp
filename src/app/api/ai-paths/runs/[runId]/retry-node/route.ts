@@ -33,14 +33,14 @@ async function POST_handler(
     if (!parsed.ok) return parsed.response;
 
     const runId: string = params.runId;
-    const repo = await getPathRunRepository();
+    const repo = getPathRunRepository();
     const existing = await repo.findRunById(runId);
     if (!existing) {
       throw notFoundError("Run not found", { runId });
     }
     assertAiPathRunAccess(access, existing);
     const nodeId = parsed.data.nodeId;
-    const run: unknown = await retryPathRunNode(runId, nodeId);
+    const run: unknown = retryPathRunNode(runId, nodeId);
     startAiPathRunQueue();
     return NextResponse.json({ run });
   } catch (error) {

@@ -15,9 +15,9 @@ async function GET_handler(
   try {
     const access = await requireAiPathsAccess();
     const runId = params.runId;
-    const repo = await getPathRunRepository();
+    const repo = getPathRunRepository();
     const run = await repo.findRunById(runId);
-    if (!run) {
+    if (run === null) {
       throw notFoundError("Run not found", { runId });
     }
     assertAiPathRunAccess(access, run);

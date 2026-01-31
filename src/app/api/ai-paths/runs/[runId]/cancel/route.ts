@@ -21,13 +21,13 @@ async function POST_handler(
     const access = await requireAiPathsAccess();
     enforceAiPathsActionRateLimit(access, "run-cancel");
     const runId: string = params.runId;
-    const repo = await getPathRunRepository();
+    const repo = getPathRunRepository();
     const existing = await repo.findRunById(runId);
     if (!existing) {
       throw notFoundError("Run not found", { runId });
     }
     assertAiPathRunAccess(access, existing);
-    const run: unknown = await cancelPathRun(runId);
+    const run: unknown = cancelPathRun(runId);
     return NextResponse.json({ run });
   } catch (error) {
     return createErrorResponse(error, {

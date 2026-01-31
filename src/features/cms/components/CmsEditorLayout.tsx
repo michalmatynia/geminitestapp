@@ -9,7 +9,7 @@ export default function CmsEditorLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   const [page, setPage] = useState<Page | null>(null);
 
   return (

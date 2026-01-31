@@ -67,7 +67,7 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
     id: "super_admin",
     name: "Super Admin",
     description: "Full access to everything.",
-    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission: AuthPermission) => permission.id),
     deniedPermissions: [],
     level: 100,
   },
@@ -75,7 +75,7 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
     id: "superuser",
     name: "Super User",
     description: "Full access including system-level settings.",
-    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission: AuthPermission) => permission.id),
     deniedPermissions: [],
     level: 95,
   },
@@ -83,7 +83,7 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
     id: "admin",
     name: "Admin",
     description: "Full access to all apps and settings.",
-    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission: AuthPermission) => permission.id),
     deniedPermissions: [],
     level: 90,
   },
@@ -113,8 +113,8 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
 
 export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRole[] => {
   const incoming = Array.isArray(roles) ? roles : [];
-  const defaults = new Map(DEFAULT_AUTH_ROLES.map((role) => [role.id, role]));
-  const merged = incoming.map((role) => {
+  const defaults = new Map<string, AuthRole>(DEFAULT_AUTH_ROLES.map((role: AuthRole) => [role.id, role]));
+  const merged = incoming.map((role: AuthRole) => {
     const fallback = defaults.get(role.id);
     if (!fallback) return role;
     const level = typeof role.level === "number" ? role.level : fallback.level;
@@ -129,7 +129,7 @@ export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRol
     };
   });
 
-  const known = new Set(merged.map((role) => role.id));
+  const known = new Set(merged.map((role: AuthRole) => role.id));
   for (const role of DEFAULT_AUTH_ROLES) {
     if (!known.has(role.id)) {
       merged.push(role);

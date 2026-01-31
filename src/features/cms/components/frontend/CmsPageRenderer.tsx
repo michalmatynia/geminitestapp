@@ -16,6 +16,7 @@ import { FrontendNewsletterSection } from "./sections/FrontendNewsletterSection"
 import { FrontendContactFormSection } from "./sections/FrontendContactFormSection";
 import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
 import { getHoverEffectVars } from "./theme-styles";
+import { MediaStylesProvider } from "./media-styles-context";
 
 // ---------------------------------------------------------------------------
 // Types for the section content stored in PageComponent.content
@@ -43,9 +44,19 @@ interface CmsPageRendererProps {
   layout?: { fullWidth?: boolean };
   hoverEffect?: string;
   hoverScale?: number;
+  mediaVars?: React.CSSProperties;
+  mediaStyles?: React.CSSProperties;
 }
 
-export function CmsPageRenderer({ components, colorSchemes, layout, hoverEffect, hoverScale }: CmsPageRendererProps): React.ReactNode {
+export function CmsPageRenderer({
+  components,
+  colorSchemes,
+  layout,
+  hoverEffect,
+  hoverScale,
+  mediaVars,
+  mediaStyles,
+}: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   // Parse components into sections with zone info
   const sections = components.map((comp: PageComponent, idx: number) => {
@@ -57,7 +68,7 @@ export function CmsPageRenderer({ components, colorSchemes, layout, hoverEffect,
       settings: content.settings ?? {},
       blocks: content.blocks ?? [],
     };
-  }).filter((section) => !section.settings["isHidden"]);
+  }).filter((section: { key: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !section.settings["isHidden"]);
 
   // Group by zone and render in order
   const sectionsByZone: Record<PageZone, typeof sections> = {
@@ -71,25 +82,27 @@ export function CmsPageRenderer({ components, colorSchemes, layout, hoverEffect,
   }
 
   return (
-    <div className="cms-page cms-hover-scope" style={hoverVars}>
-      {ZONE_ORDER.map((zone: PageZone) =>
-        sectionsByZone[zone].map((section: typeof sections[number]) => {
-          const animConfig = section.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
+    <MediaStylesProvider value={mediaStyles}>
+      <div className="cms-page cms-hover-scope" style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
+        {ZONE_ORDER.map((zone: PageZone) =>
+          sectionsByZone[zone].map((section: typeof sections[number]) => {
+            const animConfig = section.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
 
-          return (
-            <GsapAnimationWrapper key={section.key} config={animConfig}>
-              <SectionRenderer
-                type={section.type}
-                settings={section.settings}
-                blocks={section.blocks}
-                colorSchemes={colorSchemes}
-                layout={layout}
-              />
-            </GsapAnimationWrapper>
-          );
-        })
-      )}
-    </div>
+            return (
+              <GsapAnimationWrapper key={section.key} config={animConfig}>
+                <SectionRenderer
+                  type={section.type}
+                  settings={section.settings}
+                  blocks={section.blocks}
+                  colorSchemes={colorSchemes}
+                  layout={layout}
+                />
+              </GsapAnimationWrapper>
+            );
+          })
+        )}
+      </div>
+    </MediaStylesProvider>
   );
 }
 

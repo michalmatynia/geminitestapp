@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import { Image as ImageIcon } from "lucide-react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { useMediaStyles } from "../media-styles-context";
 
 interface FrontendImageWithTextBlockProps {
   settings: Record<string, unknown>;
@@ -13,21 +16,22 @@ export function FrontendImageWithTextBlock({ settings, blocks }: FrontendImageWi
   const image = settings["image"] as string | undefined;
   const placement = (settings["desktopImagePlacement"] as string) || "image-first";
   const imageFirst = placement !== "image-second";
+  const mediaStyles = useMediaStyles();
 
   return (
     <div className={`flex flex-col gap-4 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"}`}>
       {/* Image */}
-      <div className="relative w-full md:w-2/5">
+      <div className="cms-media relative w-full md:w-2/5" style={mediaStyles ?? undefined}>
         {image ? (
           <Image
             src={image}
             alt=""
             fill
-            className="rounded-lg object-cover"
+            className="object-cover"
             sizes="(max-width: 768px) 100vw, 40vw"
           />
         ) : (
-          <div className="flex min-h-[120px] w-full items-center justify-center rounded-lg bg-gray-800">
+          <div className="flex min-h-[120px] w-full items-center justify-center bg-gray-800">
             <ImageIcon className="size-10 text-gray-600" />
           </div>
         )}

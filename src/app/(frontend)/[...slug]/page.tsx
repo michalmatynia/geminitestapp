@@ -9,18 +9,21 @@ import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider"
 import type { Page, CmsTheme } from "@/features/cms/types";
 import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
+import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
 import { auth } from "@/features/auth/auth";
+import type { Session } from "next-auth";
 import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
 
-const isAdminSession = (session: Awaited<ReturnType<typeof auth>>): boolean => {
+const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  if (session.user.isElevated) return true;
-  const role = session.user.role ?? "";
+  const user = session.user as Session["user"] & { isElevated?: boolean; role?: string | null };
+  if (user.isElevated) return true;
+  const role = user.role ?? "";
   return ["admin", "super_admin", "superuser"].includes(role);
 };
 
 const canPreviewDrafts = async (
-  session: Awaited<ReturnType<typeof auth>>
+  session: Session | null
 ): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
@@ -120,13 +123,17 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   const themeSettings = await getCmsThemeSettings();
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: themeSettings.fullWidth };
+  const mediaVars = getMediaStyleVars(themeSettings);
+  const mediaStyles = getMediaInlineStyles(themeSettings);
   const content = (
     <CmsPageRenderer
-      components={page.components}
+      components={page.components ?? []}
       colorSchemes={colorSchemes}
       layout={layout}
       hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
       hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
+      mediaVars={mediaVars}
+      mediaStyles={mediaStyles}
     />
   );
 

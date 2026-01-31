@@ -84,7 +84,7 @@ export const assertAiPathRunAccess = (
 export const enforceAiPathsRunRateLimit = async (
   access: AiPathsAccessContext
 ): Promise<void> => {
-  const repo = await getPathRunRepository();
+  const repo = getPathRunRepository();
   const now = Date.now();
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
 

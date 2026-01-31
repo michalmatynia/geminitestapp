@@ -11,14 +11,14 @@ interface CmsSideMenuProps {
   setPage: React.Dispatch<React.SetStateAction<Page | null>>;
 }
 
-export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
-  const addComponent = (type: string) => {
+export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.JSX.Element {
+  const addComponent = (type: string): void => {
     const newComponent: PageComponent = {
       type,
       content: {},
     };
 
-    setPage((prev) => {
+    setPage((prev: Page | null) => {
       if (!prev) return prev; // nothing to update yet
       return {
         ...prev,
@@ -27,8 +27,8 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
     });
   };
 
-  const handleContentChange = (index: number, content: Record<string, unknown>) => {
-    setPage((prev) => {
+  const handleContentChange = (index: number, content: Record<string, unknown>): void => {
+    setPage((prev: Page | null) => {
       if (!prev) return prev;
       const nextComponents = [...(prev.components ?? [])];
 
@@ -69,13 +69,13 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
         <div>
           <h3 className="font-bold mb-2">Template</h3>
 
-          {page.components?.map((component, index) => {
+          {page.components?.map((component: PageComponent, index: number) => {
             if (component?.type === "RichText") {
               return (
                 <RichTextBlock
                   key={index}
                   content={component.content as Record<string, string | undefined>}
-                  onChange={(content) => handleContentChange(index, content as Record<string, unknown>)}
+                  onChange={(content: Record<string, string | undefined>) => handleContentChange(index, content as Record<string, unknown>)}
                 />
               );
             }

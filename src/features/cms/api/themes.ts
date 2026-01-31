@@ -24,7 +24,7 @@ export const fetchTheme = async (id: string): Promise<CmsTheme> => {
   return res.json() as Promise<CmsTheme>;
 };
 
-export const createTheme = async (input: CmsThemeCreateInput) => {
+export const createTheme = async (input: CmsThemeCreateInput): Promise<{ ok: boolean; payload: CmsTheme }> => {
   const res = await fetch("/api/cms/themes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -34,7 +34,7 @@ export const createTheme = async (input: CmsThemeCreateInput) => {
   return { ok: res.ok, payload };
 };
 
-export const updateTheme = async (id: string, input: CmsThemeUpdateInput) => {
+export const updateTheme = async (id: string, input: CmsThemeUpdateInput): Promise<{ ok: boolean; payload: CmsTheme }> => {
   const res = await fetch(`/api/cms/themes/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -44,7 +44,7 @@ export const updateTheme = async (id: string, input: CmsThemeUpdateInput) => {
   return { ok: res.ok, payload };
 };
 
-export const deleteTheme = async (id: string) => {
+export const deleteTheme = async (id: string): Promise<{ ok: boolean }> => {
   const res = await fetch(`/api/cms/themes/${id}`, {
     method: "DELETE",
   });

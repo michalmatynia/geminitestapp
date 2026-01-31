@@ -160,7 +160,7 @@ const fetchEntityByType = async (entityType: string, entityId: string): Promise<
 };
 
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
-  const repo = await getPathRunRepository();
+  const repo = getPathRunRepository();
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     await repo.updateRun(run.id, {

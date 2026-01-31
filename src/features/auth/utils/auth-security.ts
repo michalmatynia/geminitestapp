@@ -28,7 +28,7 @@ export const DEFAULT_AUTH_SECURITY_POLICY: AuthSecurityPolicy = {
   ipRateLimitDurationMinutes: 10,
 };
 
-const clampNumber = (value: unknown, fallback: number, min: number, max: number) => {
+const clampNumber = (value: unknown, fallback: number, min: number, max: number): number => {
   if (typeof value !== "number" || Number.isNaN(value)) return fallback;
   return Math.min(Math.max(value, min), max);
 };

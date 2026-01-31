@@ -17,7 +17,7 @@ import {
 } from "@/features/auth/utils/auth-user-pages";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
-export default function AuthUserPagesPage() {
+export default function AuthUserPagesPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
 
@@ -47,18 +47,18 @@ function AuthUserPagesForm({
   initialSettings,
 }: {
   initialSettings: AuthUserPageSettings;
-}) {
+}): React.JSX.Element {
   const { toast } = useToast();
   const [settings, setSettings] = useState<AuthUserPageSettings>(initialSettings);
   const [dirty, setDirty] = useState(false);
   const updateSetting = useUpdateSetting();
 
-  const handleToggle = (key: keyof AuthUserPageSettings) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleToggle = (key: keyof AuthUserPageSettings): void => {
+    setSettings((prev: AuthUserPageSettings) => ({ ...prev, [key]: !prev[key] }));
     setDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
         key: AUTH_SETTINGS_KEYS.userPages,
@@ -96,7 +96,7 @@ function AuthUserPagesForm({
               ["allowSocialLogin", "Allow social login", "Show OAuth providers on login."],
               ["requireEmailVerification", "Require email verification", "Block access until email is verified."],
             ] as const
-          ).map(([key, title, description]) => (
+          ).map(([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
             <div
               key={key}
               className="flex items-center justify-between rounded-md border border-border bg-card/40 px-4 py-3"

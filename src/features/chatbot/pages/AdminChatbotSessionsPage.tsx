@@ -265,7 +265,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={(): Promise<void> => void selectAllMatching()}
+                onClick={() => { void selectAllMatching(); }}
                 disabled={bulkDeleting || selectingAll}
               >
                 {selectingAll ? "Selecting..." : "Select all (all pages)"}
@@ -283,7 +283,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={(): Promise<void> => void bulkDelete()}
+                onClick={() => { void bulkDelete(); }}
                 disabled={
                   selectedIds.size === 0 || bulkDeleting || selectingAll
                 }
@@ -347,7 +347,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(): Promise<void> => void saveTitle(session.id)}
+                        onClick={() => { void saveTitle(session.id); }}
                       >
                         Save
                       </Button>
@@ -372,7 +372,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     variant="destructive"
                     size="sm"
                     disabled={deletingId === session.id}
-                    onClick={(): Promise<void> => void deleteSession(session)}
+                    onClick={() => { void deleteSession(session); }}
                   >
                     {deletingId === session.id ? "Removing..." : "Remove"}
                   </Button>

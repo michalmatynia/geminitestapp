@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
+import { useMediaStyles } from "../media-styles-context";
 
 interface FrontendVideoSectionProps {
   settings: Record<string, unknown>;
@@ -40,6 +43,7 @@ export function FrontendVideoSection({ settings, colorSchemes, layout }: Fronten
   const videoUrl = (settings["videoUrl"] as string) || "";
   const aspectRatio = (settings["aspectRatio"] as string) || "16:9";
   const autoplay = (settings["autoplay"] as string) === "yes";
+  const mediaStyles = useMediaStyles();
 
   const embedUrl = getEmbedUrl(videoUrl);
 
@@ -47,7 +51,10 @@ export function FrontendVideoSection({ settings, colorSchemes, layout }: Fronten
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-4xl" })}>
         {embedUrl ? (
-          <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom: getAspectPadding(aspectRatio) }}>
+          <div
+            className="cms-media relative w-full"
+            style={{ paddingBottom: getAspectPadding(aspectRatio), ...(mediaStyles ?? {}) }}
+          >
             <iframe
               className="absolute inset-0 h-full w-full"
               src={`${embedUrl}${autoplay ? "?autoplay=1&mute=1" : ""}`}
@@ -58,8 +65,8 @@ export function FrontendVideoSection({ settings, colorSchemes, layout }: Fronten
           </div>
         ) : (
           <div
-            className="flex items-center justify-center rounded-lg bg-gray-800/50"
-            style={{ paddingBottom: getAspectPadding(aspectRatio), position: "relative" }}
+            className="cms-media flex items-center justify-center bg-gray-800/50"
+            style={{ paddingBottom: getAspectPadding(aspectRatio), position: "relative", ...(mediaStyles ?? {}) }}
           >
             <p className="absolute inset-0 flex items-center justify-center text-gray-500">
               Enter a video URL in section settings

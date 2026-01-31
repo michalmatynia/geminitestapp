@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/shared/ui";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
+import type { CmsDomain } from "@/features/cms/types";
 
 type CmsDomainSelectorProps = {
   label?: string;
@@ -40,7 +41,7 @@ export function CmsDomainSelector({
           <SelectValue placeholder={domains.length ? "Select zone" : "No zones"} />
         </SelectTrigger>
         <SelectContent>
-          {domains.map((item) => (
+          {domains.map((item: CmsDomain) => (
             <SelectItem key={item.id} value={item.id}>
               {item.domain}
               {hostDomainId === item.id ? " (current)" : ""}

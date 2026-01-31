@@ -33,7 +33,7 @@ export const fetchPage = async (id: string): Promise<Page> => {
 export const createPage = async (input: {
   name: string;
   slugIds: string[];
-}) => {
+}): Promise<{ ok: boolean; payload: Page }> => {
   const res = await fetch("/api/cms/pages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -43,7 +43,7 @@ export const createPage = async (input: {
   return { ok: res.ok, payload };
 };
 
-export const updatePage = async (id: string, input: Page & { slugIds?: string[] }) => {
+export const updatePage = async (id: string, input: Page & { slugIds?: string[] }): Promise<{ ok: boolean; payload: Page }> => {
   const res = await fetch(`/api/cms/pages/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -53,7 +53,7 @@ export const updatePage = async (id: string, input: Page & { slugIds?: string[] 
   return { ok: res.ok, payload };
 };
 
-export const deletePage = async (id: string) => {
+export const deletePage = async (id: string): Promise<{ ok: boolean }> => {
   const res = await fetch(`/api/cms/pages/${id}`, {
     method: "DELETE",
   });

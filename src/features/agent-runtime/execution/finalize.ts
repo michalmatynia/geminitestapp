@@ -51,18 +51,15 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
     plannerModel,
     memorySummarizationModel,
   } = input;
+  const status = requiresHuman ? "waiting_human" : overallOk ? "completed" : "failed";
 
   await prisma.chatbotAgentRun.update({
     where: { id: run.id },
     data: {
-      status: overallOk
-        ? "completed"
-        : requiresHuman
-          ? "waiting_human"
-          : "failed",
+      status,
       requiresHumanIntervention: requiresHuman,
       finishedAt: new Date(),
-      errorMessage: overallOk ? null : lastError,
+      errorMessage: status === "failed" ? lastError : null,
       activeStepId: null,
       planState: buildCheckpointState({
         steps: planSteps,
@@ -76,7 +73,9 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
       }),
       checkpointedAt: new Date(),
       logLines: {
-        push: `[${new Date().toISOString()}] Playwright tool ${overallOk ? "completed" : "failed"}.`,
+        push: `[${new Date().toISOString()}] Playwright tool ${
+          status === "completed" ? "completed" : status === "waiting_human" ? "paused" : "failed"
+        }.`,
       },
     },
   });

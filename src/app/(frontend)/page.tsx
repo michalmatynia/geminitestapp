@@ -13,18 +13,21 @@ import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRende
 import type { Slug } from "@/features/cms/types";
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
+import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
 import { auth } from "@/features/auth/auth";
+import type { Session } from "next-auth";
 import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
 
-const isAdminSession = (session: Awaited<ReturnType<typeof auth>>): boolean => {
+const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  if (session.user.isElevated) return true;
-  const role = session.user.role ?? "";
+  const user = session.user as Session["user"] & { isElevated?: boolean; role?: string | null };
+  if (user.isElevated) return true;
+  const role = user.role ?? "";
   return ["admin", "super_admin", "superuser"].includes(role);
 };
 
 const canPreviewDrafts = async (
-  session: Awaited<ReturnType<typeof auth>>
+  session: Session | null
 ): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
@@ -118,6 +121,8 @@ export default async function Home(): Promise<JSX.Element> {
     const themeSettings = hasCmsContent ? await getCmsThemeSettings() : null;
     const colorSchemes = themeSettings ? buildColorSchemeMap(themeSettings) : undefined;
     const layout = themeSettings ? { fullWidth: themeSettings.fullWidth } : undefined;
+    const mediaVars = themeSettings ? getMediaStyleVars(themeSettings) : undefined;
+    const mediaStyles = themeSettings ? getMediaInlineStyles(themeSettings) : undefined;
 
     return (
       <div className="flex min-h-screen flex-col">
@@ -148,6 +153,8 @@ export default async function Home(): Promise<JSX.Element> {
               layout={layout}
               hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}
               hoverScale={themeSettings?.enableAnimations ? themeSettings.hoverScale : undefined}
+              mediaVars={mediaVars}
+              mediaStyles={mediaStyles}
             />
           ) : (
             <section className="w-full py-12">

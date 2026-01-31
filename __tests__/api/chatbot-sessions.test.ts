@@ -26,7 +26,7 @@ describe("Chatbot Sessions API", () => {
     vi.mocked(chatbotSessionRepository.findAll).mockResolvedValue(mockSessions as any);
 
     const req = new NextRequest("http://localhost/api/chatbot/sessions");
-    const res = await GET(req, {} as any);
+    const res = await GET(req);
     const data = await res.json();
 
     expect(res.status).toBe(200);

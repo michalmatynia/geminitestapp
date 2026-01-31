@@ -35,8 +35,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : undefined;
     const offset =
       Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
-    const repo = await getPathRunRepository();
-    const result = await repo.listRuns({
+    const repo = getPathRunRepository();
+    const result = repo.listRuns({
       ...(!access.isElevated ? { userId: access.userId } : {}),
       ...(pathId ? { pathId } : {}),
       ...(query ? { query } : {}),

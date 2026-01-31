@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import { Image as ImageIcon } from "lucide-react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { getSectionContainerClass, getSectionStyles, getVerticalAlign, type ColorSchemeColors } from "../theme-styles";
+import { useMediaStyles } from "../media-styles-context";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 
 interface FrontendImageWithTextSectionProps {
@@ -20,6 +23,7 @@ export function FrontendImageWithTextSection({ settings, blocks, colorSchemes, l
   const contentPosition = settings["desktopContentPosition"] as string | undefined;
   const verticalClass = getVerticalAlign(contentPosition);
   const imageHeight = (settings["imageHeight"] as string) || "medium";
+  const mediaStyles = useMediaStyles();
 
   const imgHeightClass =
     imageHeight === "small" ? "min-h-[200px]"
@@ -31,17 +35,17 @@ export function FrontendImageWithTextSection({ settings, blocks, colorSchemes, l
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"} ${verticalClass}`}>
           {/* Image */}
-          <div className={`relative w-full md:w-1/2 ${imgHeightClass}`}>
+          <div className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`} style={mediaStyles ?? undefined}>
             {image ? (
               <Image
                 src={image}
                 alt=""
                 fill
-                className="rounded-lg object-cover"
+                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             ) : (
-              <div className={`flex ${imgHeightClass} w-full items-center justify-center rounded-lg bg-gray-800`}>
+              <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}>
                 <ImageIcon className="size-16 text-gray-600" />
               </div>
             )}

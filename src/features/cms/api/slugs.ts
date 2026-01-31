@@ -38,7 +38,7 @@ export const fetchSlug = async (id: string, domainId?: string | null): Promise<S
   return res.json() as Promise<Slug>;
 };
 
-export const createSlug = async (input: { slug: string; domainId?: string | null }) => {
+export const createSlug = async (input: { slug: string; domainId?: string | null }): Promise<{ ok: boolean; payload: Slug }> => {
   const res = await fetch(withDomainQuery("/api/cms/slugs", input.domainId ?? undefined), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -48,7 +48,7 @@ export const createSlug = async (input: { slug: string; domainId?: string | null
   return { ok: res.ok, payload };
 };
 
-export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: string | null) => {
+export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: string | null): Promise<{ ok: boolean; payload: Slug }> => {
   const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ export const updateSlug = async (id: string, input: Partial<Slug>, domainId?: st
   return { ok: res.ok, payload };
 };
 
-export const deleteSlug = async (id: string, domainId?: string | null) => {
+export const deleteSlug = async (id: string, domainId?: string | null): Promise<{ ok: boolean }> => {
   const res = await fetch(withDomainQuery(`/api/cms/slugs/${id}`, domainId ?? undefined), {
     method: "DELETE",
   });

@@ -1,6 +1,9 @@
+"use client";
+
 import React from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
+import { useMediaStyles } from "../media-styles-context";
 
 interface FrontendHeroBlockProps {
   settings: Record<string, unknown>;
@@ -9,9 +12,10 @@ interface FrontendHeroBlockProps {
 
 export function FrontendHeroBlock({ settings, blocks }: FrontendHeroBlockProps): React.ReactNode {
   const image = settings["image"] as string | undefined;
+  const mediaStyles = useMediaStyles();
 
   return (
-    <div className="relative min-h-[200px] overflow-hidden rounded-lg">
+    <div className="cms-media relative min-h-[200px] overflow-hidden" style={mediaStyles ?? undefined}>
       {image ? (
         <div
           className="absolute inset-0 bg-cover bg-center"

@@ -154,32 +154,27 @@ test.describe('AI Paths Admin Page', () => {
   test('should fire a trigger and see it in job queue', async ({ page }) => {
     await page.getByRole('tab', { name: 'Canvas' }).click();
     
-    // Find Trigger node. 
-    // In initialNodes, Trigger is not there by default? 
-    // Wait, let's check initialNodes again. 
-    // Trigger is NOT in initialNodes. Context Filter is.
-    
-    // Let's add a Trigger node first.
-    await page.getByRole('button', { name: /Triggers/i }).click();
-    
-    // Drag and drop is hard, let's try New Path which might have a different default.
-    // Actually, createAiDescriptionPath has a Trigger? No, it has Context Filter.
-    
-    // Let's assume there is at least one node we can "Fire Trigger" on if it's a trigger type.
-    // I'll skip adding for now and just look if any Trigger exists.
+    // Attempt to find a Trigger node. The existing comments suggest it might not be present by default.
+    // If a Trigger node exists and is selectable, we proceed. Otherwise, we log and skip.
     const triggerNode = page.locator('div[style*="translate"]').filter({ hasText: /Trigger/i }).first();
-    if (await triggerNode.isVisible()) {
+    
+    if (await triggerNode.isVisible({ timeout: 5000 })) { // Add timeout as it might not be immediately visible
       await triggerNode.click({ force: true });
-      await page.getByRole('button', { name: 'Fire Trigger' }).click();
+      await page.waitForTimeout(500); // Wait for potential inspector actions
+      
+      const fireTriggerButton = page.getByRole('button', { name: 'Fire Trigger' });
+      await expect(fireTriggerButton).toBeVisible();
+      await fireTriggerButton.click();
       
       // Should show success toast
       await expect(page.getByText(/triggered|started|success/i).first()).toBeVisible();
       
-      // Check Job Queue
+      // Check Job Queue tab
       await page.getByRole('tab', { name: 'Job Queue' }).click();
-      // It might take a moment to appear
-      await page.waitForTimeout(2000);
-      await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
+      // Wait for the job to appear in the queue - it might take a moment.
+      await expect(page.locator('tbody tr').first()).toContainText(/queued|running/i, { timeout: 20000 }); // Expect job to be visible and in a pending state
+    } else {
+      console.log('Skipping "fire a trigger" test: No Trigger node found on the canvas.');
     }
   });
 

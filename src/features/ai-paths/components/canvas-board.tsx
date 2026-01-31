@@ -1,5 +1,5 @@
+import React from "react";
 import { Button, Tooltip } from "@/shared/ui";
-
 
 import type { AiNode, Edge, RuntimeState } from "@/features/ai-paths/lib";
 import {
@@ -122,7 +122,6 @@ export function CanvasBoard({
   onPointerMoveNode,
   onPointerUpNode,
   onStartConnection,
-  _onCompleteConnection,
   onDrop,
   onDragOver,
   onPanStart,

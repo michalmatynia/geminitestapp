@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Input, Label } from "@/shared/ui";
 
 import Image from "next/image";

@@ -22,15 +22,18 @@ const GLOBAL_ID_KEY = "__cmsNextId";
 
 function getNextId(): number {
   const globalScope = globalThis as { [GLOBAL_ID_KEY]?: number };
-  if (typeof globalScope[GLOBAL_ID_KEY] !== "number") {
+  const nextId = globalScope[GLOBAL_ID_KEY];
+  if (typeof nextId !== "number") {
     globalScope[GLOBAL_ID_KEY] = 1000;
+    return 1000;
   }
-  return globalScope[GLOBAL_ID_KEY] as number;
+  return nextId;
 }
 
 function bumpNextId(target: number): void {
   const globalScope = globalThis as { [GLOBAL_ID_KEY]?: number };
-  if (typeof globalScope[GLOBAL_ID_KEY] !== "number" || (globalScope[GLOBAL_ID_KEY] as number) < target) {
+  const nextId = globalScope[GLOBAL_ID_KEY];
+  if (typeof nextId !== "number" || nextId < target) {
     globalScope[GLOBAL_ID_KEY] = target;
   }
 }
@@ -324,6 +327,22 @@ function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
     const normalizedId = ensureUniqueId(section.id, seen);
     const baseSection = ensureGridRows({ ...section, id: normalizedId });
     const normalizedBlocks = normalizeBlocks(baseSection.blocks ?? [], seen);
+    if (baseSection.type === TEXT_ATOM_BLOCK_TYPE) {
+      const updatedBlock = applyTextAtomSettings(
+        {
+          id: baseSection.id,
+          type: TEXT_ATOM_BLOCK_TYPE,
+          settings: baseSection.settings,
+          blocks: normalizedBlocks,
+        },
+        baseSection.settings,
+        seen
+      );
+      return {
+        ...baseSection,
+        blocks: updatedBlock.blocks ?? [],
+      };
+    }
     return {
       ...baseSection,
       blocks: normalizedBlocks,
@@ -504,19 +523,25 @@ export function basePageBuilderReducer(
       const def = getSectionDefinition(action.sectionType);
       if (!def) return state;
 
+      const settings = buildSectionSettings(action.sectionType, {});
       // For Grid sections, auto-create Column blocks
       let initialBlocks: BlockInstance[] = [];
       if (action.sectionType === "Grid") {
-        const rows = (def.defaultSettings["rows"] as number) ?? 1;
-        const colCount = (def.defaultSettings["columns"] as number) ?? 2;
+        const rows = (settings["rows"] as number) ?? 1;
+        const colCount = (settings["columns"] as number) ?? 2;
         initialBlocks = Array.from({ length: Math.max(1, rows) }, () => createRowBlock(colCount));
+      } else if (action.sectionType === TEXT_ATOM_BLOCK_TYPE) {
+        initialBlocks = buildTextAtomLetterBlocks(
+          normalizeTextAtomText(settings["text"]),
+          undefined
+        );
       }
 
       const newSection: SectionInstance = {
         id: uid(),
         type: action.sectionType,
         zone: action.zone,
-        settings: buildSectionSettings(action.sectionType, {}),
+        settings,
         blocks: initialBlocks,
       };
       return {
@@ -589,11 +614,23 @@ export function basePageBuilderReducer(
     }
 
     case "UPDATE_SECTION_SETTINGS": {
-      const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === action.sectionId
-          ? { ...s, settings: { ...s.settings, ...action.settings } }
-          : s
-      );
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        const nextSettings = { ...s.settings, ...action.settings };
+        if (s.type === TEXT_ATOM_BLOCK_TYPE) {
+          const updatedBlock = applyTextAtomSettings(
+            {
+              id: s.id,
+              type: TEXT_ATOM_BLOCK_TYPE,
+              settings: s.settings,
+              blocks: s.blocks,
+            },
+            nextSettings
+          );
+          return { ...s, settings: updatedBlock.settings, blocks: updatedBlock.blocks ?? [] };
+        }
+        return { ...s, settings: nextSettings };
+      });
       return { ...state, sections: updatedSections };
     }
 
@@ -883,18 +920,31 @@ export function basePageBuilderReducer(
       if (action.sectionId === action.toSectionId) return state;
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
-      if (sourceSection.type !== "TextElement" && sourceSection.type !== "ImageElement") return state;
+      if (
+        sourceSection.type !== "TextElement" &&
+        sourceSection.type !== "ImageElement" &&
+        sourceSection.type !== TEXT_ATOM_BLOCK_TYPE
+      ) return state;
       const targetSection = state.sections.find((s: SectionInstance) => s.id === action.toSectionId);
       if (!targetSection) return state;
 
       const blockDef = getBlockDefinition(sourceSection.type);
+      const baseSettings = {
+        ...(blockDef?.defaultSettings ?? {}),
+        ...sourceSection.settings,
+      };
+      const textAtomBlocks =
+        sourceSection.type === TEXT_ATOM_BLOCK_TYPE
+          ? buildTextAtomLetterBlocks(
+              normalizeTextAtomText(baseSettings["text"]),
+              sourceSection.blocks
+            )
+          : undefined;
       const convertedBlock: BlockInstance = {
         id: uid(),
         type: sourceSection.type,
-        settings: {
-          ...(blockDef?.defaultSettings ?? {}),
-          ...sourceSection.settings,
-        },
+        settings: baseSettings,
+        ...(textAtomBlocks ? { blocks: textAtomBlocks } : {}),
       };
 
       const remaining = state.sections.filter((s: SectionInstance) => s.id !== action.sectionId);
@@ -1116,7 +1166,7 @@ export function basePageBuilderReducer(
         ...state,
         currentPage: {
           ...state.currentPage,
-          slugs: action.slugValues.map((slug) => ({ slug: { slug } })),
+          slugs: action.slugValues.map((slug: string) => ({ slug: { slug } })),
           slugIds: action.slugIds,
         },
       };

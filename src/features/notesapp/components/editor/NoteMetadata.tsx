@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Input, Label, Checkbox } from "@/shared/ui";
 
 import { X } from "lucide-react";

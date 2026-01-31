@@ -32,7 +32,7 @@ import {
   safeJsonStringify,
 } from "../AiPathsSettingsUtils";
 
-type ToastFn = (message: string, options?: { variant?: string }) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 type UseAiPathsRuntimeArgs = {
   activePathId: string | null;

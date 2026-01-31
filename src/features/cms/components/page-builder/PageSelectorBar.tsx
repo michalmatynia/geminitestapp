@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Layers } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,9 +33,7 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const pagesQuery = useCmsPages(activeDomainId);
   const searchParams = useSearchParams();
   const pageIdParam = searchParams.get("pageId");
-  const [selectedPageId, setSelectedPageId] = useState<string>("");
   const lastSavedPageIdRef = useRef<string | null>(null);
-  const appliedParamRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
   const preferencesQuery = useQuery({
     queryKey: userPreferencesQueryKey,
@@ -66,47 +64,42 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
       console.warn("[CMS] Failed to persist page selection.", error);
     },
   });
+
+  const initialPageId = useMemo((): string => {
+    if (pageIdParam && pagesQuery.data?.some((page: PageSummary) => page.id === pageIdParam)) {
+      return pageIdParam;
+    }
+    if (state.currentPage?.id) {
+      return state.currentPage.id;
+    }
+    const preferredId = preferencesQuery.data?.cmsLastPageId ?? null;
+    if (preferredId && pagesQuery.data?.some((page: PageSummary) => page.id === preferredId)) {
+      return preferredId;
+    }
+    return "";
+  }, [pageIdParam, pagesQuery.data, state.currentPage?.id, preferencesQuery.data?.cmsLastPageId]);
+
+  const [userPageId, setUserPageId] = useState<string | null>(null);
+  const selectedPageId = userPageId ?? initialPageId;
+
   const pageQuery = useCmsPage(selectedPageId || undefined);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!pagesQuery.data) return;
-    if (selectedPageId && !pagesQuery.data.some((page) => page.id === selectedPageId)) {
-      setSelectedPageId("");
+    if (selectedPageId && !pagesQuery.data.some((page: PageSummary) => page.id === selectedPageId)) {
+      setUserPageId("");
       dispatch({ type: "CLEAR_CURRENT_PAGE" });
     }
   }, [pagesQuery.data, selectedPageId, dispatch]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!pageQuery.data) return;
     if (pageQuery.data.id !== selectedPageId) return;
     if (state.currentPage?.id === pageQuery.data.id) return;
     dispatch({ type: "SET_CURRENT_PAGE", page: pageQuery.data });
   }, [pageQuery.data, selectedPageId, state.currentPage?.id, dispatch]);
 
-  useEffect(() => {
-    if (selectedPageId) return;
-    if (state.currentPage?.id) {
-      setSelectedPageId(state.currentPage.id);
-      return;
-    }
-    if (!pagesQuery.data) return;
-    const preferredId = preferencesQuery.data?.cmsLastPageId ?? null;
-    if (!preferredId) return;
-    if (pagesQuery.data.some((page) => page.id === preferredId)) {
-      setSelectedPageId(preferredId);
-    }
-  }, [selectedPageId, state.currentPage?.id, pagesQuery.data, preferencesQuery.data?.cmsLastPageId]);
-
-  useEffect(() => {
-    if (!pageIdParam) return;
-    if (!pagesQuery.data || pagesQuery.data.length === 0) return;
-    if (appliedParamRef.current === pageIdParam) return;
-    if (!pagesQuery.data.some((page) => page.id === pageIdParam)) return;
-    appliedParamRef.current = pageIdParam;
-    setSelectedPageId(pageIdParam);
-  }, [pageIdParam, pagesQuery.data]);
-
-  useEffect(() => {
+  useEffect((): void => {
     if (!selectedPageId) return;
     if (selectedPageId === preferencesQuery.data?.cmsLastPageId) {
       lastSavedPageIdRef.current = selectedPageId;
@@ -117,8 +110,8 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
     updatePreferencesMutation.mutate({ cmsLastPageId: selectedPageId });
   }, [selectedPageId, preferencesQuery.data?.cmsLastPageId, updatePreferencesMutation]);
 
-  const handlePageChange = useCallback((value: string) => {
-    setSelectedPageId((prev) => (prev === value ? prev : value));
+  const handlePageChange = useCallback((value: string): void => {
+    setUserPageId((prev: string | null) => (prev === value ? prev : value));
   }, []);
 
   return (

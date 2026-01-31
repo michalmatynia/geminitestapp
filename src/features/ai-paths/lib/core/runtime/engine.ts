@@ -36,24 +36,24 @@ import {
   handleViewer,
 } from "./handlers";
 
-type ToastFn = (message: string, options?: { variant?: "success" | "error" }) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
 
 export type EvaluateGraphOptions = {
   nodes: AiNode[];
   edges: Edge[];
   activePathId: string | null;
-  activePathName?: string | null;
-  triggerNodeId?: string;
-  triggerEvent?: string;
-  triggerContext?: Record<string, unknown> | null;
-  deferPoll?: boolean;
-  skipAiJobs?: boolean;
-  seedOutputs?: Record<string, RuntimePortValues>;
-  seedHashes?: Record<string, string>;
-  seedHistory?: Record<string, RuntimeHistoryEntry[]>;
-  recordHistory?: boolean;
-  historyLimit?: number;
-  skipNodeIds?: Set<string> | string[];
+  activePathName?: string | null | undefined;
+  triggerNodeId?: string | undefined;
+  triggerEvent?: string | undefined;
+  triggerContext?: Record<string, unknown> | null | undefined;
+  deferPoll?: boolean | undefined;
+  skipAiJobs?: boolean | undefined;
+  seedOutputs?: Record<string, RuntimePortValues> | undefined;
+  seedHashes?: Record<string, string> | undefined;
+  seedHistory?: Record<string, RuntimeHistoryEntry[]> | undefined;
+  recordHistory?: boolean | undefined;
+  historyLimit?: number | undefined;
+  skipNodeIds?: Set<string> | string[] | undefined;
   onNodeStart?: (payload: {
     node: AiNode;
     nodeInputs: RuntimePortValues;

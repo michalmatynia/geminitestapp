@@ -838,6 +838,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
+  TextAtom: {
+    type: "TextAtom",
+    label: "Text atoms",
+    icon: "Folder",
+    allowedBlockTypes: [],
+    defaultSettings: { ...BLOCK_DEFINITIONS.TextAtom.defaultSettings },
+    settingsSchema: [...BLOCK_DEFINITIONS.TextAtom.settingsSchema],
+  },
   ImageElement: {
     type: "ImageElement",
     label: "Image element",
@@ -1226,9 +1234,9 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ["AnnouncementBar", "Block", "TextElement", "ImageElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
   template: Object.keys(SECTION_DEFINITIONS).filter((type) => type !== "AnnouncementBar"),
-  footer: ["Block", "TextElement", "ImageElement", "RichText", "Grid", "Newsletter", "ContactForm"],
+  footer: ["Block", "TextElement", "TextAtom", "ImageElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {

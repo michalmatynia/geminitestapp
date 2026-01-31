@@ -234,49 +234,66 @@ function CheckboxField({
 
 export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-  const [settings, setSettings] = useState<MenuSettings>(DEFAULT_MENU_SETTINGS);
   const { theme } = useThemeSettings();
   const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
-  const [menuScopeId, setMenuScopeId] = useState<string>("default");
-  const scopeTouchedRef = useRef(false);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
-  const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
   const loadedKeyRef = useRef<string | null>(null);
   const pendingSerializedRef = useRef<string | null>(null);
-  const settingsSerializedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
   const persistTimerRef = useRef<number | null>(null);
 
-  const colorSchemeOptions = useMemo(() => {
+  const initialMenuScopeId = useMemo((): string => {
+    if (!zoningEnabled) return "default";
+    return activeDomainId || "default";
+  }, [zoningEnabled, activeDomainId]);
+
+  const [userMenuScopeId, setUserMenuScopeId] = useState<string | null>(null);
+  const menuScopeId = userMenuScopeId ?? initialMenuScopeId;
+
+  const menuKey = useMemo((): string => {
+    if (!zoningEnabled) return CMS_MENU_SETTINGS_KEY;
+    if (!menuScopeId || menuScopeId === "default") return CMS_MENU_SETTINGS_KEY;
+    return getCmsMenuSettingsKey(menuScopeId);
+  }, [menuScopeId, zoningEnabled]);
+
+  const initialSettings = useMemo((): MenuSettings => {
+    if (!settingsQuery.isFetched) return DEFAULT_MENU_SETTINGS;
+    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
+      settingsQuery.data?.get(menuKey),
+      null
+    );
+    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
+      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
+        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+        null
+      );
+      return normalizeMenuSettings(fallback);
+    }
+    return normalizeMenuSettings(stored);
+  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
+
+  const [userSettings, setUserSettings] = useState<MenuSettings | null>(null);
+  const settings = userSettings ?? initialSettings;
+
+  const colorSchemeOptions = useMemo((): { label: string; value: string }[] => {
     const options = [...COLOR_SCHEME_FALLBACK];
     const schemes = theme?.colorSchemes ?? [];
-    schemes.forEach((scheme) => {
+    schemes.forEach((scheme: any) => {
       if (!scheme?.id) return;
       options.push({ label: scheme.name || scheme.id, value: scheme.id });
     });
     return options;
   }, [theme?.colorSchemes]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!zoningEnabled) {
-      if (menuScopeId !== "default") {
-        setMenuScopeId("default");
+      if (userMenuScopeId !== "default" && userMenuScopeId !== null) {
+        setUserMenuScopeId("default");
       }
-      scopeTouchedRef.current = false;
       return;
     }
-    if (scopeTouchedRef.current) return;
-    if (activeDomainId && menuScopeId !== activeDomainId) {
-      setMenuScopeId(activeDomainId);
-    }
-  }, [activeDomainId, menuScopeId, zoningEnabled]);
-
-  const menuKey = useMemo(() => {
-    if (!zoningEnabled) return CMS_MENU_SETTINGS_KEY;
-    if (!menuScopeId || menuScopeId === "default") return CMS_MENU_SETTINGS_KEY;
-    return getCmsMenuSettingsKey(menuScopeId);
-  }, [menuScopeId, zoningEnabled]);
+  }, [zoningEnabled, userMenuScopeId]);
 
   const hasScopedMenu = useMemo(() => {
     if (!zoningEnabled) return false;
@@ -288,105 +305,78 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     settingsSerializedRef.current = serializeSetting(settings);
   }, [settings]);
 
-  const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]): void => {
+    setUserSettings((prev: MenuSettings | null) => ({ ...(prev ?? initialSettings), [key]: value }));
+  }, [initialSettings]);
 
-  const addMenuItem = useCallback(() => {
-    setSettings((prev) => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        { id: String(Date.now()), label: "New link", url: "/", imageUrl: "" },
-      ],
-    }));
-  }, []);
+  const addMenuItem = useCallback((): void => {
+    setUserSettings((prev: MenuSettings | null) => {
+      const current = prev ?? initialSettings;
+      return {
+        ...current,
+        items: [
+          ...current.items,
+          { id: String(Date.now()), label: "New link", url: "/", imageUrl: "" },
+        ],
+      };
+    });
+  }, [initialSettings]);
 
-  const updateMenuItem = useCallback((id: string, field: "label" | "url" | "imageUrl", value: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      items: prev.items.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateMenuItem = useCallback((id: string, field: "label" | "url" | "imageUrl", value: string): void => {
+    setUserSettings((prev: MenuSettings | null) => {
+      const current = prev ?? initialSettings;
+      return {
+        ...current,
+        items: current.items.map((item: any) =>
+          item.id === id ? { ...item, [field]: value } : item
+        ),
+      };
+    });
+  }, [initialSettings]);
 
-  const removeMenuItem = useCallback((id: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      items: prev.items.filter((item) => item.id !== id),
-    }));
-  }, []);
+  const removeMenuItem = useCallback((id: string): void => {
+    setUserSettings((prev: MenuSettings | null) => {
+      const current = prev ?? initialSettings;
+      return {
+        ...current,
+        items: current.items.filter((item: any) => item.id !== id),
+      };
+    });
+  }, [initialSettings]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (settings.menuColorSchemeId === "custom") return;
-    const available = new Set((theme?.colorSchemes ?? []).map((scheme) => scheme.id));
+    const available = new Set((theme?.colorSchemes ?? []).map((scheme: any) => scheme.id));
     if (!available.has(settings.menuColorSchemeId)) {
       update("menuColorSchemeId", "custom");
     }
   }, [settings.menuColorSchemeId, theme?.colorSchemes, update]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!settingsQuery.isFetched) return;
-    if (loadedKeyRef.current === menuKey && hasHydratedRef.current) {
-      const currentSerialized = settingsSerializedRef.current;
-      if (currentSerialized !== lastSavedRef.current) {
-        return;
-      }
-    }
-    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
-      settingsQuery.data?.get(menuKey),
-      null
-    );
-    let normalized = normalizeMenuSettings(stored);
-    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
-      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
-        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
-        null
-      );
-      normalized = normalizeMenuSettings(fallback);
-    }
-    const normalizedSerialized = serializeSetting(normalized);
-    const currentSerialized = settingsSerializedRef.current;
-    if (loadedKeyRef.current === menuKey && normalizedSerialized === currentSerialized) {
-      lastSavedRef.current = normalizedSerialized;
-      pendingSerializedRef.current = null;
-      hasHydratedRef.current = true;
-      return;
-    }
-    pendingSerializedRef.current = normalizedSerialized;
-    setSettings(normalized);
-    lastSavedRef.current = normalizedSerialized;
-    loadedKeyRef.current = menuKey;
     hasHydratedRef.current = true;
-  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
+    loadedKeyRef.current = menuKey;
+  }, [menuKey, settingsQuery.isFetched]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!hasHydratedRef.current) return;
     if (loadedKeyRef.current !== menuKey) return;
-    const nextSerialized = serializeSetting(settings);
-    if (pendingSerializedRef.current) {
-      if (pendingSerializedRef.current !== nextSerialized) {
-        return;
-      }
-      pendingSerializedRef.current = null;
-    }
-    if (nextSerialized === lastSavedRef.current) return;
+    if (!userSettings) return;
+    const nextSerialized = serializeSetting(userSettings);
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     persistTimerRef.current = window.setTimeout(() => {
-      lastSavedRef.current = nextSerialized;
       updateSetting.mutate({ key: menuKey, value: nextSerialized });
     }, 500);
-  }, [menuKey, settings, updateSetting]);
+  }, [menuKey, userSettings, updateSetting]);
 
-  useEffect(() => {
-    return () => {
+  useEffect((): () => void => {
+    return (): void => {
       if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     };
   }, []);
 
-  const toggleSection = useCallback((section: string) => {
-    setOpenSections((prev) => {
+  const toggleSection = useCallback((section: string): void => {
+    setOpenSections((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(section)) {
         next.delete(section);
@@ -507,7 +497,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         case "Menu Items":
           return (
             <div className="space-y-2">
-              {settings.items.map((item) => (
+              {settings.items.map((item: any) => (
                 <div
                   key={item.id}
                   className="flex items-start gap-1.5 rounded border border-border/40 bg-gray-800/30 p-2"
@@ -542,7 +532,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeMenuItem(item.id)}
+                    onClick={(): void => removeMenuItem(item.id)}
                     className="mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10"
                     title="Remove item"
                   >
@@ -966,7 +956,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="default">Default (fallback)</SelectItem>
-                    {domains.map((domain) => (
+                    {domains.map((domain: any) => (
                       <SelectItem key={domain.id} value={domain.id}>
                         {domain.domain}
                         {domain.id === activeDomainId ? " (active)" : ""}
@@ -987,7 +977,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             )}
           </div>
           <div className="space-y-2">
-          {MENU_SECTIONS.map((section) => {
+          {MENU_SECTIONS.map((section: string) => {
             const isOpen = openSections.has(section);
             return (
               <div
@@ -996,7 +986,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               >
                 <button
                   type="button"
-                  onClick={() => toggleSection(section)}
+                  onClick={(): void => toggleSection(section)}
                   className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40"
                   aria-expanded={isOpen}
                 >

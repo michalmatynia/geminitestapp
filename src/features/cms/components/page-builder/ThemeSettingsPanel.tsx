@@ -502,7 +502,6 @@ const userPreferencesQueryKey = ["user-preferences"] as const;
 // ---------------------------------------------------------------------------
 
 export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const { theme, setTheme, update } = useThemeSettings();
   const [schemeView, setSchemeView] = useState<"list" | "edit">("list");
   const [editingSchemeId, setEditingSchemeId] = useState<string | null>(null);
@@ -521,7 +520,6 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
 
   // Accordion open-state persistence
   const hasHydratedRef = useRef(false);
-  const lastSavedRef = useRef<string>("[]");
   const persistTimerRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
@@ -534,6 +532,18 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  const initialOpenSections = useMemo((): Set<string> => {
+    if (!preferencesQuery.isFetched) return new Set<string>();
+    const saved = preferencesQuery.data?.cmsThemeOpenSections ?? [];
+    const filtered = saved.filter((item: string): item is string => typeof item === "string");
+    return new Set(filtered);
+  }, [preferencesQuery.data, preferencesQuery.isFetched]);
+
+  const [userOpenSections, setUserOpenSections] = useState<Set<string> | null>(null);
+  const openSections = userOpenSections ?? initialOpenSections;
+
+  const lastSavedRef = useRef<string>(JSON.stringify(Array.from(initialOpenSections)));
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (payload: { cmsThemeOpenSections: string[] }): Promise<void> => {
@@ -549,19 +559,15 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   });
 
   useEffect((): void => {
-    if (hasHydratedRef.current) return;
-    if (!preferencesQuery.isFetched) return;
-    const saved = preferencesQuery.data?.cmsThemeOpenSections ?? [];
-    const filtered = saved.filter((item: string): item is string => typeof item === "string");
-    setOpenSections(new Set(filtered));
-    lastSavedRef.current = JSON.stringify(filtered);
-    hasHydratedRef.current = true;
-  }, [preferencesQuery.data, preferencesQuery.isFetched]);
+    if (preferencesQuery.isFetched) {
+      hasHydratedRef.current = true;
+    }
+  }, [preferencesQuery.isFetched]);
 
   const openSectionsArray = useMemo((): string[] => Array.from(openSections), [openSections]);
 
   useEffect((): void | (() => void) => {
-    if (!hasHydratedRef.current) return;
+    if (!hasHydratedRef.current || !userOpenSections) return;
     const nextSerialized = JSON.stringify(openSectionsArray);
     if (nextSerialized === lastSavedRef.current) return;
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
@@ -569,7 +575,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       lastSavedRef.current = nextSerialized;
       updatePreferencesMutation.mutate({ cmsThemeOpenSections: openSectionsArray });
     }, 400);
-  }, [openSectionsArray, updatePreferencesMutation]);
+  }, [openSectionsArray, userOpenSections, updatePreferencesMutation]);
 
   useEffect((): (() => void) => {
     return (): void => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
@@ -588,7 +594,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   useEffect((): void | (() => void) => {
     if (!logoFile) {
       if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
-      setLogoPreviewUrl(null);
+      setLogoPreviewUrl((prev: string | null) => prev === null ? null : null);
       return;
     }
     const nextUrl = URL.createObjectURL(logoFile);
@@ -601,13 +607,13 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   }, [logoFile]);
 
   const toggleSection = useCallback((section: string): void => {
-    setOpenSections((prev: Set<string>) => {
-      if (!hasHydratedRef.current) hasHydratedRef.current = true;
-      const next = new Set(prev);
+    setUserOpenSections((prev: Set<string> | null) => {
+      const current = prev ?? initialOpenSections;
+      const next = new Set(current);
       if (next.has(section)) { next.delete(section); } else { next.add(section); }
       return next;
     });
-  }, []);
+  }, [initialOpenSections]);
 
   const activeScheme = useMemo((): { id: string; name: string; colors: ColorSchemeColors } | null => {
     if (!theme.colorSchemes.length) return null;
@@ -778,7 +784,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 {schemeView === "list" ? (
                   theme.colorSchemes.length > 0 ? (
                     <div className="mt-3 flex flex-col gap-3">
-                      {theme.colorSchemes.map((scheme) => {
+                      {theme.colorSchemes.map((scheme: ColorScheme) => {
                         const isActive = scheme.id === theme.activeColorSchemeId;
                         return (
                           <div
@@ -791,7 +797,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                           >
                             <button
                               type="button"
-                              onClick={() => update("activeColorSchemeId", scheme.id)}
+                              onClick={(): void => update("activeColorSchemeId", scheme.id)}
                               className="w-full text-left"
                             >
                               <div className="mb-2 flex items-start justify-between gap-2 text-[11px] text-gray-300">
@@ -806,7 +812,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                                     type="button"
                                     size="sm"
                                     variant="ghost"
-                                    onClick={(event) => {
+                                    onClick={(event: React.MouseEvent): void => {
                                       event.stopPropagation();
                                       startEditScheme(scheme.id);
                                     }}

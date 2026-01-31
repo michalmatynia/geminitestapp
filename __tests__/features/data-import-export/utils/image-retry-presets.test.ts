@@ -10,7 +10,7 @@ describe("Image Retry Presets Utils", () => {
     it("returns default presets", () => {
       const presets = getDefaultImageRetryPresets();
       expect(presets.length).toBeGreaterThan(0);
-      expect(presets[0].id).toBe("lower-dimension");
+      expect(presets[0]!.id).toBe("lower-dimension");
     });
   });
 
@@ -29,8 +29,8 @@ describe("Image Retry Presets Utils", () => {
       
       const normalized = normalizeImageRetryPresets(input);
       expect(normalized.length).toBe(1);
-      expect(normalized[0].label).toBe("Custom Label");
-      expect(normalized[0].transform.maxDimension).toBe(800);
+      expect(normalized[0]!.label).toBe("Custom Label");
+      expect(normalized[0]!.transform.maxDimension).toBe(800);
     });
 
     it("overwrites labels for known IDs based on build rules", () => {
@@ -41,13 +41,13 @@ describe("Image Retry Presets Utils", () => {
       }];
       
       const normalized = normalizeImageRetryPresets(input);
-      expect(normalized[0].label).toBe("Lower max dimension (1000px)");
+      expect(normalized[0]!.label).toBe("Lower max dimension (1000px)");
     });
   });
 
   describe("buildImageRetryPresetLabel", () => {
     it("builds label correctly for known presets", () => {
-      const preset = getDefaultImageRetryPresets()[0];
+      const preset = getDefaultImageRetryPresets()[0]!;
       const label = buildImageRetryPresetLabel(preset);
       expect(label).toContain("Lower max dimension");
     });

@@ -344,8 +344,8 @@ export type RuntimeHistoryEntry = {
 export type RuntimeState = {
   inputs: Record<string, RuntimePortValues>;
   outputs: Record<string, RuntimePortValues>;
-  hashes?: Record<string, string>;
-  history?: Record<string, RuntimeHistoryEntry[]>;
+  hashes?: Record<string, string> | undefined;
+  history?: Record<string, RuntimeHistoryEntry[]> | undefined;
 };
 
 export type AiPathRunStatus =

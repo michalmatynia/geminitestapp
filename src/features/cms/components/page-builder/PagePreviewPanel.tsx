@@ -55,8 +55,6 @@ export function PagePreviewPanel(): React.ReactNode {
   const [showEditButton, setShowEditButton] = useState(false);
   const showEditButtonRef = useRef(false);
   const lastPointerMoveRef = useRef(0);
-  const [selectedPreviewSlug, setSelectedPreviewSlug] = useState<string | null>(null);
-  const [previewDraftsEnabled, setPreviewDraftsEnabled] = useState(false);
   const previewDraftsHydratedRef = useRef(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -110,34 +108,31 @@ export function PagePreviewPanel(): React.ReactNode {
     return values.filter((value) => !domainSlugSet.has(value));
   }, [state.currentPage?.slugs, domainSlugSet]);
 
-  const zoneSlugValues = useMemo(() => {
+  const zoneSlugValues = useMemo((): string[] => {
     const page = state.currentPage;
     const domainSlugs = slugsQuery.data ?? [];
     if (!page || domainSlugs.length === 0) return [];
     if (page.slugIds?.length) {
-      const slugById = new Map(domainSlugs.map((slug) => [slug.id, slug.slug]));
+      const slugById = new Map(domainSlugs.map((slug: any) => [slug.id, slug.slug]));
       const ordered = page.slugIds
-        .map((id) => slugById.get(id))
-        .filter((value): value is string => Boolean(value));
+        .map((id: string) => slugById.get(id))
+        .filter((value: string | undefined): value is string => Boolean(value));
       if (ordered.length) return ordered;
     }
     if (!domainSlugSet) return [];
-    const values = (page.slugs ?? []).map((link) => link.slug.slug);
-    return values.filter((value) => domainSlugSet.has(value));
+    const values = (page.slugs ?? []).map((link: any) => link.slug.slug);
+    return values.filter((value: string) => domainSlugSet.has(value));
   }, [state.currentPage, slugsQuery.data, domainSlugSet]);
 
-  useEffect(() => {
-    if (!state.currentPage || zoneSlugValues.length === 0) {
-      setSelectedPreviewSlug(null);
-      return;
-    }
-    if (selectedPreviewSlug && zoneSlugValues.includes(selectedPreviewSlug)) {
-      return;
-    }
-    setSelectedPreviewSlug(zoneSlugValues[0]);
-  }, [state.currentPage?.id, selectedPreviewSlug, zoneSlugValues]);
+  const initialPreviewSlug = useMemo((): string | null => {
+    if (!state.currentPage || zoneSlugValues.length === 0) return null;
+    return zoneSlugValues[0] || null;
+  }, [state.currentPage, zoneSlugValues]);
 
-  const previewUrl = useMemo(() => {
+  const [userPreviewSlug, setUserPreviewSlug] = useState<string | null>(null);
+  const selectedPreviewSlug = userPreviewSlug ?? initialPreviewSlug;
+
+  const previewUrl = useMemo((): string | null => {
     if (!selectedPreviewSlug) return null;
     if (typeof window === "undefined") return `/${selectedPreviewSlug}`;
 
@@ -150,7 +145,7 @@ export function PagePreviewPanel(): React.ReactNode {
     return `${protocol}//${resolvedHost}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
 
-  const previewHostMatches = useMemo(() => {
+  const previewHostMatches = useMemo((): boolean => {
     if (typeof window === "undefined") return true;
     if (!previewUrl) return true;
     try {
@@ -161,20 +156,20 @@ export function PagePreviewPanel(): React.ReactNode {
     }
   }, [previewUrl]);
 
-  const previewFallbackUrl = useMemo(() => {
+  const previewFallbackUrl = useMemo((): string | null => {
     if (!state.currentPage) return null;
     if (typeof window === "undefined") return `/preview/${state.currentPage.id}`;
     return `${window.location.origin}/preview/${state.currentPage.id}`;
   }, [state.currentPage]);
 
-  useEffect(() => {
-    if (!preferencesQuery.isFetched) return;
-    if (previewDraftsHydratedRef.current) return;
-    setPreviewDraftsEnabled(Boolean(preferencesQuery.data?.cmsPreviewEnabled));
-    previewDraftsHydratedRef.current = true;
-  }, [preferencesQuery.data?.cmsPreviewEnabled, preferencesQuery.isFetched]);
+  const initialPreviewDraftsEnabled = useMemo((): boolean => {
+    return Boolean(preferencesQuery.data?.cmsPreviewEnabled);
+  }, [preferencesQuery.data?.cmsPreviewEnabled]);
 
-  const previewTargetLabel = useMemo(() => {
+  const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
+  const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
+
+  const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return "";
     const path = selectedPreviewSlug.startsWith("/") ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
     const host = activeDomain?.domain ?? "current";
@@ -182,27 +177,27 @@ export function PagePreviewPanel(): React.ReactNode {
   }, [selectedPreviewSlug, activeDomain]);
 
   const handleSelectNode = useCallback(
-    (nodeId: string) => {
+    (nodeId: string): void => {
       dispatch({ type: "SELECT_NODE", nodeId });
     },
     [dispatch]
   );
 
   const handleHoverNode = useCallback(
-    (nodeId: string | null) => {
+    (nodeId: string | null): void => {
       if (!state.inspectorEnabled) return;
-      setHoveredNodeId((prev) => (prev === nodeId ? prev : nodeId));
+      setHoveredNodeId((prev: string | null) => (prev === nodeId ? prev : nodeId));
     },
     [state.inspectorEnabled]
   );
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!state.inspectorEnabled) {
       setHoveredNodeId(null);
     }
   }, [state.inspectorEnabled]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
 
     const page = state.currentPage;
@@ -229,7 +224,7 @@ export function PagePreviewPanel(): React.ReactNode {
     });
   }, [state.currentPage, state.sections, updatePage]);
 
-  const handlePreview = useCallback(async () => {
+  const handlePreview = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
     const initialTarget = previewFallbackUrl ?? "about:blank";
     const previewWindow = window.open(initialTarget, "_blank");
@@ -266,12 +261,12 @@ export function PagePreviewPanel(): React.ReactNode {
   }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
 
 
-  const handleOpenMedia = useCallback((target: MediaReplaceTarget) => {
+  const handleOpenMedia = useCallback((target: MediaReplaceTarget): void => {
     setMediaTarget(target);
     setMediaOpen(true);
   }, []);
 
-  const handleMediaOpenChange = useCallback((open: boolean) => {
+  const handleMediaOpenChange = useCallback((open: boolean): void => {
     setMediaOpen(open);
     if (!open) {
       setMediaTarget(null);
@@ -279,7 +274,7 @@ export function PagePreviewPanel(): React.ReactNode {
   }, []);
 
   const handleMediaSelect = useCallback(
-    (filepaths: string[]) => {
+    (filepaths: string[]): void => {
       if (!mediaTarget) return;
       const image = filepaths[0];
       if (!image) return;
@@ -325,20 +320,20 @@ export function PagePreviewPanel(): React.ReactNode {
     [dispatch, mediaTarget]
   );
 
-  const showEdit = useCallback(() => {
+  const showEdit = useCallback((): void => {
     if (showEditButtonRef.current) return;
     showEditButtonRef.current = true;
     setShowEditButton(true);
   }, []);
 
-  const hideEdit = useCallback(() => {
+  const hideEdit = useCallback((): void => {
     if (!showEditButtonRef.current) return;
     showEditButtonRef.current = false;
     setShowEditButton(false);
   }, []);
 
   const setPanelsCollapsed = useCallback(
-    (leftCollapsed: boolean, rightCollapsed: boolean) => {
+    (leftCollapsed: boolean, rightCollapsed: boolean): void => {
       if (state.leftPanelCollapsed !== leftCollapsed) {
         dispatch({ type: "TOGGLE_LEFT_PANEL" });
       }
@@ -349,7 +344,7 @@ export function PagePreviewPanel(): React.ReactNode {
     [dispatch, state.leftPanelCollapsed, state.rightPanelCollapsed]
   );
 
-  const handleToggleViewing = useCallback(() => {
+  const handleToggleViewing = useCallback((): void => {
     if (!isViewing) {
       previousPanelsRef.current = {
         left: state.leftPanelCollapsed,
@@ -367,12 +362,12 @@ export function PagePreviewPanel(): React.ReactNode {
       setPanelsCollapsed(false, false);
     }
     previousPanelsRef.current = null;
-  }, [hideEdit, isViewing, setPanelsCollapsed, showEdit, state.leftPanelCollapsed, state.rightPanelCollapsed]);
+  }, [isViewing, setPanelsCollapsed, showEdit, state.leftPanelCollapsed, state.rightPanelCollapsed]);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     if (!isViewing) {
       hideEdit();
-      return;
+      return (): void => {};
     }
 
     lastPointerMoveRef.current = Date.now();
@@ -388,7 +383,7 @@ export function PagePreviewPanel(): React.ReactNode {
       }
     }, 200);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.clearInterval(idleCheck);
     };
@@ -437,15 +432,15 @@ export function PagePreviewPanel(): React.ReactNode {
               ) : zoneSlugValues.length > 1 ? (
                 <Select
                   value={selectedPreviewSlug ?? ""}
-                  onValueChange={(value) =>
-                    setSelectedPreviewSlug((prev) => (prev === value ? prev : value))
+                  onValueChange={(value: string): void =>
+                    setUserPreviewSlug((prev: string | null) => (prev === value ? prev : value))
                   }
                 >
                   <SelectTrigger className="h-8 w-[200px] text-xs">
                     <SelectValue placeholder="Preview slug" />
                   </SelectTrigger>
                   <SelectContent>
-                    {zoneSlugValues.map((slug) => (
+                    {zoneSlugValues.map((slug: string) => (
                       <SelectItem key={slug} value={slug}>
                         /{slug}
                       </SelectItem>
@@ -466,22 +461,22 @@ export function PagePreviewPanel(): React.ReactNode {
               )}
               {outOfZoneSlugs.length > 0 && (
                 <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200">
-                  Cross-zone: {outOfZoneSlugs.map((slug) => `/${slug}`).join(", ")}
+                  Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(", ")}
                 </div>
               )}
               <label className="flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200">
                 <Checkbox
                   checked={previewDraftsEnabled}
-                  onCheckedChange={(value) => {
+                  onCheckedChange={(value: boolean | "indeterminate"): void => {
                     const next = value === true;
-                    setPreviewDraftsEnabled(next);
+                    setUserPreviewDraftsEnabled(next);
                     updatePreferencesMutation.mutate({ cmsPreviewEnabled: next });
                   }}
                 />
                 Draft preview
               </label>
               <Button
-                onClick={handlePreview}
+                onClick={(): void => { void handlePreview(); }}
                 size="sm"
                 variant="outline"
                 className="text-gray-300 hover:text-white"
@@ -491,7 +486,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 {updatePage.isPending ? "Saving..." : "Preview"}
               </Button>
               <Button
-                onClick={() => dispatch({ type: "UNDO" })}
+                onClick={(): void => dispatch({ type: "UNDO" })}
                 size="icon"
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
@@ -500,7 +495,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 <Undo2 className="size-4" />
               </Button>
               <Button
-                onClick={() => dispatch({ type: "REDO" })}
+                onClick={(): void => dispatch({ type: "REDO" })}
                 size="icon"
                 variant="ghost"
                 className="text-gray-400 hover:text-white"
@@ -509,7 +504,7 @@ export function PagePreviewPanel(): React.ReactNode {
                 <Redo2 className="size-4" />
               </Button>
               <Button
-                onClick={() => { void handleSave(); }}
+                onClick={(): void => { void handleSave(); }}
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={!state.currentPage || updatePage.isPending}

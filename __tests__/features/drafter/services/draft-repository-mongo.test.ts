@@ -81,7 +81,7 @@ describe("DraftRepository (MongoDB)", () => {
     mockCollection.toArray.mockResolvedValue([{ _id: validId, name: "D1" }]);
     const result = await listDrafts();
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe("D1");
+    expect(result[0]!.name).toBe("D1");
   });
 
   it("should update a draft", async () => {

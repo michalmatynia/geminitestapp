@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Input } from "@/shared/ui";
 
 import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";

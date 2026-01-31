@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import NextImage from "next/image";
 import {
   Input,
   Label,
@@ -83,18 +84,18 @@ export function SettingsFieldRenderer({
   onChange,
 }: SettingsFieldRendererProps): React.ReactNode {
   const { theme } = useThemeSettings();
-  const colorSchemeOptions = useMemo<SettingsFieldOption[]>(() => {
+  const colorSchemeOptions = useMemo<SettingsFieldOption[]>((): SettingsFieldOption[] => {
     const baseOptions =
       theme.colorSchemes.length === 0
         ? COLOR_SCHEME_OPTIONS
-        : theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }));
+        : theme.colorSchemes.map((scheme: any) => ({ label: scheme.name, value: scheme.id }));
     const extraOptions = field.options
-      ? field.options.filter((opt) => !baseOptions.some((base) => base.value === opt.value))
+      ? field.options.filter((opt: SettingsFieldOption) => !baseOptions.some((base: any) => base.value === opt.value))
       : [];
     return [...extraOptions, ...baseOptions];
   }, [field.options, theme.colorSchemes]);
   const handleChange = useCallback(
-    (newValue: unknown) => {
+    (newValue: unknown): void => {
       onChange(field.key, newValue);
     },
     [field.key, onChange]
@@ -112,7 +113,7 @@ export function SettingsFieldRenderer({
       {field.type === "text" && (
         <Input
           value={(value as string) ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
           className="text-sm"
         />
       )}
@@ -125,7 +126,7 @@ export function SettingsFieldRenderer({
         <Input
           type="number"
           value={(value as number) ?? 0}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
           className="text-sm"
         />
       )}
@@ -133,7 +134,7 @@ export function SettingsFieldRenderer({
       {field.type === "select" && (
         <Select
           value={(value as string) ?? ""}
-          onValueChange={(v: string) => handleChange(v)}
+          onValueChange={(v: string): void => handleChange(v)}
         >
           <SelectTrigger className="w-full text-sm">
             <SelectValue />
@@ -165,7 +166,7 @@ export function SettingsFieldRenderer({
                 size="sm"
                 aria-pressed={isActive}
                 className={`w-full justify-center ${isActive ? "border-primary/60 bg-primary/10 text-primary" : "border-foreground/20"}`}
-                onClick={() => handleChange(opt.value)}
+                onClick={(): void => handleChange(opt.value)}
               >
                 {opt.label}
               </Button>
@@ -177,7 +178,7 @@ export function SettingsFieldRenderer({
       {field.type === "radio" && (
         <RadioGroup
           value={(value as string) ?? ""}
-          onValueChange={(v: string) => handleChange(v)}
+          onValueChange={(v: string): void => handleChange(v)}
           className="space-y-1"
         >
           {(field.options ?? []).map((opt: SettingsFieldOption) => (
@@ -193,9 +194,9 @@ export function SettingsFieldRenderer({
 
       {field.type === "image" && (
         <div className="space-y-2">
-          <div className="flex h-24 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+          <div className="flex h-24 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30 relative">
             {imageValue ? (
-              <img src={imageValue} alt="Selected" className="h-full w-full object-cover" />
+              <NextImage src={imageValue} alt="Selected" className="object-cover" fill unoptimized />
             ) : (
               <span className="text-xs text-gray-500">No image</span>
             )}
@@ -205,7 +206,7 @@ export function SettingsFieldRenderer({
               size="sm"
               variant="outline"
               className="flex-1 text-xs"
-              onClick={() => setMediaOpen(true)}
+              onClick={(): void => setMediaOpen(true)}
             >
               <Upload className="mr-1.5 size-3" />
               {imageValue ? "Replace image" : "Upload image"}
@@ -214,7 +215,7 @@ export function SettingsFieldRenderer({
               size="sm"
               variant="outline"
               className="flex-1 text-xs"
-              onClick={() => setMediaOpen(true)}
+              onClick={(): void => setMediaOpen(true)}
             >
               <FolderOpen className="mr-1.5 size-3" />
               Browse
@@ -225,7 +226,7 @@ export function SettingsFieldRenderer({
               size="sm"
               variant="ghost"
               className="w-full text-xs text-gray-400 hover:text-gray-200"
-              onClick={() => handleChange("")}
+              onClick={(): void => handleChange("")}
             >
               Clear image
             </Button>
@@ -234,7 +235,7 @@ export function SettingsFieldRenderer({
             open={mediaOpen}
             onOpenChange={setMediaOpen}
             selectionMode="single"
-            onSelect={(filepaths) => handleChange(filepaths[0] ?? "")}
+            onSelect={(filepaths: string[]): void => handleChange(filepaths[0] ?? "")}
           />
         </div>
       )}
@@ -246,7 +247,7 @@ export function SettingsFieldRenderer({
             min={field.min ?? 1}
             max={field.max ?? 12}
             value={(value as number) ?? field.min ?? 1}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
             className="flex-1 accent-blue-500"
           />
           <span className="w-8 text-center text-sm font-medium text-gray-300">
@@ -258,7 +259,7 @@ export function SettingsFieldRenderer({
       {field.type === "color-scheme" && (
         <Select
           value={(value as string) ?? "scheme-1"}
-          onValueChange={(v: string) => handleChange(v)}
+          onValueChange={(v: string): void => handleChange(v)}
         >
           <SelectTrigger className="w-full text-sm">
             <SelectValue />
@@ -278,12 +279,12 @@ export function SettingsFieldRenderer({
           <input
             type="color"
             value={(value as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
             className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
           />
           <Input
             value={(value as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
             className="flex-1 text-sm font-mono"
             maxLength={7}
           />
@@ -301,7 +302,7 @@ export function SettingsFieldRenderer({
           return (
         <Select
           value={resolvedValue}
-          onValueChange={(v: string) => handleChange(v)}
+          onValueChange={(v: string): void => handleChange(v)}
         >
           <SelectTrigger className="w-full text-sm">
             <SelectValue />
@@ -321,7 +322,7 @@ export function SettingsFieldRenderer({
       {field.type === "font-weight" && (
         <Select
           value={String((value as string | number) ?? "400")}
-          onValueChange={(v: string) => handleChange(v)}
+          onValueChange={(v: string): void => handleChange(v)}
         >
           <SelectTrigger className="w-full text-sm">
             <SelectValue />
@@ -382,7 +383,7 @@ function SpacingField({ value, onChange }: CompositeFieldProps): React.ReactNode
           <Input
             type="number"
             value={spacing[side] ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update(side, Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update(side, Number(e.target.value))}
             className="text-xs h-7 px-1.5"
           />
         </div>
@@ -404,7 +405,7 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
           <Input
             type="number"
             value={(border.width as number) ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("width", Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("width", Number(e.target.value))}
             className="text-xs h-7"
             min={0}
           />
@@ -414,7 +415,7 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
           <Input
             type="number"
             value={(border.radius as number) ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("radius", Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("radius", Number(e.target.value))}
             className="text-xs h-7"
             min={0}
           />
@@ -425,7 +426,7 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
           <span className="text-[10px] text-gray-500 uppercase">Style</span>
           <Select
             value={(border.style as string) ?? "solid"}
-            onValueChange={(v: string) => update("style", v)}
+            onValueChange={(v: string): void => update("style", v)}
           >
             <SelectTrigger className="text-xs h-7">
               <SelectValue />
@@ -443,12 +444,12 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
             <input
               type="color"
               value={(border.color as string) ?? "#4b5563"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
               className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
             />
             <Input
               value={(border.color as string) ?? "#4b5563"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
               className="text-xs h-7 font-mono flex-1"
               maxLength={7}
             />
@@ -473,7 +474,7 @@ function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode 
             <Input
               type="number"
               value={(shadow[prop] as number) ?? 0}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update(prop, Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update(prop, Number(e.target.value))}
               className="text-xs h-7 px-1.5"
             />
           </div>
@@ -484,12 +485,12 @@ function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode 
         <input
           type="color"
           value={(shadow.color as string)?.slice(0, 7) ?? "#000000"}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
           className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
         />
         <Input
           value={(shadow.color as string) ?? "#00000040"}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
           className="text-xs h-7 font-mono flex-1"
         />
       </div>
@@ -505,7 +506,7 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
   };
   return (
     <div className="space-y-2">
-      <Select value={bgType} onValueChange={(v: string) => update("type", v)}>
+      <Select value={bgType} onValueChange={(v: string): void => update("type", v)}>
         <SelectTrigger className="text-xs h-7">
           <SelectValue />
         </SelectTrigger>
@@ -521,12 +522,12 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
           <input
             type="color"
             value={(bg.color as string) ?? "#000000"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
             className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
           />
           <Input
             value={(bg.color as string) ?? "#000000"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("color", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("color", e.target.value)}
             className="flex-1 text-xs font-mono"
             maxLength={7}
           />
@@ -540,12 +541,12 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
             <input
               type="color"
               value={(bg.gradientFrom as string) ?? "#000000"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientFrom", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientFrom", e.target.value)}
               className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
             />
             <Input
               value={(bg.gradientFrom as string) ?? "#000000"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientFrom", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientFrom", e.target.value)}
               className="flex-1 text-xs font-mono"
               maxLength={7}
             />
@@ -555,12 +556,12 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
             <input
               type="color"
               value={(bg.gradientTo as string) ?? "#ffffff"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientTo", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientTo", e.target.value)}
               className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
             />
             <Input
               value={(bg.gradientTo as string) ?? "#ffffff"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientTo", e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientTo", e.target.value)}
               className="flex-1 text-xs font-mono"
               maxLength={7}
             />
@@ -570,7 +571,7 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
             <Input
               type="number"
               value={(bg.gradientAngle as number) ?? 180}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("gradientAngle", Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientAngle", Number(e.target.value))}
               className="w-20 text-xs h-7"
               min={0}
               max={360}
@@ -583,7 +584,7 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
       {bgType === "image" && (
         <Input
           value={(bg.imageUrl as string) ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("imageUrl", e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("imageUrl", e.target.value)}
           placeholder="Image URL..."
           className="text-xs"
         />
@@ -603,7 +604,7 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
         <span className="text-[10px] text-gray-500 uppercase">Font Family</span>
         <Select
           value={(typo.fontFamily as string) ?? "Inter, sans-serif"}
-          onValueChange={(v: string) => update("fontFamily", v)}
+          onValueChange={(v: string): void => update("fontFamily", v)}
         >
           <SelectTrigger className="text-xs h-7">
             <SelectValue />
@@ -622,7 +623,7 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
           <span className="text-[10px] text-gray-500 uppercase">Weight</span>
           <Select
             value={String((typo.fontWeight as string | number) ?? "400")}
-            onValueChange={(v: string) => update("fontWeight", v)}
+            onValueChange={(v: string): void => update("fontWeight", v)}
           >
             <SelectTrigger className="text-xs h-7">
               <SelectValue />
@@ -639,7 +640,7 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
           <Input
             type="number"
             value={(typo.fontSize as number) ?? 16}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("fontSize", Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("fontSize", Number(e.target.value))}
             className="text-xs h-7"
             min={8}
             max={200}
@@ -652,7 +653,7 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
           <Input
             type="number"
             value={(typo.lineHeight as number) ?? 1.5}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("lineHeight", Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("lineHeight", Number(e.target.value))}
             className="text-xs h-7"
             min={0.5}
             max={5}
@@ -664,7 +665,7 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
           <Input
             type="number"
             value={(typo.letterSpacing as number) ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("letterSpacing", Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("letterSpacing", Number(e.target.value))}
             className="text-xs h-7"
             step={0.5}
           />
@@ -676,12 +677,12 @@ function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactN
           <input
             type="color"
             value={(typo.textColor as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("textColor", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("textColor", e.target.value)}
             className="h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
           />
           <Input
             value={(typo.textColor as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("textColor", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("textColor", e.target.value)}
             className="flex-1 text-xs font-mono"
             maxLength={7}
           />
@@ -720,7 +721,7 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
       <div className="relative">
         <Input
           value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
           className="pr-10 text-sm"
           placeholder="https://example.com or /your-slug"
         />
@@ -745,7 +746,7 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
                 <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-gray-500" />
                 <Input
                   value={query}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setQuery(e.target.value)}
                   className="pl-8 text-sm"
                   placeholder="Search slugs..."
                 />
@@ -761,7 +762,7 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
                   <button
                     key={slug.id}
                     type="button"
-                    onClick={() => handleSelect(slug)}
+                    onClick={(): void => handleSelect(slug)}
                     className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-gray-200 hover:bg-foreground/5"
                   >
                     <span>/{slug.slug}</span>
@@ -783,7 +784,7 @@ function LinkField({ value, onChange }: LinkFieldProps): React.ReactNode {
           size="sm"
           variant="ghost"
           className="w-full text-xs text-gray-400 hover:text-gray-200"
-          onClick={() => onChange("")}
+          onClick={(): void => onChange("")}
         >
           Clear link
         </Button>

@@ -12,7 +12,7 @@ import {
 import { buildHistoryNodeOptions, type HistoryNodeOption } from "../run-history-utils";
 import type { RunHistoryFilter } from "../run-history-panel";
 
-type ToastFn = (message: string, options?: { variant?: string }) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
@@ -136,7 +136,7 @@ export function useAiPathsRunHistory({
     source.addEventListener("run", (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setRunDetail((prev: typeof runDetail) => (prev ? { ...prev, run: payload } : prev));
+        setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
@@ -144,7 +144,7 @@ export function useAiPathsRunHistory({
     source.addEventListener("nodes", (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setRunDetail((prev: typeof runDetail) => (prev ? { ...prev, nodes: payload } : prev));
+        setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, nodes: payload } : prev));
       } catch {
         // ignore parse errors
       }
@@ -246,8 +246,10 @@ export function useAiPathsRunHistory({
 
   const runsQuery = useQuery({
     queryKey: ["ai-paths-runs", activePathId],
-    queryFn: async (): Promise<{ ok: boolean; data: { runs: AiPathRunRecord[] } }> =>
-      runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) }),
+    queryFn: async () => {
+      const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });
+      return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };
+    },
     enabled: Boolean(activePathId),
     refetchInterval: (data: unknown): number | false => {
       const d: { ok: boolean; data: { runs: AiPathRunRecord[] } } | undefined = data as

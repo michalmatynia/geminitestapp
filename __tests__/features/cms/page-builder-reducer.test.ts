@@ -65,30 +65,30 @@ describe("Page Builder Reducer", () => {
     const nextState = pageBuilderReducer(initialState, action);
     
     expect(nextState.sections).toHaveLength(1);
-    expect(nextState.sections[0].type).toBe("Hero");
-    expect(nextState.sections[0].zone).toBe("template");
-    expect(nextState.selectedNodeId).toBe(nextState.sections[0].id);
+    expect(nextState.sections[0]!.type).toBe("Hero");
+    expect(nextState.sections[0]!.zone).toBe("template");
+    expect(nextState.selectedNodeId).toBe(nextState.sections[0]!.id);
   });
 
   it("should handle ADD_BLOCK", () => {
     // 1. Add section first
     const sectionAction = { type: "ADD_SECTION" as const, sectionType: "RichText", zone: "template" as const };
     let state = pageBuilderReducer(initialState, sectionAction);
-    const sectionId = state.sections[0].id;
+    const sectionId = state.sections[0]!.id;
 
     // 2. Add block to that section
     const blockAction = { type: "ADD_BLOCK" as const, sectionId, blockType: "Heading" };
     state = pageBuilderReducer(state, blockAction);
 
-    expect(state.sections[0].blocks).toHaveLength(1);
-    expect(state.sections[0].blocks[0].type).toBe("Heading");
-    expect(state.selectedNodeId).toBe(state.sections[0].blocks[0].id);
+    expect(state.sections[0]!.blocks).toHaveLength(1);
+    expect(state.sections[0]!.blocks[0]!.type).toBe("Heading");
+    expect(state.selectedNodeId).toBe(state.sections[0]!.blocks[0]!.id);
   });
 
   it("should handle REMOVE_SECTION", () => {
     const sectionAction = { type: "ADD_SECTION" as const, sectionType: "RichText", zone: "template" as const };
     let state = pageBuilderReducer(initialState, sectionAction);
-    const sectionId = state.sections[0].id;
+    const sectionId = state.sections[0]!.id;
 
     state = pageBuilderReducer(state, { type: "REMOVE_SECTION", sectionId });
     expect(state.sections).toHaveLength(0);
@@ -98,7 +98,7 @@ describe("Page Builder Reducer", () => {
   it("should handle UPDATE_SECTION_SETTINGS", () => {
     const sectionAction = { type: "ADD_SECTION" as const, sectionType: "Hero", zone: "template" as const };
     let state = pageBuilderReducer(initialState, sectionAction);
-    const sectionId = state.sections[0].id;
+    const sectionId = state.sections[0]!.id;
 
     state = pageBuilderReducer(state, { 
       type: "UPDATE_SECTION_SETTINGS", 
@@ -106,6 +106,6 @@ describe("Page Builder Reducer", () => {
       settings: { imageHeight: "small" } 
     });
 
-    expect(state.sections[0].settings.imageHeight).toBe("small");
+    expect(state.sections[0]!.settings.imageHeight).toBe("small");
   });
 });

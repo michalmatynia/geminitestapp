@@ -1,3 +1,4 @@
+import React from "react";
 import { Button, ListPanel } from "@/shared/ui";
 
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight } from "lucide-react";

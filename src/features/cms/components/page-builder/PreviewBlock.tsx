@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import NextImage from "next/image";
 import { createPortal } from "react-dom";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
@@ -69,11 +70,11 @@ const formatSettingValue = (value: unknown): string => {
   if (value === null || value === undefined) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return value.map((item) => formatSettingValue(item)).join(", ");
+  if (Array.isArray(value)) return (value as unknown[]).map((item: unknown) => formatSettingValue(item)).join(", ");
   try {
     return JSON.stringify(value);
   } catch {
-    return String(value);
+    return "Object";
   }
 };
 
@@ -168,12 +169,12 @@ const InspectorHover = ({
     }
   };
 
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!enabled || !showTooltip) {
       clearTimer();
-      setOpen(false);
+      setOpen((prev: boolean) => prev ? false : prev);
     }
-    return () => {
+    return (): void => {
       clearTimer();
     };
   }, [enabled, showTooltip]);
@@ -196,10 +197,10 @@ const InspectorHover = ({
 
   const updateTooltipPosition = (): void => {
     const viewport = typeof document !== "undefined"
-      ? (document.querySelector("[data-cms-canvas-viewport='true']") as HTMLElement | null)
+      ? document.querySelector("[data-cms-canvas-viewport='true']")
       : null;
     const canvas = typeof document !== "undefined"
-      ? (document.querySelector("[data-cms-canvas='true']") as HTMLElement | null)
+      ? document.querySelector("[data-cms-canvas='true']")
       : null;
     const el = viewport ?? canvas ?? wrapperRef.current;
     if (!el) return;
@@ -808,7 +809,7 @@ export function PreviewSection({
           <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
             <div className="cms-media flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
               {sectionImage ? (
-                <img src={sectionImage} alt="" className="size-full object-cover" />
+                <NextImage src={sectionImage} alt="" className="size-full object-cover" fill unoptimized />
               ) : (
                 <ImageIcon className="size-8 text-gray-500" />
               )}
@@ -961,7 +962,7 @@ export function PreviewSection({
           {divider}
           {src ? (
             <div className="relative" style={presentation.wrapperStyles}>
-              <img src={src} alt={alt} style={presentation.imageStyles} />
+              <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
@@ -974,6 +975,83 @@ export function PreviewSection({
               No image selected
             </div>
           )}
+        </div>
+      )
+    );
+  }
+
+  // Text atom section
+  if (section.type === "TextAtom") {
+    const text = (section.settings["text"] as string) || "";
+    const alignment = (section.settings["alignment"] as string) || "left";
+    const letterGap = (section.settings["letterGap"] as number) || 0;
+    const lineGap = (section.settings["lineGap"] as number) || 0;
+    const wrap = (section.settings["wrap"] as string) || "wrap";
+    const letters = (section.blocks ?? []).length
+      ? (section.blocks ?? [])
+      : Array.from(text).map((char: string, index: number): BlockInstance => ({
+          id: `text-atom-${section.id}-${index}`,
+          type: "TextAtomLetter",
+          settings: { textContent: char },
+        }));
+
+    const justifyContent =
+      alignment === "center"
+        ? "center"
+        : alignment === "right"
+          ? "flex-end"
+          : "flex-start";
+    const containerStyle: React.CSSProperties = {
+      display: "flex",
+      flexWrap: wrap === "nowrap" ? "nowrap" : "wrap",
+      justifyContent,
+      alignItems: "baseline",
+      columnGap: letterGap,
+      rowGap: lineGap,
+      whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
+    };
+
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={getSectionStyles(section.settings, colorSchemes)}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2">
+            {letters.length > 0 ? (
+              <div style={containerStyle}>
+                {letters.map((letter: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={letter.id}
+                    block={letter}
+                    isSelected={selectedNodeId === letter.id}
+                    isInspecting={isInspecting}
+                    inspectorSettings={inspectorSettings}
+                    hoveredNodeId={hoveredNodeId}
+                    onHoverNode={onHoverNode}
+                    onSelect={onSelect}
+                    contained
+                    selectedNodeId={selectedNodeId}
+                    sectionId={section.id}
+                    sectionType={section.type}
+                    sectionZone={section.zone}
+                    onOpenMedia={onOpenMedia}
+                    mediaStyles={mediaStyles}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-500">Text atoms</div>
+            )}
+          </div>
         </div>
       )
     );
@@ -1730,7 +1808,7 @@ function PreviewBlockItem({
         >
           {src ? (
             <div className="relative" style={presentation.wrapperStyles}>
-              <img src={src} alt={alt} style={presentation.imageStyles} />
+              <NextImage src={src} alt={alt} style={presentation.imageStyles} fill unoptimized />
               {presentation.hasOverlay && (
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
@@ -1840,11 +1918,13 @@ function PreviewBlockItem({
             )}
           >
             {src ? (
-              <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
-                <img
+              <div className="cms-media relative" style={{ width: `${width}%`, ...resolvedStyles }}>
+                <NextImage
                   src={src}
                   alt={alt}
                   className="block h-auto w-full object-cover"
+                  fill
+                  unoptimized
                 />
               </div>
             ) : (
@@ -2109,13 +2189,13 @@ function PreviewImageWithTextBlock({
       className={`flex gap-2 ${imageFirst ? "flex-row" : "flex-row-reverse"} ${stretchClass}`}
       style={stretchStyle}
     >
-      <div className="cms-media flex w-1/3 shrink-0 items-center justify-center bg-gray-700/40 min-h-[48px]" style={mediaStyles ?? undefined}>
-        {blockImage ? (
-          <img src={blockImage} alt="" className="size-full object-cover" />
-        ) : (
-          <ImageIcon className="size-5 text-gray-500" />
-        )}
-      </div>
+            <div className="cms-media relative flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[80px]" style={mediaStyles ?? undefined}>
+              {blockImage ? (
+                <NextImage src={blockImage} alt="" className="size-full object-cover" fill unoptimized />
+              ) : (
+                <ImageIcon className="size-6 text-gray-500" />
+              )}
+            </div>
       <div className="flex flex-1 flex-col justify-center gap-1 overflow-hidden">
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (

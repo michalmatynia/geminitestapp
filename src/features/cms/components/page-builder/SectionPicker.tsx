@@ -20,7 +20,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const groupedTemplates = useMemo(() => getTemplatesByCategory(zone), [zone]);
   const { dispatch } = usePageBuilder();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
-  const elementTypes = useMemo(() => new Set(["TextElement", "ImageElement"]), []);
+  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement"]), []);
   const primitives = useMemo(
     () => sectionTypes.filter((def) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]
@@ -52,19 +52,19 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     [dispatch, zone]
   );
 
-  const templatePreviewGroups = useMemo(() => {
+  const templatePreviewGroups = useMemo((): { category: string; templates: { template: SectionTemplate; blockTypes: string[]; sectionType: string }[] }[] => {
     if (!isOpen) return [];
-    return Object.entries(groupedTemplates).map(([category, templates]) => ({
+    return Object.entries(groupedTemplates).map(([category, templates]: [string, SectionTemplate[]]) => ({
       category,
       templates: templates.map((template: SectionTemplate) => {
         const section = template.create();
-        const blockTypes = section.blocks?.map((block) => block.type) ?? [];
+        const blockTypes = section.blocks?.map((block: any) => block.type) ?? [];
         return { template, blockTypes, sectionType: section.type };
       }),
     }));
   }, [groupedTemplates, isOpen]);
 
-  const renderPreview = (blockTypes: string[]) => {
+  const renderPreview = (blockTypes: string[]): React.ReactNode => {
     const items = blockTypes.slice(0, 4);
     const columns = Math.max(1, Math.min(items.length, 4));
     return (
@@ -88,7 +88,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
     );
   };
 
-  const renderAllowedBlocks = (types: string[]) =>
+  const renderAllowedBlocks = (types: string[]): string =>
     types.length > 0 ? `Blocks: ${types.join(", ")}` : "No blocks";
 
   return (
@@ -216,13 +216,13 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
               Templates
             </div>
             <div className="space-y-4">
-              {templatePreviewGroups.map((group) => (
+              {templatePreviewGroups.map((group: any) => (
                 <div key={group.category}>
                   <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">
                     {group.category}
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    {group.templates.map(({ template, blockTypes, sectionType }) => (
+                    {group.templates.map(({ template, blockTypes, sectionType }: any) => (
                       <button
                         key={template.name}
                         type="button"

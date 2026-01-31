@@ -16,7 +16,7 @@ import {
   validateConnection,
 } from "@/features/ai-paths/lib";
 
-type ToastFn = (message: string, options?: { variant?: string }) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
 
 type UseAiPathsCanvasInteractionsArgs = {
   nodes: AiNode[];
@@ -46,7 +46,7 @@ export interface AiPathsCanvasInteractions {
   connectingPos: { x: number; y: number } | null;
   lastDrop: { x: number; y: number } | null;
   selectedEdgeId: string | null;
-  edgePaths: { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[];
+  edgePaths: { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined }[];
   connectingFromNode: AiNode | null;
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };

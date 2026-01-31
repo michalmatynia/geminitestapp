@@ -21,46 +21,59 @@ const ThemeSettingsContext = createContext<ThemeSettingsContextValue | undefined
 export function ThemeSettingsProvider({ children }: { children: React.ReactNode }): React.ReactNode {
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
-  const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
   const hasHydratedRef = useRef(false);
-  const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_THEME));
   const persistTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (hasHydratedRef.current) return;
-    if (!settingsQuery.isFetched) return;
+  const initialTheme = useMemo((): ThemeSettings => {
+    if (!settingsQuery.isFetched) return DEFAULT_THEME;
     const stored = parseJsonSetting<Partial<ThemeSettings> | null>(
       settingsQuery.data?.get(CMS_THEME_SETTINGS_KEY),
       null
     );
-    const normalized = normalizeThemeSettings(stored);
-    setTheme(normalized);
-    lastSavedRef.current = serializeSetting(normalized);
-    hasHydratedRef.current = true;
-  }, [settingsQuery.data, settingsQuery.isFetched, setTheme]);
+    return normalizeThemeSettings(stored);
+  }, [settingsQuery.data, settingsQuery.isFetched]);
 
-  useEffect(() => {
+  const [userTheme, setUserTheme] = useState<ThemeSettings | null>(null);
+  const theme = userTheme ?? initialTheme;
+
+  const lastSavedRef = useRef<string>(serializeSetting(initialTheme));
+
+  useEffect((): void => {
+    if (settingsQuery.isFetched) {
+      hasHydratedRef.current = true;
+    }
+  }, [settingsQuery.isFetched]);
+
+  useEffect((): void => {
     if (!hasHydratedRef.current) return;
-    const nextSerialized = serializeSetting(theme);
+    if (!userTheme) return;
+    const nextSerialized = serializeSetting(userTheme);
     if (nextSerialized === lastSavedRef.current) return;
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     persistTimerRef.current = window.setTimeout(() => {
       lastSavedRef.current = nextSerialized;
       updateSetting.mutate({ key: CMS_THEME_SETTINGS_KEY, value: nextSerialized });
     }, 500);
-  }, [theme, updateSetting]);
+  }, [userTheme, updateSetting]);
 
-  useEffect(() => {
-    return () => {
+  useEffect((): () => void => {
+    return (): void => {
       if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     };
   }, []);
 
-  const update = useCallback(<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
-    setTheme((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const update = useCallback(<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]): void => {
+    setUserTheme((prev: ThemeSettings | null) => ({ ...(prev ?? initialTheme), [key]: value }));
+  }, [initialTheme]);
 
-  const value = useMemo(() => ({ theme, setTheme, update }), [theme, update]);
+  const setThemeProxy = useCallback((val: React.SetStateAction<ThemeSettings>): void => {
+    setUserTheme((prev: ThemeSettings | null) => {
+      const current = prev ?? initialTheme;
+      return typeof val === "function" ? (val as any)(current) : val;
+    });
+  }, [initialTheme]);
+
+  const value = useMemo(() => ({ theme, setTheme: setThemeProxy as any, update }), [theme, update, setThemeProxy]);
   return (
     <ThemeSettingsContext.Provider value={value}>
       {children}

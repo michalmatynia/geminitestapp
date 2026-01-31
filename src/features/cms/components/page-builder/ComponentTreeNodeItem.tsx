@@ -10,6 +10,7 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   AnnouncementBar: Megaphone,
   Block: Box,
   TextElement: FileText,
+  TextAtom: Folder,
   ImageElement: ImageIcon,
   ImageWithText: Layers,
   RichText: AlignLeft,
@@ -140,12 +141,14 @@ export function SectionNodeItem({
   onDropSectionToColumn,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
-  const isFileSection = section.type === "TextElement" || section.type === "ImageElement";
+  const isFileSection = section.type === "TextElement" || section.type === "TextAtom" || section.type === "ImageElement";
   const hasChildren = section.blocks.length > 0;
   const canToggle = !isFileSection && (section.type === "Grid" || hasChildren);
   const isExpanded = canToggle && expandedIds.has(section.id);
   const targetAllowsTextElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextElement") ?? false;
+  const targetAllowsTextAtom =
+    getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextAtom") ?? false;
   const targetAllowsImageElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("ImageElement") ?? false;
   const hasBlocks = section.blocks.length > 0;
@@ -207,6 +210,8 @@ export function SectionNodeItem({
           setIsSectionDragOver(false);
           if (draggedSectionId && draggedSectionId !== section.id) {
             if (draggedSectionType === "TextElement" && targetAllowsTextElement) {
+              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
+            } else if (draggedSectionType === "TextAtom" && targetAllowsTextAtom) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
             } else if (draggedSectionType === "ImageElement" && targetAllowsImageElement) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);

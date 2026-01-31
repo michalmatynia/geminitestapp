@@ -73,7 +73,7 @@ export default function ListProductModal({
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
   const selectedConnection = selectedIntegration?.connections.find(
-    (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
+    (connection: any) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
@@ -311,8 +311,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {integrationsWithConnections
-                        .filter((integration: Integration) => integration.id)
-                        .map((integration: Integration) => (
+                        .filter((integration: any) => integration.id)
+                        .map((integration: any) => (
                           <SelectItem key={integration.id} value={integration.id}>
                             {integration.name}
                           </SelectItem>
@@ -333,8 +333,8 @@ export default function ListProductModal({
                       </SelectTrigger>
                       <SelectContent>
                         {selectedIntegration.connections
-                          .filter((connection: IntegrationConnectionBasic) => connection.id)
-                          .map((connection: IntegrationConnectionBasic) => (
+                          .filter((connection: any) => connection.id)
+                          .map((connection: any) => (
                             <SelectItem key={connection.id} value={connection.id}>
                               {connection.name}
                             </SelectItem>
@@ -366,8 +366,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {inventories
-                        .filter((inventory: InventoryOption) => inventory.id)
-                        .map((inventory: InventoryOption) => (
+                        .filter((inventory: any) => inventory.id)
+                        .map((inventory: any) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -393,8 +393,8 @@ export default function ListProductModal({
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
                       {templates
-                        .filter((template: Template) => template.id)
-                        .map((template: Template) => (
+                        .filter((template: any) => template.id)
+                        .map((template: any) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>

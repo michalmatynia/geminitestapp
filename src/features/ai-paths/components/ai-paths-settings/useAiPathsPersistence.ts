@@ -603,6 +603,7 @@ export function useAiPathsPersistence({
       }
     };
     void loadConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     toast,
     reportAiPathsError,
@@ -775,6 +776,9 @@ export function useAiPathsPersistence({
       persistPreferences,
       reportAiPathsError,
       persistLastError,
+      setLastError,
+      setPathConfigs,
+      setPaths,
       toast,
     ]
   );

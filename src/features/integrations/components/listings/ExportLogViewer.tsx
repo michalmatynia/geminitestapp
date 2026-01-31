@@ -37,7 +37,7 @@ export function ExportLogViewer({
     const sum = (key: "outputBytes" | "originalBytes" | "base64Length"): number =>
       entries.reduce(
         (total: number, entry: Record<string, unknown>) =>
-          total + (typeof entry[key] === "number" ? (entry[key] as number) : 0),
+          total + (typeof entry[key] === "number" ? entry[key] : 0),
         0
       );
     const outputModes = new Set(

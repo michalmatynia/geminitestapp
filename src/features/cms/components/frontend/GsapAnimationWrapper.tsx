@@ -777,7 +777,8 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                   .split("")
                   .map((char: string, idx: number): string => {
                     if (idx < revealCount || char === " ") return char;
-                    return chars[Math.floor(Math.random() * chars.length)];
+                    const randomIndex = Math.floor(Math.random() * chars.length);
+                    return chars.charAt(randomIndex) || char;
                   })
                   .join("");
                 target.textContent = scrambled;

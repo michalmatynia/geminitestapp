@@ -60,7 +60,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     .sort({ createdAt: -1 })
     .toArray();
 
-  return drafts.map((draft) => ({
+  return drafts.map((draft: MongoDraftDoc) => ({
     id: String(draft._id),
     name: draft.name || "",
     description: draft.description || null,
@@ -294,7 +294,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     orderBy: { createdAt: "desc" },
   });
 
-  return drafts.map((draft) => ({
+  return drafts.map((draft: Prisma.ProductDraftGetPayload<Record<string, never>>) => ({
     ...draft,
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],

@@ -61,7 +61,7 @@ export default function MassListProductModal({
   const [logsOpen, setLogsOpen] = useState(false);
 
   const connectionName = selectedIntegration?.connections.find(
-    (c: IntegrationConnectionBasic) => c.id === selectedConnectionId
+    (c: any) => c.id === selectedConnectionId
   )?.name || "";
 
   const handleSubmit = async (): Promise<void> => {

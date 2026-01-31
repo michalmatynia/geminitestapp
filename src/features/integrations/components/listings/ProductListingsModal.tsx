@@ -220,9 +220,9 @@ export default function ProductListingsModal({
       ) : integrations.length === 0 ? (
         <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
           No connected integrations.{" "}
-          <a href="/admin/integrations" className="underline hover:text-yellow-100">
+          <Link href="/admin/integrations" className="underline hover:text-yellow-100">
             Set up an integration
-          </a>
+          </Link>
           .
         </div>
       ) : (

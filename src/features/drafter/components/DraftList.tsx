@@ -44,7 +44,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   sparkles: Sparkles,
 };
 
-import type { Draft } from "@/features/drafter/types/draft";
+import type { ProductDraft } from "@/features/products/types/drafts";
 
 export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.Element {
   const { data: drafts = [], isLoading: loading } = useDrafts();
@@ -94,7 +94,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
         </div>
       ) : (
         <div className="space-y-3">
-          {drafts.map((draft: Draft) => (
+          {drafts.map((draft: ProductDraft) => (
             <div
               key={draft.id}
               className="rounded-lg border border-border bg-card/50 p-4 transition-colors hover:border"

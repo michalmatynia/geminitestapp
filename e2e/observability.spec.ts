@@ -62,7 +62,7 @@ test.describe('Observability and Monitoring', () => {
     });
 
     // Wait for the route handler to capture the payload
-    // @ts-ignore
+    // @ts-expect-error - testing direct global check
     await page.waitForFunction(() => window.__e2e_error_captured__, { timeout: 5000 }).catch(() => {});
     
     // Assert against the captured payload

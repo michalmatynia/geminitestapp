@@ -8,7 +8,7 @@ export const coerceStatus = (value: unknown): TestStatus => {
 
 export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
-  return value.map((raw) => {
+  return value.map((raw: any) => {
     const s =
       raw && typeof raw === "object"
         ? (raw as Record<string, unknown>)

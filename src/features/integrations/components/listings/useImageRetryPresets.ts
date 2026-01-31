@@ -6,14 +6,14 @@ import {
   normalizeImageRetryPresets,
 } from "@/features/data-import-export";
 
-export const useImageRetryPresets = () => {
+export const useImageRetryPresets = (): ImageRetryPreset[] => {
   const [presets, setPresets] = useState<ImageRetryPreset[]>(
     getDefaultImageRetryPresets()
   );
 
   useEffect(() => {
     let active = true;
-    const loadPresets = async () => {
+    const loadPresets = async (): Promise<void> => {
       try {
         const res = await fetch("/api/integrations/exports/base/image-retry-presets");
         const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
@@ -21,12 +21,12 @@ export const useImageRetryPresets = () => {
         if (payload.presets && active) {
           setPresets(normalizeImageRetryPresets(payload.presets));
         }
-      } catch (_error) {
+      } catch (_error: unknown) {
         // Keep defaults on failure.
       }
     };
     void loadPresets();
-    return () => {
+    return (): void => {
       active = false;
     };
   }, []);

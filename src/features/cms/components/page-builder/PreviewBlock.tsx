@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
-import { Image as ImageIcon, Play, Share2, Star, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
+import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2 } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
@@ -295,7 +295,7 @@ export function PreviewSection({
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = resolveNodeLabel(section.type, section.settings["label"]);
-  const inspectorActive = isInspecting;
+  const inspectorActive = isInspecting && showEditorChrome;
   const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
@@ -378,7 +378,7 @@ export function PreviewSection({
   };
 
   const renderSectionActions = (): React.ReactNode => {
-    if (!isSectionSelected) return null;
+    if (!showEditorChrome || !isSectionSelected) return null;
     return (
       <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
         <button
@@ -485,13 +485,15 @@ export function PreviewSection({
   // Shared section wrapper — uses getSectionStyles for real inline styles
   // ---------------------------------------------------------------------------
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
-  const selectedRing = isSectionSelected
-    ? isInspecting
-      ? "ring-2 ring-inset ring-blue-500/60"
-      : "ring-2 ring-inset ring-blue-500/40"
-    : isSectionHovered
-      ? "ring-2 ring-inset ring-blue-500/30"
-      : "hover:ring-1 hover:ring-inset hover:ring-border/40";
+  const selectedRing = showEditorChrome
+    ? isSectionSelected
+      ? isInspecting
+        ? "ring-2 ring-inset ring-blue-500/60"
+        : "ring-2 ring-inset ring-blue-500/40"
+      : isSectionHovered
+        ? "ring-2 ring-inset ring-blue-500/30"
+        : "hover:ring-1 hover:ring-inset hover:ring-border/40"
+    : "";
 
   const sectionImage = section.settings["image"] as string | undefined;
 
@@ -574,10 +576,12 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           {rowsToRender.length === 0 ? (
-            <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
-              No rows
-            </div>
-          ) : isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
+            showEditorChrome ? (
+              <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
+                No rows
+              </div>
+            ) : null
+          ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
             <div className="h-px w-full bg-border/40" />
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
@@ -586,7 +590,7 @@ export function PreviewSection({
                   const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                   const columnCount = Math.max(1, rowColumns.length);
                   const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
-                  const isRowSelected = !virtual && selectedNodeId === row.id;
+                  const isRowSelected = showEditorChrome && !virtual && selectedNodeId === row.id;
                   const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
                   const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
                   const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
@@ -613,7 +617,7 @@ export function PreviewSection({
                       style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                       className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
                     >
-                    {!virtual && isRowSelected && onRemoveRow && (
+                    {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
                       <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
                         <button
                           type="button"
@@ -635,8 +639,8 @@ export function PreviewSection({
                       style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}
                     >
                       {rowColumns.map((column: BlockInstance, colIndex: number) => {
-                        const isColumnSelected = selectedNodeId === column.id;
-                        const isColumnHovered = isInspecting && hoveredNodeId === column.id;
+                        const isColumnSelected = showEditorChrome && selectedNodeId === column.id;
+                        const isColumnHovered = showEditorChrome && isInspecting && hoveredNodeId === column.id;
                         const columnHoverClass =
                           isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
                         const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
@@ -1191,8 +1195,14 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2">
-            {letters.length > 0 ? (
+          {letters.length === 0 ? (
+            showEditorChrome ? (
+              <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2 text-xs text-gray-500">
+                Text atoms
+              </div>
+            ) : null
+          ) : showEditorChrome ? (
+            <div className="rounded border border-dashed border-border/40 bg-gray-800/20 p-2">
               <div style={containerStyle}>
                 {letters.map((letter: BlockInstance) => (
                   <PreviewBlockItem
@@ -1214,10 +1224,30 @@ export function PreviewSection({
                   />
                 ))}
               </div>
-            ) : (
-              <div className="text-xs text-gray-500">Text atoms</div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div style={containerStyle}>
+              {letters.map((letter: BlockInstance) => (
+                <PreviewBlockItem
+                  key={letter.id}
+                  block={letter}
+                  isSelected={selectedNodeId === letter.id}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )
     );
@@ -1740,18 +1770,18 @@ function PreviewBlockItem({
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
     : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
-  const inspectorActive = isInspecting;
+  const inspectorActive = isInspecting && showEditorChrome;
   const isHovered = inspectorActive && hoveredNodeId === block.id;
   const hoverFrameClass = isHovered && !isSelected
     ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
     : "";
   const isFaithful = !showEditorChrome;
-  const canvasSelectedClass = isSelected
+  const canvasSelectedClass = showEditorChrome && isSelected
     ? isInspecting
       ? "ring-2 ring-inset ring-blue-500/40"
       : "ring-1 ring-inset ring-blue-500/30"
     : "";
-  const canvasHoverClass = isHovered && !isSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
+  const canvasHoverClass = showEditorChrome && isHovered && !isSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
   const canvasFrameClass = `${canvasSelectedClass} ${canvasHoverClass}`.trim();
   const stretchClass = stretch ? "h-full" : "";
   const buildContainerClass = (base: string, editor: string): string =>
@@ -2195,8 +2225,12 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            hasSrc ? baseClasses : `${baseClasses} rounded border p-1 border-border/30 bg-gray-800/20`,
-            ""
+            baseClasses,
+            `rounded border p-1 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
           )}
         >
           {hasSrc ? (
@@ -2329,7 +2363,6 @@ function PreviewBlockItem({
     const alt = (block.settings["alt"] as string) || "Image";
     const width = (block.settings["width"] as number) || 100;
     const borderRadius = (block.settings["borderRadius"] as number) || 0;
-    const hasSrc = Boolean(src);
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
     const resolvedStyles: React.CSSProperties = {
       ...(mediaStyles ?? {}),
@@ -2345,8 +2378,12 @@ function PreviewBlockItem({
             onClick={handleSelect}
             onKeyDown={handleKeyDown}
             className={buildContainerClass(
-              hasSrc ? baseClasses : `${baseClasses} rounded border p-1 border-transparent hover:border-border/30`,
-              ""
+              baseClasses,
+              `rounded border p-1 ${
+                isSelected
+                  ? `${selectedBorderClass} ${selectedSoftBg}`
+                  : "border-transparent hover:border-border/30"
+              }`
             )}
           >
             {src ? (
@@ -2524,7 +2561,10 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <hr style={{ borderStyle: style, borderTopWidth: `${thickness}px`, borderColor: color }} />
+          <hr
+            className="my-2 border-0"
+            style={{ borderTopStyle: style as "solid" | "dashed" | "dotted", borderTopWidth: `${thickness}px`, borderTopColor: color }}
+          />
         </div>
       )
     );
@@ -2532,6 +2572,9 @@ function PreviewBlockItem({
 
   // SocialLinks block
   if (block.type === "SocialLinks") {
+    const platforms = (block.settings["platforms"] as string) || "";
+    const links = platforms.split(",").map((l: string) => l.trim()).filter(Boolean);
+
     return (
       wrapBlock(
         <div
@@ -2540,7 +2583,7 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `text-left transition ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -2548,10 +2591,31 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div className="flex items-center justify-center gap-3">
-            <Share2 className="size-4 text-gray-500" />
-            <span className="text-xs text-gray-500">Social Links</span>
-          </div>
+          {links.length === 0 ? (
+            <p className="text-sm text-gray-500">Add social media URLs in settings</p>
+          ) : (
+            <div className="flex items-center gap-4">
+              {links.map((link: string, idx: number) => {
+                let label = "Link";
+                try {
+                  label = new URL(link).hostname.replace("www.", "").split(".")[0] ?? "Link";
+                } catch {
+                  // keep default
+                }
+                return (
+                  <a
+                    key={`${link}-${idx}`}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-gray-600 p-2 text-gray-400 transition hover:text-white hover:border-white"
+                  >
+                    <span className="text-xs font-medium uppercase">{label.slice(0, 2)}</span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
       )
     );
@@ -2560,6 +2624,7 @@ function PreviewBlockItem({
   // Icon block
   if (block.type === "Icon") {
     const iconName = (block.settings["iconName"] as string) || "Star";
+    const iconSize = (block.settings["iconSize"] as number) || 24;
     const iconColor = (block.settings["iconColor"] as string) || "#ffffff";
 
     return (
@@ -2570,7 +2635,7 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `text-left transition ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -2578,9 +2643,10 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div className="flex items-center justify-center gap-2">
-            <Star className="size-5" style={{ color: iconColor }} />
-            <span className="text-xs text-gray-500">{iconName}</span>
+          <div className="flex items-center justify-center">
+            <span style={{ fontSize: `${iconSize}px`, color: iconColor }} role="img" aria-label={iconName}>
+              {iconName === "Star" ? "★" : iconName === "Heart" ? "♥" : iconName === "Check" ? "✓" : iconName === "Arrow" ? "→" : "●"}
+            </span>
           </div>
         </div>
       )
@@ -2588,6 +2654,18 @@ function PreviewBlockItem({
   }
 
   // Fallback for unknown block types
+  if (!showEditorChrome) {
+    return wrapBlock(
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleSelect}
+        onKeyDown={handleKeyDown}
+        className={buildContainerClass("min-h-[1px] w-full", "")}
+      />
+    );
+  }
+
   return (
     wrapBlock(
       <div
@@ -2917,6 +2995,7 @@ function PreviewTextAtomBlock({
   onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const text = (block.settings["text"] as string) || "";
   const alignment = (block.settings["alignment"] as string) || "left";
   const letterGap = (block.settings["letterGap"] as number) || 0;
@@ -2947,6 +3026,10 @@ function PreviewTextAtomBlock({
     whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
   };
 
+  if (letters.length === 0 && !showEditorChrome) {
+    return null;
+  }
+
   return (
     <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
       {letters.length > 0 ? (
@@ -2971,9 +3054,9 @@ function PreviewTextAtomBlock({
             mediaStyles={mediaStyles}
           />
         ))
-      ) : (
+      ) : showEditorChrome ? (
         <div className="text-xs text-gray-600">Text atoms</div>
-      )}
+      ) : null}
     </div>
   );
 }

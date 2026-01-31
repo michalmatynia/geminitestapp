@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 const KEY_ENV = "INTEGRATION_ENCRYPTION_KEY";
 
-function getKey() {
+function getKey(): Buffer {
   const raw = process.env[KEY_ENV];
   if (!raw) {
     throw new Error(`${KEY_ENV} is required`);
@@ -16,7 +16,7 @@ function getKey() {
   return key;
 }
 
-export function encryptSecret(value: string) {
+export function encryptSecret(value: string): string {
   const key = getKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
@@ -29,7 +29,7 @@ export function encryptSecret(value: string) {
   ].join(":");
 }
 
-export function decryptSecret(payload: string) {
+export function decryptSecret(payload: string): string {
   const key = getKey();
   const [ivB64, tagB64, dataB64] = payload.split(":");
   if (!ivB64 || !tagB64 || !dataB64) {

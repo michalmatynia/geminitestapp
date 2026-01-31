@@ -2,7 +2,7 @@
 import { FilePreviewModal, Button, useToast, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products";
 import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";

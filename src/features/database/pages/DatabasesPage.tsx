@@ -138,7 +138,15 @@ export default function DatabasesPage(): React.JSX.Element {
 
   const handleBackup = async (): Promise<void> => {
     try {
-      const { ok, payload } = await createBackup.mutateAsync({ dbType: activeTab });
+      const { ok, payload } = (await createBackup.mutateAsync({ dbType: activeTab })) as {
+        ok: boolean;
+        payload: {
+          log?: string;
+          warning?: string;
+          message?: string;
+          error?: string;
+        };
+      };
       const log = payload.log ?? "No log available.";
       if (ok) {
         if (payload.warning) {

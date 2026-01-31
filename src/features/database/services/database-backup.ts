@@ -150,7 +150,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
   }
 };
 
-export const createFullDatabaseBackup = async () => {
+export const createFullDatabaseBackup = async (): Promise<{ mongo: DatabaseBackupResult; postgres: DatabaseBackupResult }> => {
   const mongo = await createMongoBackup();
   const postgres = await createPostgresBackup();
   return { mongo, postgres };

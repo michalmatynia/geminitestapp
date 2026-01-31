@@ -72,8 +72,8 @@ export default function SelectIntegrationModal({
                 </SelectTrigger>
                 <SelectContent>
                   {integrations
-                    .filter((integration: Integration) => integration.id)
-                    .map((integration: Integration) => (
+                    .filter((integration: any) => integration.id)
+                    .map((integration: any) => (
                       <SelectItem key={integration.id} value={integration.id}>
                         {integration.name}
                       </SelectItem>
@@ -96,8 +96,8 @@ export default function SelectIntegrationModal({
                   </SelectTrigger>
                   <SelectContent>
                     {selectedIntegration.connections
-                      .filter((connection: IntegrationConnectionBasic) => connection.id)
-                      .map((connection: IntegrationConnectionBasic) => (
+                      .filter((connection: any) => connection.id)
+                      .map((connection: any) => (
                         <SelectItem key={connection.id} value={connection.id}>
                           {connection.name}
                         </SelectItem>

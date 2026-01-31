@@ -66,7 +66,7 @@ export default function SelectProductForListingModal({
   const imageRetryPresets = useImageRetryPresets();
 
   const connectionName = selectedIntegration?.connections.find(
-    (c: { id: string; name: string }) => c.id === selectedConnectionId
+    (c: any) => c.id === selectedConnectionId
   )?.name || "";
 
   // Load products
@@ -309,7 +309,7 @@ export default function SelectProductForListingModal({
                   <SelectValue placeholder="Select a product..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((product: ProductWithImages) => (
+                  {products.map((product: any) => (
                     <SelectItem key={product.id} value={product.id}>
                       {getProductDisplayName(product)} ({product.sku})
                     </SelectItem>
@@ -334,8 +334,8 @@ export default function SelectProductForListingModal({
                     </SelectTrigger>
                     <SelectContent>
                       {inventories
-                        .filter((inventory: InventoryOption) => inventory.id)
-                        .map((inventory: InventoryOption) => (
+                        .filter((inventory: any) => inventory.id)
+                        .map((inventory: any) => (
                           <SelectItem key={inventory.id} value={inventory.id}>
                             {inventory.name}
                           </SelectItem>
@@ -361,8 +361,8 @@ export default function SelectProductForListingModal({
                     <SelectContent>
                       <SelectItem value="none">No template</SelectItem>
                       {templates
-                        .filter((template: Template) => template.id)
-                        .map((template: Template) => (
+                        .filter((template: any) => template.id)
+                        .map((template: any) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>

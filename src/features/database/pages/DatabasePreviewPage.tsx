@@ -435,7 +435,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                                         key={`${table.name}-${rowIndex}-${column}`}
                                         className="whitespace-nowrap px-3 py-2 align-top"
                                       >
-                                        {(() => {
+                                        {(() : string => {
                                           const value = row[column];
                                           if (
                                             typeof value === "string" ||

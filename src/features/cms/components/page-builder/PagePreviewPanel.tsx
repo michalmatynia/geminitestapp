@@ -50,6 +50,11 @@ export function PagePreviewPanel(): React.ReactNode {
   const showEditButtonRef = useRef<boolean>(isViewing);
   const lastPointerMoveRef = useRef(0);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const canvasViewportRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
+  const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const preferencesQuery = useQuery({
     queryKey: userPreferencesQueryKey,

@@ -40,13 +40,13 @@ type MongoIndexDiagnostics = {
   collections: MongoCollectionIndexStatus[];
 };
 
-const formatTimestamp = (value: Date | string) => {
+const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString();
 };
 
-const formatDateParam = (value: string, endOfDay = false) => {
+const formatDateParam = (value: string, endOfDay: boolean = false): string | null => {
   if (!value) return null;
   const suffix = endOfDay ? "T23:59:59.999" : "T00:00:00.000";
   const date = new Date(`${value}${suffix}`);
@@ -54,7 +54,7 @@ const formatDateParam = (value: string, endOfDay = false) => {
   return date.toISOString();
 };
 
-export default function SystemLogsPage() {
+export default function SystemLogsPage(): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -87,7 +87,7 @@ export default function SystemLogsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  const buildLogParams = useCallback(() => {
+  const buildLogParams = useCallback((): URLSearchParams => {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("pageSize", String(pageSize));
@@ -101,7 +101,7 @@ export default function SystemLogsPage() {
     return params;
   }, [level, page, pageSize, query, source, fromDate, toDate]);
 
-  const buildMetricsParams = useCallback(() => {
+  const buildMetricsParams = useCallback((): URLSearchParams => {
     const params = new URLSearchParams();
     if (level !== "all") params.set("level", level);
     if (query.trim()) params.set("query", query.trim());
@@ -120,7 +120,12 @@ export default function SystemLogsPage() {
     pageSize?: number;
   }>({
     queryKey: ["system-logs", page, pageSize, level, query, source, fromDate, toDate],
-    queryFn: async () => {
+    queryFn: async (): Promise<{
+      logs?: SystemLogRecord[];
+      total?: number;
+      page?: number;
+      pageSize?: number;
+    }> => {
       const params = buildLogParams();
       const res = await fetch(`/api/system/logs?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load system logs.");
@@ -135,7 +140,7 @@ export default function SystemLogsPage() {
 
   const metricsQuery = useQuery<{ metrics?: SystemLogMetrics }>({
     queryKey: ["system-log-metrics", level, query, source, fromDate, toDate],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ metrics?: SystemLogMetrics }> => {
       const params = buildMetricsParams();
       const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load system log metrics.");
@@ -145,7 +150,7 @@ export default function SystemLogsPage() {
 
   const mongoDiagnosticsQuery = useQuery<MongoIndexDiagnostics>({
     queryKey: ["mongo-index-diagnostics"],
-    queryFn: async () => {
+    queryFn: async (): Promise<MongoIndexDiagnostics> => {
       const res = await fetch("/api/system/diagnostics/mongo-indexes");
       if (!res.ok) throw new Error("Failed to load Mongo index diagnostics.");
       return (await res.json()) as MongoIndexDiagnostics;
@@ -153,7 +158,9 @@ export default function SystemLogsPage() {
   });
 
   const rebuildIndexesMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<MongoIndexDiagnostics & {
+      created?: Array<{ collection: string; key: Record<string, unknown> }>;
+    }> => {
       const res = await fetch("/api/system/diagnostics/mongo-indexes", {
         method: "POST",
       });
@@ -162,12 +169,12 @@ export default function SystemLogsPage() {
         created?: Array<{ collection: string; key: Record<string, unknown> }>;
       };
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void mongoDiagnosticsQuery.refetch();
     },
   });
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!logsQuery.error) return;
     toast(
       logsQuery.error instanceof Error
@@ -177,7 +184,7 @@ export default function SystemLogsPage() {
     );
   }, [logsQuery.error, toast]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!metricsQuery.error) return;
     toast(
       metricsQuery.error instanceof Error
@@ -187,7 +194,7 @@ export default function SystemLogsPage() {
     );
   }, [metricsQuery.error, toast]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!mongoDiagnosticsQuery.error) return;
     toast(
       mongoDiagnosticsQuery.error instanceof Error
@@ -206,36 +213,36 @@ export default function SystemLogsPage() {
   const metricsLoading = metricsQuery.isPending;
   const diagnosticsLoading = mongoDiagnosticsQuery.isPending;
 
-  const totalPages = useMemo(() => {
+  const totalPages: number = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [total, pageSize]);
 
   const clearLogsMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<boolean> => {
       const res = await fetch("/api/system/logs", { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to clear logs.");
       return true;
     },
-    onSuccess: () => {
+    onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: ["system-logs"] });
       void queryClient.invalidateQueries({ queryKey: ["system-log-metrics"] });
     },
   });
 
 
-  const clearLogs = async () => {
+  const clearLogs = async (): Promise<void> => {
     if (!window.confirm("Clear all system logs?")) return;
     try {
       await clearLogsMutation.mutateAsync();
       toast("System logs cleared.", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to clear logs.", {
         variant: "error",
       });
     }
   };
 
-  const rebuildMongoIndexes = async () => {
+  const rebuildMongoIndexes = async (): Promise<void> => {
     if (!window.confirm("Rebuild missing Mongo indexes for AI Paths runtime?")) return;
     try {
       const result = await rebuildIndexesMutation.mutateAsync();
@@ -246,19 +253,19 @@ export default function SystemLogsPage() {
           : "Mongo indexes already up to date.",
         { variant: "success" }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to rebuild indexes.", {
         variant: "error",
       });
     }
   };
 
-  const exportLogs = async () => {
+  const exportLogs = async (): Promise<void> => {
     try {
       const payload = JSON.stringify(logs, null, 2);
       await navigator.clipboard.writeText(payload);
       toast("Logs copied to clipboard.", { variant: "success" });
-    } catch (_error) {
+    } catch (_error: unknown) {
       toast("Failed to copy logs.", { variant: "error" });
     }
   };
@@ -269,9 +276,9 @@ export default function SystemLogsPage() {
     info: "border-blue-500/40 text-blue-300 bg-blue-500/10",
   };
 
-  const getContextValue = (context: unknown, path: string) => {
+  const getContextValue = (context: unknown, path: string): unknown => {
     if (!context || typeof context !== "object") return null;
-    return path.split(".").reduce<unknown>((acc, key) => {
+    return path.split(".").reduce<unknown>((acc: unknown, key: string): unknown => {
       if (!acc || typeof acc !== "object") return null;
       return (acc as Record<string, unknown>)[key] ?? null;
     }, context);

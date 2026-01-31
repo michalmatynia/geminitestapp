@@ -811,7 +811,7 @@ export const mongoNoteRepository: NoteRepository = {
 
       // Remove category from all notes
       const pullCategories: UpdateFilter<NoteDocument> = {
-        $pull: { categories: { categoryId: id } } as any,
+        $pull: { categories: { categoryId: id } } as UpdateFilter<NoteDocument>["$pull"],
       };
       await noteCollection.updateMany(
         { "categories.categoryId": id } as Filter<NoteDocument>,

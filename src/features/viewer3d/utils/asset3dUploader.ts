@@ -8,7 +8,7 @@ import { isValid3DAsset } from "./validateAsset3d";
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const assets3dRoot = path.join(uploadsRoot, "assets3d");
 
-export function getDiskPathFromPublicPath(publicPath: string) {
+export function getDiskPathFromPublicPath(publicPath: string): string {
   return path.join(process.cwd(), "public", publicPath.replace(/^\/+/, ""));
 }
 

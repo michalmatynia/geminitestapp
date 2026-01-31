@@ -22,7 +22,7 @@ export function Asset3DUploader({
   existingCategories = [],
   existingTags = [],
   className,
-}: Asset3DUploaderProps) {
+}: Asset3DUploaderProps): React.JSX.Element {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -35,7 +35,7 @@ export function Asset3DUploader({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
+  const handleFileSelect = useCallback((selectedFile: File): void => {
     const validation = validate3DFile(selectedFile);
     if (!validation.valid) {
       setError(validation.error ?? "Invalid file");
@@ -55,7 +55,7 @@ export function Asset3DUploader({
   }, [name]);
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: React.DragEvent<HTMLDivElement>): void => {
       e.preventDefault();
       setIsDragOver(false);
       const droppedFile = e.dataTransfer.files[0];
@@ -64,7 +64,7 @@ export function Asset3DUploader({
     [handleFileSelect]
   );
 
-  const handleAddTag = () => {
+  const handleAddTag = (): void => {
     const trimmed = newTag.trim().toLowerCase();
     if (trimmed && !tags.includes(trimmed)) {
       setTags([...tags, trimmed]);
@@ -72,11 +72,11 @@ export function Asset3DUploader({
     }
   };
 
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
+  const handleRemoveTag = (tag: string): void => {
+    setTags(tags.filter((t: string) => t !== tag));
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (): Promise<void> => {
     if (!file) return;
 
     setIsUploading(true);
@@ -98,7 +98,7 @@ export function Asset3DUploader({
     }
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
@@ -115,11 +115,11 @@ export function Asset3DUploader({
               ? "border-blue-500 bg-blue-500/10"
               : "border-gray-600 bg-gray-800/50 hover:border-blue-500 hover:bg-gray-800"
           )}
-          onDragOver={(e) => {
+          onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
             e.preventDefault();
             setIsDragOver(true);
           }}
-          onDragLeave={(e) => {
+          onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
             e.preventDefault();
             setIsDragOver(false);
           }}
@@ -138,7 +138,7 @@ export function Asset3DUploader({
             type="file"
             accept=".glb,.gltf"
             className="hidden"
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
               const selectedFile = e.target.files?.[0];
               if (selectedFile) handleFileSelect(selectedFile);
               e.target.value = "";
@@ -176,7 +176,7 @@ export function Asset3DUploader({
             <Input
               id="upload-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
               placeholder="Enter asset name..."
               className="mt-1 bg-gray-800 border-gray-700"
               disabled={isUploading}
@@ -191,7 +191,7 @@ export function Asset3DUploader({
             <textarea
               id="upload-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
               placeholder="Enter description..."
               rows={2}
               className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
@@ -207,14 +207,14 @@ export function Asset3DUploader({
             <Input
               id="upload-category"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
               placeholder="Enter category..."
               list="upload-categories-list"
               className="mt-1 bg-gray-800 border-gray-700"
               disabled={isUploading}
             />
             <datalist id="upload-categories-list">
-              {existingCategories.map((cat) => (
+              {existingCategories.map((cat: string) => (
                 <option key={cat} value={cat} />
               ))}
             </datalist>
@@ -226,8 +226,8 @@ export function Asset3DUploader({
             <div className="mt-1 flex gap-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddTag();
@@ -240,8 +240,8 @@ export function Asset3DUploader({
               />
               <datalist id="upload-tags-list">
                 {existingTags
-                  .filter((t) => !tags.includes(t))
-                  .map((tag) => (
+                  .filter((t: string) => !tags.includes(t))
+                  .map((tag: string) => (
                     <option key={tag} value={tag} />
                   ))}
               </datalist>
@@ -257,7 +257,7 @@ export function Asset3DUploader({
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {tags.map((tag) => (
+                {tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs"
@@ -282,7 +282,7 @@ export function Asset3DUploader({
             <input
               type="checkbox"
               checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setIsPublic(e.target.checked)}
               className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
               disabled={isUploading}
             />

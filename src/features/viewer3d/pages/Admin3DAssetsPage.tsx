@@ -37,7 +37,7 @@ import type { Asset3DRecord } from "../types";
 
 type ViewMode = "grid" | "list";
 
-export function Admin3DAssetsPage() {
+export function Admin3DAssetsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
@@ -70,16 +70,16 @@ export function Admin3DAssetsPage() {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const handleUpload = (_asset: Asset3DRecord) => {
+  const handleUpload = (_asset: Asset3DRecord): void => {
     setShowUploader(false);
     void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
   };
 
-  const handleEdit = (_updated: Asset3DRecord) => {
+  const handleEdit = (_updated: Asset3DRecord): void => {
     void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
   };
 
-  const handleDelete = async (asset: Asset3DRecord) => {
+  const handleDelete = async (asset: Asset3DRecord): Promise<void> => {
     if (!confirm(`Are you sure you want to delete "${asset.name || asset.filename}"?`)) {
       return;
     }
@@ -95,7 +95,7 @@ export function Admin3DAssetsPage() {
     }
   };
 
-  const clearFilters = () => {
+  const clearFilters = (): void => {
     setSearchQuery("");
     setSelectedCategory(null);
     setSelectedTags([]);
@@ -103,13 +103,13 @@ export function Admin3DAssetsPage() {
 
   const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string): string => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -165,7 +165,7 @@ export function Admin3DAssetsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
                 placeholder="Search assets..."
                 className="h-8 pl-9 text-sm"
               />
@@ -223,11 +223,11 @@ export function Admin3DAssetsPage() {
               <label className="mb-2 block text-sm text-muted-foreground">Category</label>
               <select
                 value={selectedCategory ?? ""}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               >
                 <option value="">All categories</option>
-                {categories.map((cat) => (
+                {categories.map((cat: string) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -238,14 +238,14 @@ export function Admin3DAssetsPage() {
             <div>
               <label className="mb-2 block text-sm text-muted-foreground">Tags</label>
               <div className="flex flex-wrap gap-2">
-                {allTags.map((tag) => (
+                {allTags.map((tag: string) => (
                   <Button
                     key={tag}
                     variant={selectedTags.includes(tag) ? "default" : "outline"}
                     size="sm"
                     onClick={() =>
-                      setSelectedTags((prev) =>
-                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      setSelectedTags((prev: string[]) =>
+                        prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
                       )
                     }
                     className="h-7 px-2 text-xs"
@@ -309,13 +309,13 @@ export function Admin3DAssetsPage() {
 
       {!loading && assets.length > 0 && viewMode === "grid" && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {assets.map((asset) => (
+          {assets.map((asset: Asset3DRecord) => (
             <Asset3DCard
               key={asset.id}
               asset={asset}
               onPreview={setPreviewAsset}
               onEdit={setEditAsset}
-              onDelete={(a) => void handleDelete(a)}
+              onDelete={(a: Asset3DRecord) => void handleDelete(a)}
               isDeleting={deletingId === asset.id}
             />
           ))}
@@ -335,7 +335,7 @@ export function Admin3DAssetsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assets.map((asset) => (
+            {assets.map((asset: Asset3DRecord) => (
               <TableRow key={asset.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -361,7 +361,7 @@ export function Admin3DAssetsPage() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex flex-wrap gap-1">
-                    {asset.tags.slice(0, 2).map((tag) => (
+                    {asset.tags.slice(0, 2).map((tag: string) => (
                       <span
                         key={tag}
                         className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"

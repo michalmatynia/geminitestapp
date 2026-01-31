@@ -21,7 +21,7 @@ import { OrderedDitheringPass } from "./shaders/OrderedDitheringEffect";
 import { ToneMappingMode, BlendFunction } from "postprocessing";
 
 // Loading progress component
-function Loader() {
+function Loader(): React.JSX.Element {
   const { progress } = useProgress();
   return (
     <Html center>
@@ -67,14 +67,14 @@ interface Model3DProps {
   receiveShadow?: boolean;
 }
 
-function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true }: Model3DProps) {
+function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true }: Model3DProps): React.JSX.Element {
   const { scene } = useGLTF(url);
   const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     if (scene) {
       // Optimize materials for PBR rendering
-      scene.traverse((child) => {
+      scene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {
           child.castShadow = castShadow;
           child.receiveShadow = receiveShadow;
@@ -108,7 +108,7 @@ function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true
 }
 
 // Ground plane with realistic shadows
-function Ground({ visible = true }: { visible?: boolean }) {
+function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | null {
   if (!visible) return null;
 
   /* eslint-disable react/no-unknown-property */
@@ -134,7 +134,7 @@ interface SceneLightingProps {
   intensity?: number;
 }
 
-function SceneLighting({ preset, intensity = 1 }: SceneLightingProps) {
+function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX.Element {
   const lightConfigs = {
     studio: {
       ambient: 0.4,
@@ -194,7 +194,7 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps) {
 }
 
 // Camera auto-framing
-function CameraController({ autoFit }: { autoFit?: boolean }) {
+function CameraController({ autoFit }: { autoFit?: boolean }): null {
   const { camera, scene } = useThree();
 
   useEffect(() => {
@@ -317,7 +317,7 @@ export function Viewer3D({
   autoFit = true,
   enableAntiAliasing = true,
   presentationMode = false,
-}: Viewer3DProps) {
+}: Viewer3DProps): React.JSX.Element {
   const hasPostProcessing =
     enableDithering ||
     enableOrderedDithering ||
@@ -469,6 +469,6 @@ export function Viewer3D({
 }
 
 // Preload models for better performance
-export function preloadModel(url: string) {
+export function preloadModel(url: string): void {
   useGLTF.preload(url);
 }

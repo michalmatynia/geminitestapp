@@ -140,8 +140,8 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       distinct: ["category"],
     });
     return results
-      .map((r) => r.category)
-      .filter((c): c is string => c !== null);
+      .map((r: { category: string | null }) => r.category)
+      .filter((c: string | null): c is string => c !== null);
   },
 
   async getTags() {
@@ -149,7 +149,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       where: { tags: { isEmpty: false } },
       select: { tags: true },
     });
-    const allTags = assets.flatMap((a) => a.tags);
+    const allTags = assets.flatMap((a: { tags: string[] }) => a.tags);
     return [...new Set(allTags)];
   },
 };

@@ -30,7 +30,7 @@ import { cn } from "@/shared/utils";
 
 type ViewMode = "grid" | "list";
 
-export function Asset3DListPage() {
+export function Asset3DListPage(): React.JSX.Element {
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
@@ -58,13 +58,13 @@ export function Asset3DListPage() {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string): string => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -114,7 +114,7 @@ export function Asset3DListPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
                 placeholder="Search assets..."
                 className="h-8 pl-9 text-sm"
               />
@@ -123,11 +123,11 @@ export function Asset3DListPage() {
             {categories.length > 0 && (
               <select
                 value={selectedCategory ?? ""}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedCategory(e.target.value || null)}
                 className="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               >
                 <option value="">All categories</option>
-                {categories.map((cat) => (
+                {categories.map((cat: string) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -137,14 +137,14 @@ export function Asset3DListPage() {
 
             {allTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {allTags.slice(0, 5).map((tag) => (
+                {allTags.slice(0, 5).map((tag: string) => (
                   <Button
                     key={tag}
                     variant={selectedTags.includes(tag) ? "default" : "outline"}
                     size="sm"
                     onClick={() =>
-                      setSelectedTags((prev) =>
-                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                      setSelectedTags((prev: string[]) =>
+                        prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
                       )
                     }
                     className="h-7 px-2 text-xs"
@@ -198,7 +198,7 @@ export function Asset3DListPage() {
 
       {!loading && assets.length > 0 && viewMode === "grid" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {assets.map((asset) => (
+          {assets.map((asset: Asset3DRecord) => (
             <div
               key={asset.id}
               onClick={() => setPreviewAsset(asset)}
@@ -244,7 +244,7 @@ export function Asset3DListPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assets.map((asset) => (
+            {assets.map((asset: Asset3DRecord) => (
               <TableRow key={asset.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -267,7 +267,7 @@ export function Asset3DListPage() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex flex-wrap gap-1">
-                    {asset.tags.slice(0, 2).map((tag) => (
+                    {asset.tags.slice(0, 2).map((tag: string) => (
                       <span
                         key={tag}
                         className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"

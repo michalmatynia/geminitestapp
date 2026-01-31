@@ -75,7 +75,7 @@ export const getAll = async (
   });
 
   if (filters.truncateContent) {
-    return notes.map((note) => ({
+    return notes.map((note: NoteWithRelations) => ({
       ...note,
       content:
         note.content.length > 300
@@ -128,13 +128,13 @@ export const create = async (
 
   if (tagIds) {
     createData.tags = {
-      create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+      create: tagIds.map((tagId: string) => ({ tag: { connect: { id: tagId } } })),
     };
   }
 
   if (categoryIds) {
     createData.categories = {
-      create: categoryIds.map((categoryId) => ({
+      create: categoryIds.map((categoryId: string) => ({
         category: { connect: { id: categoryId } },
       })),
     };
@@ -142,7 +142,7 @@ export const create = async (
 
   if (relatedNoteIds) {
     createData.relationsFrom = {
-      create: relatedNoteIds.map((targetNoteId) => ({
+      create: relatedNoteIds.map((targetNoteId: string) => ({
         targetNote: { connect: { id: targetNoteId } },
       })),
     };
@@ -190,14 +190,14 @@ export const update = async (
   if (tagIds !== undefined) {
     updateData.tags = {
       deleteMany: {},
-      create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+      create: tagIds.map((tagId: string) => ({ tag: { connect: { id: tagId } } })),
     };
   }
 
   if (categoryIds !== undefined) {
     updateData.categories = {
       deleteMany: {},
-      create: categoryIds.map((categoryId) => ({
+      create: categoryIds.map((categoryId: string) => ({
         category: { connect: { id: categoryId } },
       })),
     };
@@ -206,7 +206,7 @@ export const update = async (
   if (relatedNoteIds !== undefined) {
     updateData.relationsFrom = {
       deleteMany: {},
-      create: relatedNoteIds.map((targetNoteId) => ({
+      create: relatedNoteIds.map((targetNoteId: string) => ({
         targetNote: { connect: { id: targetNoteId } },
       })),
     };

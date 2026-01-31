@@ -97,7 +97,7 @@ export function useEditorMode(
       toast("Note migrated to WYSIWYG format", { variant: "success" });
       onSuccess?.();
       return htmlContent;
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       toast("Failed to migrate note", { variant: "error" });
       throw new Error("Migration failed");
     } finally {
@@ -132,7 +132,7 @@ export function useEditorMode(
       toast("Note migrated to Markdown format", { variant: "success" });
       onSuccess?.();
       return markdownContent;
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       toast("Failed to migrate note", { variant: "error" });
       throw new Error("Migration failed");
     } finally {

@@ -52,7 +52,7 @@ export function FileAttachments({
         Attachments ({noteFiles.length}/{maxSlots} slots used)
       </Label>
       <div className="flex flex-wrap gap-3">
-        {(() => {
+        {(() : React.JSX.Element => {
           const nextSlot = getNextAvailableSlot();
           const isUploading = nextSlot !== null && uploadingSlots.has(nextSlot);
           return (

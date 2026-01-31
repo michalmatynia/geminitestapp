@@ -60,35 +60,35 @@ export class OrderedDitheringEffectImpl extends Effect {
     }
   }
 
-  setGridSize(size: number) {
+  setGridSize(size: number): void {
     const gridSizeUniform = this.uniforms.get("gridSize");
     if (gridSizeUniform) {
       gridSizeUniform.value = size;
     }
   }
 
-  setPixelSizeRatio(ratio: number) {
+  setPixelSizeRatio(ratio: number): void {
     const pixelSizeRatioUniform = this.uniforms.get("pixelSizeRatio");
     if (pixelSizeRatioUniform) {
       pixelSizeRatioUniform.value = ratio;
     }
   }
 
-  setGrayscaleOnly(grayscaleOnly: boolean) {
+  setGrayscaleOnly(grayscaleOnly: boolean): void {
     const grayscaleOnlyUniform = this.uniforms.get("grayscaleOnly");
     if (grayscaleOnlyUniform) {
       grayscaleOnlyUniform.value = grayscaleOnly ? 1 : 0;
     }
   }
 
-  setInvertColor(invertColor: boolean) {
+  setInvertColor(invertColor: boolean): void {
     const invertColorUniform = this.uniforms.get("invertColor");
     if (invertColorUniform) {
       invertColorUniform.value = invertColor ? 1 : 0;
     }
   }
 
-  setLuminanceMethod(luminanceMethod: number) {
+  setLuminanceMethod(luminanceMethod: number): void {
     const luminanceMethodUniform = this.uniforms.get("luminanceMethod");
     if (luminanceMethodUniform) {
       luminanceMethodUniform.value = luminanceMethod;
@@ -118,7 +118,7 @@ export const OrderedDitheringPass = forwardRef<
     blendFunction = BlendFunction.NORMAL,
   }: OrderedDitheringPassProps,
   ref: React.Ref<OrderedDitheringEffectImpl>
-) {
+): React.JSX.Element {
   const effect = useMemo(
     () =>
       new OrderedDitheringEffectImpl({

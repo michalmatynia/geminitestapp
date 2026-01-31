@@ -42,7 +42,7 @@ export function MarkdownEditor({
   onPaste,
   setLightboxImage,
   isCodeMode = false,
-}: MarkdownEditorProps) {
+}: MarkdownEditorProps): React.JSX.Element {
   const { toast } = useToast();
   const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>("");
 

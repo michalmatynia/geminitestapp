@@ -46,7 +46,7 @@ export function NoteDetailView({
     const fromRelations = (selectedNote.relationsFrom ?? [])
       .map((relation: NoteRelationWithTarget) =>
         build(
-          relation.targetNote?.id ?? (relation as unknown as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.id ?? relation.targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
@@ -56,7 +56,7 @@ export function NoteDetailView({
     const toRelations = (selectedNote.relationsTo ?? [])
       .map((relation: NoteRelationWithSource) =>
         build(
-          relation.sourceNote?.id ?? (relation as unknown as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.id ?? relation.sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )
@@ -366,21 +366,21 @@ export function NoteDetailView({
                   ? selectedNote.content
                   : renderMarkdownToHtml(selectedNote.content),
             }}
-            onMouseOver={(e: React.MouseEvent<HTMLDivElement>) => {
+            onMouseOver={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const wrapper = target.closest("[data-code]");
               const button = wrapper?.querySelector("[data-copy-code]");
               if (button instanceof HTMLElement) button.style.opacity = "1";
             }}
-            onMouseOut={(e: React.MouseEvent<HTMLDivElement>) => {
+            onMouseOut={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const wrapper = target.closest("[data-code]");
               const button = wrapper?.querySelector("[data-copy-code]");
               if (button instanceof HTMLElement) button.style.opacity = "0";
             }}
-            onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+            onClick={(e: React.MouseEvent<HTMLDivElement>): void => {
               const target = e.target;
               if (!(target instanceof HTMLElement)) return;
               const copyButton = target.closest("[data-copy-code]");
@@ -389,15 +389,15 @@ export function NoteDetailView({
               const encoded = wrapper?.getAttribute("data-code");
               if (!encoded) return;
               const originalLabel = copyButton.textContent;
-              navigator.clipboard
+              void navigator.clipboard
                 .writeText(decodeURIComponent(encoded))
-                .then(() => {
+                .then((): void => {
                   copyButton.textContent = "Copied";
-                  window.setTimeout(() => {
+                  window.setTimeout((): void => {
                     copyButton.textContent = originalLabel ?? "Copy";
                   }, 1500);
                 })
-                .catch(() => toast("Failed to copy code", { variant: "error" }));
+                .catch((): void => { toast("Failed to copy code", { variant: "error" }); });
             }}
           />
           {relatedNotes.length > 0 && (
@@ -421,8 +421,8 @@ export function NoteDetailView({
                           style={relatedPreviewStyle}
                           role="button"
                           tabIndex={0}
-                          onClick={() => onSelectRelatedNote(related.id)}
-                          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+                          onClick={(): void => onSelectRelatedNote(related.id)}
+                          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                             if (event.key === "Enter" || event.key === " ") {
                               event.preventDefault();
                               onSelectRelatedNote(related.id);
@@ -437,7 +437,7 @@ export function NoteDetailView({
                           </div>
                           <Button
                             type="button"
-                            onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                               event.stopPropagation();
                               void onUnlinkRelatedNote(related.id);
                             }}

@@ -51,10 +51,10 @@ export const getCategoryTree = async (
 
   const buildTree = (parentId: string | null): CategoryWithChildren[] => {
     return categories
-      .filter((cat) => cat.parentId === parentId)
-      .map((cat) => ({
+      .filter((cat: CategoryRecord) => cat.parentId === parentId)
+      .map((cat: any): CategoryWithChildren => ({
         ...cat,
-        notes: cat.notes.map((nc) => nc.note),
+        notes: (cat.notes as any[]).map((nc: any) => nc.note),
         children: buildTree(cat.id),
       }));
   };

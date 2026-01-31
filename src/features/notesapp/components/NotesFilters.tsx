@@ -65,8 +65,8 @@ export function NotesFilters({
             >
               <option value="">Filter by Tag...</option>
               {tags
-                .filter((t: any) => !filterTagIds.includes(t.id))
-                .map((tag: any) => (
+                .filter((t: TagRecord) => !filterTagIds.includes(t.id))
+                .map((tag: TagRecord) => (
                   <option key={tag.id} value={tag.id}>
                     {tag.name}
                   </option>
@@ -74,7 +74,7 @@ export function NotesFilters({
             </select>
           </div>
           {filterTagIds.map((tagId: string) => {
-            const tag = tags.find((t: any) => t.id === tagId);
+            const tag = tags.find((t: TagRecord) => t.id === tagId);
             if (!tag) return null;
             return (
               <span

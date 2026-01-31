@@ -545,7 +545,6 @@ export default function ProductListingsModal({
       imagesOnly: true,
       listingId: listing.id,
       externalListingId: listing.externalListingId,
-      allowDuplicateSku,
       exportImagesAsBase64: true,
     };
     if (options?.imageBase64Mode) {

@@ -71,8 +71,8 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
     const response = await fetch("/api/settings");
     if (!response.ok) return null;
 
-    const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s: { key: string }) => s.key === DB_SETTING_KEY);
+    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const setting = settingsList.find((s: { key: string }) => s.key === DB_SETTING_KEY);
 
     if (setting && setting.value) {
       return setting.value;
@@ -89,8 +89,8 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
     const response = await fetch("/api/settings");
     if (!response.ok) return null;
 
-    const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
+    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const setting = settingsList.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
 
     if (setting && setting.value) {
       return setting.value;
@@ -122,8 +122,8 @@ async function loadAutoformatFromDb(): Promise<boolean | null> {
     const response = await fetch("/api/settings");
     if (!response.ok) return null;
 
-    const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
+    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const setting = settingsList.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
 
     if (setting && setting.value) {
       return setting.value === "true";
@@ -155,8 +155,8 @@ async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" |
     const response = await fetch("/api/settings");
     if (!response.ok) return null;
 
-    const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
+    const settingsList = (await response.json()) as Array<{ key: string; value: string }>;
+    const setting = settingsList.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
 
     if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {
       return setting.value as "markdown" | "wysiwyg" | "code";

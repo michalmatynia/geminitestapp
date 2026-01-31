@@ -997,7 +997,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                   <NumberField label="Left" value={theme.pageMarginLeft} onChange={(v) => update("pageMarginLeft", v)} suffix="px" min={0} max={200} />
                 </div>
               </div>
-              <RangeField label="Border radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={24} suffix="px" />
+              <RangeField label="Page corner radius" value={theme.borderRadius} onChange={(v) => update("borderRadius", v)} min={0} max={40} suffix="px" />
             </div>
           );
 

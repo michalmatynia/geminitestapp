@@ -17,7 +17,7 @@ export type MediaReplaceTarget = {
 };
 
 // Section-type block types that get a richer preview
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
 
 const getGapClass = (gap?: string): string => {
   if (gap === "none") return "gap-0";
@@ -35,6 +35,8 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   Heading: 48,
   Text: 64,
   TextElement: 32,
+  TextAtom: 48,
+  TextAtomLetter: 20,
   Announcement: 32,
   Button: 44,
   ImageElement: 140,

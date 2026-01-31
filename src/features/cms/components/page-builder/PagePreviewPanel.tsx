@@ -102,6 +102,7 @@ export function PagePreviewPanel(): React.ReactNode {
   );
   const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
   const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
+  const pageCornerRadius = typeof theme.borderRadius === "number" ? theme.borderRadius : 0;
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
@@ -571,7 +572,13 @@ export function PagePreviewPanel(): React.ReactNode {
                 className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
                   state.inspectorEnabled ? "cursor-crosshair" : ""
                 }`}
-                style={{ ...hoverVars, ...mediaVars }}
+                style={{
+                  ...hoverVars,
+                  ...mediaVars,
+                  backgroundColor: theme.backgroundColor,
+                  borderRadius: pageCornerRadius > 0 ? pageCornerRadius : undefined,
+                  overflow: pageCornerRadius > 0 ? "hidden" : undefined,
+                }}
               >
                 {ZONE_ORDER.map((zone: PageZone) => {
                   const zoneSections = sectionsByZone[zone];

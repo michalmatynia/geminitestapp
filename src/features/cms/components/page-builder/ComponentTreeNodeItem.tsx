@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow, Plus } from "lucide-react";
+import { ChevronRight, ChevronDown, Heading, AlignLeft, MousePointerClick, Box, Layers, GripVertical, LayoutGrid, Columns, FileText, LayoutTemplate, ListCollapse, Quote, Video, GalleryHorizontal, Mail, Send, ImageIcon, Minus, Share2, Smile, Megaphone, Eye, EyeOff, Trash2, AppWindow, Plus, Folder } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 import { getSectionDefinition } from "./section-registry";
@@ -28,6 +28,8 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
   Heading: Heading,
   Text: AlignLeft,
   TextElement: FileText,
+  TextAtom: Folder,
+  TextAtomLetter: FileText,
   ImageElement: ImageIcon,
   Button: MousePointerClick,
   Column: Columns,
@@ -42,7 +44,7 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
   AppEmbed: AppWindow,
 };
 
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
 const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {
@@ -949,6 +951,7 @@ function SectionBlockNodeItem({
   const Icon = BLOCK_ICONS[block.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
+  const isTextAtom = block.type === "TextAtom";
   const blockLabel = resolveNodeLabel(block.type, block.settings["label"]);
 
   return (
@@ -990,6 +993,7 @@ function SectionBlockNodeItem({
           }
         }}
         onDragOver={(e: React.DragEvent) => {
+          if (isTextAtom) return;
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
           const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
           const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
@@ -1000,6 +1004,7 @@ function SectionBlockNodeItem({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={(e: React.DragEvent) => {
+          if (isTextAtom) return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
@@ -1065,9 +1070,11 @@ function SectionBlockNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
-        <ColumnBlockPicker
-          onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
-        />
+        {!isTextAtom && (
+          <ColumnBlockPicker
+            onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+          />
+        )}
       </div>
 
       {isExpanded && hasChildren && (

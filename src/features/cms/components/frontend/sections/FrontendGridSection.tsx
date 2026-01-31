@@ -8,7 +8,7 @@ import { FrontendHeroBlock } from "./FrontendHeroBlock";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 
 // Section-type blocks that need special rendering inside columns
-const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block"]);
+const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom"]);
 
 interface FrontendGridSectionProps {
   settings: Record<string, unknown>;
@@ -33,6 +33,7 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   Heading: 48,
   Text: 64,
   TextElement: 32,
+  TextAtom: 48,
   Announcement: 32,
   Button: 44,
   ImageElement: 140,

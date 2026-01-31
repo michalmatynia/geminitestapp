@@ -56,7 +56,7 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "ImageElement", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
@@ -772,11 +772,78 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
+  TextAtom: {
+    type: "TextAtom",
+    label: "Text atoms",
+    icon: "Folder",
+    allowedBlockTypes: ["TextAtomLetter"],
+    defaultSettings: {
+      text: "Text",
+      alignment: "left",
+      letterGap: 0,
+      lineGap: 0,
+      wrap: "wrap",
+    },
+    settingsSchema: [
+      { key: "text", label: "Text", type: "text", defaultValue: "Text" },
+      {
+        key: "alignment",
+        label: "Alignment",
+        type: "alignment",
+        defaultValue: "left",
+      },
+      { key: "letterGap", label: "Letter gap (px)", type: "number", defaultValue: 0 },
+      { key: "lineGap", label: "Line gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "wrap",
+        label: "Wrap",
+        type: "select",
+        options: [
+          { label: "Wrap", value: "wrap" },
+          { label: "No wrap", value: "nowrap" },
+        ],
+        defaultValue: "wrap",
+      },
+    ],
+  },
+  TextAtomLetter: {
+    type: "TextAtomLetter",
+    label: "Text atom",
+    icon: "FileText",
+    defaultSettings: {
+      textContent: "",
+      fontFamily: "Inter, sans-serif",
+      fontSize: 0,
+      fontWeight: "400",
+      fontStyle: "normal",
+      lineHeight: 0,
+      letterSpacing: 0,
+      textColor: "",
+    },
+    settingsSchema: [
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "Inter, sans-serif" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
+      {
+        key: "fontStyle",
+        label: "Font style",
+        type: "select",
+        options: [
+          { label: "Normal", value: "normal" },
+          { label: "Italic", value: "italic" },
+        ],
+        defaultValue: "normal",
+      },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
+    ],
+  },
   ImageWithText: {
     type: "ImageWithText",
     label: "Image with text",
     icon: "ImageIcon",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "medium",
       desktopImageWidth: "medium",
@@ -879,7 +946,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "RichText",
     label: "Rich text",
     icon: "FileText",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -933,7 +1000,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Hero",
     label: "Hero banner",
     icon: "LayoutTemplate",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "large",
       colorScheme: "scheme-1",
@@ -964,7 +1031,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Accordion",
     label: "Accordion",
     icon: "ListCollapse",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -981,7 +1048,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Testimonials",
     label: "Testimonials",
     icon: "Quote",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "Image", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Image", "AppEmbed"],
     defaultSettings: {
       layout: "grid",
       columns: 3,

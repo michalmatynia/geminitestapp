@@ -39,6 +39,10 @@ function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperti
       return <TextBlock settings={block.settings} />;
     case "TextElement":
       return <TextElementBlock settings={block.settings} />;
+    case "TextAtom":
+      return <TextAtomBlock block={block} mediaStyles={mediaStyles} />;
+    case "TextAtomLetter":
+      return <TextAtomLetterBlock settings={block.settings} />;
     case "Announcement":
       return <AnnouncementBlock settings={block.settings} />;
     case "Button":
@@ -95,6 +99,64 @@ function TextElementBlock({ settings }: { settings: Record<string, unknown> }): 
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
+}
+
+function TextAtomBlock({
+  block,
+  mediaStyles: _mediaStyles,
+}: {
+  block: BlockInstance;
+  mediaStyles: React.CSSProperties | null;
+}): React.ReactNode {
+  const text = (block.settings["text"] as string) || "";
+  const alignment = (block.settings["alignment"] as string) || "left";
+  const letterGap = (block.settings["letterGap"] as number) || 0;
+  const lineGap = (block.settings["lineGap"] as number) || 0;
+  const wrap = (block.settings["wrap"] as string) || "wrap";
+  const letters = (block.blocks ?? []).length
+    ? (block.blocks ?? [])
+    : Array.from(text).map((char: string, index: number): BlockInstance => ({
+        id: `text-atom-${block.id}-${index}`,
+        type: "TextAtomLetter",
+        settings: { textContent: char },
+      }));
+
+  if (!letters.length) return null;
+
+  const justifyContent =
+    alignment === "center"
+      ? "center"
+      : alignment === "right"
+        ? "flex-end"
+        : "flex-start";
+
+  const containerStyle: React.CSSProperties = {
+    display: "flex",
+    flexWrap: wrap === "nowrap" ? "nowrap" : "wrap",
+    justifyContent,
+    alignItems: "baseline",
+    columnGap: letterGap,
+    rowGap: lineGap,
+    whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
+  };
+
+  return (
+    <div style={containerStyle}>
+      {letters.map((letter: BlockInstance) => (
+        <FrontendBlockRenderer key={letter.id} block={letter} />
+      ))}
+    </div>
+  );
+}
+
+function TextAtomLetterBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+  const text = (settings["textContent"] as string) ?? "";
+  const typoStyles = getBlockTypographyStyles(settings);
+  return (
+    <span className="inline-block" style={{ ...typoStyles, whiteSpace: "pre" }}>
+      {text}
+    </span>
+  );
 }
 
 function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {

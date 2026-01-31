@@ -31,6 +31,12 @@ export function CmsPageShell({
   const marginLeft = typeof theme.pageMarginLeft === "number" ? theme.pageMarginLeft : baseMargin;
   const isSideMenu = menuVisible && (menu.menuPlacement === "left" || menu.menuPlacement === "right");
   const sideOffset = isSideMenu ? menu.sideWidth : 0;
+  const pageRadius = typeof theme.borderRadius === "number" ? theme.borderRadius : 0;
+  const pageStyle: CSSProperties = {
+    backgroundColor: theme.backgroundColor,
+    borderRadius: pageRadius > 0 ? pageRadius : undefined,
+    overflow: pageRadius > 0 ? "hidden" : undefined,
+  };
   const contentStyle: CSSProperties = {
     paddingTop,
     paddingRight,
@@ -51,7 +57,7 @@ export function CmsPageShell({
   }
 
   return (
-    <div>
+    <div style={pageStyle}>
       {menuVisible ? (
         <CmsMenu
           menu={menu}

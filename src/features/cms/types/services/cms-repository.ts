@@ -11,6 +11,7 @@ export interface PageUpdateData {
   robotsMeta?: string | null | undefined;
   components?: PageComponent[] | undefined;
   themeId?: string | null | undefined;
+  showMenu?: boolean | null | undefined;
 }
 
 export type CmsRepository = {

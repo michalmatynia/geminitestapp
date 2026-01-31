@@ -422,7 +422,7 @@ export function useAiPathsCanvasInteractions({
           arrow: { x: s.x, y: s.y, angle },
         };
       })
-      .filter(Boolean) as { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[];
+      .filter(Boolean) as { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined }[];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edges, nodePositionsKey]);
 

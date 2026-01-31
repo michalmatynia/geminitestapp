@@ -18,6 +18,7 @@ const pageUpdateSchema = z.object({
   seoOgImage: z.string().nullable().optional(),
   seoCanonical: z.string().nullable().optional(),
   robotsMeta: z.string().nullable().optional(),
+  showMenu: z.boolean().optional(),
   themeId: z.string().nullable().optional(),
   slugIds: z.array(z.string().trim().min(1)).optional(),
   components: z.array(
@@ -66,7 +67,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     if (!parsed.ok) {
       return parsed.response;
     }
-    const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, themeId, slugIds, components } = parsed.data;
+    const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, themeId, slugIds, components, showMenu } = parsed.data;
 
     const cmsRepository = await getCmsRepository();
 
@@ -81,6 +82,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
       seoCanonical,
       robotsMeta,
       themeId,
+      showMenu,
       components,
     });
 

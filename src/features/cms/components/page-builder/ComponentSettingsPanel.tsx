@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Switch } from "@/shared/ui";
 import type { SettingsField, InspectorSettings } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, CmsTheme, Slug } from "../../types";
@@ -844,6 +844,12 @@ function PageSettingsTab(): React.ReactNode {
     dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
   };
 
+  const handleMenuVisibilityChange = (checked: boolean): void => {
+    dispatch({ type: "SET_PAGE_MENU_VISIBILITY", showMenu: checked });
+  };
+
+  const showMenuValue = page.showMenu !== false;
+
   const handleSetHome = async (slug: Slug): Promise<void> => {
     await updateSlug.mutateAsync({
       id: slug.id,
@@ -897,6 +903,14 @@ function PageSettingsTab(): React.ReactNode {
                 Published: {new Date(page.publishedAt).toLocaleDateString()}
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-400">Menu</Label>
+            <div className="flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2">
+              <span className="text-xs text-gray-300">Show global menu on this page</span>
+              <Switch checked={showMenuValue} onCheckedChange={handleMenuVisibilityChange} />
+            </div>
           </div>
 
           <div className="space-y-2">

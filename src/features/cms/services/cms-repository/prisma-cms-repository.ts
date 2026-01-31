@@ -73,6 +73,7 @@ export const prismaCmsRepository: CmsRepository = {
       seoCanonical: data.seoCanonical,
       robotsMeta: data.robotsMeta,
       themeId: data.themeId,
+      showMenu: data.showMenu,
     });
 
     if (Object.keys(cleanData).length > 0) {

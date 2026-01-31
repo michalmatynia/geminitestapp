@@ -16,7 +16,7 @@ export type MediaReplaceTarget = {
 };
 
 // Section-type block types that get a richer preview
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
 // ---------------------------------------------------------------------------
 // Color scheme background tints
@@ -1203,6 +1203,16 @@ function PreviewBlockItem({
   const hoverFrameClass = isHovered && !isSelected
     ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
     : "";
+  const isFaithful = true;
+  const canvasSelectedClass = isSelected
+    ? isInspecting
+      ? "ring-2 ring-inset ring-blue-500/40"
+      : "ring-1 ring-inset ring-blue-500/30"
+    : "";
+  const canvasHoverClass = isHovered && !isSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
+  const canvasFrameClass = `${canvasSelectedClass} ${canvasHoverClass}`.trim();
+  const buildContainerClass = (base: string, editor: string): string =>
+    `${base} ${isFaithful ? canvasFrameClass : `${editor} ${hoverFrameClass}`}`.trim();
   const metaEntries: InspectorEntry[] = [{ label: "Type", value: block.type }];
   if (inspectorSettings.showIdentifiers) {
     metaEntries.push({ label: "ID", value: block.id });
@@ -1316,6 +1326,40 @@ function PreviewBlockItem({
                   mediaStyles={mediaStyles}
                 />
               )}
+              {block.type === "RichText" && (
+                <PreviewRichTextBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
+              {block.type === "Block" && (
+                <PreviewBlockSectionBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
             </div>
           </button>
           {canReplaceImage && (
@@ -1360,13 +1404,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`cms-hover-card w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `cms-hover-card w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
         </button>
@@ -1385,11 +1430,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-sm transition ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
-              : "border-transparent text-gray-300 hover:border-border/30"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            "flex w-full items-center gap-2 text-sm transition",
+            `${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
+                : "border-transparent text-gray-300 hover:border-border/30"
+            } rounded border px-2 py-1`
+          )}
         >
           <Megaphone className="size-3.5 text-gray-400" />
           <span className={link ? "text-blue-300 underline decoration-blue-400/50" : ""}>
@@ -1413,13 +1461,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           {text ? (
             <p className="text-sm text-gray-300 line-clamp-3">{text}</p>
@@ -1444,13 +1493,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-0 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-0 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
             {text}
@@ -1473,13 +1523,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`cms-hover-button w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `cms-hover-button w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div
             className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
@@ -1508,13 +1559,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${schemeBg} ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${schemeBg} ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className="flex flex-col gap-1.5">
             <div className="h-2 w-full rounded bg-gray-600/40" />
@@ -1610,13 +1662,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]" style={mediaStyles ?? undefined}>
             <div className="flex items-center gap-2">
@@ -1643,13 +1696,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -1680,13 +1734,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <hr style={{ borderStyle: style, borderTopWidth: `${thickness}px`, borderColor: color }} />
         </button>
@@ -1704,13 +1759,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className="flex items-center justify-center gap-3">
             <Share2 className="size-4 text-gray-500" />
@@ -1734,13 +1790,14 @@ function PreviewBlockItem({
             e.stopPropagation();
             onSelect(block.id);
           }}
-          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-border/30 bg-gray-800/20 hover:border-border/50"
-          } ${hoverFrameClass}`}
+          className={buildContainerClass(
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `rounded border p-3 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
         >
           <div className="flex items-center justify-center gap-2">
             <Star className="size-5" style={{ color: iconColor }} />
@@ -1760,13 +1817,14 @@ function PreviewBlockItem({
           e.stopPropagation();
           onSelect(block.id);
         }}
-        className={`flex w-full items-center gap-2 rounded border p-3 text-left text-sm transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        } ${hoverFrameClass}`}
+        className={buildContainerClass(
+          `flex w-full items-center gap-2 text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+          `rounded border p-3 ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          }`
+        )}
       >
         <span className="flex-1 truncate text-gray-300">{block.type}</span>
       </button>
@@ -1911,6 +1969,128 @@ function PreviewHeroBlock({
           ))
         ) : (
           <span className="text-xs text-gray-500">Hero banner</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RichText block preview (inside columns)
+// ---------------------------------------------------------------------------
+
+function PreviewRichTextBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  inspectorSettings,
+  hoveredNodeId,
+  onSelect,
+  sectionId,
+  sectionType,
+  sectionZone,
+  columnId,
+  onHoverNode,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
+  const children = block.blocks ?? [];
+  const blockStyles = getSectionStyles(block.settings);
+
+  return (
+    <div style={blockStyles} className="space-y-2">
+      {children.length > 0 ? (
+        children.map((child: BlockInstance) => (
+          <PreviewBlockItem
+            key={child.id}
+            block={child}
+            isSelected={selectedNodeId === child.id}
+            isInspecting={isInspecting}
+            inspectorSettings={inspectorSettings}
+            hoveredNodeId={hoveredNodeId}
+            onHoverNode={onHoverNode}
+            onSelect={onSelect}
+            contained
+            selectedNodeId={selectedNodeId}
+            sectionId={sectionId}
+            sectionType={sectionType}
+            sectionZone={sectionZone}
+            columnId={columnId}
+            parentBlockId={block.id}
+            onOpenMedia={onOpenMedia}
+            mediaStyles={mediaStyles}
+          />
+        ))
+      ) : (
+        <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
+          Rich text section
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Block section preview (inside columns)
+// ---------------------------------------------------------------------------
+
+function PreviewBlockSectionBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  inspectorSettings,
+  hoveredNodeId,
+  onSelect,
+  sectionId,
+  sectionType,
+  sectionZone,
+  columnId,
+  onHoverNode,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
+  const children = block.blocks ?? [];
+  const blockStyles = {
+    ...getSectionStyles(block.settings),
+    ...getTextAlign(block.settings["contentAlignment"]),
+  };
+  const alignment = (block.settings["contentAlignment"] as string) || "left";
+  const alignmentClass =
+    alignment === "center"
+      ? "justify-center"
+      : alignment === "right"
+        ? "justify-end"
+        : "justify-start";
+
+  return (
+    <div style={blockStyles}>
+      <div className={`flex flex-wrap items-center gap-2 ${alignmentClass}`}>
+        {children.length > 0 ? (
+          children.map((child: BlockInstance) => (
+            <PreviewBlockItem
+              key={child.id}
+              block={child}
+              isSelected={selectedNodeId === child.id}
+              isInspecting={isInspecting}
+              inspectorSettings={inspectorSettings}
+              hoveredNodeId={hoveredNodeId}
+              onHoverNode={onHoverNode}
+              onSelect={onSelect}
+              contained
+              selectedNodeId={selectedNodeId}
+              sectionId={sectionId}
+              sectionType={sectionType}
+              sectionZone={sectionZone}
+              columnId={columnId}
+              parentBlockId={block.id}
+              onOpenMedia={onOpenMedia}
+              mediaStyles={mediaStyles}
+            />
+          ))
+        ) : (
+          <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
+            Block
+          </div>
         )}
       </div>
     </div>

@@ -37,6 +37,7 @@ export interface Page {
   seoCanonical?: string;
   robotsMeta?: string;
   themeId?: string;
+  showMenu?: boolean | null;
   components: PageComponent[];
   slugs?: PageSlugLink[];
   slugIds?: string[];

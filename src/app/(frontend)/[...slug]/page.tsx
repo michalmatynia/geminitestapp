@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
 import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
+import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
 import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
 import type { Page, CmsTheme } from "@/features/cms/types";
 import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
@@ -121,20 +123,29 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   }
 
   const themeSettings = await getCmsThemeSettings();
+  const menuSettings = await getCmsMenuSettings();
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: themeSettings.fullWidth };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
+  const showMenu = page.showMenu !== false;
   const content = (
-    <CmsPageRenderer
-      components={page.components ?? []}
+    <CmsPageShell
+      menu={menuSettings}
+      theme={themeSettings}
       colorSchemes={colorSchemes}
-      layout={layout}
-      hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
-      hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
-      mediaVars={mediaVars}
-      mediaStyles={mediaStyles}
-    />
+      showMenu={showMenu}
+    >
+      <CmsPageRenderer
+        components={page.components ?? []}
+        colorSchemes={colorSchemes}
+        layout={layout}
+        hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
+        hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
+        mediaVars={mediaVars}
+        mediaStyles={mediaStyles}
+      />
+    </CmsPageShell>
   );
 
   return (

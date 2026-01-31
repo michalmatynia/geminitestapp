@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { auth } from "@/features/auth/auth";
 import type { Session } from "next-auth";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
 import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
+import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
 import { ThemeProvider } from "@/features/cms/components/frontend/ThemeProvider";
 import type { CmsTheme } from "@/features/cms/types";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
@@ -52,22 +54,31 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
   }
 
   const themeSettings = await getCmsThemeSettings();
+  const menuSettings = await getCmsMenuSettings();
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: themeSettings.fullWidth };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
+  const showMenu = page.showMenu !== false;
   const content = (
-    <CmsPageRenderer
-      components={page.components ?? []}
+    <CmsPageShell
+      menu={menuSettings}
+      theme={themeSettings}
       colorSchemes={colorSchemes}
-      layout={layout}
-      hoverEffect={hoverEffect}
-      hoverScale={hoverScale}
-      mediaVars={mediaVars}
-      mediaStyles={mediaStyles}
-    />
+      showMenu={showMenu}
+    >
+      <CmsPageRenderer
+        components={page.components ?? []}
+        colorSchemes={colorSchemes}
+        layout={layout}
+        hoverEffect={hoverEffect}
+        hoverScale={hoverScale}
+        mediaVars={mediaVars}
+        mediaStyles={mediaStyles}
+      />
+    </CmsPageShell>
   );
 
   return (

@@ -523,6 +523,7 @@ model Page {
   seoCanonical   String?
   robotsMeta     String?         @default("index,follow")
   themeId        String?
+  showMenu       Boolean         @default(true)
   theme          CmsTheme?       @relation(fields: [themeId], references: [id], onDelete: SetNull)
   slugs          PageSlug[]
   components     PageComponent[]

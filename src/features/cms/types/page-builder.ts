@@ -165,6 +165,7 @@ export type PageBuilderAction =
   | { type: "SET_PAGE_STATUS"; status: PageStatus }
   | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
   | { type: "UPDATE_PAGE_SLUGS"; slugIds: string[]; slugValues: string[] }
+  | { type: "SET_PAGE_MENU_VISIBILITY"; showMenu: boolean }
   | { type: "TOGGLE_INSPECTOR" }
   | { type: "UPDATE_INSPECTOR_SETTINGS"; settings: Partial<InspectorSettings> }
   | { type: "SET_PREVIEW_MODE"; mode: "desktop" | "mobile" }

@@ -22,6 +22,7 @@ interface PageDocument {
   seoCanonical?: string | null;
   robotsMeta?: string | null;
   themeId?: string | null;
+  showMenu?: boolean;
   components: PageComponent[];
   createdAt: Date;
   updatedAt: Date;
@@ -95,6 +96,7 @@ export const mongoCmsRepository: CmsRepository = {
         seoOgImage: doc.seoOgImage ?? undefined,
         seoCanonical: doc.seoCanonical ?? undefined,
         robotsMeta: doc.robotsMeta ?? "index,follow",
+        showMenu: doc.showMenu ?? true,
         components: doc.components || [],
         slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
       } as Page;
@@ -121,6 +123,7 @@ export const mongoCmsRepository: CmsRepository = {
       seoOgImage: doc.seoOgImage ?? undefined,
       seoCanonical: doc.seoCanonical ?? undefined,
       robotsMeta: doc.robotsMeta ?? "index,follow",
+      showMenu: doc.showMenu ?? true,
       components: doc.components || [],
       slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
     } as Page;
@@ -142,12 +145,13 @@ export const mongoCmsRepository: CmsRepository = {
       id,
       name: data.name,
       status: "draft",
+      showMenu: true,
       components: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     await db.collection<PageDocument>(pagesCollection).insertOne(doc);
-    return { id, name: doc.name, status: "draft", components: [] } as Page;
+    return { id, name: doc.name, status: "draft", showMenu: true, components: [] } as Page;
   },
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
@@ -162,6 +166,7 @@ export const mongoCmsRepository: CmsRepository = {
       seoCanonical: data.seoCanonical,
       robotsMeta: data.robotsMeta,
       themeId: data.themeId,
+      showMenu: data.showMenu,
       components: data.components,
       updatedAt: new Date(),
     }) as Partial<PageDocument>;

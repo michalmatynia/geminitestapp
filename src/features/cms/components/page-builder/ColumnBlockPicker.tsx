@@ -8,7 +8,7 @@ import { useSettingsMap } from "@/shared/hooks/useSettings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
 interface ColumnBlockPickerProps {
   onSelect: (blockType: string) => void;

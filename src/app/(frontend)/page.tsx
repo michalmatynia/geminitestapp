@@ -9,7 +9,9 @@ import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
+import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
+import { CmsPageShell } from "@/features/cms/components/frontend/CmsPageShell";
 import type { Slug } from "@/features/cms/types";
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 import { buildColorSchemeMap, type ThemeSettings } from "@/features/cms/types/theme-settings";
@@ -98,6 +100,8 @@ export default async function Home(): Promise<JSX.Element> {
   const slugs = await getSlugsForDomain(domain.id, cmsRepository);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
   const themeSettings = await getCmsThemeSettings();
+  const menuSettings = await getCmsMenuSettings();
+  const colorSchemes = buildColorSchemeMap(themeSettings);
 
   type MaybeImages = {
     images?: (ProductWithImages["images"][number] | null)[] | null;
@@ -121,73 +125,34 @@ export default async function Home(): Promise<JSX.Element> {
     const allowDrafts = await canPreviewDrafts(session);
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
 
+    const showMenu = cmsPage?.showMenu !== false;
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="flex h-14 items-center px-4 lg:px-6">
-          <Link
-            href="#"
-            className="flex items-center justify-center"
-            prefetch={false}
-          >
-            <MountainIcon className="size-6" />
-            <span className="sr-only">Acme Inc</span>
-          </Link>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
-            <Link
-              href="/admin"
-              className="text-sm font-medium underline-offset-4 hover:underline"
-              prefetch={false}
-            >
-              Admin
-            </Link>
-          </nav>
-        </header>
-        <main className="flex-1">
-          {hasCmsContent ? (
-            <CmsPageRenderer
-              components={cmsPage.components}
-              colorSchemes={buildColorSchemeMap(themeSettings)}
-              layout={{ fullWidth: themeSettings.fullWidth }}
-              hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}
-              hoverScale={themeSettings?.enableAnimations ? themeSettings.hoverScale : undefined}
-              mediaVars={getMediaStyleVars(themeSettings)}
-              mediaStyles={getMediaInlineStyles(themeSettings)}
-            />
-          ) : (
-            <section className="w-full py-12">
-              <div className="container px-4 md:px-6">
-                <h1 className="text-3xl font-bold">
-                  Welcome to {defaultSlug.slug}
-                </h1>
-              </div>
-            </section>
-          )}
-        </main>
-        <footer className="flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">
-          <p className="text-xs text-gray-400">
-            &copy; 2024 Acme Inc. All rights reserved.
-          </p>
-          <div className="flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center">
-            <nav className="flex gap-4 sm:gap-6">
-              <Link
-                href="#"
-                className="text-xs underline-offset-4 hover:underline"
-                prefetch={false}
-              >
-                Terms of Service
-              </Link>
-              <Link
-                href="#"
-                className="text-xs underline-offset-4 hover:underline"
-                prefetch={false}
-              >
-                Privacy
-              </Link>
-            </nav>
-            <SocialLinks theme={themeSettings} />
-          </div>
-        </footer>
-      </div>
+      <CmsPageShell
+        menu={menuSettings}
+        theme={themeSettings}
+        colorSchemes={colorSchemes}
+        showMenu={showMenu}
+      >
+        {hasCmsContent ? (
+          <CmsPageRenderer
+            components={cmsPage.components}
+            colorSchemes={colorSchemes}
+            layout={{ fullWidth: themeSettings.fullWidth }}
+            hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}
+            hoverScale={themeSettings?.enableAnimations ? themeSettings.hoverScale : undefined}
+            mediaVars={getMediaStyleVars(themeSettings)}
+            mediaStyles={getMediaInlineStyles(themeSettings)}
+          />
+        ) : (
+          <section className="w-full py-12">
+            <div className="container px-4 md:px-6">
+              <h1 className="text-3xl font-bold">
+                Welcome to {defaultSlug.slug}
+              </h1>
+            </div>
+          </section>
+        )}
+      </CmsPageShell>
     );
   }
 
@@ -196,65 +161,77 @@ export default async function Home(): Promise<JSX.Element> {
     productsRaw as (ProductWithImages | (ProductWithImages & MaybeImages))[]
   ).map(normalizeProduct);
 
+  const showFallbackHeader = !menuSettings.showMenu;
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex h-14 items-center px-4 lg:px-6">
-        <Link
-          href="#"
-          className="flex items-center justify-center"
-          prefetch={false}
-        >
-          <MountainIcon className="size-6" />
-          <span className="sr-only">Acme Inc</span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            href="/admin"
-            className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
-          >
-            Admin
-          </Link>
-        </nav>
-      </header>
+    <CmsPageShell
+      menu={menuSettings}
+      theme={themeSettings}
+      colorSchemes={colorSchemes}
+      showMenu={menuSettings.showMenu}
+    >
+      <div className="flex min-h-screen flex-col">
+        {showFallbackHeader ? (
+          <header className="flex h-14 items-center px-4 lg:px-6">
+            <Link
+              href="#"
+              className="flex items-center justify-center"
+              prefetch={false}
+            >
+              <MountainIcon className="size-6" />
+              <span className="sr-only">Acme Inc</span>
+            </Link>
+            <nav className="ml-auto flex gap-4 sm:gap-6">
+              <Link
+                href="/admin"
+                className="text-sm font-medium underline-offset-4 hover:underline"
+                prefetch={false}
+              >
+                Admin
+              </Link>
+            </nav>
+          </header>
+        ) : null}
 
-      <main className="flex-1">
-        <section className="w-full py-12">
-          <div className="container px-4 md:px-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product: ProductWithImages) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+        <main className="flex-1">
+          <section className="w-full py-12">
+            <div className="container px-4 md:px-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((product: ProductWithImages) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
 
-      <footer className="flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">
-        <p className="text-xs text-gray-400">
-          &copy; 2024 Acme Inc. All rights reserved.
-        </p>
-        <div className="flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center">
-          <nav className="flex gap-4 sm:gap-6">
-            <Link
-              href="#"
-              className="text-xs underline-offset-4 hover:underline"
-              prefetch={false}
-            >
-              Terms of Service
-            </Link>
-            <Link
-              href="#"
-              className="text-xs underline-offset-4 hover:underline"
-              prefetch={false}
-            >
-              Privacy
-            </Link>
-          </nav>
-          <SocialLinks theme={themeSettings} />
-        </div>
-      </footer>
-    </div>
+        {showFallbackHeader ? (
+          <footer className="flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">
+            <p className="text-xs text-gray-400">
+              &copy; 2024 Acme Inc. All rights reserved.
+            </p>
+            <div className="flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center">
+              <nav className="flex gap-4 sm:gap-6">
+                <Link
+                  href="#"
+                  className="text-xs underline-offset-4 hover:underline"
+                  prefetch={false}
+                >
+                  Terms of Service
+                </Link>
+                <Link
+                  href="#"
+                  className="text-xs underline-offset-4 hover:underline"
+                  prefetch={false}
+                >
+                  Privacy
+                </Link>
+              </nav>
+              <SocialLinks theme={themeSettings} />
+            </div>
+          </footer>
+        ) : null}
+      </div>
+    </CmsPageShell>
   );
 }
 

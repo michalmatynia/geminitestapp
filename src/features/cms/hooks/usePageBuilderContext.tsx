@@ -715,7 +715,7 @@ export function basePageBuilderReducer(
     case "ADD_BLOCK_TO_COLUMN": {
       const blockDef = getBlockDefinition(action.blockType);
       if (!blockDef) return state;
-      const isSectionType = ["ImageWithText", "Hero"].includes(action.blockType);
+      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block"].includes(action.blockType);
       const newBlock: BlockInstance = {
         id: uid(),
         type: action.blockType,
@@ -844,7 +844,7 @@ export function basePageBuilderReducer(
     }
 
     case "MOVE_SECTION_TO_COLUMN": {
-      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero"];
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block"];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
@@ -1004,6 +1004,17 @@ export function basePageBuilderReducer(
           ...state.currentPage,
           status: action.status,
           publishedAt: action.status === "published" ? new Date().toISOString() : state.currentPage.publishedAt,
+        },
+      };
+    }
+
+    case "SET_PAGE_MENU_VISIBILITY": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          showMenu: action.showMenu,
         },
       };
     }

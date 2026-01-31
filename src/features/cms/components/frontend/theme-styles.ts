@@ -270,9 +270,9 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
 // ---------------------------------------------------------------------------
 
 export function getSectionContainerClass(options?: {
-  fullWidth?: boolean;
-  maxWidthClass?: string;
-  paddingClass?: string;
+  fullWidth?: boolean | undefined;
+  maxWidthClass?: string | undefined;
+  paddingClass?: string | undefined;
 }): string {
   const padding = options?.paddingClass ?? "px-4 md:px-6";
   if (options?.fullWidth) {

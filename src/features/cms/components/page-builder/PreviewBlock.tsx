@@ -1968,7 +1968,8 @@ function PreviewBlockItem({
   if (block.type === "Heading") {
     const text = (block.settings["headingText"] as string) || "Heading";
     const size = (block.settings["headingSize"] as string) || "medium";
-    const sizeClass = size === "small" ? "text-base font-semibold" : size === "large" ? "text-2xl font-bold" : "text-xl font-bold";
+    const typoStyles = getBlockTypographyStyles(block.settings);
+    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(
@@ -1977,16 +1978,21 @@ function PreviewBlockItem({
           tabIndex={0}
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
-          className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `cms-hover-card rounded border p-3 ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
-            }`
-          )}
+          className={buildContainerClass(baseClasses, "")}
         >
-          <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
+          {size === "small" ? (
+            <h3 className="text-xl font-bold leading-tight tracking-tight md:text-2xl text-gray-200" style={typoStyles}>
+              {text}
+            </h3>
+          ) : size === "large" ? (
+            <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl text-gray-200" style={typoStyles}>
+              {text}
+            </h2>
+          ) : (
+            <h2 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl text-gray-200" style={typoStyles}>
+              {text}
+            </h2>
+          )}
         </div>
       )
     );
@@ -2025,6 +2031,9 @@ function PreviewBlockItem({
   // Text block
   if (block.type === "Text") {
     const text = (block.settings["textContent"] as string) || "";
+    const typoStyles = getBlockTypographyStyles(block.settings);
+    const hasText = text.trim().length > 0;
+    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(
@@ -2034,16 +2043,12 @@ function PreviewBlockItem({
           onClick={handleSelect}
           onKeyDown={handleKeyDown}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/20 hover:border-border/50"
-            }`
+            hasText ? baseClasses : `${baseClasses} rounded border border-border/30 bg-gray-800/20`,
+            ""
           )}
         >
-          {text ? (
-            <p className="text-sm text-gray-300 line-clamp-3">{text}</p>
+          {hasText ? (
+            <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>
           ) : (
             <p className="text-sm italic text-gray-500">Add text content...</p>
           )}
@@ -2057,7 +2062,7 @@ function PreviewBlockItem({
     const text = (block.settings["textContent"] as string) || "";
     const typoStyles = getBlockTypographyStyles(block.settings);
     const hasText = text.trim().length > 0;
-    const baseClasses = `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`;
+    const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
 
     return (
       wrapBlock(

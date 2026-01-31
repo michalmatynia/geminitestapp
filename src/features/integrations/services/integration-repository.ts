@@ -154,13 +154,13 @@ const toConnectionRecord = (
 });
 
 const prismaRepository: IntegrationRepository = {
-  listIntegrations: async () => {
+  listIntegrations: async (): Promise<IntegrationRecord[]> => {
     const integrations = await prisma.integration.findMany({
       orderBy: { createdAt: "desc" },
     });
     return integrations;
   },
-  upsertIntegration: async (input) => {
+  upsertIntegration: async (input: { name: string; slug: string }): Promise<IntegrationRecord> => {
     const integration = await prisma.integration.upsert({
       where: { slug: input.slug },
       update: { name: input.name },
@@ -168,24 +168,24 @@ const prismaRepository: IntegrationRepository = {
     });
     return integration;
   },
-  getIntegrationById: async (id) => {
+  getIntegrationById: async (id: string): Promise<IntegrationRecord | null> => {
     return prisma.integration.findUnique({ where: { id } });
   },
-  listConnections: async (integrationId) => {
+  listConnections: async (integrationId: string): Promise<IntegrationConnectionRecord[]> => {
     return prisma.integrationConnection.findMany({
       where: { integrationId },
       orderBy: { createdAt: "desc" },
     });
   },
-  getConnectionById: async (id) => {
+  getConnectionById: async (id: string): Promise<IntegrationConnectionRecord | null> => {
     return prisma.integrationConnection.findUnique({ where: { id } });
   },
-  getConnectionByIdAndIntegration: async (id, integrationId) => {
+  getConnectionByIdAndIntegration: async (id: string, integrationId: string): Promise<IntegrationConnectionRecord | null> => {
     return prisma.integrationConnection.findFirst({
       where: { id, integrationId },
     });
   },
-  createConnection: async (integrationId, input) => {
+  createConnection: async (integrationId: string, input: { name: string; username: string; password: string }): Promise<IntegrationConnectionRecord> => {
     return prisma.integrationConnection.create({
       data: {
         integrationId,
@@ -195,7 +195,7 @@ const prismaRepository: IntegrationRepository = {
       },
     });
   },
-  updateConnection: async (id, input) => {
+  updateConnection: async (id: string, input: Partial<IntegrationConnectionRecord>): Promise<IntegrationConnectionRecord> => {
     const {
       id: _ignoredId,
       integrationId: _ignoredIntegrationId,
@@ -208,13 +208,13 @@ const prismaRepository: IntegrationRepository = {
       data: rest as Prisma.IntegrationConnectionUpdateInput,
     });
   },
-  deleteConnection: async (id) => {
+  deleteConnection: async (id: string): Promise<void> => {
     await prisma.integrationConnection.delete({ where: { id } });
   },
 };
 
 const mongoRepository: IntegrationRepository = {
-  listIntegrations: async () => {
+  listIntegrations: async (): Promise<IntegrationRecord[]> => {
     const db = await getMongoDb();
     const docs = await db
       .collection<IntegrationDocument>(INTEGRATIONS_COLLECTION)
@@ -223,7 +223,7 @@ const mongoRepository: IntegrationRepository = {
       .toArray();
     return docs.map(toIntegrationRecord);
   },
-  upsertIntegration: async (input) => {
+  upsertIntegration: async (input: { name: string; slug: string }): Promise<IntegrationRecord> => {
     const db = await getMongoDb();
     const now = new Date();
     const existing = await db
@@ -253,16 +253,16 @@ const mongoRepository: IntegrationRepository = {
       updatedAt: now,
     };
     await db.collection<IntegrationDocument>(INTEGRATIONS_COLLECTION).insertOne(doc);
-    return toIntegrationRecord(doc);
+    return toIntegrationRecord(doc as WithId<IntegrationDocument>);
   },
-  getIntegrationById: async (id) => {
+  getIntegrationById: async (id: string): Promise<IntegrationRecord | null> => {
     const db = await getMongoDb();
     const doc = await db
       .collection<IntegrationDocument>(INTEGRATIONS_COLLECTION)
       .findOne({ _id: id });
     return doc ? toIntegrationRecord(doc) : null;
   },
-  listConnections: async (integrationId) => {
+  listConnections: async (integrationId: string): Promise<IntegrationConnectionRecord[]> => {
     const db = await getMongoDb();
     const docs = await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
@@ -271,21 +271,21 @@ const mongoRepository: IntegrationRepository = {
       .toArray();
     return docs.map(toConnectionRecord);
   },
-  getConnectionById: async (id) => {
+  getConnectionById: async (id: string): Promise<IntegrationConnectionRecord | null> => {
     const db = await getMongoDb();
     const doc = await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ _id: id });
     return doc ? toConnectionRecord(doc) : null;
   },
-  getConnectionByIdAndIntegration: async (id, integrationId) => {
+  getConnectionByIdAndIntegration: async (id: string, integrationId: string): Promise<IntegrationConnectionRecord | null> => {
     const db = await getMongoDb();
     const doc = await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ _id: id, integrationId });
     return doc ? toConnectionRecord(doc) : null;
   },
-  createConnection: async (integrationId, input) => {
+  createConnection: async (integrationId: string, input: { name: string; username: string; password: string }): Promise<IntegrationConnectionRecord> => {
     const db = await getMongoDb();
     const now = new Date();
     const existing = await db
@@ -308,9 +308,9 @@ const mongoRepository: IntegrationRepository = {
     await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .insertOne(doc);
-    return toConnectionRecord(doc);
+    return toConnectionRecord(doc as WithId<IntegrationConnectionDocument>);
   },
-  updateConnection: async (id, input) => {
+  updateConnection: async (id: string, input: Partial<IntegrationConnectionRecord>): Promise<IntegrationConnectionRecord> => {
     const db = await getMongoDb();
     const now = new Date();
     const { id: _ignoredId, integrationId: _ignoredIntegrationId, ...rest } =
@@ -330,7 +330,7 @@ const mongoRepository: IntegrationRepository = {
     }
     return toConnectionRecord(updated);
   },
-  deleteConnection: async (id) => {
+  deleteConnection: async (id: string): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)

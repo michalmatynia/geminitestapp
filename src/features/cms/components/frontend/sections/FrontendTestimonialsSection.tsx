@@ -6,8 +6,8 @@ import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } fr
 interface FrontendTestimonialsSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendTestimonialsSection({ settings, blocks, colorSchemes, layout }: FrontendTestimonialsSectionProps): React.ReactNode {

@@ -54,6 +54,13 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   updatedAt: doc.updatedAt,
 });
 
+type EnrichedPrismaListing = Prisma.ProductListingGetPayload<{
+  include: {
+    integration: { select: { id: true; name: true; slug: true } };
+    connection: { select: { id: true; name: true } };
+  };
+}>;
+
 const prismaRepository: ProductListingRepository = {
   getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
     const listings = await prisma.productListing.findMany({
@@ -68,10 +75,10 @@ const prismaRepository: ProductListingRepository = {
       },
       orderBy: { createdAt: "desc" },
     });
-    return listings.map((listing: any) => ({
+    return (listings as EnrichedPrismaListing[]).map((listing: EnrichedPrismaListing) => ({
       ...listing,
-      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
-    }));
+      exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
+    })) as unknown as ProductListingWithDetails[];
   },
 
   getListingById: async (id: string): Promise<ProductListingRecord | null> => {
@@ -79,7 +86,7 @@ const prismaRepository: ProductListingRepository = {
     if (!listing) return null;
     return {
       ...listing,
-      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
+      exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
     };
   },
 
@@ -104,8 +111,8 @@ const prismaRepository: ProductListingRepository = {
     });
     return {
       ...listing,
-      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
-    };
+      exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
+    } as unknown as ProductListingWithDetails;
   },
 
   updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
@@ -218,7 +225,7 @@ const mongoRepository: ProductListingRepository = {
           id: connection?._id || listing.connectionId,
           name: connection?.name || "Unknown",
         },
-      };
+      } as ProductListingWithDetails;
     });
   },
 
@@ -271,7 +278,7 @@ const mongoRepository: ProductListingRepository = {
         id: connection?._id || input.connectionId,
         name: connection?.name || "Unknown",
       },
-    };
+    } as ProductListingWithDetails;
   },
 
   updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {

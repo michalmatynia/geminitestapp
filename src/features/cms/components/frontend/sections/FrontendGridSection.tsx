@@ -13,8 +13,8 @@ const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block
 interface FrontendGridSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 const getGapClass = (gap?: string): string => {
@@ -116,9 +116,9 @@ function ColumnRenderer({
   rowHeight,
 }: {
   column: BlockInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  rowHeightMode?: string;
-  rowHeight?: number;
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  rowHeightMode?: string | undefined;
+  rowHeight?: number | undefined;
 }): React.ReactNode {
   const children = column.blocks ?? [];
   const animConfig = column.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
@@ -168,8 +168,8 @@ function SectionBlockRenderer({
   stretch = false,
 }: {
   block: BlockInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  stretch?: boolean;
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  stretch?: boolean | undefined;
 }): React.ReactNode {
   const children = block.blocks ?? [];
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;

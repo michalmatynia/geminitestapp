@@ -14,9 +14,9 @@ import { getGsapFromVars, getParallaxDefaults } from "@/features/gsap";
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin, Flip, Draggable, CustomEase, Observer);
 
 interface GsapAnimationWrapperProps {
-  config?: GsapAnimationConfig;
+  config?: GsapAnimationConfig | undefined;
   children: ReactNode;
-  className?: string;
+  className?: string | undefined;
 }
 
 const DEFAULT_STAGGER = 0.12;
@@ -629,21 +629,21 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
             }
           };
 
-          const scaleFn = (index: number): number | undefined => {
+          const scaleFn = (index: number): number => {
             if (pattern === "layers") {
               return scaleBase + index * layerScaleStep;
             }
-            return scaleBase !== 1 ? scaleBase : undefined;
+            return scaleBase;
           };
 
           const baseScale = scaleFn(0);
-          const hasScale = baseScale !== undefined || pattern === "layers";
+          const hasScale = baseScale !== 1 || pattern === "layers";
           const hasOffset = offsetFn(0) !== 0 || pattern !== "uniform";
 
           if (hasOffset || hasScale) {
             gsap.to(targetsArray, {
               [axis]: (i: number): number => offsetFn(i),
-              ...(hasScale ? { scale: (i: number): number | undefined => scaleFn(i) } : {}),
+              ...(hasScale ? { scale: (i: number): number => scaleFn(i) } : {}),
               ease: "none",
               scrollTrigger: {
                 trigger: el,

@@ -11,8 +11,8 @@ import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 interface FrontendImageWithTextSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendImageWithTextSection({ settings, blocks, colorSchemes, layout }: FrontendImageWithTextSectionProps): React.ReactNode {

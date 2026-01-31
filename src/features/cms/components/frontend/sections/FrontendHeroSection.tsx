@@ -9,8 +9,8 @@ import { useMediaStyles } from "../media-styles-context";
 interface FrontendHeroSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendHeroSection({ settings, blocks, colorSchemes, layout }: FrontendHeroSectionProps): React.ReactNode {

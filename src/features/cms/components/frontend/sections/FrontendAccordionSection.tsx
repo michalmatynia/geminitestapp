@@ -8,8 +8,8 @@ import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } fr
 interface FrontendAccordionSectionProps {
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean | undefined } | undefined;
 }
 
 export function FrontendAccordionSection({ settings, blocks, colorSchemes, layout }: FrontendAccordionSectionProps): React.ReactNode {

@@ -21,6 +21,7 @@ import {
   Input,
   Label,
   Checkbox,
+  Switch,
 } from "@/shared/ui";
 import Link from "next/link";
 
@@ -31,6 +32,9 @@ import {
   useDeleteSlug,
 } from "@/features/cms/hooks/useCmsQueries";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 
 export default function SlugsPage() {
   const router = useRouter();
@@ -44,7 +48,18 @@ export default function SlugsPage() {
     canonicalDomain,
     sharedWithDomains,
     setActiveDomainId,
+    zoningEnabled,
   } = useCmsDomainSelection({ initialDomainId: domainIdParam ?? null });
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const domainSettings = useMemo(
+    () =>
+      normalizeCmsDomainSettings(
+        parseJsonSetting(settingsQuery.data?.get(CMS_DOMAIN_SETTINGS_KEY), null)
+      ),
+    [settingsQuery.data]
+  );
+  const zoningToggleValue = domainSettings.zoningEnabled;
   const [attachOpen, setAttachOpen] = useState(false);
   const [attachSelectedIds, setAttachSelectedIds] = useState<string[]>([]);
   const [attachSearch, setAttachSearch] = useState("");
@@ -66,6 +81,11 @@ export default function SlugsPage() {
     const next = params.toString();
     router.replace(next ? `${pathname}?${next}` : pathname);
     setActiveDomainId(value || null);
+  };
+
+  const handleZoningToggle = (checked: boolean): void => {
+    const next = normalizeCmsDomainSettings({ ...domainSettings, zoningEnabled: checked });
+    updateSetting.mutate({ key: CMS_DOMAIN_SETTINGS_KEY, value: serializeSetting(next) });
   };
 
   const buildDomainHref = useMemo(() => {
@@ -131,19 +151,34 @@ export default function SlugsPage() {
             title="Slugs"
             actions={
               <>
-                <Select value={activeDomainId} onValueChange={handleDomainChange}>
-                  <SelectTrigger className="h-9 w-[220px]">
-                    <SelectValue placeholder="Current domain" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {domains.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.domain}
-                        {hostDomainId === item.id ? " (current)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/40 px-2 py-1">
+                  <Switch
+                    id="cms-domain-zoning"
+                    checked={zoningToggleValue}
+                    onCheckedChange={handleZoningToggle}
+                    disabled={updateSetting.isPending}
+                  />
+                  <Label htmlFor="cms-domain-zoning" className="text-xs text-muted-foreground">
+                    Domain zoning
+                  </Label>
+                </div>
+                {zoningEnabled ? (
+                  <Select value={activeDomainId} onValueChange={handleDomainChange}>
+                    <SelectTrigger className="h-9 w-[220px]">
+                      <SelectValue placeholder="Current domain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {domains.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.domain}
+                          {hostDomainId === item.id ? " (current)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Simple routing</span>
+                )}
                 <Dialog
                   open={attachOpen}
                   onOpenChange={(open) => {
@@ -155,9 +190,11 @@ export default function SlugsPage() {
                     }
                   }}
                 >
-                  <DialogTrigger asChild>
-                    <Button variant="secondary">Attach Existing</Button>
-                  </DialogTrigger>
+                  {zoningEnabled ? (
+                    <DialogTrigger asChild>
+                      <Button variant="secondary">Attach Existing</Button>
+                    </DialogTrigger>
+                  ) : null}
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Attach Existing Slug</DialogTitle>

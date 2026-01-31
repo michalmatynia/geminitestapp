@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 
 type UserPreferencesResponse = {
   cmsActiveDomainId?: string | null;
@@ -17,6 +20,15 @@ type CmsDomainSelectionOptions = {
 
 export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
   const { initialDomainId = null, persist = true } = options;
+  const settingsQuery = useSettingsMap();
+  const domainSettings = useMemo(
+    () =>
+      normalizeCmsDomainSettings(
+        parseJsonSetting(settingsQuery.data?.get(CMS_DOMAIN_SETTINGS_KEY), null)
+      ),
+    [settingsQuery.data]
+  );
+  const zoningEnabled = domainSettings.zoningEnabled;
   const domainsQuery = useCmsDomains();
   const domains = domainsQuery.data ?? [];
   const queryClient = useQueryClient();
@@ -55,20 +67,23 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!zoningEnabled) return;
     if (!domains.length) return;
     const host = window.location.hostname.toLowerCase();
     const match = domains.find((item) => item.domain.toLowerCase() === host);
     if (match) {
       setHostDomainId(match.id);
     }
-  }, [domains]);
+  }, [domains, zoningEnabled]);
 
   const preferredDomainId = useMemo(() => {
+    if (!zoningEnabled) return null;
     if (initialDomainId) return initialDomainId;
     return preferencesQuery.data?.cmsActiveDomainId ?? null;
-  }, [initialDomainId, preferencesQuery.data?.cmsActiveDomainId]);
+  }, [initialDomainId, preferencesQuery.data?.cmsActiveDomainId, zoningEnabled]);
 
   const activeDomainId = useMemo(() => {
+    if (!zoningEnabled) return null;
     if (preferredDomainId && domains.some((item) => item.id === preferredDomainId)) {
       return preferredDomainId;
     }
@@ -76,26 +91,28 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
       return hostDomainId;
     }
     return domains[0]?.id ?? null;
-  }, [preferredDomainId, hostDomainId, domains]);
+  }, [preferredDomainId, hostDomainId, domains, zoningEnabled]);
 
   const activeDomain = useMemo(
-    () => domains.find((item) => item.id === activeDomainId) ?? null,
-    [domains, activeDomainId]
+    () => (zoningEnabled ? domains.find((item) => item.id === activeDomainId) ?? null : null),
+    [domains, activeDomainId, zoningEnabled]
   );
 
   const canonicalDomain = useMemo(() => {
+    if (!zoningEnabled) return null;
     if (!activeDomain?.aliasOf) return null;
     return domains.find((item) => item.id === activeDomain.aliasOf) ?? null;
-  }, [domains, activeDomain]);
+  }, [domains, activeDomain, zoningEnabled]);
 
   const sharedWithDomains = useMemo(
-    () => (activeDomainId ? domains.filter((item) => item.aliasOf === activeDomainId) : []),
-    [domains, activeDomainId]
+    () => (zoningEnabled && activeDomainId ? domains.filter((item) => item.aliasOf === activeDomainId) : []),
+    [domains, activeDomainId, zoningEnabled]
   );
 
   const setActiveDomainId = useCallback(
     (domainId: string | null) => {
       if (!persist) return;
+      if (!zoningEnabled) return;
       if (domainId === preferencesQuery.data?.cmsActiveDomainId) return;
       queryClient.setQueryData<UserPreferencesResponse>(userPreferencesQueryKey, (prev) => ({
         ...(prev ?? {}),
@@ -103,11 +120,12 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
       }));
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
-    [persist, preferencesQuery.data?.cmsActiveDomainId, queryClient, updatePreferencesMutation]
+    [persist, preferencesQuery.data?.cmsActiveDomainId, queryClient, updatePreferencesMutation, zoningEnabled]
   );
 
   useEffect(() => {
     if (!persist) return;
+    if (!zoningEnabled) return;
     if (!preferencesQuery.isSuccess) return;
     if (preferredDomainId && preferredDomainId !== preferencesQuery.data?.cmsActiveDomainId) {
       updatePreferencesMutation.mutate({ cmsActiveDomainId: preferredDomainId });
@@ -116,16 +134,17 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
     if (!preferredDomainId && hostDomainId) {
       updatePreferencesMutation.mutate({ cmsActiveDomainId: hostDomainId });
     }
-  }, [persist, preferredDomainId, hostDomainId, preferencesQuery.isSuccess, preferencesQuery.data?.cmsActiveDomainId, updatePreferencesMutation]);
+  }, [persist, preferredDomainId, hostDomainId, preferencesQuery.isSuccess, preferencesQuery.data?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]);
 
   return {
-    domains,
+    domains: zoningEnabled ? domains : [],
     activeDomainId,
     activeDomain,
     canonicalDomain,
     sharedWithDomains,
-    hostDomainId,
-    isLoading: domainsQuery.isLoading || preferencesQuery.isLoading,
+    hostDomainId: zoningEnabled ? hostDomainId : null,
+    zoningEnabled,
+    isLoading: domainsQuery.isLoading || preferencesQuery.isLoading || settingsQuery.isLoading,
     isSaving: updatePreferencesMutation.isPending,
     setActiveDomainId,
   };

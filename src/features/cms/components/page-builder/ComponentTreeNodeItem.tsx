@@ -499,7 +499,7 @@ function RowNodeItem({
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
           if (!dragId || !firstColumn) return;
           const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
           const fromColumn =
             (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
           const fromParent =
@@ -694,12 +694,12 @@ function ColumnNodeItem({
     const dragId =
       draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
           const fromSection =
-            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
           const fromColumn =
             (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
           const fromParent =
             (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
-    if (dragId && fromSection) {
+    if (dragId) {
       onDropBlockToColumn(
         dragId,
         fromSection,
@@ -970,11 +970,15 @@ function SectionBlockNodeItem({
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
-          if (draggedBlockId && draggedFromSectionId && draggedBlockId !== block.id) {
+          const dragId =
+            draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
+          const fromSection =
+            draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
+          if (dragId && dragId !== block.id) {
             // Drop element into this section-type block
             onDropBlockToColumn(
-              draggedBlockId,
-              draggedFromSectionId,
+              dragId,
+              fromSection,
               draggedFromColumnId ?? undefined,
               sectionId,
               columnId,
@@ -1153,12 +1157,12 @@ function BlockNodeItem({
           draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
         if (!dragId || dragId === block.id) return;
         const fromSection =
-          draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || null;
+          draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
         const fromColumn =
           (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
         const fromParent =
           (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
-        if (columnId && onDropBlockToColumn && fromSection) {
+        if (columnId && onDropBlockToColumn) {
           onDropBlockToColumn(
             dragId,
             fromSection,

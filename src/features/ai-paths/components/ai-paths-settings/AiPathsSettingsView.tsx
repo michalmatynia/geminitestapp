@@ -156,6 +156,7 @@ export function AiPathsSettingsView({
     setRunDetailOpen,
     runDetailLoading,
     runDetail,
+    setRunDetail,
     runStreamStatus,
     runStreamPaused,
     setRunStreamPaused,

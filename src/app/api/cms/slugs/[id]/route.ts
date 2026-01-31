@@ -10,10 +10,12 @@ import {
   getDomainSlugLinks,
   getSlugForDomainById,
   isSlugLinkedToAnyDomain,
+  isDomainZoningEnabled,
   removeDomainSlug,
   resolveCmsDomainFromRequest,
   resolveCmsDomainScopeById,
   setDomainDefaultSlug,
+  setGlobalDefaultSlug,
 } from "@/features/cms/services/cms-domain";
 
 type Params = { id: string };
@@ -104,6 +106,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
 
     const cmsRepository = await getCmsRepository();
     const domain = await resolveDomainFromRequest(req);
+    const zoningEnabled = await isDomainZoningEnabled();
 
     const updatedSlug = await cmsRepository.updateSlug(id, {
       slug,
@@ -115,19 +118,32 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Pa
     }
 
     if (typeof isDefault === "boolean") {
-      if (isDefault) {
-        await setDomainDefaultSlug(domain.id, id);
+      if (zoningEnabled) {
+        if (isDefault) {
+          await setDomainDefaultSlug(domain.id, id);
+        } else {
+          const links = await getDomainSlugLinks(domain.id);
+          const isCurrentDefault = links.some((link) => link.slugId === id && link.isDefault);
+          if (isCurrentDefault) {
+            await setDomainDefaultSlug(domain.id, null);
+          }
+        }
       } else {
-        const links = await getDomainSlugLinks(domain.id);
-        const isCurrentDefault = links.some((link) => link.slugId === id && link.isDefault);
-        if (isCurrentDefault) {
-          await setDomainDefaultSlug(domain.id, null);
+        if (isDefault) {
+          await setGlobalDefaultSlug(id);
+        } else if (updatedSlug?.isDefault) {
+          await setGlobalDefaultSlug(null);
         }
       }
     }
 
-    const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
-    return NextResponse.json(domainSlug ?? updatedSlug);
+    if (zoningEnabled) {
+      const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
+      return NextResponse.json(domainSlug ?? updatedSlug);
+    }
+
+    const refreshed = await cmsRepository.getSlugById(id);
+    return NextResponse.json(refreshed ?? updatedSlug);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

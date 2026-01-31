@@ -22,12 +22,25 @@ export function CmsDomainSelector({
   triggerClassName,
   onChange,
 }: CmsDomainSelectorProps): React.ReactNode {
-  const { domains, activeDomainId, hostDomainId, setActiveDomainId } = useCmsDomainSelection();
+  const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } = useCmsDomainSelection();
 
   const handleChange = (value: string): void => {
     setActiveDomainId(value);
     onChange?.(value);
   };
+
+  if (!zoningEnabled) {
+    return (
+      <div className="flex items-center gap-2">
+        {label ? (
+          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+            {label}
+          </span>
+        ) : null}
+        <span className="text-[11px] text-gray-500">Simple routing</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">

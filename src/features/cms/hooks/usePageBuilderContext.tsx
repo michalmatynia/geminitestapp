@@ -769,26 +769,46 @@ export function basePageBuilderReducer(
 
     case "MOVE_BLOCK_TO_COLUMN": {
       // Remove block from source (section direct, column, or nested inside a parent block in a column)
-      let movedBlock: BlockInstance | null = null;
-      const sectionsAfterRemove = state.sections.map((s: SectionInstance) => {
-        if (s.id !== action.fromSectionId) return s;
-        if (action.fromColumnId) {
-          const result = removeBlockFromColumnBlocks(s.blocks, action.fromColumnId, action.blockId, action.fromParentBlockId);
-          if (result.moved) movedBlock = result.moved;
-          return { ...s, blocks: result.blocks };
-        }
-        // Remove from section's direct blocks
-        const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
-        if (block) movedBlock = block;
-        return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
-      });
-      if (!movedBlock) return state;
+      const removeFromSource = (
+        sections: SectionInstance[],
+        fromSectionId: string,
+        fromColumnId?: string,
+        fromParentBlockId?: string
+      ): { sections: SectionInstance[]; moved: BlockInstance | null } => {
+        let moved: BlockInstance | null = null;
+        const nextSections = sections.map((s: SectionInstance) => {
+          if (s.id !== fromSectionId) return s;
+          if (fromColumnId) {
+            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            if (result.moved) moved = result.moved;
+            return { ...s, blocks: result.blocks };
+          }
+          // Remove from section's direct blocks
+          const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
+          if (block) moved = block;
+          return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
+        });
+        return { sections: nextSections, moved };
+      };
+
+      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      if (!removal.moved) {
+        const found = findBlock(state.sections, action.blockId);
+        if (!found) return state;
+        removal = removeFromSource(
+          state.sections,
+          found.section.id,
+          found.parentColumn?.id,
+          found.parentBlock?.id
+        );
+      }
+      if (!removal.moved) return state;
       // Insert into target (column direct or inside a parent block in a column)
-      const sectionsAfterInsert = sectionsAfterRemove.map((s: SectionInstance) => {
+      const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
         return {
           ...s,
-          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, movedBlock!, action.toIndex, action.toParentBlockId),
+          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, removal.moved!, action.toIndex, action.toParentBlockId),
         };
       });
       return { ...state, sections: sectionsAfterInsert };

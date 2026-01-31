@@ -24,4 +24,26 @@ test.describe("Chatbot UI", () => {
     await localContextCheckbox.click();
     expect(await localContextCheckbox.isChecked()).toBe(!isChecked);
   });
+
+  test('should send a message and receive a response', async ({ page }) => {
+    await page.goto('/admin/chatbot');
+    const messageInput = page.getByPlaceholder('Type your message...');
+    await expect(messageInput).toBeVisible();
+    
+    const userMessage = 'Hello AI!';
+    await messageInput.fill(userMessage);
+    await page.getByRole('button', { name: 'Send' }).click();
+
+    // Verify user message appears in chat history
+    await expect(page.locator('.message').filter({ hasText: userMessage }).last()).toBeVisible();
+
+    // Verify AI response appears (or at least a typing indicator/placeholder)
+    // This is tricky as AI response time can vary. We'll check for a message bubble that is NOT the user's.
+    await expect(page.locator('.message').filter({ hasText: /^(?!.*Hello AI!)/ }).last()).toBeVisible({ timeout: 15000 }); // Wait for an AI response to appear
+
+    // Verify conversation history (e.g., number of messages or content)
+    const messages = page.locator('.message');
+    await expect(messages).toHaveCount(2); // Expecting user message + AI response
+  });
 });
+

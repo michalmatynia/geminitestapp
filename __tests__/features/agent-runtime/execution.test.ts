@@ -58,7 +58,7 @@ describe("Agent Runtime - Execution", () => {
       (getBrowserContextSummary as any).mockResolvedValue({ url: "about:blank" });
       
       const mockMemory = [{ content: "Session 1" }, { content: "Session 2" }];
-      // @ts-expect-error - testing dynamic import behavior
+// Mock browser module
       const { listAgentMemory, listAgentLongTermMemory } = await import("@/features/agent-runtime/memory");
       (listAgentMemory as any).mockResolvedValue(mockMemory);
       (listAgentLongTermMemory as any).mockResolvedValue([]);

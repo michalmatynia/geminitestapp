@@ -1,18 +1,38 @@
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { GET as GET_themes, POST as POST_themes } from "@/app/api/cms/themes/route";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 import type { CmsTheme } from "@/features/cms/types";
 
+vi.mock("@/features/cms/services/cms-repository", () => ({
+  getCmsRepository: vi.fn(),
+}));
+
 describe("CMS Themes API", () => {
   let cmsRepository: any;
+  let themesStore: CmsTheme[] = [];
+  let idCounter = 0;
+
+  const mockRepo = {
+    getThemes: vi.fn(() => themesStore),
+    createTheme: vi.fn((data: Omit<CmsTheme, "id">) => {
+      const theme = { id: `theme-${++idCounter}`, ...data } as CmsTheme;
+      themesStore = [...themesStore, theme];
+      return theme;
+    }),
+    deleteTheme: vi.fn((id: string) => {
+      const existing = themesStore.find((theme) => theme.id === id) ?? null;
+      themesStore = themesStore.filter((theme) => theme.id !== id);
+      return existing;
+    }),
+  };
 
   beforeEach(async () => {
+    themesStore = [];
+    idCounter = 0;
+    vi.clearAllMocks();
+    (getCmsRepository as any).mockResolvedValue(mockRepo);
     cmsRepository = await getCmsRepository();
-
-    const themes = await cmsRepository.getThemes();
-    for (const t of themes) {
-      await cmsRepository.deleteTheme(t.id);
-    }
   });
 
   const validTheme = {

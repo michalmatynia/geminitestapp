@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
@@ -45,6 +45,116 @@ const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean =>
   return mt === 0 && mb === 0;
 };
 
+const INSPECTOR_TOOLTIP_DELAY_MS = 500;
+const STYLE_KEY_REGEX = /(color|padding|margin|radius|border|shadow|align|font|size|width|height|spacing|background|opacity)/i;
+
+const formatSettingValue = (value: unknown): string => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map((item) => formatSettingValue(item)).join(", ");
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const buildStyleEntries = (settings: Record<string, unknown>): Array<{ key: string; value: string }> => {
+  return Object.entries(settings)
+    .filter(([key, value]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => ({
+      key,
+      value: formatSettingValue(value),
+    }))
+    .filter((entry) => entry.value.length > 0)
+    .slice(0, 12);
+};
+
+const InspectorTooltip = ({ title, settings }: { title: string; settings: Record<string, unknown> }): React.ReactNode => {
+  const entries = buildStyleEntries(settings);
+  return (
+    <div className="space-y-1.5 text-xs">
+      <div className="text-[10px] uppercase tracking-wider text-blue-200">{title}</div>
+      {entries.length === 0 ? (
+        <div className="text-[11px] text-gray-400">No style settings</div>
+      ) : (
+        <div className="space-y-1">
+          {entries.map((entry) => (
+            <div key={entry.key} className="flex items-start gap-2">
+              <span className="min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400">{entry.key}</span>
+              <span className="text-[11px] text-gray-200 break-all">{entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InspectorHover = ({
+  enabled,
+  nodeId,
+  onHover,
+  fallbackNodeId,
+  content,
+  children,
+  className,
+}: {
+  enabled: boolean;
+  nodeId: string;
+  onHover?: (nodeId: string | null) => void;
+  fallbackNodeId?: string | null;
+  content?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}): React.ReactNode => {
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  const clearTimer = (): void => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!enabled) {
+      clearTimer();
+      setOpen(false);
+    }
+    return () => {
+      clearTimer();
+    };
+  }, [enabled]);
+
+  const handleEnter = (): void => {
+    if (!enabled) return;
+    onHover?.(nodeId);
+    clearTimer();
+    timerRef.current = window.setTimeout(() => setOpen(true), INSPECTOR_TOOLTIP_DELAY_MS);
+  };
+
+  const handleLeave = (): void => {
+    if (!enabled) return;
+    onHover?.(fallbackNodeId ?? null);
+    clearTimer();
+    setOpen(false);
+  };
+
+  return (
+    <div className={`relative ${className ?? ""}`} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+      {children}
+      {enabled && open && content && (
+        <div className="absolute z-40 left-1/2 -translate-x-1/2 -top-2 -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg">
+          {content}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Top-level section preview
 // ---------------------------------------------------------------------------
@@ -53,9 +163,11 @@ interface PreviewSectionProps {
   section: SectionInstance;
   selectedNodeId: string | null;
   isInspecting?: boolean;
+  hoveredNodeId?: string | null;
   colorSchemes?: Record<string, ColorSchemeColors>;
   mediaStyles?: React.CSSProperties | null;
   onSelect: (nodeId: string) => void;
+  onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   onRemoveSection?: (sectionId: string) => void;
   onToggleSectionVisibility?: (sectionId: string, isHidden: boolean) => void;
@@ -65,9 +177,11 @@ export function PreviewSection({
   section,
   selectedNodeId,
   isInspecting = false,
+  hoveredNodeId,
   colorSchemes,
   mediaStyles,
   onSelect,
+  onHoverNode,
   onOpenMedia,
   onRemoveSection,
   onToggleSectionVisibility,
@@ -75,10 +189,26 @@ export function PreviewSection({
   const isSectionSelected = selectedNodeId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = (section.settings["label"] as string | undefined) ?? section.type;
+  const isSectionHovered = isInspecting && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
   ) : null;
+  const inspectorContent = (
+    <InspectorTooltip title={`Section: ${label}`} settings={section.settings} />
+  );
+  const wrapInspector = (node: React.ReactNode): React.ReactNode => (
+    <InspectorHover
+      enabled={isInspecting}
+      nodeId={section.id}
+      onHover={onHoverNode}
+      fallbackNodeId={null}
+      content={inspectorContent}
+      className="w-full"
+    >
+      {node}
+    </InspectorHover>
+  );
 
   // Toggle: clicking an already-selected section deselects it
   const handleSelect = (): void => {
@@ -123,27 +253,33 @@ export function PreviewSection({
     const hiddenSelectedClass = isInspecting
       ? "border-blue-500 bg-blue-500/10 ring-2 ring-inset ring-blue-500/40"
       : "border-blue-500 bg-blue-500/5 ring-2 ring-inset ring-blue-500/20";
+    const hiddenHoverClass =
+      isSectionHovered && !isSectionSelected
+        ? "border-blue-500/70 ring-2 ring-inset ring-blue-500/30"
+        : "";
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        className={`relative w-full border border-dashed px-4 py-6 text-left transition cursor-pointer ${
-          isSectionSelected
-            ? hiddenSelectedClass
-            : "border-border/50 bg-transparent hover:border-border/70"
-        }`}
-      >
-        {renderSectionActions()}
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-          <EyeOff className="size-3.5" />
-          <span>Hidden section</span>
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          className={`relative w-full border border-dashed px-4 py-6 text-left transition cursor-pointer ${
+            isSectionSelected
+              ? hiddenSelectedClass
+              : "border-border/50 bg-transparent hover:border-border/70"
+          } ${hiddenHoverClass}`}
+        >
+          {renderSectionActions()}
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+            <EyeOff className="size-3.5" />
+            <span>Hidden section</span>
+          </div>
+          <div className="mt-2 text-sm text-gray-400">{label}</div>
         </div>
-        <div className="mt-2 text-sm text-gray-400">{label}</div>
-      </div>
+      )
     );
   }
 
@@ -160,49 +296,54 @@ export function PreviewSection({
       ...getSectionStyles(section.settings, colorSchemes),
       ...getTextAlign(section.settings["contentAlignment"]),
     };
+    const announcementRingClass = isSectionSelected
+      ? isInspecting
+        ? "ring-2 ring-inset ring-blue-500/60"
+        : "ring-2 ring-inset ring-blue-500/40"
+      : isSectionHovered
+        ? "ring-2 ring-inset ring-blue-500/30"
+        : "hover:ring-1 hover:ring-inset hover:ring-border/40";
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={announcementStyles}
-        className={`relative w-full transition cursor-pointer ${
-          isSectionSelected
-            ? isInspecting
-              ? "ring-2 ring-inset ring-blue-500/60"
-              : "ring-2 ring-inset ring-blue-500/40"
-            : "hover:ring-1 hover:ring-inset hover:ring-border/40"
-        }`}
-      >
-        {renderSectionActions()}
-        {divider}
-        <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-          <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
-            {section.blocks.length === 0 ? (
-              <p className="text-sm text-gray-400">Announcement bar</p>
-            ) : (
-              section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  isSelected={selectedNodeId === block.id}
-                  isInspecting={isInspecting}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
-                />
-              ))
-            )}
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={announcementStyles}
+          className={`relative w-full transition cursor-pointer ${announcementRingClass}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+            <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
+              {section.blocks.length === 0 ? (
+                <p className="text-sm text-gray-400">Announcement bar</p>
+              ) : (
+                section.blocks.map((block: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={block.id}
+                    block={block}
+                    isSelected={selectedNodeId === block.id}
+                    isInspecting={isInspecting}
+                    hoveredNodeId={hoveredNodeId}
+                    onHoverNode={onHoverNode}
+                    onSelect={onSelect}
+                    contained
+                    selectedNodeId={selectedNodeId}
+                    sectionId={section.id}
+                    onOpenMedia={onOpenMedia}
+                    mediaStyles={mediaStyles}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )
     );
   }
 
@@ -214,7 +355,9 @@ export function PreviewSection({
     ? isInspecting
       ? "ring-2 ring-inset ring-blue-500/60"
       : "ring-2 ring-inset ring-blue-500/40"
-    : "hover:ring-1 hover:ring-inset hover:ring-border/40";
+    : isSectionHovered
+      ? "ring-2 ring-inset ring-blue-500/30"
+      : "hover:ring-1 hover:ring-inset hover:ring-border/40";
 
   const sectionImage = section.settings["image"] as string | undefined;
 
@@ -232,6 +375,8 @@ export function PreviewSection({
             block={block}
             isSelected={selectedNodeId === block.id}
             isInspecting={isInspecting}
+            hoveredNodeId={hoveredNodeId}
+            onHoverNode={onHoverNode}
             onSelect={onSelect}
             contained
             selectedNodeId={selectedNodeId}
@@ -249,81 +394,105 @@ export function PreviewSection({
     const colCount = gridColumns.length || 1;
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={{
-          ...sectionStyles,
-          display: "grid",
-          gridTemplateColumns: `repeat(${colCount}, 1fr)`,
-          padding: 0,
-          margin: 0,
-        }}
-        className={`relative w-full min-h-[80px] border border-dashed border-border/50 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {gridColumns.length === 0 ? (
-          <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
-            No columns
-          </div>
-        ) : (
-          gridColumns.map((column: BlockInstance, colIndex: number) => {
-            const isColumnSelected = selectedNodeId === column.id;
-            const isLast = colIndex === gridColumns.length - 1;
-            return (
-              <div
-                key={column.id}
-                role="button"
-                tabIndex={0}
-                onClick={(e: React.MouseEvent): void => {
-                  e.stopPropagation();
-                  onSelect(column.id);
-                }}
-                onKeyDown={(e: React.KeyboardEvent): void => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.stopPropagation();
-                    onSelect(column.id);
-                  }
-                }}
-                className={`p-2 text-left transition cursor-pointer ${
-                  !isLast ? "border-r border-dashed border-border/40" : ""
-                } ${
-                  isColumnSelected
-                    ? isInspecting
-                      ? "bg-blue-500/10"
-                      : "bg-blue-500/5"
-                    : "hover:bg-gray-800/30"
-                }`}
-              >
-                {(column.blocks ?? []).length > 0 && (
-                  <div className="space-y-1.5 pointer-events-none">
-                    {(column.blocks ?? []).map((block: BlockInstance) => (
-                      <PreviewBlockItem
-                        key={block.id}
-                        block={block}
-                        isSelected={selectedNodeId === block.id}
-                        isInspecting={isInspecting}
-                        onSelect={onSelect}
-                        contained
-                        selectedNodeId={selectedNodeId}
-                        sectionId={section.id}
-                        columnId={column.id}
-                        onOpenMedia={onOpenMedia}
-                        mediaStyles={mediaStyles}
-                      />
-                    ))}
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={{
+            ...sectionStyles,
+            display: "grid",
+            gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+            padding: 0,
+            margin: 0,
+          }}
+          className={`relative w-full min-h-[80px] border border-dashed border-border/50 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {gridColumns.length === 0 ? (
+            <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
+              No columns
+            </div>
+          ) : (
+            gridColumns.map((column: BlockInstance, colIndex: number) => {
+              const isColumnSelected = selectedNodeId === column.id;
+              const isColumnHovered = isInspecting && hoveredNodeId === column.id;
+              const isLast = colIndex === gridColumns.length - 1;
+              const columnHoverClass =
+                isColumnHovered && !isColumnSelected
+                  ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
+                  : "";
+              const columnTooltip = (
+                <InspectorTooltip
+                  title="Column"
+                  settings={(column.settings as Record<string, unknown>) ?? {}}
+                />
+              );
+              return (
+                <InspectorHover
+                  key={column.id}
+                  enabled={isInspecting}
+                  nodeId={column.id}
+                  onHover={onHoverNode}
+                  fallbackNodeId={section.id}
+                  content={columnTooltip}
+                  className="w-full"
+                >
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e: React.MouseEvent): void => {
+                      e.stopPropagation();
+                      onSelect(column.id);
+                    }}
+                    onKeyDown={(e: React.KeyboardEvent): void => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        onSelect(column.id);
+                      }
+                    }}
+                    className={`p-2 text-left transition cursor-pointer ${
+                      !isLast ? "border-r border-dashed border-border/40" : ""
+                    } ${
+                      isColumnSelected
+                        ? isInspecting
+                          ? "bg-blue-500/10"
+                          : "bg-blue-500/5"
+                        : "hover:bg-gray-800/30"
+                    } ${columnHoverClass}`}
+                  >
+                    {(column.blocks ?? []).length > 0 && (
+                      <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
+                        {(column.blocks ?? []).map((block: BlockInstance) => (
+                          <PreviewBlockItem
+                            key={block.id}
+                            block={block}
+                            isSelected={selectedNodeId === block.id}
+                            isInspecting={isInspecting}
+                            hoveredNodeId={hoveredNodeId}
+                            onHoverNode={onHoverNode}
+                            onSelect={onSelect}
+                            contained
+                            selectedNodeId={selectedNodeId}
+                            sectionId={section.id}
+                            columnId={column.id}
+                            onOpenMedia={onOpenMedia}
+                            mediaStyles={mediaStyles}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+                </InspectorHover>
+              );
+            })
+          )}
+        </div>
+      )
     );
   }
 
@@ -333,43 +502,45 @@ export function PreviewSection({
     const imageFirst = placement !== "image-second";
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer group ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {onOpenMedia && (
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onOpenMedia({ kind: "section", sectionId: section.id, key: "image" });
-            }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
-          >
-            Replace image
-          </button>
-        )}
-        <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
-          <div className="cms-media flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
-            {sectionImage ? (
-              <img src={sectionImage} alt="" className="size-full object-cover" />
-            ) : (
-              <ImageIcon className="size-8 text-gray-500" />
-            )}
-          </div>
-          <div className="flex flex-1 flex-col justify-center gap-2">
-            {renderBlocks("Add blocks to content area")}
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer group ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia({ kind: "section", sectionId: section.id, key: "image" });
+              }}
+              className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
+          <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
+            <div className="cms-media flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
+              {sectionImage ? (
+                <img src={sectionImage} alt="" className="size-full object-cover" />
+              ) : (
+                <ImageIcon className="size-8 text-gray-500" />
+              )}
+            </div>
+            <div className="flex flex-1 flex-col justify-center gap-2">
+              {renderBlocks("Add blocks to content area")}
+            </div>
           </div>
         </div>
-      </div>
+      )
     );
   }
 
@@ -380,44 +551,120 @@ export function PreviewSection({
       : {};
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full text-left transition cursor-pointer group ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {onOpenMedia && (
-          <button
-            type="button"
-            onClick={(e: React.MouseEvent): void => {
-              e.stopPropagation();
-              onOpenMedia({ kind: "section", sectionId: section.id, key: "image" });
-            }}
-            className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
-          >
-            Replace image
-          </button>
-        )}
+      wrapInspector(
         <div
-          className={`cms-media relative min-h-[140px] px-6 ${sectionImage ? "" : "bg-gradient-to-br from-gray-700/40 to-gray-800/60"}`}
-          style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full text-left transition cursor-pointer group ${selectedRing}`}
         >
-          <div className="flex min-h-[140px] flex-col items-center justify-center gap-2">
-            {section.blocks.length === 0 ? (
-              <span className="text-sm text-gray-500">Add content to hero banner</span>
-            ) : (
-              section.blocks.map((block: BlockInstance) => (
+          {renderSectionActions()}
+          {divider}
+          {onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia({ kind: "section", sectionId: section.id, key: "image" });
+              }}
+              className="absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
+          <div
+            className={`cms-media relative min-h-[140px] px-6 ${sectionImage ? "" : "bg-gradient-to-br from-gray-700/40 to-gray-800/60"}`}
+            style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
+          >
+            <div className="flex min-h-[140px] flex-col items-center justify-center gap-2">
+              {section.blocks.length === 0 ? (
+                <span className="text-sm text-gray-500">Add content to hero banner</span>
+              ) : (
+                section.blocks.map((block: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={block.id}
+                    block={block}
+                    isSelected={selectedNodeId === block.id}
+                    isInspecting={isInspecting}
+                    hoveredNodeId={hoveredNodeId}
+                    onHoverNode={onHoverNode}
+                    onSelect={onSelect}
+                    contained
+                    selectedNodeId={selectedNodeId}
+                    sectionId={section.id}
+                    onOpenMedia={onOpenMedia}
+                    mediaStyles={mediaStyles}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    );
+  }
+
+  // RichText section
+  if (section.type === "RichText") {
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {renderBlocks("Add blocks to rich text section")}
+        </div>
+      )
+    );
+  }
+
+  // Accordion section
+  if (section.type === "Accordion") {
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {section.blocks.length === 0 ? (
+            <div className="space-y-1.5">
+              {[1, 2, 3].map((n: number) => (
+                <div key={n} className="flex items-center gap-2 rounded border border-dashed border-border/40 p-2">
+                  <div className="h-2 w-2/3 rounded bg-gray-600/30" />
+                  <span className="ml-auto text-xs text-gray-600">+</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {section.blocks.map((block: BlockInstance) => (
                 <PreviewBlockItem
                   key={block.id}
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
@@ -425,77 +672,11 @@ export function PreviewSection({
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-    );
-  }
-
-  // RichText section
-  if (section.type === "RichText") {
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {renderBlocks("Add blocks to rich text section")}
-      </div>
-    );
-  }
-
-  // Accordion section
-  if (section.type === "Accordion") {
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {section.blocks.length === 0 ? (
-          <div className="space-y-1.5">
-            {[1, 2, 3].map((n: number) => (
-              <div key={n} className="flex items-center gap-2 rounded border border-dashed border-border/40 p-2">
-                <div className="h-2 w-2/3 rounded bg-gray-600/30" />
-                <span className="ml-auto text-xs text-gray-600">+</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                isSelected={selectedNodeId === block.id}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      )
     );
   }
 
@@ -504,47 +685,51 @@ export function PreviewSection({
     const columns = (section.settings["columns"] as number) || 3;
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {section.blocks.length === 0 ? (
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, 3)}, 1fr)` }}>
-            {Array.from({ length: Math.min(columns, 3) }).map((_val: unknown, idx: number) => (
-              <div key={idx} className="cms-hover-card rounded border border-dashed border-border/40 p-3">
-                <Quote className="size-3 text-gray-600 mb-1" />
-                <div className="h-2 w-full rounded bg-gray-600/30 mb-1" />
-                <div className="h-2 w-2/3 rounded bg-gray-600/20" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                isSelected={selectedNodeId === block.id}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {section.blocks.length === 0 ? (
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, 3)}, 1fr)` }}>
+              {Array.from({ length: Math.min(columns, 3) }).map((_val: unknown, idx: number) => (
+                <div key={idx} className="cms-hover-card rounded border border-dashed border-border/40 p-3">
+                  <Quote className="size-3 text-gray-600 mb-1" />
+                  <div className="h-2 w-full rounded bg-gray-600/30 mb-1" />
+                  <div className="h-2 w-2/3 rounded bg-gray-600/20" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )
     );
   }
 
@@ -553,75 +738,81 @@ export function PreviewSection({
     const ratio = (section.settings["aspectRatio"] as string) || "16:9";
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-10 items-center justify-center rounded-full bg-gray-600/50">
-              <Play className="size-5 text-gray-300" />
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex size-10 items-center justify-center rounded-full bg-gray-600/50">
+                <Play className="size-5 text-gray-300" />
+              </div>
+              <span className="text-xs text-gray-500">{ratio}</span>
             </div>
-            <span className="text-xs text-gray-500">{ratio}</span>
           </div>
         </div>
-      </div>
+      )
     );
   }
 
   // Slideshow section
   if (section.type === "Slideshow") {
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {section.blocks.length === 0 ? (
-          <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[80px]">
-            <div className="flex flex-col items-center gap-2">
-              <ImageIcon className="size-6 text-gray-500" />
-              <div className="flex gap-1">
-                {[0, 1, 2].map((dotIdx: number) => (
-                  <div key={dotIdx} className={`size-1.5 rounded-full ${dotIdx === 0 ? "bg-gray-400" : "bg-gray-600"}`} />
-                ))}
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {section.blocks.length === 0 ? (
+            <div className="flex items-center justify-center rounded bg-gray-700/30 min-h-[80px]">
+              <div className="flex flex-col items-center gap-2">
+                <ImageIcon className="size-6 text-gray-500" />
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((dotIdx: number) => (
+                    <div key={dotIdx} className={`size-1.5 rounded-full ${dotIdx === 0 ? "bg-gray-400" : "bg-gray-600"}`} />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                isSelected={selectedNodeId === block.id}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="space-y-2">
+              {section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )
     );
   }
 
@@ -631,45 +822,49 @@ export function PreviewSection({
     const placeholder = (section.settings["placeholder"] as string) || "Enter your email";
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") handleSelect();
-        }}
-        style={sectionStyles}
-        className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-      >
-        {renderSectionActions()}
-        {divider}
-        {section.blocks.length > 0 && (
-          <div className="space-y-2 mb-3">
-            {section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                isSelected={selectedNodeId === block.id}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                contained
-                selectedNodeId={selectedNodeId}
-                sectionId={section.id}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            ))}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <div className="flex-1 rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500">
-            {placeholder}
-          </div>
-          <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900">
-            {buttonText}
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {section.blocks.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                  isSelected={selectedNodeId === block.id}
+                  isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={section.id}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <div className="flex-1 rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500">
+              {placeholder}
+            </div>
+            <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900">
+              {buttonText}
+            </div>
           </div>
         </div>
-      </div>
+      )
     );
   }
 
@@ -679,6 +874,37 @@ export function PreviewSection({
     const submitText = (section.settings["submitText"] as string) || "Send message";
 
     return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={sectionStyles}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div className="space-y-2">
+            {fields.map((field: string) => (
+              <div key={field} className="rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500 capitalize">
+                {field}
+              </div>
+            ))}
+            <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900 text-center">
+              {submitText}
+            </div>
+          </div>
+        </div>
+      )
+    );
+  }
+
+  // Fallback for unknown section types
+  return (
+    wrapInspector(
       <div
         role="button"
         tabIndex={0}
@@ -691,36 +917,9 @@ export function PreviewSection({
       >
         {renderSectionActions()}
         {divider}
-        <div className="space-y-2">
-          {fields.map((field: string) => (
-            <div key={field} className="rounded border border-border/40 bg-gray-800/30 px-3 py-1.5 text-xs text-gray-500 capitalize">
-              {field}
-            </div>
-          ))}
-          <div className="rounded bg-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900 text-center">
-            {submitText}
-          </div>
-        </div>
+        {renderBlocks("No blocks")}
       </div>
-    );
-  }
-
-  // Fallback for unknown section types
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleSelect}
-      onKeyDown={(e: React.KeyboardEvent): void => {
-        if (e.key === "Enter" || e.key === " ") handleSelect();
-      }}
-      style={sectionStyles}
-      className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
-    >
-      {renderSectionActions()}
-      {divider}
-      {renderBlocks("No blocks")}
-    </div>
+    )
   );
 }
 
@@ -733,12 +932,14 @@ interface PreviewBlockItemProps {
   block: BlockInstance;
   isSelected: boolean;
   isInspecting?: boolean;
+  hoveredNodeId?: string | null;
   onSelect: (nodeId: string) => void;
   sectionId: string;
   columnId?: string;
   parentBlockId?: string;
   contained?: boolean;
   selectedNodeId?: string | null;
+  onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   mediaStyles?: React.CSSProperties | null;
 }
@@ -747,12 +948,14 @@ function PreviewBlockItem({
   block,
   isSelected,
   isInspecting = false,
+  hoveredNodeId,
   onSelect,
   contained,
   selectedNodeId,
   sectionId,
   columnId,
   parentBlockId,
+  onHoverNode,
   onOpenMedia,
   mediaStyles,
 }: PreviewBlockItemProps): React.ReactNode {
@@ -761,6 +964,23 @@ function PreviewBlockItem({
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
     : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
+  const isHovered = isInspecting && hoveredNodeId === block.id;
+  const hoverFrameClass = isHovered && !isSelected
+    ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
+    : "";
+  const inspectorContent = <InspectorTooltip title={block.type} settings={block.settings} />;
+  const fallbackNodeId = parentBlockId ?? columnId ?? sectionId;
+  const wrapBlock = (node: React.ReactNode): React.ReactNode => (
+    <InspectorHover
+      enabled={isInspecting}
+      nodeId={block.id}
+      onHover={onHoverNode}
+      fallbackNodeId={fallbackNodeId}
+      content={inspectorContent}
+    >
+      {node}
+    </InspectorHover>
+  );
 
   // ---------------------------------------------------------------------------
   // Section-type blocks (ImageWithText, Hero) — layout-aware preview
@@ -768,68 +988,74 @@ function PreviewBlockItem({
   if (isSectionType) {
     const canReplaceImage = Boolean(onOpenMedia);
     return (
-      <div className="relative group">
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
-        className={`w-full rounded border-2 text-left text-sm transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/30 hover:border-border/50"
-        }`}
-      >
-          <div className="p-2.5 overflow-hidden">
-            {block.type === "ImageWithText" && (
-              <PreviewImageWithTextBlock
-                block={block}
-                selectedNodeId={selectedNodeId}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                sectionId={sectionId}
-                columnId={columnId}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            )}
-            {block.type === "Hero" && (
-              <PreviewHeroBlock
-                block={block}
-                selectedNodeId={selectedNodeId}
-                isInspecting={isInspecting}
-                onSelect={onSelect}
-                sectionId={sectionId}
-                columnId={columnId}
-                onOpenMedia={onOpenMedia}
-                mediaStyles={mediaStyles}
-              />
-            )}
-          </div>
-        </button>
-        {canReplaceImage && (
+      wrapBlock(
+        <div className="relative group">
           <button
             type="button"
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
-              onOpenMedia?.({
-                kind: "block",
-                sectionId,
-                blockId: block.id,
-                columnId,
-                parentBlockId,
-                key: "image",
-              });
+              onSelect(block.id);
             }}
-            className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className={`w-full rounded border-2 text-left text-sm transition overflow-hidden ${
+              contained ? "max-w-full" : ""
+            } ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/30 hover:border-border/50"
+            } ${hoverFrameClass}`}
           >
-            Replace image
+            <div className="p-2.5 overflow-hidden">
+              {block.type === "ImageWithText" && (
+                <PreviewImageWithTextBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  columnId={columnId}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
+              {block.type === "Hero" && (
+                <PreviewHeroBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  columnId={columnId}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
+            </div>
           </button>
-        )}
-      </div>
+          {canReplaceImage && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia?.({
+                  kind: "block",
+                  sectionId,
+                  blockId: block.id,
+                  columnId,
+                  parentBlockId,
+                  key: "image",
+                });
+              }}
+              className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
+        </div>
+      )
     );
   }
 
@@ -844,22 +1070,24 @@ function PreviewBlockItem({
     const sizeClass = size === "small" ? "text-base font-semibold" : size === "large" ? "text-2xl font-bold" : "text-xl font-bold";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`cms-hover-card w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`cms-hover-card w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className={`${sizeClass} text-gray-200 truncate`}>{text}</div>
+        </button>
+      )
     );
   }
 
@@ -867,24 +1095,26 @@ function PreviewBlockItem({
     const text = (block.settings["text"] as string) || "Announcement";
     const link = (block.settings["link"] as string) || "";
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-sm transition ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
-            : "border-transparent text-gray-300 hover:border-border/30"
-        }`}
-      >
-        <Megaphone className="size-3.5 text-gray-400" />
-        <span className={link ? "text-blue-300 underline decoration-blue-400/50" : ""}>
-          {text}
-        </span>
-        {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-sm transition ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg} text-blue-200`
+              : "border-transparent text-gray-300 hover:border-border/30"
+          } ${hoverFrameClass}`}
+        >
+          <Megaphone className="size-3.5 text-gray-400" />
+          <span className={link ? "text-blue-300 underline decoration-blue-400/50" : ""}>
+            {text}
+          </span>
+          {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
+        </button>
+      )
     );
   }
 
@@ -893,26 +1123,28 @@ function PreviewBlockItem({
     const text = (block.settings["textContent"] as string) || "";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        {text ? (
-          <p className="text-sm text-gray-300 line-clamp-3">{text}</p>
-        ) : (
-          <p className="text-sm italic text-gray-500">Add text content...</p>
-        )}
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          {text ? (
+            <p className="text-sm text-gray-300 line-clamp-3">{text}</p>
+          ) : (
+            <p className="text-sm italic text-gray-500">Add text content...</p>
+          )}
+        </button>
+      )
     );
   }
 
@@ -922,30 +1154,32 @@ function PreviewBlockItem({
     const style = (block.settings["buttonStyle"] as string) || "solid";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`cms-hover-button w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div
-          className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
-            style === "outline"
-              ? "border border-gray-400 text-gray-300"
-              : "bg-gray-200 text-gray-900"
-          }`}
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`cms-hover-button w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
         >
-          {label}
-        </div>
-      </button>
+          <div
+            className={`inline-block rounded-md px-4 py-1.5 text-sm font-medium ${
+              style === "outline"
+                ? "border border-gray-400 text-gray-300"
+                : "bg-gray-200 text-gray-900"
+            }`}
+          >
+            {label}
+          </div>
+        </button>
+      )
     );
   }
 
@@ -955,26 +1189,28 @@ function PreviewBlockItem({
     const schemeBg = getColorSchemeBg(colorScheme);
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${schemeBg} ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div className="flex flex-col gap-1.5">
-          <div className="h-2 w-full rounded bg-gray-600/40" />
-          <div className="h-2 w-5/6 rounded bg-gray-600/30" />
-          <div className="h-2 w-2/3 rounded bg-gray-600/30" />
-        </div>
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${schemeBg} ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className="flex flex-col gap-1.5">
+            <div className="h-2 w-full rounded bg-gray-600/40" />
+            <div className="h-2 w-5/6 rounded bg-gray-600/30" />
+            <div className="h-2 w-2/3 rounded bg-gray-600/30" />
+          </div>
+        </button>
+      )
     );
   }
 
@@ -990,61 +1226,63 @@ function PreviewBlockItem({
     };
 
     return (
-      <div className="relative group">
-        <button
-          type="button"
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onSelect(block.id);
-          }}
-          className={`w-full rounded border p-1 text-left transition overflow-hidden ${
-            contained ? "max-w-full" : ""
-          } ${
-            isSelected
-              ? `${selectedBorderClass} ${selectedSoftBg}`
-              : "border-transparent hover:border-border/30"
-          }`}
-        >
-          {src ? (
-            <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
-              <img
-                src={src}
-                alt={alt}
-                className="block h-auto w-full object-cover"
-              />
-            </div>
-          ) : (
-            <div
-              className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
-              style={{ width: `${width}%`, ...resolvedStyles }}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <ImageIcon className="size-6 text-gray-500" />
-                <span className="text-xs text-gray-500 truncate max-w-[120px]">{alt}</span>
-              </div>
-            </div>
-          )}
-        </button>
-        {onOpenMedia && (
+      wrapBlock(
+        <div className="relative group">
           <button
             type="button"
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
-              onOpenMedia?.({
-                kind: "block",
-                sectionId,
-                blockId: block.id,
-                columnId,
-                parentBlockId,
-                key: "src",
-              });
+              onSelect(block.id);
             }}
-            className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            className={`w-full rounded border p-1 text-left transition overflow-hidden ${
+              contained ? "max-w-full" : ""
+            } ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-transparent hover:border-border/30"
+            } ${hoverFrameClass}`}
           >
-            Replace image
+            {src ? (
+              <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
+                <img
+                  src={src}
+                  alt={alt}
+                  className="block h-auto w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
+                style={{ width: `${width}%`, ...resolvedStyles }}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <ImageIcon className="size-6 text-gray-500" />
+                  <span className="text-xs text-gray-500 truncate max-w-[120px]">{alt}</span>
+                </div>
+              </div>
+            )}
           </button>
-        )}
-      </div>
+          {onOpenMedia && (
+            <button
+              type="button"
+              onClick={(e: React.MouseEvent): void => {
+                e.stopPropagation();
+                onOpenMedia?.({
+                  kind: "block",
+                  sectionId,
+                  blockId: block.id,
+                  columnId,
+                  parentBlockId,
+                  key: "src",
+                });
+              }}
+              className="absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100"
+            >
+              Replace image
+            </button>
+          )}
+        </div>
+      )
     );
   }
 
@@ -1053,27 +1291,29 @@ function PreviewBlockItem({
     const ratio = (block.settings["aspectRatio"] as string) || "16:9";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]" style={mediaStyles ?? undefined}>
-          <div className="flex items-center gap-2">
-            <Play className="size-5 text-gray-500" />
-            <span className="text-xs text-gray-500">{ratio}</span>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]" style={mediaStyles ?? undefined}>
+            <div className="flex items-center gap-2">
+              <Play className="size-5 text-gray-500" />
+              <span className="text-xs text-gray-500">{ratio}</span>
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+      )
     );
   }
 
@@ -1084,31 +1324,33 @@ function PreviewBlockItem({
     const appLabel = APP_EMBED_OPTIONS.find((option) => option.id === appId)?.label ?? "App";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-medium text-gray-200">{title || appLabel}</div>
-            <div className="text-[10px] text-gray-500">App embed</div>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-gray-200">{title || appLabel}</div>
+              <div className="text-[10px] text-gray-500">App embed</div>
+            </div>
+            <div className="flex items-center gap-2 text-gray-500">
+              <AppWindow className="size-5" />
+              <span className="text-[10px] uppercase">{appLabel}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-gray-500">
-            <AppWindow className="size-5" />
-            <span className="text-[10px] uppercase">{appLabel}</span>
-          </div>
-        </div>
-      </button>
+        </button>
+      )
     );
   }
 
@@ -1119,47 +1361,51 @@ function PreviewBlockItem({
     const color = (block.settings["dividerColor"] as string) || "#4b5563";
 
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <hr style={{ borderStyle: style, borderTopWidth: `${thickness}px`, borderColor: color }} />
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <hr style={{ borderStyle: style, borderTopWidth: `${thickness}px`, borderColor: color }} />
+        </button>
+      )
     );
   }
 
   // SocialLinks block
   if (block.type === "SocialLinks") {
     return (
-      <button
-        type="button"
-        onClick={(e: React.MouseEvent): void => {
-          e.stopPropagation();
-          onSelect(block.id);
-        }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
-          contained ? "max-w-full" : ""
-        } ${
-          isSelected
-            ? `${selectedBorderClass} ${selectedSoftBg}`
-            : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
-      >
-        <div className="flex items-center justify-center gap-3">
-          <Share2 className="size-4 text-gray-500" />
-          <span className="text-xs text-gray-500">Social Links</span>
-        </div>
-      </button>
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className="flex items-center justify-center gap-3">
+            <Share2 className="size-4 text-gray-500" />
+            <span className="text-xs text-gray-500">Social Links</span>
+          </div>
+        </button>
+      )
     );
   }
 
@@ -1169,46 +1415,50 @@ function PreviewBlockItem({
     const iconColor = (block.settings["iconColor"] as string) || "#ffffff";
 
     return (
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Star className="size-5" style={{ color: iconColor }} />
+            <span className="text-xs text-gray-500">{iconName}</span>
+          </div>
+        </button>
+      )
+    );
+  }
+
+  // Fallback for unknown block types
+  return (
+    wrapBlock(
       <button
         type="button"
         onClick={(e: React.MouseEvent): void => {
           e.stopPropagation();
           onSelect(block.id);
         }}
-        className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+        className={`flex w-full items-center gap-2 rounded border p-3 text-left text-sm transition overflow-hidden ${
           contained ? "max-w-full" : ""
         } ${
           isSelected
             ? `${selectedBorderClass} ${selectedSoftBg}`
             : "border-border/30 bg-gray-800/20 hover:border-border/50"
-        }`}
+        } ${hoverFrameClass}`}
       >
-        <div className="flex items-center justify-center gap-2">
-          <Star className="size-5" style={{ color: iconColor }} />
-          <span className="text-xs text-gray-500">{iconName}</span>
-        </div>
+        <span className="flex-1 truncate text-gray-300">{block.type}</span>
       </button>
-    );
-  }
-
-  // Fallback for unknown block types
-  return (
-    <button
-      type="button"
-      onClick={(e: React.MouseEvent): void => {
-        e.stopPropagation();
-        onSelect(block.id);
-      }}
-      className={`flex w-full items-center gap-2 rounded border p-3 text-left text-sm transition overflow-hidden ${
-        contained ? "max-w-full" : ""
-      } ${
-        isSelected
-          ? `${selectedBorderClass} ${selectedSoftBg}`
-          : "border-border/30 bg-gray-800/20 hover:border-border/50"
-      }`}
-    >
-      <span className="flex-1 truncate text-gray-300">{block.type}</span>
-    </button>
+    )
   );
 }
 
@@ -1220,9 +1470,11 @@ interface PreviewSectionBlockProps {
   block: BlockInstance;
   selectedNodeId?: string | null;
   isInspecting?: boolean;
+  hoveredNodeId?: string | null;
   onSelect: (nodeId: string) => void;
   sectionId: string;
   columnId?: string;
+  onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
   mediaStyles?: React.CSSProperties | null;
 }
@@ -1231,9 +1483,11 @@ function PreviewImageWithTextBlock({
   block,
   selectedNodeId,
   isInspecting = false,
+  hoveredNodeId,
   onSelect,
   sectionId,
   columnId,
+  onHoverNode,
   onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
@@ -1259,6 +1513,8 @@ function PreviewImageWithTextBlock({
               block={child}
               isSelected={selectedNodeId === child.id}
               isInspecting={isInspecting}
+              hoveredNodeId={hoveredNodeId}
+              onHoverNode={onHoverNode}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
@@ -1287,9 +1543,11 @@ function PreviewHeroBlock({
   block,
   selectedNodeId,
   isInspecting = false,
+  hoveredNodeId,
   onSelect,
   sectionId,
   columnId,
+  onHoverNode,
   onOpenMedia,
   mediaStyles,
 }: PreviewSectionBlockProps): React.ReactNode {
@@ -1312,6 +1570,8 @@ function PreviewHeroBlock({
               block={child}
               isSelected={selectedNodeId === child.id}
               isInspecting={isInspecting}
+              hoveredNodeId={hoveredNodeId}
+              onHoverNode={onHoverNode}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}

@@ -16,7 +16,7 @@ type CmsMenuProps = {
   animationsEnabled?: boolean;
 };
 
-const getPresetVars = (preset: AnimationPreset) => {
+const getHoverAnimationVars = (preset: AnimationPreset): gsap.TweenVars | null => {
   if (preset === "none") return null;
   return getGsapFromVars(preset);
 };

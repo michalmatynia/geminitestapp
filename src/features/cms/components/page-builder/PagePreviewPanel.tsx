@@ -58,6 +58,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const [selectedPreviewSlug, setSelectedPreviewSlug] = useState<string | null>(null);
   const [previewDraftsEnabled, setPreviewDraftsEnabled] = useState(false);
   const previewDraftsHydratedRef = useRef(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const preferencesQuery = useQuery({
     queryKey: userPreferencesQueryKey,
@@ -185,6 +186,20 @@ export function PagePreviewPanel(): React.ReactNode {
     },
     [dispatch]
   );
+
+  const handleHoverNode = useCallback(
+    (nodeId: string | null) => {
+      if (!state.inspectorEnabled) return;
+      setHoveredNodeId((prev) => (prev === nodeId ? prev : nodeId));
+    },
+    [state.inspectorEnabled]
+  );
+
+  useEffect(() => {
+    if (!state.inspectorEnabled) {
+      setHoveredNodeId(null);
+    }
+  }, [state.inspectorEnabled]);
 
   const handleSave = useCallback(async () => {
     if (!state.currentPage) return;
@@ -568,9 +583,11 @@ export function PagePreviewPanel(): React.ReactNode {
                             section={section}
                             selectedNodeId={state.selectedNodeId}
                             isInspecting={state.inspectorEnabled}
+                            hoveredNodeId={hoveredNodeId}
                             colorSchemes={colorSchemes}
                             mediaStyles={mediaStyles}
                             onSelect={handleSelectNode}
+                            onHoverNode={handleHoverNode}
                             onOpenMedia={handleOpenMedia}
                             onRemoveSection={(sectionId: string) => dispatch({ type: "REMOVE_SECTION", sectionId })}
                             onToggleSectionVisibility={(sectionId: string, isHidden: boolean) =>

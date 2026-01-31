@@ -205,20 +205,27 @@ export interface ThemeSettings {
   drawerShadowY: number;
   drawerShadowBlur: number;
   // Badges
+  badgePosition: string;
   badgeFontSize: number;
   badgeRadius: number;
   badgePaddingX: number;
   badgePaddingY: number;
   badgeDefaultBg: string;
   badgeDefaultText: string;
+  badgeSaleColorScheme: string;
   badgeSaleBg: string;
   badgeSaleText: string;
+  badgeSoldOutColorScheme: string;
   // Brand Information
   brandName: string;
   brandTagline: string;
   brandEmail: string;
   brandPhone: string;
   brandAddress: string;
+  brandFooterHeadline: string;
+  brandFooterDescription: string;
+  brandFooterImage: string;
+  brandFooterImageWidth: number;
   // Social Media
   socialFacebook: string;
   socialInstagram: string;
@@ -226,15 +233,22 @@ export interface ThemeSettings {
   socialLinkedin: string;
   socialYoutube: string;
   socialTiktok: string;
+  socialSnapchat: string;
+  socialPinterest: string;
+  socialTumblr: string;
+  socialVimeo: string;
   // Search Behaviour
   searchPlaceholder: string;
   searchMinChars: number;
   searchShowSuggestions: boolean;
+  searchShowVendor: boolean;
+  searchShowPrice: boolean;
   searchMaxResults: number;
   // Currency Format
   currencyCode: string;
   currencySymbol: string;
   currencyPosition: string;
+  currencyShowCode: boolean;
   thousandsSeparator: string;
   decimalSeparator: string;
   decimalPlaces: number;
@@ -484,32 +498,46 @@ export const DEFAULT_THEME: ThemeSettings = {
   drawerShadowX: 0,
   drawerShadowY: 8,
   drawerShadowBlur: 24,
+  badgePosition: "top-left",
   badgeFontSize: 11,
   badgeRadius: 4,
   badgePaddingX: 8,
   badgePaddingY: 2,
   badgeDefaultBg: "#374151",
   badgeDefaultText: "#d1d5db",
+  badgeSaleColorScheme: "scheme-1",
   badgeSaleBg: "#ef4444",
   badgeSaleText: "#ffffff",
+  badgeSoldOutColorScheme: "scheme-1",
   brandName: "",
   brandTagline: "",
   brandEmail: "",
   brandPhone: "",
   brandAddress: "",
+  brandFooterHeadline: "",
+  brandFooterDescription: "",
+  brandFooterImage: "",
+  brandFooterImageWidth: 240,
   socialFacebook: "",
   socialInstagram: "",
   socialTwitter: "",
   socialLinkedin: "",
   socialYoutube: "",
   socialTiktok: "",
+  socialSnapchat: "",
+  socialPinterest: "",
+  socialTumblr: "",
+  socialVimeo: "",
   searchPlaceholder: "Search...",
   searchMinChars: 2,
   searchShowSuggestions: true,
+  searchShowVendor: true,
+  searchShowPrice: true,
   searchMaxResults: 8,
   currencyCode: "USD",
   currencySymbol: "$",
   currencyPosition: "before",
+  currencyShowCode: false,
   thousandsSeparator: ",",
   decimalSeparator: ".",
   decimalPlaces: 2,
@@ -540,6 +568,8 @@ const normalizeScheme = (scheme: Partial<ColorScheme> | null | undefined, fallba
   };
 };
 
+const BADGE_POSITIONS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
+
 export const normalizeThemeSettings = (
   input?: Partial<ThemeSettings> | null
 ): ThemeSettings => {
@@ -552,6 +582,10 @@ export const normalizeThemeSettings = (
   merged.pageMargin = typeof input?.pageMargin === "number" ? input.pageMargin : DEFAULT_THEME.pageMargin;
   merged.fullWidth = typeof input?.fullWidth === "boolean" ? input.fullWidth : DEFAULT_THEME.fullWidth;
   merged.hoverEffect = typeof input?.hoverEffect === "string" ? input.hoverEffect : DEFAULT_THEME.hoverEffect;
+  merged.badgePosition =
+    typeof input?.badgePosition === "string" && BADGE_POSITIONS.has(input.badgePosition)
+      ? input.badgePosition
+      : DEFAULT_THEME.badgePosition;
 
   const fallbackSchemes = DEFAULT_THEME.colorSchemes;
   const rawSchemes = Array.isArray(input?.colorSchemes) ? input?.colorSchemes : merged.colorSchemes;

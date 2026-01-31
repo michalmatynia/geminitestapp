@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ArrowLeft } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import { ArrowLeft, Bold, ChevronDown, FolderOpen, Italic, Link2, List, ListOrdered, Upload } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -15,7 +18,8 @@ import {
   Checkbox,
 } from "@/shared/ui";
 import { useThemeSettings } from "./ThemeSettingsContext";
-import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
+import { MediaLibraryPanel } from "./MediaLibraryPanel";
+import type { ColorScheme, ColorSchemeColors } from "@/features/cms/types/theme-settings";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -115,6 +119,272 @@ function RangeField({ label, value, onChange, min, max, suffix, step }: { label:
         <span className="text-[11px] text-gray-300">{safeValue}{suffix}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={safeValue} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
+    </div>
+  );
+}
+
+function sanitizeRichText(value: string | null | undefined): string {
+  if (!value) return "";
+  if (typeof value !== "string") return "";
+  const temp = document.createElement("div");
+  temp.innerHTML = value;
+  return temp.innerHTML;
+}
+
+function RichTextToolbarButton({
+  title,
+  onClick,
+  active,
+  disabled,
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`size-8 rounded-md ${active ? "bg-blue-600 text-white hover:bg-blue-500" : "text-gray-300 hover:text-white"}`}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function MiniRichTextEditor({
+  label,
+  value,
+  onChange,
+  minHeight = 90,
+  showFormatSelect = false,
+  enableLists = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  minHeight?: number;
+  showFormatSelect?: boolean;
+  enableLists?: boolean;
+}): React.JSX.Element {
+  const lastValueRef = useRef<string>(value);
+  const [formatValue, setFormatValue] = useState<string>("paragraph");
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: showFormatSelect ? { levels: [1, 2, 3] } : false,
+        bulletList: enableLists,
+        orderedList: enableLists,
+        listItem: enableLists,
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-blue-400 underline hover:text-blue-300",
+        },
+      }),
+    ],
+    content: sanitizeRichText(value),
+    editorProps: {
+      attributes: {
+        class: "min-h-full outline-none text-sm text-gray-200",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      if (html !== lastValueRef.current) {
+        lastValueRef.current = html;
+        onChange(html);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    if (value === lastValueRef.current) return;
+    const sanitized = sanitizeRichText(value);
+    if (sanitized !== editor.getHTML()) {
+      lastValueRef.current = sanitized;
+      editor.commands.setContent(sanitized, { emitUpdate: false });
+    }
+  }, [value, editor]);
+
+  useEffect(() => {
+    if (!editor || !showFormatSelect) return;
+    const updateFormat = (): void => {
+      if (editor.isActive("heading", { level: 1 })) return setFormatValue("heading-1");
+      if (editor.isActive("heading", { level: 2 })) return setFormatValue("heading-2");
+      if (editor.isActive("heading", { level: 3 })) return setFormatValue("heading-3");
+      setFormatValue("paragraph");
+    };
+    updateFormat();
+    editor.on("selectionUpdate", updateFormat);
+    editor.on("transaction", updateFormat);
+    return () => {
+      editor.off("selectionUpdate", updateFormat);
+      editor.off("transaction", updateFormat);
+    };
+  }, [editor, showFormatSelect]);
+
+  const applyFormat = (format: string): void => {
+    if (!editor) return;
+    if (format === "paragraph") {
+      editor.chain().focus().setParagraph().run();
+      return;
+    }
+    const level = format === "heading-1" ? 1 : format === "heading-2" ? 2 : 3;
+    editor.chain().focus().setHeading({ level }).run();
+  };
+
+  const addLink = (): void => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Enter URL:", previousUrl ?? "");
+    if (url === null) return;
+    if (url.trim() === "") {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
+
+  if (!editor) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+        <div className="rounded border border-border/50 bg-gray-800/40 p-3 text-xs text-gray-500">
+          Loading editor...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <div className="flex flex-wrap items-center gap-1 rounded border border-border/50 bg-gray-900/60 px-2 py-1">
+        {showFormatSelect && (
+          <div className="mr-2">
+            <Select value={formatValue} onValueChange={applyFormat}>
+              <SelectTrigger className="h-7 w-32 bg-gray-800/60 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paragraph">Paragraph</SelectItem>
+                <SelectItem value="heading-1">Heading 1</SelectItem>
+                <SelectItem value="heading-2">Heading 2</SelectItem>
+                <SelectItem value="heading-3">Heading 3</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <RichTextToolbarButton
+          title="Bold"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          active={editor.isActive("bold")}
+        >
+          <Bold className="size-4" />
+        </RichTextToolbarButton>
+        <RichTextToolbarButton
+          title="Italic"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          active={editor.isActive("italic")}
+        >
+          <Italic className="size-4" />
+        </RichTextToolbarButton>
+        {enableLists && (
+          <>
+            <RichTextToolbarButton
+              title="Bullet list"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              active={editor.isActive("bulletList")}
+            >
+              <List className="size-4" />
+            </RichTextToolbarButton>
+            <RichTextToolbarButton
+              title="Numbered list"
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              active={editor.isActive("orderedList")}
+            >
+              <ListOrdered className="size-4" />
+            </RichTextToolbarButton>
+          </>
+        )}
+        <RichTextToolbarButton
+          title="Insert link"
+          onClick={addLink}
+          active={editor.isActive("link")}
+        >
+          <Link2 className="size-4" />
+        </RichTextToolbarButton>
+      </div>
+      <div className="rounded border border-border/50 bg-gray-800/40">
+        <EditorContent
+          editor={editor}
+          className="px-3 py-2 [&_.ProseMirror]:min-h-[80px] [&_.ProseMirror]:outline-none [&_.ProseMirror_h1]:text-xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h2]:text-lg [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:text-base [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-1 [&_.ProseMirror_ul]:ml-5 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ol]:ml-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_a]:text-blue-400 [&_.ProseMirror_a]:underline"
+          style={{ minHeight }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ImagePickerField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
+      <div className="flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
+        {value ? (
+          <img src={value} alt="Selected" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-xs text-gray-500">No image</span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => setOpen(true)}>
+          <Upload className="mr-1.5 size-3" />
+          {value ? "Replace image" : "Upload image"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => setOpen(true)}>
+          <FolderOpen className="mr-1.5 size-3" />
+          Browse
+        </Button>
+      </div>
+      {value ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="w-full text-xs text-gray-400 hover:text-gray-200"
+          onClick={() => onChange("")}
+        >
+          Clear image
+        </Button>
+      ) : null}
+      <MediaLibraryPanel
+        open={open}
+        onOpenChange={setOpen}
+        selectionMode="single"
+        onSelect={(filepaths) => onChange(filepaths[0] ?? "")}
+      />
     </div>
   );
 }
@@ -336,7 +606,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   // Section bodies
   // ---------------------------------------------------------------------------
 
-  const renderSectionBody = useCallback(
+  const renderSectionBody = useCallback<(section: string) => React.ReactNode>(
     (section: string): React.ReactNode => {
       switch (section) {
 
@@ -808,8 +1078,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 { label: "Center", value: "center" },
                 { label: "Right", value: "right" },
               ]} />
-              <SelectField label="Color scheme" value={theme.cardColorScheme} onChange={(v) => update("cardColorScheme", v)} options={
-                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              <SelectField label="Color scheme" value={theme.cardColorScheme} onChange={(v: string): void => update("cardColorScheme", v)} options={
+                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
               <NumberField label="Radius" value={theme.cardRadius} onChange={(v) => update("cardRadius", v)} suffix="px" min={0} max={24} />
               <ColorField label="Background" value={theme.cardBg} onChange={(v) => update("cardBg", v)} />
@@ -858,8 +1128,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField label="Text alignment" value={theme.collectionTextAlign} onChange={(v) => update("collectionTextAlign", v)} options={[
                 { label: "Left", value: "left" }, { label: "Center", value: "center" }, { label: "Right", value: "right" },
               ]} />
-              <SelectField label="Color scheme" value={theme.collectionColorScheme} onChange={(v) => update("collectionColorScheme", v)} options={
-                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              <SelectField label="Color scheme" value={theme.collectionColorScheme} onChange={(v: string): void => update("collectionColorScheme", v)} options={
+                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
               <CheckboxField label="Show overlay" checked={theme.collectionOverlay} onChange={(v) => update("collectionOverlay", v)} />
               {theme.collectionOverlay && (
@@ -904,8 +1174,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                 { label: "Center", value: "center" },
                 { label: "Right", value: "right" },
               ]} />
-              <SelectField label="Color scheme" value={theme.blogColorScheme} onChange={(v) => update("blogColorScheme", v)} options={
-                theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }))
+              <SelectField label="Color scheme" value={theme.blogColorScheme} onChange={(v: string): void => update("blogColorScheme", v)} options={
+                theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))
               } />
               <NumberField label="Radius" value={theme.blogRadius} onChange={(v) => update("blogRadius", v)} suffix="px" min={0} max={24} />
               <CheckboxField label="Show date" checked={theme.blogShowDate} onChange={(v) => update("blogShowDate", v)} />
@@ -1071,11 +1341,36 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Badges":
           return (
             <div className="space-y-3">
+              <SelectField
+                label="Position on cards"
+                value={theme.badgePosition}
+                onChange={(v) => update("badgePosition", v)}
+                options={[
+                  { label: "Top left", value: "top-left" },
+                  { label: "Top right", value: "top-right" },
+                  { label: "Bottom left", value: "bottom-left" },
+                  { label: "Bottom right", value: "bottom-right" },
+                ]}
+              />
+              <RangeField label="Corner radius" value={theme.badgeRadius} onChange={(v) => update("badgeRadius", v)} min={0} max={40} suffix="px" />
               <NumberField label="Font size" value={theme.badgeFontSize} onChange={(v) => update("badgeFontSize", v)} suffix="px" min={8} max={16} />
-              <NumberField label="Radius" value={theme.badgeRadius} onChange={(v) => update("badgeRadius", v)} suffix="px" min={0} max={16} />
               <div className="grid grid-cols-2 gap-2">
                 <NumberField label="Padding X" value={theme.badgePaddingX} onChange={(v) => update("badgePaddingX", v)} suffix="px" min={2} max={16} />
                 <NumberField label="Padding Y" value={theme.badgePaddingY} onChange={(v) => update("badgePaddingY", v)} suffix="px" min={0} max={8} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <SelectField
+                  label="Sale color scheme"
+                  value={theme.badgeSaleColorScheme}
+                  onChange={(v: string): void => update("badgeSaleColorScheme", v)}
+                  options={theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))}
+                />
+                <SelectField
+                  label="Sold out color scheme"
+                  value={theme.badgeSoldOutColorScheme}
+                  onChange={(v: string): void => update("badgeSoldOutColorScheme", v)}
+                  options={theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))}
+                />
               </div>
               <div className="border-t border-border/30 pt-2">
                 <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Default</Label>
@@ -1097,12 +1392,44 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         // ---------------------------------------------------------------
         case "Brand Information":
           return (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <TextField label="Brand name" value={theme.brandName} onChange={(v) => update("brandName", v)} placeholder="Your brand" />
               <TextField label="Tagline" value={theme.brandTagline} onChange={(v) => update("brandTagline", v)} placeholder="Your tagline" />
               <TextField label="Email" value={theme.brandEmail} onChange={(v) => update("brandEmail", v)} placeholder="hello@example.com" />
               <TextField label="Phone" value={theme.brandPhone} onChange={(v) => update("brandPhone", v)} placeholder="+1 234 567 890" />
               <TextField label="Address" value={theme.brandAddress} onChange={(v) => update("brandAddress", v)} placeholder="123 Main St" />
+              <div className="border-t border-border/30 pt-2">
+                <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Footer description</Label>
+                <div className="space-y-3">
+                  <MiniRichTextEditor
+                    label="Headline"
+                    value={theme.brandFooterHeadline}
+                    onChange={(v) => update("brandFooterHeadline", v)}
+                    minHeight={70}
+                  />
+                  <MiniRichTextEditor
+                    label="Description"
+                    value={theme.brandFooterDescription}
+                    onChange={(v) => update("brandFooterDescription", v)}
+                    minHeight={140}
+                    showFormatSelect
+                    enableLists
+                  />
+                  <ImagePickerField
+                    label="Image"
+                    value={theme.brandFooterImage}
+                    onChange={(v) => update("brandFooterImage", v)}
+                  />
+                  <RangeField
+                    label="Image width"
+                    value={theme.brandFooterImageWidth}
+                    onChange={(v) => update("brandFooterImageWidth", v)}
+                    min={50}
+                    max={550}
+                    suffix="px"
+                  />
+                </div>
+              </div>
             </div>
           );
 
@@ -1112,10 +1439,14 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
             <div className="space-y-3">
               <TextField label="Facebook" value={theme.socialFacebook} onChange={(v) => update("socialFacebook", v)} placeholder="https://facebook.com/..." />
               <TextField label="Instagram" value={theme.socialInstagram} onChange={(v) => update("socialInstagram", v)} placeholder="https://instagram.com/..." />
-              <TextField label="Twitter / X" value={theme.socialTwitter} onChange={(v) => update("socialTwitter", v)} placeholder="https://x.com/..." />
-              <TextField label="LinkedIn" value={theme.socialLinkedin} onChange={(v) => update("socialLinkedin", v)} placeholder="https://linkedin.com/..." />
               <TextField label="YouTube" value={theme.socialYoutube} onChange={(v) => update("socialYoutube", v)} placeholder="https://youtube.com/..." />
               <TextField label="TikTok" value={theme.socialTiktok} onChange={(v) => update("socialTiktok", v)} placeholder="https://tiktok.com/..." />
+              <TextField label="X / Twitter" value={theme.socialTwitter} onChange={(v) => update("socialTwitter", v)} placeholder="https://x.com/..." />
+              <TextField label="Snapchat" value={theme.socialSnapchat} onChange={(v) => update("socialSnapchat", v)} placeholder="https://snapchat.com/add/..." />
+              <TextField label="Pinterest" value={theme.socialPinterest} onChange={(v) => update("socialPinterest", v)} placeholder="https://pinterest.com/..." />
+              <TextField label="Tumblr" value={theme.socialTumblr} onChange={(v) => update("socialTumblr", v)} placeholder="https://tumblr.com/..." />
+              <TextField label="Vimeo" value={theme.socialVimeo} onChange={(v) => update("socialVimeo", v)} placeholder="https://vimeo.com/..." />
+              <TextField label="LinkedIn" value={theme.socialLinkedin} onChange={(v) => update("socialLinkedin", v)} placeholder="https://linkedin.com/..." />
             </div>
           );
 
@@ -1125,7 +1456,13 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
             <div className="space-y-3">
               <TextField label="Placeholder text" value={theme.searchPlaceholder} onChange={(v) => update("searchPlaceholder", v)} />
               <NumberField label="Min characters" value={theme.searchMinChars} onChange={(v) => update("searchMinChars", v)} min={1} max={5} />
-              <CheckboxField label="Show suggestions" checked={theme.searchShowSuggestions} onChange={(v) => update("searchShowSuggestions", v)} />
+              <CheckboxField label="Enable search suggestions" checked={theme.searchShowSuggestions} onChange={(v) => update("searchShowSuggestions", v)} />
+              {theme.searchShowSuggestions && (
+                <>
+                  <CheckboxField label="Show product vendor" checked={theme.searchShowVendor} onChange={(v) => update("searchShowVendor", v)} />
+                  <CheckboxField label="Show product price" checked={theme.searchShowPrice} onChange={(v) => update("searchShowPrice", v)} />
+                </>
+              )}
               <NumberField label="Max results" value={theme.searchMaxResults} onChange={(v) => update("searchMaxResults", v)} min={3} max={20} />
             </div>
           );
@@ -1142,6 +1479,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
               <SelectField label="Symbol position" value={theme.currencyPosition} onChange={(v) => update("currencyPosition", v)} options={[
                 { label: "Before ($10)", value: "before" }, { label: "After (10$)", value: "after" },
               ]} />
+              <CheckboxField label="Show currency codes" checked={theme.currencyShowCode} onChange={(v) => update("currencyShowCode", v)} />
               <TextField label="Thousands separator" value={theme.thousandsSeparator} onChange={(v) => update("thousandsSeparator", v)} />
               <TextField label="Decimal separator" value={theme.decimalSeparator} onChange={(v) => update("decimalSeparator", v)} />
               <NumberField label="Decimal places" value={theme.decimalPlaces} onChange={(v) => update("decimalPlaces", v)} min={0} max={4} />
@@ -1231,13 +1569,13 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-2">
-          {THEME_SECTIONS.map((section) => {
+          {THEME_SECTIONS.map((section: string): React.JSX.Element => {
             const isOpen = openSections.has(section);
             return (
               <div key={section} className="rounded border border-border/40 bg-gray-900/60">
                 <button
                   type="button"
-                  onClick={() => toggleSection(section)}
+                  onClick={(): void => toggleSection(section)}
                   className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40"
                   aria-expanded={isOpen}
                 >

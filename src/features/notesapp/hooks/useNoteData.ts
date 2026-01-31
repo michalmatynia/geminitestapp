@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UseNoteDataProps } from "@/features/notesapp/types/notes-hooks";
-import type { NotebookRecord, NoteWithRelations } from "@/shared/types/notes";
+import type { NotebookRecord, NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren } from "@/shared/types/notes";
 import { getCategoryIdsWithDescendants } from "../utils";
 import {
   useNotebooks,
@@ -24,7 +24,22 @@ export function useNoteData({
   filterFavorite,
   filterTagIds,
   setSelectedNotebookId,
-}: UseNoteDataProps): any {
+}: UseNoteDataProps): {
+  notes: NoteWithRelations[];
+  setNotes: (updater: NoteWithRelations[] | ((prev: NoteWithRelations[]) => NoteWithRelations[])) => void;
+  tags: TagRecord[];
+  themes: ThemeRecord[];
+  notebook: NotebookRecord | null;
+  setNotebook: (updated: NotebookRecord) => void;
+  folderTree: CategoryWithChildren[];
+  loading: boolean;
+  folderTreeRef: React.MutableRefObject<CategoryWithChildren[]>;
+  notesRef: React.MutableRefObject<NoteWithRelations[]>;
+  fetchNotes: () => Promise<void>;
+  fetchFolderTree: () => Promise<void>;
+  fetchTags: () => Promise<void>;
+  fetchThemes: () => Promise<void>;
+} {
   const queryClient = useQueryClient();
 
   // Queries
@@ -33,7 +48,7 @@ export function useNoteData({
   const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
   const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
 
-  const folderTree = useMemo((): any[] => folderTreeQuery.data ?? [], [folderTreeQuery.data]);
+  const folderTree = useMemo((): CategoryWithChildren[] => folderTreeQuery.data ?? [], [folderTreeQuery.data]);
   const folderTreeRef = useRef(folderTree);
   
   useEffect((): void => {

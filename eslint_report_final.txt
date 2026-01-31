@@ -1,88 +1,16 @@
 
-> libapp2@0.1.0 lint
-> eslint .
-
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/dialog/PollNodeConfigSection.tsx
-   90:45  error  Unsafe spread of an `any` value in an array                                                   @typescript-eslint/no-unsafe-assignment
-  115:18  error  This assertion is unnecessary since the receiver accepts the original type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
-  5:24  error  Parsing error: 'from' expected
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx
+  37:3  error  Expected a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/MenuSettingsPanel.tsx
-  404:72  error  Unsafe argument of type `any` assigned to a parameter of type `"top" | "left" | "right"`  @typescript-eslint/no-unsafe-argument
-  404:77  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  453:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  496:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  499:19  error  Unknown property 'iv
-' found                                                              react/no-unknown-property
-  500:19  error  Unknown property 'd}
-      ' found                                                        react/no-unknown-property
-  502:24  error  Unknown property '         ' found                                                        react/no-unknown-property
-  531:21  error  Unknown property '
-   ' found                                                             react/no-unknown-property
-  532:21  error  Unknown property '
-      ' found                                                          react/no-unknown-property
-  533:21  error  Unknown property '
-        ' found                                                        react/no-unknown-property
-  534:21  error  Unknown property '
-    ' found                                                            react/no-unknown-property
-  557:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  581:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  628:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  667:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  669:20  error  Unknown property '>
-       ' found                                                        react/no-unknown-property
-  691:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  731:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  782:18  error  Unknown property 'n (
-     ' found                                                        react/no-unknown-property
-  786:71  error  Unsafe argument of type `any` assigned to a parameter of type `"static" | "sticky"`       @typescript-eslint/no-unsafe-argument
-  786:76  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  841:18  error  Unknown property '
-        ' found                                                        react/no-unknown-property
-  867:18  error  Unknown property '
-        ' found                                                        react/no-unknown-property
-  901:18  error  Unknown property '
-        ' found                                                        react/no-unknown-property
-  906:26  error  Unsafe assignment of an `any` value                                                       @typescript-eslint/no-unsafe-assignment
-  906:47  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  912:26  error  Unsafe assignment of an `any` value                                                       @typescript-eslint/no-unsafe-assignment
-  912:47  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  918:23  error  Unknown property '      def' found                                                        react/no-unknown-property
-  925:10  error  Unknown property 'rSchemeId' found                                                        react/no-unknown-property
-  927:14  error  Unknown property '
-      {s' found                                                        react/no-unknown-property
-  928:16  error  Unknown property 'er-border' found                                                        react/no-unknown-property
-  931:14  error  Unknown property 'ttings
-  ' found                                                        react/no-unknown-property
-  936:12  error  Unknown property '>
-       ' found                                                        react/no-unknown-property
-  937:14  error  Unknown property '1 overflo' found                                                        react/no-unknown-property
-  938:16  error  Unknown property 'lassName=' found                                                        react/no-unknown-property
-  943:20  error  Unknown property 'zoningEna' found                                                        react/no-unknown-property
-  965:22  error  Unknown property 'sScopedMe' found                                                        react/no-unknown-property
-  971:18  error  Unknown property '>
-       ' found                                                        react/no-unknown-property
-  976:16  error  Unknown property '  )}
-    ' found                                                        react/no-unknown-property
-  981:17  error  Unknown property '(
- ' found                                                              react/no-unknown-property
-  982:17  error  Unknown property '       ke' found                                                        react/no-unknown-property
-  985:19  error  Unknown property '    ' found                                                             react/no-unknown-property
-  986:19  error  Unknown property '     ty' found                                                          react/no-unknown-property
-  987:19  error  Unknown property 'eSection(' found                                                        react/no-unknown-property
-  988:19  error  Unknown property 'hover:bg-mute' found                                                    react/no-unknown-property
-  994:24  error  Unknown property ' {isOpen ' found                                                        react/no-unknown-property
+  398:72  error  Unsafe argument of type `any` assigned to a parameter of type `"top" | "left" | "right"`  @typescript-eslint/no-unsafe-argument
+  398:77  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  753:71  error  Unsafe argument of type `any` assigned to a parameter of type `"static" | "sticky"`       @typescript-eslint/no-unsafe-argument
+  753:76  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  864:26  error  Unsafe assignment of an `any` value                                                       @typescript-eslint/no-unsafe-assignment
+  864:47  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  870:26  error  Unsafe assignment of an `any` value                                                       @typescript-eslint/no-unsafe-assignment
+  870:47  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/components/DatabaseColumns.tsx
   44:23  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
@@ -255,21 +183,11 @@
   29:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/NoteListView.tsx
-   95:35   error  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
-   96:30   error  Unsafe assignment of an `any` value                                                      @typescript-eslint/no-unsafe-assignment
-   96:36   error  Unsafe member access .id on an `any` value                                               @typescript-eslint/no-unsafe-member-access
-   96:47   error  Unsafe assignment of an `any` value                                                      @typescript-eslint/no-unsafe-assignment
-   96:53   error  Unsafe member access .id on an `any` value                                               @typescript-eslint/no-unsafe-member-access
-   97:26   error  Unsafe member access .name on an `any` value                                             @typescript-eslint/no-unsafe-member-access
-  190:82   error  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
-  190:109  error  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
-  194:41   error  Unsafe argument of type `any` assigned to a parameter of type `string | null`            @typescript-eslint/no-unsafe-argument
-  194:47   error  Unsafe member access .id on an `any` value                                               @typescript-eslint/no-unsafe-member-access
-  200:26   error  Unsafe member access .name on an `any` value                                             @typescript-eslint/no-unsafe-member-access
-  221:22   error  Unsafe assignment of an error typed value                                                @typescript-eslint/no-unsafe-assignment
-  221:27   error  Unsafe member access .id on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
-  222:23   error  Unsafe assignment of an error typed value                                                @typescript-eslint/no-unsafe-assignment
-  223:40   error  Unsafe argument of type error typed assigned to a parameter of type `NoteWithRelations`  @typescript-eslint/no-unsafe-argument
+  191:82   error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  191:109  error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  195:41   error  Unsafe argument of type `any` assigned to a parameter of type `string | null`  @typescript-eslint/no-unsafe-argument
+  195:47   error  Unsafe member access .id on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  201:26   error  Unsafe member access .name on an `any` value                                   @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/NotesFilters.tsx
   68:29  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
@@ -295,36 +213,11 @@
   127:16  error  Expected a type annotation  @typescript-eslint/typedef
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/NoteSettingsContext.tsx
-   75:36  error  Expected s to have a type annotation     @typescript-eslint/typedef
-   93:36  error  Expected s to have a type annotation     @typescript-eslint/typedef
-  126:36  error  Expected s to have a type annotation     @typescript-eslint/typedef
-  159:36  error  Expected s to have a type annotation     @typescript-eslint/typedef
-  171:8   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  171:8   error  Missing return type on function          @typescript-eslint/explicit-module-boundary-types
-  183:35  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  189:24  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  200:22  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  220:22  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  237:22  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  254:22  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  320:59  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  321:18  error  Expected prev to have a type annotation  @typescript-eslint/typedef
-  324:30  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  342:8   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  342:8   error  Missing return type on function          @typescript-eslint/explicit-module-boundary-types
+  162:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useEditorMode.ts
-   10:8   error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-   10:8   error  Missing return type on function       @typescript-eslint/explicit-module-boundary-types
-   31:74  error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-   49:13  error  Expected p to have a type annotation  @typescript-eslint/typedef
-   69:5   error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-  104:5   error  Missing return type on function       @typescript-eslint/explicit-function-return-type
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteData.ts
-  27:23  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  36:34  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  46:75  error  Unsafe argument of type `any[]` assigned to a parameter of type `CategoryWithChildren[]`  @typescript-eslint/no-unsafe-argument
+  100:14  error  'error' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+  135:14  error  'error' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteFileAttachments.ts
   10:8   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
@@ -394,22 +287,6 @@
   135:5   error  Unsafe assignment of an `any` value                 @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/pages/AdminNotesPage.tsx
-   44:9    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   72:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   73:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   74:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   75:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   84:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   85:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   86:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   90:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   91:5    error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-   96:5    error  Unsafe return of a value of type `any`                @typescript-eslint/no-unsafe-return
-  158:10   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  159:10   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  164:10   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  165:10   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  183:7    error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
   203:59   error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
   203:75   error  Unsafe return of a value of type `any`                @typescript-eslint/no-unsafe-return
   203:79   error  Unsafe member access .targetNote on an `any` value    @typescript-eslint/no-unsafe-member-access
@@ -418,23 +295,7 @@
   204:73   error  Unsafe return of a value of type `any`                @typescript-eslint/no-unsafe-return
   204:77   error  Unsafe member access .sourceNote on an `any` value    @typescript-eslint/no-unsafe-member-access
   204:99   error  Unsafe member access .sourceNoteId on an `any` value  @typescript-eslint/no-unsafe-member-access
-  223:13   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  239:15   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  240:15   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  299:13   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  300:13   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  332:24   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  365:52   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
-  375:27   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  385:21   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  388:45   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
   389:34   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  396:24   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  405:27   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  413:23   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  459:23   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  461:17   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
-  464:44   error  Unsafe call of an `any` typed value                   @typescript-eslint/no-unsafe-call
   465:24   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts
@@ -1613,6 +1474,6 @@
   20:66  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
   20:66  error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
 
-✖ 1357 problems (1357 errors, 0 warnings)
+✖ 1251 problems (1251 errors, 0 warnings)
   7 errors and 0 warnings potentially fixable with the `--fix` option.
 

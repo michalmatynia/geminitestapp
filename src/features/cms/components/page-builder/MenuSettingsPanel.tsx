@@ -33,8 +33,6 @@ import type { CmsDomain } from "@/features/cms/types";
 // Types
 // ---------------------------------------------------------------------------
 
-// Types imported from menu-settings.ts
-
 const MENU_SECTIONS = [
   "Visibility & Placement",
   "Menu Layout",
@@ -246,7 +244,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const loadedKeyRef = useRef<string | null>(null);
-  const scopeTouchedRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
 
   const initialMenuScopeId = useMemo((): string => {
@@ -304,7 +301,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     return availableColorSchemeIds.has(settings.menuColorSchemeId) ? settings.menuColorSchemeId : "custom";
   }, [availableColorSchemeIds, settings.menuColorSchemeId]);
 
-  const hasScopedMenu = useMemo(() => {
+  const hasScopedMenu = useMemo((): boolean => {
     if (!zoningEnabled) return false;
     if (menuKey === CMS_MENU_SETTINGS_KEY) return false;
     return settingsQuery.data?.has(menuKey) ?? false;
@@ -387,9 +384,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const renderSectionBody = useCallback(
     (section: string): React.ReactNode => {
       switch (section) {
-        // ---------------------------------------------------------------
-        // Visibility & Placement
-        // ---------------------------------------------------------------
         case "Visibility & Placement":
           return (
             <div className="space-y-3">
@@ -445,9 +439,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Menu Layout
-        // ---------------------------------------------------------------
         case "Menu Layout":
           return (
             <div className="space-y-3">
@@ -488,9 +479,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Menu Items
-        // ---------------------------------------------------------------
         case "Menu Items":
           return (
             <div className="space-y-2">
@@ -549,9 +537,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Menu Images
-        // ---------------------------------------------------------------
         case "Menu Images":
           return (
             <div className="space-y-3">
@@ -573,9 +558,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Typography
-        // ---------------------------------------------------------------
         case "Typography":
           return (
             <div className="space-y-3">
@@ -620,9 +602,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Colors
-        // ---------------------------------------------------------------
         case "Colors":
           return (
             <div className="space-y-3">
@@ -659,9 +638,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Spacing
-        // ---------------------------------------------------------------
         case "Spacing":
           return (
             <div className="space-y-3">
@@ -683,9 +659,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Mobile Menu
-        // ---------------------------------------------------------------
         case "Mobile Menu":
           return (
             <div className="space-y-3">
@@ -723,9 +696,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Dropdown Style
-        // ---------------------------------------------------------------
         case "Dropdown Style":
           return (
             <div className="space-y-3">
@@ -769,9 +739,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Sticky Behaviour
-        // ---------------------------------------------------------------
         case "Sticky Behaviour":
           const positionMode =
             settings.positionMode ?? (settings.stickyEnabled ? "sticky" : "static");
@@ -783,7 +750,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               <SelectField
                 label="Menu position"
                 value={positionMode}
-                onChange={(v: string): void => update("positionMode", v as "sticky" | "static")}
+                onChange={(v: string): void => update("positionMode", v as any)}
                 options={[
                   { label: "Glued to top", value: "sticky" },
                   { label: "Top of page", value: "static" },
@@ -833,9 +800,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Active State
-        // ---------------------------------------------------------------
         case "Active State":
           return (
             <div className="space-y-3">
@@ -859,9 +823,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Hover Effects
-        // ---------------------------------------------------------------
         case "Hover Effects":
           return (
             <div className="space-y-3">
@@ -893,9 +854,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             </div>
           );
 
-        // ---------------------------------------------------------------
-        // Animations
-        // ---------------------------------------------------------------
         case "Animations":
           return (
             <div className="space-y-3">
@@ -944,7 +902,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 <Select
                   value={menuScopeId}
                   onValueChange={(value: string): void => {
-                    scopeTouchedRef.current = true;
                     setUserMenuScopeId(value);
                   }}
                 >

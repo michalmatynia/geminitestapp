@@ -87,7 +87,7 @@ export function PollNodeConfigSection({
         const value = fromOutput[fromPort];
         if (value === undefined) return current;
         if (current === undefined) return value;
-        if (Array.isArray(current)) return [...current, value];
+        if (Array.isArray(current)) return [...(current as unknown[]), value];
         return [current, value];
       }, undefined);
       if (merged !== undefined) {
@@ -112,7 +112,7 @@ export function PollNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Mode</Label>
         <Select
-          value={resolvedPollConfig.mode!}
+          value={resolvedPollConfig.mode}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as "job" | "database" })
           }

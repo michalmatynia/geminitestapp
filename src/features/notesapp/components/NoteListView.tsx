@@ -8,6 +8,7 @@ import { NotesFilters } from "./NotesFilters";
 import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";
 import type { NoteListViewProps } from "@/features/notesapp/types/notes-ui";
+import type { NoteWithRelations, ThemeRecord } from "@/shared/types/notes";
 
 export function NoteListView({
   loading,
@@ -92,7 +93,7 @@ export function NoteListView({
               className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-300"
             >
               <option value="">Default</option>
-              {themes.map((theme: any) => (
+              {themes.map((theme: ThemeRecord) => (
                 <option key={theme.id} value={theme.id}>
                   {theme.name}
                 </option>

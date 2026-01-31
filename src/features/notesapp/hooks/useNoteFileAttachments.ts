@@ -7,7 +7,24 @@ import type { NoteFileRecord } from "@/shared/types/notes";
 // - Lightbox for preview management
 // - Paste handling for direct image insertion
 // Extracting prevents form component bloat and makes attachment logic testable.
-export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []) {
+export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []): {
+  noteFiles: NoteFileRecord[];
+  setNoteFiles: (files: NoteFileRecord[]) => void;
+  uploadingSlots: Set<number>;
+  addUploadingSlot: (slotIndex: number) => void;
+  removeUploadingSlot: (slotIndex: number) => void;
+  isSlotUploading: (slotIndex: number) => boolean;
+  lightboxImage: string | null;
+  openLightbox: (imageUrl: string) => void;
+  closeLightbox: () => void;
+  isPasting: boolean;
+  setIsPasting: (isPasting: boolean) => void;
+  MAX_SLOTS: number;
+  canAddMoreFiles: () => boolean;
+  addFile: (file: NoteFileRecord) => boolean;
+  removeFile: (fileId: string) => void;
+  updateFile: (fileId: string, updates: Partial<NoteFileRecord>) => void;
+} {
   const [noteFiles, setNoteFiles] = useState<NoteFileRecord[]>(initialFiles);
   const [uploadingSlots, setUploadingSlots] = useState<Set<number>>(new Set());
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -15,45 +32,45 @@ export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []) {
 
   const MAX_SLOTS = 10;
 
-  const addUploadingSlot = (slotIndex: number) => {
-    setUploadingSlots((prev) => new Set([...prev, slotIndex]));
+  const addUploadingSlot = (slotIndex: number): void => {
+    setUploadingSlots((prev: Set<number>) => new Set([...prev, slotIndex]));
   };
 
-  const removeUploadingSlot = (slotIndex: number) => {
-    setUploadingSlots((prev) => {
+  const removeUploadingSlot = (slotIndex: number): void => {
+    setUploadingSlots((prev: Set<number>) => {
       const next = new Set(prev);
       next.delete(slotIndex);
       return next;
     });
   };
 
-  const isSlotUploading = (slotIndex: number) => uploadingSlots.has(slotIndex);
+  const isSlotUploading = (slotIndex: number): boolean => uploadingSlots.has(slotIndex);
 
-  const canAddMoreFiles = () => noteFiles.length < MAX_SLOTS;
+  const canAddMoreFiles = (): boolean => noteFiles.length < MAX_SLOTS;
 
-  const addFile = (file: NoteFileRecord) => {
+  const addFile = (file: NoteFileRecord): boolean => {
     if (canAddMoreFiles()) {
-      setNoteFiles((prev) => [...prev, file]);
+      setNoteFiles((prev: NoteFileRecord[]) => [...prev, file]);
       return true;
     }
     return false;
   };
 
-  const removeFile = (fileId: string) => {
-    setNoteFiles((prev) => prev.filter((f) => f.id !== fileId));
+  const removeFile = (fileId: string): void => {
+    setNoteFiles((prev: NoteFileRecord[]) => prev.filter((f: NoteFileRecord) => f.id !== fileId));
   };
 
-  const updateFile = (fileId: string, updates: Partial<NoteFileRecord>) => {
-    setNoteFiles((prev) =>
-      prev.map((f) => (f.id === fileId ? { ...f, ...updates } : f))
+  const updateFile = (fileId: string, updates: Partial<NoteFileRecord>): void => {
+    setNoteFiles((prev: NoteFileRecord[]) =>
+      prev.map((f: NoteFileRecord) => (f.id === fileId ? { ...f, ...updates } : f))
     );
   };
 
-  const openLightbox = (imageUrl: string) => {
+  const openLightbox = (imageUrl: string): void => {
     setLightboxImage(imageUrl);
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = (): void => {
     setLightboxImage(null);
   };
 

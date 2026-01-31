@@ -14,12 +14,13 @@ import { useMediaStyles } from "../media-styles-context";
 
 interface FrontendBlockRendererProps {
   block: BlockInstance;
+  stretch?: boolean;
 }
 
-export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): React.ReactNode {
+export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockRendererProps): React.ReactNode {
   const animConfig = block.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
   const mediaStyles = useMediaStyles();
-  const content = renderBlockContent(block, mediaStyles);
+  const content = renderBlockContent(block, mediaStyles, stretch);
 
   if (!content) return null;
 
@@ -30,7 +31,11 @@ export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): Re
   );
 }
 
-function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperties | null): React.ReactNode {
+function renderBlockContent(
+  block: BlockInstance,
+  mediaStyles: React.CSSProperties | null,
+  stretch: boolean = false
+): React.ReactNode {
   switch (block.type) {
     case "Heading":
       return <HeadingBlock settings={block.settings} />;
@@ -49,9 +54,9 @@ function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperti
     case "RichText":
       return <RichTextBlock settings={block.settings} />;
     case "ImageElement":
-      return <ImageElementBlock settings={block.settings} mediaStyles={mediaStyles} />;
+      return <ImageElementBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
     case "Image":
-      return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} />;
+      return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
     case "VideoEmbed":
       return <VideoEmbedBlock settings={block.settings} mediaStyles={mediaStyles} />;
     case "Divider":
@@ -242,9 +247,11 @@ function RichTextBlock({ settings }: { settings: Record<string, unknown> }): Rea
 function ImageElementBlock({
   settings,
   mediaStyles,
+  stretch = false,
 }: {
   settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
+  stretch?: boolean;
 }): React.ReactNode {
   const src = (settings["src"] as string) || "";
   const alt = (settings["alt"] as string) || "Image";
@@ -281,6 +288,7 @@ function ImageElementBlock({
   };
   if (height > 0) wrapperStyles.height = `${height}px`;
   if (aspectRatio !== "auto") wrapperStyles.aspectRatio = aspectRatio;
+  if (stretch) wrapperStyles.height = "100%";
   if (borderWidth > 0 && borderStyle !== "none") {
     wrapperStyles.borderWidth = `${borderWidth}px`;
     wrapperStyles.borderStyle = borderStyle;
@@ -350,7 +358,7 @@ function ImageElementBlock({
     );
   }
 
-  const useFill = height > 0 || aspectRatio !== "auto";
+  const useFill = stretch || height > 0 || aspectRatio !== "auto";
 
   return (
     <div className="relative" style={wrapperStyles}>
@@ -374,9 +382,11 @@ function ImageElementBlock({
 function ImageBlock({
   settings,
   mediaStyles,
+  stretch = false,
 }: {
   settings: Record<string, unknown>;
   mediaStyles: React.CSSProperties | null;
+  stretch?: boolean;
 }): React.ReactNode {
   const src = (settings["src"] as string) || "";
   const alt = (settings["alt"] as string) || "";
@@ -398,10 +408,17 @@ function ImageBlock({
     );
   }
 
+  const wrapperStyles: React.CSSProperties = {
+    width: `${width}%`,
+    ...(stretch ? { height: "100%" } : {}),
+    ...resolvedStyles,
+  };
+  const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
+
   return (
-    <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
+    <div className="cms-media" style={wrapperStyles}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="block h-auto w-full object-cover" />
+      <img src={src} alt={alt} className={imageClassName} />
     </div>
   );
 }

@@ -2208,11 +2208,10 @@ function PreviewBlockItem({
     const presentation = buildImageElementPresentation(block.settings, mediaStyles);
     const hasSrc = Boolean(src);
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
-    const fillHeight = stretch || (!showEditorChrome && Boolean(columnId));
-    const wrapperStyles = fillHeight
+    const wrapperStyles = stretch
       ? { ...presentation.wrapperStyles, height: "100%" }
       : presentation.wrapperStyles;
-    const useFill = fillHeight ? true : presentation.useFill;
+    const useFill = stretch ? true : presentation.useFill;
 
     return (
       wrapBlock(
@@ -2365,11 +2364,10 @@ function PreviewBlockItem({
       ...(mediaStyles ?? {}),
       ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
     };
-    const fillHeight = stretch || (!showEditorChrome && Boolean(columnId));
-    const wrapperStyles: React.CSSProperties = fillHeight
+    const wrapperStyles: React.CSSProperties = stretch
       ? { width: `${width}%`, height: "100%", ...resolvedStyles }
       : { width: `${width}%`, ...resolvedStyles };
-    const imageClassName = fillHeight ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
+    const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
 
     return (
       wrapBlock(
@@ -2939,6 +2937,7 @@ function PreviewBlockSectionBlock({
         ? "justify-end"
         : "justify-start";
   const blockGap = getSpacingValue(block.settings["blockGap"]);
+  const shouldStretchChildren = stretch && children.length === 1;
 
   return (
     <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
@@ -2962,6 +2961,7 @@ function PreviewBlockSectionBlock({
             parentBlockId={block.id}
             onOpenMedia={onOpenMedia}
             mediaStyles={mediaStyles}
+            stretch={shouldStretchChildren}
           />
         ))}
       </div>

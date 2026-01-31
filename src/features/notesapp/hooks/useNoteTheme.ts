@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import type { NoteWithRelations, NotebookRecord } from "@/shared/types/notes";
+import type { NoteWithRelations, NotebookRecord, ThemeRecord } from "@/shared/types/notes";
 import type { UseNoteThemeProps } from "@/features/notesapp/types/notes-hooks";
 import { findFolderById } from "@/features/foldertree";
 
@@ -13,24 +13,24 @@ export function useNoteTheme({
   fetchFolderTree,
   setNotebook,
 }: UseNoteThemeProps): {
-  getThemeForNote: (note: NoteWithRelations | null | undefined) => any | null;
-  selectedNoteTheme: any | null;
-  selectedFolderTheme: any | null;
+  getThemeForNote: (note: NoteWithRelations | null | undefined) => ThemeRecord | null;
+  selectedNoteTheme: ThemeRecord | null;
+  selectedFolderTheme: ThemeRecord | null;
   selectedFolderThemeId: string;
   handleThemeChange: (themeId: string | null) => Promise<void>;
 } {
   
   const themeMap = useMemo(
-    (): Map<string, any> => new Map(themes.map((theme: any) => [String(theme.id), theme])),
+    (): Map<string, ThemeRecord> => new Map(themes.map((theme: ThemeRecord): [string, ThemeRecord] => [String(theme.id), theme])),
     [themes]
   );
 
-  const defaultTheme = notebook?.defaultThemeId
+  const defaultTheme: ThemeRecord | null = notebook?.defaultThemeId
     ? themeMap.get(String(notebook.defaultThemeId)) ?? null
     : null;
 
   const getThemeForFolderId = useCallback(
-    (folderId: string | null | undefined): any | null => {
+    (folderId: string | null | undefined): ThemeRecord | null => {
       if (!folderId) return null;
       const folder = findFolderById(folderTree, folderId);
       const themeId = folder?.themeId ? String(folder.themeId) : null;
@@ -41,11 +41,11 @@ export function useNoteTheme({
   );
 
   const selectedFolderTheme = useMemo(
-    (): any | null => getThemeForFolderId(selectedFolderId),
+    (): ThemeRecord | null => getThemeForFolderId(selectedFolderId),
     [getThemeForFolderId, selectedFolderId]
   );
 
-  const selectedFolderThemeId = selectedFolderId
+  const selectedFolderThemeId: string = selectedFolderId
     ? ((): string => {
         const folder = findFolderById(folderTree, selectedFolderId);
         return folder?.themeId ? String(folder.themeId) : "";
@@ -55,7 +55,7 @@ export function useNoteTheme({
       : "";
 
   const getThemeForNote = useCallback(
-    (note: NoteWithRelations | null | undefined): any | null => {
+    (note: NoteWithRelations | null | undefined): ThemeRecord | null => {
       if (!note) return null;
       // 1. Check selected folder's theme
       if (selectedFolderId) {
@@ -63,7 +63,7 @@ export function useNoteTheme({
         if (selectedTheme) return selectedTheme;
       }
       // 2. Check note's category themes
-      const categoryIds = note.categories?.map((category: { categoryId: string }) => category.categoryId) ?? [];
+      const categoryIds = note.categories?.map((category: { categoryId: string }): string => category.categoryId) ?? [];
       for (const categoryId of categoryIds) {
         const theme = getThemeForFolderId(categoryId);
         if (theme) return theme;
@@ -74,8 +74,8 @@ export function useNoteTheme({
     [getThemeForFolderId, selectedFolderId, defaultTheme]
   );
 
-  const selectedNoteTheme = useMemo(
-    (): any | null => getThemeForNote(selectedNote),
+  const selectedNoteTheme: ThemeRecord | null = useMemo(
+    (): ThemeRecord | null => getThemeForNote(selectedNote),
     [getThemeForNote, selectedNote]
   );
 

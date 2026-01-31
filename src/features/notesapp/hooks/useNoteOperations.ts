@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { NoteWithRelations } from "@/shared/types/notes";
 import type { UseNoteOperationsProps } from "@/features/notesapp/types/notes-hooks";
 import { findFolderParentId, findFolderById } from "@/features/foldertree";
+import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
 
 export function useNoteOperations({
   selectedNotebookId,
@@ -70,10 +71,6 @@ export function useNoteOperations({
         await fetchFolderTree();
         await fetchNotes();
         toast("Folder deleted successfully");
-        // Since we don't have access to current selectedFolderId in state directly here (only via setter),
-        // we might rely on the parent component to handle clearing selection if needed,
-        // or pass current selection as prop.
-        // For now, assuming caller handles side-effects if needed or we re-fetch.
       } else {
         toast("Failed to delete folder", { variant: "error" });
       }
@@ -95,7 +92,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousName && previousName !== newName) {
-          setUndoStack((prev: any[]) => [
+          setUndoStack((prev: UndoAction[]): UndoAction[] => [
             { type: "renameFolder", folderId, fromName: previousName, toName: newName },
             ...prev,
           ]);
@@ -200,7 +197,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousTitle && previousTitle !== newTitle) {
-          setUndoStack((prev: any[]) => [
+          setUndoStack((prev: UndoAction[]): UndoAction[] => [
             { type: "renameNote", noteId, fromTitle: previousTitle, toTitle: newTitle },
             ...prev,
           ]);
@@ -235,7 +232,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousFolderId !== folderId) {
-          setUndoStack((prev: any[]) => [
+          setUndoStack((prev: UndoAction[]): UndoAction[] => [
             { type: "moveNote", noteId, fromFolderId: previousFolderId, toFolderId: folderId },
             ...prev,
           ]);
@@ -265,7 +262,7 @@ export function useNoteOperations({
 
       if (response.ok) {
         if (previousParentId !== targetParentId) {
-          setUndoStack((prev: any[]) => [
+          setUndoStack((prev: UndoAction[]): UndoAction[] => [
             { type: "moveFolder", folderId, fromParentId: previousParentId, toParentId: targetParentId },
             ...prev,
           ]);
@@ -334,7 +331,6 @@ export function useNoteOperations({
       await fetchFolderTree();
       await fetchNotes();
 
-      // Refresh the selected note if it was involved in the linking
       if (selectedNote && (selectedNote.id === sourceNoteId || selectedNote.id === targetNoteId)) {
         try {
           const refreshRes = await fetch(`/api/notes/${selectedNote.id}`, { cache: "no-store" });

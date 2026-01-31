@@ -45,7 +45,7 @@ async function saveSelectedFolderToDb(folderId: string | null): Promise<void> {
         value: folderId ?? "",
       }),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to save selectedFolderId to database:", error);
   }
 }
@@ -60,7 +60,7 @@ async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void
         value: notebookId ?? "",
       }),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to save selectedNotebookId to database:", error);
   }
 }
@@ -72,13 +72,13 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
     if (!response.ok) return null;
 
     const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s) => s.key === DB_SETTING_KEY);
+    const setting = settings.find((s: { key: string }) => s.key === DB_SETTING_KEY);
 
     if (setting && setting.value) {
       return setting.value;
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load selectedFolderId from database:", error);
     return null;
   }
@@ -90,13 +90,13 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
     if (!response.ok) return null;
 
     const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s) => s.key === DB_NOTEBOOK_KEY);
+    const setting = settings.find((s: { key: string }) => s.key === DB_NOTEBOOK_KEY);
 
     if (setting && setting.value) {
       return setting.value;
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load selectedNotebookId from database:", error);
     return null;
   }
@@ -112,7 +112,7 @@ async function saveAutoformatToDb(enabled: boolean): Promise<void> {
         value: enabled ? "true" : "false",
       }),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to save autoformatOnPaste to database:", error);
   }
 }
@@ -123,13 +123,13 @@ async function loadAutoformatFromDb(): Promise<boolean | null> {
     if (!response.ok) return null;
 
     const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s) => s.key === DB_AUTOFORMAT_KEY);
+    const setting = settings.find((s: { key: string }) => s.key === DB_AUTOFORMAT_KEY);
 
     if (setting && setting.value) {
       return setting.value === "true";
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load autoformatOnPaste from database:", error);
     return null;
   }
@@ -145,7 +145,7 @@ async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promis
         value: mode,
       }),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to save editorMode to database:", error);
   }
 }
@@ -156,19 +156,19 @@ async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" |
     if (!response.ok) return null;
 
     const settings = await response.json() as Array<{ key: string; value: string }>;
-    const setting = settings.find((s) => s.key === DB_EDITOR_MODE_KEY);
+    const setting = settings.find((s: { key: string }) => s.key === DB_EDITOR_MODE_KEY);
 
     if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {
-      return setting.value;
+      return setting.value as "markdown" | "wysiwyg" | "code";
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load editorMode from database:", error);
     return null;
   }
 }
 
-export function NoteSettingsProvider({ children }: { children: ReactNode }) {
+export function NoteSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
@@ -177,27 +177,27 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   const previousEditorModeRef = useRef<"markdown" | "wysiwyg" | "code">("markdown");
 
   // Load settings from localStorage first (fast), then from database (authoritative)
-  useEffect(() => {
+  useEffect((): void => {
     if (typeof window === "undefined") return;
 
-    const loadSettings = async () => {
+    const loadSettings = async (): Promise<void> => {
       // First, load from localStorage for immediate UI
       try {
         const stored = window.localStorage.getItem(STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored) as Partial<NoteSettings>;
-          setSettings((prev) => ({ ...prev, ...parsed }));
+          setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }));
           previousFolderIdRef.current = parsed.selectedFolderId ?? null;
           previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to load note settings from localStorage:", error);
       }
 
       // Then, load selectedFolderId from database (authoritative source)
       const dbFolderId = await loadSelectedFolderFromDb();
       if (dbFolderId !== null) {
-        setSettings((prev) => ({ ...prev, selectedFolderId: dbFolderId }));
+        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, selectedFolderId: dbFolderId }));
         previousFolderIdRef.current = dbFolderId;
         // Update localStorage cache
         try {
@@ -207,7 +207,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
             STORAGE_KEY,
             JSON.stringify({ ...current, selectedFolderId: dbFolderId })
           );
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
@@ -217,7 +217,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
       // Load selectedNotebookId from database
       const dbNotebookId = await loadSelectedNotebookFromDb();
       if (dbNotebookId !== null) {
-        setSettings((prev) => ({ ...prev, selectedNotebookId: dbNotebookId }));
+        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, selectedNotebookId: dbNotebookId }));
         previousNotebookIdRef.current = dbNotebookId;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -226,7 +226,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
             STORAGE_KEY,
             JSON.stringify({ ...current, selectedNotebookId: dbNotebookId })
           );
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
@@ -234,7 +234,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
       // Load autoformatOnPaste from database
       const dbAutoformat = await loadAutoformatFromDb();
       if (dbAutoformat !== null) {
-        setSettings((prev) => ({ ...prev, autoformatOnPaste: dbAutoformat }));
+        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, autoformatOnPaste: dbAutoformat }));
         previousAutoformatRef.current = dbAutoformat;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -243,7 +243,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
             STORAGE_KEY,
             JSON.stringify({ ...current, autoformatOnPaste: dbAutoformat })
           );
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
@@ -251,7 +251,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
       // Load editorMode from database
       const dbEditorMode = await loadEditorModeFromDb();
       if (dbEditorMode !== null) {
-        setSettings((prev) => ({ ...prev, editorMode: dbEditorMode }));
+        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, editorMode: dbEditorMode }));
         previousEditorModeRef.current = dbEditorMode;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -260,7 +260,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
             STORAGE_KEY,
             JSON.stringify({ ...current, editorMode: dbEditorMode })
           );
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
@@ -270,18 +270,18 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Save settings to localStorage whenever they change
-  useEffect(() => {
+  useEffect((): void => {
     if (!isInitialized || typeof window === "undefined") return;
 
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to save note settings:", error);
     }
   }, [settings, isInitialized]);
 
   // Save selectedFolderId to database when it changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isInitialized) return;
 
     // Only save to DB if the folder actually changed
@@ -291,7 +291,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.selectedFolderId, isInitialized]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!isInitialized) return;
     if (settings.selectedNotebookId !== previousNotebookIdRef.current) {
       previousNotebookIdRef.current = settings.selectedNotebookId;
@@ -300,7 +300,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.selectedNotebookId, isInitialized]);
 
   // Save autoformatOnPaste to database when it changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isInitialized) return;
     if (settings.autoformatOnPaste !== previousAutoformatRef.current) {
       previousAutoformatRef.current = settings.autoformatOnPaste;
@@ -309,7 +309,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.autoformatOnPaste, isInitialized]);
 
   // Save editorMode to database when it changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isInitialized) return;
     if (settings.editorMode !== previousEditorModeRef.current) {
       previousEditorModeRef.current = settings.editorMode;
@@ -317,11 +317,11 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.editorMode, isInitialized]);
 
-  const updateSettings = (updates: Partial<NoteSettings>) => {
-    setSettings((prev) => ({ ...prev, ...updates }));
+  const updateSettings = (updates: Partial<NoteSettings>): void => {
+    setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }));
   };
 
-  const resetToDefaults = () => {
+  const resetToDefaults = (): void => {
     setSettings(DEFAULT_NOTE_SETTINGS);
     // Also clear the database values
     void saveSelectedFolderToDb(null);
@@ -339,7 +339,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useNoteSettings() {
+export function useNoteSettings(): NoteSettingsContextType {
   const context = useContext(NoteSettingsContext);
   if (context === undefined) {
     throw new Error("useNoteSettings must be used within a NoteSettingsProvider");

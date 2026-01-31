@@ -149,7 +149,7 @@ function ColumnRenderer({
           }
           return (
             <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>
-              <FrontendBlockRenderer block={block} />
+              <FrontendBlockRenderer block={block} stretch={shouldStretch} />
             </div>
           );
         })}
@@ -225,12 +225,13 @@ function SectionBlockRenderer({
         : alignment === "right"
           ? "justify-end"
           : "justify-start";
+    const shouldStretchChildren = stretch && children.length === 1;
     return (
       <GsapAnimationWrapper config={animConfig}>
         <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
           <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
             {children.map((child: BlockInstance) => (
-              <FrontendBlockRenderer key={child.id} block={child} />
+              <FrontendBlockRenderer key={child.id} block={child} stretch={shouldStretchChildren} />
             ))}
           </div>
         </div>

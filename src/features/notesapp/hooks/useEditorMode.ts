@@ -10,7 +10,14 @@ import { useState, useEffect } from "react";
 export function useEditorMode(
   note: { id?: string; editorType?: string; content?: string } | null,
   settingsEditorMode: "markdown" | "wysiwyg" | "code"
-) {
+): {
+  editorMode: "markdown" | "wysiwyg" | "code";
+  setEditorMode: (mode: "markdown" | "wysiwyg" | "code") => void;
+  isEditorModeLocked: boolean;
+  isMigrating: boolean;
+  handleMigrateToWysiwyg: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
+  handleMigrateToMarkdown: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
+} {
   const { toast } = useToast();
   const [editorMode, setEditorMode] = useState<"markdown" | "wysiwyg" | "code">(
     (note?.editorType as "markdown" | "wysiwyg" | "code") || settingsEditorMode
@@ -18,7 +25,7 @@ export function useEditorMode(
   const [isMigrating, setIsMigrating] = useState(false);
 
   // Sync editor mode from note's editorType
-  useEffect(() => {
+  useEffect((): void => {
     if (note?.editorType) {
       setEditorMode(note.editorType as "markdown" | "wysiwyg" | "code");
     } else {
@@ -28,7 +35,7 @@ export function useEditorMode(
 
   const isEditorModeLocked = Boolean(note?.id);
 
-  const handleEditorModeChange = (mode: "markdown" | "wysiwyg" | "code") => {
+  const handleEditorModeChange = (mode: "markdown" | "wysiwyg" | "code"): void => {
     if (!note?.id) {
       setEditorMode(mode);
     }
@@ -46,7 +53,7 @@ export function useEditorMode(
     html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
     html = html
       .split("\n\n")
-      .map((p) => {
+      .map((p: string) => {
         if (!p.startsWith("<")) return `<p>${p}</p>`;
         return p;
       })
@@ -66,7 +73,7 @@ export function useEditorMode(
   const handleMigrateToWysiwyg = async (
     content: string,
     onSuccess?: () => void
-  ) => {
+  ): Promise<string | undefined> => {
     if (!note?.id) return;
 
     setIsMigrating(true);
@@ -90,7 +97,7 @@ export function useEditorMode(
       toast("Note migrated to WYSIWYG format", { variant: "success" });
       onSuccess?.();
       return htmlContent;
-    } catch {
+    } catch (error: unknown) {
       toast("Failed to migrate note", { variant: "error" });
       throw new Error("Migration failed");
     } finally {
@@ -101,7 +108,7 @@ export function useEditorMode(
   const handleMigrateToMarkdown = async (
     content: string,
     onSuccess?: () => void
-  ) => {
+  ): Promise<string | undefined> => {
     if (!note?.id) return;
 
     setIsMigrating(true);
@@ -125,7 +132,7 @@ export function useEditorMode(
       toast("Note migrated to Markdown format", { variant: "success" });
       onSuccess?.();
       return markdownContent;
-    } catch {
+    } catch (error: unknown) {
       toast("Failed to migrate note", { variant: "error" });
       throw new Error("Migration failed");
     } finally {

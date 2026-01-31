@@ -2,7 +2,27 @@ import { useState, useEffect, useCallback } from "react";
 import type { UseNoteFiltersProps } from "@/features/notesapp/types/notes-hooks";
 import type { NoteWithRelations } from "@/shared/types/notes";
 
-export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps) {
+export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  debouncedSearchQuery: string;
+  filterPinned: boolean | undefined;
+  setFilterPinned: (v: boolean | undefined) => void;
+  filterArchived: boolean | undefined;
+  setFilterArchived: (v: boolean | undefined) => void;
+  filterFavorite: boolean | undefined;
+  setFilterFavorite: (v: boolean | undefined) => void;
+  filterTagIds: string[];
+  setFilterTagIds: (ids: string[]) => void;
+  highlightTagId: string | null;
+  setHighlightTagId: (id: string | null) => void;
+  page: number;
+  setPage: (p: number | ((curr: number) => number)) => void;
+  pageSize: number;
+  setPageSize: (s: number) => void;
+  handleFilterByTag: (tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
+  handleToggleFavoritesFilter: (setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
+} {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
@@ -16,15 +36,15 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   const [pageSize, setPageSize] = useState(24);
 
   // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  useEffect((): void | (() => void) => {
+    const timer = setTimeout((): void => {
       setDebouncedSearchQuery(searchQuery);
     }, 250);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [searchQuery]);
 
   // Reset page when filters change
-  useEffect(() => {
+  useEffect((): void => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [
@@ -39,15 +59,15 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   ]);
 
   // Clear highlight tag
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     if (!highlightTagId) return;
-    const timer = setTimeout(() => {
+    const timer = setTimeout((): void => {
       setHighlightTagId(null);
     }, 2000);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [highlightTagId]);
 
-  const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => {
+  const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
     setSelectedFolderId(null);
     setFilterTagIds([tagId]);
     setSearchQuery("");
@@ -56,8 +76,8 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     setHighlightTagId(tagId);
   }, []);
 
-  const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => {
-    setFilterFavorite((prev) => (prev ? undefined : true));
+  const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
+    setFilterFavorite((prev: boolean | undefined) => (prev ? undefined : true));
     setSelectedFolderId(null);
     setSelectedNote(null);
     setIsEditing(false);

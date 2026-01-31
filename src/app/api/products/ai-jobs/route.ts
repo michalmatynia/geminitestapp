@@ -8,9 +8,9 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const staleResult = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
-    if (staleResult.count > 0) {
-      console.log(`[api/products/ai-jobs] Marked ${staleResult.count} stale running jobs as failed`);
+    const staleCount = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
+    if (staleCount > 0) {
+      console.log(`[api/products/ai-jobs] Marked ${staleCount} stale running jobs as failed`);
     }
     startProductAiJobQueue();
     const { searchParams } = new URL(req.url);
@@ -41,12 +41,12 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     const scope = searchParams.get("scope");
 
     if (scope === "terminal") {
-      const result = await deleteTerminalProductAiJobs();
-      return NextResponse.json({ success: true, count: result.count });
+      const count = await deleteTerminalProductAiJobs();
+      return NextResponse.json({ success: true, count });
     }
     if (scope === "all") {
-      const result = await deleteAllProductAiJobs();
-      return NextResponse.json({ success: true, count: result.count });
+      const count = await deleteAllProductAiJobs();
+      return NextResponse.json({ success: true, count });
     }
 
     throw badRequestError("Invalid scope");

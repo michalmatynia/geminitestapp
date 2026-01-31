@@ -58,15 +58,24 @@ export default function DatabasesPage(): React.JSX.Element {
         backupName,
         truncateBeforeRestore,
       }),
-    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
-      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
+    onSuccess: (
+      _data: unknown,
+      variables: {
+        dbType: DatabaseType;
+        backupName: string;
+        truncateBeforeRestore: boolean;
+      }
+    ): void => {
+      void queryClient.invalidateQueries({
+        queryKey: ["database-backups", variables.dbType],
+      });
     },
   });
 
   const uploadBackup = useMutation({
     mutationFn: async ({ dbType, file }: { dbType: DatabaseType; file: File }) =>
       uploadDatabaseBackup(dbType, file),
-    onSuccess: (_data: unknown, variables: { dbType: DatabaseType }): void => {
+    onSuccess: (_data: unknown, variables: { dbType: DatabaseType; file: File }): void => {
       void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
     },
   });

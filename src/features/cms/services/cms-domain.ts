@@ -58,8 +58,8 @@ const getFallbackDomain = (): string => {
 const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
   id: "default-domain",
   domain: normalizeHost(hostHeader),
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 });
 
 const normalizeHost = (hostHeader: string | null): string => {

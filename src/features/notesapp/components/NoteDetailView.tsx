@@ -27,11 +27,11 @@ export function NoteDetailView({
   onSelectRelatedNote,
   onFilterByTag,
   onUnlinkRelatedNote,
-}: NoteDetailViewProps) {
+}: NoteDetailViewProps): React.JSX.Element {
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
-  const relatedNotes = useMemo(() => {
+  const relatedNotes = useMemo((): any[] => {
     if (!selectedNote) return [];
     if (selectedNote.relations && selectedNote.relations.length > 0) {
       return selectedNote.relations;
@@ -41,37 +41,37 @@ export function NoteDetailView({
       id: string | undefined,
       title: string | undefined,
       color: string | null | undefined
-    ) => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+    ): { id: string; title: string; color: string | null } | null => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
 
     const fromRelations = (selectedNote.relationsFrom ?? [])
-      .map((relation) =>
+      .map((relation: any) =>
         build(
           relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
       )
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
 
     const toRelations = (selectedNote.relationsTo ?? [])
-      .map((relation) =>
+      .map((relation: any) =>
         build(
           relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )
       )
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item: any): item is NonNullable<typeof item> => Boolean(item));
 
     return [...fromRelations, ...toRelations];
   }, [selectedNote]);
 
   const relationIds = useMemo(
-    () =>
+    (): string[] =>
       relatedNotes
-        .map((rel) => rel.id)
+        .map((rel: any) => rel.id)
         .filter(
-          (id, index, array) => array.findIndex((entry) => entry === id) === index
+          (id: string, index: number, array: string[]): boolean => array.findIndex((entry: string): boolean => entry === id) === index
         ),
     [relatedNotes]
   );
@@ -79,10 +79,10 @@ export function NoteDetailView({
   useEffect(() => {
     if (!selectedNote || relationIds.length === 0) return;
     let isActive = true;
-    const fetchRelated = async () => {
+    const fetchRelated = async (): Promise<void> => {
       try {
         const notes = await Promise.all(
-          relationIds.map(async (id) => {
+          relationIds.map(async (id: string) => {
             try {
               const res = await fetch(`/api/notes/${id}`, { cache: "no-store" });
               if (!res.ok) return null;
@@ -94,22 +94,22 @@ export function NoteDetailView({
         );
         if (!isActive) return;
         const nextMap: Record<string, NoteWithRelations> = {};
-        notes.filter(Boolean).forEach((note) => {
+        notes.filter((note: NoteWithRelations | null): note is NoteWithRelations => !!note).forEach((note: NoteWithRelations) => {
           if (note) nextMap[note.id] = note;
         });
         setRelatedPreviewNotes(nextMap);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to load related notes:", error);
       }
     };
 
     void fetchRelated();
-    return () => {
+    return (): void => {
       isActive = false;
     };
   }, [selectedNote, relationIds]);
 
-  const getReadableTextColor = (hexColor: string) => {
+  const getReadableTextColor = (hexColor: string): string => {
     const normalized = hexColor.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
       return "#f8fafc";
@@ -242,14 +242,14 @@ export function NoteDetailView({
           selectedNote.categories[0]?.categoryId || null,
           selectedNote.title,
           folderTree
-        ).map((crumb, index, array) => (
+        ).map((crumb: any, index: number, array: any[]) => (
           <React.Fragment key={index}>
             {crumb.isNote ? (
               <span className="text-gray-300">{crumb.name}</span>
             ) : (
               <Button
                 variant="link"
-                onClick={() => {
+                onClick={(): void => {
                   setSelectedFolderId(crumb.id);
                   setSelectedNote(null);
                   setIsEditing(false);
@@ -268,7 +268,7 @@ export function NoteDetailView({
 
       <div className="mb-4 flex items-center gap-4">
         <Button
-          onClick={() => {
+          onClick={(): void => {
             if (isEditing) {
               setIsEditing(false);
             } else {
@@ -281,7 +281,7 @@ export function NoteDetailView({
         </Button>
         <Button
           type="button"
-          onClick={() => onToggleFavorite(selectedNote)}
+          onClick={(): void => void onToggleFavorite(selectedNote)}
           className="flex items-center gap-2 border border-white/20 hover:border-white/40"
         >
           <Star
@@ -294,7 +294,7 @@ export function NoteDetailView({
         </Button>
         {!isEditing ? (
           <Button
-            onClick={() => setIsEditing(true)}
+            onClick={(): void => setIsEditing(true)}
             className="min-w-[80px] border border-white/20 hover:border-white/40"
           >
             Edit
@@ -304,7 +304,7 @@ export function NoteDetailView({
             <Button
               type="button"
               form="note-edit-form"
-              onClick={() => {
+              onClick={(): void => {
                 const form = document.getElementById("note-edit-form") as HTMLFormElement;
                 form?.requestSubmit();
               }}
@@ -314,14 +314,14 @@ export function NoteDetailView({
             </Button>
             <Button
               type="button"
-              onClick={() => setIsEditing(false)}
+              onClick={(): void => setIsEditing(false)}
               className="min-w-[80px] border border-white/20 hover:border-white/40"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              onClick={() => { void onDeleteNote(); }}
+              onClick={(): void => { void onDeleteNote(); }}
               className="min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400"
             >
               Delete

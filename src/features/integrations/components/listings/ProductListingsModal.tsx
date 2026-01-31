@@ -3,10 +3,7 @@ import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownM
 import React, { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
-
-
-
-
+import Link from "next/link";
 
 import type { ProductWithImages } from "@/features/products";
 import type { ProductListingWithDetails, ProductListingExportEvent, IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
@@ -312,7 +309,7 @@ export default function ProductListingsModal({
           <div className="flex items-center gap-2 text-xs text-blue-300">
             <ArrowRight className="size-3" />
             <span>
-              Currently configured for <strong>one-way export</strong> (Product → Base.com)
+              Currently configured for <strong>one-way export</strong> (Product &rarr; Base.com)
             </span>
           </div>
         </div>
@@ -548,7 +545,7 @@ export default function ProductListingsModal({
       imagesOnly: true,
       listingId: listing.id,
       externalListingId: listing.externalListingId,
-      allowDuplicateSku: true,
+      allowDuplicateSku,
       exportImagesAsBase64: true,
     };
     if (options?.imageBase64Mode) {
@@ -811,7 +808,7 @@ export default function ProductListingsModal({
                                     {event.fields && event.fields.length > 0 ? (
                                       <span>Fields: {event.fields.join(", ")}</span>
                                     ) : (
-                                      <span>Fields: —</span>
+                                      <span>Fields: &mdash;</span>
                                     )}
                                   </div>
                                 </div>

@@ -51,13 +51,13 @@ export const getDatabaseColumns = (options?: {
   },
   {
     id: "createdAt",
-    accessorFn: (row: DatabaseInfo): number | undefined => row.createdAt,
+    accessorFn: (row: DatabaseInfo): number => new Date(row.createdAt).getTime(),
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Created", column),
     cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.created,
   },
   {
     id: "lastModifiedAt",
-    accessorFn: (row: DatabaseInfo): number | undefined => row.lastModifiedAt,
+    accessorFn: (row: DatabaseInfo): number => new Date(row.lastModifiedAt).getTime(),
     header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader("Last Modified", column),
     cell: ({ row }: { row: { original: DatabaseInfo } }): string | undefined => row.original.lastModified,
   },

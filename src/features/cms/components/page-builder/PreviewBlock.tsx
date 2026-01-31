@@ -2208,6 +2208,10 @@ function PreviewBlockItem({
     const presentation = buildImageElementPresentation(block.settings, mediaStyles);
     const hasSrc = Boolean(src);
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
+    const wrapperStyles = stretch
+      ? { ...presentation.wrapperStyles, height: "100%" }
+      : presentation.wrapperStyles;
+    const useFill = stretch ? true : presentation.useFill;
 
     return (
       wrapBlock(
@@ -2226,7 +2230,7 @@ function PreviewBlockItem({
           )}
         >
           {hasSrc ? (
-            <div className="relative" style={presentation.wrapperStyles}>
+            <div className="relative" style={wrapperStyles}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
@@ -2234,7 +2238,7 @@ function PreviewBlockItem({
                 style={{
                   ...presentation.imageStyles,
                   display: "block",
-                  height: presentation.useFill ? "100%" : "auto",
+                  height: useFill ? "100%" : "auto",
                 }}
               />
               {presentation.hasOverlay && (
@@ -2360,6 +2364,10 @@ function PreviewBlockItem({
       ...(mediaStyles ?? {}),
       ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
     };
+    const wrapperStyles: React.CSSProperties = stretch
+      ? { width: `${width}%`, height: "100%", ...resolvedStyles }
+      : { width: `${width}%`, ...resolvedStyles };
+    const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
 
     return (
       wrapBlock(
@@ -2379,14 +2387,14 @@ function PreviewBlockItem({
             )}
           >
             {src ? (
-              <div className="cms-media relative" style={{ width: `${width}%`, ...resolvedStyles }}>
+              <div className="cms-media relative" style={wrapperStyles}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={alt} className="block h-auto w-full object-cover" />
+                <img src={src} alt={alt} className={imageClassName} />
               </div>
             ) : (
               <div
                 className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
-                style={{ width: `${width}%`, ...resolvedStyles }}
+                style={wrapperStyles}
               >
                 <div className="flex flex-col items-center gap-1">
                   <ImageIcon className="size-6 text-gray-500" />

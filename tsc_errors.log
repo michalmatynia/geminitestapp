@@ -1,3 +1,7 @@
+src/app/api/products/ai-jobs/route.ts(12,21): error TS2339: Property 'count' does not exist on type 'number'.
+src/app/api/products/ai-jobs/route.ts(13,64): error TS2339: Property 'count' does not exist on type 'number'.
+src/app/api/products/ai-jobs/route.ts(45,63): error TS2339: Property 'count' does not exist on type 'number'.
+src/app/api/products/ai-jobs/route.ts(49,63): error TS2339: Property 'count' does not exist on type 'number'.
 src/features/cms/components/frontend/GsapAnimationWrapper.tsx(7,22): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Flip.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/flip.d.ts' only in casing.
   The file is in the program because:
     Referenced via 'flip.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
@@ -10,58 +14,9 @@ src/features/cms/components/frontend/GsapAnimationWrapper.tsx(10,26): error TS11
   The file is in the program because:
     Referenced via 'observer.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
     Imported via "gsap/Observer" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Observer.d.ts@3.14.2'
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(984,47): error TS18048: 'closest' is possibly 'undefined'.
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(986,48): error TS2532: Object is possibly 'undefined'.
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(992,19): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(1011,13): error TS2322: Type 'string' is not assignable to type 'DraggableType | undefined'.
-src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx(323,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
-src/features/cms/components/frontend/theme-styles.ts(43,7): error TS2322: Type 'CSSProperties | undefined' is not assignable to type 'CSSProperties'.
-  Type 'undefined' is not assignable to type 'Properties<string | number, string & {}>'.
-src/features/cms/components/page-builder/ComponentSettingsPanel.tsx(622,26): error TS2345: Argument of type '(prev: string) => string' is not assignable to parameter of type 'SetStateAction<"connections" | "settings" | "animation">'.
-  Type '(prev: string) => string' is not assignable to type '(prevState: "connections" | "settings" | "animation") => "connections" | "settings" | "animation"'.
-    Type 'string' is not assignable to type '"connections" | "settings" | "animation"'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(299,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1095,15): error TS2322: Type 'string' is not assignable to type 'never'.
 src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1273,15): error TS2322: Type 'string' is not assignable to type 'never'.
-src/features/cms/components/page-builder/MenuSettingsPanel.tsx(404,17): error TS2322: Type '(v: MenuSettings["menuPlacement"]) => void' is not assignable to type '(v: string) => void'.
-  Types of parameters 'v' and 'v' are incompatible.
-    Type 'string' is not assignable to type '"left" | "right" | "top"'.
-src/features/cms/components/page-builder/MenuSettingsPanel.tsx(786,17): error TS2322: Type '(v: MenuSettings["positionMode"]) => void' is not assignable to type '(v: string) => void'.
-  Types of parameters 'v' and 'v' are incompatible.
-    Type 'string' is not assignable to type '"sticky" | "static"'.
-src/features/cms/components/page-builder/MenuSettingsPanel.tsx(905,71): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
-src/features/cms/components/page-builder/MenuSettingsPanel.tsx(911,71): error TS2345: Argument of type 'string' is not assignable to parameter of type 'AnimationPreset'.
-src/features/cms/components/page-builder/PreviewBlock.tsx(3154,5): error TS2322: Type 'string' is not assignable to type 'ObjectFit | undefined'.
-src/features/cms/components/page-builder/section-registry.ts(850,27): error TS18048: 'BLOCK_DEFINITIONS.TextAtom' is possibly 'undefined'.
-src/features/cms/components/page-builder/section-registry.ts(851,25): error TS18048: 'BLOCK_DEFINITIONS.TextAtom' is possibly 'undefined'.
-src/features/cms/components/page-builder/section-registry.ts(858,27): error TS18048: 'BLOCK_DEFINITIONS.ImageElement' is possibly 'undefined'.
-src/features/cms/components/page-builder/section-registry.ts(859,25): error TS18048: 'BLOCK_DEFINITIONS.ImageElement' is possibly 'undefined'.
-src/features/cms/components/page-builder/section-registry.ts(866,27): error TS18048: 'BLOCK_DEFINITIONS.Button' is possibly 'undefined'.
-src/features/cms/components/page-builder/section-registry.ts(867,25): error TS18048: 'BLOCK_DEFINITIONS.Button' is possibly 'undefined'.
-src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(237,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<BulletListOptions> | undefined'.
-src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(238,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<OrderedListOptions> | undefined'.
-src/features/cms/components/page-builder/ThemeSettingsPanel.tsx(239,9): error TS2322: Type 'boolean' is not assignable to type 'false | Partial<ListItemOptions> | undefined'.
-src/features/cms/hooks/useCmsQueries.ts(128,3): error TS2322: Type 'UseMutationResult<Slug, Error, { slug: string; domainId?: string | undefined; }, unknown>' is not assignable to type 'UseMutationResult<Slug, Error, { slug: string; domainId?: string | null | undefined; }>'.
-  Type 'Override<MutationObserverIdleResult<Slug, Error, { slug: string; domainId?: string | undefined; }, unknown>, { mutate: UseMutateFunction<Slug, Error, { ...; }, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<Slug, Error, { slug: string; domainId?: string | null | undefined; }>'.
-    Type 'Override<MutationObserverIdleResult<Slug, Error, { slug: string; domainId?: string | undefined; }, unknown>, { mutate: UseMutateFunction<Slug, Error, { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<Slug, Error, { slug: string; domainId?: string | null | undefined; }, unknown>, { mutate: UseMutateFunction<Slug, Error, { ...; }, unknown>; }> & { ...; }'.
-      Type 'Override<MutationObserverIdleResult<Slug, Error, { slug: string; domainId?: string | undefined; }, unknown>, { mutate: UseMutateFunction<Slug, Error, { ...; }, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<Slug, Error, { slug: string; domainId?: string | null | undefined; }, unknown>, { mutate: UseMutateFunction<Slug, Error, { ...; }, unknown>; }>'.
-        Types of property 'mutate' are incompatible.
-          Type 'UseMutateFunction<Slug, Error, { slug: string; domainId?: string | undefined; }, unknown>' is not assignable to type 'UseMutateFunction<Slug, Error, { slug: string; domainId?: string | null | undefined; }, unknown>'.
-            Types of parameters 'variables' and 'variables' are incompatible.
-              Type '{ slug: string; domainId?: string | null | undefined; }' is not assignable to type '{ slug: string; domainId?: string | undefined; }'.
-                Types of property 'domainId' are incompatible.
-                  Type 'string | null | undefined' is not assignable to type 'string | undefined'.
-                    Type 'null' is not assignable to type 'string | undefined'.
-src/features/cms/hooks/usePageBuilderContext.tsx(1329,20): error TS18048: 'previous' is possibly 'undefined'.
-src/features/cms/hooks/usePageBuilderContext.tsx(1330,17): error TS18048: 'previous' is possibly 'undefined'.
-src/features/cms/hooks/usePageBuilderContext.tsx(1343,20): error TS18048: 'next' is possibly 'undefined'.
-src/features/cms/hooks/usePageBuilderContext.tsx(1344,17): error TS18048: 'next' is possibly 'undefined'.
-src/features/cms/pages/pages/EditPagePage.tsx(38,44): error TS2322: Type 'Map<string, { id: string; slug: string; }>' is not assignable to type 'void'.
-src/features/cms/pages/slugs/SlugsPage.tsx(167,27): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
-  Type 'null' is not assignable to type 'string | undefined'.
-src/features/cms/services/cms-domain.ts(61,3): error TS2322: Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-domain.ts(62,3): error TS2322: Type 'Date' is not assignable to type 'string'.
 src/features/cms/services/cms-domain.ts(151,3): error TS2322: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
   Types of property 'createdAt' are incompatible.
     Type 'Date' is not assignable to type 'string'.
@@ -76,28 +31,9 @@ src/features/cms/services/cms-domain.ts(188,3): error TS2322: Type 'CmsDomainRec
   Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
     Types of property 'createdAt' are incompatible.
       Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(341,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }[]' to type 'CmsTheme[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' is not comparable to type 'CmsTheme'.
-    Types of property 'colors' are incompatible.
-      Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(357,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'colors' are incompatible.
-    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(375,15): error TS2352: Conversion of type 'CmsThemeColors' to type 'Record<string, string>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Index signature for type 'string' is missing in type 'CmsThemeColors'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(376,19): error TS2352: Conversion of type 'CmsThemeTypography' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Index signature for type 'string' is missing in type 'CmsThemeTypography'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(377,16): error TS2352: Conversion of type 'CmsThemeSpacing' to type 'Record<string, string>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Index signature for type 'string' is missing in type 'CmsThemeSpacing'.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(383,12): error TS2352: Conversion of type '{ id: `${string}-${string}-${string}-${string}-${string}`; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'colors' are incompatible.
-    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(410,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; createdAt: string; updatedAt: string; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'colors' are incompatible.
-    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
-src/features/cms/services/cms-repository/mongo-cms-repository.ts(426,12): error TS2352: Conversion of type '{ id: string; name: string; colors: Record<string, string>; typography: Record<string, unknown>; spacing: Record<string, string>; customCss: string | undefined; }' to type 'CmsTheme' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'colors' are incompatible.
-    Type 'Record<string, string>' is missing the following properties from type 'CmsThemeColors': primary, secondary, accent, background, and 3 more.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(34,11): error TS2304: Cannot find name 'CmsThemeColors'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(35,15): error TS2304: Cannot find name 'CmsThemeTypography'.
+src/features/cms/services/cms-repository/mongo-cms-repository.ts(36,12): error TS2304: Cannot find name 'CmsThemeSpacing'.
 src/features/cms/services/cms-repository/prisma-cms-repository.ts(197,17): error TS2352: Conversion of type 'CmsThemeColors' to type 'InputJsonValue' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
   Type 'CmsThemeColors' is not comparable to type 'InputJsonObject'.
     Index signature for type 'string' is missing in type 'CmsThemeColors'.
@@ -144,10 +80,9 @@ src/features/files/services/image-file-repository/prisma-image-file-repository.t
   Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
 src/features/gsap/components/AnimationPreviewIcon.tsx(185,17): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
   Type 'undefined' is not assignable to type 'TweenTarget'.
-src/features/integrations/components/listings/ListProductModal.tsx(30,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
-src/features/integrations/components/listings/ListProductModal.tsx(30,28): error TS6196: 'IntegrationConnectionBasic' is declared but never used.
-src/features/integrations/components/listings/ListProductModal.tsx(31,1): error TS6192: All imports in import declaration are unused.
-src/features/integrations/components/listings/ListProductModal.tsx(191,27): error TS2339: Property 'connections' does not exist on type 'Integration'.
+src/features/integrations/components/listings/ListProductModal.tsx(26,28): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
+src/features/integrations/components/listings/ListProductModal.tsx(26,28): error TS6196: 'IntegrationConnectionBasic' is declared but never used.
+src/features/integrations/components/listings/ListProductModal.tsx(187,27): error TS2339: Property 'connections' does not exist on type 'Integration'.
 src/features/integrations/components/listings/MassListProductModal.tsx(24,1): error TS6133: 'IntegrationConnectionBasic' is declared but its value is never read.
 src/features/integrations/components/listings/MassListProductModal.tsx(24,15): error TS2724: '"@/features/integrations/types/integrations-ui"' has no exported member named 'IntegrationConnectionBasic'. Did you mean 'IntegrationConnection'?
 src/features/integrations/components/listings/ProductListingsModal.tsx(223,12): error TS2304: Cannot find name 'Link'.
@@ -174,6 +109,114 @@ src/features/integrations/services/product-listing-repository.ts(325,3): error T
   Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
     Type 'boolean' is not assignable to type 'void'.
 src/features/jobs/server.ts(7,1): error TS2308: Module "./workers/chatbotJobQueue" has already exported a member named 'pollQueue'. Consider explicitly re-exporting to resolve the ambiguity.
+src/features/jobs/services/productAiService.ts(1,10): error TS2300: Duplicate identifier 'productService'.
+src/features/jobs/services/productAiService.ts(2,10): error TS2300: Duplicate identifier 'getProductAiJobRepository'.
+src/features/jobs/services/productAiService.ts(3,10): error TS2300: Duplicate identifier 'invalidStateError'.
+src/features/jobs/services/productAiService.ts(3,29): error TS2300: Duplicate identifier 'notFoundError'.
+src/features/jobs/services/productAiService.ts(4,15): error TS2300: Duplicate identifier 'ProductAiJobUpdate'.
+src/features/jobs/services/productAiService.ts(5,15): error TS2300: Duplicate identifier 'ProductAiJobType'.
+src/features/jobs/services/productAiService.ts(7,10): error TS2300: Duplicate identifier 'productService'.
+src/features/jobs/services/productAiService.ts(8,10): error TS2300: Duplicate identifier 'getProductAiJobRepository'.
+src/features/jobs/services/productAiService.ts(9,10): error TS2300: Duplicate identifier 'invalidStateError'.
+src/features/jobs/services/productAiService.ts(9,29): error TS2300: Duplicate identifier 'notFoundError'.
+src/features/jobs/services/productAiService.ts(10,15): error TS2300: Duplicate identifier 'ProductAiJobUpdate'.
+src/features/jobs/services/productAiService.ts(11,15): error TS2300: Duplicate identifier 'ProductAiJobType'.
+src/features/jobs/services/productAiService.ts(18,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+  Types of property 'result' are incompatible.
+    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(45,52): error TS2345: Argument of type '(j: ProductAiJob) => string' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => string'.
+  Types of parameters 'j' and 'value' are incompatible.
+    Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+      Types of property 'result' are incompatible.
+        Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(70,3): error TS2322: Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }[]' is not assignable to type '(ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; })[]'.
+  Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }' is not assignable to type 'ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; }'.
+    Type '{ product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }' is not assignable to type 'ProductAiJob'.
+      Types of property 'product' are incompatible.
+        Type '{ name_en: any; sku: any; } | null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
+          Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
+src/features/jobs/services/productAiService.ts(70,19): error TS2345: Argument of type '(job: ProductAiJob) => { product: { name_en: any; sku: any; } | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; ... 5 more ...; finishedAt: string | null; }' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => { product: { name_en: any; sku: any; } | null; id: string; productId: string; ... 7 more ...; finishedAt: string | null; }'.
+  Types of parameters 'job' and 'value' are incompatible.
+    Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+      Types of property 'result' are incompatible.
+        Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(109,3): error TS2322: Type '{ product: ProductWithImages | null; id: string; productId: string; status: ProductAiJobStatus; type: string; payload: unknown; ... 4 more ...; finishedAt?: Date | null; }' is not assignable to type 'ProductAiJob & { product: any; }'.
+  Type '{ product: ProductWithImages | null; id: string; productId: string; status: ProductAiJobStatus; type: string; payload: unknown; ... 4 more ...; finishedAt?: Date | null; }' is not assignable to type 'ProductAiJob'.
+    Types of property 'result' are incompatible.
+      Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(117,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+  Types of property 'result' are incompatible.
+    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(131,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
+  Types of property 'result' are incompatible.
+    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
+src/features/jobs/services/productAiService.ts(144,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/jobs/services/productAiService.ts(149,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/jobs/services/productAiService.ts(154,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
+src/features/notesapp/api/useNoteMutations.ts(5,52): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(5,78): error TS2304: Cannot find name 'NoteCreateInput'.
+src/features/notesapp/api/useNoteMutations.ts(9,33): error TS2304: Cannot find name 'NoteCreateInput'.
+src/features/notesapp/api/useNoteMutations.ts(9,59): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(16,41): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(25,52): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(25,98): error TS2304: Cannot find name 'NoteUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(29,58): error TS2304: Cannot find name 'NoteUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(29,86): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(36,41): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(38,24): error TS2304: Cannot find name 'NoteWithRelations'.
+src/features/notesapp/api/useNoteMutations.ts(46,52): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(50,45): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(55,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(64,58): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(68,105): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(75,41): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(83,58): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(83,101): error TS2304: Cannot find name 'CategoryUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(87,58): error TS2304: Cannot find name 'CategoryUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(87,90): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(94,41): error TS2304: Cannot find name 'CategoryRecord'.
+src/features/notesapp/api/useNoteMutations.ts(103,58): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(107,101): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(113,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(122,56): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(125,61): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(132,41): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(140,56): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(143,77): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(150,41): error TS2304: Cannot find name 'NotebookRecord'.
+src/features/notesapp/api/useNoteMutations.ts(158,56): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(161,45): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(164,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(176,55): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(179,5): error TS2322: Type '(payload: { name: string; notebookId: string; color?: string; }) => Promise<TagRecord>' is not assignable to type 'MutationFunction<TagRecord, { notebookId: string; }>'.
+  Types of parameters 'payload' and 'variables' are incompatible.
+    Property 'name' is missing in type '{ notebookId: string; }' but required in type '{ name: string; notebookId: string; color?: string | undefined; }'.
+src/features/notesapp/api/useNoteMutations.ts(179,96): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(186,41): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(188,24): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(194,55): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(194,93): error TS2304: Cannot find name 'TagUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(197,58): error TS2304: Cannot find name 'TagUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(197,85): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(204,41): error TS2304: Cannot find name 'TagRecord'.
+src/features/notesapp/api/useNoteMutations.ts(212,55): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(215,45): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(218,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(226,57): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(229,5): error TS2322: Type '(payload: { name: string; notebookId: string; colors: Record<string, string>; }) => Promise<ThemeRecord>' is not assignable to type 'MutationFunction<ThemeRecord, { notebookId: string; }>'.
+  Types of parameters 'payload' and 'variables' are incompatible.
+    Type '{ notebookId: string; }' is missing the following properties from type '{ name: string; notebookId: string; colors: Record<string, string>; }': name, colors
+src/features/notesapp/api/useNoteMutations.ts(229,112): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(236,41): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(238,24): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(244,57): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(244,97): error TS2304: Cannot find name 'ThemeUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(247,58): error TS2304: Cannot find name 'ThemeUpdateInput'.
+src/features/notesapp/api/useNoteMutations.ts(247,87): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(254,41): error TS2304: Cannot find name 'ThemeRecord'.
+src/features/notesapp/api/useNoteMutations.ts(262,57): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(265,45): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/api/useNoteMutations.ts(268,41): error TS2304: Cannot find name 'DeleteResponse'.
 src/features/notesapp/components/NoteForm.tsx(712,14): error TS2322: Type '() => void' is not assignable to type 'void'.
 src/features/notesapp/components/NoteForm.tsx(827,13): error TS2322: Type '(e: React.ClipboardEvent<HTMLTextAreaElement>) => void' is not assignable to type '(e: ClipboardEvent<HTMLTextAreaElement>) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
@@ -262,4 +305,3 @@ src/features/products/services/product-repository/prisma-product-repository.ts(2
   Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
 src/features/products/services/product-repository/prisma-product-repository.ts(279,38): error TS2345: Argument of type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' is not assignable to parameter of type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
   Property 'tags' is missing in type '{ size: number; height: number | null; id: string; width: number | null; filepath: string; filename: string; createdAt: Date; updatedAt: Date; mimetype: string; }' but required in type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[] | null; createdAt: Date; updatedAt: Date; }'.
-src/shared/lib/observability/system-log-repository.ts(335,40): error TS2694: Namespace '"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.prisma/client/index".Prisma' has no exported member 'SystemLog'.

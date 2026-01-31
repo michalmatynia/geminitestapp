@@ -194,9 +194,9 @@ export const prismaCmsRepository: CmsRepository = {
     const theme = await prisma.cmsTheme.create({
       data: {
         name: data.name,
-        colors: data.colors as Prisma.InputJsonValue,
-        typography: data.typography as Prisma.InputJsonValue,
-        spacing: data.spacing as Prisma.InputJsonValue,
+        colors: data.colors as unknown as Prisma.InputJsonValue,
+        typography: data.typography as unknown as Prisma.InputJsonValue,
+        spacing: data.spacing as unknown as Prisma.InputJsonValue,
         customCss: data.customCss ?? null,
       },
     });
@@ -206,9 +206,9 @@ export const prismaCmsRepository: CmsRepository = {
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
     const cleanData = removeUndefined({
       name: data.name,
-      colors: data.colors as Prisma.InputJsonValue | undefined,
-      typography: data.typography as Prisma.InputJsonValue | undefined,
-      spacing: data.spacing as Prisma.InputJsonValue | undefined,
+      colors: data.colors as unknown as Prisma.InputJsonValue | undefined,
+      typography: data.typography as unknown as Prisma.InputJsonValue | undefined,
+      spacing: data.spacing as unknown as Prisma.InputJsonValue | undefined,
       customCss: data.customCss,
     });
     const theme = await prisma.cmsTheme.update({

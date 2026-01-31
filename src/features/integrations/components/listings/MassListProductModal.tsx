@@ -3,9 +3,6 @@
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox } from "@/shared/ui";
 import { useState } from "react";
 
-
-
-
 import { logger } from "@/shared/utils/logger";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
@@ -21,7 +18,6 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
-import type { IntegrationConnectionBasic } from "@/features/integrations/types/integrations-ui";
 import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
 
 export default function MassListProductModal({
@@ -42,7 +38,7 @@ export default function MassListProductModal({
     selectedIntegration,
     isBaseComIntegration,
   } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
-
+  
   // Base.com specific settings
   const {
     templates,
@@ -60,7 +56,7 @@ export default function MassListProductModal({
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
 
-  const connectionName = selectedIntegration?.connections.find(
+  const connectionName = (selectedIntegration?.connections as any[])?.find(
     (c: any) => c.id === selectedConnectionId
   )?.name || "";
 
@@ -223,9 +219,9 @@ export default function MassListProductModal({
                             <SelectValue placeholder="Select inventory..." />
                             </SelectTrigger>
                             <SelectContent>
-                            {inventories
-                                .filter((inventory: InventoryOption) => inventory.id)
-                                .map((inventory: InventoryOption) => (
+                            {(inventories as any[])
+                                .filter((inventory: any): boolean => !!inventory.id)
+                                .map((inventory: any) => (
                                 <SelectItem key={inventory.id} value={inventory.id}>
                                     {inventory.name}
                                 </SelectItem>
@@ -250,9 +246,9 @@ export default function MassListProductModal({
                             </SelectTrigger>
                             <SelectContent>
                             <SelectItem value="none">No template</SelectItem>
-                            {templates
-                                .filter((template: Template) => template.id)
-                                .map((template: Template) => (
+                            {(templates as any[])
+                                .filter((template: any): boolean => !!template.id)
+                                .map((template: any) => (
                                 <SelectItem key={template.id} value={template.id}>
                                     {template.name}
                                 </SelectItem>
@@ -267,7 +263,8 @@ export default function MassListProductModal({
                         <div className="flex items-center gap-2 pt-2">
                         <Checkbox
                             id="allowDuplicateSku"
-                            checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
+                            checked={allowDuplicateSku} 
+                            onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                             className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                         />
                         <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

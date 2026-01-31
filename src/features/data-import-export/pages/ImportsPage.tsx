@@ -217,10 +217,9 @@ export default function ImportsPage(): React.JSX.Element {
     });
   const invalidStockMappings =
     acceptedWarehouseIds.size > 0
-      ? stockMappingEntries.filter(
-          ({ suffix, normalized }: { suffix: string; normalized: string }): boolean => suffix && !acceptedWarehouseIds.has(normalized)
-        )
-      : [];
+              ? stockMappingEntries.filter(
+                  ({ suffix, normalized }: { suffix: string; normalized: string }): boolean => !!suffix && !acceptedWarehouseIds.has(normalized)
+                )      : [];
   const hasStockMappingMismatch =
     !isImportTemplateScope && invalidStockMappings.length > 0;
   const invalidStockMappingLabels = invalidStockMappings.map(({ key }: { key: string }): string => key);

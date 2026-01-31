@@ -24,7 +24,7 @@ export function useNoteData({
   filterFavorite,
   filterTagIds,
   setSelectedNotebookId,
-}: UseNoteDataProps) {
+}: UseNoteDataProps): any {
   const queryClient = useQueryClient();
 
   // Queries
@@ -33,21 +33,21 @@ export function useNoteData({
   const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
   const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
 
-  const folderTree = useMemo(() => folderTreeQuery.data ?? [], [folderTreeQuery.data]);
+  const folderTree = useMemo((): any[] => folderTreeQuery.data ?? [], [folderTreeQuery.data]);
   const folderTreeRef = useRef(folderTree);
   
-  useEffect(() => {
+  useEffect((): void => {
     folderTreeRef.current = folderTree;
   }, [folderTree]);
 
   // Derived category IDs for notes filter
-  const categoryIds = useMemo(() => {
+  const categoryIds = useMemo((): string[] => {
     if (!selectedFolderId) return [];
     const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTree);
     return descendantIds.length > 0 ? descendantIds : [selectedFolderId];
   }, [selectedFolderId, folderTree]);
 
-  const notesParams = useMemo(() => {
+  const notesParams = useMemo((): FetchNotesParams => {
     const params: FetchNotesParams = {
       search: searchQuery,
       searchScope,
@@ -74,15 +74,15 @@ export function useNoteData({
 
   const notesQuery = useNotes(notesParams);
 
-  const notes = useMemo(() => notesQuery.data ?? [], [notesQuery.data]);
+  const notes = useMemo((): NoteWithRelations[] => notesQuery.data ?? [], [notesQuery.data]);
   const notesRef = useRef(notes);
 
-  useEffect(() => {
+  useEffect((): void => {
     notesRef.current = notes;
   }, [notes]);
 
   // Load initial notebook if none selected
-  useEffect(() => {
+  useEffect((): void => {
     if (selectedNotebookId) return;
     const firstNotebook = notebooksQuery.data?.[0];
     if (firstNotebook) {
@@ -90,19 +90,19 @@ export function useNoteData({
     }
   }, [selectedNotebookId, notebooksQuery.data, setSelectedNotebookId]);
 
-  const notebook = useMemo(() => 
-    notebooksQuery.data?.find(n => n.id === selectedNotebookId) ?? null,
+  const notebook = useMemo((): NotebookRecord | null => 
+    notebooksQuery.data?.find((n: NotebookRecord) => n.id === selectedNotebookId) ?? null,
     [notebooksQuery.data, selectedNotebookId]
   );
 
-  const setNotes = useCallback((updater: NoteWithRelations[] | ((prev: NoteWithRelations[]) => NoteWithRelations[])) => {
+  const setNotes = useCallback((updater: NoteWithRelations[] | ((prev: NoteWithRelations[]) => NoteWithRelations[])): void => {
     queryClient.setQueryData(["notes", notesParams], updater);
   }, [queryClient, notesParams]);
 
-  const setNotebook = useCallback((updated: NotebookRecord) => {
-    queryClient.setQueryData(["notebooks"], (prev: NotebookRecord[] | undefined) => {
+  const setNotebook = useCallback((updated: NotebookRecord): void => {
+    queryClient.setQueryData(["notebooks"], (prev: NotebookRecord[] | undefined): NotebookRecord[] => {
       if (!prev) return [updated];
-      return prev.map(n => n.id === updated.id ? updated : n);
+      return prev.map((n: NotebookRecord) => n.id === updated.id ? updated : n);
     });
   }, [queryClient]);
 
@@ -117,9 +117,9 @@ export function useNoteData({
     loading: notesQuery.isLoading || folderTreeQuery.isLoading || notebooksQuery.isLoading,
     folderTreeRef,
     notesRef,
-    fetchNotes: async () => { await notesQuery.refetch(); },
-    fetchFolderTree: async () => { await folderTreeQuery.refetch(); },
-    fetchTags: async () => { await tagsQuery.refetch(); },
-    fetchThemes: async () => { await themesQuery.refetch(); },
+    fetchNotes: async (): Promise<void> => { await notesQuery.refetch(); },
+    fetchFolderTree: async (): Promise<void> => { await folderTreeQuery.refetch(); },
+    fetchTags: async (): Promise<void> => { await tagsQuery.refetch(); },
+    fetchThemes: async (): Promise<void> => { await themesQuery.refetch(); },
   };
 }

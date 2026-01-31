@@ -28,7 +28,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const previousConnectionId = useRef<string>("");
 
   // Load templates when connection changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration || !connectionId) {
       setTemplates([]);
       return;
@@ -54,7 +54,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
         } catch {
           // Preference load failed, not critical
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to load templates:", err);
         setTemplates([]);
       }
@@ -62,7 +62,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, connectionId]);
 
   // Load inventories when connection changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration || !connectionId) {
       setInventories([]);
       setLoadingInventories(false);
@@ -108,7 +108,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
         } catch {
           // Preference load failed, not critical
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to load inventories:", err);
         setInventories([]);
       } finally {
@@ -118,7 +118,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, connectionId]);
 
   // Auto-select preferred template
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration) return;
     if (!preferredTemplateId) return;
     if (selectedTemplateId !== "none") return;
@@ -126,7 +126,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
   // Auto-select preferred inventory or first available
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration) return;
     if (selectedInventoryId) return;
     if (!inventories.length) return;
@@ -139,7 +139,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, loadingInventories]);
 
   // Sync template preference when selected changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === "none") return;
     void (async (): Promise<void> => {
       try {
@@ -155,7 +155,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, selectedTemplateId]);
 
   // Sync inventory preference when selected changes
-  useEffect(() => {
+  useEffect((): void => {
     if (!isBaseComIntegration || !selectedInventoryId) return;
     void (async (): Promise<void> => {
       try {

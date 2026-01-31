@@ -55,7 +55,7 @@ export function NoteListView({
   setSelectedFolderId,
   setSelectedNote,
   setIsEditing,
-}: NoteListViewProps) {
+}: NoteListViewProps): React.JSX.Element {
   return (
     <ListPanel
       variant="flat"
@@ -88,11 +88,11 @@ export function NoteListView({
             <span className="text-xs text-gray-500">Theme</span>
             <select
               value={selectedFolderThemeId}
-              onChange={(e) => onThemeChange(e.target.value || null)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => onThemeChange(e.target.value || null)}
               className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-300"
             >
               <option value="">Default</option>
-              {themes.map((theme) => (
+              {themes.map((theme: any) => (
                 <option key={theme.id} value={theme.id}>
                   {theme.name}
                 </option>
@@ -103,7 +103,7 @@ export function NoteListView({
             <span className="text-xs text-gray-500">Page</span>
             <Button
               type="button"
-              onClick={() => setPage(Math.max(1, page - 1))}
+              onClick={(): void => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
               className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
             >
@@ -114,7 +114,7 @@ export function NoteListView({
             </span>
             <Button
               type="button"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              onClick={(): void => setPage(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
               className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
             >
@@ -122,14 +122,14 @@ export function NoteListView({
             </Button>
             <select
               value={pageSize}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
                 setPageSize(Number(e.target.value));
                 setPage(1);
               }}
               className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border"
               aria-label="Notes per page"
             >
-              {[12, 24, 48].map((size) => (
+              {[12, 24, 48].map((size: number) => (
                 <option key={size} value={size}>
                   {size} / page
                 </option>
@@ -161,7 +161,7 @@ export function NoteListView({
             buildBreadcrumbPath={buildBreadcrumbPath}
           />
           <Button
-            onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
+            onClick={(): void => setFilterPinned(filterPinned === true ? undefined : true)}
             className={`rounded-lg border px-4 py-2 ${
               filterPinned === true
                 ? "border-blue-500 bg-blue-600 text-white"
@@ -171,7 +171,7 @@ export function NoteListView({
             <Pin size={20} />
           </Button>
           <Button
-            onClick={() => setFilterArchived(filterArchived === true ? undefined : true)}
+            onClick={(): void => setFilterArchived(filterArchived === true ? undefined : true)}
             className={`rounded-lg border px-4 py-2 ${
               filterArchived === true
                 ? "border-gray-500 bg-gray-700 text-white"
@@ -187,10 +187,10 @@ export function NoteListView({
         {/* Breadcrumb */}
         {selectedFolderId && (
           <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
-            {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb, index, array) => (
+            {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb: any, index: number, array: any[]) => (
               <React.Fragment key={index}>
                 <Button
-                  onClick={() => {
+                  onClick={(): void => {
                     setSelectedFolderId(crumb.id);
                     setSelectedNote(null);
                     setIsEditing(false);
@@ -216,7 +216,7 @@ export function NoteListView({
           </div>
         ) : (
           <div className={noteLayoutClassName}>
-            {pagedNotes.map((note) => (
+            {pagedNotes.map((note: NoteWithRelations) => (
               <NoteCard
                 key={note.id}
                 note={note}
@@ -240,7 +240,7 @@ export function NoteListView({
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
             <Button
               type="button"
-              onClick={() => setPage(Math.max(1, page - 1))}
+              onClick={(): void => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
               className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
             >
@@ -251,7 +251,7 @@ export function NoteListView({
             </span>
             <Button
               type="button"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              onClick={(): void => setPage(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
               className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
             >

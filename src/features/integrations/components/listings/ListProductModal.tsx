@@ -2,10 +2,6 @@
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, ModalShell, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Checkbox } from "@/shared/ui";
 import { useState } from "react";
 
-
-
-
-
 import { ProductWithImages } from "@/features/products";
 import type {
   ImageRetryPreset,
@@ -27,9 +23,20 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
-import type { Integration } from "@/features/integrations/types/integrations-ui";
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from "@/features/integrations/types/listings";
 import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
+
+type LocalIntegrationConnection = {
+  id: string;
+  name: string;
+  integrationId: string;
+};
+
+type LocalIntegration = {
+  id: string;
+  name: string;
+  slug: string;
+  connections: LocalIntegrationConnection[];
+};
 
 export default function ListProductModal({
   product,
@@ -48,12 +55,12 @@ export default function ListProductModal({
     isBaseComIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection(initialIntegrationId, initialConnectionId) as {
-    integrations: IntegrationWithConnections[];
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId) as unknown as {
+    integrations: LocalIntegration[];
     loading: boolean;
     selectedIntegrationId: string;
     selectedConnectionId: string;
-    selectedIntegration: IntegrationWithConnections | null;
+    selectedIntegration: LocalIntegration | null;
     isBaseComIntegration: boolean;
     setSelectedIntegrationId: (id: string) => void;
     setSelectedConnectionId: (id: string) => void;
@@ -74,16 +81,16 @@ export default function ListProductModal({
 
   // Export logging
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
-  const [logsOpen, setLogsOpen] = useState(false);
+  const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const imageRetryPresets = useImageRetryPresets();
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  const selectedConnection = selectedIntegration?.connections.find(
-    (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
+  const selectedConnection = selectedIntegration?.connections?.find(
+    (connection: LocalIntegrationConnection) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
@@ -169,7 +176,7 @@ export default function ListProductModal({
 
         onSuccess();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
     } finally {
       setSubmitting(false);
@@ -190,7 +197,7 @@ export default function ListProductModal({
         imageTransform: preset.transform,
       });
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setSubmitting(false);
@@ -198,7 +205,7 @@ export default function ListProductModal({
   };
 
   const integrationsWithConnections = integrations.filter(
-    (i: Integration) => i.connections.length > 0
+    (i: LocalIntegration) => i.connections.length > 0
   );
 
   return (
@@ -321,8 +328,8 @@ export default function ListProductModal({
                     </SelectTrigger>
                     <SelectContent>
                       {integrationsWithConnections
-                        .filter((integration: Integration): boolean => !!integration.id)
-                        .map((integration: Integration) => (
+                        .filter((integration: LocalIntegration): boolean => !!integration.id)
+                        .map((integration: LocalIntegration) => (
                           <SelectItem key={integration.id} value={integration.id}>
                             {integration.name}
                           </SelectItem>
@@ -343,8 +350,8 @@ export default function ListProductModal({
                       </SelectTrigger>
                       <SelectContent>
                         {selectedIntegration.connections
-                          .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
-                          .map((connection: IntegrationConnectionBasic) => (
+                          .filter((connection: LocalIntegrationConnection): boolean => !!connection.id)
+                          .map((connection: LocalIntegrationConnection) => (
                             <SelectItem key={connection.id} value={connection.id}>
                               {connection.name}
                             </SelectItem>
@@ -419,7 +426,8 @@ export default function ListProductModal({
                 <div className="flex items-center gap-2 pt-2">
                   <Checkbox
                     id="allowDuplicateSku"
-                    checked={allowDuplicateSku} onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
+                    checked={allowDuplicateSku} 
+                    onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
                     className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">

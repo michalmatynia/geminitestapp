@@ -2,13 +2,23 @@ import { productService } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
 import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
-import type { ProductAiJobType } from "@/shared/types/jobs";
-
-import { productService } from "@/features/products/server";
-import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
-import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
-import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
 import type { ProductAiJobType, ProductAiJob } from "@/shared/types/jobs";
+
+type ProductSummary = {
+  name_en: string | null;
+  sku: string | null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object";
+
+const toProductSummary = (product: Record<string, unknown> | null): ProductSummary | null => {
+  if (!product) return null;
+  const record = product;
+  const name = typeof record.name_en === "string" ? record.name_en : null;
+  const sku = typeof record.sku === "string" ? record.sku : null;
+  return { name_en: name, sku };
+};
 
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
@@ -47,10 +57,10 @@ export async function getProductAiJobs(productId?: string): Promise<(ProductAiJo
 
   // Fetch all unique products in parallel
   const productResults = await Promise.all(
-    uniqueProductIds.map(async (id: string) => {
+    uniqueProductIds.map(async (id: string): Promise<{ id: string; product: Record<string, unknown> | null }> => {
       try {
         const product = await productService.getProductById(id);
-        return { id, product };
+        return { id, product: isRecord(product) ? product : null };
       } catch (error: unknown) {
         console.error(`[getProductAiJobs] Failed to fetch product ${id}:`, error);
         return { id, product: null };
@@ -60,9 +70,9 @@ export async function getProductAiJobs(productId?: string): Promise<(ProductAiJo
 
   // Create lookup map for O(1) access
   const productMap = new Map(
-    productResults.map(({ id, product }: { id: string; product: any }) => [
+    productResults.map(({ id, product }: { id: string; product: Record<string, unknown> | null }) => [
       id,
-      product ? { name_en: product.name_en, sku: product.sku } : null,
+      toProductSummary(product),
     ])
   );
 
@@ -73,12 +83,12 @@ export async function getProductAiJobs(productId?: string): Promise<(ProductAiJo
   }));
 }
 
-export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { product: any }) | null> {
+export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { product: Record<string, unknown> | null }) | null> {
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.findJobById(jobId);
   if (!job) return null;
 
-  let product = null;
+  let product: Record<string, unknown> | null = null;
   const payload =
     job.payload && typeof job.payload === "object"
       ? (job.payload as Record<string, unknown>)
@@ -99,7 +109,8 @@ export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { 
     (entityType ? entityType === "product" : true);
   if (shouldFetch) {
     try {
-      product = await productService.getProductById(job.productId);
+      const result = await productService.getProductById(job.productId);
+      product = isRecord(result) ? result : null;
     } catch (error: unknown) {
       console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
       // Continue without product details if it fails

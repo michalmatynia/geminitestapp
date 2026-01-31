@@ -5,7 +5,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { Filter } from "mongodb";
 import { ObjectId } from "mongodb";
 import type { CmsRepository, PageUpdateData } from "../../types/services/cms-repository";
-import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from "../../types";
+import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput, CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from "../../types";
 
 const pagesCollection = "cms_pages";
 const slugsCollection = "cms_slugs";
@@ -31,9 +31,9 @@ interface PageDocument {
 interface ThemeDocument {
   id: string;
   name: string;
-  colors: Record<string, string>;
-  typography: Record<string, unknown>;
-  spacing: Record<string, string>;
+  colors: CmsThemeColors;
+  typography: CmsThemeTypography;
+  spacing: CmsThemeSpacing;
   customCss?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -347,7 +347,7 @@ export const mongoCmsRepository: CmsRepository = {
       customCss: doc.customCss ?? undefined,
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
-    })) as CmsTheme[];
+    }));
   },
 
   async getThemeById(id: string): Promise<CmsTheme | null> {
@@ -363,7 +363,7 @@ export const mongoCmsRepository: CmsRepository = {
       customCss: doc.customCss ?? undefined,
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
-    } as CmsTheme;
+    };
   },
 
   async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
@@ -372,9 +372,9 @@ export const mongoCmsRepository: CmsRepository = {
     const doc: ThemeDocument = {
       id,
       name: data.name,
-      colors: data.colors as Record<string, string>,
-      typography: data.typography as Record<string, unknown>,
-      spacing: data.spacing as Record<string, string>,
+      colors: data.colors,
+      typography: data.typography,
+      spacing: data.spacing,
       customCss: data.customCss ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -387,16 +387,18 @@ export const mongoCmsRepository: CmsRepository = {
       typography: doc.typography,
       spacing: doc.spacing,
       customCss: doc.customCss ?? undefined,
-    } as CmsTheme;
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
   },
 
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
     const db = await getMongoDb();
     const update = removeUndefined({
       name: data.name,
-      colors: data.colors as Record<string, string> | undefined,
-      typography: data.typography as Record<string, unknown> | undefined,
-      spacing: data.spacing as Record<string, string> | undefined,
+      colors: data.colors,
+      typography: data.typography,
+      spacing: data.spacing,
       customCss: data.customCss,
       updatedAt: new Date(),
     }) as Partial<ThemeDocument>;
@@ -416,7 +418,7 @@ export const mongoCmsRepository: CmsRepository = {
       customCss: result.customCss ?? undefined,
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
-    } as CmsTheme;
+    };
   },
 
   async deleteTheme(id: string): Promise<CmsTheme | null> {
@@ -430,6 +432,8 @@ export const mongoCmsRepository: CmsRepository = {
       typography: doc.typography,
       spacing: doc.spacing,
       customCss: doc.customCss ?? undefined,
-    } as CmsTheme;
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
   },
 };

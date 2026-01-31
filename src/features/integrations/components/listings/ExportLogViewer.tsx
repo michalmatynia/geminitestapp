@@ -36,26 +36,28 @@ export function ExportLogViewer({
     if (entries.length === 0) return null;
     const sum = (key: "outputBytes" | "originalBytes" | "base64Length"): number =>
       entries.reduce(
-        (total: number, entry: Record<string, unknown>) =>
-          total + (typeof entry[key] === "number" ? entry[key] : 0),
+        (total: number, entry: Record<string, unknown>): number => {
+          const val = entry[key];
+          return total + (typeof val === "number" ? val : 0);
+        },
         0
       );
     const outputModes = new Set(
       entries
-        .map((entry: Record<string, unknown>) =>
+        .map((entry: Record<string, unknown>): string | null =>
           typeof entry.outputMode === "string" ? entry.outputMode : null
         )
-        .filter(Boolean)
+        .filter((mode: string | null): mode is string => !!mode)
     );
     const outputFormats = new Set(
       entries
-        .map((entry: Record<string, unknown>) =>
+        .map((entry: Record<string, unknown>): string | null =>
           typeof entry.outputFormat === "string" ? entry.outputFormat : null
         )
-        .filter(Boolean)
+        .filter((format: string | null): format is string => !!format)
     );
-    const convertedCount = entries.filter((entry: Record<string, unknown>) => entry.converted === true).length;
-    const resizedCount = entries.filter((entry: Record<string, unknown>) => entry.resized === true).length;
+    const convertedCount = entries.filter((entry: Record<string, unknown>): boolean => entry.converted === true).length;
+    const resizedCount = entries.filter((entry: Record<string, unknown>): boolean => entry.resized === true).length;
     return {
       count: entries.length,
       totalOriginalBytes: sum("originalBytes"),

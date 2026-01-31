@@ -630,9 +630,8 @@ export const normalizeThemeSettings = (
   const fallbackSchemes = DEFAULT_THEME.colorSchemes;
   const rawSchemes = Array.isArray(input?.colorSchemes) ? input?.colorSchemes : merged.colorSchemes;
   const normalizedSchemes = Array.isArray(rawSchemes)
-    ? rawSchemes.map((scheme: Partial<ColorScheme> | null | undefined, index: number) =>
-      normalizeScheme(scheme, fallbackSchemes[index] ?? fallbackSchemes[0]))
-    : fallbackSchemes;
+          ? rawSchemes.map((scheme: Partial<ColorScheme> | null | undefined, index: number) =>
+            normalizeScheme(scheme, fallbackSchemes[index] ?? fallbackSchemes[0]!))    : fallbackSchemes;
 
   merged.colorSchemes = normalizedSchemes.length > 0 ? normalizedSchemes : fallbackSchemes;
 

@@ -7,6 +7,8 @@ import { ColumnBlockPicker } from "./ColumnBlockPicker";
 
 const SECTION_ICONS: Record<string, React.ElementType> = {
   AnnouncementBar: Megaphone,
+  Block: Box,
+  TextElement: FileText,
   ImageWithText: Layers,
   RichText: AlignLeft,
   Hero: Layers,
@@ -20,9 +22,11 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
 };
 
 const BLOCK_ICONS: Record<string, React.ElementType> = {
+  Row: GripVertical,
   Announcement: Megaphone,
   Heading: Heading,
   Text: AlignLeft,
+  TextElement: FileText,
   Button: MousePointerClick,
   Column: Columns,
   ImageWithText: Layers,

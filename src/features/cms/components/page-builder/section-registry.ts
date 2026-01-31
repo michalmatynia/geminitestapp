@@ -16,6 +16,16 @@ function colorSchemeField(key: string, label: string, defaultValue: string = "sc
   return { key, label, type: "color-scheme", options: COLOR_SCHEME_OPTIONS, defaultValue };
 }
 
+function colorSchemeFieldWithNone(key: string, label: string, defaultValue: string = "none"): SettingsField {
+  return {
+    key,
+    label,
+    type: "color-scheme",
+    options: [{ label: "None", value: "none" }],
+    defaultValue,
+  };
+}
+
 function paddingFields(): SettingsField[] {
   return [
     { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 36 },
@@ -46,9 +56,17 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
+const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
+  Row: {
+    type: "Row",
+    label: "Row",
+    icon: "GripVertical",
+    defaultSettings: {},
+    settingsSchema: [],
+  },
   Announcement: {
     type: "Announcement",
     label: "Announcement",
@@ -130,6 +148,40 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
       { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
       { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
+    ],
+  },
+  TextElement: {
+    type: "TextElement",
+    label: "Text element",
+    icon: "FileText",
+    defaultSettings: {
+      textContent: "Text element",
+      fontFamily: "",
+      fontSize: 0,
+      fontWeight: "400",
+      fontStyle: "normal",
+      lineHeight: 0,
+      letterSpacing: 0,
+      textColor: "",
+    },
+    settingsSchema: [
+      { key: "textContent", label: "Text", type: "text", defaultValue: "Text element" },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
+      {
+        key: "fontStyle",
+        label: "Font style",
+        type: "select",
+        options: [
+          { label: "Normal", value: "normal" },
+          { label: "Italic", value: "italic" },
+        ],
+        defaultValue: "normal",
+      },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
       { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
@@ -359,7 +411,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "AnnouncementBar",
     label: "Announcement bar",
     icon: "Megaphone",
-    allowedBlockTypes: ["Announcement", "Text", "Button", "Icon", "AppEmbed"],
+    allowedBlockTypes: ["Announcement", "Text", "TextElement", "Button", "Icon", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-2",
       paddingTop: 12,
@@ -377,7 +429,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       {
         key: "contentAlignment",
         label: "Content alignment",
-        type: "select",
+        type: "alignment",
         options: [
           { label: "Left", value: "left" },
           { label: "Center", value: "center" },
@@ -390,11 +442,81 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       ...sectionStyleFields(),
     ],
   },
+  Block: {
+    type: "Block",
+    label: "Block",
+    icon: "Box",
+    allowedBlockTypes: BLOCK_SECTION_ALLOWED_BLOCK_TYPES,
+    defaultSettings: {
+      colorScheme: "none",
+      paddingTop: 24,
+      paddingBottom: 24,
+      paddingLeft: 24,
+      paddingRight: 24,
+      marginTop: 0,
+      marginBottom: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      contentAlignment: "left",
+    },
+    settingsSchema: [
+      colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
+      {
+        key: "contentAlignment",
+        label: "Content alignment",
+        type: "select",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+        defaultValue: "left",
+      },
+      ...paddingFields(),
+      ...marginFields(),
+      ...sectionStyleFields(),
+    ],
+  },
+  TextElement: {
+    type: "TextElement",
+    label: "Text element",
+    icon: "FileText",
+    allowedBlockTypes: [],
+    defaultSettings: {
+      textContent: "Text element",
+      fontFamily: "",
+      fontSize: 0,
+      fontWeight: "400",
+      fontStyle: "normal",
+      lineHeight: 0,
+      letterSpacing: 0,
+      textColor: "",
+    },
+    settingsSchema: [
+      { key: "textContent", label: "Text", type: "text", defaultValue: "Text element" },
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
+      {
+        key: "fontStyle",
+        label: "Font style",
+        type: "select",
+        options: [
+          { label: "Normal", value: "normal" },
+          { label: "Italic", value: "italic" },
+        ],
+        defaultValue: "normal",
+      },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
+    ],
+  },
   ImageWithText: {
     type: "ImageWithText",
     label: "Image with text",
     icon: "ImageIcon",
-    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "medium",
       desktopImageWidth: "medium",
@@ -497,7 +619,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "RichText",
     label: "Rich text",
     icon: "FileText",
-    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "Button", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -514,8 +636,9 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Grid",
     label: "Grid",
     icon: "LayoutGrid",
-    allowedBlockTypes: ["Column"],
+    allowedBlockTypes: ["Row"],
     defaultSettings: {
+      rows: 1,
       columns: 2,
       gap: "medium",
       paddingTop: 36,
@@ -525,6 +648,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       colorScheme: "scheme-1",
     },
     settingsSchema: [
+      { key: "rows", label: "Rows", type: "range", defaultValue: 1, min: 1, max: 8 },
       { key: "columns", label: "Columns", type: "range", defaultValue: 2, min: 1, max: 12 },
       {
         key: "gap",
@@ -549,7 +673,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Hero",
     label: "Hero banner",
     icon: "LayoutTemplate",
-    allowedBlockTypes: ["Heading", "Text", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "Button", "AppEmbed"],
     defaultSettings: {
       imageHeight: "large",
       colorScheme: "scheme-1",
@@ -580,7 +704,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Accordion",
     label: "Accordion",
     icon: "ListCollapse",
-    allowedBlockTypes: ["Heading", "Text", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-1",
       paddingTop: 36,
@@ -597,7 +721,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Testimonials",
     label: "Testimonials",
     icon: "Quote",
-    allowedBlockTypes: ["Heading", "Text", "Image", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "Image", "AppEmbed"],
     defaultSettings: {
       layout: "grid",
       columns: 3,
@@ -669,7 +793,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["Image", "Heading", "Text", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Image", "Heading", "Text", "TextElement", "Button", "AppEmbed"],
     defaultSettings: {
       transition: "fade",
       autoplaySpeed: 5000,
@@ -710,7 +834,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Newsletter",
     label: "Newsletter",
     icon: "Mail",
-    allowedBlockTypes: ["Heading", "Text", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "AppEmbed"],
     defaultSettings: {
       buttonText: "Subscribe",
       placeholder: "Enter your email",
@@ -768,9 +892,9 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ["AnnouncementBar", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  header: ["AnnouncementBar", "Block", "TextElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
   template: Object.keys(SECTION_DEFINITIONS).filter((type) => type !== "AnnouncementBar"),
-  footer: ["RichText", "Grid", "Newsletter", "ContactForm"],
+  footer: ["Block", "TextElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {

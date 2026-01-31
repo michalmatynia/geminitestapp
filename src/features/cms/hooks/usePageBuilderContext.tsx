@@ -78,6 +78,144 @@ function ensureUniqueId(id: unknown, seen: Set<string>): string {
   return nextId;
 }
 
+function createColumnBlock(): BlockInstance {
+  const colDef = getBlockDefinition("Column");
+  return {
+    id: uid(),
+    type: "Column",
+    settings: colDef ? { ...colDef.defaultSettings } : {},
+    blocks: [],
+  };
+}
+
+function createRowBlock(columnCount: number): BlockInstance {
+  const rowDef = getBlockDefinition("Row");
+  return {
+    id: uid(),
+    type: "Row",
+    settings: rowDef ? { ...rowDef.defaultSettings } : {},
+    blocks: Array.from({ length: Math.max(1, columnCount) }, () => createColumnBlock()),
+  };
+}
+
+function ensureGridRows(section: SectionInstance): SectionInstance {
+  if (section.type !== "Grid") return section;
+  const hasRows = section.blocks.some((b: BlockInstance) => b.type === "Row");
+  if (hasRows) return section;
+  const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+  const rowDef = getBlockDefinition("Row");
+  const rowsSetting = (section.settings["rows"] as number) ?? 1;
+  const columnsSetting = (section.settings["columns"] as number) ?? Math.max(1, columns.length || 1);
+  if (columns.length === 0) {
+    const rows = Array.from({ length: Math.max(1, rowsSetting) }, () => createRowBlock(columnsSetting));
+    return { ...section, blocks: rows, settings: { ...section.settings, rows: rows.length, columns: columnsSetting } };
+  }
+  const row: BlockInstance = {
+    id: uid(),
+    type: "Row",
+    settings: rowDef ? { ...rowDef.defaultSettings } : {},
+    blocks: columns,
+  };
+  return { ...section, blocks: [row], settings: { ...section.settings, rows: 1, columns: columns.length } };
+}
+
+function updateColumnBlocks(
+  blocks: BlockInstance[],
+  columnId: string,
+  updater: (column: BlockInstance) => BlockInstance
+): BlockInstance[] {
+  return blocks.map((block: BlockInstance) => {
+    if (block.type === "Column") {
+      return block.id === columnId ? updater(block) : block;
+    }
+    if (block.type === "Row" && block.blocks) {
+      return { ...block, blocks: updateColumnBlocks(block.blocks, columnId, updater) };
+    }
+    return block;
+  });
+}
+
+function updateRowBlocks(
+  blocks: BlockInstance[],
+  rowId: string,
+  updater: (row: BlockInstance) => BlockInstance
+): BlockInstance[] {
+  return blocks.map((block: BlockInstance) => {
+    if (block.type === "Row") {
+      return block.id === rowId ? updater(block) : block;
+    }
+    return block;
+  });
+}
+
+function removeBlockFromColumnBlocks(
+  blocks: BlockInstance[],
+  columnId: string,
+  blockId: string,
+  fromParentBlockId?: string
+): { blocks: BlockInstance[]; moved?: BlockInstance } {
+  let moved: BlockInstance | undefined;
+  const nextBlocks = blocks.map((block: BlockInstance) => {
+    if (block.type === "Row" && block.blocks) {
+      const result = removeBlockFromColumnBlocks(block.blocks, columnId, blockId, fromParentBlockId);
+      if (result.moved) moved = result.moved;
+      return { ...block, blocks: result.blocks };
+    }
+    if (block.type === "Column" && block.id === columnId) {
+      if (fromParentBlockId) {
+        return {
+          ...block,
+          blocks: (block.blocks ?? []).map((pb: BlockInstance) => {
+            if (pb.id !== fromParentBlockId) return pb;
+            const found = (pb.blocks ?? []).find((eb: BlockInstance) => eb.id === blockId);
+            if (found) moved = found;
+            return { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== blockId) };
+          }),
+        };
+      }
+      const found = (block.blocks ?? []).find((cb: BlockInstance) => cb.id === blockId);
+      if (found) moved = found;
+      return { ...block, blocks: (block.blocks ?? []).filter((cb: BlockInstance) => cb.id !== blockId) };
+    }
+    return block;
+  });
+  return { blocks: nextBlocks, moved };
+}
+
+function insertBlockIntoColumnBlocks(
+  blocks: BlockInstance[],
+  columnId: string,
+  block: BlockInstance,
+  toIndex: number,
+  toParentBlockId?: string
+): BlockInstance[] {
+  return blocks.map((blockItem: BlockInstance) => {
+    if (blockItem.type === "Row" && blockItem.blocks) {
+      return {
+        ...blockItem,
+        blocks: insertBlockIntoColumnBlocks(blockItem.blocks, columnId, block, toIndex, toParentBlockId),
+      };
+    }
+    if (blockItem.type === "Column" && blockItem.id === columnId) {
+      if (toParentBlockId) {
+        return {
+          ...blockItem,
+          blocks: (blockItem.blocks ?? []).map((pb: BlockInstance) => {
+            if (pb.id !== toParentBlockId) return pb;
+            const newBlocks = [...(pb.blocks ?? [])];
+            newBlocks.splice(toIndex, 0, block);
+            return { ...pb, blocks: newBlocks };
+          }),
+        };
+      }
+      const newBlocks = [...(blockItem.blocks ?? [])];
+      newBlocks.splice(toIndex, 0, block);
+      return { ...blockItem, blocks: newBlocks };
+    }
+    return blockItem;
+  });
+}
+
 function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInstance[] {
   return blocks.map((block: BlockInstance): BlockInstance => {
     const normalizedId = ensureUniqueId(block.id, seen);
@@ -94,10 +232,10 @@ function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
   const seen = new Set<string>();
   return sections.map((section: SectionInstance): SectionInstance => {
     const normalizedId = ensureUniqueId(section.id, seen);
-    const normalizedBlocks = normalizeBlocks(section.blocks ?? [], seen);
+    const baseSection = ensureGridRows({ ...section, id: normalizedId });
+    const normalizedBlocks = normalizeBlocks(baseSection.blocks ?? [], seen);
     return {
-      ...section,
-      id: normalizedId,
+      ...baseSection,
       blocks: normalizedBlocks,
     };
   });
@@ -110,32 +248,57 @@ function findSection(sections: SectionInstance[], nodeId: string): SectionInstan
   return null;
 }
 
-function findBlock(sections: SectionInstance[], nodeId: string): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null {
-  for (const s of sections) {
-    for (const b of s.blocks) {
-      if (b.id === nodeId) return { block: b, section: s };
-      // Search inside column blocks (Grid columns)
-      if (b.blocks) {
-        for (const cb of b.blocks) {
-          if (cb.id === nodeId) return { block: cb, section: s, parentColumn: b };
-          // Search inside section-type blocks inside columns (3rd level)
+function findBlock(
+  sections: SectionInstance[],
+  nodeId: string
+): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null {
+  const searchBlocks = (
+    blocks: BlockInstance[],
+    section: SectionInstance,
+    parentColumn?: BlockInstance,
+    parentBlock?: BlockInstance
+  ): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null => {
+    for (const b of blocks) {
+      if (b.id === nodeId) return { block: b, section, parentColumn, parentBlock };
+      if (!b.blocks || b.blocks.length === 0) continue;
+      if (b.type === "Column") {
+        for (const cb of b.blocks ?? []) {
+          if (cb.id === nodeId) return { block: cb, section, parentColumn: b };
           if (cb.blocks) {
             for (const eb of cb.blocks) {
-              if (eb.id === nodeId) return { block: eb, section: s, parentColumn: b, parentBlock: cb };
+              if (eb.id === nodeId) return { block: eb, section, parentColumn: b, parentBlock: cb };
             }
           }
         }
+        continue;
       }
+      const nested = searchBlocks(b.blocks ?? [], section, parentColumn, parentBlock);
+      if (nested) return nested;
     }
+    return null;
+  };
+
+  for (const s of sections) {
+    const result = searchBlocks(s.blocks ?? [], s);
+    if (result) return result;
   }
   return null;
 }
 
 function findColumn(sections: SectionInstance[], nodeId: string): { column: BlockInstance; section: SectionInstance } | null {
-  for (const s of sections) {
-    for (const b of s.blocks) {
-      if (b.type === "Column" && b.id === nodeId) return { column: b, section: s };
+  const searchColumns = (blocks: BlockInstance[], section: SectionInstance): { column: BlockInstance; section: SectionInstance } | null => {
+    for (const b of blocks) {
+      if (b.type === "Column" && b.id === nodeId) return { column: b, section };
+      if (b.blocks) {
+        const nested = searchColumns(b.blocks, section);
+        if (nested) return nested;
+      }
     }
+    return null;
+  };
+  for (const s of sections) {
+    const result = searchColumns(s.blocks ?? [], s);
+    if (result) return result;
   }
   return null;
 }
@@ -249,14 +412,9 @@ export function basePageBuilderReducer(
       // For Grid sections, auto-create Column blocks
       let initialBlocks: BlockInstance[] = [];
       if (action.sectionType === "Grid") {
-        const colDef = getBlockDefinition("Column");
+        const rows = (def.defaultSettings["rows"] as number) ?? 1;
         const colCount = (def.defaultSettings["columns"] as number) ?? 2;
-        initialBlocks = Array.from({ length: colCount }, (): BlockInstance => ({
-          id: uid(),
-          type: "Column",
-          settings: colDef ? { ...colDef.defaultSettings } : {},
-          blocks: [],
-        }));
+        initialBlocks = Array.from({ length: Math.max(1, rows) }, () => createRowBlock(colCount));
       }
 
       const newSection: SectionInstance = {
@@ -376,27 +534,72 @@ export function basePageBuilderReducer(
     }
 
     case "SET_GRID_COLUMNS": {
-      const colDef = getBlockDefinition("Column");
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
-        const currentCols = s.blocks.filter((b: BlockInstance) => b.type === "Column");
-        const target = action.columnCount;
-        if (target > currentCols.length) {
-          // Add new columns
-          const newCols: BlockInstance[] = Array.from(
-            { length: target - currentCols.length },
-            (): BlockInstance => ({
-              id: uid(),
-              type: "Column",
-              settings: colDef ? { ...colDef.defaultSettings } : {},
-              blocks: [],
-            })
-          );
-          return { ...s, blocks: [...currentCols, ...newCols], settings: { ...s.settings, columns: target } };
+        const normalized = ensureGridRows(s);
+        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const targetCols = Math.max(1, action.columnCount);
+        const nextRows = rows.map((row: BlockInstance) => {
+          const cols = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+          if (cols.length < targetCols) {
+            const newCols = Array.from({ length: targetCols - cols.length }, () => createColumnBlock());
+            return { ...row, blocks: [...cols, ...newCols] };
+          }
+          return { ...row, blocks: cols.slice(0, targetCols) };
+        });
+        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, columns: targetCols, rows: nextRows.length } };
+      });
+      return { ...state, sections: updatedSections };
+    }
+
+    case "SET_GRID_ROWS": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId || s.type !== "Grid") return s;
+        const normalized = ensureGridRows(s);
+        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const columnsPerRow =
+          (normalized.settings["columns"] as number) ??
+          Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
+        const targetRows = Math.max(1, action.rowCount);
+        let nextRows = rows;
+        if (targetRows > rows.length) {
+          const newRows = Array.from({ length: targetRows - rows.length }, () => createRowBlock(columnsPerRow));
+          nextRows = [...rows, ...newRows];
         } else {
-          // Remove columns from the end
-          return { ...s, blocks: currentCols.slice(0, target), settings: { ...s.settings, columns: target } };
+          nextRows = rows.slice(0, targetRows);
         }
+        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: targetRows, columns: columnsPerRow } };
+      });
+      return { ...state, sections: updatedSections };
+    }
+
+    case "ADD_GRID_ROW": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId || s.type !== "Grid") return s;
+        const normalized = ensureGridRows(s);
+        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const columnsPerRow =
+          (normalized.settings["columns"] as number) ??
+          Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
+        const nextRows = [...rows, createRowBlock(columnsPerRow)];
+        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow } };
+      });
+      return { ...state, sections: updatedSections };
+    }
+
+    case "ADD_COLUMN_TO_ROW": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId || s.type !== "Grid") return s;
+        const normalized = ensureGridRows(s);
+        let maxColumns = (normalized.settings["columns"] as number) ?? 1;
+        const nextBlocks = updateRowBlocks(normalized.blocks, action.rowId, (row: BlockInstance) => {
+          const cols = row.blocks ?? [];
+          const nextCols = [...cols, createColumnBlock()];
+          maxColumns = Math.max(maxColumns, nextCols.length);
+          return { ...row, blocks: nextCols };
+        });
+        const rowCount = nextBlocks.filter((b: BlockInstance) => b.type === "Row").length;
+        return { ...normalized, blocks: nextBlocks, settings: { ...normalized.settings, rows: rowCount, columns: maxColumns } };
       });
       return { ...state, sections: updatedSections };
     }
@@ -415,10 +618,10 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((b: BlockInstance) => {
-            if (b.id !== action.columnId) return b;
-            return { ...b, blocks: [...(b.blocks ?? []), newBlock] };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (column: BlockInstance) => ({
+            ...column,
+            blocks: [...(column.blocks ?? []), newBlock],
+          })),
         };
       });
       return { ...state, sections: updatedSections, selectedNodeId: newBlock.id };
@@ -429,10 +632,10 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((b: BlockInstance) => {
-            if (b.id !== action.columnId) return b;
-            return { ...b, blocks: (b.blocks ?? []).filter((cb: BlockInstance) => cb.id !== action.blockId) };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (column: BlockInstance) => ({
+            ...column,
+            blocks: (column.blocks ?? []).filter((cb: BlockInstance) => cb.id !== action.blockId),
+          })),
         };
       });
       return {
@@ -447,10 +650,10 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((b: BlockInstance) => {
-            if (b.id !== action.columnId) return b;
-            return { ...b, settings: { ...b.settings, ...action.settings } };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (column: BlockInstance) => ({
+            ...column,
+            settings: { ...column.settings, ...action.settings },
+          })),
         };
       });
       return { ...state, sections: updatedSections };
@@ -462,28 +665,9 @@ export function basePageBuilderReducer(
       const sectionsAfterRemove = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.fromSectionId) return s;
         if (action.fromColumnId) {
-          return {
-            ...s,
-            blocks: s.blocks.map((col: BlockInstance) => {
-              if (col.id !== action.fromColumnId) return col;
-              if (action.fromParentBlockId) {
-                // Remove from inside a parent block within a column
-                return {
-                  ...col,
-                  blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                    if (pb.id !== action.fromParentBlockId) return pb;
-                    const block = (pb.blocks ?? []).find((eb: BlockInstance) => eb.id === action.blockId);
-                    if (block) movedBlock = block;
-                    return { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.blockId) };
-                  }),
-                };
-              }
-              // Remove from column direct
-              const block = (col.blocks ?? []).find((cb: BlockInstance) => cb.id === action.blockId);
-              if (block) movedBlock = block;
-              return { ...col, blocks: (col.blocks ?? []).filter((cb: BlockInstance) => cb.id !== action.blockId) };
-            }),
-          };
+          const result = removeBlockFromColumnBlocks(s.blocks, action.fromColumnId, action.blockId, action.fromParentBlockId);
+          if (result.moved) movedBlock = result.moved;
+          return { ...s, blocks: result.blocks };
         }
         // Remove from section's direct blocks
         const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
@@ -496,25 +680,7 @@ export function basePageBuilderReducer(
         if (s.id !== action.toSectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.toColumnId) return col;
-            if (action.toParentBlockId) {
-              // Insert into a parent block within the column
-              return {
-                ...col,
-                blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                  if (pb.id !== action.toParentBlockId) return pb;
-                  const newBlocks = [...(pb.blocks ?? [])];
-                  newBlocks.splice(action.toIndex, 0, movedBlock!);
-                  return { ...pb, blocks: newBlocks };
-                }),
-              };
-            }
-            // Insert into column direct
-            const newBlocks = [...(col.blocks ?? [])];
-            newBlocks.splice(action.toIndex, 0, movedBlock!);
-            return { ...col, blocks: newBlocks };
-          }),
+          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, movedBlock!, action.toIndex, action.toParentBlockId),
         };
       });
       return { ...state, sections: sectionsAfterInsert };
@@ -543,23 +709,7 @@ export function basePageBuilderReducer(
         if (s.id !== action.toSectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.toColumnId) return col;
-            if (action.toParentBlockId) {
-              return {
-                ...col,
-                blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                  if (pb.id !== action.toParentBlockId) return pb;
-                  const newBlocks = [...(pb.blocks ?? [])];
-                  newBlocks.splice(action.toIndex, 0, convertedBlock);
-                  return { ...pb, blocks: newBlocks };
-                }),
-              };
-            }
-            const newBlocks = [...(col.blocks ?? [])];
-            newBlocks.splice(action.toIndex, 0, convertedBlock);
-            return { ...col, blocks: newBlocks };
-          }),
+          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, convertedBlock, action.toIndex, action.toParentBlockId),
         };
       });
 
@@ -571,16 +721,12 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.columnId) return col;
-            return {
-              ...col,
-              blocks: (col.blocks ?? []).map((b: BlockInstance) => {
-                if (b.id !== action.blockId) return b;
-                return { ...b, settings: { ...b.settings, ...action.settings } };
-              }),
-            };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((b: BlockInstance) =>
+              b.id === action.blockId ? { ...b, settings: { ...b.settings, ...action.settings } } : b
+            ),
+          })),
         };
       });
       return { ...state, sections: updatedSections };
@@ -598,16 +744,12 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.columnId) return col;
-            return {
-              ...col,
-              blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                if (pb.id !== action.parentBlockId) return pb;
-                return { ...pb, blocks: [...(pb.blocks ?? []), newElem] };
-              }),
-            };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
+              pb.id === action.parentBlockId ? { ...pb, blocks: [...(pb.blocks ?? []), newElem] } : pb
+            ),
+          })),
         };
       });
       return { ...state, sections: updatedSections, selectedNodeId: newElem.id };
@@ -618,16 +760,14 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.columnId) return col;
-            return {
-              ...col,
-              blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                if (pb.id !== action.parentBlockId) return pb;
-                return { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.elementId) };
-              }),
-            };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
+              pb.id === action.parentBlockId
+                ? { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.elementId) }
+                : pb
+            ),
+          })),
         };
       });
       return {
@@ -642,22 +782,19 @@ export function basePageBuilderReducer(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: s.blocks.map((col: BlockInstance) => {
-            if (col.id !== action.columnId) return col;
-            return {
-              ...col,
-              blocks: (col.blocks ?? []).map((pb: BlockInstance) => {
-                if (pb.id !== action.parentBlockId) return pb;
-                return {
-                  ...pb,
-                  blocks: (pb.blocks ?? []).map((eb: BlockInstance) => {
-                    if (eb.id !== action.blockId) return eb;
-                    return { ...eb, settings: { ...eb.settings, ...action.settings } };
-                  }),
-                };
-              }),
-            };
-          }),
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
+              pb.id === action.parentBlockId
+                ? {
+                    ...pb,
+                    blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
+                      eb.id === action.blockId ? { ...eb, settings: { ...eb.settings, ...action.settings } } : eb
+                    ),
+                  }
+                : pb
+            ),
+          })),
         };
       });
       return { ...state, sections: updatedSections };

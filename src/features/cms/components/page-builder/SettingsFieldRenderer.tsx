@@ -84,9 +84,15 @@ export function SettingsFieldRenderer({
 }: SettingsFieldRendererProps): React.ReactNode {
   const { theme } = useThemeSettings();
   const colorSchemeOptions = useMemo<SettingsFieldOption[]>(() => {
-    if (theme.colorSchemes.length === 0) return COLOR_SCHEME_OPTIONS;
-    return theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }));
-  }, [theme.colorSchemes]);
+    const baseOptions =
+      theme.colorSchemes.length === 0
+        ? COLOR_SCHEME_OPTIONS
+        : theme.colorSchemes.map((scheme) => ({ label: scheme.name, value: scheme.id }));
+    const extraOptions = field.options
+      ? field.options.filter((opt) => !baseOptions.some((base) => base.value === opt.value))
+      : [];
+    return [...extraOptions, ...baseOptions];
+  }, [field.options, theme.colorSchemes]);
   const handleChange = useCallback(
     (newValue: unknown) => {
       onChange(field.key, newValue);
@@ -140,6 +146,32 @@ export function SettingsFieldRenderer({
             ))}
           </SelectContent>
         </Select>
+      )}
+
+      {field.type === "alignment" && (
+        <div className="grid grid-cols-3 gap-2">
+          {(field.options ?? [
+            { label: "Left", value: "left" },
+            { label: "Center", value: "center" },
+            { label: "Right", value: "right" },
+          ]).map((opt: SettingsFieldOption) => {
+            const currentValue = (value as string) ?? field.options?.[0]?.value ?? "left";
+            const isActive = currentValue === opt.value;
+            return (
+              <Button
+                key={opt.value}
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-pressed={isActive}
+                className={`w-full justify-center ${isActive ? "border-primary/60 bg-primary/10 text-primary" : "border-foreground/20"}`}
+                onClick={() => handleChange(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            );
+          })}
+        </div>
       )}
 
       {field.type === "radio" && (

@@ -37,6 +37,8 @@ function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperti
       return <HeadingBlock settings={block.settings} />;
     case "Text":
       return <TextBlock settings={block.settings} />;
+    case "TextElement":
+      return <TextElementBlock settings={block.settings} />;
     case "Announcement":
       return <AnnouncementBlock settings={block.settings} />;
     case "Button":
@@ -84,6 +86,13 @@ function TextBlock({ settings }: { settings: Record<string, unknown> }): React.R
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
   return <p className="text-base leading-relaxed text-gray-300 md:text-lg" style={typoStyles}>{text}</p>;
+}
+
+function TextElementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+  const text = (settings["textContent"] as string) || "";
+  if (!text) return null;
+  const typoStyles = getBlockTypographyStyles(settings);
+  return <p className="text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
 }
 
 function AnnouncementBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {

@@ -566,7 +566,9 @@ export function PagePreviewPanel(): React.ReactNode {
           <>
             <div className="p-3 md:p-4">
               <div
-                className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""}`}
+                className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
+                  state.inspectorEnabled ? "cursor-crosshair" : ""
+                }`}
                 style={{ ...hoverVars, ...mediaVars }}
               >
                 {ZONE_ORDER.map((zone: PageZone) => {

@@ -111,6 +111,31 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleAddGridRow = useCallback(
+    (sectionId: string) => {
+      dispatch({ type: "ADD_GRID_ROW", sectionId });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(sectionId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
+  const handleAddColumnToRow = useCallback(
+    (sectionId: string, rowId: string) => {
+      dispatch({ type: "ADD_COLUMN_TO_ROW", sectionId, rowId });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(sectionId);
+        next.add(rowId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
   const handleAddElementToNestedBlock = useCallback(
     (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => {
       dispatch({ type: "ADD_ELEMENT_TO_NESTED_BLOCK", sectionId, columnId, parentBlockId, elementType });
@@ -251,6 +276,8 @@ export function ComponentTreePanel(): React.ReactNode {
                 onDropBlock={handleDropBlock}
                 onAddBlockToColumn={handleAddBlockToColumn}
                 onDropBlockToColumn={handleDropBlockToColumn}
+                onAddGridRow={handleAddGridRow}
+                onAddColumnToRow={handleAddColumnToRow}
                 onAddElementToNestedBlock={handleAddElementToNestedBlock}
                 onDropSectionInZone={handleDropSectionInZone}
                 onPasteSection={handlePasteSection}
@@ -299,6 +326,8 @@ interface ZoneGroupProps {
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onAddGridRow: (sectionId: string) => void;
+  onAddColumnToRow: (sectionId: string, rowId: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
   onPasteSection: (zone: PageZone) => void;
@@ -336,6 +365,8 @@ function ZoneGroup({
   onDropBlock,
   onAddBlockToColumn,
   onDropBlockToColumn,
+  onAddGridRow,
+  onAddColumnToRow,
   onAddElementToNestedBlock,
   onDropSectionInZone,
   onPasteSection,
@@ -421,9 +452,11 @@ function ZoneGroup({
                   onSelect={onSelectNode}
                   onAddBlock={onAddBlock}
                   onDropBlock={onDropBlock}
-                  onAddBlockToColumn={onAddBlockToColumn}
-                  onDropBlockToColumn={onDropBlockToColumn}
-                  onAddElementToNestedBlock={onAddElementToNestedBlock}
+                onAddBlockToColumn={onAddBlockToColumn}
+                onDropBlockToColumn={onDropBlockToColumn}
+                onAddGridRow={onAddGridRow}
+                onAddColumnToRow={onAddColumnToRow}
+                onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   onRemoveSection={onRemoveSection}

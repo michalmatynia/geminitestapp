@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { getSectionStyles, getTextAlign, type ColorSchemeColors } from "../frontend/theme-styles";
+import { getSectionStyles, getTextAlign, getBlockTypographyStyles, type ColorSchemeColors } from "../frontend/theme-styles";
 
 export type MediaReplaceTarget = {
   kind: "section" | "block";
@@ -60,6 +60,9 @@ const formatSettingValue = (value: unknown): string => {
   }
 };
 
+type InspectorEntry = { label: string; value: string };
+type InspectorSection = { title: string; entries: InspectorEntry[] };
+
 const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] => {
   return Object.entries(settings)
     .filter(([key, value]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== "")
@@ -70,9 +73,6 @@ const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] 
     .filter((entry) => entry.value.length > 0)
     .slice(0, 12);
 };
-
-type InspectorEntry = { label: string; value: string };
-type InspectorSection = { title: string; entries: InspectorEntry[] };
 
 const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNode => (
   <div className="space-y-1">
@@ -171,7 +171,7 @@ const InspectorHover = ({
     <div className={`relative ${className ?? ""}`} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       {children}
       {enabled && showTooltip && open && content && (
-        <div className="absolute z-40 left-1/2 -translate-x-1/2 -top-2 -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg">
+        <div className="absolute z-[9999] left-1/2 -translate-x-1/2 -top-2 -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none">
           {content}
         </div>
       )}
@@ -233,8 +233,12 @@ export function PreviewSection({
     { label: "Blocks", value: String(section.blocks.length) },
   ];
   if (section.type === "Grid") {
+    const columnsPerRow = (section.settings["columns"] as number) ?? 1;
+    const rows = (section.settings["rows"] as number) ?? 1;
     const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column").length;
-    structureEntries.push({ label: "Columns", value: String(columns) });
+    structureEntries.push({ label: "Rows", value: String(rows) });
+    structureEntries.push({ label: "Columns / row", value: String(columnsPerRow) });
+    structureEntries.push({ label: "Cells", value: String(columns) });
   }
   const visibilityEntries: InspectorEntry[] = [
     { label: "Hidden", value: isHidden ? "Yes" : "No" },
@@ -351,7 +355,7 @@ export function PreviewSection({
     );
   }
 
-  if (section.type === "AnnouncementBar") {
+  if (section.type === "AnnouncementBar" || section.type === "Block") {
     const alignment = (section.settings["contentAlignment"] as string) || "center";
     const alignmentClasses =
       alignment === "left"
@@ -360,17 +364,18 @@ export function PreviewSection({
           ? "justify-end text-right"
           : "justify-center text-center";
 
-    const announcementStyles: React.CSSProperties = {
+    const containerStyles: React.CSSProperties = {
       ...getSectionStyles(section.settings, colorSchemes),
       ...getTextAlign(section.settings["contentAlignment"]),
     };
-    const announcementRingClass = isSectionSelected
+    const containerRingClass = isSectionSelected
       ? isInspecting
         ? "ring-2 ring-inset ring-blue-500/60"
         : "ring-2 ring-inset ring-blue-500/40"
       : isSectionHovered
         ? "ring-2 ring-inset ring-blue-500/30"
         : "hover:ring-1 hover:ring-inset hover:ring-border/40";
+    const emptyLabel = section.type === "Block" ? "Block" : "Announcement bar";
 
     return (
       wrapInspector(
@@ -381,15 +386,15 @@ export function PreviewSection({
           onKeyDown={(e: React.KeyboardEvent): void => {
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
-          style={announcementStyles}
-          className={`relative w-full transition cursor-pointer ${announcementRingClass}`}
+          style={containerStyles}
+          className={`relative w-full transition cursor-pointer ${containerRingClass}`}
         >
           {renderSectionActions()}
           {divider}
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
               {section.blocks.length === 0 ? (
-                <p className="text-sm text-gray-400">Announcement bar</p>
+                <p className="text-sm text-gray-400">{emptyLabel}</p>
               ) : (
                 section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem
@@ -465,7 +470,22 @@ export function PreviewSection({
   // Grid sections
   if (section.type === "Grid") {
     const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
-    const colCount = gridColumns.length || 1;
+    const columnsPerRow = Math.max(1, (section.settings["columns"] as number) ?? 1);
+    const rows = Math.max(1, (section.settings["rows"] as number) ?? 1);
+    const totalCells = rows * columnsPerRow;
+    const colCount = columnsPerRow;
+    const normalizedColumns =
+      gridColumns.length === totalCells
+        ? gridColumns
+        : [
+            ...gridColumns,
+            ...Array.from({ length: Math.max(0, totalCells - gridColumns.length) }, (_, idx: number): BlockInstance => ({
+              id: `placeholder-${section.id}-${idx}`,
+              type: "Column",
+              settings: {},
+              blocks: [],
+            })),
+          ].slice(0, totalCells);
 
     return (
       wrapInspector(
@@ -478,8 +498,6 @@ export function PreviewSection({
           }}
           style={{
             ...sectionStyles,
-            display: "grid",
-            gridTemplateColumns: `repeat(${colCount}, 1fr)`,
             padding: 0,
             margin: 0,
           }}
@@ -492,131 +510,156 @@ export function PreviewSection({
               No columns
             </div>
           ) : (
-            gridColumns.map((column: BlockInstance, colIndex: number) => {
-              const isColumnSelected = selectedNodeId === column.id;
-              const isColumnHovered = isInspecting && hoveredNodeId === column.id;
-              const isLast = colIndex === gridColumns.length - 1;
-              const columnHoverClass =
-                isColumnHovered && !isColumnSelected
-                  ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
-                  : "";
-              const columnTooltip = (
-                <InspectorTooltip
-                  title="Column"
-                  sections={[
-                    {
-                      title: "Meta",
-                      entries: inspectorSettings.showIdentifiers
-                        ? [
-                            { label: "Type", value: "Column" },
-                            { label: "ID", value: column.id },
-                          ]
-                        : [{ label: "Type", value: "Column" }],
-                    },
-                    ...(inspectorSettings.showStructureInfo
-                      ? [
-                          {
-                            title: "Structure",
-                            entries: [
-                              { label: "Section", value: section.type },
-                              { label: "Zone", value: section.zone },
-                            ],
-                          },
-                        ]
-                      : []),
-                    ...(inspectorSettings.showConnectionInfo
-                      ? [
-                          {
-                            title: "Connection",
-                            entries: (() => {
-                              const connection = column.settings["connection"] as
-                                | { enabled?: boolean; source?: string; path?: string; fallback?: string }
-                                | undefined;
-                              if (!connection) return [];
-                              const entries: InspectorEntry[] = [
-                                { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
-                              ];
-                              if (connection.source) entries.push({ label: "Source", value: connection.source });
-                              if (connection.path) entries.push({ label: "Path", value: connection.path });
-                              if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
-                              return entries;
-                            })(),
-                          },
-                        ]
-                      : []),
-                    ...(inspectorSettings.showStyleSettings
-                      ? [
-                          {
-                            title: "Styles",
-                            entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              );
-              return (
-                <InspectorHover
-                  key={column.id}
-                  enabled={inspectorActive}
-                  showTooltip={inspectorSettings.showTooltip}
-                  nodeId={column.id}
-                  onHover={onHoverNode}
-                  fallbackNodeId={section.id}
-                  content={columnTooltip}
-                  className="w-full"
-                >
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: rows }, (_, rowIndex: number) => {
+                const start = rowIndex * columnsPerRow;
+                const rowColumns = normalizedColumns.slice(start, start + columnsPerRow);
+                return (
                   <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e: React.MouseEvent): void => {
-                      e.stopPropagation();
-                      onSelect(column.id);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent): void => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                        onSelect(column.id);
-                      }
-                    }}
-                    className={`p-2 text-left transition cursor-pointer ${
-                      !isLast ? "border-r border-dashed border-border/40" : ""
-                    } ${
-                      isColumnSelected
-                        ? isInspecting
-                          ? "bg-blue-500/10"
-                          : "bg-blue-500/5"
-                        : "hover:bg-gray-800/30"
-                    } ${columnHoverClass}`}
+                    key={`grid-row-${rowIndex}`}
+                    className="grid gap-2"
+                    style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
                   >
-                    {(column.blocks ?? []).length > 0 && (
-                      <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
-                        {(column.blocks ?? []).map((block: BlockInstance) => (
-                          <PreviewBlockItem
-                            key={block.id}
-                            block={block}
-                            isSelected={selectedNodeId === block.id}
-                            isInspecting={isInspecting}
-                            inspectorSettings={inspectorSettings}
-                            hoveredNodeId={hoveredNodeId}
-                            onHoverNode={onHoverNode}
-                            onSelect={onSelect}
-                            contained
-                            selectedNodeId={selectedNodeId}
-                            sectionId={section.id}
-                            sectionType={section.type}
-                            sectionZone={section.zone}
-                            columnId={column.id}
-                            onOpenMedia={onOpenMedia}
-                            mediaStyles={mediaStyles}
+                    {rowColumns.map((column: BlockInstance, colIndex: number) => {
+                      const isPlaceholder = column.id.startsWith("placeholder-");
+                      const isColumnSelected = !isPlaceholder && selectedNodeId === column.id;
+                      const isColumnHovered = !isPlaceholder && isInspecting && hoveredNodeId === column.id;
+                      const isLast = colIndex === rowColumns.length - 1;
+                      const columnHoverClass =
+                        isColumnHovered && !isColumnSelected
+                          ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
+                          : "";
+                      if (isPlaceholder) {
+                        return (
+                          <div
+                            key={column.id}
+                            className="min-h-[48px] rounded border border-dashed border-border/40 bg-gray-900/20"
                           />
-                        ))}
-                      </div>
-                    )}
+                        );
+                      }
+                      const columnTooltip = (
+                        <InspectorTooltip
+                          title="Column"
+                          sections={[
+                            {
+                              title: "Meta",
+                              entries: inspectorSettings.showIdentifiers
+                                ? [
+                                    { label: "Type", value: "Column" },
+                                    { label: "ID", value: column.id },
+                                  ]
+                                : [{ label: "Type", value: "Column" }],
+                            },
+                            ...(inspectorSettings.showStructureInfo
+                              ? [
+                                  {
+                                    title: "Structure",
+                                    entries: [
+                                      { label: "Section", value: section.type },
+                                      { label: "Zone", value: section.zone },
+                                      { label: "Row", value: String(rowIndex + 1) },
+                                      { label: "Column", value: String(colIndex + 1) },
+                                    ],
+                                  },
+                                ]
+                              : []),
+                            ...(inspectorSettings.showConnectionInfo
+                              ? [
+                                  {
+                                    title: "Connection",
+                                    entries: (() => {
+                                      const connection = column.settings["connection"] as
+                                        | { enabled?: boolean; source?: string; path?: string; fallback?: string }
+                                        | undefined;
+                                      if (!connection) return [];
+                                      const entries: InspectorEntry[] = [
+                                        { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
+                                      ];
+                                      if (connection.source) entries.push({ label: "Source", value: connection.source });
+                                      if (connection.path) entries.push({ label: "Path", value: connection.path });
+                                      if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
+                                      return entries;
+                                    })(),
+                                  },
+                                ]
+                              : []),
+                            ...(inspectorSettings.showStyleSettings
+                              ? [
+                                  {
+                                    title: "Styles",
+                                    entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
+                      );
+                      return (
+                        <InspectorHover
+                          key={column.id}
+                          enabled={inspectorActive}
+                          showTooltip={inspectorSettings.showTooltip}
+                          nodeId={column.id}
+                          onHover={onHoverNode}
+                          fallbackNodeId={section.id}
+                          content={columnTooltip}
+                          className="w-full"
+                        >
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e: React.MouseEvent): void => {
+                              e.stopPropagation();
+                              onSelect(column.id);
+                            }}
+                            onKeyDown={(e: React.KeyboardEvent): void => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.stopPropagation();
+                                onSelect(column.id);
+                              }
+                            }}
+                            className={`p-2 text-left transition cursor-pointer ${
+                              !isLast ? "border-r border-dashed border-border/40" : ""
+                            } ${
+                              isColumnSelected
+                                ? isInspecting
+                                  ? "bg-blue-500/10"
+                                  : "bg-blue-500/5"
+                                : "hover:bg-gray-800/30"
+                            } ${columnHoverClass}`}
+                          >
+                            {(column.blocks ?? []).length > 0 && (
+                              <div className={`space-y-1.5 ${isInspecting ? "" : "pointer-events-none"}`}>
+                                {(column.blocks ?? []).map((block: BlockInstance) => (
+                                  <PreviewBlockItem
+                                    key={block.id}
+                                    block={block}
+                                    isSelected={selectedNodeId === block.id}
+                                    isInspecting={isInspecting}
+                                    inspectorSettings={inspectorSettings}
+                                    hoveredNodeId={hoveredNodeId}
+                                    onHoverNode={onHoverNode}
+                                    onSelect={onSelect}
+                                    contained
+                                    selectedNodeId={selectedNodeId}
+                                    sectionId={section.id}
+                                    sectionType={section.type}
+                                    sectionZone={section.zone}
+                                    columnId={column.id}
+                                    onOpenMedia={onOpenMedia}
+                                    mediaStyles={mediaStyles}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </InspectorHover>
+                      );
+                    })}
                   </div>
-                </InspectorHover>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
       )
@@ -755,6 +798,34 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           {renderBlocks("Add blocks to rich text section")}
+        </div>
+      )
+    );
+  }
+
+  // Text element section
+  if (section.type === "TextElement") {
+    const text = (section.settings["textContent"] as string) || "Text element";
+    const typoStyles = getBlockTypographyStyles(section.settings);
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={getSectionStyles(section.settings, colorSchemes)}
+          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div className="rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2">
+            <p className="text-sm text-gray-200 line-clamp-4" style={typoStyles}>
+              {text}
+            </p>
+          </div>
         </div>
       )
     );
@@ -1340,6 +1411,35 @@ function PreviewBlockItem({
           ) : (
             <p className="text-sm italic text-gray-500">Add text content...</p>
           )}
+        </button>
+      )
+    );
+  }
+
+  // Text element block
+  if (block.type === "TextElement") {
+    const text = (block.settings["textContent"] as string) || "Text element";
+    const typoStyles = getBlockTypographyStyles(block.settings);
+
+    return (
+      wrapBlock(
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onSelect(block.id);
+          }}
+          className={`w-full rounded border p-3 text-left transition overflow-hidden ${
+            contained ? "max-w-full" : ""
+          } ${
+            isSelected
+              ? `${selectedBorderClass} ${selectedSoftBg}`
+              : "border-border/30 bg-gray-800/20 hover:border-border/50"
+          } ${hoverFrameClass}`}
+        >
+          <p className="text-sm text-gray-200 line-clamp-4" style={typoStyles}>
+            {text}
+          </p>
         </button>
       )
     );

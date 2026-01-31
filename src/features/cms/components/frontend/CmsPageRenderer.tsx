@@ -4,6 +4,7 @@ import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import { FrontendAnnouncementBarSection } from "./sections/FrontendAnnouncementBarSection";
+import { FrontendBlockSection } from "./sections/FrontendBlockSection";
 import { FrontendHeroSection } from "./sections/FrontendHeroSection";
 import { FrontendImageWithTextSection } from "./sections/FrontendImageWithTextSection";
 import { FrontendRichTextSection } from "./sections/FrontendRichTextSection";
@@ -17,6 +18,7 @@ import { FrontendContactFormSection } from "./sections/FrontendContactFormSectio
 import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
 import { getHoverEffectVars } from "./theme-styles";
 import { MediaStylesProvider } from "./media-styles-context";
+import { FrontendTextElementSection } from "./sections/FrontendTextElementSection";
 
 // ---------------------------------------------------------------------------
 // Types for the section content stored in PageComponent.content
@@ -40,12 +42,12 @@ const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 
 interface CmsPageRendererProps {
   components: PageComponent[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean } | undefined;
   hoverEffect?: string | undefined;
   hoverScale?: number | undefined;
-  mediaVars?: React.CSSProperties;
-  mediaStyles?: React.CSSProperties;
+  mediaVars?: React.CSSProperties | undefined;
+  mediaStyles?: React.CSSProperties | undefined;
 }
 
 export function CmsPageRenderer({
@@ -114,14 +116,18 @@ interface SectionRendererProps {
   type: string;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  layout?: { fullWidth?: boolean };
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  layout?: { fullWidth?: boolean } | undefined;
 }
 
 function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: SectionRendererProps): React.ReactNode {
   switch (type) {
     case "AnnouncementBar":
       return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+    case "Block":
+      return <FrontendBlockSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
+    case "TextElement":
+      return <FrontendTextElementSection settings={settings} />;
     case "Hero":
       return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ImageWithText":

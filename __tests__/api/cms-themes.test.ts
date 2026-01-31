@@ -77,10 +77,14 @@ describe("CMS Themes API", () => {
   it("should fetch all themes", async () => {
     await cmsRepository.createTheme(validTheme);
 
-    const res = await GET_themes(new NextRequest("http://localhost/api/cms/themes"), {} as any);
+    const res = await GET_themes(new NextRequest("http://localhost/api/cms/themes"));
     const data = (await res.json()) as CmsTheme[];
     expect(res.status).toBe(200);
     expect(data.length).toBe(1);
-    expect(data[0].name).toBe("Default Theme");
-  });
+          expect(data).toBeDefined();
+          expect(data.length).toBeGreaterThan(0);
+          expect(data).toBeDefined();
+      expect(data.length).toBeGreaterThan(0);
+      expect(data[0]).toBeDefined();
+      expect(data[0]!.name).toBe("Default Theme");  });
 });

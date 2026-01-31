@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MenuSettings } from "@/features/cms/types/menu-settings";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
-import type { AnimationPreset } from "@/features/gsap/types/animation";
+// import type { AnimationPreset } from "@/features/gsap/types/animation"; // Unused
 import { getGsapFromVars } from "@/features/gsap/utils/presets";
 
 const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);
@@ -16,10 +16,6 @@ type CmsMenuProps = {
   animationsEnabled?: boolean;
 };
 
-const getHoverAnimationVars = (preset: AnimationPreset): gsap.TweenVars | null => {
-  if (preset === "none") return null;
-  return getGsapFromVars(preset);
-};
 
 export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMenuProps): React.ReactNode {
   const pathname = usePathname();
@@ -32,7 +28,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     setCollapsed(menu.collapsible ? menu.collapsedByDefault : false);
   }, [menu.collapsible, menu.collapsedByDefault, menu.menuPlacement]);
 
-  const resolvedColors = useMemo(() => {
+  const resolvedColors = useMemo((): { background?: string; text?: string; border?: string; accent?: string } => {
     if (menu.menuColorSchemeId && menu.menuColorSchemeId !== "custom") {
       const scheme = colorSchemes?.[menu.menuColorSchemeId];
       if (scheme) {
@@ -61,7 +57,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
-      const vars = getPresetVars(menu.menuEntryAnimation);
+      const vars: gsap.TweenVars = getPresetVars(menu.menuEntryAnimation);
       if (!vars) return;
       ctx = gsap.context(() => {
         gsap.from(items, {
@@ -72,7 +68,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
         });
       }, itemsRef);
     });
-    return () => {
+    return (): void => {
       cancelled = true;
       ctx?.revert?.();
     };
@@ -81,7 +77,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   useEffect(() => {
     if (!animationsEnabled) return;
     if (menu.menuHoverAnimation === "none") return;
-    const fromVars = getPresetVars(menu.menuHoverAnimation);
+    const fromVars: gsap.TweenVars = getPresetVars(menu.menuHoverAnimation);
     if (!fromVars) return;
     let cancelled = false;
     const cleanups: Array<() => void> = [];
@@ -101,24 +97,24 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
         skewY: 0,
         filter: "blur(0px)",
       };
-      items.forEach((item) => {
-        const onEnter = () => {
+      items.forEach((item: Element) => {
+        const onEnter = (): void => {
           gsap.fromTo(item, { ...fromVars }, { ...resetVars, duration: 0.3, ease: "power2.out" });
         };
-        const onLeave = () => {
+        const onLeave = (): void => {
           gsap.to(item, { ...resetVars, duration: 0.2, ease: "power2.out" });
         };
         item.addEventListener("mouseenter", onEnter);
         item.addEventListener("mouseleave", onLeave);
-        cleanups.push(() => {
+        cleanups.push((): void => {
           item.removeEventListener("mouseenter", onEnter);
           item.removeEventListener("mouseleave", onLeave);
         });
       });
     });
-    return () => {
+    return (): void => {
       cancelled = true;
-      cleanups.forEach((fn) => fn());
+      cleanups.forEach((fn: () => void) => fn());
     };
   }, [menu.menuHoverAnimation, menu.items.length, animationsEnabled]);
 
@@ -167,7 +163,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
           : menu.alignment === "space-between"
             ? "space-between"
             : "flex-start",
-    gap: menu.layoutStyle === "vertical" || isSide ? menu.itemGap : menu.itemGap,
+    gap: menu.itemGap,
   };
 
   const itemsStyle: React.CSSProperties = {
@@ -183,14 +179,14 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
         {menu.collapsible && (
           <button
             type="button"
-            onClick={() => setCollapsed((prev) => !prev)}
+            onClick={(): void => setCollapsed((prev: boolean) => !prev)}
             className="mb-2 inline-flex items-center gap-2 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
           >
             {collapsed ? "Expand" : "Collapse"}
           </button>
         )}
         <div style={itemsStyle} ref={itemsRef}>
-          {menu.items.map((item) => {
+          {menu.items.map((item: { id: string; url: string; label: string; imageUrl?: string }) => {
             const isActive = pathname === item.url;
             const color = isActive ? resolvedColors.accent : resolvedColors.text;
             const activeStyles: React.CSSProperties = {};
@@ -218,6 +214,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
             const content = (
               <>
                 {menu.showItemImages && item.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.imageUrl}
                     alt=""

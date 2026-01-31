@@ -33,6 +33,9 @@ export function getColorSchemeStyle(
   schemes?: Record<string, ColorSchemeColors>
 ): React.CSSProperties {
   if (typeof scheme === "string") {
+    if (scheme === "none" || scheme.trim() === "") {
+      return {};
+    }
     if (schemes?.[scheme]) {
       return buildSchemeStyle(schemes[scheme]);
     }
@@ -186,6 +189,7 @@ export function getBlockTypographyStyles(settings: Record<string, unknown>): Rea
   const styles: React.CSSProperties = {};
   const fontFamily = settings["fontFamily"] as string | undefined;
   const fontWeight = settings["fontWeight"] as string | undefined;
+  const fontStyle = settings["fontStyle"] as string | undefined;
   const fontSize = settings["fontSize"] as number | undefined;
   const lineHeight = settings["lineHeight"] as number | undefined;
   const letterSpacing = settings["letterSpacing"] as number | undefined;
@@ -193,6 +197,7 @@ export function getBlockTypographyStyles(settings: Record<string, unknown>): Rea
 
   if (fontFamily) styles.fontFamily = fontFamily;
   if (fontWeight) styles.fontWeight = fontWeight;
+  if (fontStyle) styles.fontStyle = fontStyle;
   if (fontSize && fontSize > 0) styles.fontSize = `${fontSize}px`;
   if (lineHeight && lineHeight > 0) styles.lineHeight = lineHeight;
   if (letterSpacing) styles.letterSpacing = `${letterSpacing}px`;

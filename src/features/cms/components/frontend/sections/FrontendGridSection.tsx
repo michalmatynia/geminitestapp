@@ -20,6 +20,8 @@ interface FrontendGridSectionProps {
 export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const columns = blocks.filter((b: BlockInstance) => b.type === "Column");
+  const columnsPerRow = Math.max(1, (settings["columns"] as number) ?? 1);
+  const rows = Math.max(1, (settings["rows"] as number) ?? 1);
   const gap = (settings["gap"] as string) || "medium";
 
   const gapClass =
@@ -33,13 +35,23 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div
-          className={`grid ${gapClass}`}
-          style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}
-        >
-          {columns.map((column: BlockInstance) => (
-            <ColumnRenderer key={column.id} column={column} />
-          ))}
+        <div className={`flex flex-col ${gapClass}`}>
+          {Array.from({ length: rows }, (_, rowIndex: number) => {
+            const start = rowIndex * columnsPerRow;
+            const rowColumns = columns.slice(start, start + columnsPerRow);
+            if (rowColumns.length === 0) return null;
+            return (
+              <div
+                key={`grid-row-${rowIndex}`}
+                className={`grid ${gapClass}`}
+                style={{ gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)` }}
+              >
+                {rowColumns.map((column: BlockInstance) => (
+                  <ColumnRenderer key={column.id} column={column} />
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

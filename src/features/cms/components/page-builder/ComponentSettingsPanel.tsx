@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
-import type { SettingsField } from "../../types/page-builder";
+import type { SettingsField, InspectorSettings } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import type { PageStatus, CmsTheme, Slug } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
@@ -241,6 +241,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
           sectionId: selectedSection.id,
           columnCount: value as number,
         });
+      } else if (key === "rows" && selectedSection.type === "Grid") {
+        dispatch({
+          type: "SET_GRID_ROWS",
+          sectionId: selectedSection.id,
+          rowCount: value as number,
+        });
       } else {
         handleSectionSettingChange(key, value);
       }
@@ -371,7 +377,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [state.inspectorEnabled]);
 
   const updateInspectorSetting = useCallback(
-    (patch: Partial<typeof inspectorSettings>) => {
+    (patch: Partial<InspectorSettings>) => {
       dispatch({ type: "UPDATE_INSPECTOR_SETTINGS", settings: patch });
     },
     [dispatch]

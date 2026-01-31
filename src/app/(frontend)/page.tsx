@@ -121,11 +121,6 @@ export default async function Home(): Promise<JSX.Element> {
     const allowDrafts = await canPreviewDrafts(session);
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === "published") && cmsPage.components.length > 0;
 
-    const colorSchemes = hasCmsContent ? buildColorSchemeMap(themeSettings) : undefined;
-    const layout = hasCmsContent ? { fullWidth: themeSettings.fullWidth } : undefined;
-    const mediaVars = hasCmsContent ? getMediaStyleVars(themeSettings) : undefined;
-    const mediaStyles = hasCmsContent ? getMediaInlineStyles(themeSettings) : undefined;
-
     return (
       <div className="flex min-h-screen flex-col">
         <header className="flex h-14 items-center px-4 lg:px-6">
@@ -151,12 +146,12 @@ export default async function Home(): Promise<JSX.Element> {
           {hasCmsContent ? (
             <CmsPageRenderer
               components={cmsPage.components}
-              colorSchemes={colorSchemes}
-              layout={layout}
+              colorSchemes={buildColorSchemeMap(themeSettings)}
+              layout={{ fullWidth: themeSettings.fullWidth }}
               hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}
               hoverScale={themeSettings?.enableAnimations ? themeSettings.hoverScale : undefined}
-              mediaVars={mediaVars}
-              mediaStyles={mediaStyles}
+              mediaVars={getMediaStyleVars(themeSettings)}
+              mediaStyles={getMediaInlineStyles(themeSettings)}
             />
           ) : (
             <section className="w-full py-12">

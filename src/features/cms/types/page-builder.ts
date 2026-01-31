@@ -28,7 +28,8 @@ export interface SettingsField {
     | "shadow"
     | "background"
     | "typography"
-    | "link";
+    | "link"
+    | "alignment";
   options?: SettingsFieldOption[];
   defaultValue?: unknown;
   min?: number;
@@ -146,6 +147,9 @@ export type PageBuilderAction =
   | { type: "MOVE_BLOCK"; blockId: string; fromSectionId: string; toSectionId: string; toIndex: number }
   | { type: "REORDER_BLOCKS"; sectionId: string; fromIndex: number; toIndex: number }
   | { type: "SET_GRID_COLUMNS"; sectionId: string; columnCount: number }
+  | { type: "SET_GRID_ROWS"; sectionId: string; rowCount: number }
+  | { type: "ADD_GRID_ROW"; sectionId: string }
+  | { type: "ADD_COLUMN_TO_ROW"; sectionId: string; rowId: string }
   | { type: "ADD_BLOCK_TO_COLUMN"; sectionId: string; columnId: string; blockType: string }
   | { type: "REMOVE_BLOCK_FROM_COLUMN"; sectionId: string; columnId: string; blockId: string }
   | { type: "UPDATE_COLUMN_SETTINGS"; sectionId: string; columnId: string; settings: Record<string, unknown> }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import { createPortal } from "react-dom";
 import { Button, Input } from "@/shared/ui";
 import { CanvasBoard } from "../canvas-board";

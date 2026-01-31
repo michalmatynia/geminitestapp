@@ -41,7 +41,7 @@ describe("CMS Pages API", () => {
       const mockPages = [{ id: "1", name: "Page 1" }];
       mockRepo.getPages.mockResolvedValue(mockPages);
 
-      const res = await listPages(new NextRequest("http://localhost/api/cms/pages?scope=all"), {} as any);
+      const res = await listPages(new NextRequest("http://localhost/api/cms/pages?scope=all"));
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -80,7 +80,7 @@ describe("CMS Pages API", () => {
         body: JSON.stringify(pageData),
       });
 
-      const res = await createPage(req, {} as any);
+      const res = await createPage(req);
       const data = await res.json();
 
       expect(res.status).toBe(200);

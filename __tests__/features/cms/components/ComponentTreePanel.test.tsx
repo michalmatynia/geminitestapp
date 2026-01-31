@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ComponentTreePanel } from "@/features/cms/components/page-builder/ComponentTreePanel";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";

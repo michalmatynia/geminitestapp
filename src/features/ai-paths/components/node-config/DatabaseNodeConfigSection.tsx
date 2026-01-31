@@ -3,7 +3,7 @@
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { dbApi } from "@/features/ai-paths/lib/api";
-import React from "react";
+
 
 
 

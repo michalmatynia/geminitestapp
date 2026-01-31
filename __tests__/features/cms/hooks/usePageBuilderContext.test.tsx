@@ -1,4 +1,4 @@
-import React from "react";
+
 import { renderHook, act } from "@testing-library/react";
 import { PageBuilderProvider, usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
 import { vi } from "vitest";
@@ -58,8 +58,8 @@ describe("usePageBuilder Hook", () => {
     });
 
     expect(result.current.state.sections.length).toBe(1);
-    expect(result.current.state.sections[0].type).toBe("RichText");
-    const sectionId = result.current.state.sections[0].id;
+    expect(result.current.state.sections[0]!.type).toBe("RichText");
+    const sectionId = result.current.state.sections[0]!.id;
     expect(result.current.state.selectedNodeId).toBe(sectionId);
 
     act(() => {
@@ -77,21 +77,21 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "RichText", zone: "template" });
     });
 
-    const sectionId = result.current.state.sections[0].id;
+    const sectionId = result.current.state.sections[0]!.id;
 
     act(() => {
       result.current.dispatch({ type: "ADD_BLOCK", sectionId, blockType: "Heading" });
     });
 
-    expect(result.current.state.sections[0].blocks.length).toBe(1);
-    expect(result.current.state.sections[0].blocks[0].type).toBe("Heading");
-    const blockId = result.current.state.sections[0].blocks[0].id;
+    expect(result.current.state.sections[0]!.blocks.length).toBe(1);
+    expect(result.current.state.sections[0]!.blocks[0]!.type).toBe("Heading");
+    const blockId = result.current.state.sections[0]!.blocks[0]!.id;
 
     act(() => {
       result.current.dispatch({ type: "REMOVE_BLOCK", sectionId, blockId });
     });
 
-    expect(result.current.state.sections[0].blocks.length).toBe(0);
+    expect(result.current.state.sections[0]!.blocks.length).toBe(0);
   });
 
   it("should handle Undo and Redo", () => {
@@ -123,7 +123,7 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "RichText", zone: "template" });
     });
 
-    const sectionId = result.current.state.sections[0].id;
+    const sectionId = result.current.state.sections[0]!.id;
 
     act(() => {
       result.current.dispatch({ 
@@ -133,7 +133,7 @@ describe("usePageBuilder Hook", () => {
       });
     });
 
-    expect(result.current.state.sections[0].settings.text).toBe("Updated");
+    expect(result.current.state.sections[0]!.settings.text).toBe("Updated");
   });
 
   it("should handle Grid columns (special case)", () => {
@@ -143,15 +143,15 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "Grid", zone: "template" });
     });
 
-    expect(result.current.state.sections[0].blocks.length).toBe(2); // Mock default is 2
-    expect(result.current.state.sections[0].blocks[0].type).toBe("Column");
+    expect(result.current.state.sections[0]!.blocks.length).toBe(2); // Mock default is 2
+    expect(result.current.state.sections[0]!.blocks[0]!.type).toBe("Column");
 
     act(() => {
-      result.current.dispatch({ type: "SET_GRID_COLUMNS", sectionId: result.current.state.sections[0].id, columnCount: 3 });
+      result.current.dispatch({ type: "SET_GRID_COLUMNS", sectionId: result.current.state.sections[0]!.id, columnCount: 3 });
     });
 
-    expect(result.current.state.sections[0].blocks.length).toBe(3);
-    expect(result.current.state.sections[0].settings.columns).toBe(3);
+    expect(result.current.state.sections[0]!.blocks.length).toBe(3);
+    expect(result.current.state.sections[0]!.settings.columns).toBe(3);
   });
 
   it("should copy and paste sections", () => {
@@ -161,7 +161,7 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "RichText", zone: "template" });
     });
 
-    const sectionId = result.current.state.sections[0].id;
+    const sectionId = result.current.state.sections[0]!.id;
 
     act(() => {
       result.current.dispatch({ type: "COPY_SECTION", sectionId });
@@ -174,8 +174,8 @@ describe("usePageBuilder Hook", () => {
     });
 
     expect(result.current.state.sections.length).toBe(2);
-    expect(result.current.state.sections[1].zone).toBe("footer");
-    expect(result.current.state.sections[1].type).toBe("RichText");
+    expect(result.current.state.sections[1]!.zone).toBe("footer");
+    expect(result.current.state.sections[1]!.type).toBe("RichText");
   });
 
   it("should handle reordering sections within zones", () => {
@@ -186,14 +186,14 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "Grid", zone: "template" });     // Index 1
     });
 
-    expect(result.current.state.sections[0].type).toBe("RichText");
-    expect(result.current.state.sections[1].type).toBe("Grid");
+    expect(result.current.state.sections[0]!.type).toBe("RichText");
+    expect(result.current.state.sections[1]!.type).toBe("Grid");
 
     act(() => {
       result.current.dispatch({ type: "REORDER_SECTIONS", zone: "template", fromIndex: 0, toIndex: 1 });
     });
 
-    expect(result.current.state.sections[0].type).toBe("Grid");
-    expect(result.current.state.sections[1].type).toBe("RichText");
+    expect(result.current.state.sections[0]!.type).toBe("Grid");
+    expect(result.current.state.sections[1]!.type).toBe("RichText");
   });
 });

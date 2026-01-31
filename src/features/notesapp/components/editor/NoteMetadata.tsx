@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Checkbox } from "@/shared/ui";
-import React from "react";
+
 import { X } from "lucide-react";
 import type { TagRecord, NoteWithRelations, ThemeRecord } from "@/shared/types/notes";
 

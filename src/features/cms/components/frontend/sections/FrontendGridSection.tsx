@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from "../theme-styles";

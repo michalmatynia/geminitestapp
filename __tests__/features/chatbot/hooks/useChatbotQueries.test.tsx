@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useChatbotSessions, useChatbotSession, useChatbotSettings, useChatbotModels } from "@/features/chatbot/hooks/useChatbotQueries";
 import * as chatbotApi from "@/features/chatbot/api";
-import React from "react";
+
 
 vi.mock("@/features/chatbot/api", () => ({
   chatbotQueryKeys: {

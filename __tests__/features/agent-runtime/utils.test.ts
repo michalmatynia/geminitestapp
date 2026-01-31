@@ -121,7 +121,7 @@ describe("Agent Runtime - Utils", () => {
       const items = ["Product Alpha"];
       const snippets = buildEvidenceSnippets(items, dom);
       expect(snippets).toHaveLength(2);
-      expect(snippets[0]?.snippet).toContain("Product Alpha");
+      expect(snippets[0]!.snippet).toContain("Product Alpha");
     });
   });
 });

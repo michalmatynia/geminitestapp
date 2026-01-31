@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import FileManager from "@/features/files/components/FileManager";
 import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";

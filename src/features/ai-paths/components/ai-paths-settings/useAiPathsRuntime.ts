@@ -249,18 +249,18 @@ export function useAiPathsRuntime({
     let current: Element | null = element;
     while (current && current.tagName.toLowerCase() !== "html" && segments.length < 5) {
       const tagName = current.tagName.toLowerCase();
-      const parent = current.parentElement;
+      const parent: HTMLElement | null = current.parentElement;
       if (!parent) break;
-      const siblings = Array.from(parent.children).filter(
-        (child: Element): boolean => child.tagName === current.tagName
+      const siblings: Element[] = Array.from(parent.children).filter(
+        (child: Element): boolean => child.tagName === (current as Element).tagName
       );
-      const index = siblings.indexOf(current) + 1;
+      const index: number = siblings.indexOf(current) + 1;
       segments.unshift(`${tagName}:nth-of-type(${index})`);
       if (parent.id) {
         segments.unshift(`#${selectorEscape(parent.id)}`);
         break;
       }
-      current = parent;
+      current = parent as Element;
     }
     return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
   };

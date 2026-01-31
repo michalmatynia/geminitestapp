@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label } from "@/shared/ui";
-import React from "react";
+
 import Image from "next/image";
 import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
 import type { NoteFileRecord } from "@/shared/types/notes";

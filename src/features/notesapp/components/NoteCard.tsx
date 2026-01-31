@@ -1,7 +1,7 @@
 "use client";
 
 import { BreadcrumbScroller, Button } from "@/shared/ui";
-import React from "react";
+
 import Image from "next/image";
 import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
 import type { ThemeRecord } from "@/shared/types/notes";

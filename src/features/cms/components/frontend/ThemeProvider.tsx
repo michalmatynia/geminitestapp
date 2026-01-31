@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { CmsTheme } from "../../types/theme";
 
 interface ThemeProviderProps {

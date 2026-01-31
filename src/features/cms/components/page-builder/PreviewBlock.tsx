@@ -195,10 +195,13 @@ const InspectorHover = ({
   };
 
   const updateTooltipPosition = (): void => {
+    const viewport = typeof document !== "undefined"
+      ? (document.querySelector("[data-cms-canvas-viewport='true']") as HTMLElement | null)
+      : null;
     const canvas = typeof document !== "undefined"
       ? (document.querySelector("[data-cms-canvas='true']") as HTMLElement | null)
       : null;
-    const el = canvas ?? wrapperRef.current;
+    const el = viewport ?? canvas ?? wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const margin = 12;
@@ -931,6 +934,46 @@ export function PreviewSection({
               {text}
             </p>
           </div>
+        </div>
+      )
+    );
+  }
+
+  // Image element section
+  if (section.type === "ImageElement") {
+    const src = (section.settings["src"] as string) || "";
+    const alt = (section.settings["alt"] as string) || "Image";
+    const presentation = buildImageElementPresentation(section.settings, mediaStyles);
+
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={getSectionStyles(section.settings, colorSchemes)}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          {src ? (
+            <div className="relative" style={presentation.wrapperStyles}>
+              <img src={src} alt={alt} style={presentation.imageStyles} />
+              {presentation.hasOverlay && (
+                <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
+              )}
+            </div>
+          ) : (
+            <div
+              className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
+              style={presentation.wrapperStyles}
+            >
+              No image selected
+            </div>
+          )}
         </div>
       )
     );

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { getBlockTypographyStyles } from "../theme-styles";
 
 interface FrontendTextElementSectionProps {

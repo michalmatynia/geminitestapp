@@ -69,6 +69,7 @@ export interface MenuSettings {
   shrinkOnScroll: boolean;
   stickyBackground: string;
   hideOnScroll: boolean;
+  showOnScrollUpAfterPx: number;
   // Active
   activeStyle: string;
   activeColor: string;
@@ -129,6 +130,7 @@ export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   shrinkOnScroll: false,
   stickyBackground: "#111827",
   hideOnScroll: false,
+  showOnScrollUpAfterPx: 80,
   activeStyle: "underline",
   activeColor: "#3b82f6",
   hoverStyle: "color-shift",
@@ -182,6 +184,10 @@ export const normalizeMenuSettings = (input?: Partial<MenuSettings> | null): Men
   merged.showItemImages = typeof input?.showItemImages === "boolean" ? input.showItemImages : DEFAULT_MENU_SETTINGS.showItemImages;
   merged.itemImageSize = typeof input?.itemImageSize === "number" ? input.itemImageSize : DEFAULT_MENU_SETTINGS.itemImageSize;
   merged.hideOnScroll = typeof input?.hideOnScroll === "boolean" ? input.hideOnScroll : DEFAULT_MENU_SETTINGS.hideOnScroll;
+  merged.showOnScrollUpAfterPx =
+    typeof input?.showOnScrollUpAfterPx === "number"
+      ? input.showOnScrollUpAfterPx
+      : DEFAULT_MENU_SETTINGS.showOnScrollUpAfterPx;
   merged.stickyEnabled = merged.positionMode === "sticky";
   merged.menuEntryAnimation =
     normalizeAnimationPreset(input?.menuEntryAnimation, DEFAULT_MENU_SETTINGS.menuEntryAnimation);

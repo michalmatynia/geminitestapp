@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SectionPicker } from "@/features/cms/components/page-builder/SectionPicker";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
 import {
   chatbotQueryKeys,
   createChatbotSession,
@@ -12,11 +12,12 @@ import {
   saveChatbotSettings,
 } from "../api";
 import type { ChatMessage, ChatbotSettingsPayload } from "@/shared/types/chatbot";
+import type { ChatSession } from "@/shared/types/chatbot";
 
 /**
  * Mutation hook for creating a new chatbot session
  */
-export function useCreateChatbotSession(): typeof useMutation {
+export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string; session?: ChatSession }, Error, { title?: string; settings?: any }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -30,7 +31,7 @@ export function useCreateChatbotSession(): typeof useMutation {
 /**
  * Mutation hook for updating a session title
  */
-export function useUpdateSessionTitle(): typeof useMutation {
+export function useUpdateSessionTitle() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -46,7 +47,7 @@ export function useUpdateSessionTitle(): typeof useMutation {
 /**
  * Mutation hook for deleting a single session
  */
-export function useDeleteChatbotSession(): typeof useMutation {
+export function useDeleteChatbotSession() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -61,7 +62,7 @@ export function useDeleteChatbotSession(): typeof useMutation {
 /**
  * Mutation hook for deleting multiple sessions
  */
-export function useDeleteChatbotSessions(): typeof useMutation {
+export function useDeleteChatbotSessions() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -79,7 +80,7 @@ export function useDeleteChatbotSessions(): typeof useMutation {
 /**
  * Mutation hook for persisting a message to a session
  */
-export function usePersistSessionMessage(): typeof useMutation {
+export function usePersistSessionMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -101,7 +102,7 @@ export function usePersistSessionMessage(): typeof useMutation {
 /**
  * Mutation hook for sending a chat message
  */
-export function useSendChatMessage(): typeof useMutation {
+export function useSendChatMessage() {
   return useMutation({
     mutationFn: sendChatbotMessage,
   });
@@ -110,7 +111,7 @@ export function useSendChatMessage(): typeof useMutation {
 /**
  * Mutation hook for saving chatbot settings
  */
-export function useSaveChatbotSettings(): typeof useMutation {
+export function useSaveChatbotSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({

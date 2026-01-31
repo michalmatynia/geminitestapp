@@ -555,7 +555,7 @@ export function PagePreviewPanel(): React.ReactNode {
       )}
 
       {/* Preview area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" data-cms-canvas-viewport="true">
         {!state.currentPage ? (
           <div className="flex h-full items-center justify-center p-6 text-gray-500">
             Select a page from the left panel to preview it

@@ -40,6 +40,40 @@ const DEFAULT_PRESET_DRAFT: ClusterPresetDraft = {
   template: "Write a summary for {{context.entity.title}}",
 };
 
+export interface AiPathsPresets {
+  clusterPresets: ClusterPreset[];
+  setClusterPresets: React.Dispatch<React.SetStateAction<ClusterPreset[]>>;
+  saveClusterPresets: (nextPresets: ClusterPreset[]) => Promise<void>;
+  dbQueryPresets: DbQueryPreset[];
+  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
+  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
+  dbNodePresets: DbNodePreset[];
+  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
+  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
+  editingPresetId: string | null;
+  presetDraft: ClusterPresetDraft;
+  setPresetDraft: React.Dispatch<React.SetStateAction<ClusterPresetDraft>>;
+  handleSavePreset: () => Promise<void>;
+  handleLoadPreset: (preset: ClusterPreset) => void;
+  handleDeletePreset: (presetId: string) => Promise<void>;
+  handleApplyPreset: (preset: ClusterPreset) => void;
+  handleExportPresets: () => void;
+  handleImportPresets: (mode: "merge" | "replace") => Promise<void>;
+  handlePresetFromSelection: () => void;
+  handleResetPresetDraft: () => void;
+  presetsModalOpen: boolean;
+  setPresetsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  presetsJson: string;
+  setPresetsJson: React.Dispatch<React.SetStateAction<string>>;
+  expandedPaletteGroups: Set<string>;
+  setExpandedPaletteGroups: React.Dispatch<React.SetStateAction<Set<string>>>;
+  paletteCollapsed: boolean;
+  setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  togglePaletteGroup: (title: string) => void;
+  normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
+  normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
+}
+
 export function useAiPathsPresets({
   nodes,
   edges,
@@ -51,7 +85,7 @@ export function useAiPathsPresets({
   getCanvasCenterPosition,
   toast,
   reportAiPathsError,
-}: UseAiPathsPresetsArgs) {
+}: UseAiPathsPresetsArgs): AiPathsPresets {
   const [clusterPresets, setClusterPresets] = useState<ClusterPreset[]>([]);
   const [dbQueryPresets, setDbQueryPresets] = useState<DbQueryPreset[]>([]);
   const [dbNodePresets, setDbNodePresets] = useState<DbNodePreset[]>([]);

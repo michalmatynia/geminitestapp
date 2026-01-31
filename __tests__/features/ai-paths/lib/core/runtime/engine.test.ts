@@ -59,8 +59,8 @@ describe("AI Paths Runtime Engine", () => {
 
     // Note: handleMapper expects context to be an object. 
     // We update node-1 to return an object.
-    nodes[0].config.constant.value = JSON.stringify({ val: "mapped" });
-    nodes[0].config.constant.valueType = "json";
+    nodes[0]!.config!.constant!.value = JSON.stringify({ val: "mapped" });
+    nodes[0]!.config!.constant!.valueType = "json";
 
     const result = await evaluateGraph({
       ...defaultOptions,
@@ -170,7 +170,7 @@ describe("AI Paths Runtime Engine", () => {
       nodes,
       edges: [],
       seedOutputs: result1.outputs,
-      seedHashes: result1.hashes,
+      seedHashes: result1.hashes ?? {},
       onNodeStart,
     });
 

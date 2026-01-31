@@ -273,6 +273,72 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
+  TextAtom: {
+    type: "TextAtom",
+    label: "Text atoms",
+    icon: "Folder",
+    defaultSettings: {
+      text: "Text",
+      alignment: "left",
+      letterGap: 0,
+      lineGap: 0,
+      wrap: "wrap",
+    },
+    settingsSchema: [
+      { key: "text", label: "Text", type: "text", defaultValue: "Text" },
+      {
+        key: "alignment",
+        label: "Alignment",
+        type: "alignment",
+        defaultValue: "left",
+      },
+      { key: "letterGap", label: "Letter gap (px)", type: "number", defaultValue: 0 },
+      { key: "lineGap", label: "Line gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "wrap",
+        label: "Wrap",
+        type: "select",
+        options: [
+          { label: "Wrap", value: "wrap" },
+          { label: "No wrap", value: "nowrap" },
+        ],
+        defaultValue: "wrap",
+      },
+    ],
+  },
+  TextAtomLetter: {
+    type: "TextAtomLetter",
+    label: "Text atom",
+    icon: "FileText",
+    defaultSettings: {
+      textContent: "",
+      fontFamily: "Inter, sans-serif",
+      fontSize: 0,
+      fontWeight: "400",
+      fontStyle: "normal",
+      lineHeight: 0,
+      letterSpacing: 0,
+      textColor: "",
+    },
+    settingsSchema: [
+      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "Inter, sans-serif" },
+      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
+      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
+      {
+        key: "fontStyle",
+        label: "Font style",
+        type: "select",
+        options: [
+          { label: "Normal", value: "normal" },
+          { label: "Italic", value: "italic" },
+        ],
+        defaultValue: "normal",
+      },
+      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
+      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
+      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
+    ],
+  },
   ImageElement: {
     type: "ImageElement",
     label: "Image element",
@@ -671,7 +737,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "AnnouncementBar",
     label: "Announcement bar",
     icon: "Megaphone",
-    allowedBlockTypes: ["Announcement", "Text", "TextElement", "ImageElement", "Button", "Icon", "AppEmbed"],
+    allowedBlockTypes: ["Announcement", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Icon", "AppEmbed"],
     defaultSettings: {
       colorScheme: "scheme-2",
       paddingTop: 12,
@@ -772,71 +838,13 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
     ],
   },
-  TextAtom: {
-    type: "TextAtom",
-    label: "Text atoms",
-    icon: "Folder",
-    defaultSettings: {
-      text: "Text",
-      alignment: "left",
-      letterGap: 0,
-      lineGap: 0,
-      wrap: "wrap",
-    },
-    settingsSchema: [
-      { key: "text", label: "Text", type: "text", defaultValue: "Text" },
-      {
-        key: "alignment",
-        label: "Alignment",
-        type: "alignment",
-        defaultValue: "left",
-      },
-      { key: "letterGap", label: "Letter gap (px)", type: "number", defaultValue: 0 },
-      { key: "lineGap", label: "Line gap (px)", type: "number", defaultValue: 0 },
-      {
-        key: "wrap",
-        label: "Wrap",
-        type: "select",
-        options: [
-          { label: "Wrap", value: "wrap" },
-          { label: "No wrap", value: "nowrap" },
-        ],
-        defaultValue: "wrap",
-      },
-    ],
-  },
-  TextAtomLetter: {
-    type: "TextAtomLetter",
-    label: "Text atom",
-    icon: "FileText",
-    defaultSettings: {
-      textContent: "",
-      fontFamily: "Inter, sans-serif",
-      fontSize: 0,
-      fontWeight: "400",
-      fontStyle: "normal",
-      lineHeight: 0,
-      letterSpacing: 0,
-      textColor: "",
-    },
-    settingsSchema: [
-      { key: "fontFamily", label: "Font family", type: "font-family", defaultValue: "Inter, sans-serif" },
-      { key: "fontSize", label: "Font size (px)", type: "number", defaultValue: 0 },
-      { key: "fontWeight", label: "Font weight", type: "font-weight", defaultValue: "400" },
-      {
-        key: "fontStyle",
-        label: "Font style",
-        type: "select",
-        options: [
-          { label: "Normal", value: "normal" },
-          { label: "Italic", value: "italic" },
-        ],
-        defaultValue: "normal",
-      },
-      { key: "lineHeight", label: "Line height", type: "number", defaultValue: 0 },
-      { key: "letterSpacing", label: "Letter spacing (px)", type: "number", defaultValue: 0 },
-      { key: "textColor", label: "Text color", type: "color", defaultValue: "" },
-    ],
+  ImageElement: {
+    type: "ImageElement",
+    label: "Image element",
+    icon: "ImageIcon",
+    allowedBlockTypes: [],
+    defaultSettings: { ...BLOCK_DEFINITIONS.ImageElement.defaultSettings },
+    settingsSchema: [...BLOCK_DEFINITIONS.ImageElement.settingsSchema],
   },
   ImageWithText: {
     type: "ImageWithText",
@@ -1119,7 +1127,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["Image", "Heading", "Text", "TextElement", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       transition: "fade",
       autoplaySpeed: 5000,
@@ -1160,7 +1168,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Newsletter",
     label: "Newsletter",
     icon: "Mail",
-    allowedBlockTypes: ["Heading", "Text", "TextElement", "ImageElement", "AppEmbed"],
+    allowedBlockTypes: ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "AppEmbed"],
     defaultSettings: {
       buttonText: "Subscribe",
       placeholder: "Enter your email",
@@ -1218,9 +1226,9 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ["AnnouncementBar", "Block", "TextElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  header: ["AnnouncementBar", "Block", "TextElement", "ImageElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
   template: Object.keys(SECTION_DEFINITIONS).filter((type) => type !== "AnnouncementBar"),
-  footer: ["Block", "TextElement", "RichText", "Grid", "Newsletter", "ContactForm"],
+  footer: ["Block", "TextElement", "ImageElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {

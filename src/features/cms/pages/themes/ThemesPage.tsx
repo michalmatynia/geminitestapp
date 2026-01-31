@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import { Button, ListPanel, SectionHeader } from "@/shared/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

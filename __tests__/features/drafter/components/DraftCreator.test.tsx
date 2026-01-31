@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { DraftCreator } from "@/features/drafter/components/DraftCreator";
 import { vi } from "vitest";

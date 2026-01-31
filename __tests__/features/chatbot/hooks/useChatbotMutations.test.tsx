@@ -8,7 +8,7 @@ import {
   useSaveChatbotSettings 
 } from "@/features/chatbot/hooks/useChatbotMutations";
 import * as chatbotApi from "@/features/chatbot/api";
-import React from "react";
+
 
 vi.mock("@/features/chatbot/api", () => ({
   chatbotQueryKeys: {

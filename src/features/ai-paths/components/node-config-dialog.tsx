@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
-import React from "react";
+
 
 
 import type {

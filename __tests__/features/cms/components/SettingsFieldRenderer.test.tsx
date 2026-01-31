@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SettingsFieldRenderer } from "@/features/cms/components/page-builder/SettingsFieldRenderer";
 import { vi } from "vitest";

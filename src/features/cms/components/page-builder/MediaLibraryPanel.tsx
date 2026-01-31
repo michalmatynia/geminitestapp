@@ -31,7 +31,7 @@ export function MediaLibraryPanel({
   const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === "single";
 
   const handleSelect = (files: ImageFileSelection[]): void => {
-    const filepaths = files.map((file) => file.filepath).filter(Boolean);
+    const filepaths = files.map((file: ImageFileSelection) => file.filepath).filter(Boolean);
     if (filepaths.length === 0) return;
     onSelect(filepaths);
     if (selectionMode === "single") {
@@ -99,7 +99,7 @@ export function MediaLibraryPanel({
             accept="image/*"
             multiple
             className="hidden"
-            onChange={handleUpload}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { void handleUpload(e); }}
           />
           <p className="text-xs text-gray-500">Max 10MB per file</p>
         </div>

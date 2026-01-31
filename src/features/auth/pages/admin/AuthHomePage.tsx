@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import { SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 

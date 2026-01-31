@@ -1,10 +1,10 @@
 import type { JSX } from "react";
 
-export default async function FrontendLayout({
+export default function FrontendLayout({
   children,
 }: {
   children: React.ReactNode;
-}): Promise<JSX.Element> {
+}): JSX.Element {
   return (
     <div>{children}</div>
   );

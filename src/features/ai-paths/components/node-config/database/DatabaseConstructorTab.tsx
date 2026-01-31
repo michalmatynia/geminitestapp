@@ -2,7 +2,7 @@
 
 import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from "@/shared/ui";
 import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
-import React from "react";
+
 
 /** Extract code blocks from markdown-style ``` delimiters */
 function extractCodeSnippets(text: string): string[] {

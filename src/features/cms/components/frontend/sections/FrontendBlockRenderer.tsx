@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import NextImage from "next/image";
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
@@ -354,7 +354,7 @@ function ImageElementBlock({
 
   return (
     <div className="relative" style={wrapperStyles}>
-      <img src={src} alt={alt} style={imageStyles} />
+      <NextImage src={src} alt={alt} style={imageStyles} fill unoptimized />
       {overlayType !== "none" && (
         <div className="pointer-events-none absolute inset-0" style={overlayStyles} />
       )}

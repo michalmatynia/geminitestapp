@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BlockPicker } from "@/features/cms/components/page-builder/BlockPicker";
 import { vi } from "vitest";

@@ -36,6 +36,42 @@ type ConnectingState = {
   start: { x: number; y: number };
 };
 
+export interface AiPathsCanvasInteractions {
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
+  view: { x: number; y: number; scale: number };
+  panState: { startX: number; startY: number; originX: number; originY: number } | null;
+  dragState: { nodeId: string; offsetX: number; offsetY: number } | null;
+  connecting: ConnectingState | null;
+  connectingPos: { x: number; y: number } | null;
+  lastDrop: { x: number; y: number } | null;
+  selectedEdgeId: string | null;
+  edgePaths: { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[];
+  connectingFromNode: AiNode | null;
+  ensureNodeVisible: (node: AiNode) => void;
+  getCanvasCenterPosition: () => { x: number; y: number };
+  handlePointerDown: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  handlePointerMove: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  handlePointerUp: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  handleDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
+  handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
+  handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
+  handleStartConnection: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
+  handleCompleteConnection: (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string) => void;
+  handlePanStart: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePanMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePanEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handleReconnectInput: (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string) => void;
+  handleRemoveEdge: (edgeId: string) => void;
+  handleDisconnectPort: (direction: "input" | "output", nodeId: string, port: string) => void;
+  handleDeleteSelectedNode: () => void;
+  handleSelectEdge: (edgeId: string | null) => void;
+  handleSelectNode: (nodeId: string) => void;
+  zoomTo: (targetScale: number) => void;
+  fitToNodes: () => void;
+  resetView: () => void;
+}
+
 export function useAiPathsCanvasInteractions({
   nodes,
   setNodes,
@@ -46,7 +82,7 @@ export function useAiPathsCanvasInteractions({
   clearRuntimeInputsForEdges,
   reportAiPathsError,
   toast,
-}: UseAiPathsCanvasInteractionsArgs) {
+}: UseAiPathsCanvasInteractionsArgs): AiPathsCanvasInteractions {
   // Initial view centered on the middle of the canvas where nodes are placed
   const [view, setView] = useState({ x: -600, y: -320, scale: 1 });
   const [connecting, setConnecting] = useState<ConnectingState | null>(null);
@@ -756,4 +792,3 @@ export function useAiPathsCanvasInteractions({
   };
 }
 
-export type AiPathsCanvasInteractions = ReturnType<typeof useAiPathsCanvasInteractions>;

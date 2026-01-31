@@ -11,23 +11,23 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const initializedRef = useRef(false);
-  const [enabled, setEnabled] = useState<Set<AppEmbedId>>(new Set());
-
-  useEffect(() => {
-    if (!settingsQuery.data) return;
-    if (initializedRef.current) return;
+  
+  const initialEnabled = useMemo(() => {
+    if (!settingsQuery.data) return new Set<AppEmbedId>();
     const stored = parseJsonSetting<AppEmbedId[]>(
       settingsQuery.data.get(APP_EMBED_SETTING_KEY),
       []
     );
-    setEnabled(new Set(stored));
-    initializedRef.current = true;
+    return new Set(stored);
   }, [settingsQuery.data]);
 
+  const [userEnabled, setUserEnabled] = useState<Set<AppEmbedId> | null>(null);
+  const enabled = userEnabled ?? initialEnabled;
+
   const toggleOption = (id: AppEmbedId, checked: boolean): void => {
-    setEnabled((prev) => {
-      const next = new Set(prev);
+    setUserEnabled((prev: Set<AppEmbedId> | null) => {
+      const current = prev ?? initialEnabled;
+      const next = new Set(current);
       if (checked) {
         next.add(id);
       } else {
@@ -43,6 +43,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
         key: APP_EMBED_SETTING_KEY,
         value: serializeSetting(Array.from(enabled)),
       });
+      setUserEnabled(null); // Reset to follow server data after save
       toast("App embeds saved.", { variant: "success" });
     } catch (error) {
       console.error("Failed to save app embeds:", error);
@@ -70,7 +71,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
       )}
       <div className="flex-1 overflow-y-auto p-3">
         <div className="space-y-3">
-          {APP_EMBED_OPTIONS.map((option) => {
+          {APP_EMBED_OPTIONS.map((option: { id: AppEmbedId; label: string; description: string; settingsRoute: string }) => {
             const isEnabled = enabled.has(option.id);
             return (
               <div
@@ -85,7 +86,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
                   <label className="flex items-center gap-2 text-xs text-gray-300">
                     <Checkbox
                       checked={isEnabled}
-                      onCheckedChange={(checked) => toggleOption(option.id, checked === true)}
+                      onCheckedChange={(checked: boolean | "indeterminate") => toggleOption(option.id, checked === true)}
                     />
                     Enabled
                   </label>

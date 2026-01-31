@@ -6,7 +6,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { useChatbotLogic } from "@/features/chatbot/hooks/useChatbotLogic";
 import * as chatbotApi from "@/features/chatbot/api";
 import { ToastProvider } from "@/shared/ui/toast";
-import React from "react";
+
 
 // Mock the APIs
 vi.mock("@/features/chatbot/api", () => ({

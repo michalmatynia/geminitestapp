@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 import { useMediaStyles } from "../media-styles-context";
 

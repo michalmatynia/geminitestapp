@@ -883,14 +883,14 @@ export function basePageBuilderReducer(
       if (action.sectionId === action.toSectionId) return state;
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
-      if (sourceSection.type !== "TextElement") return state;
+      if (sourceSection.type !== "TextElement" && sourceSection.type !== "ImageElement") return state;
       const targetSection = state.sections.find((s: SectionInstance) => s.id === action.toSectionId);
       if (!targetSection) return state;
 
-      const blockDef = getBlockDefinition("TextElement");
+      const blockDef = getBlockDefinition(sourceSection.type);
       const convertedBlock: BlockInstance = {
         id: uid(),
-        type: "TextElement",
+        type: sourceSection.type,
         settings: {
           ...(blockDef?.defaultSettings ?? {}),
           ...sourceSection.settings,

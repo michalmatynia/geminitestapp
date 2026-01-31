@@ -2,20 +2,20 @@
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Switch } from "@/shared/ui";
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch } from "@/shared/ui";
 import type { SettingsField, InspectorSettings } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
-import type { PageStatus, CmsTheme, Slug } from "../../types";
+import type { PageStatus, Slug } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
-import { useCmsAllSlugs, useCmsSlugs, useCmsThemes, useUpdateSlug } from "../../hooks/useCmsQueries";
+import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from "../../hooks/useCmsQueries";
 import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
 import { useSettingsMap } from "@/shared/hooks/useSettings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
+import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
@@ -25,8 +25,8 @@ const MANAGEMENT_FIELDS: SettingsField[] = [
 ];
 
 function prependManagementFields(schema: SettingsField[]): SettingsField[] {
-  const existing = new Set(schema.map((field) => field.key));
-  const extra = MANAGEMENT_FIELDS.filter((field) => !existing.has(field.key));
+  const existing = new Set(schema.map((field: SettingsField) => field.key));
+  const extra = MANAGEMENT_FIELDS.filter((field: SettingsField) => !existing.has(field.key));
   return extra.length ? [...extra, ...schema] : schema;
 }
 
@@ -41,10 +41,10 @@ function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
   let paddingBuf: SettingsField[] = [];
   let marginBuf: SettingsField[] = [];
 
-  const flushPadding = () => {
+  const flushPadding = (): void => {
     if (paddingBuf.length) { groups.push({ kind: "padding", fields: paddingBuf }); paddingBuf = []; }
   };
-  const flushMargin = () => {
+  const flushMargin = (): void => {
     if (marginBuf.length) { groups.push({ kind: "margin", fields: marginBuf }); marginBuf = []; }
   };
 
@@ -72,7 +72,7 @@ function renderFieldGroups(
   onChange: (key: string, value: unknown) => void,
   resolveField?: (field: SettingsField) => SettingsField,
 ): React.ReactNode[] {
-  return groups.map((group) => {
+  return groups.map((group: FieldGroup) => {
     if (group.kind === "single") {
       const raw = group.fields[0]!;
       const field = resolveField ? resolveField(raw) : raw;
@@ -90,7 +90,7 @@ function renderFieldGroups(
       <div key={group.kind} className="space-y-1.5">
         <Label className="text-xs text-gray-400">{label}</Label>
         <div className="grid grid-cols-2 gap-2">
-          {group.fields.map((field) => (
+          {group.fields.map((field: SettingsField) => (
             <div key={field.key} className="space-y-0.5">
               <span className="text-[10px] text-gray-500 uppercase">
                 {field.key.replace(/^(padding|margin)/, "")}
@@ -98,7 +98,7 @@ function renderFieldGroups(
               <Input
                 type="number"
                 value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(field.key, Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(field.key, Number(e.target.value))}
                 className="text-xs h-7 px-1.5"
               />
             </div>
@@ -124,15 +124,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const settingsQuery = useSettingsMap();
   const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
-  const rowCount = useMemo(() => {
+  const rowCount = useMemo((): number => {
     if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
-    return selectedParentSection.blocks.filter((b) => b.type === "Row").length;
+    return selectedParentSection.blocks.filter((b: any) => b.type === "Row").length;
   }, [selectedParentSection]);
   const canRemoveRow = rowCount > 1;
-  const rowIndex = useMemo(() => {
+  const rowIndex = useMemo((): number | null => {
     if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
-    const rows = selectedParentSection.blocks.filter((b) => b.type === "Row");
-    const idx = rows.findIndex((b) => b.id === selectedBlock.id);
+    const rows = selectedParentSection.blocks.filter((b: any) => b.type === "Row");
+    const idx = rows.findIndex((b: any) => b.id === selectedBlock.id);
     return idx >= 0 ? idx + 1 : null;
   }, [isRowBlock, selectedParentSection, selectedBlock]);
 
@@ -141,7 +141,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   // ---------------------------------------------------------------------------
 
   const handleSectionSettingChange = useCallback(
-    (key: string, value: unknown) => {
+    (key: string, value: unknown): void => {
       if (!selectedSection) return;
       dispatch({
         type: "UPDATE_SECTION_SETTINGS",
@@ -152,17 +152,17 @@ export function ComponentSettingsPanel(): React.ReactNode {
     [selectedSection, dispatch]
   );
 
-  const handleRemoveSection = useCallback(() => {
+  const handleRemoveSection = useCallback((): void => {
     if (!selectedSection) return;
     dispatch({ type: "REMOVE_SECTION", sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
-  const handleCopySection = useCallback(() => {
+  const handleCopySection = useCallback((): void => {
     if (!selectedSection) return;
     dispatch({ type: "COPY_SECTION", sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
 
-  const handleDuplicateSection = useCallback(() => {
+  const handleDuplicateSection = useCallback((): void => {
     if (!selectedSection) return;
     dispatch({ type: "DUPLICATE_SECTION", sectionId: selectedSection.id });
   }, [selectedSection, dispatch]);
@@ -172,7 +172,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   // ---------------------------------------------------------------------------
 
   const handleBlockSettingChange = useCallback(
-    (key: string, value: unknown) => {
+    (key: string, value: unknown): void => {
       if (!selectedBlock || !selectedParentSection) return;
 
       if (selectedParentBlock && selectedParentColumn) {
@@ -207,7 +207,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
     [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]
   );
 
-  const handleRemoveBlock = useCallback(() => {
+  const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
 
     if (selectedParentBlock && selectedParentColumn) {
@@ -237,7 +237,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
   }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]);
 
-  const handleRemoveRow = useCallback(() => {
+  const handleRemoveRow = useCallback((): void => {
     if (!isRowBlock || !selectedParentSection || !selectedBlock) return;
     dispatch({
       type: "REMOVE_GRID_ROW",
@@ -251,7 +251,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   // ---------------------------------------------------------------------------
 
   const handleColumnSettingChange = useCallback(
-    (key: string, value: unknown) => {
+    (key: string, value: unknown): void => {
       if (!selectedColumn || !selectedColumnParentSection) return;
       dispatch({
         type: "UPDATE_COLUMN_SETTINGS",
@@ -264,7 +264,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   );
 
   const handleSectionSettingChangeWithGridColumns = useCallback(
-    (key: string, value: unknown) => {
+    (key: string, value: unknown): void => {
       if (!selectedSection) return;
       if (key === "columns" && selectedSection.type === "Grid") {
         dispatch({
@@ -290,7 +290,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   // ---------------------------------------------------------------------------
 
   const handleAnimationChange = useCallback(
-    (config: GsapAnimationConfig) => {
+    (config: GsapAnimationConfig): void => {
       if (selectedSection && !selectedBlock && !selectedColumn) {
         handleSectionSettingChange("gsapAnimation", config);
       } else if (selectedColumn) {
@@ -323,8 +323,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
     );
   }, [settingsQuery.data]);
 
-  const appEmbedOptions = useMemo(() => {
-    const options = APP_EMBED_OPTIONS.filter((option) => enabledAppEmbeds.includes(option.id)).map((option) => ({
+  const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
+    const options = APP_EMBED_OPTIONS.filter((option: any) => enabledAppEmbeds.includes(option.id)).map((option: any) => ({
       label: option.label,
       value: option.id,
     }));
@@ -344,7 +344,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
 
-  const selectedLabel = useMemo(() => {
+  const selectedLabel = useMemo((): string => {
     if (selectedSection) return sectionDef?.label ?? selectedSection.type;
     if (selectedColumn) return "Column";
     if (selectedBlock) return blockDef?.label ?? selectedBlock.type;
@@ -374,7 +374,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [selectedSection, selectedColumn, selectedBlock]);
 
   const updateConnectionSetting = useCallback(
-    (patch: Partial<{ enabled: boolean; source: string; path: string; fallback: string }>) => {
+    (patch: Partial<{ enabled: boolean; source: string; path: string; fallback: string }>): void => {
       const next = { ...connectionSettings, ...patch };
       if (selectedSection && !selectedBlock && !selectedColumn) {
         handleSectionSettingChange("connection", next);
@@ -399,16 +399,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
     ]
   );
 
-  useEffect(() => {
+  useEffect((): void => {
     if (state.inspectorEnabled) {
-      setActiveTab((prev) => (prev === "connections" ? prev : "connections"));
+      setActiveTab((prev: string) => (prev === "connections" ? prev : "connections") as any);
       return;
     }
-    setActiveTab((prev) => (prev === "connections" ? "settings" : prev));
+    setActiveTab((prev: string) => (prev === "connections" ? "settings" : prev) as any);
   }, [state.inspectorEnabled]);
 
   const updateInspectorSetting = useCallback(
-    (patch: Partial<InspectorSettings>) => {
+    (patch: Partial<InspectorSettings>): void => {
       dispatch({ type: "UPDATE_INSPECTOR_SETTINGS", settings: patch });
     },
     [dispatch]
@@ -423,7 +423,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             type="button"
             size="icon"
             variant="ghost"
-            onClick={() => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
+            onClick={(): void => dispatch({ type: "TOGGLE_RIGHT_PANEL" })}
             aria-label="Hide right panel"
             className="h-6 w-6 p-0 text-gray-500 hover:text-gray-300"
           >
@@ -433,7 +433,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             type="button"
             size="icon"
             variant="ghost"
-            onClick={() => dispatch({ type: "TOGGLE_INSPECTOR" })}
+            onClick={(): void => dispatch({ type: "TOGGLE_INSPECTOR" })}
             title={state.inspectorEnabled ? "Inspector (on)" : "Inspector"}
             aria-label="Toggle inspector"
             className={`h-6 w-6 p-0 ${
@@ -448,7 +448,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             type="button"
             size="icon"
             variant="ghost"
-            onClick={() => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
+            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "desktop" })}
             title="Desktop preview"
             aria-label="Desktop preview"
             className={`h-6 w-6 p-0 ${
@@ -463,7 +463,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             type="button"
             size="icon"
             variant="ghost"
-            onClick={() => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
+            onClick={(): void => dispatch({ type: "SET_PREVIEW_MODE", mode: "mobile" })}
             title="Mobile preview"
             aria-label="Mobile preview"
             className={`h-6 w-6 p-0 ${
@@ -495,7 +495,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             <label className="flex items-center gap-2">
               <Checkbox
                 checked={inspectorSettings.showTooltip}
-                onCheckedChange={(value) => updateInspectorSetting({ showTooltip: value === true })}
+                onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showTooltip: value === true })}
               />
               Enable tooltip
             </label>
@@ -504,35 +504,35 @@ export function ComponentSettingsPanel(): React.ReactNode {
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showStyleSettings}
-                  onCheckedChange={(value) => updateInspectorSetting({ showStyleSettings: value === true })}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showStyleSettings: value === true })}
                 />
                 Style settings
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showStructureInfo}
-                  onCheckedChange={(value) => updateInspectorSetting({ showStructureInfo: value === true })}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showStructureInfo: value === true })}
                 />
                 Structure info (zone + counts)
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showIdentifiers}
-                  onCheckedChange={(value) => updateInspectorSetting({ showIdentifiers: value === true })}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showIdentifiers: value === true })}
                 />
                 Identifiers (IDs)
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showVisibilityInfo}
-                  onCheckedChange={(value) => updateInspectorSetting({ showVisibilityInfo: value === true })}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showVisibilityInfo: value === true })}
                 />
                 Visibility info
               </label>
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={inspectorSettings.showConnectionInfo}
-                  onCheckedChange={(value) => updateInspectorSetting({ showConnectionInfo: value === true })}
+                  onCheckedChange={(value: boolean | "indeterminate"): void => updateInspectorSetting({ showConnectionInfo: value === true })}
                 />
                 Connection info
               </label>
@@ -553,8 +553,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
       ) : (
         <Tabs
           value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab((prev) => (prev === value ? prev : (value as "settings" | "animation" | "connections")))
+          onValueChange={(value: string): void =>
+            setActiveTab((prev: string) => (prev === value ? prev : (value as "settings" | "animation" | "connections")))
           }
           className="flex flex-1 flex-col overflow-hidden"
         >
@@ -661,7 +661,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
                   selectedBlock.settings,
                   handleBlockSettingChange,
-                  (field) =>
+                  (field: SettingsField): SettingsField =>
                     selectedBlock.type === "AppEmbed" && field.key === "appId"
                       ? { ...field, options: appEmbedOptions }
                       : field,
@@ -715,7 +715,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <Label className="text-xs text-gray-400">Data source</Label>
                     <Input
                       value={connectionSettings.source}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateConnectionSetting({ source: e.target.value })
                       }
                       placeholder="e.g. product, collection, hero"
@@ -726,7 +726,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <Label className="text-xs text-gray-400">Key path</Label>
                     <Input
                       value={connectionSettings.path}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateConnectionSetting({ path: e.target.value })
                       }
                       placeholder="e.g. title, hero.text"
@@ -737,7 +737,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <Label className="text-xs text-gray-400">Fallback</Label>
                     <Input
                       value={connectionSettings.fallback}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                         updateConnectionSetting({ fallback: e.target.value })
                       }
                       placeholder="Optional fallback text"
@@ -747,7 +747,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   <label className="flex items-center gap-2 text-xs text-gray-400">
                     <Checkbox
                       checked={connectionSettings.enabled}
-                      onCheckedChange={(value) =>
+                      onCheckedChange={(value: boolean | "indeterminate"): void =>
                         updateConnectionSetting({ enabled: value === true })
                       }
                     />
@@ -782,73 +782,74 @@ function PageSettingsTab(): React.ReactNode {
   const [search, setSearch] = useState("");
   const [selectedSlugIds, setSelectedSlugIds] = useState<string[]>([]);
   const initializedRef = useRef(false);
-  if (!page) return null;
 
   const allSlugs = allSlugsQuery.data ?? [];
   const domainSlugs = slugsQuery.data ?? [];
-  const allSlugByValue = useMemo(() => {
+  const allSlugByValue = useMemo((): Map<string, Slug> => {
     const map = new Map<string, Slug>();
-    allSlugs.forEach((slug) => map.set(slug.slug, slug));
+    allSlugs.forEach((slug: Slug) => map.set(slug.slug, slug));
     return map;
   }, [allSlugs]);
 
-  useEffect(() => {
-    if (!allSlugs.length) return;
+  useEffect((): void => {
+    if (!page || !allSlugs.length) return;
     if (initializedRef.current) return;
-    const pageSlugValues = (page.slugs ?? []).map((s) => s.slug.slug);
+    const pageSlugValues = (page.slugs ?? []).map((s: any) => s.slug.slug);
     const ids = pageSlugValues
-      .map((value) => allSlugByValue.get(value)?.id)
-      .filter((value): value is string => Boolean(value));
+      .map((value: string) => allSlugByValue.get(value)?.id)
+      .filter((value: string | undefined): value is string => Boolean(value));
     setSelectedSlugIds(ids);
     initializedRef.current = true;
-  }, [allSlugs, allSlugByValue, page.id, page.slugs]);
+  }, [allSlugs, allSlugByValue, page?.id, page?.slugs]);
 
-  useEffect(() => {
+  useEffect((): void => {
     initializedRef.current = false;
-  }, [page.id, activeDomainId]);
+  }, [page?.id, activeDomainId]);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!initializedRef.current) return;
-    const selectedSlugs = selectedSlugIds
-      .map((id) => allSlugs.find((slug) => slug.id === id))
+    const selectedSlugsList = selectedSlugIds
+      .map((id: string) => allSlugs.find((slug: Slug) => slug.id === id))
       .filter(Boolean) as Slug[];
     dispatch({
       type: "UPDATE_PAGE_SLUGS",
       slugIds: selectedSlugIds,
-      slugValues: selectedSlugs.map((slug) => slug.slug),
+      slugValues: selectedSlugsList.map((slug: Slug) => slug.slug),
     });
   }, [selectedSlugIds, allSlugs, dispatch]);
 
-  const domainSlugIds = useMemo(() => new Set(domainSlugs.map((slug) => slug.id)), [domainSlugs]);
-  const selectedSlugs = useMemo(() => {
-    const byId = new Map(allSlugs.map((slug) => [slug.id, slug]));
+  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const selectedSlugs = useMemo((): Slug[] => {
+    const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
     return selectedSlugIds
-      .map((idValue) => byId.get(idValue))
-      .filter((value): value is Slug => Boolean(value));
+      .map((idValue: string) => byId.get(idValue))
+      .filter((value: Slug | undefined): value is Slug => Boolean(value));
   }, [allSlugs, selectedSlugIds]);
 
   const crossZoneSlugs = useMemo(
-    () => selectedSlugs.filter((slug) => !domainSlugIds.has(slug.id)),
+    (): Slug[] => selectedSlugs.filter((slug: Slug) => !domainSlugIds.has(slug.id)),
     [selectedSlugs, domainSlugIds]
   );
   const eligibleHomeSlugs = useMemo(
-    () => selectedSlugs.filter((slug) => domainSlugIds.has(slug.id)),
+    (): Slug[] => selectedSlugs.filter((slug: Slug) => domainSlugIds.has(slug.id)),
     [selectedSlugs, domainSlugIds]
   );
   const currentHomeSlug = useMemo(
-    () => domainSlugs.find((slug) => slug.isDefault) ?? null,
+    (): Slug | null => domainSlugs.find((slug: Slug) => slug.isDefault) ?? null,
     [domainSlugs]
   );
   const pageHomeSlug = useMemo(
-    () => (currentHomeSlug ? eligibleHomeSlugs.find((slug) => slug.id === currentHomeSlug.id) ?? null : null),
+    (): Slug | null => (currentHomeSlug ? eligibleHomeSlugs.find((slug: Slug) => slug.id === currentHomeSlug.id) ?? null : null),
     [currentHomeSlug, eligibleHomeSlugs]
   );
 
-  const filteredDomainSlugs = useMemo(() => {
+  const filteredDomainSlugs = useMemo((): Slug[] => {
     const term = search.trim().toLowerCase();
     if (!term) return domainSlugs;
-    return domainSlugs.filter((slug) => slug.slug.toLowerCase().includes(term));
+    return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
   }, [domainSlugs, search]);
+
+  if (!page) return null;
 
   const handleStatusChange = (status: PageStatus): void => {
     dispatch({ type: "SET_PAGE_STATUS", status });
@@ -946,7 +947,7 @@ function PageSettingsTab(): React.ReactNode {
             <Label className="text-xs text-gray-400">Slugs for this zone</Label>
             <Input
               value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
               placeholder="Search slugs..."
               className="h-8 text-xs"
             />
@@ -956,15 +957,15 @@ function PageSettingsTab(): React.ReactNode {
                   No slugs available for this zone.
                 </p>
               ) : (
-                filteredDomainSlugs.map((slug) => {
+                filteredDomainSlugs.map((slug: Slug) => {
                   const checked = selectedSlugIds.includes(slug.id);
                   return (
                     <label key={slug.id} className="flex items-center gap-2 text-xs text-gray-200">
                       <Checkbox
                         checked={checked}
-                        onCheckedChange={() => {
-                          setSelectedSlugIds((prev) =>
-                            checked ? prev.filter((idValue) => idValue !== slug.id) : [...prev, slug.id]
+                        onCheckedChange={(): void => {
+                          setSelectedSlugIds((prev: string[]) =>
+                            checked ? prev.filter((idValue: string) => idValue !== slug.id) : [...prev, slug.id]
                           );
                         }}
                       />
@@ -986,12 +987,12 @@ function PageSettingsTab(): React.ReactNode {
                 These slugs are not part of the current zone. Remove them or switch zones.
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {crossZoneSlugs.map((slug) => (
+                {crossZoneSlugs.map((slug: Slug) => (
                   <button
                     key={slug.id}
                     type="button"
-                    onClick={() =>
-                      setSelectedSlugIds((prev) => prev.filter((idValue) => idValue !== slug.id))
+                    onClick={(): void =>
+                      setSelectedSlugIds((prev: string[]) => prev.filter((idValue: string) => idValue !== slug.id))
                     }
                     className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"
                   >
@@ -1010,7 +1011,7 @@ function PageSettingsTab(): React.ReactNode {
               </p>
             ) : (
               <div className="space-y-2">
-                {eligibleHomeSlugs.map((slug) => {
+                {eligibleHomeSlugs.map((slug: Slug) => {
                   const isHome = currentHomeSlug?.id === slug.id;
                   return (
                     <div
@@ -1027,7 +1028,7 @@ function PageSettingsTab(): React.ReactNode {
                           size="sm"
                           variant="outline"
                           disabled={updateSlug.isPending}
-                          onClick={() => { void handleSetHome(slug); }}
+                          onClick={(): void => { void handleSetHome(slug); }}
                           className="h-6 px-2 text-[10px]"
                         >
                           Set as home

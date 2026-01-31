@@ -79,7 +79,7 @@ describe("Chatbot Job Repository", () => {
       const input = {
         sessionId: "s1",
         model: "gpt-4",
-        payload: { prompt: "test" },
+        payload: { messages: [], model: "gpt-4" },
       };
       const newId = new ObjectId("507f1f77bcf86cd799439012");
       mockCollection.insertOne.mockResolvedValue({ insertedId: newId });

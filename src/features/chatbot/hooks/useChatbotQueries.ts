@@ -14,7 +14,7 @@ import type { ChatbotSessionListItem } from "../types";
 /**
  * Query hook for fetching all chatbot sessions
  */
-export function useChatbotSessions(options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotSessions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.sessions(),
     queryFn: async (): Promise<ChatbotSessionListItem[]> => {
@@ -28,7 +28,7 @@ export function useChatbotSessions(options?: { enabled?: boolean }): typeof useQ
 /**
  * Query hook for fetching session IDs only (lightweight)
  */
-export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...chatbotQueryKeys.sessions(), "ids", query ?? "all"],
     queryFn: async (): Promise<string[]> => {
@@ -45,7 +45,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
 /**
  * Query hook for fetching a single chatbot session with messages
  */
-export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : ["chatbot", "session", "none"],
     queryFn: async () => {
@@ -59,7 +59,7 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
 /**
  * Query hook for fetching chatbot settings
  */
-export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotSettings(key?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.settings(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
@@ -70,7 +70,7 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching available models from the chatbot API
  */
-export function useChatbotModels(options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotModels(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.models(),
     queryFn: async (): Promise<string[]> => {
@@ -89,7 +89,7 @@ export function useChatbotModels(options?: { enabled?: boolean }): typeof useQue
 /**
  * Query hook for fetching Ollama models from a custom base URL
  */
-export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): typeof useQuery {
+export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...chatbotQueryKeys.models(), "ollama", baseUrl],
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
@@ -101,7 +101,7 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching chatbot memory/context
  */
-export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): typeof useQuery {
+export function useChatbotMemory(query?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.memory(query),
     queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ""),

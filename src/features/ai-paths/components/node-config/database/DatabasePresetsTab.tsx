@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from "@/shared/ui";
-import React from "react";
+
 import { Eye } from "lucide-react";
 
 import type { DbQueryPreset } from "@/features/ai-paths/lib";

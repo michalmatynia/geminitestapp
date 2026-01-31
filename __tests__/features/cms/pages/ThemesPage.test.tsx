@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import ThemesPage from "@/features/cms/pages/themes/ThemesPage";
 import { useCmsThemes, useDeleteTheme } from "@/features/cms/hooks/useCmsQueries";

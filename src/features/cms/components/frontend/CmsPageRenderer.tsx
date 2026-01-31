@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { PageComponent } from "../../types";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
@@ -19,6 +19,7 @@ import { GsapAnimationWrapper } from "./GsapAnimationWrapper";
 import { getHoverEffectVars } from "./theme-styles";
 import { MediaStylesProvider } from "./media-styles-context";
 import { FrontendTextElementSection } from "./sections/FrontendTextElementSection";
+import { FrontendImageElementSection } from "./sections/FrontendImageElementSection";
 
 // ---------------------------------------------------------------------------
 // Types for the section content stored in PageComponent.content
@@ -128,6 +129,8 @@ function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: Secti
       return <FrontendBlockSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "TextElement":
       return <FrontendTextElementSection settings={settings} />;
+    case "ImageElement":
+      return <FrontendImageElementSection settings={settings} />;
     case "Hero":
       return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ImageWithText":

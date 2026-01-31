@@ -33,7 +33,7 @@ describe("CMS Slugs API", () => {
       const mockSlugs = [{ id: "1", slug: "home" }];
       vi.mocked(getSlugsForDomain).mockResolvedValue(mockSlugs as any);
 
-      const res = await listSlugs(new NextRequest("http://localhost/api/cms/slugs"), {} as any);
+      const res = await listSlugs(new NextRequest("http://localhost/api/cms/slugs"));
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -54,7 +54,7 @@ describe("CMS Slugs API", () => {
         body: JSON.stringify(slugData),
       });
 
-      const res = await createSlug(req, {} as any);
+      const res = await createSlug(req);
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -68,7 +68,7 @@ describe("CMS Slugs API", () => {
         body: JSON.stringify({}),
       });
 
-      const res = await createSlug(req, {} as any);
+      const res = await createSlug(req);
       expect(res.status).toBe(400);
     });
   });

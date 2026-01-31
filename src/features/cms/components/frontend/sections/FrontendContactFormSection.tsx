@@ -1,4 +1,4 @@
-import React from "react";
+
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 
 interface FrontendContactFormSectionProps {

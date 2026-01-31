@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Textarea, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui";
-import React from "react";
+
 
 
 

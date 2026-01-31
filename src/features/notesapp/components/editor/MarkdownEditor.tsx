@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast, Textarea } from "@/shared/ui";
-import React from "react";
+
 
 import { renderMarkdownToHtml } from "../../utils";
 

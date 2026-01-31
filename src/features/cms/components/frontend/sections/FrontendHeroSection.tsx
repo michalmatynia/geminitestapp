@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import type { BlockInstance } from "../../../types/page-builder";
 import { getSectionContainerClass, getSectionStyles, type ColorSchemeColors } from "../theme-styles";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";

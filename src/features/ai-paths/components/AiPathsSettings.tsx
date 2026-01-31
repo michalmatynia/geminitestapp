@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import { AiPathsSettingsView } from "./ai-paths-settings/AiPathsSettingsView";
 import { useAiPathsSettingsState } from "./ai-paths-settings/useAiPathsSettingsState";
 

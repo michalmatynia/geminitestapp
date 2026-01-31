@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
 import { vi } from "vitest";

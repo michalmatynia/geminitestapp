@@ -10,6 +10,7 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   AnnouncementBar: Megaphone,
   Block: Box,
   TextElement: FileText,
+  ImageElement: ImageIcon,
   ImageWithText: Layers,
   RichText: AlignLeft,
   Hero: Layers,
@@ -139,12 +140,14 @@ export function SectionNodeItem({
   onDropSectionToColumn,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
-  const isFileSection = section.type === "TextElement";
+  const isFileSection = section.type === "TextElement" || section.type === "ImageElement";
   const hasChildren = section.blocks.length > 0;
   const canToggle = !isFileSection && (section.type === "Grid" || hasChildren);
   const isExpanded = canToggle && expandedIds.has(section.id);
   const targetAllowsTextElement =
     getSectionDefinition(section.type)?.allowedBlockTypes?.includes("TextElement") ?? false;
+  const targetAllowsImageElement =
+    getSectionDefinition(section.type)?.allowedBlockTypes?.includes("ImageElement") ?? false;
   const hasBlocks = section.blocks.length > 0;
   const Icon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
@@ -204,6 +207,8 @@ export function SectionNodeItem({
           setIsSectionDragOver(false);
           if (draggedSectionId && draggedSectionId !== section.id) {
             if (draggedSectionType === "TextElement" && targetAllowsTextElement) {
+              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
+            } else if (draggedSectionType === "ImageElement" && targetAllowsImageElement) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
             } else if (section.type === "Grid") {
               // Section dropped on a Grid — route to first column
@@ -463,8 +468,6 @@ function RowNodeItem({
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddElementToNestedBlock,
-  rowId,
-  rowColumnCount,
   expandedIds,
   onToggleExpand,
   draggedBlockId,

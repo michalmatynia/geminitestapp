@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+
 import type { BlockInstance } from "../../../types/page-builder";
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { useMediaStyles } from "../media-styles-context";

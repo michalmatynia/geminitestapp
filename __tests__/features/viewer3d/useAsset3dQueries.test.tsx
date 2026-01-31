@@ -4,7 +4,7 @@ import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } fro
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw";
 import { server } from "@/mocks/server";
-import React from "react";
+
 
 const createWrapper = () => {
   const queryClient = new QueryClient({

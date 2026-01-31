@@ -789,6 +789,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           const positionMode =
             settings.positionMode ?? (settings.stickyEnabled ? "sticky" : "static");
           const isSticky = positionMode === "sticky";
+          const isSide = settings.menuPlacement === "left" || settings.menuPlacement === "right";
+          const canHideOnScroll = isSticky || isSide;
           return (
             <div className="space-y-3">
               <SelectField
@@ -820,11 +822,25 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                     value={settings.stickyBackground}
                     onChange={(v) => update("stickyBackground", v)}
                   />
+                </>
+              )}
+              {canHideOnScroll && (
+                <>
                   <CheckboxField
                     label="Hide on scroll"
                     checked={settings.hideOnScroll}
                     onChange={(v) => update("hideOnScroll", v)}
                   />
+                  {settings.hideOnScroll && (
+                    <NumberField
+                      label="Show on scroll up after"
+                      value={settings.showOnScrollUpAfterPx}
+                      onChange={(v) => update("showOnScrollUpAfterPx", v)}
+                      suffix="px"
+                      min={0}
+                      max={600}
+                    />
+                  )}
                 </>
               )}
             </div>

@@ -27,6 +27,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   const isSide = menu.menuPlacement === "left" || menu.menuPlacement === "right";
   const isStickyMode = positionMode === "sticky";
   const allowHideOnScroll = menu.hideOnScroll && (isSide || isStickyMode);
+  const showOnScrollUpAfterPx = Math.max(0, menu.showOnScrollUpAfterPx ?? 0);
   const [isHiddenOnScroll, setIsHiddenOnScroll] = useState<boolean>(false);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       return;
     }
     let lastY = typeof window !== "undefined" ? window.scrollY : 0;
+    let hiddenAtY = lastY;
     const threshold = 8;
     const handleScroll = (): void => {
       const currentY = window.scrollY;
@@ -50,10 +52,14 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       if (Math.abs(delta) < threshold) return;
       if (currentY <= 0) {
         setIsHiddenOnScroll(false);
+        hiddenAtY = 0;
       } else if (delta > 0) {
         setIsHiddenOnScroll(true);
+        hiddenAtY = currentY;
       } else {
-        setIsHiddenOnScroll(false);
+        if (showOnScrollUpAfterPx <= 0 || hiddenAtY - currentY >= showOnScrollUpAfterPx) {
+          setIsHiddenOnScroll(false);
+        }
       }
       lastY = currentY;
     };
@@ -61,7 +67,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [allowHideOnScroll]);
+  }, [allowHideOnScroll, showOnScrollUpAfterPx]);
 
   const resolvedColors = useMemo((): { background?: string; text?: string; border?: string; accent?: string } => {
     if (menu.menuColorSchemeId && menu.menuColorSchemeId !== "custom") {
@@ -88,11 +94,11 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     if (menu.menuEntryAnimation === "none") return;
     let ctx: { revert?: () => void } | null = null;
     let cancelled = false;
-    void import("gsap").then(({ gsap }) => {
+    void import("gsap").then(({ gsap }: { gsap: any }) => {
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
-      const vars: gsap.TweenVars = getPresetVars(menu.menuEntryAnimation);
+      const vars: gsap.TweenVars = getGsapFromVars(menu.menuEntryAnimation as any);
       if (!vars) return;
       ctx = gsap.context(() => {
         gsap.from(items, {
@@ -112,11 +118,11 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   useEffect(() => {
     if (!animationsEnabled) return;
     if (menu.menuHoverAnimation === "none") return;
-    const fromVars: gsap.TweenVars = getPresetVars(menu.menuHoverAnimation);
+    const fromVars: gsap.TweenVars = getGsapFromVars(menu.menuHoverAnimation as any);
     if (!fromVars) return;
     let cancelled = false;
     const cleanups: Array<() => void> = [];
-    void import("gsap").then(({ gsap }) => {
+    void import("gsap").then(({ gsap }: { gsap: any }) => {
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
@@ -163,7 +169,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     : "translateY(-110%)";
   const transitions = [
     menu.collapsible ? "width 200ms ease" : null,
-    allowHideOnScroll ? "transform 220ms ease" : null,
+    allowHideOnScroll ? "transform 220ms ease, opacity 220ms ease" : null,
   ].filter(Boolean).join(", ");
 
   const navStyle: React.CSSProperties = {
@@ -190,6 +196,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     width: isSide ? width : "100%",
     transition: transitions || undefined,
     transform: allowHideOnScroll && isHiddenOnScroll ? hideTransform : undefined,
+    opacity: allowHideOnScroll && isHiddenOnScroll ? 0 : 1,
     pointerEvents: allowHideOnScroll && isHiddenOnScroll ? "none" : undefined,
   };
 

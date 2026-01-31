@@ -20,17 +20,18 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const groupedTemplates = useMemo(() => getTemplatesByCategory(zone), [zone]);
   const { dispatch } = usePageBuilder();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
+  const elementTypes = useMemo(() => new Set(["TextElement", "ImageElement"]), []);
   const primitives = useMemo(
     () => sectionTypes.filter((def) => primitiveTypes.has(def.type)),
     [sectionTypes, primitiveTypes]
   );
   const elements = useMemo(
-    () => sectionTypes.filter((def) => def.type === "TextElement"),
-    [sectionTypes]
+    () => sectionTypes.filter((def) => elementTypes.has(def.type)),
+    [sectionTypes, elementTypes]
   );
   const templates = useMemo(
-    () => sectionTypes.filter((def) => !primitiveTypes.has(def.type) && def.type !== "TextElement"),
-    [sectionTypes, primitiveTypes]
+    () => sectionTypes.filter((def) => !primitiveTypes.has(def.type) && !elementTypes.has(def.type)),
+    [sectionTypes, primitiveTypes, elementTypes]
   );
 
   const handleSelect = useCallback(

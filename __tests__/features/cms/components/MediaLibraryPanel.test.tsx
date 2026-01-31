@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MediaLibraryPanel } from "@/features/cms/components/page-builder/MediaLibraryPanel";
 import { vi, describe, it, expect } from "vitest";

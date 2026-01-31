@@ -1,7 +1,7 @@
 "use client";
 
 import { AppModal, ModalShell, Button, Input, Label, Checkbox, useToast } from "@/shared/ui";
-import React from "react";
+
 
 
 

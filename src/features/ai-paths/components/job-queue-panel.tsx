@@ -403,7 +403,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
             if (!options.length) return null;
             const existing = historySelection[runId];
             if (existing && options.some((option: { id: string }) => option.id === existing)) return existing;
-            return options[0].id;
+            return options[0]?.id ?? null;
           },    [historySelection]
   );
 
@@ -761,7 +761,7 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
                                 Node
                               </Label>
                                                               <Select
-                                                                value={selectedHistoryNodeId ?? undefined}
+                                                                {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
                                                                 onValueChange={(value: string) =>
                                                                   setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
                                                                 }

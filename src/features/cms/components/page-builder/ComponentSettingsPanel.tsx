@@ -3,9 +3,9 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch } from "@/shared/ui";
-import type { SettingsField, InspectorSettings } from "../../types/page-builder";
+import type { SettingsField, InspectorSettings, BlockInstance } from "../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
-import type { PageStatus, Slug } from "../../types";
+import type { PageStatus, Slug, PageSlugLink } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from "../../hooks/useCmsQueries";
@@ -126,13 +126,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
   const rowCount = useMemo((): number => {
     if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
-    return selectedParentSection.blocks.filter((b: any) => b.type === "Row").length;
+    return selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row").length;
   }, [selectedParentSection]);
   const canRemoveRow = rowCount > 1;
   const rowIndex = useMemo((): number | null => {
     if (!isRowBlock || !selectedParentSection || !selectedBlock) return null;
-    const rows = selectedParentSection.blocks.filter((b: any) => b.type === "Row");
-    const idx = rows.findIndex((b: any) => b.id === selectedBlock.id);
+    const rows = selectedParentSection.blocks.filter((b: BlockInstance) => b.type === "Row");
+    const idx = rows.findIndex((b: BlockInstance) => b.id === selectedBlock.id);
     return idx >= 0 ? idx + 1 : null;
   }, [isRowBlock, selectedParentSection, selectedBlock]);
 
@@ -324,10 +324,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [settingsQuery.data]);
 
   const appEmbedOptions = useMemo((): { label: string; value: string }[] => {
-    const options = APP_EMBED_OPTIONS.filter((option: any) => enabledAppEmbeds.includes(option.id)).map((option: any) => ({
-      label: option.label,
-      value: option.id,
-    }));
+    const options = APP_EMBED_OPTIONS
+      .filter((option) => enabledAppEmbeds.includes(option.id))
+      .map((option) => ({
+        label: option.label,
+        value: option.id,
+      }));
     if (options.length > 0) return options;
     return [{ label: "No app embeds enabled", value: "" }];
   }, [enabledAppEmbeds]);
@@ -401,10 +403,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   useEffect((): void => {
     if (state.inspectorEnabled) {
-      setActiveTab((prev: string) => (prev === "connections" ? prev : "connections") as any);
+      setActiveTab((prev: "settings" | "animation" | "connections") =>
+        prev === "connections" ? prev : "connections"
+      );
       return;
     }
-    setActiveTab((prev: string) => (prev === "connections" ? "settings" : prev) as any);
+    setActiveTab((prev: "settings" | "animation" | "connections") =>
+      prev === "connections" ? "settings" : prev
+    );
   }, [state.inspectorEnabled]);
 
   const updateInspectorSetting = useCallback(
@@ -794,7 +800,7 @@ function PageSettingsTab(): React.ReactNode {
   useEffect((): void => {
     if (!page || !allSlugs.length) return;
     if (initializedRef.current) return;
-    const pageSlugValues = (page.slugs ?? []).map((s: any) => s.slug.slug);
+    const pageSlugValues = (page.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
     const ids = pageSlugValues
       .map((value: string) => allSlugByValue.get(value)?.id)
       .filter((value: string | undefined): value is string => Boolean(value));

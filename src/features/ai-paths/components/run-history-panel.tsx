@@ -1,6 +1,6 @@
 "use client";
 
-
+import React from "react";
 
 import {
   Button,
@@ -182,7 +182,7 @@ export function RunHistoryPanel({
                         if (!runHistorySelection[run.id] && runHistoryOptions[0]?.id) {
                           setRunHistorySelection((prev: Record<string, string>) => ({
                             ...prev,
-                            [run.id]: runHistoryOptions[0].id,
+                            [run.id]: runHistoryOptions[0]?.id ?? "",
                           }));
                         }
                       }}
@@ -237,7 +237,7 @@ export function RunHistoryPanel({
                       {runHistory ? (
                         runHistoryOptions.length > 1 ? (
                           <Select
-                            value={selectedHistoryNodeId ?? undefined}
+                            {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
                             onValueChange={(value: string): void =>
                               setRunHistorySelection((prev: Record<string, string>) => ({
                                 ...prev,

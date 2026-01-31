@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { dbApi } from "@/features/ai-paths/lib/api";
@@ -510,7 +511,7 @@ export function DatabaseNodeConfigSection({
                   value: path,
                 }));
                 const uniqueTargetPathOptions = Array.from(
-                  new Map(targetPathOptions.map((option: { value: string }) => [option.value, option])).values()
+                  new Map(targetPathOptions.map((option: { label: string; value: string }) => [option.value, option])).values()
                 );
                 const findMatchingTargetPath = (port: string): string => {
                   const normalized = port.toLowerCase();

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from "@/shared/ui";
 
 import { Eye } from "lucide-react";

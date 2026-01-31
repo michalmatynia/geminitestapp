@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Checkbox, useToast } from "@/shared/ui";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
@@ -12,7 +12,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   
-  const initialEnabled = useMemo(() => {
+  const initialEnabled = useMemo<Set<AppEmbedId>>(() => {
     if (!settingsQuery.data) return new Set<AppEmbedId>();
     const stored = parseJsonSetting<AppEmbedId[]>(
       settingsQuery.data.get(APP_EMBED_SETTING_KEY),
@@ -22,7 +22,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
   }, [settingsQuery.data]);
 
   const [userEnabled, setUserEnabled] = useState<Set<AppEmbedId> | null>(null);
-  const enabled = userEnabled ?? initialEnabled;
+  const enabled: Set<AppEmbedId> = userEnabled ?? initialEnabled;
 
   const toggleOption = (id: AppEmbedId, checked: boolean): void => {
     setUserEnabled((prev: Set<AppEmbedId> | null) => {

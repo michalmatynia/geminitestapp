@@ -43,7 +43,7 @@ import {
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
 
-type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 type UseAiPathsPersistenceArgs = {
   activePathId: string | null;

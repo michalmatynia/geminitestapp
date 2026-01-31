@@ -1,6 +1,6 @@
 "use client";
 
-
+import React from "react";
 
 import { Button, Tooltip } from "@/shared/ui";
 
@@ -17,7 +17,7 @@ type TimelineItem = {
   description?: string;
   status?: string | null;
   kind: "run" | "node";
-  meta?: string;
+  meta?: string | undefined;
 };
 
 type TimelineFilter = "run" | "node" | "event";

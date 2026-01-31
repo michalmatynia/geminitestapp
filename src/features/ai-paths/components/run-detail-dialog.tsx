@@ -165,7 +165,7 @@ export function RunDetailDialog({
                 <Label className="text-[10px] uppercase text-gray-500">History</Label>
                 {historyOptions.length > 1 ? (
                   <Select
-                    value={selectedHistoryNodeId ?? undefined}
+                    {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
                     onValueChange={onSelectHistoryNode}
                   >
                     <SelectTrigger className="h-7 w-[220px] border-border bg-card/70 text-[11px] text-white">

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from "@/shared/ui";
 import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { dbApi } from "@/features/ai-paths/lib/api";

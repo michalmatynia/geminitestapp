@@ -14,7 +14,7 @@ import {
   parsePathList,
 } from "@/features/ai-paths/lib";
 
-type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 type UseAiPathsPresetsArgs = {
   nodes: AiNode[];

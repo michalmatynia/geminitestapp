@@ -48,7 +48,7 @@ export function ViewerNodeConfigSection({
     });
     const visited = new Set<string>();
     const queue = [...triggerIds];
-    triggerIds.forEach((id: string): boolean => visited.add(id));
+    triggerIds.forEach((id: string): void => { visited.add(id); });
     while (queue.length) {
       const current = queue.shift();
       if (!current) continue;

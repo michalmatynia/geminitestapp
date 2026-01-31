@@ -12,7 +12,7 @@ import {
 import { buildHistoryNodeOptions, type HistoryNodeOption } from "../run-history-utils";
 import type { RunHistoryFilter } from "../run-history-panel";
 
-type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;

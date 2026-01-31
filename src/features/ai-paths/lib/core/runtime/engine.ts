@@ -36,7 +36,7 @@ import {
   handleViewer,
 } from "./handlers";
 
-type ToastFn = (message: string, options?: Partial<{ variant: string; duration: number }>) => void;
+type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 export type EvaluateGraphOptions = {
   nodes: AiNode[];

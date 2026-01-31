@@ -77,7 +77,10 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const handleSave = async () => {
     if (!page) return;
 
-    await updatePage.mutateAsync({ id, input: { ...page, slugIds: selectedSlugIds } });
+    await updatePage.mutateAsync({
+      id,
+      input: { ...page, showMenu: page.showMenu ?? true, slugIds: selectedSlugIds },
+    });
     router.push("/admin/cms/pages");
   };
 

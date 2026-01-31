@@ -207,6 +207,7 @@ export function PagePreviewPanel(): React.ReactNode {
     const page = state.currentPage;
     const updatedPage = {
       ...page,
+      showMenu: page.showMenu ?? true,
       status: page.status,
       publishedAt: page.publishedAt,
       seoTitle: page.seoTitle,

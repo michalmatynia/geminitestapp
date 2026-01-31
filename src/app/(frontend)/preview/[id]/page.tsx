@@ -1,9 +1,11 @@
 import { JSX } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@/features/auth/auth";
 import type { Session } from "next-auth";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import { resolveCmsDomainFromHeaders } from "@/features/cms/services/cms-domain";
 import { getCmsMenuSettings } from "@/features/cms/services/cms-menu-settings";
 import { getCmsThemeSettings } from "@/features/cms/services/cms-theme-settings";
 import { CmsPageRenderer } from "@/features/cms/components/frontend/CmsPageRenderer";
@@ -53,8 +55,10 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
+  const hdrs = await headers();
+  const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings();
+  const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: themeSettings.fullWidth };
   const mediaVars = getMediaStyleVars(themeSettings);

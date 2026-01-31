@@ -100,7 +100,7 @@ export default async function Home(): Promise<JSX.Element> {
   const slugs = await getSlugsForDomain(domain.id, cmsRepository);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
   const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings();
+  const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
   type MaybeImages = {

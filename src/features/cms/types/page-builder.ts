@@ -163,6 +163,7 @@ export type PageBuilderAction =
   | { type: "REORDER_SECTIONS"; zone: PageZone; fromIndex: number; toIndex: number }
   | { type: "MOVE_SECTION_TO_ZONE"; sectionId: string; toZone: PageZone; toIndex: number }
   | { type: "SET_PAGE_STATUS"; status: PageStatus }
+  | { type: "SET_PAGE_NAME"; name: string }
   | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
   | { type: "UPDATE_PAGE_SLUGS"; slugIds: string[]; slugValues: string[] }
   | { type: "SET_PAGE_MENU_VISIBILITY"; showMenu: boolean }

@@ -8,9 +8,11 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 import {
   CMS_MENU_SETTINGS_KEY,
   DEFAULT_MENU_SETTINGS,
+  getCmsMenuSettingsKey,
   normalizeMenuSettings,
   type MenuSettings,
 } from "@/features/cms/types/menu-settings";
+import { isDomainZoningEnabled } from "@/features/cms/services/cms-domain";
 
 type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };
 
@@ -52,11 +54,20 @@ const readSettingValue = async (key: string): Promise<string | null> => {
   return readPrismaSetting(key);
 };
 
-export const getCmsMenuSettings = async (): Promise<MenuSettings> => {
-  const stored = await readSettingValue(CMS_MENU_SETTINGS_KEY);
+export const getCmsMenuSettings = async (domainId?: string | null): Promise<MenuSettings> => {
+  const zoningEnabled = await isDomainZoningEnabled();
+  const scopedKey = getCmsMenuSettingsKey(zoningEnabled ? domainId ?? null : null);
+  const stored = await readSettingValue(scopedKey);
   const parsed = parseJsonSetting<Partial<MenuSettings> | null>(stored, null);
-  if (!stored) {
-    return DEFAULT_MENU_SETTINGS;
+  if (stored) {
+    return normalizeMenuSettings(parsed);
   }
-  return normalizeMenuSettings(parsed);
+  if (scopedKey !== CMS_MENU_SETTINGS_KEY) {
+    const fallback = await readSettingValue(CMS_MENU_SETTINGS_KEY);
+    const fallbackParsed = parseJsonSetting<Partial<MenuSettings> | null>(fallback, null);
+    if (fallback) {
+      return normalizeMenuSettings(fallbackParsed);
+    }
+  }
+  return DEFAULT_MENU_SETTINGS;
 };

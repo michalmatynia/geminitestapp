@@ -74,6 +74,17 @@ function buildIdFilter<T extends { id: string }>(id: string): Filter<T> {
   return { $or: orFilters } as Filter<T>;
 }
 
+function normalizeShowMenu(value: unknown): boolean {
+  if (value === false) return false;
+  if (value === true) return true;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["false", "0", "no", "off"].includes(normalized)) return false;
+    if (["true", "1", "yes", "on"].includes(normalized)) return true;
+  }
+  return true;
+}
+
 export const mongoCmsRepository: CmsRepository = {
   // Pages
   async getPages(): Promise<Page[]> {
@@ -96,7 +107,7 @@ export const mongoCmsRepository: CmsRepository = {
         seoOgImage: doc.seoOgImage ?? undefined,
         seoCanonical: doc.seoCanonical ?? undefined,
         robotsMeta: doc.robotsMeta ?? "index,follow",
-        showMenu: doc.showMenu ?? true,
+        showMenu: normalizeShowMenu(doc.showMenu),
         components: doc.components || [],
         slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
       } as Page;
@@ -123,7 +134,7 @@ export const mongoCmsRepository: CmsRepository = {
       seoOgImage: doc.seoOgImage ?? undefined,
       seoCanonical: doc.seoCanonical ?? undefined,
       robotsMeta: doc.robotsMeta ?? "index,follow",
-      showMenu: doc.showMenu ?? true,
+      showMenu: normalizeShowMenu(doc.showMenu),
       components: doc.components || [],
       slugs: slugs.map(s => ({ slug: { slug: s.slug } })),
     } as Page;

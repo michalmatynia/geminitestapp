@@ -840,6 +840,10 @@ function PageSettingsTab(): React.ReactNode {
     dispatch({ type: "SET_PAGE_STATUS", status });
   };
 
+  const handleNameChange = (value: string): void => {
+    dispatch({ type: "SET_PAGE_NAME", name: value });
+  };
+
   const handleSeoChange = (key: string, value: string): void => {
     dispatch({ type: "UPDATE_SEO", seo: { [key]: value || undefined } });
   };
@@ -871,6 +875,17 @@ function PageSettingsTab(): React.ReactNode {
           <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
             <FileText className="mr-1.5 inline size-3" />
             {page.name}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="page-name" className="text-xs text-gray-400">Page name</Label>
+            <Input
+              id="page-name"
+              value={page.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
+              placeholder="Page name"
+              className="h-8 text-xs"
+            />
           </div>
 
           <div className="rounded border border-border/40 bg-gray-800/20 px-3 py-2">

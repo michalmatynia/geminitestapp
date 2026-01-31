@@ -18,25 +18,6 @@ export type MediaReplaceTarget = {
 // Section-type block types that get a richer preview
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
-// ---------------------------------------------------------------------------
-// Color scheme background tints
-// ---------------------------------------------------------------------------
-
-const COLOR_SCHEME_BG: Record<string, string> = {
-  "scheme-1": "bg-transparent",
-  "scheme-2": "bg-blue-500/5",
-  "scheme-3": "bg-purple-500/5",
-  "scheme-4": "bg-green-500/5",
-  "scheme-5": "bg-amber-500/5",
-};
-
-function getColorSchemeBg(scheme: unknown): string {
-  if (typeof scheme === "string" && scheme in COLOR_SCHEME_BG) {
-    return COLOR_SCHEME_BG[scheme];
-  }
-  return "";
-}
-
 const getGapClass = (gap?: string): string => {
   if (gap === "none") return "gap-0";
   if (gap === "small") return "gap-4";
@@ -481,12 +462,8 @@ export function PreviewSection({
           onKeyDown={(e: React.KeyboardEvent): void => {
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
-          style={{
-            ...sectionStyles,
-            padding: 0,
-            margin: 0,
-          }}
-          className={`relative w-full min-h-[80px] border border-dashed border-border/50 text-left transition cursor-pointer ${selectedRing}`}
+          style={sectionStyles}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
@@ -500,7 +477,6 @@ export function PreviewSection({
                 const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                 const columnCount = Math.max(1, rowColumns.length);
                 const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
-                const rowMinHeightClass = rowHasContent ? "" : "min-h-[80px]";
                 const isRowSelected = !virtual && selectedNodeId === row.id;
                 const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
                 const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
@@ -522,7 +498,7 @@ export function PreviewSection({
                       }
                     }}
                     style={rowStyles}
-                    className={`relative rounded border border-dashed border-border/30 ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40 bg-blue-500/5" : ""}`}
+                    className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
                   >
                     {!virtual && isRowSelected && onRemoveRow && (
                       <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
@@ -542,16 +518,14 @@ export function PreviewSection({
                       </div>
                     )}
                     <div
-                      className={`grid ${rowGapClass} ${rowMinHeightClass} items-stretch divide-x divide-dashed divide-border/40`}
+                      className={`grid ${rowGapClass} items-stretch`}
                       style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}
                     >
                       {rowColumns.map((column: BlockInstance, colIndex: number) => {
                         const isColumnSelected = selectedNodeId === column.id;
                         const isColumnHovered = isInspecting && hoveredNodeId === column.id;
                         const columnHoverClass =
-                          isColumnHovered && !isColumnSelected
-                            ? "ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
-                            : "";
+                          isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
                         const columnTooltip = (
                           <InspectorTooltip
                             title="Column"
@@ -634,15 +608,11 @@ export function PreviewSection({
                                 }
                               }}
                               className={`h-full text-left transition cursor-pointer ${
-                                isColumnSelected
-                                  ? isInspecting
-                                    ? "bg-blue-500/10"
-                                    : "bg-blue-500/5"
-                                  : "hover:bg-gray-800/30"
+                                isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                               } ${columnHoverClass}`}
                             >
                               {(column.blocks ?? []).length > 0 && (
-                                <div className={`space-y-1.5 p-2 ${isInspecting ? "" : "pointer-events-none"}`}>
+                                <div className={`space-y-4 ${isInspecting ? "" : "pointer-events-none"}`}>
                                   {(column.blocks ?? []).map((block: BlockInstance) => (
                                     <PreviewBlockItem
                                       key={block.id}
@@ -1283,15 +1253,16 @@ function PreviewBlockItem({
               e.stopPropagation();
               onSelect(block.id);
             }}
-            className={`w-full rounded border-2 text-left text-sm transition overflow-hidden ${
-              contained ? "max-w-full" : ""
-            } ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-border/30 bg-gray-800/30 hover:border-border/50"
-            } ${hoverFrameClass}`}
+            className={buildContainerClass(
+              `w-full text-left text-sm transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+              `rounded border-2 ${
+                isSelected
+                  ? `${selectedBorderClass} ${selectedSoftBg}`
+                  : "border-border/30 bg-gray-800/30 hover:border-border/50"
+              }`
+            )}
           >
-            <div className="p-2.5 overflow-hidden">
+            <div className={isFaithful ? "overflow-hidden" : "p-2.5 overflow-hidden"}>
               {block.type === "ImageWithText" && (
                 <PreviewImageWithTextBlock
                   block={block}
@@ -1405,8 +1376,8 @@ function PreviewBlockItem({
             onSelect(block.id);
           }}
           className={buildContainerClass(
-            `cms-hover-card w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `cms-hover-card rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
                 : "border-border/30 bg-gray-800/20 hover:border-border/50"
@@ -1422,6 +1393,9 @@ function PreviewBlockItem({
   if (block.type === "Announcement") {
     const text = (block.settings["text"] as string) || "Announcement";
     const link = (block.settings["link"] as string) || "";
+    const textClass = link
+      ? "text-blue-300 underline decoration-blue-400/50"
+      : "text-gray-200";
     return (
       wrapBlock(
         <button
@@ -1440,9 +1414,7 @@ function PreviewBlockItem({
           )}
         >
           <Megaphone className="size-3.5 text-gray-400" />
-          <span className={link ? "text-blue-300 underline decoration-blue-400/50" : ""}>
-            {text}
-          </span>
+          <span className={textClass}>{text}</span>
           {link ? <Link2 className="size-3 text-blue-300/80" /> : null}
         </button>
       )
@@ -1524,8 +1496,8 @@ function PreviewBlockItem({
             onSelect(block.id);
           }}
           className={buildContainerClass(
-            `cms-hover-button w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
-            `rounded border p-3 ${
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+            `cms-hover-button rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
                 : "border-border/30 bg-gray-800/20 hover:border-border/50"
@@ -1549,7 +1521,6 @@ function PreviewBlockItem({
   // RichText block
   if (block.type === "RichText") {
     const colorScheme = block.settings["colorScheme"] as string | undefined;
-    const schemeBg = getColorSchemeBg(colorScheme);
 
     return (
       wrapBlock(
@@ -1560,7 +1531,7 @@ function PreviewBlockItem({
             onSelect(block.id);
           }}
           className={buildContainerClass(
-            `w-full text-left transition overflow-hidden ${schemeBg} ${contained ? "max-w-full" : ""}`,
+            `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
             `rounded border p-3 ${
               isSelected
                 ? `${selectedBorderClass} ${selectedSoftBg}`
@@ -1568,10 +1539,8 @@ function PreviewBlockItem({
             }`
           )}
         >
-          <div className="flex flex-col gap-1.5">
-            <div className="h-2 w-full rounded bg-gray-600/40" />
-            <div className="h-2 w-5/6 rounded bg-gray-600/30" />
-            <div className="h-2 w-2/3 rounded bg-gray-600/30" />
+          <div className="rounded-lg p-4 text-gray-400" data-color-scheme={colorScheme}>
+            <p className="text-sm italic">Rich text content area</p>
           </div>
         </button>
       )
@@ -1598,13 +1567,14 @@ function PreviewBlockItem({
               e.stopPropagation();
               onSelect(block.id);
             }}
-            className={`w-full rounded border p-1 text-left transition overflow-hidden ${
-              contained ? "max-w-full" : ""
-            } ${
-              isSelected
-                ? `${selectedBorderClass} ${selectedSoftBg}`
-                : "border-transparent hover:border-border/30"
-            } ${hoverFrameClass}`}
+            className={buildContainerClass(
+              `w-full text-left transition overflow-hidden ${contained ? "max-w-full" : ""}`,
+              `rounded border p-1 ${
+                isSelected
+                  ? `${selectedBorderClass} ${selectedSoftBg}`
+                  : "border-transparent hover:border-border/30"
+              }`
+            )}
           >
             {src ? (
               <div className="cms-media" style={{ width: `${width}%`, ...resolvedStyles }}>
@@ -1998,7 +1968,7 @@ function PreviewRichTextBlock({
   const blockStyles = getSectionStyles(block.settings);
 
   return (
-    <div style={blockStyles} className="space-y-2">
+    <div style={blockStyles} className="space-y-4">
       {children.length > 0 ? (
         children.map((child: BlockInstance) => (
           <PreviewBlockItem
@@ -2022,7 +1992,7 @@ function PreviewRichTextBlock({
           />
         ))
       ) : (
-        <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
+        <div className="text-xs text-gray-600">
           Rich text section
         </div>
       )}
@@ -2064,7 +2034,7 @@ function PreviewBlockSectionBlock({
 
   return (
     <div style={blockStyles}>
-      <div className={`flex flex-wrap items-center gap-2 ${alignmentClass}`}>
+      <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
         {children.length > 0 ? (
           children.map((child: BlockInstance) => (
             <PreviewBlockItem
@@ -2087,11 +2057,11 @@ function PreviewBlockSectionBlock({
               mediaStyles={mediaStyles}
             />
           ))
-        ) : (
-          <div className="flex min-h-[40px] items-center justify-center rounded border border-dashed border-border/30 text-xs text-gray-600">
-            Block
-          </div>
-        )}
+      ) : (
+        <div className="text-xs text-gray-600">
+          Block
+        </div>
+      )}
       </div>
     </div>
   );

@@ -122,8 +122,10 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
     theme = await cmsRepository.getThemeById(page.themeId);
   }
 
+  const hdrs = await headers();
+  const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings();
+  const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: themeSettings.fullWidth };
   const mediaVars = getMediaStyleVars(themeSettings);

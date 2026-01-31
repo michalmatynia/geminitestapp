@@ -376,14 +376,14 @@ export function useAiPathsCanvasInteractions({
     [nodes]
   );
 
-  const edgePaths = useMemo((): { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[] => {
+  const edgePaths = useMemo((): { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined }[] => {
     const nodeMap = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
     const midpoint = (a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } => ({
       x: (a.x + b.x) / 2,
       y: (a.y + b.y) / 2,
     });
     return edges
-      .map((edge: Edge): { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } } | null => {
+      .map((edge: Edge): { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined } | null => {
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;

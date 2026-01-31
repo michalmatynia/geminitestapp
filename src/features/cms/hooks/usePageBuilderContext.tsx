@@ -11,7 +11,7 @@ import type {
   SettingsField,
 } from "../types/page-builder";
 import { DEFAULT_INSPECTOR_SETTINGS } from "../types/page-builder";
-import type { PageComponent } from "../types";
+import type { Page, PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
 
 // ---------------------------------------------------------------------------
@@ -409,6 +409,10 @@ export function basePageBuilderReducer(
 
     case "SET_CURRENT_PAGE": {
       // Reconstruct SectionInstance[] from the page's saved components
+      const normalizedPage: Page = {
+        ...action.page,
+        showMenu: action.page.showMenu ?? true,
+      };
       const reconstructedSections: SectionInstance[] = (action.page.components ?? []).map(
         (comp: PageComponent, idx: number): SectionInstance => {
           const content = comp.content as {
@@ -429,7 +433,7 @@ export function basePageBuilderReducer(
       syncNextIdFromSections(normalizedSections);
       return {
         ...state,
-        currentPage: action.page,
+        currentPage: normalizedPage,
         sections: normalizedSections,
         selectedNodeId: null,
       };
@@ -1004,6 +1008,17 @@ export function basePageBuilderReducer(
           ...state.currentPage,
           status: action.status,
           publishedAt: action.status === "published" ? new Date().toISOString() : state.currentPage.publishedAt,
+        },
+      };
+    }
+
+    case "SET_PAGE_NAME": {
+      if (!state.currentPage) return state;
+      return {
+        ...state,
+        currentPage: {
+          ...state.currentPage,
+          name: action.name,
         },
       };
     }

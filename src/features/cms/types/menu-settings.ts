@@ -2,6 +2,12 @@ import type { AnimationPreset } from "@/features/gsap/types/animation";
 import { ANIMATION_PRESETS } from "@/features/gsap/types/animation";
 
 export const CMS_MENU_SETTINGS_KEY = "cms_menu_settings.v1";
+export const CMS_MENU_SETTINGS_ZONE_PREFIX = `${CMS_MENU_SETTINGS_KEY}.zone.`;
+
+export const getCmsMenuSettingsKey = (domainId?: string | null): string => {
+  if (!domainId) return CMS_MENU_SETTINGS_KEY;
+  return `${CMS_MENU_SETTINGS_ZONE_PREFIX}${domainId}`;
+};
 
 export interface MenuItem {
   id: string;

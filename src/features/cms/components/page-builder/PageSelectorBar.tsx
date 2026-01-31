@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Layers } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,8 +31,11 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const { state, dispatch } = usePageBuilder();
   const { activeDomainId } = useCmsDomainSelection();
   const pagesQuery = useCmsPages(activeDomainId);
+  const searchParams = useSearchParams();
+  const pageIdParam = searchParams.get("pageId");
   const [selectedPageId, setSelectedPageId] = useState<string>("");
   const lastSavedPageIdRef = useRef<string | null>(null);
+  const appliedParamRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
   const preferencesQuery = useQuery({
     queryKey: userPreferencesQueryKey,
@@ -92,6 +96,15 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
       setSelectedPageId(preferredId);
     }
   }, [selectedPageId, state.currentPage?.id, pagesQuery.data, preferencesQuery.data?.cmsLastPageId]);
+
+  useEffect(() => {
+    if (!pageIdParam) return;
+    if (!pagesQuery.data || pagesQuery.data.length === 0) return;
+    if (appliedParamRef.current === pageIdParam) return;
+    if (!pagesQuery.data.some((page) => page.id === pageIdParam)) return;
+    appliedParamRef.current = pageIdParam;
+    setSelectedPageId(pageIdParam);
+  }, [pageIdParam, pagesQuery.data]);
 
   useEffect(() => {
     if (!selectedPageId) return;

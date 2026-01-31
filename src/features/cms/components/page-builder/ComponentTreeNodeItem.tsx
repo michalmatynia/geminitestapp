@@ -28,6 +28,7 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
   Heading: Heading,
   Text: AlignLeft,
   TextElement: FileText,
+  ImageElement: ImageIcon,
   Button: MousePointerClick,
   Column: Columns,
   ImageWithText: Layers,

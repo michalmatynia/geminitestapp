@@ -15,9 +15,16 @@ import {
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { CMS_MENU_SETTINGS_KEY, DEFAULT_MENU_SETTINGS, type MenuSettings, normalizeMenuSettings } from "@/features/cms/types/menu-settings";
+import {
+  CMS_MENU_SETTINGS_KEY,
+  DEFAULT_MENU_SETTINGS,
+  getCmsMenuSettingsKey,
+  type MenuSettings,
+  normalizeMenuSettings,
+} from "@/features/cms/types/menu-settings";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { ANIMATION_PRESETS } from "@/features/gsap/types/animation";
+import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -229,10 +236,14 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<MenuSettings>(DEFAULT_MENU_SETTINGS);
   const { theme } = useThemeSettings();
+  const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
+  const [menuScopeId, setMenuScopeId] = useState<string>("default");
+  const scopeTouchedRef = useRef(false);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const hasHydratedRef = useRef(false);
   const lastSavedRef = useRef<string>(serializeSetting(DEFAULT_MENU_SETTINGS));
+  const loadedKeyRef = useRef<string | null>(null);
   const persistTimerRef = useRef<number | null>(null);
 
   const colorSchemeOptions = useMemo(() => {
@@ -246,6 +257,32 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   }, [theme?.colorSchemes]);
 
   useEffect(() => {
+    if (!zoningEnabled) {
+      if (menuScopeId !== "default") {
+        setMenuScopeId("default");
+      }
+      scopeTouchedRef.current = false;
+      return;
+    }
+    if (scopeTouchedRef.current) return;
+    if (activeDomainId && menuScopeId !== activeDomainId) {
+      setMenuScopeId(activeDomainId);
+    }
+  }, [activeDomainId, menuScopeId, zoningEnabled]);
+
+  const menuKey = useMemo(() => {
+    if (!zoningEnabled) return CMS_MENU_SETTINGS_KEY;
+    if (!menuScopeId || menuScopeId === "default") return CMS_MENU_SETTINGS_KEY;
+    return getCmsMenuSettingsKey(menuScopeId);
+  }, [menuScopeId, zoningEnabled]);
+
+  const hasScopedMenu = useMemo(() => {
+    if (!zoningEnabled) return false;
+    if (menuKey === CMS_MENU_SETTINGS_KEY) return false;
+    return settingsQuery.data?.has(menuKey) ?? false;
+  }, [menuKey, settingsQuery.data, zoningEnabled]);
+
+  useEffect(() => {
     if (settings.menuColorSchemeId === "custom") return;
     const available = new Set((theme?.colorSchemes ?? []).map((scheme) => scheme.id));
     if (!available.has(settings.menuColorSchemeId)) {
@@ -254,28 +291,36 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
   }, [settings.menuColorSchemeId, theme?.colorSchemes, update]);
 
   useEffect(() => {
-    if (hasHydratedRef.current) return;
     if (!settingsQuery.isFetched) return;
     const stored = parseJsonSetting<Partial<MenuSettings> | null>(
-      settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+      settingsQuery.data?.get(menuKey),
       null
     );
-    const normalized = normalizeMenuSettings(stored);
+    let normalized = normalizeMenuSettings(stored);
+    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
+      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
+        settingsQuery.data?.get(CMS_MENU_SETTINGS_KEY),
+        null
+      );
+      normalized = normalizeMenuSettings(fallback);
+    }
     setSettings(normalized);
     lastSavedRef.current = serializeSetting(normalized);
+    loadedKeyRef.current = menuKey;
     hasHydratedRef.current = true;
-  }, [settingsQuery.data, settingsQuery.isFetched]);
+  }, [menuKey, settingsQuery.data, settingsQuery.isFetched]);
 
   useEffect(() => {
     if (!hasHydratedRef.current) return;
+    if (loadedKeyRef.current !== menuKey) return;
     const nextSerialized = serializeSetting(settings);
     if (nextSerialized === lastSavedRef.current) return;
     if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     persistTimerRef.current = window.setTimeout(() => {
       lastSavedRef.current = nextSerialized;
-      updateSetting.mutate({ key: CMS_MENU_SETTINGS_KEY, value: nextSerialized });
+      updateSetting.mutate({ key: menuKey, value: nextSerialized });
     }, 500);
-  }, [settings, updateSetting]);
+  }, [menuKey, settings, updateSetting]);
 
   useEffect(() => {
     return () => {
@@ -847,7 +892,46 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         </div>
       )}
       <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-2">
+        <div className="space-y-3">
+          <div className="rounded border border-border/40 bg-gray-900/50 p-3">
+            <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+              Menu scope
+            </Label>
+            {zoningEnabled ? (
+              <div className="mt-2 space-y-2">
+                <Select
+                  value={menuScopeId}
+                  onValueChange={(value) => {
+                    scopeTouchedRef.current = true;
+                    setMenuScopeId(value);
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default (fallback)</SelectItem>
+                    {domains.map((domain) => (
+                      <SelectItem key={domain.id} value={domain.id}>
+                        {domain.domain}
+                        {domain.id === activeDomainId ? " (active)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {menuScopeId !== "default" && !hasScopedMenu ? (
+                  <p className="text-[10px] text-gray-500">
+                    Using default menu until you customize this zone.
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-2 text-[11px] text-gray-500">
+                Simple routing enabled. This menu applies globally.
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
           {MENU_SECTIONS.map((section) => {
             const isOpen = openSections.has(section);
             return (
@@ -870,6 +954,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>

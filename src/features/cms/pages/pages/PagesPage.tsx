@@ -141,7 +141,7 @@ export default function PagesPage(): React.ReactNode {
             return (
               <li key={page.id} className="flex justify-between items-center py-2 border-b border">
                 <div className="flex items-center gap-3">
-                  <Link href={`/admin/cms/pages/${page.id}/edit`}>
+                  <Link href={`/admin/cms/builder?pageId=${page.id}`}>
                     <span className="hover:underline">{page.name}</span>
                   </Link>
                   <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE_CLASSES[status]}`}>

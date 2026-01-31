@@ -47,7 +47,7 @@ const BLOCK_ICONS: Record<string, React.ElementType> = {
 };
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
-const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
+const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {
   if (typeof value === "string") {
@@ -1163,7 +1163,9 @@ function BlockNodeItem({
   setDraggedBlockId,
   draggedFromSectionId,
   setDraggedFromSectionId,
+  draggedFromColumnId,
   setDraggedFromColumnId,
+  draggedFromParentBlockId,
   setDraggedFromParentBlockId,
 }: BlockNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === block.id;

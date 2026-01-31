@@ -1235,7 +1235,7 @@ export function getAllSectionTypes(): SectionDefinition[] {
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
   header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
-  template: Object.keys(SECTION_DEFINITIONS).filter((type) => type !== "AnnouncementBar"),
+  template: Object.keys(SECTION_DEFINITIONS).filter((type: string) => type !== "AnnouncementBar"),
   footer: ["Block", "TextElement", "TextAtom", "ImageElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 

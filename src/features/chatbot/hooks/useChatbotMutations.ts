@@ -11,13 +11,13 @@ import {
   sendChatbotMessage,
   saveChatbotSettings,
 } from "../api";
-import type { ChatMessage, ChatbotSettingsPayload } from "@/shared/types/chatbot";
-import type { ChatSession } from "@/shared/types/chatbot";
+import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from "@/shared/types/chatbot";
+import type { ChatbotSessionListItem } from "../types";
 
 /**
  * Mutation hook for creating a new chatbot session
  */
-export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string; session?: ChatSession }, Error, { title?: string; settings?: any }> {
+export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string; session?: ChatSession }, Error, { title?: string; settings?: ChatSession["settings"] }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -31,13 +31,13 @@ export function useCreateChatbotSession(): UseMutationResult<{ sessionId: string
 /**
  * Mutation hook for updating a session title
  */
-export function useUpdateSessionTitle() {
+export function useUpdateSessionTitle(): UseMutationResult<ChatbotSessionListItem, Error, { sessionId: string; title: string }> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<ChatbotSessionListItem, Error, { sessionId: string; title: string }>({
     mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
       updateChatbotSessionTitle(sessionId, title),
-    onSuccess: (_data: unknown, { sessionId }: { sessionId: string }): Promise<void> => {
+    onSuccess: (_data: ChatbotSessionListItem, { sessionId }: { sessionId: string; title: string }): Promise<void> => {
       void queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.sessions() });
       return queryClient.invalidateQueries({ queryKey: chatbotQueryKeys.session(sessionId) });
     },
@@ -47,7 +47,7 @@ export function useUpdateSessionTitle() {
 /**
  * Mutation hook for deleting a single session
  */
-export function useDeleteChatbotSession() {
+export function useDeleteChatbotSession(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -62,7 +62,7 @@ export function useDeleteChatbotSession() {
 /**
  * Mutation hook for deleting multiple sessions
  */
-export function useDeleteChatbotSessions() {
+export function useDeleteChatbotSessions(): UseMutationResult<unknown, Error, string[]> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -80,7 +80,7 @@ export function useDeleteChatbotSessions() {
 /**
  * Mutation hook for persisting a message to a session
  */
-export function usePersistSessionMessage() {
+export function usePersistSessionMessage(): UseMutationResult<void, Error, { sessionId: string; role: ChatMessage["role"]; content: string }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -102,7 +102,7 @@ export function usePersistSessionMessage() {
 /**
  * Mutation hook for sending a chat message
  */
-export function useSendChatMessage() {
+export function useSendChatMessage(): UseMutationResult<{ message?: string }, Error, { messages: ChatMessage[]; model: string; sessionId?: string | null }> {
   return useMutation({
     mutationFn: sendChatbotMessage,
   });
@@ -111,7 +111,7 @@ export function useSendChatMessage() {
 /**
  * Mutation hook for saving chatbot settings
  */
-export function useSaveChatbotSettings() {
+export function useSaveChatbotSettings(): UseMutationResult<{ settings?: { settings?: ChatbotSettingsPayload } }, Error, { key: string; settings: ChatbotSettingsPayload }> {
   const queryClient = useQueryClient();
 
   return useMutation({

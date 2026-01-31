@@ -959,7 +959,7 @@ export function basePageBuilderReducer(
     }
 
     case "MOVE_SECTION_TO_COLUMN": {
-      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block"];
+      const CONVERTIBLE_TYPES = ["ImageWithText", "RichText", "Hero", "Block", "TextElement", "ImageElement", "TextAtom"];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;

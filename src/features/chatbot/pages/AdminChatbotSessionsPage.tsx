@@ -29,7 +29,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const [selectingAll, setSelectingAll] = useState<boolean>(false);
   const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
 
-  useEffect((): void => {
+  useEffect((): (() => void) => {
     let isMounted: boolean = true;
     const loadSessions = async (): Promise<void> => {
       setLoading(true);

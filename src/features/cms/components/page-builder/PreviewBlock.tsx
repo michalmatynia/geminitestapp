@@ -8,6 +8,8 @@ import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionStyles, getTextAlign, getBlockTypographyStyles, type ColorSchemeColors } from "../frontend/theme-styles";
 
+type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
+
 export type MediaReplaceTarget = {
   kind: "section" | "block";
   sectionId: string;
@@ -91,18 +93,18 @@ const resolveNodeLabel = (fallback: string, value: unknown): string => {
 
 const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] => {
   return Object.entries(settings)
-    .filter(([key, value]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== "")
-    .map(([key, value]) => ({
+    .filter(([key, value]: [string, unknown]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== "")
+    .map(([key, value]: [string, unknown]) => ({
       label: key,
       value: formatSettingValue(value),
     }))
-    .filter((entry) => entry.value.length > 0)
+    .filter((entry: InspectorEntry) => entry.value.length > 0)
     .slice(0, 12);
 };
 
 const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNode => (
   <div className="space-y-1">
-    {entries.map((entry) => (
+    {entries.map((entry: InspectorEntry) => (
       <div key={`${entry.label}-${entry.value}`} className="flex items-start gap-2">
         <span className="min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400">{entry.label}</span>
         <span className="text-[11px] text-gray-200 break-all">
@@ -120,14 +122,14 @@ const InspectorTooltip = ({
   title: string;
   sections: InspectorSection[];
 }): React.ReactNode => {
-  const visibleSections = sections.filter((section) => section.entries.length > 0);
+  const visibleSections = sections.filter((section: InspectorSection) => section.entries.length > 0);
   return (
     <div className="space-y-2 text-xs">
       <div className="text-[10px] uppercase tracking-wider text-blue-200">{title}</div>
       {visibleSections.length === 0 ? (
         <div className="text-[11px] text-gray-400">No inspector details</div>
       ) : (
-        visibleSections.map((section) => (
+        visibleSections.map((section: InspectorSection) => (
           <div key={section.title} className="space-y-1">
             <div className="text-[10px] uppercase tracking-wider text-gray-500">{section.title}</div>
             {renderInspectorEntries(section.entries)}
@@ -161,38 +163,14 @@ const InspectorHover = ({
   const [open, setOpen] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const timerRef = useRef<number | null>(null);
+  const isTooltipEnabled = enabled && showTooltip;
+  const effectiveOpen = isTooltipEnabled ? open : false;
 
   const clearTimer = (): void => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  };
-
-  useEffect((): void | (() => void) => {
-    if (!enabled || !showTooltip) {
-      clearTimer();
-      setOpen((prev: boolean) => prev ? false : prev);
-    }
-    return (): void => {
-      clearTimer();
-    };
-  }, [enabled, showTooltip]);
-
-  const handleEnter = (): void => {
-    if (!enabled) return;
-    onHover?.(nodeId);
-    clearTimer();
-    if (showTooltip) {
-      timerRef.current = window.setTimeout(() => setOpen(true), INSPECTOR_TOOLTIP_DELAY_MS);
-    }
-  };
-
-  const handleLeave = (): void => {
-    if (!enabled) return;
-    onHover?.(fallbackNodeId ?? null);
-    clearTimer();
-    setOpen(false);
   };
 
   const updateTooltipPosition = (): void => {
@@ -212,9 +190,37 @@ const InspectorHover = ({
     });
   };
 
-  useEffect(() => {
-    if (!open) return;
-    updateTooltipPosition();
+  useEffect((): void | (() => void) => {
+    if (!isTooltipEnabled) {
+      clearTimer();
+      return undefined;
+    }
+    return (): void => {
+      clearTimer();
+    };
+  }, [isTooltipEnabled]);
+
+  const handleEnter = (): void => {
+    if (!enabled) return;
+    onHover?.(nodeId);
+    clearTimer();
+    if (showTooltip) {
+      timerRef.current = window.setTimeout(() => {
+        updateTooltipPosition();
+        setOpen(true);
+      }, INSPECTOR_TOOLTIP_DELAY_MS);
+    }
+  };
+
+  const handleLeave = (): void => {
+    if (!enabled) return;
+    onHover?.(fallbackNodeId ?? null);
+    clearTimer();
+    setOpen(false);
+  };
+
+  useEffect((): void | (() => void) => {
+    if (!open || !isTooltipEnabled) return undefined;
     const handleScroll = (): void => updateTooltipPosition();
     const handleResize = (): void => updateTooltipPosition();
     window.addEventListener("scroll", handleScroll, true);
@@ -223,7 +229,7 @@ const InspectorHover = ({
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleResize);
     };
-  }, [open]);
+  }, [open, isTooltipEnabled]);
 
   return (
     <div
@@ -233,7 +239,7 @@ const InspectorHover = ({
       onMouseLeave={handleLeave}
     >
       {children}
-      {enabled && showTooltip && open && content && tooltipPos && typeof document !== "undefined"
+      {enabled && showTooltip && effectiveOpen && content && tooltipPos && typeof document !== "undefined"
         ? createPortal(
             <div
               className="fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none"
@@ -422,8 +428,6 @@ export function PreviewSection({
       : isSectionHovered
         ? "ring-2 ring-inset ring-blue-500/30"
         : "hover:ring-1 hover:ring-inset hover:ring-border/40";
-    const emptyLabel = section.type === "Block" ? "Block" : "Announcement bar";
-
     return (
       wrapInspector(
         <div
@@ -440,8 +444,8 @@ export function PreviewSection({
           {divider}
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className={`flex flex-wrap items-center gap-3 ${alignmentClasses}`}>
-              {section.blocks.length === 0 ? (
-                <p className="text-sm text-gray-400">{emptyLabel}</p>
+              {section.blocks.length === 0 && section.type !== "Block" ? (
+                <p className="text-sm text-gray-400">Announcement bar</p>
               ) : (
                 section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem
@@ -528,15 +532,15 @@ export function PreviewSection({
         : directColumns.length > 0
         ? [{ row: { id: `row-virtual-${section.id}`, type: "Row", settings: {}, blocks: directColumns }, virtual: true }]
         : [];
-    const hasZeroSpacing = ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "marginTop", "marginBottom", "marginLeft", "marginRight"].every((key) => {
+    const hasZeroSpacing = ["paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "marginTop", "marginBottom", "marginLeft", "marginRight"].every((key: string) => {
       const value = section.settings[key] as number | undefined;
       return !value || value === 0;
     });
-    const isEmptyGrid = rowsToRender.length > 0 && rowsToRender.every(({ row }) => {
+    const isEmptyGrid = rowsToRender.length > 0 && rowsToRender.every(({ row }: { row: BlockInstance }) => {
       const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
       return columns.length > 0 && columns.every((column: BlockInstance) => (column.blocks ?? []).length === 0);
     });
-    const hasFixedHeights = rowsToRender.some(({ row }) => {
+    const hasFixedHeights = rowsToRender.some(({ row }: { row: BlockInstance }) => {
       const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
       const rowHeight = (row.settings?.["height"] as number) || 0;
       if (rowHeightMode === "fixed" && rowHeight > 0) return true;
@@ -570,7 +574,7 @@ export function PreviewSection({
             <div className="h-px w-full bg-border/40" />
           ) : (
             <div className={`flex flex-col ${sectionGapClass}`}>
-              {rowsToRender.map(({ row, virtual }, rowIndex: number) => {
+              {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
                 const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                 const columnCount = Math.max(1, rowColumns.length);
                 const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
@@ -665,7 +669,7 @@ export function PreviewSection({
                                 ? [
                                     {
                                       title: "Connection",
-                                      entries: (() => {
+                                      entries: ((): InspectorEntry[] => {
                                         const connection = column.settings["connection"] as
                                           | { enabled?: boolean; source?: string; path?: string; fallback?: string }
                                           | undefined;
@@ -685,7 +689,7 @@ export function PreviewSection({
                                 ? [
                                     {
                                       title: "Styles",
-                                      entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
+                                      entries: buildStyleEntries(column.settings ?? {}),
                                     },
                                   ]
                                 : []),
@@ -721,7 +725,7 @@ export function PreviewSection({
                                 isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                               } ${columnHoverClass}`}
                             >
-                              {(column.blocks ?? []).length > 0 && (() => {
+                              {(column.blocks ?? []).length > 0 && ((): React.ReactNode => {
                                 const columnBlocks = column.blocks ?? [];
                                 const isSingleBlock = columnBlocks.length === 1;
                                 const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
@@ -1998,7 +2002,7 @@ function PreviewBlockItem({
   if (block.type === "AppEmbed") {
     const appId = (block.settings["appId"] as AppEmbedId) || "chatbot";
     const title = (block.settings["title"] as string) || "";
-    const appLabel = APP_EMBED_OPTIONS.find((option) => option.id === appId)?.label ?? "App";
+    const appLabel = APP_EMBED_OPTIONS.find((option: AppEmbedOption) => option.id === appId)?.label ?? "App";
 
     return (
       wrapBlock(
@@ -2387,33 +2391,27 @@ function PreviewBlockSectionBlock({
   return (
     <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
       <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
-        {children.length > 0 ? (
-          children.map((child: BlockInstance) => (
-            <PreviewBlockItem
-              key={child.id}
-              block={child}
-              isSelected={selectedNodeId === child.id}
-              isInspecting={isInspecting}
-              inspectorSettings={inspectorSettings}
-              hoveredNodeId={hoveredNodeId}
-              onHoverNode={onHoverNode}
-              onSelect={onSelect}
-              contained
-              selectedNodeId={selectedNodeId}
-              sectionId={sectionId}
-              sectionType={sectionType}
-              sectionZone={sectionZone}
-              columnId={columnId}
-              parentBlockId={block.id}
-              onOpenMedia={onOpenMedia}
-              mediaStyles={mediaStyles}
-            />
-          ))
-      ) : (
-        <div className="text-xs text-gray-600">
-          Block
-        </div>
-      )}
+        {children.map((child: BlockInstance) => (
+          <PreviewBlockItem
+            key={child.id}
+            block={child}
+            isSelected={selectedNodeId === child.id}
+            isInspecting={isInspecting}
+            inspectorSettings={inspectorSettings}
+            hoveredNodeId={hoveredNodeId}
+            onHoverNode={onHoverNode}
+            onSelect={onSelect}
+            contained
+            selectedNodeId={selectedNodeId}
+            sectionId={sectionId}
+            sectionType={sectionType}
+            sectionZone={sectionZone}
+            columnId={columnId}
+            parentBlockId={block.id}
+            onOpenMedia={onOpenMedia}
+            mediaStyles={mediaStyles}
+          />
+        ))}
       </div>
     </div>
   );

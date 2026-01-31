@@ -918,7 +918,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           return <div className="text-xs text-gray-500">Settings coming soon.</div>;
       }
     },
-    [settings, update, addMenuItem, updateMenuItem, removeMenuItem, colorSchemeOptions]
+    [settings, update, addMenuItem, updateMenuItem, removeMenuItem, colorSchemeOptions, menuColorSchemeId]
   );
 
   return (

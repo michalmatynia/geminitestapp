@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, useToast } from "@/shared/ui";
 
 import Link from "next/link";

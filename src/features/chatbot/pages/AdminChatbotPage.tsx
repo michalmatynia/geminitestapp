@@ -135,8 +135,8 @@ function ChatbotPageInner(): React.JSX.Element | null {
             sessions={logic.sessions}
             currentSessionId={logic.currentSessionId}
             onSelectSession={logic.selectSession}
-            onNewSession={(): Promise<void> => void logic.createNewSession()}
-            onDeleteSession={(id: string): Promise<void> => void logic.deleteSession(id)}
+            onNewSession={(): void => void logic.createNewSession()}
+            onDeleteSession={(id: string): void => void logic.deleteSession(id)}
           />
         </SectionPanel>
 

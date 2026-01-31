@@ -153,7 +153,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
 export function getTemplatesByCategory(zone?: PageZone): Record<string, SectionTemplate[]> {
   const grouped: Record<string, SectionTemplate[]> = {};
   const templates = zone
-    ? SECTION_TEMPLATES.filter((tpl) => !tpl.zones || tpl.zones.includes(zone))
+    ? SECTION_TEMPLATES.filter((tpl: SectionTemplate) => !tpl.zones || tpl.zones.includes(zone))
     : SECTION_TEMPLATES;
   for (const tpl of templates) {
     if (!grouped[tpl.category]) grouped[tpl.category] = [];

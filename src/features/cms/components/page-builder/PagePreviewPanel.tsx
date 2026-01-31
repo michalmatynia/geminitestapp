@@ -14,8 +14,8 @@ import {
   useToast,
 } from "@/shared/ui";
 import { CmsDomainSelector } from "@/features/cms";
-import type { SectionInstance } from "../../types/page-builder";
-import type { PageZone } from "../../types/page-builder";
+import type { PageZone, SectionInstance } from "../../types/page-builder";
+import type { PageSlugLink, Slug } from "../../types";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsSlugs, useUpdatePage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
@@ -28,12 +28,6 @@ import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 1200;
-
-const ZONE_LABELS: Record<PageZone, string> = {
-  header: "Header",
-  template: "Template",
-  footer: "Footer",
-};
 
 type UserPreferencesResponse = {
   cmsPreviewEnabled?: boolean | null;
@@ -52,10 +46,9 @@ export function PagePreviewPanel(): React.ReactNode {
   const { toast } = useToast();
   const previousPanelsRef = useRef<{ left: boolean; right: boolean } | null>(null);
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
-  const [showEditButton, setShowEditButton] = useState(false);
-  const showEditButtonRef = useRef(false);
+  const [showEditButton, setShowEditButton] = useState<boolean>(isViewing);
+  const showEditButtonRef = useRef<boolean>(isViewing);
   const lastPointerMoveRef = useRef(0);
-  const previewDraftsHydratedRef = useRef(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const preferencesQuery = useQuery({
@@ -88,7 +81,10 @@ export function PagePreviewPanel(): React.ReactNode {
     },
   });
   const domainSlugSet = useMemo(
-    () => ((slugsQuery.data ?? []).length ? new Set((slugsQuery.data ?? []).map((slug) => slug.slug)) : null),
+    (): Set<string> | null =>
+      (slugsQuery.data ?? []).length
+        ? new Set((slugsQuery.data ?? []).map((slug: Slug) => slug.slug))
+        : null,
     [slugsQuery.data]
   );
   const colorSchemes = useMemo(() => (
@@ -104,8 +100,8 @@ export function PagePreviewPanel(): React.ReactNode {
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const slugs = state.currentPage?.slugs ?? [];
-    const values = slugs.map((link) => link.slug.slug);
-    return values.filter((value) => !domainSlugSet.has(value));
+    const values = slugs.map((link: PageSlugLink) => link.slug.slug);
+    return values.filter((value: string) => !domainSlugSet.has(value));
   }, [state.currentPage?.slugs, domainSlugSet]);
 
   const zoneSlugValues = useMemo((): string[] => {
@@ -113,14 +109,14 @@ export function PagePreviewPanel(): React.ReactNode {
     const domainSlugs = slugsQuery.data ?? [];
     if (!page || domainSlugs.length === 0) return [];
     if (page.slugIds?.length) {
-      const slugById = new Map(domainSlugs.map((slug: any) => [slug.id, slug.slug]));
+      const slugById = new Map(domainSlugs.map((slug: Slug) => [slug.id, slug.slug]));
       const ordered = page.slugIds
         .map((id: string) => slugById.get(id))
         .filter((value: string | undefined): value is string => Boolean(value));
       if (ordered.length) return ordered;
     }
     if (!domainSlugSet) return [];
-    const values = (page.slugs ?? []).map((link: any) => link.slug.slug);
+    const values = (page.slugs ?? []).map((link: PageSlugLink) => link.slug.slug);
     return values.filter((value: string) => domainSlugSet.has(value));
   }, [state.currentPage, slugsQuery.data, domainSlugSet]);
 
@@ -191,11 +187,7 @@ export function PagePreviewPanel(): React.ReactNode {
     [state.inspectorEnabled]
   );
 
-  useEffect((): void => {
-    if (!state.inspectorEnabled) {
-      setHoveredNodeId(null);
-    }
-  }, [state.inspectorEnabled]);
+  const effectiveHoveredNodeId = state.inspectorEnabled ? hoveredNodeId : null;
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!state.currentPage) return;
@@ -362,16 +354,13 @@ export function PagePreviewPanel(): React.ReactNode {
       setPanelsCollapsed(false, false);
     }
     previousPanelsRef.current = null;
-  }, [isViewing, setPanelsCollapsed, showEdit, state.leftPanelCollapsed, state.rightPanelCollapsed]);
+    hideEdit();
+  }, [hideEdit, isViewing, setPanelsCollapsed, showEdit, state.leftPanelCollapsed, state.rightPanelCollapsed]);
 
   useEffect((): (() => void) => {
-    if (!isViewing) {
-      hideEdit();
-      return (): void => {};
-    }
+    if (!isViewing) return (): void => {};
 
     lastPointerMoveRef.current = Date.now();
-    showEdit();
     const handlePointerMove = (): void => {
       lastPointerMoveRef.current = Date.now();
       showEdit();
@@ -590,7 +579,7 @@ export function PagePreviewPanel(): React.ReactNode {
                             selectedNodeId={state.selectedNodeId}
                             isInspecting={state.inspectorEnabled}
                             inspectorSettings={state.inspectorSettings}
-                            hoveredNodeId={hoveredNodeId}
+                            hoveredNodeId={effectiveHoveredNodeId}
                             colorSchemes={colorSchemes}
                             mediaStyles={mediaStyles}
                             onSelect={handleSelectNode}

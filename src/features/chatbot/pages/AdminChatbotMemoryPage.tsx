@@ -36,7 +36,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
-  useEffect((): void => {
+  useEffect((): (() => void) => {
     let isMounted: boolean = true;
     const load = async (): Promise<void> => {
       setLoading(true);

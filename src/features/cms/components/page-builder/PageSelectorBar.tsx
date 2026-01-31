@@ -80,17 +80,20 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   }, [pageIdParam, pagesQuery.data, state.currentPage?.id, preferencesQuery.data?.cmsLastPageId]);
 
   const [userPageId, setUserPageId] = useState<string | null>(null);
-  const selectedPageId = userPageId ?? initialPageId;
+  const selectedPageId = useMemo((): string => {
+    const candidate = userPageId ?? initialPageId;
+    if (!candidate) return "";
+    if (!pagesQuery.data) return candidate;
+    return pagesQuery.data.some((page: PageSummary) => page.id === candidate) ? candidate : "";
+  }, [initialPageId, pagesQuery.data, userPageId]);
 
   const pageQuery = useCmsPage(selectedPageId || undefined);
 
   useEffect((): void => {
-    if (!pagesQuery.data) return;
-    if (selectedPageId && !pagesQuery.data.some((page: PageSummary) => page.id === selectedPageId)) {
-      setUserPageId("");
-      dispatch({ type: "CLEAR_CURRENT_PAGE" });
-    }
-  }, [pagesQuery.data, selectedPageId, dispatch]);
+    if (selectedPageId) return;
+    if (!state.currentPage) return;
+    dispatch({ type: "CLEAR_CURRENT_PAGE" });
+  }, [dispatch, selectedPageId, state.currentPage]);
 
   useEffect((): void => {
     if (!pageQuery.data) return;

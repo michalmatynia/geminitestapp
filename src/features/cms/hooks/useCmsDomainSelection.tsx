@@ -19,7 +19,20 @@ type CmsDomainSelectionOptions = {
   persist?: boolean;
 };
 
-export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}) {
+type CmsDomainSelectionResult = {
+  domains: CmsDomain[];
+  activeDomainId: string | null;
+  activeDomain: CmsDomain | null;
+  canonicalDomain: CmsDomain | null;
+  sharedWithDomains: CmsDomain[];
+  hostDomainId: string | null;
+  zoningEnabled: boolean;
+  isLoading: boolean;
+  isSaving: boolean;
+  setActiveDomainId: (domainId: string | null) => void;
+};
+
+export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): CmsDomainSelectionResult {
   const { initialDomainId = null, persist = true } = options;
   const settingsQuery = useSettingsMap();
   const domainSettings = useMemo(

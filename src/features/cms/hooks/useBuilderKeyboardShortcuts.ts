@@ -23,7 +23,7 @@ export function useBuilderKeyboardShortcuts(): void {
     selectedColumnParentSection,
   } = usePageBuilder();
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (isEditableTarget(event.target)) return;
 
@@ -140,5 +140,6 @@ export function useBuilderKeyboardShortcuts(): void {
     selectedColumn,
     selectedColumnParentSection,
     state.clipboard,
+    state.selectedNodeId,
   ]);
 }

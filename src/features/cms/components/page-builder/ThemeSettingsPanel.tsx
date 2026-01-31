@@ -18,8 +18,10 @@ import {
   Checkbox,
 } from "@/shared/ui";
 import { useThemeSettings } from "./ThemeSettingsContext";
+import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
-import type { ColorScheme, ColorSchemeColors } from "@/features/cms/types/theme-settings";
+import type { ColorScheme, ColorSchemeColors, ThemeSettings } from "@/features/cms/types/theme-settings";
+import type { CmsTheme } from "@/features/cms/types";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -77,6 +79,56 @@ const DEFAULT_SCHEME_COLORS: ColorSchemeColors = {
   text: "#f3f4f6",
   accent: "#3b82f6",
   border: "#1f2937",
+};
+
+const SAVED_THEME_PREFIX = "saved:";
+
+const parseCssNumber = (value?: string | null): number | null => {
+  if (!value) return null;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const applySavedThemePreset = (
+  current: ThemeSettings,
+  saved: CmsTheme,
+  presetValue: string
+): ThemeSettings => {
+  const next = { ...current, themePreset: presetValue };
+
+  const colors = saved.colors;
+  if (colors) {
+    if (colors.primary) next.primaryColor = colors.primary;
+    if (colors.secondary) next.secondaryColor = colors.secondary;
+    if (colors.accent) next.accentColor = colors.accent;
+    if (colors.background) next.backgroundColor = colors.background;
+    if (colors.surface) next.surfaceColor = colors.surface;
+    if (colors.text) next.textColor = colors.text;
+    if (colors.muted) next.mutedTextColor = colors.muted;
+  }
+
+  const typography = saved.typography;
+  if (typography) {
+    if (typography.headingFont) next.headingFont = typography.headingFont;
+    if (typography.bodyFont) next.bodyFont = typography.bodyFont;
+    if (Number.isFinite(typography.baseSize)) next.baseSize = typography.baseSize;
+    if (Number.isFinite(typography.headingWeight)) next.headingWeight = String(typography.headingWeight);
+    if (Number.isFinite(typography.bodyWeight)) next.bodyWeight = String(typography.bodyWeight);
+  }
+
+  const spacing = saved.spacing;
+  if (spacing) {
+    const sectionSpacing = parseCssNumber(spacing.sectionPadding);
+    if (sectionSpacing !== null) next.sectionSpacing = sectionSpacing;
+    const maxWidth = parseCssNumber(spacing.containerMaxWidth);
+    if (maxWidth !== null) next.maxContentWidth = maxWidth;
+  }
+
+  if (typeof saved.customCss === "string") {
+    next.customCss = saved.customCss;
+  }
+
+  return next;
 };
 
 // ---------------------------------------------------------------------------
@@ -389,13 +441,27 @@ function ImagePickerField({
   );
 }
 
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }): React.JSX.Element {
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  disabled = false,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { label: string; value: string }[];
+  disabled?: boolean;
+  placeholder?: string;
+}): React.JSX.Element {
   return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-7 bg-gray-800/40 text-xs">
-          <SelectValue />
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
+        <SelectTrigger className="h-7 bg-gray-800/40 text-xs" disabled={disabled}>
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((opt: { label: string; value: string }): React.JSX.Element => (
@@ -443,6 +509,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
   const [newSchemeName, setNewSchemeName] = useState("");
   const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
+  const themesQuery = useCmsThemes();
+  const savedThemes = themesQuery.data ?? [];
 
   // Logo-specific state (file picker)
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -601,6 +669,33 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
     setLogoFile(event.target.files?.[0] ?? null);
     event.target.value = "";
   }, []);
+
+  const themePresetOptions = useMemo(() => {
+    const presets = [
+      { label: "Default", value: "default" },
+      { label: "Minimal", value: "minimal" },
+      { label: "Bold", value: "bold" },
+      { label: "Elegant", value: "elegant" },
+      { label: "Playful", value: "playful" },
+    ];
+    const saved = savedThemes.map((savedTheme: CmsTheme) => ({
+      label: `Saved: ${savedTheme.name}`,
+      value: `${SAVED_THEME_PREFIX}${savedTheme.id}`,
+    }));
+    return [...presets, ...saved];
+  }, [savedThemes]);
+
+  const handleThemePresetChange = useCallback((value: string): void => {
+    if (value.startsWith(SAVED_THEME_PREFIX)) {
+      const themeId = value.slice(SAVED_THEME_PREFIX.length);
+      const selected = savedThemes.find((item: CmsTheme) => item.id === themeId);
+      if (selected) {
+        setTheme((prev: ThemeSettings) => applySavedThemePreset(prev, selected, value));
+        return;
+      }
+    }
+    setTheme((prev: ThemeSettings) => ({ ...prev, themePreset: value }));
+  }, [savedThemes, setTheme]);
 
   // ---------------------------------------------------------------------------
   // Section bodies
@@ -1487,25 +1582,65 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
           );
 
         // ---------------------------------------------------------------
-        case "Cart":
+        case "Cart": {
+          const drawerCollectionValue = theme.cartDrawerCollectionId || "coming-soon";
+          const drawerCollectionOptions = theme.cartDrawerCollectionId
+            ? [{ label: theme.cartDrawerCollectionId, value: theme.cartDrawerCollectionId }]
+            : [{ label: "Coming soon", value: "coming-soon" }];
+
           return (
             <div className="space-y-3">
-              <SelectField label="Cart style" value={theme.cartStyle} onChange={(v) => update("cartStyle", v)} options={[
-                { label: "Drawer", value: "drawer" }, { label: "Page", value: "page" }, { label: "Dropdown", value: "dropdown" },
+              <SelectField label="Cart type" value={theme.cartStyle} onChange={(v) => update("cartStyle", v)} options={[
+                { label: "Drawer", value: "drawer" }, { label: "Page", value: "page" }, { label: "Popup notification", value: "dropdown" },
               ]} />
               <SelectField label="Icon style" value={theme.cartIconStyle} onChange={(v) => update("cartIconStyle", v)} options={[
                 { label: "Bag", value: "bag" }, { label: "Cart", value: "cart" }, { label: "Basket", value: "basket" },
               ]} />
               <CheckboxField label="Show item count" checked={theme.showCartCount} onChange={(v) => update("showCartCount", v)} />
+              <CheckboxField label="Show vendor" checked={theme.cartShowVendor} onChange={(v) => update("cartShowVendor", v)} />
+              <CheckboxField label="Enable cart note" checked={theme.cartEnableNote} onChange={(v) => update("cartEnableNote", v)} />
               <TextField label="Empty cart text" value={theme.cartEmptyText} onChange={(v) => update("cartEmptyText", v)} />
+              {theme.cartStyle === "drawer" && (
+                <div className="border-t border-border/30 pt-2">
+                  <Label className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 block">Cart drawer</Label>
+                  <div className="space-y-2">
+                    <SelectField
+                      label="Collection"
+                      value={drawerCollectionValue}
+                      onChange={(v) => update("cartDrawerCollectionId", v)}
+                      options={drawerCollectionOptions}
+                      disabled
+                      placeholder="Coming soon"
+                    />
+                    <CheckboxField
+                      label="Visible when cart drawer is empty"
+                      checked={theme.cartDrawerShowWhenEmpty}
+                      onChange={(v) => update("cartDrawerShowWhenEmpty", v)}
+                    />
+                    <SelectField
+                      label="Color scheme"
+                      value={theme.cartDrawerColorScheme}
+                      onChange={(v) => update("cartDrawerColorScheme", v)}
+                      options={theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id }))}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           );
+        }
 
         // ---------------------------------------------------------------
         case "Custom CSS":
           return (
             <div className="space-y-2">
               <Label className="text-[10px] uppercase tracking-wider text-gray-500">Custom CSS</Label>
+              <TextField
+                label="CSS selectors"
+                value={theme.customCssSelectors}
+                onChange={(v) => update("customCssSelectors", v)}
+                placeholder=".product-card, #cart, .footer"
+              />
               <textarea
                 value={theme.customCss}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => update("customCss", e.target.value)}
@@ -1520,13 +1655,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
         case "Theme Style":
           return (
             <div className="space-y-3">
-              <SelectField label="Preset" value={theme.themePreset} onChange={(v) => update("themePreset", v)} options={[
-                { label: "Default", value: "default" },
-                { label: "Minimal", value: "minimal" },
-                { label: "Bold", value: "bold" },
-                { label: "Elegant", value: "elegant" },
-                { label: "Playful", value: "playful" },
-              ]} />
+              <SelectField label="Preset" value={theme.themePreset} onChange={handleThemePresetChange} options={themePresetOptions} />
               <CheckboxField label="Dark mode" checked={theme.darkMode} onChange={(v) => update("darkMode", v)} />
             </div>
           );
@@ -1550,6 +1679,8 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
       startAddScheme,
       startEditScheme,
       schemeView,
+      themePresetOptions,
+      handleThemePresetChange,
       theme,
       update,
     ]

@@ -257,7 +257,13 @@ export interface ThemeSettings {
   cartIconStyle: string;
   showCartCount: boolean;
   cartEmptyText: string;
+  cartShowVendor: boolean;
+  cartEnableNote: boolean;
+  cartDrawerCollectionId: string;
+  cartDrawerShowWhenEmpty: boolean;
+  cartDrawerColorScheme: string;
   // Custom CSS
+  customCssSelectors: string;
   customCss: string;
   // Theme Style
   themePreset: string;
@@ -545,6 +551,12 @@ export const DEFAULT_THEME: ThemeSettings = {
   cartIconStyle: "bag",
   showCartCount: true,
   cartEmptyText: "Your cart is empty",
+  cartShowVendor: true,
+  cartEnableNote: false,
+  cartDrawerCollectionId: "",
+  cartDrawerShowWhenEmpty: true,
+  cartDrawerColorScheme: "scheme-1",
+  customCssSelectors: "",
   customCss: "",
   themePreset: "default",
   darkMode: true,

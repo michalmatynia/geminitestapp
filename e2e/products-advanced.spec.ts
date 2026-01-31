@@ -135,7 +135,7 @@ test.describe('Products Management - Advanced', () => {
     await modal.getByRole('button', { name: 'Update', exact: true }).click({ force: true });
     await updatePromise;
     
-    await expect(page.locator('tr').filter({ hasText: sku3 })).not.toBeVisible();
+    await expect(page.locator('tr').filter({ hasText: sku })).not.toBeVisible();
   });
 
   test('should manage product parameters', async ({ page }) => {
@@ -211,47 +211,5 @@ test.describe('Products Management - Advanced', () => {
         return page.getByLabel('Close').click({ force: true });
     });
     await expect(modal).not.toBeVisible();
-  });
-});
-
-    const rows = page.locator('tbody tr');
-    if (await rows.count() < 2) {
-      await createTestProduct(page, `MASS1${Date.now()}`, `Mass 1`);
-      await createTestProduct(page, `MASS2${Date.now()}`, `Mass 2`);
-      await page.reload();
-      await page.waitForTimeout(2000);
-    }
-
-    const checkboxes = page.getByRole('checkbox', { name: /select row/i });
-    await expect(checkboxes.first()).toBeVisible({ timeout: 15000 });
-    
-    await checkboxes.nth(0).click();
-    await page.waitForTimeout(200);
-    await checkboxes.nth(1).click();
-
-    // Use a more relaxed match for Selection button since it has a badge
-    await expect(page.getByRole('button', { name: /Selection/i })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: /Actions/i }).first()).toBeVisible({ timeout: 15000 });
-  });
-
-  test('should manage product parameters', async ({ page }) => {
-    const sku = `PARAM${Date.now()}`;
-    await createTestProduct(page, sku, `Param Test`);
-
-    const skuSearchInput = page.getByPlaceholder('Search by SKU...');
-    await skuSearchInput.fill(sku);
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(1000);
-
-    const row = page.locator('tr').filter({ hasText: sku });
-    await expect(row.first()).toBeVisible({ timeout: 15000 });
-    await row.first().getByLabel('Open row actions').click();
-    await page.getByRole('menuitem', { name: 'Edit' }).click();
-
-    await page.waitForTimeout(1000);
-    const modal = page.locator('[role="dialog"]');
-    await modal.getByRole('tab', { name: 'Parameters' }).click();
-    
-    await expect(page.getByText(/No parameters defined|Add Parameter/i).first()).toBeVisible({ timeout: 10000 });
   });
 });

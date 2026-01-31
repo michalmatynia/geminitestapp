@@ -10,6 +10,7 @@ import type {
   PageBuilderSnapshot,
   SettingsField,
 } from "../types/page-builder";
+import { DEFAULT_INSPECTOR_SETTINGS } from "../types/page-builder";
 import type { PageComponent } from "../types";
 import { getSectionDefinition, getBlockDefinition } from "../components/page-builder/section-registry";
 
@@ -739,6 +740,15 @@ export function basePageBuilderReducer(
     case "TOGGLE_INSPECTOR":
       return { ...state, inspectorEnabled: !state.inspectorEnabled };
 
+    case "UPDATE_INSPECTOR_SETTINGS":
+      return {
+        ...state,
+        inspectorSettings: {
+          ...state.inspectorSettings,
+          ...action.settings,
+        },
+      };
+
     case "SET_PREVIEW_MODE":
       return { ...state, previewMode: action.mode };
 
@@ -859,6 +869,7 @@ const HISTORY_IGNORED_ACTIONS = new Set<PageBuilderAction["type"]>([
   "COPY_BLOCK",
   "UPDATE_PAGE_SLUGS",
   "TOGGLE_INSPECTOR",
+  "UPDATE_INSPECTOR_SETTINGS",
   "SET_PREVIEW_MODE",
 ]);
 
@@ -933,6 +944,7 @@ export const initialState: PageBuilderState = {
   sections: [],
   selectedNodeId: null,
   inspectorEnabled: false,
+  inspectorSettings: DEFAULT_INSPECTOR_SETTINGS,
   previewMode: "desktop",
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,

@@ -96,12 +96,33 @@ export interface PageBuilderHistory {
   future: PageBuilderSnapshot[];
 }
 
+export interface InspectorSettings {
+  showTooltip: boolean;
+  showStyleSettings: boolean;
+  showStructureInfo: boolean;
+  showIdentifiers: boolean;
+  showVisibilityInfo: boolean;
+  showConnectionInfo: boolean;
+  detectHiddenElements: boolean;
+}
+
+export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
+  showTooltip: true,
+  showStyleSettings: true,
+  showStructureInfo: true,
+  showIdentifiers: false,
+  showVisibilityInfo: true,
+  showConnectionInfo: true,
+  detectHiddenElements: true,
+};
+
 export interface PageBuilderState {
   pages: PageSummary[];
   currentPage: Page | null;
   sections: SectionInstance[];
   selectedNodeId: string | null;
   inspectorEnabled: boolean;
+  inspectorSettings: InspectorSettings;
   previewMode: "desktop" | "mobile";
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
@@ -140,6 +161,7 @@ export type PageBuilderAction =
   | { type: "UPDATE_SEO"; seo: Partial<PageSeoData> }
   | { type: "UPDATE_PAGE_SLUGS"; slugIds: string[]; slugValues: string[] }
   | { type: "TOGGLE_INSPECTOR" }
+  | { type: "UPDATE_INSPECTOR_SETTINGS"; settings: Partial<InspectorSettings> }
   | { type: "SET_PREVIEW_MODE"; mode: "desktop" | "mobile" }
   | { type: "TOGGLE_LEFT_PANEL" }
   | { type: "TOGGLE_RIGHT_PANEL" }

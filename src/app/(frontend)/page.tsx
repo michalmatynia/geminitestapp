@@ -93,7 +93,8 @@ export default async function Home(): Promise<JSX.Element> {
   }
 
   const cmsRepository = await getCmsRepository();
-  const domain = await resolveCmsDomainFromHeaders(headers());
+  const hdrs = await headers();
+  const domain = await resolveCmsDomainFromHeaders(hdrs);
   const slugs = await getSlugsForDomain(domain.id, cmsRepository);
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
   const themeSettings = await getCmsThemeSettings();

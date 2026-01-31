@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
-import type { SectionInstance, BlockInstance } from "../../types/page-builder";
+import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionStyles, getTextAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 
@@ -60,33 +60,53 @@ const formatSettingValue = (value: unknown): string => {
   }
 };
 
-const buildStyleEntries = (settings: Record<string, unknown>): Array<{ key: string; value: string }> => {
+const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] => {
   return Object.entries(settings)
     .filter(([key, value]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== "")
     .map(([key, value]) => ({
-      key,
+      label: key,
       value: formatSettingValue(value),
     }))
     .filter((entry) => entry.value.length > 0)
     .slice(0, 12);
 };
 
-const InspectorTooltip = ({ title, settings }: { title: string; settings: Record<string, unknown> }): React.ReactNode => {
-  const entries = buildStyleEntries(settings);
+type InspectorEntry = { label: string; value: string };
+type InspectorSection = { title: string; entries: InspectorEntry[] };
+
+const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNode => (
+  <div className="space-y-1">
+    {entries.map((entry) => (
+      <div key={`${entry.label}-${entry.value}`} className="flex items-start gap-2">
+        <span className="min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400">{entry.label}</span>
+        <span className="text-[11px] text-gray-200 break-all">
+          {entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+const InspectorTooltip = ({
+  title,
+  sections,
+}: {
+  title: string;
+  sections: InspectorSection[];
+}): React.ReactNode => {
+  const visibleSections = sections.filter((section) => section.entries.length > 0);
   return (
-    <div className="space-y-1.5 text-xs">
+    <div className="space-y-2 text-xs">
       <div className="text-[10px] uppercase tracking-wider text-blue-200">{title}</div>
-      {entries.length === 0 ? (
-        <div className="text-[11px] text-gray-400">No style settings</div>
+      {visibleSections.length === 0 ? (
+        <div className="text-[11px] text-gray-400">No inspector details</div>
       ) : (
-        <div className="space-y-1">
-          {entries.map((entry) => (
-            <div key={entry.key} className="flex items-start gap-2">
-              <span className="min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400">{entry.key}</span>
-              <span className="text-[11px] text-gray-200 break-all">{entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}</span>
-            </div>
-          ))}
-        </div>
+        visibleSections.map((section) => (
+          <div key={section.title} className="space-y-1">
+            <div className="text-[10px] uppercase tracking-wider text-gray-500">{section.title}</div>
+            {renderInspectorEntries(section.entries)}
+          </div>
+        ))
       )}
     </div>
   );
@@ -94,6 +114,7 @@ const InspectorTooltip = ({ title, settings }: { title: string; settings: Record
 
 const InspectorHover = ({
   enabled,
+  showTooltip = true,
   nodeId,
   onHover,
   fallbackNodeId,
@@ -102,6 +123,7 @@ const InspectorHover = ({
   className,
 }: {
   enabled: boolean;
+  showTooltip?: boolean;
   nodeId: string;
   onHover?: (nodeId: string | null) => void;
   fallbackNodeId?: string | null;
@@ -120,20 +142,22 @@ const InspectorHover = ({
   };
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !showTooltip) {
       clearTimer();
       setOpen(false);
     }
     return () => {
       clearTimer();
     };
-  }, [enabled]);
+  }, [enabled, showTooltip]);
 
   const handleEnter = (): void => {
     if (!enabled) return;
     onHover?.(nodeId);
     clearTimer();
-    timerRef.current = window.setTimeout(() => setOpen(true), INSPECTOR_TOOLTIP_DELAY_MS);
+    if (showTooltip) {
+      timerRef.current = window.setTimeout(() => setOpen(true), INSPECTOR_TOOLTIP_DELAY_MS);
+    }
   };
 
   const handleLeave = (): void => {
@@ -146,7 +170,7 @@ const InspectorHover = ({
   return (
     <div className={`relative ${className ?? ""}`} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       {children}
-      {enabled && open && content && (
+      {enabled && showTooltip && open && content && (
         <div className="absolute z-40 left-1/2 -translate-x-1/2 -top-2 -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg">
           {content}
         </div>
@@ -163,6 +187,7 @@ interface PreviewSectionProps {
   section: SectionInstance;
   selectedNodeId: string | null;
   isInspecting?: boolean;
+  inspectorSettings: InspectorSettings;
   hoveredNodeId?: string | null;
   colorSchemes?: Record<string, ColorSchemeColors>;
   mediaStyles?: React.CSSProperties | null;
@@ -177,6 +202,7 @@ export function PreviewSection({
   section,
   selectedNodeId,
   isInspecting = false,
+  inspectorSettings,
   hoveredNodeId,
   colorSchemes,
   mediaStyles,
@@ -189,17 +215,59 @@ export function PreviewSection({
   const isSectionSelected = selectedNodeId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
   const label = (section.settings["label"] as string | undefined) ?? section.type;
-  const isSectionHovered = isInspecting && hoveredNodeId === section.id;
+  const inspectorActive = isInspecting && (!isHidden || inspectorSettings.detectHiddenElements);
+  const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
   ) : null;
+  const metaEntries: InspectorEntry[] = [
+    { label: "Type", value: section.type },
+    { label: "Label", value: label },
+  ];
+  if (inspectorSettings.showIdentifiers) {
+    metaEntries.push({ label: "ID", value: section.id });
+  }
+  const structureEntries: InspectorEntry[] = [
+    { label: "Zone", value: section.zone },
+    { label: "Blocks", value: String(section.blocks.length) },
+  ];
+  if (section.type === "Grid") {
+    const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column").length;
+    structureEntries.push({ label: "Columns", value: String(columns) });
+  }
+  const visibilityEntries: InspectorEntry[] = [
+    { label: "Hidden", value: isHidden ? "Yes" : "No" },
+  ];
+  const connectionEntries: InspectorEntry[] = [];
+  const connection = section.settings["connection"] as { enabled?: boolean; source?: string; path?: string; fallback?: string } | undefined;
+  if (connection) {
+    connectionEntries.push({ label: "Enabled", value: connection.enabled ? "Yes" : "No" });
+    if (connection.source) connectionEntries.push({ label: "Source", value: connection.source });
+    if (connection.path) connectionEntries.push({ label: "Path", value: connection.path });
+    if (connection.fallback) connectionEntries.push({ label: "Fallback", value: connection.fallback });
+  }
+  const styleEntries = inspectorSettings.showStyleSettings ? buildStyleEntries(section.settings) : [];
+  const inspectorSections: InspectorSection[] = [{ title: "Meta", entries: metaEntries }];
+  if (inspectorSettings.showStructureInfo) {
+    inspectorSections.push({ title: "Structure", entries: structureEntries });
+  }
+  if (inspectorSettings.showVisibilityInfo) {
+    inspectorSections.push({ title: "Visibility", entries: visibilityEntries });
+  }
+  if (inspectorSettings.showConnectionInfo) {
+    inspectorSections.push({ title: "Connection", entries: connectionEntries });
+  }
+  if (inspectorSettings.showStyleSettings) {
+    inspectorSections.push({ title: "Styles", entries: styleEntries });
+  }
   const inspectorContent = (
-    <InspectorTooltip title={`Section: ${label}`} settings={section.settings} />
+    <InspectorTooltip title={`Section: ${label}`} sections={inspectorSections} />
   );
   const wrapInspector = (node: React.ReactNode): React.ReactNode => (
     <InspectorHover
-      enabled={isInspecting}
+      enabled={inspectorActive}
+      showTooltip={inspectorSettings.showTooltip}
       nodeId={section.id}
       onHover={onHoverNode}
       fallbackNodeId={null}
@@ -329,12 +397,15 @@ export function PreviewSection({
                     block={block}
                     isSelected={selectedNodeId === block.id}
                     isInspecting={isInspecting}
+                    inspectorSettings={inspectorSettings}
                     hoveredNodeId={hoveredNodeId}
                     onHoverNode={onHoverNode}
                     onSelect={onSelect}
                     contained
                     selectedNodeId={selectedNodeId}
                     sectionId={section.id}
+                    sectionType={section.type}
+                    sectionZone={section.zone}
                     onOpenMedia={onOpenMedia}
                     mediaStyles={mediaStyles}
                   />
@@ -375,12 +446,15 @@ export function PreviewSection({
             block={block}
             isSelected={selectedNodeId === block.id}
             isInspecting={isInspecting}
+            inspectorSettings={inspectorSettings}
             hoveredNodeId={hoveredNodeId}
             onHoverNode={onHoverNode}
             onSelect={onSelect}
             contained
             selectedNodeId={selectedNodeId}
             sectionId={section.id}
+            sectionType={section.type}
+            sectionZone={section.zone}
             onOpenMedia={onOpenMedia}
             mediaStyles={mediaStyles}
           />
@@ -429,13 +503,63 @@ export function PreviewSection({
               const columnTooltip = (
                 <InspectorTooltip
                   title="Column"
-                  settings={(column.settings as Record<string, unknown>) ?? {}}
+                  sections={[
+                    {
+                      title: "Meta",
+                      entries: inspectorSettings.showIdentifiers
+                        ? [
+                            { label: "Type", value: "Column" },
+                            { label: "ID", value: column.id },
+                          ]
+                        : [{ label: "Type", value: "Column" }],
+                    },
+                    ...(inspectorSettings.showStructureInfo
+                      ? [
+                          {
+                            title: "Structure",
+                            entries: [
+                              { label: "Section", value: section.type },
+                              { label: "Zone", value: section.zone },
+                            ],
+                          },
+                        ]
+                      : []),
+                    ...(inspectorSettings.showConnectionInfo
+                      ? [
+                          {
+                            title: "Connection",
+                            entries: (() => {
+                              const connection = column.settings["connection"] as
+                                | { enabled?: boolean; source?: string; path?: string; fallback?: string }
+                                | undefined;
+                              if (!connection) return [];
+                              const entries: InspectorEntry[] = [
+                                { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
+                              ];
+                              if (connection.source) entries.push({ label: "Source", value: connection.source });
+                              if (connection.path) entries.push({ label: "Path", value: connection.path });
+                              if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
+                              return entries;
+                            })(),
+                          },
+                        ]
+                      : []),
+                    ...(inspectorSettings.showStyleSettings
+                      ? [
+                          {
+                            title: "Styles",
+                            entries: buildStyleEntries((column.settings as Record<string, unknown>) ?? {}),
+                          },
+                        ]
+                      : []),
+                  ]}
                 />
               );
               return (
                 <InspectorHover
                   key={column.id}
-                  enabled={isInspecting}
+                  enabled={inspectorActive}
+                  showTooltip={inspectorSettings.showTooltip}
                   nodeId={column.id}
                   onHover={onHoverNode}
                   fallbackNodeId={section.id}
@@ -473,12 +597,15 @@ export function PreviewSection({
                             block={block}
                             isSelected={selectedNodeId === block.id}
                             isInspecting={isInspecting}
+                            inspectorSettings={inspectorSettings}
                             hoveredNodeId={hoveredNodeId}
                             onHoverNode={onHoverNode}
                             onSelect={onSelect}
                             contained
                             selectedNodeId={selectedNodeId}
                             sectionId={section.id}
+                            sectionType={section.type}
+                            sectionZone={section.zone}
                             columnId={column.id}
                             onOpenMedia={onOpenMedia}
                             mediaStyles={mediaStyles}
@@ -590,12 +717,15 @@ export function PreviewSection({
                     block={block}
                     isSelected={selectedNodeId === block.id}
                     isInspecting={isInspecting}
+                    inspectorSettings={inspectorSettings}
                     hoveredNodeId={hoveredNodeId}
                     onHoverNode={onHoverNode}
                     onSelect={onSelect}
                     contained
                     selectedNodeId={selectedNodeId}
                     sectionId={section.id}
+                    sectionType={section.type}
+                    sectionZone={section.zone}
                     onOpenMedia={onOpenMedia}
                     mediaStyles={mediaStyles}
                   />
@@ -663,12 +793,15 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -716,12 +849,15 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -799,12 +935,15 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -843,12 +982,15 @@ export function PreviewSection({
                   block={block}
                   isSelected={selectedNodeId === block.id}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   contained
                   selectedNodeId={selectedNodeId}
                   sectionId={section.id}
+                  sectionType={section.type}
+                  sectionZone={section.zone}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
                 />
@@ -932,9 +1074,12 @@ interface PreviewBlockItemProps {
   block: BlockInstance;
   isSelected: boolean;
   isInspecting?: boolean;
+  inspectorSettings: InspectorSettings;
   hoveredNodeId?: string | null;
   onSelect: (nodeId: string) => void;
   sectionId: string;
+  sectionType?: string;
+  sectionZone?: PageZone;
   columnId?: string;
   parentBlockId?: string;
   contained?: boolean;
@@ -948,11 +1093,14 @@ function PreviewBlockItem({
   block,
   isSelected,
   isInspecting = false,
+  inspectorSettings,
   hoveredNodeId,
   onSelect,
   contained,
   selectedNodeId,
   sectionId,
+  sectionType,
+  sectionZone,
   columnId,
   parentBlockId,
   onHoverNode,
@@ -964,15 +1112,58 @@ function PreviewBlockItem({
     ? "border-blue-500 ring-2 ring-inset ring-blue-500/40"
     : "border-blue-400 ring-1 ring-inset ring-blue-400/30";
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
-  const isHovered = isInspecting && hoveredNodeId === block.id;
+  const inspectorActive = isInspecting;
+  const isHovered = inspectorActive && hoveredNodeId === block.id;
   const hoverFrameClass = isHovered && !isSelected
     ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
     : "";
-  const inspectorContent = <InspectorTooltip title={block.type} settings={block.settings} />;
+  const metaEntries: InspectorEntry[] = [{ label: "Type", value: block.type }];
+  if (inspectorSettings.showIdentifiers) {
+    metaEntries.push({ label: "ID", value: block.id });
+  }
+  const structureEntries: InspectorEntry[] = [];
+  if (sectionType) {
+    structureEntries.push({ label: "Section", value: sectionType });
+  }
+  if (sectionZone) {
+    structureEntries.push({ label: "Zone", value: sectionZone });
+  }
+  if (columnId) {
+    structureEntries.push({ label: "Column", value: inspectorSettings.showIdentifiers ? columnId : "Column" });
+  }
+  const visibilityEntries: InspectorEntry[] = [];
+  const blockHidden = block.settings["isHidden"];
+  if (typeof blockHidden === "boolean") {
+    visibilityEntries.push({ label: "Hidden", value: blockHidden ? "Yes" : "No" });
+  }
+  const connectionEntries: InspectorEntry[] = [];
+  const connection = block.settings["connection"] as { enabled?: boolean; source?: string; path?: string; fallback?: string } | undefined;
+  if (connection) {
+    connectionEntries.push({ label: "Enabled", value: connection.enabled ? "Yes" : "No" });
+    if (connection.source) connectionEntries.push({ label: "Source", value: connection.source });
+    if (connection.path) connectionEntries.push({ label: "Path", value: connection.path });
+    if (connection.fallback) connectionEntries.push({ label: "Fallback", value: connection.fallback });
+  }
+  const styleEntries = inspectorSettings.showStyleSettings ? buildStyleEntries(block.settings) : [];
+  const inspectorSections: InspectorSection[] = [{ title: "Meta", entries: metaEntries }];
+  if (inspectorSettings.showStructureInfo) {
+    inspectorSections.push({ title: "Structure", entries: structureEntries });
+  }
+  if (inspectorSettings.showVisibilityInfo && visibilityEntries.length > 0) {
+    inspectorSections.push({ title: "Visibility", entries: visibilityEntries });
+  }
+  if (inspectorSettings.showConnectionInfo) {
+    inspectorSections.push({ title: "Connection", entries: connectionEntries });
+  }
+  if (inspectorSettings.showStyleSettings) {
+    inspectorSections.push({ title: "Styles", entries: styleEntries });
+  }
+  const inspectorContent = <InspectorTooltip title={block.type} sections={inspectorSections} />;
   const fallbackNodeId = parentBlockId ?? columnId ?? sectionId;
   const wrapBlock = (node: React.ReactNode): React.ReactNode => (
     <InspectorHover
-      enabled={isInspecting}
+      enabled={inspectorActive}
+      showTooltip={inspectorSettings.showTooltip}
       nodeId={block.id}
       onHover={onHoverNode}
       fallbackNodeId={fallbackNodeId}
@@ -1010,10 +1201,13 @@ function PreviewBlockItem({
                   block={block}
                   selectedNodeId={selectedNodeId}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
                   columnId={columnId}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
@@ -1024,10 +1218,13 @@ function PreviewBlockItem({
                   block={block}
                   selectedNodeId={selectedNodeId}
                   isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
                   hoveredNodeId={hoveredNodeId}
                   onHoverNode={onHoverNode}
                   onSelect={onSelect}
                   sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
                   columnId={columnId}
                   onOpenMedia={onOpenMedia}
                   mediaStyles={mediaStyles}
@@ -1470,9 +1667,12 @@ interface PreviewSectionBlockProps {
   block: BlockInstance;
   selectedNodeId?: string | null;
   isInspecting?: boolean;
+  inspectorSettings: InspectorSettings;
   hoveredNodeId?: string | null;
   onSelect: (nodeId: string) => void;
   sectionId: string;
+  sectionType?: string;
+  sectionZone?: PageZone;
   columnId?: string;
   onHoverNode?: (nodeId: string | null) => void;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
@@ -1483,9 +1683,12 @@ function PreviewImageWithTextBlock({
   block,
   selectedNodeId,
   isInspecting = false,
+  inspectorSettings,
   hoveredNodeId,
   onSelect,
   sectionId,
+  sectionType,
+  sectionZone,
   columnId,
   onHoverNode,
   onOpenMedia,
@@ -1513,12 +1716,15 @@ function PreviewImageWithTextBlock({
               block={child}
               isSelected={selectedNodeId === child.id}
               isInspecting={isInspecting}
+              inspectorSettings={inspectorSettings}
               hoveredNodeId={hoveredNodeId}
               onHoverNode={onHoverNode}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
               sectionId={sectionId}
+              sectionType={sectionType}
+              sectionZone={sectionZone}
               columnId={columnId}
               parentBlockId={block.id}
               onOpenMedia={onOpenMedia}
@@ -1543,9 +1749,12 @@ function PreviewHeroBlock({
   block,
   selectedNodeId,
   isInspecting = false,
+  inspectorSettings,
   hoveredNodeId,
   onSelect,
   sectionId,
+  sectionType,
+  sectionZone,
   columnId,
   onHoverNode,
   onOpenMedia,
@@ -1570,12 +1779,15 @@ function PreviewHeroBlock({
               block={child}
               isSelected={selectedNodeId === child.id}
               isInspecting={isInspecting}
+              inspectorSettings={inspectorSettings}
               hoveredNodeId={hoveredNodeId}
               onHoverNode={onHoverNode}
               onSelect={onSelect}
               contained
               selectedNodeId={selectedNodeId}
               sectionId={sectionId}
+              sectionType={sectionType}
+              sectionZone={sectionZone}
               columnId={columnId}
               parentBlockId={block.id}
               onOpenMedia={onOpenMedia}

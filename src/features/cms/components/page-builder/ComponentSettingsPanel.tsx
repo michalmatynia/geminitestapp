@@ -302,6 +302,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const sectionDef = selectedSection ? getSectionDefinition(selectedSection.type) : null;
   const blockDef = selectedBlock ? getBlockDefinition(selectedBlock.type) : null;
   const columnDef = selectedColumn ? getBlockDefinition("Column") : null;
+  const inspectorSettings = state.inspectorSettings;
 
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
@@ -368,6 +369,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
     }
     setActiveTab((prev) => (prev === "connections" ? "settings" : prev));
   }, [state.inspectorEnabled]);
+
+  const updateInspectorSetting = useCallback(
+    (patch: Partial<typeof inspectorSettings>) => {
+      dispatch({ type: "UPDATE_INSPECTOR_SETTINGS", settings: patch });
+    },
+    [dispatch]
+  );
 
   return (
     <aside className="flex w-80 flex-col border-l border-border bg-gray-900">
@@ -442,6 +450,66 @@ export function ComponentSettingsPanel(): React.ReactNode {
             : "Settings"}
         </h3>
       </div>
+
+      {state.inspectorEnabled && (
+        <div className="border-b border-border px-4 py-3">
+          <div className="text-[10px] uppercase tracking-wider text-gray-400">Inspector options</div>
+          <div className="mt-2 space-y-2 text-xs text-gray-300">
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={inspectorSettings.showTooltip}
+                onCheckedChange={(value) => updateInspectorSetting({ showTooltip: value === true })}
+              />
+              Enable tooltip
+            </label>
+            <div className="rounded border border-border/40 bg-gray-800/30 px-2 py-2 space-y-2">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Tooltip content</div>
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={inspectorSettings.showStyleSettings}
+                  onCheckedChange={(value) => updateInspectorSetting({ showStyleSettings: value === true })}
+                />
+                Style settings
+              </label>
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={inspectorSettings.showStructureInfo}
+                  onCheckedChange={(value) => updateInspectorSetting({ showStructureInfo: value === true })}
+                />
+                Structure info (zone + counts)
+              </label>
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={inspectorSettings.showIdentifiers}
+                  onCheckedChange={(value) => updateInspectorSetting({ showIdentifiers: value === true })}
+                />
+                Identifiers (IDs)
+              </label>
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={inspectorSettings.showVisibilityInfo}
+                  onCheckedChange={(value) => updateInspectorSetting({ showVisibilityInfo: value === true })}
+                />
+                Visibility info
+              </label>
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={inspectorSettings.showConnectionInfo}
+                  onCheckedChange={(value) => updateInspectorSetting({ showConnectionInfo: value === true })}
+                />
+                Connection info
+              </label>
+            </div>
+            <label className="flex items-center gap-2">
+              <Checkbox
+                checked={inspectorSettings.detectHiddenElements}
+                onCheckedChange={(value) => updateInspectorSetting({ detectHiddenElements: value === true })}
+              />
+              Detect hidden elements
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {!state.currentPage ? (

@@ -583,6 +583,7 @@ export function PagePreviewPanel(): React.ReactNode {
                             section={section}
                             selectedNodeId={state.selectedNodeId}
                             isInspecting={state.inspectorEnabled}
+                            inspectorSettings={state.inspectorSettings}
                             hoveredNodeId={hoveredNodeId}
                             colorSchemes={colorSchemes}
                             mediaStyles={mediaStyles}

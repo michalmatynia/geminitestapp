@@ -137,8 +137,6 @@ function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: Secti
       return <FrontendImageElementSection settings={settings} />;
     case "ButtonElement":
       return <FrontendButtonElementSection settings={settings} />;
-    case "ButtonElement":
-      return <FrontendButtonElementSection settings={settings} />;
     case "Hero":
       return <FrontendHeroSection settings={settings} blocks={blocks} colorSchemes={colorSchemes} layout={layout} />;
     case "ImageWithText":

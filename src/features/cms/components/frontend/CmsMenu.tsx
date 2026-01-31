@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { MenuSettings } from "@/features/cms/types/menu-settings";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
-// import type { AnimationPreset } from "@/features/gsap/types/animation"; // Unused
+import type { gsap } from "gsap";
 import { getGsapFromVars } from "@/features/gsap/utils/presets";
 
 const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);
@@ -64,7 +64,7 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
       lastY = currentY;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
+    return (): void => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [allowHideOnScroll, showOnScrollUpAfterPx]);
@@ -94,11 +94,12 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     if (menu.menuEntryAnimation === "none") return;
     let ctx: { revert?: () => void } | null = null;
     let cancelled = false;
-    void import("gsap").then(({ gsap }: { gsap: any }) => {
+    void import("gsap").then((module: typeof import("gsap")) => {
+      const { gsap } = module;
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;
-      const vars: gsap.TweenVars = getGsapFromVars(menu.menuEntryAnimation as any);
+      const vars: gsap.TweenVars = getGsapFromVars(menu.menuEntryAnimation);
       if (!vars) return;
       ctx = gsap.context(() => {
         gsap.from(items, {
@@ -118,11 +119,12 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   useEffect(() => {
     if (!animationsEnabled) return;
     if (menu.menuHoverAnimation === "none") return;
-    const fromVars: gsap.TweenVars = getGsapFromVars(menu.menuHoverAnimation as any);
+    const fromVars: gsap.TweenVars = getGsapFromVars(menu.menuHoverAnimation);
     if (!fromVars) return;
     let cancelled = false;
     const cleanups: Array<() => void> = [];
-    void import("gsap").then(({ gsap }: { gsap: any }) => {
+    void import("gsap").then((module: typeof import("gsap")) => {
+      const { gsap } = module;
       if (cancelled) return;
       const items = itemsRef.current?.querySelectorAll("[data-menu-item]");
       if (!items || items.length === 0) return;

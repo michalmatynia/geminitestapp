@@ -35,7 +35,9 @@ const sections = [
   },
 ];
 
-export default function AllegroMarketplacePage() {
+import React from "react";
+
+export default function AllegroMarketplacePage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10">
       <SectionPanel className="p-6">
@@ -54,7 +56,7 @@ export default function AllegroMarketplacePage() {
         />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sections.map((section) => (
+          {sections.map((section: { name: string; description: string; href: string }) => (
             <Link
               key={section.name}
               href={section.href}

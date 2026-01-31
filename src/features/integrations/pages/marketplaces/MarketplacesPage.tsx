@@ -1,6 +1,6 @@
 import { SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
-
+import React from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ const marketplaces = [
   },
 ];
 
-export default function MarketplacesPage() {
+export default function MarketplacesPage(): React.JSX.Element {
   return (
     <SectionPanel className="p-6">
       <SectionHeader
@@ -29,7 +29,7 @@ export default function MarketplacesPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {marketplaces.map((marketplace) => (
+        {marketplaces.map((marketplace: { name: string; description: string; href: string }) => (
           <Link
             key={marketplace.name}
             href={marketplace.href}

@@ -37,7 +37,7 @@ import {
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
 
-function IntegrationsContent() {
+function IntegrationsContent(): React.JSX.Element {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -174,7 +174,7 @@ function IntegrationsContent() {
 
   useEffect(() => {
     if (!activeIntegration) return;
-    if (integrations.find((item) => item.id === activeIntegration.id)) return;
+    if (integrations.find((item: Integration) => item.id === activeIntegration.id)) return;
     setActiveIntegration(null);
   }, [activeIntegration, integrations]);
 
@@ -186,12 +186,12 @@ function IntegrationsContent() {
 
   useEffect(() => {
     let active = true;
-    const loadPersonas = async () => {
+    const loadPersonas = async (): Promise<void> => {
       try {
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPlaywrightPersonas(stored);
-      } catch (error) {
+      } catch (error: unknown) {
         if (!active) return;
         const message =
           error instanceof Error ? error.message : "Failed to load personas.";
@@ -206,7 +206,7 @@ function IntegrationsContent() {
     };
   }, [toast]);
 
-  const refreshConnections = (integrationId: string) => {
+  const refreshConnections = (integrationId: string): void => {
     void queryClient.invalidateQueries({
       queryKey: ["integration-connections", integrationId],
     });
@@ -295,14 +295,14 @@ function IntegrationsContent() {
 
   const ensureIntegration = async (
     definition: (typeof integrationDefinitions)[number]
-  ) => {
+  ): Promise<Integration | null> => {
     let currentIntegrations = integrations;
     if (!currentIntegrations.length && integrationsQuery.isFetching) {
       const refreshed = await integrationsQuery.refetch();
       currentIntegrations = refreshed.data ?? integrationsQuery.data ?? [];
     }
     const existing = currentIntegrations.find(
-      (integration) => integration.slug === definition.slug
+      (integration: Integration) => integration.slug === definition.slug
     );
     if (existing) return existing;
     try {
@@ -311,7 +311,7 @@ function IntegrationsContent() {
         slug: definition.slug,
       });
       return created;
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
@@ -323,7 +323,7 @@ function IntegrationsContent() {
 
   const handleIntegrationClick = async (
     definition: (typeof integrationDefinitions)[number]
-  ) => {
+  ): Promise<void> => {
     const integration = await ensureIntegration(definition);
     if (!integration) return;
     setActiveIntegration(integration);
@@ -331,7 +331,7 @@ function IntegrationsContent() {
     setIsModalOpen(true);
   };
 
-  const handleSaveConnection = async () => {
+  const handleSaveConnection = async (): Promise<void> => {
     if (!activeIntegration) return;
     if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
       toast("Connection name and username are required.", {
@@ -358,14 +358,14 @@ function IntegrationsContent() {
       });
       setConnectionForm({ name: "", username: "", password: "" });
       setEditingConnectionId(null);
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to save connection.";
       toast(message, { variant: "error" });
     }
   };
 
-  const handleAllegroAuthorize = () => {
+  const handleAllegroAuthorize = (): void => {
     if (!activeIntegration || !activeConnection) {
       toast("Create an Allegro connection first.", { variant: "error" });
       return;
@@ -373,7 +373,7 @@ function IntegrationsContent() {
     window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
   };
 
-  const handleAllegroDisconnect = async () => {
+  const handleAllegroDisconnect = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) return;
     try {
       const res = await fetch(
@@ -392,13 +392,13 @@ function IntegrationsContent() {
       }
       toast("Allegro disconnected.", { variant: "success" });
       refreshConnections(activeIntegration.id);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to disconnect Allegro:", error);
       toast("Failed to disconnect Allegro.", { variant: "error" });
     }
   };
 
-  const handleDeleteConnection = async (connection: IntegrationConnection) => {
+  const handleDeleteConnection = async (connection: IntegrationConnection): Promise<void> => {
     const confirmed = window.confirm(`Delete connection "${connection.name}"?`);
     if (!confirmed) return;
     try {
@@ -410,14 +410,14 @@ function IntegrationsContent() {
         setEditingConnectionId(null);
         setConnectionForm({ name: "", username: "", password: "" });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete connection.";
       toast(message, { variant: "error" });
     }
   };
 
-  const handleBaselinkerTest = async (connection: IntegrationConnection) => {
+  const handleBaselinkerTest = async (connection: IntegrationConnection): Promise<void> => {
     if (!activeIntegration) return;
     setIsTesting(true);
     setTestLog([]);
@@ -450,7 +450,7 @@ function IntegrationsContent() {
 
       if (!res.ok) {
         const failedStepDetail = 
-          normalizedSteps.find((step) => step.status === "failed")?.detail ||
+          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
           "";
 
         const errorBody =
@@ -461,7 +461,7 @@ function IntegrationsContent() {
         const errorMessage = `Baselinker test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
 
         const steps: TestLogEntry[] = normalizedSteps.length
-          ? normalizedSteps.map((step) =>
+          ? normalizedSteps.map((step: TestLogEntry) =>
               step.status === "failed" && !step.detail
                 ? { ...step, detail: errorMessage }
                 : step
@@ -502,7 +502,7 @@ function IntegrationsContent() {
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
       refreshConnections(activeIntegration.id);
-    } catch (error) {
+    } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
       const errorMessage = `Baselinker test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
@@ -515,7 +515,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleAllegroTest = async (connection: IntegrationConnection) => {
+  const handleAllegroTest = async (connection: IntegrationConnection): Promise<void> => {
     if (!activeIntegration) return;
     setIsTesting(true);
     setTestLog([]);
@@ -546,7 +546,7 @@ function IntegrationsContent() {
 
       if (!res.ok) {
         const failedStepDetail = 
-          normalizedSteps.find((step) => step.status === "failed")?.detail ||
+          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
           "";
         const errorBody =
           payload.error || failedStepDetail || "No response body";
@@ -556,7 +556,7 @@ function IntegrationsContent() {
         const errorMessage = `Allegro connection test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
 
         const steps: TestLogEntry[] = normalizedSteps.length
-          ? normalizedSteps.map((step) =>
+          ? normalizedSteps.map((step: TestLogEntry) =>
               step.status === "failed" && !step.detail
                 ? { ...step, detail: errorMessage }
                 : step
@@ -603,7 +603,7 @@ function IntegrationsContent() {
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
       refreshConnections(activeIntegration.id);
-    } catch (error) {
+    } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
       const errorMessage = `Allegro connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
@@ -616,7 +616,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleTestConnection = async (connection: IntegrationConnection) => {
+  const handleTestConnection = async (connection: IntegrationConnection): Promise<void> => {
     if (!activeIntegration) return;
     setIsTesting(true);
     setTestLog([]);
@@ -647,7 +647,7 @@ function IntegrationsContent() {
 
       if (!res.ok) {
         const failedStepDetail = 
-          normalizedSteps.find((step) => step.status === "failed")?.detail ||
+          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
           "";
 
         const errorBody =
@@ -658,7 +658,7 @@ function IntegrationsContent() {
         const errorMessage = `Connection test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
 
         const steps: TestLogEntry[] = normalizedSteps.length
-          ? normalizedSteps.map((step) =>
+          ? normalizedSteps.map((step: TestLogEntry) =>
               step.status === "failed" && !step.detail
                 ? { ...step, detail: errorMessage }
                 : step
@@ -695,7 +695,7 @@ function IntegrationsContent() {
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
       refreshConnections(activeIntegration.id);
-    } catch (error) {
+    } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
       const errorMessage = `Connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
@@ -708,24 +708,24 @@ function IntegrationsContent() {
     }
   };
 
-  const handleOpenSessionModal = () => {
+  const handleOpenSessionModal = (): void => {
     if (!activeConnection) return;
     setShowSessionModal(true);
   };
 
-  const handleSelectPlaywrightPersona = (personaId: string | null) => {
+  const handleSelectPlaywrightPersona = (personaId: string | null): void => {
     if (!personaId) {
       setPlaywrightPersonaId(null);
       return;
     }
-    const persona = playwrightPersonas.find((item) => item.id === personaId);
+    const persona = playwrightPersonas.find((item: PlaywrightPersona) => item.id === personaId);
     if (!persona) return;
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
     toast(`Applied persona "${persona.name}".`, { variant: "success" });
   };
 
-  const handleSavePlaywrightSettings = async () => {
+  const handleSavePlaywrightSettings = async (): Promise<void> => {
     const connection = connections[0];
     if (!connection) return;
 
@@ -757,7 +757,7 @@ function IntegrationsContent() {
         },
       });
       setShowPlaywrightSaved(true);
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
@@ -766,7 +766,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleAllegroSandboxToggle = async (value: boolean) => {
+  const handleAllegroSandboxToggle = async (value: boolean): Promise<void> => {
     if (!activeConnection) return;
     if (savingAllegroSandbox) return;
     setSavingAllegroSandbox(true);
@@ -781,7 +781,7 @@ function IntegrationsContent() {
         },
       });
       toast("Allegro sandbox setting updated.", { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
@@ -792,7 +792,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleAllegroSandboxConnect = async () => {
+  const handleAllegroSandboxConnect = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
       toast("Create an Allegro connection first.", { variant: "error" });
       return;
@@ -810,7 +810,7 @@ function IntegrationsContent() {
         },
       });
       window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to enable Allegro sandbox.";
       toast(message, { variant: "error" });
@@ -819,7 +819,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleBaseApiRequest = async () => {
+  const handleBaseApiRequest = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
       toast("Create a Base.com connection first.", { variant: "error" });
       return;
@@ -927,7 +927,7 @@ function IntegrationsContent() {
         return;
       }
       setBaseApiResponse({ data: payload.data });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to send request.";
       setBaseApiError(message);
@@ -936,7 +936,7 @@ function IntegrationsContent() {
     }
   };
 
-  const handleAllegroApiRequest = async () => {
+  const handleAllegroApiRequest = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) {
       toast("Select an integration connection first.", { variant: "error" });
       return;
@@ -988,7 +988,7 @@ function IntegrationsContent() {
         data: payload.data,
         refreshed: payload.refreshed,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to send request.";
       setAllegroApiError(message);
@@ -1001,26 +1001,26 @@ function IntegrationsContent() {
     <div className="container mx-auto py-10">
       <IntegrationList
         integrations={integrations}
-        onIntegrationClick={(def) => { void handleIntegrationClick(def); }}
+        onIntegrationClick={(def: (typeof integrationDefinitions)[number]): void => { void handleIntegrationClick(def); }}
       />
 
       {isModalOpen && activeIntegration && (
         <IntegrationModal
           activeIntegration={activeIntegration}
           connections={connections}
-          onClose={() => setIsModalOpen(false)}
+          onClose={(): void => setIsModalOpen(false)}
           editingConnectionId={editingConnectionId}
           setEditingConnectionId={setEditingConnectionId}
           connectionForm={connectionForm}
           setConnectionForm={setConnectionForm}
-          onSaveConnection={() => void handleSaveConnection()}
-          onDeleteConnection={(c) => void handleDeleteConnection(c)}
-          onTestConnection={(c) => void handleTestConnection(c)}
-          onBaselinkerTest={(c) => void handleBaselinkerTest(c)}
-          onAllegroTest={(c) => void handleAllegroTest(c)}
+          onSaveConnection={(): void => { void handleSaveConnection(); }}
+          onDeleteConnection={(c: IntegrationConnection): void => { void handleDeleteConnection(c); }}
+          onTestConnection={(c: IntegrationConnection): void => { void handleTestConnection(c); }}
+          onBaselinkerTest={(c: IntegrationConnection): void => { void handleBaselinkerTest(c); }}
+          onAllegroTest={(c: IntegrationConnection): void => { void handleAllegroTest(c); }}
           isTesting={isTesting}
           testLog={testLog}
-          onShowLog={(step) => {
+          onShowLog={(step: TestLogEntry): void => {
             setSelectedStep(
               step.status !== "pending"
                 ? (step as TestLogEntry & { status: "ok" | "failed" })
@@ -1029,36 +1029,36 @@ function IntegrationsContent() {
             setShowTestLogModal(true);
           }}
           showTestLogModal={showTestLogModal}
-          onCloseTestLogModal={() => setShowTestLogModal(false)}
+          onCloseTestLogModal={(): void => setShowTestLogModal(false)}
           selectedStep={selectedStep}
           showTestErrorModal={showTestErrorModal}
           testError={testError}
           testErrorMeta={testErrorMeta}
-          onCloseTestErrorModal={() => setShowTestErrorModal(false)}
+          onCloseTestErrorModal={(): void => setShowTestErrorModal(false)}
           showTestSuccessModal={showTestSuccessModal}
           testSuccessMessage={testSuccessMessage}
-          onCloseTestSuccessModal={() => setShowTestSuccessModal(false)}
+          onCloseTestSuccessModal={(): void => setShowTestSuccessModal(false)}
           showSessionModal={showSessionModal}
           sessionLoading={sessionQuery.isFetching}
           sessionError={sessionError}
           sessionCookies={sessionCookies}
           sessionOrigins={sessionOrigins}
           sessionUpdatedAt={sessionUpdatedAt}
-          onCloseSessionModal={() => setShowSessionModal(false)}
+          onCloseSessionModal={(): void => setShowSessionModal(false)}
           playwrightPersonas={playwrightPersonas}
           playwrightPersonasLoading={playwrightPersonasLoading}
           playwrightPersonaId={playwrightPersonaId}
           onSelectPlaywrightPersona={handleSelectPlaywrightPersona}
           playwrightSettings={playwrightSettings}
           setPlaywrightSettings={setPlaywrightSettings}
-          onSavePlaywrightSettings={() => void handleSavePlaywrightSettings()}
+          onSavePlaywrightSettings={(): void => { void handleSavePlaywrightSettings(); }}
           showPlaywrightSaved={showPlaywrightSaved}
-          onOpenSessionModal={() => void handleOpenSessionModal()}
+          onOpenSessionModal={(): void => { void handleOpenSessionModal(); }}
           savingAllegroSandbox={savingAllegroSandbox}
-          onToggleAllegroSandbox={(v) => void handleAllegroSandboxToggle(v)}
-          onAllegroAuthorize={() => void handleAllegroAuthorize()}
-          onAllegroDisconnect={() => void handleAllegroDisconnect()}
-          onAllegroSandboxConnect={() => void handleAllegroSandboxConnect()}
+          onToggleAllegroSandbox={(v: boolean): void => { void handleAllegroSandboxToggle(v); }}
+          onAllegroAuthorize={(): void => { void handleAllegroAuthorize(); }}
+          onDisconnect={(): void => { void handleAllegroDisconnect(); }}
+          onAllegroSandboxConnect={(): void => { void handleAllegroSandboxConnect(); }}
           baseApiMethod={baseApiMethod}
           setBaseApiMethod={setBaseApiMethod}
           baseApiParams={baseApiParams}
@@ -1066,7 +1066,7 @@ function IntegrationsContent() {
           baseApiLoading={baseApiLoading}
           baseApiError={baseApiError}
           baseApiResponse={baseApiResponse}
-          onBaseApiRequest={() => void handleBaseApiRequest()}
+          onBaseApiRequest={(): void => { void handleBaseApiRequest(); }}
           allegroApiMethod={allegroApiMethod}
           setAllegroApiMethod={setAllegroApiMethod}
           allegroApiPath={allegroApiPath}
@@ -1076,10 +1076,18 @@ function IntegrationsContent() {
           allegroApiLoading={allegroApiLoading}
           allegroApiError={allegroApiError}
           allegroApiResponse={allegroApiResponse}
-          onAllegroApiRequest={() => void handleAllegroApiRequest()}
+          onAllegroApiRequest={(): void => { void handleAllegroApiRequest(); }}
         />
       )}
     </div>
+  );
+}
+
+export default function IntegrationsPage(): React.JSX.Element {
+  return (
+    <Suspense fallback={<div>Loading integrations...</div>}>
+      <IntegrationsContent />
+    </Suspense>
   );
 }
 

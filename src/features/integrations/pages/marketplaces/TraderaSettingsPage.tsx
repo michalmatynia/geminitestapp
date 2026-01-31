@@ -2,7 +2,9 @@
 
 
 
-export default function TraderaSettingsPage() {
+import React from "react";
+
+export default function TraderaSettingsPage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10">
       <SectionPanel className="p-6">

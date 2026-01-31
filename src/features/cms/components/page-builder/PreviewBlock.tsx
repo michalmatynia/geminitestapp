@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { Image as ImageIcon, Play, Share2, Star, Quote, Eye, EyeOff, Trash2, Megaphone, Link2, AppWindow } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, type ColorSchemeColors } from "../frontend/theme-styles";
+import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 
@@ -791,6 +791,13 @@ export function PreviewSection({
   if (section.type === "ImageWithText") {
     const placement = section.settings["desktopImagePlacement"] as string | undefined;
     const imageFirst = placement !== "image-second";
+    const contentPosition = section.settings["desktopContentPosition"] as string | undefined;
+    const verticalClass = getVerticalAlign(contentPosition);
+    const imageHeight = (section.settings["imageHeight"] as string) || "medium";
+    const imgHeightClass =
+      imageHeight === "small" ? "min-h-[200px]"
+      : imageHeight === "large" ? "min-h-[500px]"
+      : "min-h-[350px]";
 
     return (
       wrapInspector(
@@ -802,7 +809,7 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer group ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer group ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
@@ -818,16 +825,49 @@ export function PreviewSection({
               Replace image
             </button>
           )}
-          <div className={`flex gap-4 ${imageFirst ? "flex-row" : "flex-row-reverse"}`}>
-            <div className="cms-media flex w-2/5 shrink-0 items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
-              {sectionImage ? (
-                <NextImage src={sectionImage} alt="" className="size-full object-cover" fill unoptimized />
-              ) : (
-                <ImageIcon className="size-8 text-gray-500" />
-              )}
-            </div>
-            <div className="flex flex-1 flex-col justify-center gap-2">
-              {renderBlocks("Add blocks to content area")}
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+            <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? "md:flex-row" : "md:flex-row-reverse"} ${verticalClass}`}>
+              <div className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`} style={mediaStyles ?? undefined}>
+                {sectionImage ? (
+                  <NextImage
+                    src={sectionImage}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    unoptimized
+                  />
+                ) : (
+                  <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}>
+                    <ImageIcon className="size-16 text-gray-600" />
+                  </div>
+                )}
+              </div>
+              <div className="flex w-full flex-col justify-center gap-4 md:w-1/2">
+                {section.blocks.length > 0 ? (
+                  section.blocks.map((block: BlockInstance) => (
+                    <PreviewBlockItem
+                      key={block.id}
+                      block={block}
+                      isSelected={selectedNodeId === block.id}
+                      isInspecting={isInspecting}
+                      inspectorSettings={inspectorSettings}
+                      hoveredNodeId={hoveredNodeId}
+                      onHoverNode={onHoverNode}
+                      onSelect={onSelect}
+                      contained
+                      selectedNodeId={selectedNodeId}
+                      sectionId={section.id}
+                      sectionType={section.type}
+                      sectionZone={section.zone}
+                      onOpenMedia={onOpenMedia}
+                      mediaStyles={mediaStyles}
+                    />
+                  ))
+                ) : (
+                  <p className="text-gray-500">Add content blocks</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -837,9 +877,11 @@ export function PreviewSection({
 
   // Hero section — full-width banner with centered content overlay
   if (section.type === "Hero") {
-    const heroBgStyle: React.CSSProperties = sectionImage
-      ? { backgroundImage: `url(${sectionImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-      : {};
+    const imageHeight = (section.settings["imageHeight"] as string) || "large";
+    const heightClass =
+      imageHeight === "small" ? "min-h-[300px]"
+      : imageHeight === "large" ? "min-h-[600px]"
+      : "min-h-[450px]";
 
     return (
       wrapInspector(
@@ -868,14 +910,28 @@ export function PreviewSection({
             </button>
           )}
           <div
-            className={`cms-media relative min-h-[140px] px-6 ${sectionImage ? "" : "bg-gradient-to-br from-gray-700/40 to-gray-800/60"}`}
-            style={{ ...heroBgStyle, ...(mediaStyles ?? {}) }}
+            className={`cms-media relative w-full ${heightClass} flex items-center justify-center overflow-hidden`}
+            style={mediaStyles ?? undefined}
           >
-            <div className="flex min-h-[140px] flex-col items-center justify-center gap-2">
-              {section.blocks.length === 0 ? (
-                <span className="text-sm text-gray-500">Add content to hero banner</span>
-              ) : (
-                section.blocks.map((block: BlockInstance) => (
+            {sectionImage ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${sectionImage})` }}
+              >
+                <div className="absolute inset-0 bg-black/50" />
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+            )}
+            <div
+              className={`relative z-10 ${getSectionContainerClass({
+                fullWidth: layout?.fullWidth,
+                maxWidthClass: "max-w-3xl",
+                paddingClass: "px-6",
+              })} text-center`}
+            >
+              <div className="space-y-4">
+                {section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem
                     key={block.id}
                     block={block}
@@ -893,7 +949,10 @@ export function PreviewSection({
                     onOpenMedia={onOpenMedia}
                     mediaStyles={mediaStyles}
                   />
-                ))
+                ))}
+              </div>
+              {section.blocks.length === 0 && (
+                <p className="text-lg text-gray-400">Hero section</p>
               )}
             </div>
           </div>
@@ -1157,6 +1216,28 @@ export function PreviewSection({
 
   // Accordion section
   if (section.type === "Accordion") {
+    const items: { heading: BlockInstance; text?: BlockInstance }[] = [];
+    let i = 0;
+    while (i < section.blocks.length) {
+      const current = section.blocks[i];
+      if (!current) {
+        i += 1;
+        continue;
+      }
+      if (current.type === "Heading") {
+        const next = section.blocks[i + 1];
+        if (next && next.type === "Text") {
+          items.push({ heading: current, text: next });
+          i += 2;
+        } else {
+          items.push({ heading: current });
+          i += 1;
+        }
+      } else {
+        i += 1;
+      }
+    }
+
     return (
       wrapInspector(
         <div
@@ -1167,40 +1248,61 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          {section.blocks.length === 0 ? (
-            <div className="space-y-1.5">
-              {[1, 2, 3].map((n: number) => (
-                <div key={n} className="flex items-center gap-2 rounded border border-dashed border-border/40 p-2">
-                  <div className="h-2 w-2/3 rounded bg-gray-600/30" />
-                  <span className="ml-auto text-xs text-gray-600">+</span>
-                </div>
-              ))}
+          {items.length === 0 ? (
+            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+              <p className="text-gray-500 text-center py-8">Add Heading and Text blocks to create accordion items</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  isSelected={selectedNodeId === block.id}
-                  isInspecting={isInspecting}
-                  inspectorSettings={inspectorSettings}
-                  hoveredNodeId={hoveredNodeId}
-                  onHoverNode={onHoverNode}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
-                />
-              ))}
+            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
+              <div className="divide-y divide-gray-700/50">
+                {items.map((item: { heading: BlockInstance; text?: BlockInstance }, index: number) => (
+                  <div key={item.heading.id} className="py-4">
+                    <div className="flex w-full items-center justify-between text-left">
+                      <PreviewBlockItem
+                        block={item.heading}
+                        isSelected={selectedNodeId === item.heading.id}
+                        isInspecting={isInspecting}
+                        inspectorSettings={inspectorSettings}
+                        hoveredNodeId={hoveredNodeId}
+                        onHoverNode={onHoverNode}
+                        onSelect={onSelect}
+                        contained
+                        selectedNodeId={selectedNodeId}
+                        sectionId={section.id}
+                        sectionType={section.type}
+                        sectionZone={section.zone}
+                        onOpenMedia={onOpenMedia}
+                        mediaStyles={mediaStyles}
+                      />
+                      <span className="ml-4 shrink-0 text-gray-400 text-xl">{index === 0 ? "−" : "+"}</span>
+                    </div>
+                    {index === 0 && item.text && (
+                      <div className="mt-3">
+                        <PreviewBlockItem
+                          block={item.text}
+                          isSelected={selectedNodeId === item.text.id}
+                          isInspecting={isInspecting}
+                          inspectorSettings={inspectorSettings}
+                          hoveredNodeId={hoveredNodeId}
+                          onHoverNode={onHoverNode}
+                          onSelect={onSelect}
+                          contained
+                          selectedNodeId={selectedNodeId}
+                          sectionId={section.id}
+                          sectionType={section.type}
+                          sectionZone={section.zone}
+                          onOpenMedia={onOpenMedia}
+                          mediaStyles={mediaStyles}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -1222,41 +1324,48 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
           {section.blocks.length === 0 ? (
-            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, 3)}, 1fr)` }}>
-              {Array.from({ length: Math.min(columns, 3) }).map((_val: unknown, idx: number) => (
-                <div key={idx} className="cms-hover-card rounded border border-dashed border-border/40 p-3">
-                  <Quote className="size-3 text-gray-600 mb-1" />
-                  <div className="h-2 w-full rounded bg-gray-600/30 mb-1" />
-                  <div className="h-2 w-2/3 rounded bg-gray-600/20" />
-                </div>
-              ))}
+            <div className="container mx-auto px-4 md:px-6">
+              <p className="text-gray-500 text-center py-8">Add blocks to create testimonial cards</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  isSelected={selectedNodeId === block.id}
-                  isInspecting={isInspecting}
-                  inspectorSettings={inspectorSettings}
-                  hoveredNodeId={hoveredNodeId}
-                  onHoverNode={onHoverNode}
-                  onSelect={onSelect}
-                  contained
-                  selectedNodeId={selectedNodeId}
-                  sectionId={section.id}
-                  sectionType={section.type}
-                  sectionZone={section.zone}
-                  onOpenMedia={onOpenMedia}
-                  mediaStyles={mediaStyles}
-                />
-              ))}
+            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+              <div
+                className="grid gap-6"
+                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+              >
+                {section.blocks.map((block: BlockInstance) => (
+                  <div key={block.id} className="cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6">
+                    <svg
+                      className="mb-4 size-6 text-gray-500"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z" />
+                    </svg>
+                    <PreviewBlockItem
+                      block={block}
+                      isSelected={selectedNodeId === block.id}
+                      isInspecting={isInspecting}
+                      inspectorSettings={inspectorSettings}
+                      hoveredNodeId={hoveredNodeId}
+                      onHoverNode={onHoverNode}
+                      onSelect={onSelect}
+                      contained
+                      selectedNodeId={selectedNodeId}
+                      sectionId={section.id}
+                      sectionType={section.type}
+                      sectionZone={section.zone}
+                      onOpenMedia={onOpenMedia}
+                      mediaStyles={mediaStyles}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -1266,7 +1375,32 @@ export function PreviewSection({
 
   // Video section
   if (section.type === "Video") {
+    const videoUrl = (section.settings["videoUrl"] as string) || "";
     const ratio = (section.settings["aspectRatio"] as string) || "16:9";
+    const autoplay = (section.settings["autoplay"] as string) === "yes";
+
+    const getEmbedUrl = (url: string): string | null => {
+      if (!url) return null;
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+      if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+      if (url.includes("embed") || url.includes("player")) return url;
+      return null;
+    };
+
+    const getAspectPadding = (aspect: string): string => {
+      switch (aspect) {
+        case "4:3":
+          return "75%";
+        case "1:1":
+          return "100%";
+        default:
+          return "56.25%";
+      }
+    };
+
+    const embedUrl = getEmbedUrl(videoUrl);
 
     return (
       wrapInspector(
@@ -1278,17 +1412,34 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={sectionStyles}
-          className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
         >
           {renderSectionActions()}
           {divider}
-          <div className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[100px]" style={mediaStyles ?? undefined}>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex size-10 items-center justify-center rounded-full bg-gray-600/50">
-                <Play className="size-5 text-gray-300" />
+          <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-4xl" })}>
+            {embedUrl ? (
+              <div
+                className="cms-media relative w-full"
+                style={{ paddingBottom: getAspectPadding(ratio), ...(mediaStyles ?? {}) }}
+              >
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`${embedUrl}${autoplay ? "?autoplay=1&mute=1" : ""}`}
+                  title="Embedded video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
-              <span className="text-xs text-gray-500">{ratio}</span>
-            </div>
+            ) : (
+              <div
+                className="cms-media flex items-center justify-center bg-gray-800/50"
+                style={{ paddingBottom: getAspectPadding(ratio), position: "relative", ...(mediaStyles ?? {}) }}
+              >
+                <p className="absolute inset-0 flex items-center justify-center text-gray-500">
+                  Enter a video URL in section settings
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )

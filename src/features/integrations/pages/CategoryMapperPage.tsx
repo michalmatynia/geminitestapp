@@ -8,7 +8,7 @@ import { BaseCategoryMapper } from "@/features/integrations/components/marketpla
 import { useIntegrationsWithConnections } from "@/features/integrations/hooks/useIntegrationQueries";
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
-export default function CategoryMapperPage() {
+export default function CategoryMapperPage(): React.JSX.Element {
   const [selectedConnectionIdOverride, setSelectedConnectionIdOverride] = useState<string | null>(null);
   const { toast } = useToast();
   const integrationsQuery = useIntegrationsWithConnections();
@@ -22,35 +22,35 @@ export default function CategoryMapperPage() {
     toast(message, { variant: "error" });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
-  const integrations = useMemo<IntegrationWithConnections[]>(() => {
+  const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
     return data.filter(
-      (i) => i.slug.toLowerCase() === "baselinker" || i.slug.toLowerCase() === "base"
+      (i: IntegrationWithConnections) => i.slug.toLowerCase() === "baselinker" || i.slug.toLowerCase() === "base"
     );
   }, [integrationsQuery.data]);
 
-  const selectedConnectionId = useMemo(() => {
+  const selectedConnectionId = useMemo((): string | null => {
     if (selectedConnectionIdOverride) {
-      const exists = integrations.some((i) =>
-        i.connections.some((c) => c.id === selectedConnectionIdOverride)
+      const exists = integrations.some((i: IntegrationWithConnections) =>
+        i.connections.some((c: { id: string }) => c.id === selectedConnectionIdOverride)
       );
       if (exists) return selectedConnectionIdOverride;
     }
     const firstConnection = integrations
-      .flatMap((i) => i.connections)
-      .find((c) => c);
+      .flatMap((i: IntegrationWithConnections) => i.connections)
+      .find((c: { id: string }) => c);
     return firstConnection?.id ?? null;
   }, [integrations, selectedConnectionIdOverride]);
 
-  const selectedConnection = (() => {
+  const selectedConnection = ((): { name: string; id: string; integration: IntegrationWithConnections } | null => {
     if (!selectedConnectionId) return null;
-    const allConnections = integrations.flatMap((i) =>
-      i.connections.map((c) => ({ ...c, integration: i }))
+    const allConnections = integrations.flatMap((i: IntegrationWithConnections) =>
+      i.connections.map((c: { id: string; name: string }) => ({ ...c, integration: i }))
     );
-    return allConnections.find((c) => c.id === selectedConnectionId) ?? null;
+    return allConnections.find((c: { id: string }) => c.id === selectedConnectionId) ?? null;
   })();
 
-  const isBaseConnection = (() => {
+  const isBaseConnection = ((): boolean => {
     if (!selectedConnection) return false;
     const slug = selectedConnection.integration.slug.toLowerCase();
     return slug === "baselinker" || slug === "base";

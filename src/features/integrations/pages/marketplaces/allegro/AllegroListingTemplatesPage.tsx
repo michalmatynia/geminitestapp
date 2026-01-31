@@ -2,7 +2,9 @@ import { SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 
 
-export default function AllegroListingTemplatesPage() {
+import React from "react";
+
+export default function AllegroListingTemplatesPage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10">
       <SectionPanel className="p-6">

@@ -430,14 +430,18 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
 
       if (effectiveTimelineMode !== "none" && orderedTargets.length > 1) {
         const allowLoop = timelineLoop && !isScrubMode;
-        const tl = gsap.timeline({
+        const timelineVars: gsap.TimelineVars = {
           delay,
           repeat: allowLoop ? timelineRepeat : 0,
           yoyo: allowLoop ? timelineYoyo : false,
           repeatDelay: allowLoop ? timelineRepeatDelay : 0,
           defaults: { ease: finalEase },
-          scrollTrigger: makeScrollTrigger(true),
-        });
+        };
+        const timelineScrollTrigger = makeScrollTrigger(true);
+        if (timelineScrollTrigger) {
+          timelineVars.scrollTrigger = timelineScrollTrigger;
+        }
+        const tl = gsap.timeline(timelineVars);
 
         if (effectiveTimelineMode === "cascade" || effectiveTimelineMode === "wave" || effectiveTimelineMode === "ripple") {
           const staggerConfig: gsap.StaggerVars = {

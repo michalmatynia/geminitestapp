@@ -50,7 +50,6 @@ export function PagePreviewPanel(): React.ReactNode {
   const showEditButtonRef = useRef<boolean>(isViewing);
   const lastPointerMoveRef = useRef(0);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
@@ -437,6 +436,67 @@ export function PagePreviewPanel(): React.ReactNode {
     marginBottom,
     marginLeft,
   };
+  const faithfulDesktopPreview = !state.inspectorSettings.showEditorChrome && state.previewMode === "desktop";
+  const shouldScaleCanvas = faithfulDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
+  const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
+    ? {
+        width: `${canvasWidth}px`,
+        position: "absolute",
+        left: "50%",
+        top: 0,
+        transform: `translateX(-50%) scale(${canvasScale})`,
+        transformOrigin: "top center",
+      }
+    : {};
+  const scaledCanvasWrapperStyle: React.CSSProperties = shouldScaleCanvas && canvasScaledHeight
+    ? { height: `${canvasScaledHeight}px`, position: "relative", overflow: "hidden" }
+    : {};
+
+  useEffect((): (() => void) | void => {
+    if (!faithfulDesktopPreview) return undefined;
+    const viewport = canvasRef.current?.closest(
+      "[data-cms-canvas-viewport='true']"
+    ) as HTMLDivElement | null;
+    if (!viewport || typeof window === "undefined") return undefined;
+
+    const updateScale = (): void => {
+      const availableWidth = viewport.clientWidth;
+      const targetWidth = window.innerWidth;
+      if (!availableWidth || !targetWidth) return;
+      const nextScale = Math.min(1, availableWidth / targetWidth);
+      setCanvasScale(nextScale);
+      setCanvasWidth(targetWidth);
+    };
+
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(viewport);
+    window.addEventListener("resize", updateScale);
+
+    return (): void => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateScale);
+    };
+  }, [faithfulDesktopPreview]);
+
+  useEffect((): (() => void) | void => {
+    if (!faithfulDesktopPreview) return undefined;
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+
+    const updateHeight = (): void => {
+      const unscaledHeight = canvas.scrollHeight;
+      setCanvasScaledHeight(unscaledHeight * canvasScale);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(canvas);
+
+    return (): void => {
+      observer.disconnect();
+    };
+  }, [faithfulDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
   return (
     <div className="relative flex flex-1 flex-col bg-gray-950">
@@ -593,9 +653,10 @@ export function PagePreviewPanel(): React.ReactNode {
           </div>
         ) : (
           <>
-            <div className="p-0">
+            <div className="p-0" style={scaledCanvasWrapperStyle}>
               <div
                 data-cms-canvas="true"
+                ref={canvasRef}
                 className={`cms-hover-scope mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? "p-3" : ""} ${
                   state.inspectorEnabled ? "cursor-crosshair" : ""
                 }`}
@@ -603,6 +664,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   ...hoverVars,
                   ...mediaVars,
                   ...pageStyle,
+                  ...scaledCanvasStyle,
                 }}
               >
                 <div style={contentStyle}>

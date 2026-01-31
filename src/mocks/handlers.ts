@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { NoteCreateData } from "@/features/notesapp";
 
+type ParamsContext = { params: Record<string, string> };
+type RequestContext = { request: Request };
+type RequestParamsContext = { params: Record<string, string>; request: Request };
+
 // Mock data
 const mockProducts = [
   {
@@ -141,15 +145,15 @@ export const handlers = [
     return HttpResponse.json({ count: mockProducts.length });
   }),
 
-  http.get('/api/products/:id', ({ params }) => {
-    const product = mockProducts.find((p) => p.id === params.id);
+  http.get('/api/products/:id', ({ params }: ParamsContext) => {
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     return HttpResponse.json(product);
   }),
 
-  http.post('/api/products', async ({ request }) => {
+  http.post('/api/products', async ({ request }: RequestContext) => {
     const body = (await request.json()) as Record<string, unknown>;
     const newProduct = {
       id: Math.random().toString(36).substr(2, 9),
@@ -160,8 +164,8 @@ export const handlers = [
     return HttpResponse.json(newProduct, { status: 201 });
   }),
 
-  http.put('/api/products/:id', async ({ params, request }) => {
-    const product = mockProducts.find((p) => p.id === params.id);
+  http.put('/api/products/:id', async ({ params, request }: RequestParamsContext) => {
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -174,8 +178,8 @@ export const handlers = [
     return HttpResponse.json(updatedProduct);
   }),
 
-  http.delete('/api/products/:id', ({ params }) => {
-    const product = mockProducts.find((p) => p.id === params.id);
+  http.delete('/api/products/:id', ({ params }: ParamsContext) => {
+    const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params.id);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -187,8 +191,8 @@ export const handlers = [
     return HttpResponse.json(mockCatalogs);
   }),
 
-  http.get('/api/catalogs/:id', ({ params }) => {
-    const catalog = mockCatalogs.find((c) => c.id === params.id);
+  http.get('/api/catalogs/:id', ({ params }: ParamsContext) => {
+    const catalog = mockCatalogs.find((c: (typeof mockCatalogs)[number]) => c.id === params.id);
     if (!catalog) {
       return HttpResponse.json({ error: 'Catalog not found' }, { status: 404 });
     }
@@ -200,15 +204,15 @@ export const handlers = [
     return HttpResponse.json(mockSettings);
   }),
 
-  http.get('/api/settings/:key', ({ params }) => {
-    const setting = mockSettings.find((s) => s.key === params.key);
+  http.get('/api/settings/:key', ({ params }: ParamsContext) => {
+    const setting = mockSettings.find((s: (typeof mockSettings)[number]) => s.key === params.key);
     if (!setting) {
       return HttpResponse.json({ error: 'Setting not found' }, { status: 404 });
     }
     return HttpResponse.json(setting);
   }),
 
-  http.post('/api/settings', async ({ request }) => {
+  http.post('/api/settings', async ({ request }: RequestContext) => {
     const body = (await request.json()) as Record<string, unknown>;
     const newSetting = {
       ...body,
@@ -217,7 +221,7 @@ export const handlers = [
   }),
 
   // Notes endpoints
-  http.get('/api/notes', ({ request }) => {
+  http.get('/api/notes', ({ request }: RequestContext) => {
     const url = new URL(request.url);
     const search = url.searchParams.get('search');
     const isPinned = url.searchParams.get('isPinned');
@@ -225,19 +229,21 @@ export const handlers = [
 
     let filtered = [...mockNotes];
     if (search) {
-      filtered = filtered.filter(n => n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase()));
+      filtered = filtered.filter((n: (typeof mockNotes)[number]) =>
+        n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase())
+      );
     }
     if (isPinned !== null && isPinned !== undefined) {
-      filtered = filtered.filter(n => String(n.isPinned) === isPinned);
+      filtered = filtered.filter((n: (typeof mockNotes)[number]) => String(n.isPinned) === isPinned);
     }
     if (isArchived !== null && isArchived !== undefined) {
-      filtered = filtered.filter(n => String(n.isArchived) === isArchived);
+      filtered = filtered.filter((n: (typeof mockNotes)[number]) => String(n.isArchived) === isArchived);
     }
 
     return HttpResponse.json(filtered);
   }),
 
-  http.post('/api/notes', async ({ request }) => {
+  http.post('/api/notes', async ({ request }: RequestContext) => {
     const body = (await request.json()) as NoteCreateData;
     const newNote = {
       id: `note-${mockNotes.length + 1}`,
@@ -269,14 +275,14 @@ export const handlers = [
   }),
 
   http.get('/api/notes/categories/tree', () => {
-    const tree = mockCategories.map((category) => ({
+    const tree = mockCategories.map((category: (typeof mockCategories)[number]) => ({
       ...category,
       children: [],
       notes: mockNotes
-        .filter((note) =>
-          note.categories.some((cat) => cat.categoryId === category.id)
+        .filter((note: (typeof mockNotes)[number]) =>
+          note.categories.some((cat: (typeof mockNotes)[number]["categories"][number]) => cat.categoryId === category.id)
         )
-        .map((note) => ({
+        .map((note: (typeof mockNotes)[number]) => ({
           id: note.id,
           title: note.title,
           content: note.content,

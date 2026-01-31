@@ -286,12 +286,12 @@ export default function ProductListingJobsPanel({
   const filters = !loading && !error ? (
     <SectionPanel>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Input
-          placeholder="Search by product, SKU, integration, or ID..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="h-8 text-sm sm:max-w-md"
-        />
+          <Input
+            placeholder="Search by product, SKU, integration, or ID..."
+            value={query}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
+            className="h-8 text-sm sm:max-w-md"
+          />
       </div>
     </SectionPanel>
   ) : null;

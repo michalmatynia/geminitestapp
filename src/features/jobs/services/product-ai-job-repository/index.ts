@@ -20,4 +20,4 @@ export const getProductAiJobRepository = async (): Promise<ProductAiJobRepositor
   return cachedRepository;
 };
 
-export const getProductAiJobProvider = () => cachedProvider;
+export const getProductAiJobProvider = (): "mongodb" | "prisma" | null => cachedProvider;

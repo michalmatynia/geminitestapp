@@ -7,6 +7,16 @@ const DEBUG_CHATBOT = process.env.NODE_ENV !== "production";
 let intervalId: NodeJS.Timeout | null = null;
 let isProcessing = false;
 
+type ChatMessage = {
+  role: string;
+  content: string;
+};
+
+type ChatPayload = {
+  model?: string;
+  messages?: ChatMessage[];
+};
+
 const logDebug = (message: string, meta?: Record<string, unknown>): void => {
   if (!DEBUG_CHATBOT) return;
   console.info(`[chatbot][jobs] ${message}`, meta || {});
@@ -26,7 +36,7 @@ const processJob = async (jobId: string): Promise<void> => {
   const job = await chatbotJobRepository.findById(jobId);
   if (!job || job.status !== "running") return;
   
-  const payload = job.payload as { model?: string; messages?: any[] };
+  const payload = job.payload as ChatPayload;
   if (!payload?.model || !Array.isArray(payload?.messages)) {
     throw new Error("Invalid job payload.");
   }

@@ -230,7 +230,7 @@ export default function ChatbotJobsPage(): React.JSX.Element {
                     {job.payload ? (
                       <p className="mt-2 text-xs text-gray-300">
                         Prompt:{" "}
-                        {(() => {
+                        {((): string => {
                           const payload = job.payload as {
                             messages?: Array<{
                               role?: string;

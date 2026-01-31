@@ -21,7 +21,7 @@ import {
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "../utils/ui-utils";
 
-type EdgePath = { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } };
+type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
 type ConnectionTypeMismatch = {
   fromNode?: AiNode | null;
   toNode?: AiNode | null;

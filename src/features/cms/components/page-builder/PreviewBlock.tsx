@@ -1468,6 +1468,24 @@ function PreviewBlockItem({
                   mediaStyles={mediaStyles}
                 />
               )}
+              {block.type === "TextAtom" && (
+                <PreviewTextAtomBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  stretch={stretch}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
             </div>
           </div>
           {canReplaceImage && (
@@ -1610,6 +1628,36 @@ function PreviewBlockItem({
           <p className="m-0 p-0 text-sm text-gray-200 line-clamp-4" style={typoStyles}>
             {text}
           </p>
+        </div>
+      )
+    );
+  }
+
+  // Text atom letter block
+  if (block.type === "TextAtomLetter") {
+    const text = (block.settings["textContent"] as string) ?? "";
+    const typoStyles = getBlockTypographyStyles(block.settings);
+    const displayText = text === "" ? " " : text;
+
+    return (
+      wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass(
+            "inline-flex items-center justify-center transition",
+            `rounded border px-1 py-0.5 ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-transparent hover:border-border/40"
+            }`
+          )}
+        >
+          <span className="inline-block text-sm text-gray-200" style={{ ...typoStyles, whiteSpace: "pre" }}>
+            {displayText}
+          </span>
         </div>
       )
     );
@@ -2244,6 +2292,87 @@ function PreviewBlockSectionBlock({
         </div>
       )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Text atom preview (inside columns)
+// ---------------------------------------------------------------------------
+
+function PreviewTextAtomBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  inspectorSettings,
+  hoveredNodeId,
+  onSelect,
+  sectionId,
+  sectionType,
+  sectionZone,
+  columnId,
+  stretch = false,
+  onHoverNode,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
+  const text = (block.settings["text"] as string) || "";
+  const alignment = (block.settings["alignment"] as string) || "left";
+  const letterGap = (block.settings["letterGap"] as number) || 0;
+  const lineGap = (block.settings["lineGap"] as number) || 0;
+  const wrap = (block.settings["wrap"] as string) || "wrap";
+  const letters = (block.blocks ?? []).length
+    ? (block.blocks ?? [])
+    : Array.from(text).map((char: string, index: number): BlockInstance => ({
+        id: `text-atom-${block.id}-${index}`,
+        type: "TextAtomLetter",
+        settings: { textContent: char },
+      }));
+
+  const justifyContent =
+    alignment === "center"
+      ? "center"
+      : alignment === "right"
+        ? "flex-end"
+        : "flex-start";
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
+  const containerStyle: React.CSSProperties = {
+    display: "flex",
+    flexWrap: wrap === "nowrap" ? "nowrap" : "wrap",
+    justifyContent,
+    alignItems: "baseline",
+    columnGap: letterGap,
+    rowGap: lineGap,
+    whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
+  };
+
+  return (
+    <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
+      {letters.length > 0 ? (
+        letters.map((child: BlockInstance) => (
+          <PreviewBlockItem
+            key={child.id}
+            block={child}
+            isSelected={selectedNodeId === child.id}
+            isInspecting={isInspecting}
+            inspectorSettings={inspectorSettings}
+            hoveredNodeId={hoveredNodeId}
+            onHoverNode={onHoverNode}
+            onSelect={onSelect}
+            contained
+            selectedNodeId={selectedNodeId}
+            sectionId={sectionId}
+            sectionType={sectionType}
+            sectionZone={sectionZone}
+            columnId={columnId}
+            parentBlockId={block.id}
+            onOpenMedia={onOpenMedia}
+            mediaStyles={mediaStyles}
+          />
+        ))
+      ) : (
+        <div className="text-xs text-gray-600">Text atoms</div>
+      )}
     </div>
   );
 }

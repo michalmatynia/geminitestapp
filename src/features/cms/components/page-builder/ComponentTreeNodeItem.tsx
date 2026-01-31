@@ -55,6 +55,16 @@ const resolveNodeLabel = (fallback: string, value: unknown): string => {
   return fallback;
 };
 
+const resolveBlockLabel = (block: BlockInstance, fallback: string): string => {
+  if (block.type === "TextAtomLetter") {
+    const raw = block.settings?.["textContent"];
+    if (typeof raw === "string") {
+      return raw.trim().length === 0 ? "space" : raw;
+    }
+  }
+  return resolveNodeLabel(fallback, block.settings?.["label"]);
+};
+
 // ---------------------------------------------------------------------------
 // Section node
 // ---------------------------------------------------------------------------
@@ -952,7 +962,7 @@ function SectionBlockNodeItem({
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
   const isTextAtom = block.type === "TextAtom";
-  const blockLabel = resolveNodeLabel(block.type, block.settings["label"]);
+  const blockLabel = resolveBlockLabel(block, block.type);
 
   return (
     <div
@@ -1152,7 +1162,7 @@ function BlockNodeItem({
   const Icon = BLOCK_ICONS[block.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
-  const blockLabel = resolveNodeLabel(block.type, block.settings["label"]);
+  const blockLabel = resolveBlockLabel(block, block.type);
 
   return (
     <div

@@ -42,6 +42,8 @@ function uid(): string {
 }
 
 const NODE_ID_REGEX = /node-(\d+)/;
+const TEXT_ATOM_BLOCK_TYPE = "TextAtom";
+const TEXT_ATOM_LETTER_TYPE = "TextAtomLetter";
 
 function syncNextIdFromSections(sections: SectionInstance[]): void {
   let maxId = 999;
@@ -63,6 +65,48 @@ function syncNextIdFromSections(sections: SectionInstance[]): void {
     }
   }
   bumpNextId(maxId + 1);
+}
+
+function normalizeTextAtomText(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function buildTextAtomLetterBlocks(
+  text: string,
+  existing: BlockInstance[] | undefined,
+  seen?: Set<string>
+): BlockInstance[] {
+  const def = getBlockDefinition(TEXT_ATOM_LETTER_TYPE);
+  const letters = Array.from(text ?? "");
+  return letters.map((char: string, index: number): BlockInstance => {
+    const existingBlock = existing?.[index];
+    const baseSettings = def?.defaultSettings ?? {};
+    const nextSettings = {
+      ...baseSettings,
+      ...(existingBlock?.settings ?? {}),
+      textContent: char,
+    };
+    const candidateId = existingBlock?.id ?? uid();
+    const id = seen ? ensureUniqueId(candidateId, seen) : candidateId;
+    return {
+      id,
+      type: TEXT_ATOM_LETTER_TYPE,
+      settings: nextSettings,
+    };
+  });
+}
+
+function applyTextAtomSettings(
+  block: BlockInstance,
+  nextSettings: Record<string, unknown>,
+  seen?: Set<string>
+): BlockInstance {
+  if (block.type !== TEXT_ATOM_BLOCK_TYPE) {
+    return { ...block, settings: nextSettings };
+  }
+  const text = normalizeTextAtomText(nextSettings["text"]);
+  const nextBlocks = buildTextAtomLetterBlocks(text, block.blocks, seen);
+  return { ...block, settings: nextSettings, blocks: nextBlocks };
 }
 
 function ensureUniqueId(id: unknown, seen: Set<string>): string {
@@ -260,11 +304,17 @@ function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInsta
   return blocks.map((block: BlockInstance): BlockInstance => {
     const normalizedId = ensureUniqueId(block.id, seen);
     const nested = block.blocks ? normalizeBlocks(block.blocks, seen) : undefined;
-    return {
+    const normalized: BlockInstance = {
       ...block,
       id: normalizedId,
       ...(nested ? { blocks: nested } : {}),
     };
+    if (normalized.type === TEXT_ATOM_BLOCK_TYPE) {
+      const text = normalizeTextAtomText(normalized.settings?.["text"]);
+      const nextBlocks = buildTextAtomLetterBlocks(text, normalized.blocks, seen);
+      return { ...normalized, blocks: nextBlocks };
+    }
+    return normalized;
   });
 }
 
@@ -502,10 +552,16 @@ export function basePageBuilderReducer(
         });
         return { ...state, sections: updatedSections };
       }
+      const baseSettings = { ...def.defaultSettings };
+      const isTextAtom = action.blockType === TEXT_ATOM_BLOCK_TYPE;
+      const textAtomBlocks = isTextAtom
+        ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings["text"]), undefined)
+        : undefined;
       const newBlock: BlockInstance = {
         id: uid(),
         type: action.blockType,
-        settings: { ...def.defaultSettings },
+        settings: baseSettings,
+        ...(textAtomBlocks ? { blocks: textAtomBlocks } : {}),
       };
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
@@ -548,7 +604,7 @@ export function basePageBuilderReducer(
               ...s,
               blocks: s.blocks.map((b: BlockInstance) =>
                 b.id === action.blockId
-                  ? { ...b, settings: { ...b.settings, ...action.settings } }
+                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
                   : b
               ),
             }
@@ -719,12 +775,17 @@ export function basePageBuilderReducer(
     case "ADD_BLOCK_TO_COLUMN": {
       const blockDef = getBlockDefinition(action.blockType);
       if (!blockDef) return state;
-      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block"].includes(action.blockType);
+      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block", TEXT_ATOM_BLOCK_TYPE].includes(action.blockType);
+      const isTextAtom = action.blockType === TEXT_ATOM_BLOCK_TYPE;
+      const baseSettings = { ...blockDef.defaultSettings };
+      const textAtomBlocks = isTextAtom
+        ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings["text"]), undefined)
+        : undefined;
       const newBlock: BlockInstance = {
         id: uid(),
         type: action.blockType,
-        settings: { ...blockDef.defaultSettings },
-        ...(isSectionType ? { blocks: [] } : {}),
+        settings: baseSettings,
+        ...(textAtomBlocks ? { blocks: textAtomBlocks } : isSectionType ? { blocks: [] } : {}),
       };
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;
@@ -885,7 +946,9 @@ export function basePageBuilderReducer(
           blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
             ...col,
             blocks: (col.blocks ?? []).map((b: BlockInstance) =>
-              b.id === action.blockId ? { ...b, settings: { ...b.settings, ...action.settings } } : b
+              b.id === action.blockId
+                ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                : b
             ),
           })),
         };
@@ -950,7 +1013,9 @@ export function basePageBuilderReducer(
                 ? {
                     ...pb,
                     blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
-                      eb.id === action.blockId ? { ...eb, settings: { ...eb.settings, ...action.settings } } : eb
+                      eb.id === action.blockId
+                        ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
+                        : eb
                     ),
                   }
                 : pb

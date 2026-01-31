@@ -13,6 +13,8 @@ type AppModalProps = {
   titleHidden?: boolean;
   titleClassName?: string;
   contentClassName?: string;
+  closeOnOutside?: boolean;
+  closeOnEscape?: boolean;
   children: React.ReactNode;
 };
 
@@ -26,11 +28,27 @@ export function AppModal({
   titleHidden = true,
   titleClassName,
   contentClassName,
+  closeOnOutside = true,
+  closeOnEscape = true,
   children,
 }: AppModalProps) {
+  const handleInteractOutside = (): void => {
+    if (!closeOnOutside) return;
+    onOpenChange?.(false);
+  };
+
+  const handleEscapeKeyDown = (): void => {
+    if (!closeOnEscape) return;
+    onOpenChange?.(false);
+  };
+
   return (
     <Dialog open={open} {...(onOpenChange ? { onOpenChange } : {})}>
-      <DialogContent className={cn(DEFAULT_CONTENT_CLASS, contentClassName)}>
+      <DialogContent
+        className={cn(DEFAULT_CONTENT_CLASS, contentClassName)}
+        onInteractOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscapeKeyDown}
+      >
         <DialogTitle
           className={cn(titleHidden && "sr-only", titleClassName)}
         >

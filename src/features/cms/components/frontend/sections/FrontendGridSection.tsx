@@ -240,6 +240,51 @@ function SectionBlockRenderer({
       </GsapAnimationWrapper>
     );
   }
+  if (block.type === "TextAtom") {
+    const text = (block.settings["text"] as string) || "";
+    const alignment = (block.settings["alignment"] as string) || "left";
+    const letterGap = (block.settings["letterGap"] as number) || 0;
+    const lineGap = (block.settings["lineGap"] as number) || 0;
+    const wrap = (block.settings["wrap"] as string) || "wrap";
+    const letters = (block.blocks ?? []).length
+      ? (block.blocks ?? [])
+      : Array.from(text).map((char: string, index: number): BlockInstance => ({
+          id: `text-atom-${block.id}-${index}`,
+          type: "TextAtomLetter",
+          settings: { textContent: char },
+        }));
+
+    const justifyContent =
+      alignment === "center"
+        ? "center"
+        : alignment === "right"
+          ? "flex-end"
+          : "flex-start";
+
+    const containerStyle: React.CSSProperties = {
+      display: "flex",
+      flexWrap: wrap === "nowrap" ? "nowrap" : "wrap",
+      justifyContent,
+      alignItems: "baseline",
+      columnGap: letterGap,
+      rowGap: lineGap,
+      whiteSpace: wrap === "nowrap" ? "pre" : "pre-wrap",
+    };
+
+    return (
+      <GsapAnimationWrapper config={animConfig}>
+        <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretchClass}>
+          {letters.length > 0 ? (
+            letters.map((letter: BlockInstance) => (
+              <FrontendBlockRenderer key={letter.id} block={letter} />
+            ))
+          ) : (
+            <span className="text-sm text-gray-400">Text atoms</span>
+          )}
+        </div>
+      </GsapAnimationWrapper>
+    );
+  }
 
   return null;
 }

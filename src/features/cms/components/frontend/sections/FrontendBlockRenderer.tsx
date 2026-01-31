@@ -40,7 +40,7 @@ function renderBlockContent(block: BlockInstance, mediaStyles: React.CSSProperti
     case "TextElement":
       return <TextElementBlock settings={block.settings} />;
     case "TextAtom":
-      return <TextAtomBlock block={block} mediaStyles={mediaStyles} />;
+      return <TextAtomBlock block={block} />;
     case "TextAtomLetter":
       return <TextAtomLetterBlock settings={block.settings} />;
     case "Announcement":
@@ -101,13 +101,7 @@ function TextElementBlock({ settings }: { settings: Record<string, unknown> }): 
   return <p className="m-0 p-0 text-base leading-relaxed text-gray-200" style={typoStyles}>{text}</p>;
 }
 
-function TextAtomBlock({
-  block,
-  mediaStyles: _mediaStyles,
-}: {
-  block: BlockInstance;
-  mediaStyles: React.CSSProperties | null;
-}): React.ReactNode {
+function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
   const text = (block.settings["text"] as string) || "";
   const alignment = (block.settings["alignment"] as string) || "left";
   const letterGap = (block.settings["letterGap"] as number) || 0;

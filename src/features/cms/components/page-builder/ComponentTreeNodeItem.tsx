@@ -57,6 +57,7 @@ interface SectionNodeItemProps {
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
+  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSection: (sectionId: string, toIndex: number) => void;
   onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
@@ -89,6 +90,7 @@ export function SectionNodeItem({
   onDropBlockToColumn,
   onAddGridRow,
   onAddColumnToRow,
+  onRemoveColumnFromRow,
   onAddElementToNestedBlock,
   onDropSection,
   onToggleSectionVisibility,
@@ -285,6 +287,7 @@ export function SectionNodeItem({
                 selectedNodeId={selectedNodeId}
                 onSelect={onSelect}
                 onAddColumnToRow={onAddColumnToRow}
+                onRemoveColumnFromRow={onRemoveColumnFromRow}
                 onAddBlockToColumn={onAddBlockToColumn}
                 onDropBlockToColumn={onDropBlockToColumn}
                 onAddElementToNestedBlock={onAddElementToNestedBlock}
@@ -316,6 +319,8 @@ export function SectionNodeItem({
                 onAddBlockToColumn={onAddBlockToColumn}
                 onDropBlockToColumn={onDropBlockToColumn}
                 onAddElementToNestedBlock={onAddElementToNestedBlock}
+                onRemoveColumnFromRow={onRemoveColumnFromRow}
+                rowColumnCount={gridColumns.length}
                 expandedIds={expandedIds}
                 onToggleExpand={onToggleExpand}
                 draggedBlockId={draggedBlockId}
@@ -383,9 +388,13 @@ interface RowNodeItemProps {
   selectedNodeId: string | null;
   onSelect: (nodeId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
+  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
+  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
+  rowId?: string;
+  rowColumnCount?: number;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
@@ -409,9 +418,13 @@ function RowNodeItem({
   selectedNodeId,
   onSelect,
   onAddColumnToRow,
+  onRemoveColumnFromRow,
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddElementToNestedBlock,
+  onRemoveColumnFromRow,
+  rowId,
+  rowColumnCount,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
@@ -497,6 +510,9 @@ function RowNodeItem({
               onAddBlockToColumn={onAddBlockToColumn}
               onDropBlockToColumn={onDropBlockToColumn}
               onAddElementToNestedBlock={onAddElementToNestedBlock}
+              onRemoveColumnFromRow={onRemoveColumnFromRow}
+              rowId={row.id}
+              rowColumnCount={columns.length}
               expandedIds={expandedIds}
               onToggleExpand={onToggleExpand}
               draggedBlockId={draggedBlockId}
@@ -576,6 +592,7 @@ function ColumnNodeItem({
   const isExpanded = expandedIds.has(column.id);
   const hasBlocks = (column.blocks ?? []).length > 0;
   const [isDragOver, setIsDragOver] = useState(false);
+  const canRemove = rowColumnCount === undefined ? true : rowColumnCount > 1;
 
   return (
     <div
@@ -657,6 +674,19 @@ function ColumnNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!canRemove) return;
+            onRemoveColumnFromRow(sectionId, column.id, rowId);
+          }}
+          disabled={!canRemove}
+          className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          title={canRemove ? "Remove column" : "At least one column is required"}
+        >
+          <Minus className="size-3" />
+        </button>
         <ColumnBlockPicker
           onSelect={(blockType: string) => onAddBlockToColumn(sectionId, column.id, blockType)}
         />

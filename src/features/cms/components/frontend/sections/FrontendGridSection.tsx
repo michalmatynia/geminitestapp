@@ -17,17 +17,24 @@ interface FrontendGridSectionProps {
   layout?: { fullWidth?: boolean };
 }
 
+const getGapClass = (gap?: string): string => {
+  if (gap === "none") return "gap-0";
+  if (gap === "small") return "gap-4";
+  if (gap === "large") return "gap-12";
+  return "gap-8";
+};
+
+const resolveGapValue = (gap: unknown, fallback: string): string => {
+  if (typeof gap === "string" && gap !== "inherit") return gap;
+  return fallback;
+};
+
 export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
   const directColumns = blocks.filter((b: BlockInstance) => b.type === "Column");
-  const gap = (settings["gap"] as string) || "medium";
-
-  const gapClass =
-    gap === "none" ? "gap-0"
-    : gap === "small" ? "gap-4"
-    : gap === "large" ? "gap-12"
-    : "gap-8"; // medium
+  const sectionGap = (settings["gap"] as string) || "medium";
+  const sectionGapClass = getGapClass(sectionGap);
 
   const rowsToRender: BlockInstance[] =
     rowBlocks.length > 0
@@ -41,15 +48,18 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div className={`flex flex-col ${gapClass}`}>
+        <div className={`flex flex-col ${sectionGapClass}`}>
           {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
             const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
             if (rowColumns.length === 0) return null;
+            const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+            const rowGapClass = getGapClass(rowGapValue);
+            const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
             return (
               <div
                 key={`grid-row-${row.id}-${rowIndex}`}
-                className={`grid ${gapClass}`}
-                style={{ gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)` }}
+                className={`grid ${rowGapClass}`}
+                style={{ ...rowStyles, gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)` }}
               >
                 {rowColumns.map((column: BlockInstance) => (
                   <ColumnRenderer key={column.id} column={column} />

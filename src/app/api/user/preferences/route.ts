@@ -102,24 +102,24 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     const parsed = updatePreferencesSchema.parse(body);
 
     // Type assertion to handle exactOptionalPropertyTypes
-    data = {
-      ...(parsed.productListNameLocale !== undefined && { productListNameLocale: parsed.productListNameLocale }),
-      ...(parsed.productListCatalogFilter !== undefined && { productListCatalogFilter: parsed.productListCatalogFilter }),
-      ...(parsed.productListCurrencyCode !== undefined && { productListCurrencyCode: parsed.productListCurrencyCode }),
-      ...(parsed.productListPageSize !== undefined && { productListPageSize: parsed.productListPageSize }),
-      ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
-      ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups ?? [] }),
-      ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
-      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: (parsed.aiPathsPathIndex ?? null) as UserPreferencesData["aiPathsPathIndex"] }),
-      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: (parsed.aiPathsPathConfigs ?? null) as UserPreferencesData["aiPathsPathConfigs"] }),
-      ...(parsed.adminMenuCollapsed !== undefined && { adminMenuCollapsed: parsed.adminMenuCollapsed }),
-      ...(parsed.cmsLastPageId !== undefined && { cmsLastPageId: parsed.cmsLastPageId }),
-      ...(parsed.cmsActiveDomainId !== undefined && { cmsActiveDomainId: parsed.cmsActiveDomainId }),
-      ...(parsed.cmsThemeOpenSections !== undefined && { cmsThemeOpenSections: parsed.cmsThemeOpenSections ?? [] }),
-      ...(parsed.cmsThemeLogoWidth !== undefined && { cmsThemeLogoWidth: parsed.cmsThemeLogoWidth }),
-      ...(parsed.cmsThemeLogoUrl !== undefined && { cmsThemeLogoUrl: parsed.cmsThemeLogoUrl }),
-      ...(parsed.cmsPreviewEnabled !== undefined && { cmsPreviewEnabled: parsed.cmsPreviewEnabled }),
-    };
+    const partial: Record<string, unknown> = {};
+    if (parsed.productListNameLocale !== undefined) partial.productListNameLocale = parsed.productListNameLocale;
+    if (parsed.productListCatalogFilter !== undefined) partial.productListCatalogFilter = parsed.productListCatalogFilter;
+    if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
+    if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
+    if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
+    if (parsed.aiPathsExpandedGroups !== undefined) partial.aiPathsExpandedGroups = parsed.aiPathsExpandedGroups ?? [];
+    if (parsed.aiPathsPaletteCollapsed !== undefined) partial.aiPathsPaletteCollapsed = parsed.aiPathsPaletteCollapsed;
+    if (parsed.aiPathsPathIndex !== undefined) partial.aiPathsPathIndex = parsed.aiPathsPathIndex ?? null;
+    if (parsed.aiPathsPathConfigs !== undefined) partial.aiPathsPathConfigs = parsed.aiPathsPathConfigs ?? null;
+    if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
+    if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
+    if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
+    if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];
+    if (parsed.cmsThemeLogoWidth !== undefined) partial.cmsThemeLogoWidth = parsed.cmsThemeLogoWidth;
+    if (parsed.cmsThemeLogoUrl !== undefined) partial.cmsThemeLogoUrl = parsed.cmsThemeLogoUrl;
+    if (parsed.cmsPreviewEnabled !== undefined) partial.cmsPreviewEnabled = parsed.cmsPreviewEnabled;
+    data = partial as Partial<UserPreferencesData>;
 
     if (!isDatabaseConfigured) {
       return NextResponse.json({

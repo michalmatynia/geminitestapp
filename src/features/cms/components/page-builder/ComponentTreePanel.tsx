@@ -136,6 +136,13 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleRemoveColumnFromRow = useCallback(
+    (sectionId: string, columnId: string, rowId?: string) => {
+      dispatch({ type: "REMOVE_COLUMN_FROM_ROW", sectionId, columnId, rowId });
+    },
+    [dispatch]
+  );
+
   const handleAddElementToNestedBlock = useCallback(
     (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => {
       dispatch({ type: "ADD_ELEMENT_TO_NESTED_BLOCK", sectionId, columnId, parentBlockId, elementType });
@@ -278,6 +285,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 onDropBlockToColumn={handleDropBlockToColumn}
                 onAddGridRow={handleAddGridRow}
                 onAddColumnToRow={handleAddColumnToRow}
+                onRemoveColumnFromRow={handleRemoveColumnFromRow}
                 onAddElementToNestedBlock={handleAddElementToNestedBlock}
                 onDropSectionInZone={handleDropSectionInZone}
                 onPasteSection={handlePasteSection}
@@ -328,6 +336,7 @@ interface ZoneGroupProps {
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
+  onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
   onPasteSection: (zone: PageZone) => void;
@@ -367,6 +376,7 @@ function ZoneGroup({
   onDropBlockToColumn,
   onAddGridRow,
   onAddColumnToRow,
+  onRemoveColumnFromRow,
   onAddElementToNestedBlock,
   onDropSectionInZone,
   onPasteSection,
@@ -456,6 +466,7 @@ function ZoneGroup({
                   onDropBlockToColumn={onDropBlockToColumn}
                   onAddGridRow={onAddGridRow}
                   onAddColumnToRow={onAddColumnToRow}
+                  onRemoveColumnFromRow={onRemoveColumnFromRow}
                   onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
                   onToggleSectionVisibility={onToggleSectionVisibility}

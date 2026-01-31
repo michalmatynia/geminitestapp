@@ -37,6 +37,18 @@ function getColorSchemeBg(scheme: unknown): string {
   return "";
 }
 
+const getGapClass = (gap?: string): string => {
+  if (gap === "none") return "gap-0";
+  if (gap === "small") return "gap-4";
+  if (gap === "large") return "gap-12";
+  return "gap-8";
+};
+
+const resolveGapValue = (gap: unknown, fallback: string): string => {
+  if (typeof gap === "string" && gap !== "inherit") return gap;
+  return fallback;
+};
+
 const getSpacingValue = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
 
 const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean => {
@@ -477,6 +489,8 @@ export function PreviewSection({
   if (section.type === "Grid") {
     const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === "Row");
     const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+    const sectionGap = (section.settings["gap"] as string) || "medium";
+    const sectionGapClass = getGapClass(sectionGap);
     const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
       rowBlocks.length > 0
         ? rowBlocks.map((row: BlockInstance) => ({ row, virtual: false }))
@@ -507,11 +521,14 @@ export function PreviewSection({
               No rows
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className={`flex flex-col ${sectionGapClass}`}>
               {rowsToRender.map(({ row, virtual }, rowIndex: number) => {
                 const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                 const columnCount = Math.max(1, rowColumns.length);
                 const isRowSelected = !virtual && selectedNodeId === row.id;
+                const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+                const rowGapClass = getGapClass(rowGapValue);
+                const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
                 const rowContainer = (
                   <div
                     role={!virtual ? "button" : undefined}
@@ -528,9 +545,10 @@ export function PreviewSection({
                         onSelect(row.id);
                       }
                     }}
+                    style={rowStyles}
                     className={`rounded border border-dashed border-border/30 p-2 ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40 bg-blue-500/5" : ""}`}
                   >
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                    <div className={`grid ${rowGapClass}`} style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
                       {rowColumns.map((column: BlockInstance, colIndex: number) => {
                         const isColumnSelected = selectedNodeId === column.id;
                         const isColumnHovered = isInspecting && hoveredNodeId === column.id;

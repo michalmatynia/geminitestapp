@@ -167,6 +167,27 @@ function updateRowBlocks(
   });
 }
 
+function removeColumnFromRows(
+  blocks: BlockInstance[],
+  columnId: string,
+  rowId?: string
+): { blocks: BlockInstance[]; removed: boolean } {
+  let removed = false;
+  const nextBlocks = blocks.map((block: BlockInstance) => {
+    if (block.type !== "Row") return block;
+    const rowBlocks = block.blocks ?? [];
+    const columns = rowBlocks.filter((b: BlockInstance) => b.type === "Column");
+    const isTargetRow = rowId ? block.id === rowId : rowBlocks.some((b: BlockInstance) => b.id === columnId);
+    if (!isTargetRow) return block;
+    if (columns.length <= 1) return block;
+    const nextRowBlocks = rowBlocks.filter((b: BlockInstance) => b.id !== columnId);
+    if (nextRowBlocks.length === rowBlocks.length) return block;
+    removed = true;
+    return { ...block, blocks: nextRowBlocks };
+  });
+  return { blocks: nextBlocks, removed };
+}
+
 function removeBlockFromColumnBlocks(
   blocks: BlockInstance[],
   columnId: string,
@@ -636,6 +657,32 @@ export function basePageBuilderReducer(
         return { ...normalized, blocks: nextBlocks, settings: { ...normalized.settings, rows: rowCount, columns: maxColumns } };
       });
       return { ...state, sections: updatedSections };
+    }
+
+    case "REMOVE_COLUMN_FROM_ROW": {
+      let didRemove = false;
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId || s.type !== "Grid") return s;
+        const normalized = ensureGridRows(s);
+        const result = removeColumnFromRows(normalized.blocks, action.columnId, action.rowId);
+        if (!result.removed) return normalized;
+        didRemove = true;
+        const rows = result.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const maxColumns = Math.max(
+          1,
+          ...rows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length)
+        );
+        return {
+          ...normalized,
+          blocks: result.blocks,
+          settings: { ...normalized.settings, rows: rows.length, columns: maxColumns },
+        };
+      });
+      return {
+        ...state,
+        sections: updatedSections,
+        selectedNodeId: didRemove && state.selectedNodeId === action.columnId ? null : state.selectedNodeId,
+      };
     }
 
     case "ADD_BLOCK_TO_COLUMN": {

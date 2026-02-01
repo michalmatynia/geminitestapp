@@ -994,6 +994,68 @@ export function basePageBuilderReducer(
       return { ...state, sections: sectionsAfterInsert };
     }
 
+    case "CONVERT_BLOCK_TO_SECTION": {
+      const located = findBlock(state.sections, action.blockId);
+      if (!located) return state;
+      const blockTypeToSectionType: Record<string, string> = {
+        TextElement: "TextElement",
+        TextAtom: "TextAtom",
+        ImageElement: "ImageElement",
+        Button: "ButtonElement",
+        Block: "Block",
+      };
+      const sectionType = blockTypeToSectionType[located.block.type];
+      if (!sectionType) return state;
+
+      let didRemove = false;
+      const sectionsAfterRemove = state.sections.map((s: SectionInstance) => {
+        if (s.id !== located.section.id) return s;
+        if (located.parentColumn) {
+          const result = removeBlockFromColumnBlocks(
+            s.blocks,
+            located.parentColumn.id,
+            action.blockId,
+            located.parentBlock?.id
+          );
+          if (result.moved) didRemove = true;
+          return { ...s, blocks: result.blocks };
+        }
+        const hasBlock = s.blocks.some((b: BlockInstance) => b.id === action.blockId);
+        if (hasBlock) didRemove = true;
+        return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
+      });
+
+      if (!didRemove) return state;
+
+      const baseSettings = { ...(located.block.settings ?? {}) };
+      const resolvedBlocks =
+        located.block.type === TEXT_ATOM_BLOCK_TYPE
+          ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings["text"]), located.block.blocks)
+          : located.block.blocks
+          ? [...located.block.blocks]
+          : [];
+      const newSection: SectionInstance = {
+        id: uid(),
+        type: sectionType,
+        zone: action.toZone,
+        settings: baseSettings,
+        blocks: resolvedBlocks,
+      };
+
+      const zoneOrder: PageZone[] = ["header", "template", "footer"];
+      const grouped: Record<PageZone, SectionInstance[]> = { header: [], template: [], footer: [] };
+      for (const s of sectionsAfterRemove) {
+        grouped[s.zone].push(s);
+      }
+      const targetList = [...grouped[action.toZone]];
+      const insertIndex = Math.min(Math.max(action.toIndex, 0), targetList.length);
+      targetList.splice(insertIndex, 0, newSection);
+      grouped[action.toZone] = targetList;
+      const rebuilt = zoneOrder.flatMap((z: PageZone) => grouped[z]);
+
+      return { ...state, sections: rebuilt, selectedNodeId: newSection.id };
+    }
+
     case "CONVERT_SECTION_TO_BLOCK": {
       if (action.sectionId === action.toSectionId) return state;
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
@@ -1168,7 +1230,10 @@ export function basePageBuilderReducer(
       const zoneList = [...byZone[action.zone]];
       const [moved] = zoneList.splice(action.fromIndex, 1);
       if (!moved) return state;
-      zoneList.splice(action.toIndex, 0, moved);
+      const rawTargetIndex =
+        action.fromIndex < action.toIndex ? action.toIndex - 1 : action.toIndex;
+      const targetIndex = Math.min(Math.max(rawTargetIndex, 0), zoneList.length);
+      zoneList.splice(targetIndex, 0, moved);
       byZone[action.zone] = zoneList;
       // Rebuild flat array in zone order
       const reordered = zoneOrder.flatMap((z: PageZone) => byZone[z]);

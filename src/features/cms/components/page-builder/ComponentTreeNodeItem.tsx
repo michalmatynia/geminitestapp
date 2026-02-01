@@ -224,6 +224,9 @@ export function SectionNodeItem({
       onDragStart={(e: React.DragEvent) => {
         e.stopPropagation();
         e.dataTransfer.setData("sectionId", section.id);
+        e.dataTransfer.setData("sectionType", section.type);
+        e.dataTransfer.setData("sectionZone", section.zone);
+        e.dataTransfer.setData("sectionIndex", sectionIndex.toString());
         e.dataTransfer.effectAllowed = "move";
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.4";
@@ -255,17 +258,24 @@ export function SectionNodeItem({
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          if (draggedSectionId && draggedSectionId !== section.id) {
+          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          if (dragSectionId && dragSectionId !== section.id) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const nextDrop = resolveSectionDropPosition(e.clientY, rect);
+            const dragZone =
+              draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
+            const dragIndexRaw = e.dataTransfer.getData("sectionIndex");
+            const parsedIndex = dragIndexRaw ? Number.parseInt(dragIndexRaw, 10) : NaN;
+            const dragIndex =
+              draggedSectionIndex ?? (Number.isNaN(parsedIndex) ? null : parsedIndex);
             if (
               nextDrop &&
-              draggedSectionZone === section.zone &&
-              draggedSectionIndex !== null
+              dragZone === section.zone &&
+              dragIndex !== null
             ) {
               const targetIndex =
                 nextDrop === "below" ? sectionIndex + 1 : sectionIndex;
-              if (targetIndex === draggedSectionIndex) {
+              if (targetIndex === dragIndex) {
                 setSectionDropPosition(null);
                 setIsSectionDragOver(true);
                 setIsDragOver(false);
@@ -293,32 +303,35 @@ export function SectionNodeItem({
           setIsSectionDragOver(false);
           const dropPosition = sectionDropPosition;
           setSectionDropPosition(null);
-          if (draggedSectionId && draggedSectionId !== section.id) {
-            if (draggedSectionType === "TextElement" && targetAllowsTextElement) {
-              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
-            } else if (draggedSectionType === "TextAtom" && targetAllowsTextAtom) {
-              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
-            } else if (draggedSectionType === "ImageElement" && targetAllowsImageElement) {
-              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
-            } else if (draggedSectionType === "ButtonElement" && targetAllowsButton) {
-              onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
+          const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+          const dragSectionType =
+            draggedSectionType || e.dataTransfer.getData("sectionType") || null;
+          if (dragSectionId && dragSectionId !== section.id) {
+            if (dragSectionType === "TextElement" && targetAllowsTextElement) {
+              onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+            } else if (dragSectionType === "TextAtom" && targetAllowsTextAtom) {
+              onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+            } else if (dragSectionType === "ImageElement" && targetAllowsImageElement) {
+              onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
+            } else if (dragSectionType === "ButtonElement" && targetAllowsButton) {
+              onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
             } else if (section.type === "Grid") {
-              if (CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "") && !dropPosition) {
+              if (CONVERTIBLE_SECTION_TYPES.includes(dragSectionType ?? "") && !dropPosition) {
                 // Section dropped on a Grid — route to first column
                 const firstColumn =
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
                   gridColumns.find((b: BlockInstance) => b.type === "Column");
                 if (firstColumn) {
-                  onDropSectionToColumn(draggedSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
+                  onDropSectionToColumn(dragSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
                 }
               } else {
                 const targetIndex = dropPosition === "below" ? sectionIndex + 1 : sectionIndex;
-                onDropSection(draggedSectionId, targetIndex);
+                onDropSection(dragSectionId, targetIndex);
               }
             } else {
               // Section drop — insert at this section's position
               const targetIndex = dropPosition === "below" ? sectionIndex + 1 : sectionIndex;
-              onDropSection(draggedSectionId, targetIndex);
+              onDropSection(dragSectionId, targetIndex);
             }
             setDraggedSectionId(null);
             setDraggedSectionType(null);
@@ -392,12 +405,6 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
-        {sectionDropPosition === "above" && (
-          <div className="pointer-events-none absolute left-2 right-2 top-0 -translate-y-1/2 h-3 rounded border border-dashed border-purple-500/70 bg-purple-600/20" />
-        )}
-        {sectionDropPosition === "below" && (
-          <div className="pointer-events-none absolute left-2 right-2 bottom-0 translate-y-1/2 h-3 rounded border border-dashed border-purple-500/70 bg-purple-600/20" />
-        )}
         <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/section:opacity-100 active:cursor-grabbing" />
         <div className="shrink-0">
           {canToggle ? (

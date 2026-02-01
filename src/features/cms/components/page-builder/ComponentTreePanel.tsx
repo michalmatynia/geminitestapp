@@ -516,52 +516,63 @@ function ZoneGroup({
           ) : (
             <div className="space-y-0.5">
               {zoneSections.map((section: SectionInstance, index: number) => (
-                <SectionNodeItem
-                  key={section.id}
-                  section={section}
-                  sectionIndex={index}
-                  selectedNodeId={selectedNodeId}
-                  onSelect={onSelectNode}
-                onAddBlock={onAddBlock}
-                onDropBlock={onDropBlock}
-                onDropBlockToSection={onDropBlockToSection}
-                  onAddBlockToColumn={onAddBlockToColumn}
-                  onDropBlockToColumn={onDropBlockToColumn}
-                  onAddGridRow={onAddGridRow}
-                  onRemoveGridRow={onRemoveGridRow}
-                  onAddColumnToRow={onAddColumnToRow}
-                  onRemoveColumnFromRow={onRemoveColumnFromRow}
-                  onAddElementToNestedBlock={onAddElementToNestedBlock}
-                  onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
-                  onToggleSectionVisibility={onToggleSectionVisibility}
-                  onRemoveSection={onRemoveSection}
-                  expandedIds={expandedIds}
-                  onToggleExpand={onToggleExpand}
-                  draggedBlockId={draggedBlockId}
-                  setDraggedBlockId={setDraggedBlockId}
-                  draggedFromSectionId={draggedFromSectionId}
-                  setDraggedFromSectionId={setDraggedFromSectionId}
-                  draggedFromColumnId={draggedFromColumnId}
-                  setDraggedFromColumnId={setDraggedFromColumnId}
-                  draggedFromParentBlockId={draggedFromParentBlockId}
-                  setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-                  draggedSectionId={draggedSectionId}
-                  setDraggedSectionId={setDraggedSectionId}
-                  draggedSectionType={draggedSectionType}
-                  setDraggedSectionType={setDraggedSectionType}
-                  draggedSectionIndex={draggedSectionIndex}
-                  setDraggedSectionIndex={setDraggedSectionIndex}
-                  draggedSectionZone={draggedSectionZone}
-                  setDraggedSectionZone={setDraggedSectionZone}
-                  onDropSectionToColumn={onDropSectionToColumn}
-                  onConvertSectionToBlock={onConvertSectionToBlock}
-                />
+                <React.Fragment key={section.id}>
+                  <SectionDropTarget
+                    zone={zone}
+                    toIndex={index}
+                    draggedSectionId={draggedSectionId}
+                    draggedSectionZone={draggedSectionZone}
+                    draggedSectionIndex={draggedSectionIndex}
+                    setDraggedSectionId={setDraggedSectionId}
+                    onDropSectionInZone={onDropSectionInZone}
+                  />
+                  <SectionNodeItem
+                    section={section}
+                    sectionIndex={index}
+                    selectedNodeId={selectedNodeId}
+                    onSelect={onSelectNode}
+                    onAddBlock={onAddBlock}
+                    onDropBlock={onDropBlock}
+                    onDropBlockToSection={onDropBlockToSection}
+                    onAddBlockToColumn={onAddBlockToColumn}
+                    onDropBlockToColumn={onDropBlockToColumn}
+                    onAddGridRow={onAddGridRow}
+                    onRemoveGridRow={onRemoveGridRow}
+                    onAddColumnToRow={onAddColumnToRow}
+                    onRemoveColumnFromRow={onRemoveColumnFromRow}
+                    onAddElementToNestedBlock={onAddElementToNestedBlock}
+                    onDropSection={(sectionId: string, toIndex: number) => onDropSectionInZone(sectionId, zone, toIndex)}
+                    onToggleSectionVisibility={onToggleSectionVisibility}
+                    onRemoveSection={onRemoveSection}
+                    expandedIds={expandedIds}
+                    onToggleExpand={onToggleExpand}
+                    draggedBlockId={draggedBlockId}
+                    setDraggedBlockId={setDraggedBlockId}
+                    draggedFromSectionId={draggedFromSectionId}
+                    setDraggedFromSectionId={setDraggedFromSectionId}
+                    draggedFromColumnId={draggedFromColumnId}
+                    setDraggedFromColumnId={setDraggedFromColumnId}
+                    draggedFromParentBlockId={draggedFromParentBlockId}
+                    setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                    draggedSectionId={draggedSectionId}
+                    setDraggedSectionId={setDraggedSectionId}
+                    draggedSectionType={draggedSectionType}
+                    setDraggedSectionType={setDraggedSectionType}
+                    draggedSectionIndex={draggedSectionIndex}
+                    setDraggedSectionIndex={setDraggedSectionIndex}
+                    draggedSectionZone={draggedSectionZone}
+                    setDraggedSectionZone={setDraggedSectionZone}
+                    onDropSectionToColumn={onDropSectionToColumn}
+                    onConvertSectionToBlock={onConvertSectionToBlock}
+                  />
+                </React.Fragment>
               ))}
-              {/* Drop target at end of zone */}
-              <ZoneDropTarget
+              <SectionDropTarget
                 zone={zone}
                 toIndex={zoneSections.length}
                 draggedSectionId={draggedSectionId}
+                draggedSectionZone={draggedSectionZone}
+                draggedSectionIndex={draggedSectionIndex}
                 setDraggedSectionId={setDraggedSectionId}
                 onDropSectionInZone={onDropSectionInZone}
               />
@@ -592,44 +603,90 @@ function ZoneGroup({
 }
 
 // ---------------------------------------------------------------------------
-// Drop target at the bottom of a zone (thin line when hovering)
+// Drop target between sections (visible when dragging a section)
 // ---------------------------------------------------------------------------
 
-interface ZoneDropTargetProps {
+interface SectionDropTargetProps {
   zone: PageZone;
   toIndex: number;
   draggedSectionId: string | null;
+  draggedSectionZone: PageZone | null;
+  draggedSectionIndex: number | null;
   setDraggedSectionId: (id: string | null) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
 }
 
-function ZoneDropTarget({ zone, toIndex, draggedSectionId, setDraggedSectionId, onDropSectionInZone }: ZoneDropTargetProps): React.ReactNode {
+function SectionDropTarget({
+  zone,
+  toIndex,
+  draggedSectionId,
+  draggedSectionZone,
+  draggedSectionIndex,
+  setDraggedSectionId,
+  onDropSectionInZone,
+}: SectionDropTargetProps): React.ReactNode {
   const [isOver, setIsOver] = useState(false);
+  const isDragging = Boolean(draggedSectionId);
 
-  if (!draggedSectionId) return null;
+  const resolveDragIndex = (rawIndex: string): number | null => {
+    if (!rawIndex) return null;
+    const parsed = Number.parseInt(rawIndex, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  if (!isDragging) return null;
 
   return (
     <div
       onDragOver={(e: React.DragEvent) => {
-        if (!draggedSectionId) return;
+        const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+        if (!dragSectionId) return;
+        const dragZone =
+          draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
+        const dragIndex =
+          draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+        const isSamePosition =
+          dragZone === zone &&
+          dragIndex !== null &&
+          (toIndex === dragIndex || toIndex === dragIndex + 1);
+        if (isSamePosition) return;
         e.preventDefault();
         e.stopPropagation();
         setIsOver(true);
       }}
-      onDragLeave={() => setIsOver(false)}
+      onDragLeave={(e: React.DragEvent) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsOver(false);
+      }}
       onDrop={(e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
-        if (!draggedSectionId) return;
-        onDropSectionInZone(draggedSectionId, zone, toIndex);
+        const dragSectionId = draggedSectionId || e.dataTransfer.getData("sectionId");
+        if (!dragSectionId) return;
+        const dragZone =
+          draggedSectionZone || (e.dataTransfer.getData("sectionZone") as PageZone) || null;
+        const dragIndex =
+          draggedSectionIndex ?? resolveDragIndex(e.dataTransfer.getData("sectionIndex"));
+        const isSamePosition =
+          dragZone === zone &&
+          dragIndex !== null &&
+          (toIndex === dragIndex || toIndex === dragIndex + 1);
+        if (isSamePosition) return;
+        onDropSectionInZone(dragSectionId, zone, toIndex);
         setDraggedSectionId(null);
       }}
-      className={`h-6 rounded transition ${
-        isOver
-          ? "bg-purple-600/20 border border-dashed border-purple-500/50"
-          : "border border-dashed border-transparent"
+      className={`relative overflow-hidden transition-[height] ${
+        isDragging ? "h-4" : "h-0"
       }`}
-    />
+    >
+      <div
+        className={`absolute left-2 right-2 top-1/2 -translate-y-1/2 rounded border border-dashed transition ${
+          isOver
+            ? "border-purple-500/70 bg-purple-600/30 h-3"
+            : "border-transparent bg-transparent h-2"
+        }`}
+      />
+    </div>
   );
 }

@@ -16,6 +16,9 @@ import { useImageRetryPresets } from "./useImageRetryPresets";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { isImageExportError } from "./utils";
+import { useProducts } from "@/features/products/hooks/useProductsQuery";
+import { useExportToBaseMutation } from "@/features/integrations/hooks/useProductListingMutations";
+import { useMutation } from "@tanstack/react-query";
 
 type SelectProductForListingModalProps = {
   integrationId: string;
@@ -30,11 +33,11 @@ export default function SelectProductForListingModal({
   onClose,
   onSuccess,
 }: SelectProductForListingModalProps): React.JSX.Element {
-  const [products, setProducts] = useState<ProductWithImages[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+
+  const { data: products = [], isLoading: loadingProducts } = useProducts({ pageSize: 1000 });
 
   // Integration & connection selection
   const {
@@ -67,66 +70,27 @@ export default function SelectProductForListingModal({
     (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
 
-  // Load products
-  useEffect(() => {
-    const fetchProducts = async (): Promise<void> => {
-      try {
-        setLoadingProducts(true);
-        const res = await fetch("/api/products");
-        if (!res.ok) throw new Error("Failed to fetch products");
-        const data = (await res.json()) as ProductWithImages[];
-        setProducts(data);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to load products");
-      } finally {
-        setLoadingProducts(false);
+  const { toast } = useToast(); // Wait, useToast is not imported? I'll check. Ah, it's not. I'll use setError for now.
+
+  const exportMutation = useExportToBaseMutation(selectedProductId);
+  const createListingMutation = useMutation({
+    mutationFn: async ({ productId, payload }: { productId: string; payload: any }) => {
+      const res = await fetch(`/api/integrations/products/${productId}/listings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || "Failed to create listing");
       }
-    };
-    void fetchProducts();
-  }, []);
-
-  const exportToBase = async (options?: {
-    imageBase64Mode?: "base-only" | "full-data-uri";
-    imageTransform?: ImageTransformOptions | null;
-  }): Promise<void> => {
-    const payload: Record<string, unknown> = {
-      connectionId: selectedConnectionId,
-      inventoryId: selectedInventoryId,
-      templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-      allowDuplicateSku,
-    };
-
-    if (options?.imageBase64Mode) {
-      payload.imageBase64Mode = options.imageBase64Mode;
-      payload.exportImagesAsBase64 = true;
+      return res.json();
     }
-    if (options?.imageTransform) {
-      payload.imageTransform = options.imageTransform;
-      payload.exportImagesAsBase64 = true;
-    }
+  });
 
-    const res = await fetch(`/api/integrations/products/${selectedProductId}/export-to-base`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = (await res.json().catch(() => ({}))) as { 
-      logs?: CapturedLog[]; 
-      skuExists?: boolean; 
-      error?: string 
-    };
-    if (data.logs) {
-      setExportLogs(data.logs);
-    }
-
-    if (!res.ok) {
-      if (data.skuExists) {
-        throw new Error(data.error || "SKU already exists in Base.com");
-      }
-      throw new Error(data.error || "Failed to export product to Base.com");
-    }
-  };
+  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
+    (c: { id: string; name: string }) => c.id === selectedConnectionId
+  )?.name || "";
 
   const handleSubmit = async (): Promise<void> => {
     if (!selectedProductId) {
@@ -151,27 +115,30 @@ export default function SelectProductForListingModal({
       setLogsOpen(true);
 
       if (isBaseComIntegration) {
-        await exportToBase();
+        const payload = {
+          connectionId: selectedConnectionId,
+          inventoryId: selectedInventoryId,
+          templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+          allowDuplicateSku,
+        };
+        const result = await exportMutation.mutateAsync(payload as any);
+        if (result.logs) setExportLogs(result.logs);
         onSuccess();
       } else {
-        const res = await fetch(`/api/integrations/products/${selectedProductId}/listings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        await createListingMutation.mutateAsync({
+          productId: selectedProductId,
+          payload: {
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
-          }),
+          }
         });
-
-        if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
-          throw new Error(data.error || "Failed to create listing");
-        }
-
         onSuccess();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
+      if (err instanceof Error && (err as any).logs) {
+        setExportLogs((err as any).logs);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -186,10 +153,19 @@ export default function SelectProductForListingModal({
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
-      await exportToBase({
+      
+      const payload = {
+        connectionId: selectedConnectionId,
+        inventoryId: selectedInventoryId,
+        templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+        allowDuplicateSku,
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
-      });
+        exportImagesAsBase64: true,
+      };
+
+      const result = await exportMutation.mutateAsync(payload as any);
+      if (result.logs) setExportLogs(result.logs);
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");

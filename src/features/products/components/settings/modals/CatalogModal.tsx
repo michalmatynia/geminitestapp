@@ -14,6 +14,7 @@ import {
 } from "@/shared/ui";
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
+import { useSaveCatalogMutation } from "@/features/products/hooks/useProductSettingsQueries";
 
 interface CatalogModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export function CatalogModal({
   defaultGroupId,
 }: CatalogModalProps) {
   const { toast } = useToast();
-  const [saving, setSaving] = React.useState(false);
+  const saveMutation = useSaveCatalogMutation();
   const [error, setError] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({
     name: "",
@@ -128,15 +129,10 @@ export function CatalogModal({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = catalog
-        ? `/api/catalogs/${catalog.id}`
-        : "/api/catalogs";
-      const res = await fetch(endpoint, {
-        method: catalog ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await saveMutation.mutateAsync({
+        id: catalog?.id,
+        data: {
           name,
           description: form.description.trim(),
           languageIds: selectedLanguageIds,
@@ -144,30 +140,14 @@ export function CatalogModal({
           priceGroupIds: catalogPriceGroupIds,
           defaultPriceGroupId: catalogDefaultPriceGroupId,
           isDefault: form.isDefault,
-        }),
+        },
       });
-
-      if (!res.ok) {
-        const payload = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = payload.error || "Failed to save catalog.";
-        setError(
-          payload.errorId
-            ? `${message} (Error ID: ${payload.errorId})`
-            : message,
-        );
-        return;
-      }
 
       toast("Catalog saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
       console.error(err);
-      setError("Failed to save catalog.");
-    } finally {
-      setSaving(false);
+      setError(err instanceof Error ? err.message : "Failed to save catalog.");
     }
   };
 
@@ -223,10 +203,10 @@ export function CatalogModal({
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={saving}
+          disabled={saveMutation.isPending}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {saving ? "Saving..." : catalog ? "Update" : "Create"}
+          {saveMutation.isPending ? "Saving..." : catalog ? "Update" : "Create"}
         </Button>
         <h2 className="text-2xl font-bold text-white">
           {catalog ? "Edit Catalog" : "Create Catalog"}

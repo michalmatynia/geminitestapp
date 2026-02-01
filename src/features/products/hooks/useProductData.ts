@@ -1,24 +1,143 @@
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { PriceGroupWithDetails } from "@/features/products/types";
-import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { getProducts, countProducts, createProduct, updateProduct, deleteProduct } from "@/features/products/api";
+import type { ProductWithImages } from "@/features/products/types";
+import type { DeleteResponse } from "@/shared/types/api";
+import type { PriceGroupWithDetails } from "@/features/products/types"; // Assuming this type exists and is imported correctly
+import type { UseProductsFilters } from "@/features/products/hooks/useProductsQuery"; // Assuming this type exists
 
-interface UseProductDataProps {
-  refreshTrigger: number;
-  initialCatalogFilter?: string;
-  initialPageSize?: number;
-  preferencesLoaded?: boolean;
-  currencyCode?: string;
-  priceGroups?: PriceGroupWithDetails[];
-  searchLanguage?: string; // "name_en" | "name_pl" | "name_de" - limits search to specific language
+// --- TanStack Query Hooks ---
+
+export function useProductsQuery(
+  filters: UseProductsFilters,
+  options: { enabled?: boolean } = {},
+): UseQueryResult<ProductWithImages[], Error> {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["products", filters],
+    queryFn: () => getProducts(filters),
+    enabled,
+  });
 }
 
-/**
- * Converts a price filter value from the display currency to the base currency.
- * This allows filtering to work correctly when viewing prices in a dependent currency.
- */
+export function useProductsCountQuery(
+  filters: UseProductsFilters,
+  options: { enabled?: boolean } = {},
+): UseQueryResult<number, Error> {
+  const { enabled = true } = options;
+
+  return useQuery({
+    queryKey: ["products-count", filters],
+    queryFn: () => countProducts(filters),
+    enabled,
+  });
+}
+
+export function useProductsWithCount(
+  filters: UseProductsFilters,
+  options: { enabled?: boolean } = {},
+): {
+  products: ProductWithImages[];
+  total: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: unknown;
+  refetch: () => Promise<void>;
+} {
+  const { enabled = true } = options;
+  const queryClient = useQueryClient();
+
+  const productsQuery = useProductsQuery(filters, { enabled });
+  const countQuery = useProductsCountQuery(filters, { enabled });
+
+  const refetch = useCallback(async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["products"] }),
+      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+    ]);
+  }, [queryClient]);
+
+  return {
+    products: productsQuery.data ?? [],
+    total: countQuery.data ?? 0,
+    isLoading: productsQuery.isPending || countQuery.isPending,
+    isFetching: productsQuery.isFetching || countQuery.isFetching,
+    error: productsQuery.error || countQuery.error,
+    refetch,
+  };
+}
+
+
+// --- Mutations ---
+
+export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData: FormData): Promise<unknown> => {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Failed to create product");
+      return response.json();
+    },
+    onSuccess: async (): Promise<void> => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateProductMutation(): UseMutationResult<ProductWithImages, Error, { id: string; data: Partial<ProductWithImages> }, unknown> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductWithImages> }): Promise<ProductWithImages> => {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update product");
+      return (await response.json()) as ProductWithImages;
+    },
+    onSuccess: async (): Promise<void> => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+      ]);
+    },
+  });
+}
+
+export function useDeleteProductMutation(): UseMutationResult<DeleteResponse, Error, string, unknown> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete product");
+      return (await response.json()) as DeleteResponse;
+    },
+    onSuccess: async (): Promise<void> => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+      ]);
+    },
+  });
+}
+
+// --- Hook Logic ---
+
 function convertPriceFilterToBase(
   filterValue: number | undefined,
   currencyCode: string | undefined,
@@ -28,7 +147,6 @@ function convertPriceFilterToBase(
     return filterValue;
   }
 
-  // Find the price group for the selected currency
   const targetGroup = priceGroups.find(
     (g) => g.currency?.code === currencyCode || g.currencyCode === currencyCode,
   );
@@ -37,17 +155,12 @@ function convertPriceFilterToBase(
     return filterValue;
   }
 
-  // If it's a dependent price group, convert back to base currency
   if (targetGroup.type === "dependent" && targetGroup.sourceGroupId) {
     const multiplier = targetGroup.priceMultiplier || 1;
     const addToPrice = targetGroup.addToPrice || 0;
-
-    // Reverse the formula: displayPrice = basePrice * multiplier + addToPrice
-    // So: basePrice = (displayPrice - addToPrice) / multiplier
     return Math.round((filterValue - addToPrice) / multiplier);
   }
 
-  // If it's a standard/base currency, no conversion needed
   return filterValue;
 }
 
@@ -59,7 +172,15 @@ export function useProductData({
   currencyCode,
   priceGroups,
   searchLanguage,
-}: UseProductDataProps) {
+}: {
+  refreshTrigger: number;
+  initialCatalogFilter?: string;
+  initialPageSize?: number;
+  preferencesLoaded?: boolean;
+  currencyCode?: string;
+  priceGroups?: PriceGroupWithDetails[];
+  searchLanguage?: string;
+}): ProductDataHookResult {
   // Filter state
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -75,20 +196,19 @@ export function useProductData({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
 
-  // Track whether initial sync from preferences has completed
   const [initialSyncComplete, setInitialSyncComplete] = useState(false);
 
-  // Sync catalogFilter and pageSize when preferences load
-  // We do this during render to avoid useEffect state sync warnings
-  if (preferencesLoaded && !initialSyncComplete) {
-    setInitialSyncComplete(true);
-    if (catalogFilter !== initialCatalogFilter) {
-      setCatalogFilter(initialCatalogFilter);
+  useEffect(() => {
+    if (preferencesLoaded && !initialSyncComplete) {
+      setInitialSyncComplete(true);
+      if (catalogFilter !== initialCatalogFilter) {
+        setCatalogFilter(initialCatalogFilter);
+      }
+      if (pageSize !== initialPageSize) {
+        setPageSize(initialPageSize);
+      }
     }
-    if (pageSize !== initialPageSize) {
-      setPageSize(initialPageSize);
-    }
-  }
+  }, [preferencesLoaded, initialSyncComplete, catalogFilter, initialCatalogFilter, pageSize, initialPageSize, setCatalogFilter, setPageSize]);
 
   // Debounce search
   useEffect(() => {
@@ -157,37 +277,40 @@ export function useProductData({
     ],
   );
 
-  const {
-    products: data,
-    total,
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = useProductsWithCount(filters, {
-    enabled: preferencesLoaded && initialSyncComplete,
+  // TanStack Query for products and count
+  const productsQuery = useProductsQuery(filters, {
+    enabled: preferencesLoaded && initialSyncComplete && filters.page !== undefined && filters.pageSize !== undefined,
   });
 
-  const lastRefreshTrigger = useRef(refreshTrigger);
-  useEffect(() => {
-    if (refreshTrigger > lastRefreshTrigger.current) {
-      lastRefreshTrigger.current = refreshTrigger;
-      void refetch();
-    }
-  }, [refreshTrigger, refetch]);
+  const countQuery = useProductsCountQuery(filters, {
+    enabled: preferencesLoaded && initialSyncComplete && filters.page !== undefined && filters.pageSize !== undefined,
+  });
+
+  const refetchProducts = useCallback(async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["products"] }),
+      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+    ]);
+  }, [queryClient]);
 
   const loadError = useMemo(() => {
-    if (!error) return null;
+    if (!productsQuery.error && !countQuery.error) return null;
+    const error = productsQuery.error || countQuery.error;
     return error instanceof Error ? error.message : "Failed to load products";
-  }, [error]);
+  }, [productsQuery.error, countQuery.error]);
 
   const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(total / pageSize));
-  }, [total, pageSize]);
+    return Math.max(1, Math.ceil((countQuery.data ?? 0) / pageSize));
+  }, [countQuery.data, pageSize]);
+
+  // Update mutations from previous hook
+  const createProductMutation = useCreateProductMutation();
+  const updateProductMutation = useUpdateProductMutation();
+  const deleteProductMutation = useDeleteProductMutation();
 
   return {
-    data,
-    total,
+    data: productsQuery.data ?? [],
+    total: countQuery.data ?? 0,
     totalPages,
     page,
     setPage,
@@ -208,7 +331,11 @@ export function useProductData({
     catalogFilter,
     setCatalogFilter,
     loadError,
-    isLoading,
-    isFetching,
+    isLoading: productsQuery.isPending || countQuery.isPending,
+    isFetching: productsQuery.isFetching || countQuery.isFetching,
+    refetchProducts,
+    createProductMutation,
+    updateProductMutation,
+    deleteProductMutation,
   };
 }

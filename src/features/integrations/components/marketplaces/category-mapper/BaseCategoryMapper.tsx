@@ -7,157 +7,86 @@ import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "luc
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
 import type { ProductCategory, Catalog } from "@/features/products";
 
+import { useCatalogs } from "@/features/products/hooks/useCatalogQueries";
+import { useProductCategories } from "@/features/products/hooks/useCategoryQueries";
+import { useExternalCategories, useCategoryMappings } from "@/features/integrations/hooks/useMarketplaceQueries";
+import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from "@/features/integrations/hooks/useMarketplaceMutations";
 
 type BaseCategoryMapperProps = {
   connectionId: string;
   connectionName: string;
 };
 
-type ExternalCategoryWithState = ExternalCategory & {
-  isExpanded?: boolean;
-  mappedToId?: string | null;
-};
-
 export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategoryMapperProps): React.JSX.Element {
-  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
-  const [catalogsLoading, setCatalogsLoading] = useState(true);
+  const { toast } = useToast();
+  
+  // Queries
+  const catalogsQuery = useCatalogs();
+  const catalogs = catalogsQuery.data ?? [];
+  const catalogsLoading = catalogsQuery.isLoading;
+
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
 
-  const [internalCategories, setInternalCategories] = useState<ProductCategory[]>([]);
-  const [internalCategoriesLoading, setInternalCategoriesLoading] = useState(false);
+  // Auto-select default catalog
+  useEffect(() => {
+    if (!selectedCatalogId && catalogs.length > 0) {
+      const defaultCatalog = catalogs.find((c: Catalog) => c.isDefault) ?? catalogs[0];
+      if (defaultCatalog) {
+        setSelectedCatalogId(defaultCatalog.id);
+      }
+    }
+  }, [catalogs, selectedCatalogId]);
 
-  const [externalCategories, setExternalCategories] = useState<ExternalCategoryWithState[]>([]);
-  const [externalCategoriesLoading, setExternalCategoriesLoading] = useState(false);
+  const internalCategoriesQuery = useProductCategories(selectedCatalogId ?? undefined);
+  const internalCategories = internalCategoriesQuery.data ?? [];
+  const internalCategoriesLoading = internalCategoriesQuery.isLoading;
 
-  const [mappings, setMappings] = useState<CategoryMappingWithDetails[]>([]);
-  const [mappingsLoading, setMappingsLoading] = useState(false);
+  const externalCategoriesQuery = useExternalCategories(connectionId);
+  const externalCategories = externalCategoriesQuery.data ?? [];
+  const externalCategoriesLoading = externalCategoriesQuery.isLoading;
+
+  const mappingsQuery = useCategoryMappings(connectionId, selectedCatalogId);
+  const mappings = mappingsQuery.data ?? [];
+  const mappingsLoading = mappingsQuery.isLoading;
+
+  // Mutations
+  const fetchMutation = useFetchExternalCategoriesMutation();
+  const saveMutation = useSaveMappingsMutation();
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string>>(new Map());
-  const [saving, setSaving] = useState(false);
-  const [fetching, setFetching] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const { toast } = useToast();
-
-  // Fetch catalogs
+  // Initialize expansion state
   useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        setCatalogsLoading(true);
-        const res = await fetch("/api/catalogs");
-        if (!res.ok) throw new Error("Failed to fetch catalogs");
-        const data = (await res.json()) as Catalog[];
-        setCatalogs(data);
-
-        // Auto-select default catalog
-        const defaultCatalog = data.find((c: Catalog) => c.isDefault) ?? data[0];
-        if (defaultCatalog) {
-          setSelectedCatalogId(defaultCatalog.id);
+    if (externalCategories.length > 0) {
+      setExpandedIds((prev) => {
+        // If we haven't initialized yet (or just reset), expand depth 0
+        if (prev.size === 0) {
+          return new Set(
+            externalCategories
+              .filter((c) => c.depth === 0)
+              .map((c) => c.id)
+          );
         }
-      } catch (error) {
-        console.error("Failed to fetch catalogs:", error);
-        toast("Failed to load catalogs", { variant: "error" });
-      } finally {
-        setCatalogsLoading(false);
-      }
-    };
-    void load();
-  }, [toast]);
-
-  // Fetch internal categories when catalog changes
-  useEffect(() => {
-    if (!selectedCatalogId) {
-      setInternalCategories([]);
-      return;
+        return prev;
+      });
     }
+  }, [externalCategories]);
 
-    const load = async (): Promise<void> => {
-      try {
-        setInternalCategoriesLoading(true);
-        const res = await fetch(`/api/products/categories?catalogId=${selectedCatalogId}`);
-        if (!res.ok) throw new Error("Failed to fetch categories");
-        const data = (await res.json()) as ProductCategory[];
-        setInternalCategories(data);
-      } catch (error) {
-        console.error("Failed to fetch internal categories:", error);
-        toast("Failed to load internal categories", { variant: "error" });
-      } finally {
-        setInternalCategoriesLoading(false);
-      }
-    };
-    void load();
-  }, [selectedCatalogId, toast]);
-
-  // Fetch external categories and mappings when connection changes
-  const fetchExternalCategories = useCallback(async (): Promise<void> => {
-    try {
-      setExternalCategoriesLoading(true);
-      const res = await fetch(`/api/marketplace/categories?connectionId=${connectionId}`);
-      if (!res.ok) throw new Error("Failed to fetch external categories");
-      const data = (await res.json()) as ExternalCategory[];
-      setExternalCategories(data.map((c: ExternalCategory) => ({ ...c, isExpanded: c.depth === 0 })));
-    } catch (error) {
-      console.error("Failed to fetch external categories:", error);
-      toast("Failed to load external categories", { variant: "error" });
-    } finally {
-      setExternalCategoriesLoading(false);
-    }
-  }, [connectionId, toast]);
-
-  const fetchMappings = useCallback(async (): Promise<void> => {
-    if (!selectedCatalogId) return;
-
-    try {
-      setMappingsLoading(true);
-      const res = await fetch(
-        `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${selectedCatalogId}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch mappings");
-      const data = (await res.json()) as CategoryMappingWithDetails[];
-      setMappings(data);
-    } catch (error) {
-      console.error("Failed to fetch mappings:", error);
-      toast("Failed to load category mappings", { variant: "error" });
-    } finally {
-      setMappingsLoading(false);
-    }
-  }, [connectionId, selectedCatalogId, toast]);
-
+  // Reset pending mappings when catalog changes
   useEffect(() => {
-    void fetchExternalCategories();
-  }, [fetchExternalCategories]);
-
-  useEffect(() => {
-    void fetchMappings();
-    // Reset pending mappings when catalog changes
     setPendingMappings(new Map());
-  }, [fetchMappings, selectedCatalogId]);
+  }, [selectedCatalogId]);
 
   // Fetch categories from Base.com API
   const handleFetchFromBase = async (): Promise<void> => {
     try {
-      setFetching(true);
-      const res = await fetch("/api/marketplace/categories/fetch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ connectionId }),
-      });
-
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || "Failed to fetch categories");
-      }
-
-      const result = (await res.json()) as { fetched: number; message: string };
+      const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: "success" });
-
-      // Refresh the list
-      await fetchExternalCategories();
     } catch (error) {
       console.error("Failed to fetch from Base.com:", error);
       const message = error instanceof Error ? error.message : "Failed to fetch categories";
       toast(message, { variant: "error" });
-    } finally {
-      setFetching(false);
     }
   };
 
@@ -196,7 +125,6 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     }
 
     try {
-      setSaving(true);
       const mappingsToSave = Array.from(pendingMappings.entries()).map(
         ([externalCategoryId, internalCategoryId]: [string, string]) => ({
           externalCategoryId,
@@ -204,49 +132,40 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         })
       );
 
-      const res = await fetch("/api/marketplace/mappings/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          connectionId,
-          catalogId: selectedCatalogId,
-          mappings: mappingsToSave,
-        }),
+      const result = await saveMutation.mutateAsync({
+        connectionId,
+        catalogId: selectedCatalogId,
+        mappings: mappingsToSave,
       });
 
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        throw new Error(error.error || "Failed to save mappings");
-      }
-
-      const result = (await res.json()) as { upserted: number; message: string };
       toast(result.message, { variant: "success" });
-
-      // Refresh mappings and clear pending
-      await fetchMappings();
       setPendingMappings(new Map());
     } catch (error) {
       console.error("Failed to save mappings:", error);
       const message = error instanceof Error ? error.message : "Failed to save mappings";
       toast(message, { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
   // Toggle category expansion
   const toggleExpand = (categoryId: string): void => {
-    setExternalCategories((prev: ExternalCategoryWithState[]) =>
-      prev.map((c: ExternalCategoryWithState) => (c.id === categoryId ? { ...c, isExpanded: !c.isExpanded } : c))
-    );
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
   };
 
   // Build tree structure for display
-  const categoryTree = useMemo((): ExternalCategoryWithState[] => {
-    const buildLevel = (parentExternalId: string | null): ExternalCategoryWithState[] => {
+  const categoryTree = useMemo((): ExternalCategory[] => {
+    const buildLevel = (parentExternalId: string | null): ExternalCategory[] => {
       return externalCategories
-        .filter((c: ExternalCategoryWithState) => c.parentExternalId === parentExternalId)
-        .sort((a: ExternalCategoryWithState, b: ExternalCategoryWithState) => a.name.localeCompare(b.name));
+        .filter((c) => c.parentExternalId === parentExternalId)
+        .sort((a, b) => a.name.localeCompare(b.name));
     };
 
     return buildLevel(null);
@@ -255,16 +174,16 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   // Count statistics
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;
-    const mapped = externalCategories.filter((c: ExternalCategoryWithState) => getMappingForExternal(c.id) !== null).length;
+    const mapped = externalCategories.filter((c) => getMappingForExternal(c.id) !== null).length;
     const pending = pendingMappings.size;
     return { total, mapped, pending };
   }, [externalCategories, getMappingForExternal, pendingMappings.size]);
 
   // Render category row with children
-  const renderCategory = (category: ExternalCategoryWithState, depth: number = 0): React.JSX.Element => {
-    const children = externalCategories.filter((c: ExternalCategoryWithState) => c.parentExternalId === category.externalId);
+  const renderCategory = (category: ExternalCategory, depth: number = 0): React.JSX.Element => {
+    const children = externalCategories.filter((c) => c.parentExternalId === category.externalId);
     const hasChildren = children.length > 0;
-    const isExpanded = category.isExpanded ?? false;
+    const isExpanded = expandedIds.has(category.id);
     const currentMapping = getMappingForExternal(category.id);
     const hasPendingChange = pendingMappings.has(category.id);
 
@@ -314,8 +233,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         {hasChildren && isExpanded && (
           <>
             {children
-              .sort((a: ExternalCategoryWithState, b: ExternalCategoryWithState) => a.name.localeCompare(b.name))
-              .map((child: ExternalCategoryWithState) => renderCategory(child, depth + 1))}
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((child) => renderCategory(child, depth + 1))}
           </>
         )}
       </React.Fragment>
@@ -338,28 +257,28 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         <div className="flex items-center gap-3">
           <Button
             onClick={(): void => { void handleFetchFromBase(); }}
-            disabled={fetching}
+            disabled={fetchMutation.isPending}
             className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
           >
-            {fetching ? (
+            {fetchMutation.isPending ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            {fetching ? "Fetching..." : "Fetch Categories"}
+            {fetchMutation.isPending ? "Fetching..." : "Fetch Categories"}
           </Button>
 
           <Button
             onClick={(): void => { void handleSave(); }}
-            disabled={saving || pendingMappings.size === 0}
+            disabled={saveMutation.isPending || pendingMappings.size === 0}
             className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
           >
-            {saving ? (
+            {saveMutation.isPending ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {saving ? "Saving..." : `Save (${pendingMappings.size})`}
+            {saveMutation.isPending ? "Saving..." : `Save (${pendingMappings.size})`}
           </Button>
         </div>
       </div>
@@ -433,7 +352,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
                 </td>
               </tr>
             ) : (
-              categoryTree.map((category: ExternalCategoryWithState) => renderCategory(category, 0))
+              categoryTree.map((category: ExternalCategory) => renderCategory(category, 0))
             )}
           </tbody>
         </table>

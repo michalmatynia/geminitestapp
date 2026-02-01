@@ -3,6 +3,10 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { Integration, IntegrationConnection } from "@/features/integrations/types/integrations-ui";
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
+import { normalizePlaywrightPersonas } from "@/features/playwright/utils/personas";
+import type { PlaywrightPersona } from "@/features/playwright/types";
+import { parseJsonSetting } from "@/shared/utils/settings-json";
 
 export function useIntegrations(): UseQueryResult<Integration[]> {
   return useQuery({
@@ -64,6 +68,25 @@ export function useIntegrationsWithConnections(): UseQueryResult<IntegrationWith
         throw new Error((error.error as string) || "Failed to load integrations");
       }
       return (await res.json()) as IntegrationWithConnections[];
+    },
+  });
+}
+
+export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
+  return useQuery({
+    queryKey: ["playwright-personas"],
+    queryFn: async (): Promise<PlaywrightPersona[]> => {
+      const res = await fetch("/api/settings", { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error("Failed to load Playwright personas.");
+      }
+      const data = (await res.json()) as Array<{ key: string; value: string }>;
+      const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
+      const stored = parseJsonSetting<PlaywrightPersona[]>(
+        map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),
+        []
+      );
+      return normalizePlaywrightPersonas(stored);
     },
   });
 }

@@ -115,7 +115,16 @@ export function useTestConnection(): UseMutationResult<Record<string, unknown>, 
       const res = await fetch(`/api/integrations/${integrationId}/connections/${connectionId}/${type}`, {
         method: "POST",
       });
-      const data = (await res.json()) as Record<string, unknown>;
+      
+      const contentType = res.headers.get("content-type") || "";
+      let data: Record<string, unknown>;
+      
+      if (contentType.includes("application/json")) {
+        data = (await res.json()) as Record<string, unknown>;
+      } else {
+        data = { error: await res.text() };
+      }
+
       if (!res.ok) {
         const message = (data.error as string) || (data.message as string) || res.statusText || "Connection test failed";
         const error = new Error(message);
@@ -123,6 +132,85 @@ export function useTestConnection(): UseMutationResult<Record<string, unknown>, 
         throw error;
       }
       return data;
+    },
+  });
+}
+
+export function useDisconnectAllegro(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string }> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ integrationId, connectionId }: { integrationId: string; connectionId: string }): Promise<Record<string, unknown>> => {
+      const res = await fetch(`/api/integrations/${integrationId}/connections/${connectionId}/allegro/disconnect`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const error = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        throw new Error((error?.error as string) || "Failed to disconnect Allegro");
+      }
+      return (await res.json()) as Record<string, unknown>;
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
+    },
+  });
+}
+
+export function useBaseApiRequest(): UseMutationResult<
+  { data?: unknown },
+  Error,
+  { integrationId: string; connectionId: string; method: string; parameters: unknown }
+> {
+  return useMutation({
+    mutationFn: async ({ integrationId, connectionId, method, parameters }) => {
+      const res = await fetch(
+        `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ method, parameters }),
+        }
+      );
+      const payload = (await res.json()) as { error?: string; data?: unknown };
+      if (!res.ok) {
+        throw new Error(payload.error || "Request failed.");
+      }
+      return payload;
+    },
+  });
+}
+
+export function useAllegroApiRequest(): UseMutationResult<
+  { status: number; statusText: string; data?: unknown; refreshed?: boolean },
+  Error,
+  { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }
+> {
+  return useMutation({
+    mutationFn: async ({ integrationId, connectionId, method, path, body }) => {
+      const res = await fetch(
+        `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ method, path, body }),
+        }
+      );
+      const payload = (await res.json()) as {
+        error?: string;
+        status?: number;
+        statusText?: string;
+        data?: unknown;
+        refreshed?: boolean;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error || "Request failed.");
+      }
+      return {
+        status: payload.status ?? res.status,
+        statusText: payload.statusText ?? "",
+        data: payload.data,
+        refreshed: payload.refreshed,
+      };
     },
   });
 }

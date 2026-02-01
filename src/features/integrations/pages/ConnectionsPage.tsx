@@ -22,30 +22,49 @@ import {
   useConnectionSession,
   useIntegrationConnections,
   useIntegrations,
+  usePlaywrightPersonas,
 } from "@/features/integrations/hooks/useIntegrationQueries";
 import {
   useCreateIntegration,
   useDeleteConnection,
   useUpsertConnection,
+  useDisconnectAllegro,
+  useTestConnection,
+  useBaseApiRequest,
+  useAllegroApiRequest,
 } from "@/features/integrations/hooks/useIntegrationMutations";
 
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
+const EMPTY_PERSONAS: PlaywrightPersona[] = [];
 
 function IntegrationsContent(): React.JSX.Element {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  
+  // Queries
   const integrationsQuery = useIntegrations();
+  const integrations = integrationsQuery.data ?? EMPTY_INTEGRATIONS;
+  
+  const [activeIntegration, setActiveIntegration] = useState<Integration | null>(null);
+  const connectionsQuery = useIntegrationConnections(activeIntegration?.id);
+  const connections = connectionsQuery.data ?? EMPTY_CONNECTIONS;
+  
+  const playwrightPersonasQuery = usePlaywrightPersonas();
+  const playwrightPersonas = playwrightPersonasQuery.data ?? EMPTY_PERSONAS;
+  const playwrightPersonasLoading = playwrightPersonasQuery.isLoading;
+
+  // Mutations
   const createIntegrationMutation = useCreateIntegration();
   const upsertConnectionMutation = useUpsertConnection();
   const deleteConnectionMutation = useDeleteConnection();
-  const integrations = integrationsQuery.data ?? EMPTY_INTEGRATIONS;
-  const [activeIntegration, setActiveIntegration] =
-    useState<Integration | null>(null);
-  const connectionsQuery = useIntegrationConnections(activeIntegration?.id);
-  const connections = connectionsQuery.data ?? EMPTY_CONNECTIONS;
+  const disconnectAllegroMutation = useDisconnectAllegro();
+  const testConnectionMutation = useTestConnection();
+  const baseApiRequestMutation = useBaseApiRequest();
+  const allegroApiRequestMutation = useAllegroApiRequest();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(
     null
@@ -100,8 +119,6 @@ function IntegrationsContent(): React.JSX.Element {
   const [playwrightSettings, setPlaywrightSettings] = useState(
     defaultPlaywrightSettings
   );
-  const [playwrightPersonas, setPlaywrightPersonas] = useState<PlaywrightPersona[]>([]);
-  const [playwrightPersonasLoading, setPlaywrightPersonasLoading] = useState(true);
   const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
 
   const activeConnection = connections[0] || null;
@@ -178,29 +195,6 @@ function IntegrationsContent(): React.JSX.Element {
     const timeout = setTimeout(() => setShowPlaywrightSaved(false), 2500);
     return () => clearTimeout(timeout);
   }, [showPlaywrightSaved]);
-
-  useEffect((): void | (() => void) => {
-    let active = true;
-    const loadPersonas = async (): Promise<void> => {
-      try {
-        const { fetchPlaywrightPersonas } = await import("@/features/playwright");
-        const stored = await fetchPlaywrightPersonas();
-        if (!active) return;
-        setPlaywrightPersonas(stored);
-      } catch (error: unknown) {
-        if (!active) return;
-        const message =
-          error instanceof Error ? error.message : "Failed to load personas.";
-        toast(message, { variant: "error" });
-      } finally {
-        if (active) setPlaywrightPersonasLoading(false);
-      }
-    };
-    void loadPersonas();
-    return () => {
-      active = false;
-    };
-  }, [toast]);
 
   const refreshConnections = (integrationId: string): void => {
     void queryClient.invalidateQueries({
@@ -315,7 +309,7 @@ function IntegrationsContent(): React.JSX.Element {
       const message =
         error instanceof Error
           ? error.message
-          : `Failed to add ${definition.name}.`;
+          : `Failed to add ${definition.name}`;
       toast(message, { variant: "error" });
       return null;
     }
@@ -376,22 +370,11 @@ function IntegrationsContent(): React.JSX.Element {
   const handleAllegroDisconnect = async (): Promise<void> => {
     if (!activeIntegration || !activeConnection) return;
     try {
-      const res = await fetch(
-        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/disconnect`,
-        { method: "POST" }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to disconnect Allegro.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
+      await disconnectAllegroMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: activeConnection.id,
+      });
       toast("Allegro disconnected.", { variant: "success" });
-      refreshConnections(activeIntegration.id);
     } catch (error: unknown) {
       console.error("Failed to disconnect Allegro:", error);
       toast("Failed to disconnect Allegro.", { variant: "error" });
@@ -417,7 +400,11 @@ function IntegrationsContent(): React.JSX.Element {
     }
   };
 
-  const handleBaselinkerTest = async (connection: IntegrationConnection): Promise<void> => {
+  const handleConnectionTest = async (
+    connection: IntegrationConnection,
+    type: "test" | "base/test" | "allegro/test",
+    title: string
+  ): Promise<void> => {
     if (!activeIntegration) return;
     setIsTesting(true);
     setTestLog([]);
@@ -430,175 +417,38 @@ function IntegrationsContent(): React.JSX.Element {
     setShowTestSuccessModal(false);
     setTestSuccessMessage(null);
 
-    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/base/test`;
+    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/${type}`;
     const startedAt = performance.now();
 
     try {
-      const res = await fetch(requestUrl, { method: "POST" });
-      const contentType = res.headers.get("content-type") || "";
+      const payload = (await testConnectionMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: connection.id,
+        type,
+      })) as TestConnectionResponse & { inventoryCount?: number; profile?: Record<string, unknown> };
 
-      let payload: TestConnectionResponse & { inventoryCount?: number };
-      if (contentType.includes("application/json")) {
-        payload = (await res.json()) as TestConnectionResponse & {
-          inventoryCount?: number;
-        };
-      } else {
-        payload = { error: await res.text() };
-      }
-
-      const normalizedSteps = normalizeSteps(payload.steps);
-
-      if (!res.ok) {
-        const failedStepDetail = 
-          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
-          "";
-
-        const errorBody =
-          payload.error || failedStepDetail || "No response body";
-        const statusLabel = `${res.status} ${res.statusText}`.trim();
-        const durationMs = Math.round(performance.now() - startedAt);
-
-        const errorMessage = `Baselinker test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
-
-        const steps: TestLogEntry[] = normalizedSteps.length
-          ? normalizedSteps.map((step: TestLogEntry) =>
-              step.status === "failed" && !step.detail
-                ? { ...step, detail: errorMessage }
-                : step
-            )
-          : [
-              {
-                step: "Connection test failed",
-                status: "failed",
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ];
-
-        setTestLog(steps);
-        setTestError(errorMessage);
-        setTestErrorMeta({
-          errorId: payload.errorId,
-          integrationId: payload.integrationId,
-          connectionId: payload.connectionId,
-        });
-        setLastTestError(errorMessage);
-        setShowTestErrorModal(true);
-        return;
-      }
+      const normalizedSteps = normalizeSteps(payload.steps || []);
 
       if (normalizedSteps.length) {
         setTestLog(normalizedSteps);
       }
 
       const durationMs = Math.round(performance.now() - startedAt);
-      const inventoryInfo = 
-        payload.inventoryCount !== undefined
-          ? `\nInventories found: ${payload.inventoryCount}`
-          : "";
-      setTestSuccessMessage(
-        `Baselinker connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${inventoryInfo}`
-      );
-      setShowTestSuccessModal(true);
-      setTestErrorMeta(null);
-      refreshConnections(activeIntegration.id);
-    } catch (error: unknown) {
-      const durationMs = Math.round(performance.now() - startedAt);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      const errorMessage = `Baselinker test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
-      setTestError(errorMessage);
-      setTestErrorMeta(null);
-      setLastTestError(errorMessage);
-      setShowTestErrorModal(true);
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const handleAllegroTest = async (connection: IntegrationConnection): Promise<void> => {
-    if (!activeIntegration) return;
-    setIsTesting(true);
-    setTestLog([]);
-    setSelectedStep(null);
-    setShowTestLogModal(false);
-    setShowTestErrorModal(false);
-    setTestError(null);
-    setTestErrorMeta(null);
-    setLastTestError(null);
-    setShowTestSuccessModal(false);
-    setTestSuccessMessage(null);
-
-    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/allegro/test`;
-    const startedAt = performance.now();
-
-    try {
-      const res = await fetch(requestUrl, { method: "POST" });
-      const contentType = res.headers.get("content-type") || "";
-
-      let payload: TestConnectionResponse;
-      if (contentType.includes("application/json")) {
-        payload = (await res.json()) as TestConnectionResponse;
-      } else {
-        payload = { error: await res.text() };
-      }
-
-      const normalizedSteps = normalizeSteps(payload.steps);
-
-      if (!res.ok) {
-        const failedStepDetail = 
-          normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
-          "";
-        const errorBody =
-          payload.error || failedStepDetail || "No response body";
-        const statusLabel = `${res.status} ${res.statusText}`.trim();
-        const durationMs = Math.round(performance.now() - startedAt);
-
-        const errorMessage = `Allegro connection test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
-
-        const steps: TestLogEntry[] = normalizedSteps.length
-          ? normalizedSteps.map((step: TestLogEntry) =>
-              step.status === "failed" && !step.detail
-                ? { ...step, detail: errorMessage }
-                : step
-            )
-          : [
-              {
-                step: "Allegro connection test failed",
-                status: "failed",
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ];
-
-        setTestLog(steps);
-        setTestError(errorMessage);
-        setTestErrorMeta({
-          errorId: payload.errorId,
-          integrationId: payload.integrationId,
-          connectionId: payload.connectionId,
-        });
-        setLastTestError(errorMessage);
-        setShowTestErrorModal(true);
-        return;
-      }
-
-      if (normalizedSteps.length) {
-        setTestLog(normalizedSteps);
-      }
-
-      const durationMs = Math.round(performance.now() - startedAt);
-      let profileSummary = "";
-      if (payload.profile && typeof payload.profile === "object") {
-        const profile = payload.profile as Record<string, unknown>;
-        const login = typeof profile.login === "string" ? profile.login : "";
-        const name = typeof profile.name === "string" ? profile.name : "";
+      
+      let extraInfo = "";
+      if (type === "base/test" && payload.inventoryCount !== undefined) {
+        extraInfo = `\nInventories found: ${payload.inventoryCount}`;
+      } else if (type === "allegro/test" && payload.profile) {
+        const login = typeof payload.profile.login === "string" ? payload.profile.login : "";
+        const name = typeof payload.profile.name === "string" ? payload.profile.name : "";
         const identifier = name || login;
         if (identifier) {
-          profileSummary = `\nAccount: ${identifier}`;
+          extraInfo = `\nAccount: ${identifier}`;
         }
       }
+
       setTestSuccessMessage(
-        `Allegro connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${profileSummary}`
+        `${title} succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${extraInfo}`
       );
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
@@ -606,56 +456,23 @@ function IntegrationsContent(): React.JSX.Element {
     } catch (error: unknown) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
-      const errorMessage = `Allegro connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
-      setTestError(errorMessage);
-      setTestErrorMeta(null);
-      setLastTestError(errorMessage);
-      setShowTestErrorModal(true);
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const handleTestConnection = async (connection: IntegrationConnection): Promise<void> => {
-    if (!activeIntegration) return;
-    setIsTesting(true);
-    setTestLog([]);
-    setSelectedStep(null);
-    setShowTestLogModal(false);
-    setShowTestErrorModal(false);
-    setTestError(null);
-    setTestErrorMeta(null);
-    setLastTestError(null);
-    setShowTestSuccessModal(false);
-    setTestSuccessMessage(null);
-
-    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/test`;
-    const startedAt = performance.now();
-
-    try {
-      const res = await fetch(requestUrl, { method: "POST" });
-      const contentType = res.headers.get("content-type") || "";
-
-      let payload: TestConnectionResponse;
-      if (contentType.includes("application/json")) {
-        payload = (await res.json()) as TestConnectionResponse;
-      } else {
-        payload = { error: await res.text() };
-      }
-
-      const normalizedSteps = normalizeSteps(payload.steps);
-
-      if (!res.ok) {
-        const failedStepDetail = 
+      
+      const err = error as Error & { data?: TestConnectionResponse };
+      const data = err.data;
+      
+      let errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
+      
+      if (data) {
+        const normalizedSteps = normalizeSteps(data.steps || []);
+        
+        const failedStepDetail =
           normalizedSteps.find((step: TestLogEntry) => step.status === "failed")?.detail ||
           "";
 
         const errorBody =
-          payload.error || failedStepDetail || "No response body";
-        const statusLabel = `${res.status} ${res.statusText}`.trim();
-        const durationMs = Math.round(performance.now() - startedAt);
-
-        const errorMessage = `Connection test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
+          data.error || failedStepDetail || "No response body";
+        
+        errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
 
         const steps: TestLogEntry[] = normalizedSteps.length
           ? normalizedSteps.map((step: TestLogEntry) =>
@@ -665,47 +482,49 @@ function IntegrationsContent(): React.JSX.Element {
             )
           : [
               {
-                step: "Connection test failed",
+                step: `${title} failed`,
                 status: "failed",
                 timestamp: new Date().toISOString(),
                 detail: errorMessage,
               },
             ];
-
+          
         setTestLog(steps);
-        setTestError(errorMessage);
         setTestErrorMeta({
-          errorId: payload.errorId,
-          integrationId: payload.integrationId,
-          connectionId: payload.connectionId,
+          errorId: data.errorId,
+          integrationId: data.integrationId,
+          connectionId: data.connectionId,
         });
-        setLastTestError(errorMessage);
-        setShowTestErrorModal(true);
-        return;
+      } else {
+        // Fallback log if no structured data
+         setTestLog([
+              {
+                step: `${title} failed`,
+                status: "failed",
+                timestamp: new Date().toISOString(),
+                detail: errorMessage,
+              },
+            ]);
       }
 
-      if (normalizedSteps.length) {
-        setTestLog(normalizedSteps);
-      }
-
-      const durationMs = Math.round(performance.now() - startedAt);
-      setTestSuccessMessage(
-        `Connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms`
-      );
-      setShowTestSuccessModal(true);
-      setTestErrorMeta(null);
-      refreshConnections(activeIntegration.id);
-    } catch (error: unknown) {
-      const durationMs = Math.round(performance.now() - startedAt);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      const errorMessage = `Connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
       setTestError(errorMessage);
-      setTestErrorMeta(null);
       setLastTestError(errorMessage);
       setShowTestErrorModal(true);
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleBaselinkerTest = (connection: IntegrationConnection): Promise<void> => {
+    return handleConnectionTest(connection, "base/test", "Baselinker connection test");
+  };
+
+  const handleAllegroTest = (connection: IntegrationConnection): Promise<void> => {
+    return handleConnectionTest(connection, "allegro/test", "Allegro connection test");
+  };
+
+  const handleTestConnection = (connection: IntegrationConnection): Promise<void> => {
+    return handleConnectionTest(connection, "test", "Connection test");
   };
 
   const handleOpenSessionModal = (): void => {
@@ -914,19 +733,12 @@ function IntegrationsContent(): React.JSX.Element {
     setBaseApiError(null);
     setBaseApiResponse(null);
     try {
-      const res = await fetch(
-        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/base/request`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ method, parameters: normalizedParams }),
-        }
-      );
-      const payload = (await res.json()) as { error?: string; data?: unknown };
-      if (!res.ok) {
-        setBaseApiError(payload.error || "Request failed.");
-        return;
-      }
+      const payload = await baseApiRequestMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: activeConnection.id,
+        method,
+        parameters: normalizedParams,
+      });
       setBaseApiResponse({ data: payload.data });
     } catch (error: unknown) {
       const message =
@@ -960,32 +772,16 @@ function IntegrationsContent(): React.JSX.Element {
     setAllegroApiError(null);
     setAllegroApiResponse(null);
     try {
-      const res = await fetch(
-        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/request`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            method: allegroApiMethod,
-            path,
-            body,
-          }),
-        }
-      );
-      const payload = (await res.json()) as {
-        error?: string;
-        status?: number;
-        statusText?: string;
-        data?: unknown;
-        refreshed?: boolean;
-      };
-      if (!res.ok) {
-        setAllegroApiError(payload.error || "Request failed.");
-        return;
-      }
+      const payload = await allegroApiRequestMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: activeConnection.id,
+        method: allegroApiMethod,
+        path,
+        body,
+      });
       setAllegroApiResponse({
-        status: payload.status ?? res.status,
-        statusText: payload.statusText ?? "",
+        status: payload.status,
+        statusText: payload.statusText,
         data: payload.data,
         refreshed: payload.refreshed,
       });

@@ -1,6 +1,3 @@
-import { logSystemEvent } from "@/features/observability/server";
-import { logAgentAudit } from "@/features/agent-runtime/server";
-
 export interface ErrorContext {
   service?: string;
   runId?: string; // For agent runs
@@ -22,6 +19,9 @@ export const ErrorSystem = {
    * @param context Contextual information (service name, IDs, etc.)
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
+    const { logSystemEvent } = await import("@/features/observability/server");
+    const { logAgentAudit } = await import("@/features/agent-runtime/server");
+    
     const message = error instanceof Error ? error.message : String(error);
     const service = context.service || "unknown";
 
@@ -59,6 +59,9 @@ export const ErrorSystem = {
    * Log a warning (non-fatal issue).
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    const { logSystemEvent } = await import("@/features/observability/server");
+    const { logAgentAudit } = await import("@/features/agent-runtime/server");
+    
     const service = context.service || "unknown";
     
     await logSystemEvent({
@@ -81,6 +84,8 @@ export const ErrorSystem = {
    * Log an operational info event.
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    const { logSystemEvent } = await import("@/features/observability/server");
+    
     const service = context.service || "unknown";
     
     await logSystemEvent({

@@ -16,6 +16,12 @@ import { useImageRetryPresets } from "./useImageRetryPresets";
 
 import { isImageExportError } from "./utils";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import {
+  useDeleteFromBaseMutation,
+  usePurgeListingMutation,
+  useUpdateListingInventoryIdMutation,
+  useExportToBaseMutation,
+} from "@/features/integrations/hooks/useProductListingMutations";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -61,6 +67,12 @@ export default function ProductListingsModal({
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useIntegrationSelection();
+
+  // Mutations
+  const deleteFromBaseMutation = useDeleteFromBaseMutation(product.id);
+  const purgeListingMutation = usePurgeListingMutation(product.id);
+  const updateInventoryIdMutation = useUpdateListingInventoryIdMutation(product.id);
+  const exportToBaseMutation = useExportToBaseMutation(product.id);
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -378,30 +390,10 @@ export default function ProductListingsModal({
 
     try {
       setDeletingFromBase(listingId);
-      // Send inventoryId if available, but let the backend handle fallback logic
       const inventoryId: string = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
-      const body: { inventoryId?: string } = inventoryId ? { inventoryId } : {};
-      const res: Response = await fetch(
-        `/api/integrations/products/${product.id}/listings/${listingId}/delete-from-base`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
-      if (!res.ok) {
-        const payload: { error?: string } = (await res.json().catch((): Record<string, never> => ({}))) as { error?: string };
-        throw new Error(payload.error || "Failed to delete from Base.com");
-      }
-      queryClient.setQueryData<ProductListingWithDetails[]>(
-        ["integrations", "product-listings", product.id],
-        (prev: ProductListingWithDetails[] | undefined = []): ProductListingWithDetails[] =>
-          prev.map((item: ProductListingWithDetails): ProductListingWithDetails =>
-            item.id === listingId
-              ? { ...item, status: "removed", updatedAt: new Date() }
-              : item
-          )
-      );
+      
+      await deleteFromBaseMutation.mutateAsync({ listingId, inventoryId });
+      
       onListingsUpdated?.();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to delete from Base.com");
@@ -419,17 +411,7 @@ export default function ProductListingsModal({
 
     try {
       setPurgingListing(listingId);
-      const res: Response = await fetch(
-        `/api/integrations/products/${product.id}/listings/${listingId}/purge`,
-        { method: "DELETE" }
-      );
-      if (!res.ok) {
-        throw new Error("Failed to remove listing history");
-      }
-      queryClient.setQueryData<ProductListingWithDetails[]>(
-        ["integrations", "product-listings", product.id],
-        (prev: ProductListingWithDetails[] | undefined = []): ProductListingWithDetails[] => prev.filter((item: ProductListingWithDetails): boolean => item.id !== listingId)
-      );
+      await purgeListingMutation.mutateAsync({ listingId });
       onListingsUpdated?.();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to remove listing history");
@@ -447,27 +429,8 @@ export default function ProductListingsModal({
 
     try {
       setSavingInventoryId(listingId);
-      const res: Response = await fetch(
-        `/api/integrations/products/${product.id}/listings/${listingId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inventoryId: value }),
-        }
-      );
-      if (!res.ok) {
-        const payload: { error?: string } = (await res.json().catch((): Record<string, never> => ({}))) as { error?: string };
-        throw new Error(payload.error || "Failed to save inventory ID");
-      }
-      queryClient.setQueryData<ProductListingWithDetails[]>(
-        ["integrations", "product-listings", product.id],
-        (prev: ProductListingWithDetails[] | undefined = []): ProductListingWithDetails[] =>
-          prev.map((item: ProductListingWithDetails): ProductListingWithDetails =>
-            item.id === listingId
-              ? { ...item, inventoryId: value, updatedAt: new Date() }
-              : item
-          )
-      );
+      await updateInventoryIdMutation.mutateAsync({ listingId, inventoryId: value });
+      
       setInventoryOverrides((prev: Record<string, string>): Record<string, string> => {
         const next: Record<string, string> = { ...prev };
         delete next[listingId];
@@ -495,31 +458,18 @@ export default function ProductListingsModal({
       throw new Error("Inventory ID is required.");
     }
     const templateId: string | undefined = getLatestTemplateId(listing) ?? undefined;
-    const payload: Record<string, unknown> = {
+    
+    const payloadRes = await exportToBaseMutation.mutateAsync({
       connectionId: listing.connectionId,
       inventoryId,
       templateId,
-    };
-    if (options?.imageBase64Mode) {
-      payload.imageBase64Mode = options.imageBase64Mode;
-      payload.exportImagesAsBase64 = true;
-    }
-    if (options?.imageTransform) {
-      payload.imageTransform = options.imageTransform;
-      payload.exportImagesAsBase64 = true;
-    }
-
-    const res: Response = await fetch(`/api/integrations/products/${product.id}/export-to-base`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      imageBase64Mode: options?.imageBase64Mode,
+      imageTransform: options?.imageTransform,
+      exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
     });
-    const payloadRes: { logs?: CapturedLog[]; error?: string } = (await res.json().catch((): Record<string, never> => ({}))) as { logs?: CapturedLog[]; error?: string };
+
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
-    }
-    if (!res.ok) {
-      throw new Error(payloadRes.error || "Failed to export product");
     }
   };
 
@@ -539,32 +489,20 @@ export default function ProductListingsModal({
     if (!listing.externalListingId) {
       throw new Error("External Base.com product ID is missing.");
     }
-    const payload: Record<string, unknown> = {
+    
+    const payloadRes = await exportToBaseMutation.mutateAsync({
       connectionId: listing.connectionId,
       inventoryId,
       imagesOnly: true,
       listingId: listing.id,
       externalListingId: listing.externalListingId,
       exportImagesAsBase64: true,
-    };
-    if (options?.imageBase64Mode) {
-      payload.imageBase64Mode = options.imageBase64Mode;
-    }
-    if (options?.imageTransform) {
-      payload.imageTransform = options.imageTransform;
-    }
-
-    const res: Response = await fetch(`/api/integrations/products/${product.id}/export-to-base`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      imageBase64Mode: options?.imageBase64Mode,
+      imageTransform: options?.imageTransform,
     });
-    const payloadRes: { logs?: CapturedLog[]; error?: string } = (await res.json().catch((): Record<string, never> => ({}))) as { logs?: CapturedLog[]; error?: string };
+
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
-    }
-    if (!res.ok) {
-      throw new Error(payloadRes.error || "Failed to export product images");
     }
   };
 
@@ -583,9 +521,6 @@ export default function ProductListingsModal({
       setExportLogs([]);
       setLogsOpen(true);
       await exportListingToBase(listingId);
-      await queryClient.invalidateQueries({
-        queryKey: ["integrations", "product-listings", product.id],
-      });
       onListingsUpdated?.();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");
@@ -608,9 +543,6 @@ export default function ProductListingsModal({
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
       } : undefined);
-      await queryClient.invalidateQueries({
-        queryKey: ["integrations", "product-listings", product.id],
-      });
       onListingsUpdated?.();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product images");
@@ -629,9 +561,6 @@ export default function ProductListingsModal({
       await exportListingToBase(lastExportListingId, {
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["integrations", "product-listings", product.id],
       });
       onListingsUpdated?.();
     } catch (err: unknown) {

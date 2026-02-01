@@ -7,7 +7,12 @@ import { FolderTree } from "@/features/foldertree";
 import { NoteListView } from "@/features/notesapp/components/NoteListView";
 import { NoteDetailView } from "@/features/notesapp/components/NoteDetailView";
 import { CreateNoteModal } from "@/features/notesapp/components/CreateNoteModal";
-import { useNoteData } from "@/features/notesapp/hooks/useNoteData";
+import { 
+  useNoteData,
+  useUpdateNoteMutation,
+  useDeleteNoteMutation,
+  useUpdateCategoryMutation
+} from "@/features/notesapp/hooks/useNoteData";
 import { useNoteFilters } from "@/features/notesapp/hooks/useNoteFilters";
 import { useNoteOperations } from "@/features/notesapp/hooks/useNoteOperations";
 import { useNoteTheme } from "@/features/notesapp/hooks/useNoteTheme";
@@ -20,6 +25,11 @@ export function AdminNotesPage(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayout();
   const { settings, updateSettings } = useNoteSettings();
   const { toast } = useToast();
+  
+  // Mutations
+  const updateNoteMutation = useUpdateNoteMutation();
+  const deleteNoteMutation = useDeleteNoteMutation();
+  const updateCategoryMutation = useUpdateCategoryMutation();
 
   // Local UI State
   const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
@@ -171,20 +181,21 @@ export function AdminNotesPage(): React.JSX.Element {
   const handleToggleFavorite = useCallback(async (note: NoteWithRelations): Promise<void> => {
     const nextFavorite: boolean = !note.isFavorite;
     try {
-      const response: Response = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFavorite: nextFavorite }),
-      });
-      if (!response.ok) {
-        toast("Failed to update favorite", { variant: "error" });
-        return;
-      }
+      await updateNoteMutation.mutateAsync({ id: note.id, isFavorite: nextFavorite });
+      
+      // Optimistic or manual state update for reactivity if needed, 
+      // though mutation invalidation should trigger refresh via useNoteData -> useNotes
+      // But AdminNotesPage uses manual setNotes sometimes?
+      // With TanStack Query, the refetch (via invalidation) will update `notes` which updates `notesRef`.
+      // The `setNotes` in `useNoteData` calls `queryClient.setQueryData`.
+      
+      // The original code updated local state:
       setNotes((prev: NoteWithRelations[]): NoteWithRelations[] =>
         prev.map((item: NoteWithRelations): NoteWithRelations =>
           item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
         )
       );
+      
       setSelectedNote((prev: NoteWithRelations | null): NoteWithRelations | null =>
         prev && prev.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
       );
@@ -192,7 +203,7 @@ export function AdminNotesPage(): React.JSX.Element {
       console.error("Failed to toggle favorite:", error);
       toast("Failed to update favorite", { variant: "error" });
     }
-  }, [toast, setNotes]);
+  }, [toast, setNotes, updateNoteMutation]);
 
   const handleUnlinkRelatedNote = useCallback(async (relatedId: string): Promise<void> => {
     if (!selectedNote) return;
@@ -208,16 +219,7 @@ export function AdminNotesPage(): React.JSX.Element {
 
       const nextSourceIds: string[] = sourceRelations.filter((id: string): boolean => id !== relatedId);
 
-      const response: Response = await fetch(`/api/notes/${selectedNote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
-      });
-
-      if (!response.ok) {
-        toast("Failed to unlink note", { variant: "error" });
-        return;
-      }
+      await updateNoteMutation.mutateAsync({ id: selectedNote.id, relatedNoteIds: nextSourceIds });
 
       toast("Note unlinked");
       await fetchNotes();
@@ -226,23 +228,22 @@ export function AdminNotesPage(): React.JSX.Element {
       console.error("Failed to unlink note:", error);
       toast("Failed to unlink note", { variant: "error" });
     }
-  }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast]);
+  }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast, updateNoteMutation]);
 
   const handleDeleteNote = useCallback(async (): Promise<void> => {
     if (!selectedNote) return;
     if (!confirm("Are you sure you want to delete this note?")) return;
     try {
-      const response: Response = await fetch(`/api/notes/${selectedNote.id}`, { method: "DELETE" });
-      if (response.ok) {
-        setSelectedNote(null);
-        setIsEditing(false);
-        await fetchNotes();
-        await fetchFolderTree();
-      }
+      await deleteNoteMutation.mutateAsync(selectedNote.id);
+      setSelectedNote(null);
+      setIsEditing(false);
+      // await fetchNotes(); // Mutation handles invalidation
+      // await fetchFolderTree(); // Mutation handles invalidation
     } catch (error: unknown) {
       console.error("Failed to delete note:", error);
+      toast("Failed to delete note", { variant: "error" });
     }
-  }, [selectedNote, fetchNotes, fetchFolderTree]);
+  }, [selectedNote, deleteNoteMutation, toast]);
 
   // Undo Logic
   const formatUndoLabel = useCallback((action: UndoAction): string => {
@@ -254,39 +255,33 @@ export function AdminNotesPage(): React.JSX.Element {
 
   const applyUndoAction = useCallback(async (action: UndoAction): Promise<void> => {
     if (action.type === "moveNote") {
-      await fetch(`/api/notes/${action.noteId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
-        }),
+      await updateNoteMutation.mutateAsync({
+        id: action.noteId,
+        categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
       });
       return;
     }
     if (action.type === "moveFolder") {
-      await fetch(`/api/notes/categories/${action.folderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentId: action.fromParentId ?? null }),
+      await updateCategoryMutation.mutateAsync({
+        id: action.folderId,
+        parentId: action.fromParentId ?? null,
       });
       return;
     }
     if (action.type === "renameFolder") {
-      await fetch(`/api/notes/categories/${action.folderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: action.fromName }),
+      await updateCategoryMutation.mutateAsync({
+        id: action.folderId,
+        name: action.fromName,
       });
       return;
     }
     if (action.type === "renameNote") {
-      await fetch(`/api/notes/${action.noteId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: action.fromTitle }),
+      await updateNoteMutation.mutateAsync({
+        id: action.noteId,
+        title: action.fromTitle,
       });
     }
-  }, []);
+  }, [updateNoteMutation, updateCategoryMutation]);
 
   const handleUndoFolderTree = useCallback(async (count: number = 1): Promise<void> => {
     const actionsToUndo: UndoAction[] = undoStack.slice(0, count);
@@ -296,13 +291,15 @@ export function AdminNotesPage(): React.JSX.Element {
       for (const action of actionsToUndo) {
         await applyUndoAction(action);
       }
-      await fetchFolderTree();
-      await fetchNotes();
+      // Invalidation handled by mutations, but force refresh to sync UI might be good?
+      // Usually query invalidation is enough.
+      // await fetchFolderTree();
+      // await fetchNotes();
     } catch (error: unknown) {
       console.error("Failed to undo folder tree action:", error);
       toast("Failed to undo", { variant: "error" });
     }
-  }, [undoStack, applyUndoAction, fetchFolderTree, fetchNotes, toast]);
+  }, [undoStack, applyUndoAction, toast]);
 
   const handleUndoAtIndex = useCallback((index: number): void => {
     const count: number = Math.max(1, index + 1);

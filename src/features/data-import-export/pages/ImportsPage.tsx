@@ -46,6 +46,14 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from "@/features/data-import-export/utils/image-retry-presets";
+import { useIntegrationsWithConnections } from "@/features/integrations/hooks/useIntegrationQueries";
+import { useCatalogs } from "@/shared/hooks/useCatalogs";
+import {
+  useTemplates,
+  useImportPreference,
+  useSavePreferenceMutation,
+  useTemplateMutation,
+} from "@/features/data-import-export/hooks/useImportQueries";
 
 export default function ImportsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -70,13 +78,18 @@ export default function ImportsPage(): React.JSX.Element {
     allRaw?: WarehouseDebugRaw | null;
   } | null>(null);
   const [loadingDebugWarehouses, setLoadingDebugWarehouses] = useState(false);
-  const [catalogs, setCatalogs] = useState<CatalogOption[]>([]);
+
+  // Queries
+  const { data: integrationsWithConnections = [], isLoading: checkingIntegration } = useIntegrationsWithConnections();
+  const { data: catalogsData = [], isLoading: loadingCatalogs } = useCatalogs();
+  const { data: importTemplatesData = [], isLoading: loadingImportTemplates } = useTemplates("import");
+  const { data: exportTemplatesData = [], isLoading: loadingExportTemplates } = useTemplates("export");
+
   const [catalogId, setCatalogId] = useState("");
   const [limit, setLimit] = useState("all");
   const [imageMode, setImageMode] = useState<"links" | "download">("links");
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
-  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [importing, setImporting] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
   const [importList, setImportList] = useState<ImportListItem[]>([]);
@@ -97,10 +110,18 @@ export default function ImportsPage(): React.JSX.Element {
   const [templateScope, setTemplateScope] = useState<"import" | "export">(
     "import",
   );
+  
   const [importTemplates, setImportTemplates] = useState<Template[]>([]);
   const [exportTemplates, setExportTemplates] = useState<Template[]>([]);
-  const [loadingImportTemplates, setLoadingImportTemplates] = useState(false);
-  const [loadingExportTemplates, setLoadingExportTemplates] = useState(false);
+  
+  useEffect(() => {
+    if (importTemplatesData) setImportTemplates(importTemplatesData);
+  }, [importTemplatesData]);
+
+  useEffect(() => {
+    if (exportTemplatesData) setExportTemplates(exportTemplatesData);
+  }, [exportTemplatesData]);
+
   const [importTemplateId, setImportTemplateId] = useState("");
   const [importTemplatePreferenceLoaded, setImportTemplatePreferenceLoaded] =
     useState(false);
@@ -164,12 +185,38 @@ export default function ImportsPage(): React.JSX.Element {
   const autoInventoriesLoadedRef = useRef(false);
   const [parameterCacheReady, setParameterCacheReady] = useState(false);
 
-  const [checkingIntegration, setCheckingIntegration] = useState(true);
   const [isBaseConnected, setIsBaseConnected] = useState(false);
   const [baseConnections, setBaseConnections] = useState<
     IntegrationConnectionBasic[]
   >([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
+
+  useEffect(() => {
+    if (integrationsWithConnections) {
+      const baseIntegration = integrationsWithConnections.find(
+        (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
+      );
+      const connections = baseIntegration?.connections ?? [];
+      setBaseConnections(connections);
+      if (connections.length > 0) {
+        setIsBaseConnected(true);
+        setSelectedBaseConnectionId(
+          (prev: string): string => prev || connections[0]?.id || "",
+        );
+      }
+    }
+  }, [integrationsWithConnections]);
+
+  useEffect(() => {
+    if (catalogsData.length > 0) {
+      const defaultCatalog = catalogsData.find(
+        (catalog: CatalogOption) => catalog.isDefault,
+      );
+      if (defaultCatalog && !catalogId) {
+        setCatalogId(defaultCatalog.id);
+      }
+    }
+  }, [catalogsData, catalogId]);
 
   const isImportTemplateScope = templateScope === "import";
   const currentTemplates = isImportTemplateScope
@@ -407,132 +454,101 @@ export default function ImportsPage(): React.JSX.Element {
     void loadExportTemplates();
   }, []);
 
-  const handleSelectTemplate = useCallback(
-    (id: string): void => {
-      const template = currentTemplates.find(
-        (item: Template) => item.id === id,
-      );
-      if (!template) return;
-      applyTemplate(template, isImportTemplateScope ? "import" : "export");
-    },
-    [applyTemplate, currentTemplates, isImportTemplateScope],
+  const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+    "last-template",
+    "/api/integrations/imports/base/last-template"
+  );
+  const { data: activeImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+    "active-template",
+    "/api/integrations/imports/base/active-template"
+  );
+  const { data: activeExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
+    "export-active-template",
+    "/api/integrations/exports/base/active-template"
+  );
+  const { data: defaultExportInventoryPref } = useImportPreference<{ inventoryId?: string | null }>(
+    "default-inventory",
+    "/api/integrations/exports/base/default-inventory"
+  );
+  const { data: exportStockFallbackPref } = useImportPreference<{ enabled?: boolean }>(
+    "stock-fallback",
+    "/api/integrations/exports/base/stock-fallback"
+  );
+  const { data: imageRetryPresetsPref } = useImportPreference<{ presets?: ImageRetryPreset[] }>(
+    "image-retry-presets",
+    "/api/integrations/exports/base/image-retry-presets"
+  );
+  const { data: sampleProductPref } = useImportPreference<{ productId?: string | null; inventoryId?: string | null }>(
+    "sample-product",
+    "/api/integrations/imports/base/sample-product"
+  );
+  const { data: parameterCachePref } = useImportPreference<{ keys?: string[]; values?: Record<string, string>; productId?: string | null }>(
+    "parameters",
+    "/api/integrations/imports/base/parameters"
   );
 
+  // Sync preferences to state
   useEffect(() => {
-    const loadTemplatePreference = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/imports/base/last-template");
-        const payload = (await res.json()) as { templateId?: string | null };
-        if (!res.ok) return;
-        if (payload.templateId) {
-          setImportTemplateId(payload.templateId);
-        }
-      } catch (error) {
-        console.error("Failed to load import template preference", error);
-      } finally {
-        setImportTemplatePreferenceLoaded(true);
-      }
-    };
-    void loadTemplatePreference();
-  }, []);
+    if (lastImportTemplatePref?.templateId) {
+      setImportTemplateId(lastImportTemplatePref.templateId);
+      setImportTemplatePreferenceLoaded(true);
+    }
+  }, [lastImportTemplatePref]);
 
   useEffect(() => {
-    const loadActiveTemplatePreference = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/imports/base/active-template",
-        );
-        const payload = (await res.json()) as { templateId?: string | null };
-        if (!res.ok) return;
-        setImportActiveTemplatePreferenceId(payload.templateId ?? null);
-      } catch (error) {
-        console.error(
-          "Failed to load active import template preference",
-          error,
-        );
-      } finally {
-        setImportActiveTemplatePreferenceLoaded(true);
-      }
-    };
-    void loadActiveTemplatePreference();
-  }, []);
+    if (activeImportTemplatePref) {
+      setImportActiveTemplatePreferenceId(activeImportTemplatePref.templateId ?? null);
+      setImportActiveTemplatePreferenceLoaded(true);
+    }
+  }, [activeImportTemplatePref]);
 
   useEffect(() => {
-    const loadExportActiveTemplate = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/exports/base/active-template",
-        );
-        const payload = (await res.json()) as { templateId?: string | null };
-        if (!res.ok) return;
-        setExportActiveTemplatePreferenceId(payload.templateId ?? null);
-      } catch (error) {
-        console.error("Failed to load export template preference", error);
-      } finally {
-        setExportActiveTemplatePreferenceLoaded(true);
-      }
-    };
-    void loadExportActiveTemplate();
-  }, []);
+    if (activeExportTemplatePref) {
+      setExportActiveTemplatePreferenceId(activeExportTemplatePref.templateId ?? null);
+      setExportActiveTemplatePreferenceLoaded(true);
+    }
+  }, [activeExportTemplatePref]);
 
   useEffect(() => {
-    const loadExportDefaultInventory = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/exports/base/default-inventory",
-        );
-        const payload = (await res.json()) as { inventoryId?: string | null };
-        if (!res.ok) return;
-        if (payload.inventoryId) {
-          setExportInventoryId(payload.inventoryId);
-        }
-      } catch (error) {
-        console.error("Failed to load export default inventory", error);
-      } finally {
-        setExportInventoryPreferenceLoaded(true);
-      }
-    };
-    void loadExportDefaultInventory();
-  }, []);
+    if (defaultExportInventoryPref?.inventoryId) {
+      setExportInventoryId(defaultExportInventoryPref.inventoryId);
+      setExportInventoryPreferenceLoaded(true);
+    }
+  }, [defaultExportInventoryPref]);
 
   useEffect(() => {
-    const loadExportStockFallback = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/exports/base/stock-fallback",
-        );
-        const payload = (await res.json()) as { enabled?: boolean };
-        if (!res.ok) return;
-        setExportStockFallbackEnabled(Boolean(payload.enabled));
-      } catch (error) {
-        console.error("Failed to load export stock fallback setting", error);
-      } finally {
-        setExportStockFallbackLoaded(true);
-      }
-    };
-    void loadExportStockFallback();
-  }, []);
+    if (exportStockFallbackPref) {
+      setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
+      setExportStockFallbackLoaded(true);
+    }
+  }, [exportStockFallbackPref]);
 
   useEffect(() => {
-    const loadImageRetryPresets = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/exports/base/image-retry-presets",
-        );
-        const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
-        if (!res.ok) return;
-        if (payload.presets) {
-          setImageRetryPresets(normalizeImageRetryPresets(payload.presets));
-        }
-      } catch (error) {
-        console.error("Failed to load image retry presets", error);
-      } finally {
-        setImageRetryPresetsLoaded(true);
-      }
-    };
-    void loadImageRetryPresets();
-  }, []);
+    if (imageRetryPresetsPref?.presets) {
+      setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
+      setImageRetryPresetsLoaded(true);
+    }
+  }, [imageRetryPresetsPref]);
 
+  useEffect(() => {
+    if (sampleProductPref) {
+      if (sampleProductPref.productId) setParameterProductId(sampleProductPref.productId);
+      if (sampleProductPref.inventoryId) setInventoryId(sampleProductPref.inventoryId);
+    }
+  }, [sampleProductPref]);
+
+  useEffect(() => {
+    if (parameterCachePref) {
+      if (parameterCachePref.productId) lastParameterProductIdRef.current = parameterCachePref.productId;
+      if (parameterCachePref.keys && parameterCachePref.values) {
+        setParameterKeys(parameterCachePref.keys);
+        setParameterValues(parameterCachePref.values);
+      }
+      setParameterCacheReady(true);
+    }
+  }, [parameterCachePref]);
+
+  // Handle export warehouse loading (still needs inventoryId)
   useEffect(() => {
     if (!exportInventoryId) {
       setExportWarehouseId("");
@@ -559,240 +575,93 @@ export default function ImportsPage(): React.JSX.Element {
     void loadExportWarehouse();
   }, [exportInventoryId]);
 
+  const handleSelectTemplate = useCallback(
+    (id: string): void => {
+      const template = currentTemplates.find(
+        (item: Template) => item.id === id,
+      );
+      if (!template) return;
+      applyTemplate(template, isImportTemplateScope ? "import" : "export");
+    },
+    [applyTemplate, currentTemplates, isImportTemplateScope],
+  );
+
+  const savePreferenceMutation = useSavePreferenceMutation();
+
   useEffect(() => {
     if (!importTemplatePreferenceLoaded) return;
-    const saveTemplatePreference = async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/imports/base/last-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: importTemplateId || null,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save import template preference", error);
-      }
-    };
-    void saveTemplatePreference();
+    savePreferenceMutation.mutate({
+      endpoint: "/api/integrations/imports/base/last-template",
+      data: { templateId: importTemplateId || null },
+    });
   }, [importTemplateId, importTemplatePreferenceLoaded]);
 
   useEffect(() => {
     if (!importActiveTemplatePreferenceLoaded) return;
-    const saveActiveTemplatePreference = async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/imports/base/active-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: importActiveTemplateId || null,
-          }),
-        });
-      } catch (error) {
-        console.error(
-          "Failed to save active import template preference",
-          error,
-        );
-      }
-    };
-    void saveActiveTemplatePreference();
+    savePreferenceMutation.mutate({
+      endpoint: "/api/integrations/imports/base/active-template",
+      data: { templateId: importActiveTemplateId || null },
+    });
   }, [importActiveTemplateId, importActiveTemplatePreferenceLoaded]);
 
   useEffect(() => {
-    if (!exportInventoryPreferenceLoaded) return;
-    if (!inventories.length) return;
-    if (
-      exportInventoryId &&
-      inventories.some((inv: InventoryOption) => inv.id === exportInventoryId)
-    ) {
-      return;
+    if (exportInventoryPreferenceLoaded && inventories.length > 0) {
+      if (!exportInventoryId || !inventories.some((inv: InventoryOption) => inv.id === exportInventoryId)) {
+        setExportInventoryId(inventories[0]?.id ?? "");
+      }
     }
-    setExportInventoryId(inventories[0]?.id ?? "");
   }, [exportInventoryPreferenceLoaded, inventories, exportInventoryId]);
 
   useEffect(() => {
-    if (!importTemplatePreferenceLoaded) return;
-    if (loadingImportTemplates) return;
-    if (!importTemplateId) return;
-    const exists = importTemplates.some(
-      (template: Template) => template.id === importTemplateId,
-    );
-    if (!exists) {
-      setImportTemplateId("");
+    if (importTemplatePreferenceLoaded && importTemplates.length > 0 && importTemplateId) {
+      const exists = importTemplates.some((template: Template) => template.id === importTemplateId);
+      if (!exists) setImportTemplateId("");
     }
-  }, [
-    importTemplateId,
-    importTemplates,
-    loadingImportTemplates,
-    importTemplatePreferenceLoaded,
-  ]);
+  }, [importTemplateId, importTemplates, importTemplatePreferenceLoaded]);
 
   useEffect(() => {
-    if (!importTemplatePreferenceLoaded) return;
-    if (loadingImportTemplates) return;
-    if (!importTemplateId) return;
-    if (importActiveTemplateId) return;
-    if (importActiveTemplatePreferenceId) return;
-    const preferred = importTemplates.find(
-      (template: Template) => template.id === importTemplateId,
-    );
-    if (!preferred) return;
-    applyTemplate(preferred, "import");
-  }, [
-    importTemplatePreferenceLoaded,
-    loadingImportTemplates,
-    importTemplateId,
-    importActiveTemplateId,
-    importActiveTemplatePreferenceId,
-    importTemplates,
-    applyTemplate,
-  ]);
-
-  useEffect(() => {
-    if (!importActiveTemplatePreferenceLoaded) return;
-    if (loadingImportTemplates) return;
-    if (importActiveTemplateId) return;
-    if (!importActiveTemplatePreferenceId) return;
-    const preferred = importTemplates.find(
-      (template: Template) => template.id === importActiveTemplatePreferenceId,
-    );
-    if (!preferred) return;
-    applyTemplate(preferred, "import");
-  }, [
-    importActiveTemplatePreferenceLoaded,
-    importActiveTemplatePreferenceId,
-    loadingImportTemplates,
-    importActiveTemplateId,
-    importTemplates,
-    applyTemplate,
-  ]);
-
-  useEffect(() => {
-    if (!exportActiveTemplatePreferenceLoaded) return;
-    if (loadingExportTemplates) return;
-    if (exportActiveTemplateId) return;
-    if (!exportActiveTemplatePreferenceId) return;
-    const preferred = exportTemplates.find(
-      (template: Template) => template.id === exportActiveTemplatePreferenceId,
-    );
-    if (!preferred) return;
-    applyTemplate(preferred, "export");
-  }, [
-    exportActiveTemplatePreferenceLoaded,
-    exportActiveTemplatePreferenceId,
-    loadingExportTemplates,
-    exportActiveTemplateId,
-    exportTemplates,
-    applyTemplate,
-  ]);
-
-  useEffect(() => {
-    const loadSampleProduct = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/imports/base/sample-product",
-        );
-        const payload = (await res.json()) as {
-          productId?: string | null;
-          inventoryId?: string | null;
-        };
-        if (!res.ok) return;
-        if (payload.productId) {
-          setParameterProductId(payload.productId);
-        }
-        if (payload.inventoryId) {
-          setInventoryId(payload.inventoryId);
-        }
-      } catch (error) {
-        console.error("Failed to load sample product ID", error);
-      }
-    };
-    void loadSampleProduct();
-  }, []);
-
-  useEffect(() => {
-    const loadParameterCache = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/imports/base/parameters");
-        const payload = (await res.json()) as {
-          keys?: string[];
-          values?: Record<string, string>;
-          productId?: string | null;
-        };
-        if (!res.ok) return;
-        if (payload.productId) {
-          lastParameterProductIdRef.current = payload.productId;
-        }
-        if (payload.keys && payload.values) {
-          setParameterKeys(payload.keys);
-          setParameterValues(payload.values);
-        }
-      } catch (error) {
-        console.error("Failed to load cached parameters", error);
-      } finally {
-        setParameterCacheReady(true);
-      }
-    };
-    void loadParameterCache();
-  }, []);
-
-  useEffect(() => {
-    if (!parameterCacheReady) return;
-    if (lastParameterProductIdRef.current === null) {
-      lastParameterProductIdRef.current = parameterProductId;
-      return;
+    if (importTemplatePreferenceLoaded && importTemplates.length > 0 && importTemplateId && !importActiveTemplateId && !importActiveTemplatePreferenceId) {
+      const preferred = importTemplates.find((template: Template) => template.id === importTemplateId);
+      if (preferred) applyTemplate(preferred, "import");
     }
-    if (lastParameterProductIdRef.current === parameterProductId) return;
-    lastParameterProductIdRef.current = parameterProductId;
-    if (
-      parameterKeys.length === 0 &&
-      Object.keys(parameterValues).length === 0
-    ) {
-      return;
-    }
-    setParameterKeys([]);
-    setParameterValues({});
-    const clearCache = async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/imports/base/parameters", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inventoryId: "",
-            productId: "",
-            clearOnly: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to clear cached parameters", error);
-      }
-    };
-    void clearCache();
-  }, [
-    parameterProductId,
-    parameterKeys.length,
-    parameterValues,
-    parameterCacheReady,
-  ]);
+  }, [importTemplatePreferenceLoaded, importTemplateId, importActiveTemplateId, importActiveTemplatePreferenceId, importTemplates, applyTemplate]);
 
   useEffect(() => {
-    if (!inventoryId) return;
-    const savePreference = async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/imports/base/sample-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inventoryId,
-            productId: parameterProductId.trim() || undefined,
-            saveOnly: true,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save sample inventory", error);
-      }
-    };
-    void savePreference();
+    if (importActiveTemplatePreferenceLoaded && importTemplates.length > 0 && !importActiveTemplateId && importActiveTemplatePreferenceId) {
+      const preferred = importTemplates.find((template: Template) => template.id === importActiveTemplatePreferenceId);
+      if (preferred) applyTemplate(preferred, "import");
+    }
+  }, [importActiveTemplatePreferenceLoaded, importActiveTemplatePreferenceId, importActiveTemplateId, importTemplates, applyTemplate]);
+
+  useEffect(() => {
+    if (exportActiveTemplatePreferenceLoaded && exportTemplates.length > 0 && !exportActiveTemplateId && exportActiveTemplatePreferenceId) {
+      const preferred = exportTemplates.find((template: Template) => template.id === exportActiveTemplatePreferenceId);
+      if (preferred) applyTemplate(preferred, "export");
+    }
+  }, [exportActiveTemplatePreferenceLoaded, exportActiveTemplatePreferenceId, exportActiveTemplateId, exportTemplates, applyTemplate]);
+
+  useEffect(() => {
+    if (parameterCacheReady && lastParameterProductIdRef.current !== parameterProductId) {
+       lastParameterProductIdRef.current = parameterProductId;
+       if (parameterKeys.length > 0 || Object.keys(parameterValues).length > 0) {
+          setParameterKeys([]);
+          setParameterValues({});
+          void fetch("/api/integrations/imports/base/parameters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ inventoryId: "", productId: "", clearOnly: true }),
+          });
+       }
+    }
+  }, [parameterProductId, parameterKeys.length, parameterValues, parameterCacheReady]);
+
+  useEffect(() => {
+    if (inventoryId) {
+      savePreferenceMutation.mutate({
+        endpoint: "/api/integrations/imports/base/sample-product",
+        data: { inventoryId, productId: parameterProductId.trim() || undefined, saveOnly: true },
+      });
+    }
   }, [inventoryId, parameterProductId]);
 
   const handleNewTemplate = (): void => {
@@ -809,6 +678,9 @@ export default function ImportsPage(): React.JSX.Element {
     setExportTemplateMappings([{ sourceKey: "", targetField: "" }]);
     setExportImagesAsBase64(false);
   };
+
+  const saveImportTemplateMutation = useTemplateMutation("import", currentActiveTemplateId);
+  const saveExportTemplateMutation = useTemplateMutation("export", currentActiveTemplateId);
 
   const handleSaveTemplate = async (): Promise<void> => {
     if (!currentTemplateName.trim()) {
@@ -839,62 +711,22 @@ export default function ImportsPage(): React.JSX.Element {
           mapping.sourceKey && mapping.targetField,
       );
 
-    const templateEndpoint = isImportTemplateScope
-      ? "/api/integrations/import-templates"
-      : "/api/integrations/export-templates";
-    const activeTemplateId = currentActiveTemplateId;
+    const mutation = isImportTemplateScope ? saveImportTemplateMutation : saveExportTemplateMutation;
 
     setSavingTemplate(true);
     try {
-      const res = await fetch(
-        activeTemplateId
-          ? `${templateEndpoint}/${activeTemplateId}`
-          : templateEndpoint,
-        {
-          method: activeTemplateId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: currentTemplateName.trim(),
-            description: currentTemplateDescription.trim() || undefined,
-            mappings: cleanedMappings,
-            ...(isImportTemplateScope ? {} : { exportImagesAsBase64 }),
-          }),
-        },
-      );
-      const payload = (await res.json()) as Template & { error?: string };
-      if (!res.ok) {
-        toast(payload.error || "Failed to save template.", {
-          variant: "error",
-        });
-        return;
-      }
-      if (isImportTemplateScope) {
-        setImportTemplates((prev: Template[]) => {
-          const next = prev.filter((item: Template) => item.id !== payload.id);
-          return [...next, payload];
-        });
-      } else {
-        setExportTemplates((prev: Template[]) => {
-          const next = prev.filter((item: Template) => item.id !== payload.id);
-          return [...next, payload];
-        });
-      }
-      applyTemplate(payload, isImportTemplateScope ? "import" : "export");
-      try {
-        const refreshRes = await fetch(templateEndpoint);
-        if (refreshRes.ok) {
-          const refreshed = (await refreshRes.json()) as Template[];
-          if (isImportTemplateScope) {
-            setImportTemplates(refreshed);
-          } else {
-            setExportTemplates(refreshed);
-          }
+      const payload = await mutation.mutateAsync({
+        data: {
+          name: currentTemplateName.trim(),
+          description: currentTemplateDescription.trim() || undefined,
+          mappings: cleanedMappings,
+          ...(isImportTemplateScope ? {} : { exportImagesAsBase64 }),
         }
-      } catch (error) {
-        console.error("Failed to refresh templates", error);
-      }
+      });
+      
+      applyTemplate(payload, isImportTemplateScope ? "import" : "export");
       toast("Template saved.", { variant: "success" });
-    } catch (_error) {
+    } catch (error) {
       toast("Failed to save template.", { variant: "error" });
     } finally {
       setSavingTemplate(false);
@@ -1025,33 +857,18 @@ export default function ImportsPage(): React.JSX.Element {
 
   const handleDeleteTemplate = async (): Promise<void> => {
     if (!currentActiveTemplateId) return;
+    if (!confirm("Are you sure you want to delete this template?")) return;
+    
+    const mutation = isImportTemplateScope ? saveImportTemplateMutation : saveExportTemplateMutation;
+
     setDeletingTemplate(true);
     try {
-      const templateEndpoint = isImportTemplateScope
-        ? "/api/integrations/import-templates"
-        : "/api/integrations/export-templates";
-      const res = await fetch(
-        `${templateEndpoint}/${currentActiveTemplateId}`,
-        { method: "DELETE" },
-      );
-      const payload = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        toast(payload.error || "Failed to delete template.", {
-          variant: "error",
-        });
-        return;
-      }
+      await mutation.mutateAsync({ isDelete: true });
+      
       if (isImportTemplateScope) {
-        setImportTemplates((prev: Template[]) =>
-          prev.filter((item: Template) => item.id !== currentActiveTemplateId),
-        );
         if (importTemplateId === currentActiveTemplateId) {
           setImportTemplateId("");
         }
-      } else {
-        setExportTemplates((prev: Template[]) =>
-          prev.filter((item: Template) => item.id !== currentActiveTemplateId),
-        );
       }
       handleNewTemplate();
       toast("Template deleted.", { variant: "success" });
@@ -1180,75 +997,35 @@ export default function ImportsPage(): React.JSX.Element {
     );
   };
 
+  const { data: inventoriesData = [], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
+  
+  useEffect(() => {
+    if (inventoriesData) {
+      setInventories(inventoriesData);
+      if (inventoriesData.length > 0) {
+        if (!inventoryId) setInventoryId(inventoriesData[0]?.id ?? "");
+        if (exportInventoryPreferenceLoaded && !exportInventoryId) setExportInventoryId(inventoriesData[0]?.id ?? "");
+      }
+    }
+  }, [inventoriesData, inventoryId, exportInventoryId, exportInventoryPreferenceLoaded]);
+
+  const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
+
+  useEffect(() => {
+    if (warehousesData) {
+      setWarehouses(warehousesData.warehouses ?? []);
+      setAllWarehouses(warehousesData.allWarehouses ?? []);
+      if (warehousesData.allWarehouses?.length === 0) setShowAllWarehouses(false);
+    }
+  }, [warehousesData]);
+
   const handleLoadInventories = useCallback(async (): Promise<void> => {
     if (!isBaseConnected) {
       toast("Please connect Base integration first.", { variant: "error" });
       return;
     }
-    setLoadingInventories(true);
-    try {
-      const body: Record<string, unknown> = { action: "inventories" };
-      if (selectedBaseConnectionId) {
-        body.connectionId = selectedBaseConnectionId;
-      }
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const payload = (await res.json()) as {
-        inventories?: InventoryOption[];
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to load inventories.", {
-          variant: "error",
-        });
-        return;
-      }
-      const nextInventories = payload.inventories ?? [];
-      setInventories(nextInventories);
-      if (nextInventories.length) {
-        const hasCurrent = inventoryId
-          ? nextInventories.some(
-              (inv: InventoryOption) => inv.id === inventoryId,
-            )
-          : false;
-        if (!hasCurrent) {
-          setInventoryId(nextInventories[0]?.id ?? "");
-        }
-        if (exportInventoryPreferenceLoaded) {
-          const hasExportCurrent = exportInventoryId
-            ? nextInventories.some(
-                (inv: InventoryOption) => inv.id === exportInventoryId,
-              )
-            : false;
-          if (!hasExportCurrent) {
-            setExportInventoryId(nextInventories[0]?.id ?? "");
-          }
-        }
-      }
-    } catch (_error) {
-      toast("Failed to load inventories.", { variant: "error" });
-    } finally {
-      setLoadingInventories(false);
-    }
-  }, [
-    exportInventoryId,
-    exportInventoryPreferenceLoaded,
-    inventoryId,
-    isBaseConnected,
-    selectedBaseConnectionId,
-    toast,
-  ]);
-
-  useEffect(() => {
-    if (checkingIntegration) return;
-    if (!isBaseConnected) return;
-    if (autoInventoriesLoadedRef.current) return;
-    autoInventoriesLoadedRef.current = true;
-    void handleLoadInventories();
-  }, [checkingIntegration, handleLoadInventories, isBaseConnected]);
+    await refetchInventories();
+  }, [isBaseConnected, refetchInventories, toast]);
 
   const handleLoadWarehouses = useCallback(async (): Promise<void> => {
     if (!isBaseConnected) {
@@ -1256,57 +1033,11 @@ export default function ImportsPage(): React.JSX.Element {
       return;
     }
     if (!exportInventoryId) {
-      toast("Select an inventory before loading warehouses.", {
-        variant: "error",
-      });
+      toast("Select an inventory before loading warehouses.", { variant: "error" });
       return;
     }
-    setLoadingWarehouses(true);
-    try {
-      const body: Record<string, unknown> = {
-        action: "warehouses",
-        inventoryId: exportInventoryId,
-        includeAllWarehouses,
-      };
-      if (selectedBaseConnectionId) {
-        body.connectionId = selectedBaseConnectionId;
-      }
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const payload = (await res.json()) as {
-        warehouses?: WarehouseOption[];
-        allWarehouses?: WarehouseOption[];
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to load warehouses.", {
-          variant: "error",
-        });
-        return;
-      }
-      const nextWarehouses = payload.warehouses ?? [];
-      const nextAllWarehouses = payload.allWarehouses ?? [];
-      setWarehouses(nextWarehouses);
-      setAllWarehouses(nextAllWarehouses);
-      if (nextAllWarehouses.length === 0) {
-        setShowAllWarehouses(false);
-      }
-      // Keep the saved warehouse selection; do not auto-pick a default.
-    } catch (_error) {
-      toast("Failed to load warehouses.", { variant: "error" });
-    } finally {
-      setLoadingWarehouses(false);
-    }
-  }, [
-    includeAllWarehouses,
-    isBaseConnected,
-    exportInventoryId,
-    selectedBaseConnectionId,
-    toast,
-  ]);
+    await refetchWarehouses();
+  }, [isBaseConnected, exportInventoryId, refetchWarehouses, toast]);
 
   const handleDebugWarehouses = async (): Promise<void> => {
     if (!isBaseConnected) {
@@ -1649,14 +1380,14 @@ export default function ImportsPage(): React.JSX.Element {
         <TabsContent value="imports" className="mt-6 space-y-6">
           <ImportTab
             inventories={inventories}
-            loadingInventories={loadingInventories}
+            loadingInventories={isFetchingInventories}
             inventoryId={inventoryId}
             setInventoryId={setInventoryId}
             handleLoadInventories={handleLoadInventories}
             handleClearInventory={handleClearInventory}
             limit={limit}
             setLimit={setLimit}
-            catalogs={catalogs}
+            catalogs={catalogsData}
             loadingCatalogs={loadingCatalogs}
             catalogId={catalogId}
             setCatalogId={setCatalogId}
@@ -1716,9 +1447,9 @@ export default function ImportsPage(): React.JSX.Element {
             setImageRetryPresets={setImageRetryPresets}
             imageRetryPresetsLoaded={imageRetryPresetsLoaded}
             handleLoadInventories={handleLoadInventories}
-            loadingInventories={loadingInventories}
+            loadingInventories={isFetchingInventories}
             handleLoadWarehouses={handleLoadWarehouses}
-            loadingWarehouses={loadingWarehouses}
+            loadingWarehouses={isFetchingWarehouses}
             handleDebugWarehouses={handleDebugWarehouses}
             loadingDebugWarehouses={loadingDebugWarehouses}
             includeAllWarehouses={includeAllWarehouses}

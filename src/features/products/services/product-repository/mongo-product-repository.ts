@@ -303,7 +303,7 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-            parameters: Array.isArray(data.parameters) ? data.parameters.map((p) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+            parameters: Array.isArray(data.parameters) ? data.parameters.map((p: import("@/features/products/types").ProductParameterValue) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
           }
         : null),
       ...(data.imageLinks !== undefined

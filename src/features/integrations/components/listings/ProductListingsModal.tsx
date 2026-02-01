@@ -3,9 +3,9 @@ import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownM
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
-import type { ProductWithImages } from "@/features/products";
+import type { ProductWithImages } from "@/features/products/types";
 import type { ProductListingWithDetails, ProductListingExportEvent, IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
-import { SyncDirection } from "@/features/products";
+import { SyncDirection } from "@/features/products/types";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
@@ -37,7 +37,7 @@ const statusColors: Record<string, string> = {
   removed: "bg-gray-500/20 text-gray-300 border-gray-500/40",
 };
 
-export default function ProductListingsModal({
+export function ProductListingsModal({
   product,
   onClose,
   onStartListing,

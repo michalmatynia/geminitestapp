@@ -2,7 +2,7 @@
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, ModalShell, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Checkbox } from "@/shared/ui";
 import { useState } from "react";
 
-import { ProductWithImages } from "@/features/products";
+import { ProductWithImages } from "@/features/products/types";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,
@@ -30,7 +30,7 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
-export default function ListProductModal({
+export function ListProductModal({
   product,
   onClose,
   onSuccess,

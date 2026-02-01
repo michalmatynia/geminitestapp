@@ -20,7 +20,7 @@ type MassListProductModalProps = {
 
 import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
 
-export default function MassListProductModal({
+export function MassListProductModal({
   productIds,
   integrationId: initialIntegrationId,
   connectionId: initialConnectionId,

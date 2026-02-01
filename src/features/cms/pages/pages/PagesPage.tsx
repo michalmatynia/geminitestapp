@@ -11,10 +11,10 @@ import {
 } from "@/shared/ui";
 import Link from "next/link";
 
-import { useAdminLayout } from "@/features/admin";
+import { useAdminLayout } from "@/features/admin/hooks/useAdminLayout";
 import { useRouter } from "next/navigation";
 import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
-import { CmsDomainSelector } from "@/features/cms";
+import { CmsDomainSelector } from "@/features/cms/components/CmsDomainSelector";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms/types";
 import { useMemo, useState } from "react";

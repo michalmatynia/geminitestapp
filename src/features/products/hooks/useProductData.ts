@@ -179,11 +179,13 @@ export function useProductData({
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || "all");
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (preferencesLoaded) {
+    if (preferencesLoaded && !hasInitialized.current) {
       if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
       if (initialPageSize) setPageSize(initialPageSize);
+      hasInitialized.current = true;
     }
   }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
 

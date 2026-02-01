@@ -8,8 +8,8 @@ import Link from "next/link";
 
 import { useChatbotLogic } from "../hooks/useChatbotLogic";
 
-import { AgentCreatorSettingsSection } from "@/features/agentcreator";
-import type { PlaywrightPersona } from "@/features/playwright";
+import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
+import type { PlaywrightPersona } from "@/features/playwright/types";
 
 type SettingsTabProps = ReturnType<typeof useChatbotLogic>;
 
@@ -51,7 +51,7 @@ export function SettingsTab({
     let active: boolean = true;
     const loadPersonas = async (): Promise<void> => {
       try {
-        const { fetchPlaywrightPersonas } = await import("@/features/playwright");
+        const { fetchPlaywrightPersonas } = await import("@/features/playwright/services/playwright-personas");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);

@@ -6,7 +6,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
-import { NoteSettingsProvider } from "@/features/notesapp";
+import { NoteSettingsProvider } from "@/features/notesapp/context/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";

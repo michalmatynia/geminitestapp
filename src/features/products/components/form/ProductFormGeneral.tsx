@@ -23,10 +23,10 @@ import type {
   PathDebugEntry,
   Edge,
   RuntimeState,
-} from "@/features/ai-paths";
+} from "@/features/ai-paths/types";
 import {
   evaluateGraph,
-} from "@/features/ai-paths";
+} from "@/features/ai-paths/services/graph-evaluator";
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
@@ -35,7 +35,7 @@ import {
   createDefaultPathConfig,
   normalizeNodes,
   sanitizeEdges,
-} from "@/features/ai-paths";
+} from "@/features/ai-paths/utils";
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const queryClient = useQueryClient();

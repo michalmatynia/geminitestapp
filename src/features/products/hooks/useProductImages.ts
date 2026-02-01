@@ -101,7 +101,7 @@ export function useProductImages(
     // Update ref with current object URLs
     objectUrlsRef.current = currentObjectUrls;
 
-    return () => {
+    return (): void => {
       // Clean up all object URLs on unmount
       objectUrlsRef.current.forEach((url: string) => URL.revokeObjectURL(url));
       objectUrlsRef.current = [];

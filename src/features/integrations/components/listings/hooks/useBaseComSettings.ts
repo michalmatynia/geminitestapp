@@ -49,31 +49,38 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const preferredInventoryId = defaultInventoryQuery.data?.inventoryId ?? null;
 
   // Auto-select preferred template
-  useEffect((): void => {
-    if (!isBaseComIntegration || !preferredTemplateId || hasInitializedTemplate.current) return;
-    if (selectedTemplateId === "none") {
-      const timer = setTimeout(() => {
-        setSelectedTemplateId(preferredTemplateId);
-        hasInitializedTemplate.current = true;
-      }, 0);
-      return () => clearTimeout(timer);
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isBaseComIntegration && preferredTemplateId && !hasInitializedTemplate.current) {
+      if (selectedTemplateId === "none") {
+        timer = setTimeout(() => {
+          setSelectedTemplateId(preferredTemplateId);
+          hasInitializedTemplate.current = true;
+        }, 0);
+      }
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
   // Auto-select preferred inventory or first available
-  useEffect((): void => {
-    if (!isBaseComIntegration || selectedInventoryId || inventories.length === 0 || inventoriesQuery.isLoading || hasInitializedInventory.current) return;
-    
-    const timer = setTimeout(() => {
-      if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
-        setSelectedInventoryId(preferredInventoryId);
-        hasInitializedInventory.current = true;
-      } else {
-        setSelectedInventoryId(inventories[0]?.id ?? "");
-        hasInitializedInventory.current = true;
-      }
-    }, 0);
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery.isLoading && !hasInitializedInventory.current) {
+      timer = setTimeout(() => {
+        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
+          setSelectedInventoryId(preferredInventoryId);
+          hasInitializedInventory.current = true;
+        } else {
+          setSelectedInventoryId(inventories[0]?.id ?? "");
+          hasInitializedInventory.current = true;
+        }
+      }, 0);
+    }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery.isLoading]);
 
   // Sync template preference when selected changes

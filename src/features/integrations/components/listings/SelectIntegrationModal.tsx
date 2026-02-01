@@ -5,7 +5,7 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 import Link from "next/link";
 
-type SelectIntegrationModalProps = {
+export type SelectIntegrationModalProps = {
   onClose: () => void;
   onSelect: (integrationId: string, connectionId: string) => void;
 };

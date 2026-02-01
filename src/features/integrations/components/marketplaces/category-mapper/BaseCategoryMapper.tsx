@@ -30,16 +30,19 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Auto-select default catalog
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (!selectedCatalogId && catalogs.length > 0 && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogs.find((c: Catalog) => c.isDefault) ?? catalogs[0];
       if (defaultCatalog) {
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           setSelectedCatalogId(defaultCatalog.id);
           hasInitializedCatalog.current = true;
         }, 0);
-        return (): void => clearTimeout(timer);
       }
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [catalogs, selectedCatalogId]);
 
   const internalCategoriesQuery = useProductCategories(selectedCatalogId ?? undefined);
@@ -64,8 +67,9 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Initialize expansion state
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (externalCategories.length > 0 && !hasInitializedExpansion.current) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setExpandedIds((prev: Set<string>) => {
           // If we haven't initialized yet (or just reset), expand depth 0
           if (prev.size === 0) {
@@ -79,8 +83,10 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         });
         hasInitializedExpansion.current = true;
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [externalCategories]);
 
   // Reset pending mappings when catalog changes

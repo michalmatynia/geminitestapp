@@ -56,7 +56,7 @@ export function useSaveMappingsMutation(): UseMutationResult<
 
       return (await res.json()) as { upserted: number; message: string };
     },
-    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string }) => {
+    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }) => {
       void queryClient.invalidateQueries({ queryKey: ["category-mappings", connectionId, catalogId] });
     },
   });

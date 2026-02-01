@@ -6,8 +6,10 @@ import type {
   CatalogRecord, 
   ProductCategory, 
   ProductTag, 
-  ProductParameter 
+  ProductParameter,
+  PriceGroupWithDetails
 } from "@/features/products/types";
+import type { Language } from "@/shared/types/internationalization";
 
 export const productMetadataKeys = {
   catalogs: ["catalogs"] as const,
@@ -79,8 +81,8 @@ export interface ProductMetadataHookResult {
   toggleTag: (tagId: string) => void;
   parameters: ProductParameter[];
   parametersLoading: boolean;
-  filteredLanguages: unknown[];
-  filteredPriceGroups: unknown[];
+  filteredLanguages: Language[];
+  filteredPriceGroups: PriceGroupWithDetails[];
 }
 
 // Composite hook that combines all metadata functionality
@@ -141,7 +143,7 @@ export function useProductMetadata({
     toggleTag,
     parameters: parametersQuery.data || [],
     parametersLoading: parametersQuery.isLoading,
-    filteredLanguages: [], // Placeholder
-    filteredPriceGroups: [], // Placeholder
+    filteredLanguages: [] as Language[], // Placeholder
+    filteredPriceGroups: [] as PriceGroupWithDetails[], // Placeholder
   };
 }

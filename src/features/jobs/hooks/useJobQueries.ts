@@ -2,6 +2,7 @@
 
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { ProductAiJob } from "@/shared/types/jobs";
+import type { ProductJob } from "@/shared/types/listing-jobs";
 
 export const jobKeys = {
   all: ["jobs"] as const,
@@ -10,13 +11,13 @@ export const jobKeys = {
   chatbot: ["jobs", "chatbot"] as const,
 };
 
-export function useIntegrationJobs(): UseQueryResult<unknown[]> {
+export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
   return useQuery({
     queryKey: jobKeys.integrations,
-    queryFn: async (): Promise<unknown[]> => {
+    queryFn: async (): Promise<ProductJob[]> => {
       const res = await fetch("/api/integrations/jobs");
       if (!res.ok) throw new Error("Failed to load integration jobs");
-      return res.json() as Promise<unknown[]>;
+      return res.json() as Promise<ProductJob[]>;
     },
   });
 }

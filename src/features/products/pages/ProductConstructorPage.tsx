@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger, useToast } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 import { ParametersSettings } from "@/features/products/components/constructor/ParametersSettings";
 import { useCatalogs, useParameters } from "@/features/products/hooks/useProductSettingsQueries";
@@ -14,13 +14,16 @@ export function ProductConstructorPage(): React.JSX.Element {
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (catalogs.length > 0 && !selectedCatalogId) {
       const defaultCatalog = catalogs.find((catalog: import("@/features/products/types").CatalogRecord) => catalog.isDefault);
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [catalogs, selectedCatalogId]);
 
   const parametersQuery = useParameters(selectedCatalogId);

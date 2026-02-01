@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/products/hooks/useUserPreferences";
 import { useCatalogs } from "@/features/products/hooks/useProductSettingsQueries";
@@ -26,16 +26,19 @@ export function ProductPreferencesPage(): React.JSX.Element {
   const updateMutation = useUpdateUserPreferencesMutation();
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (savedPreferences) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setPreferences((prev: ProductListPreferences) => {
           // Only update if actually different to minimize cascading renders
           if (JSON.stringify(prev) === JSON.stringify(savedPreferences)) return prev;
           return savedPreferences;
         });
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [savedPreferences]);
 
   const handleSave = async (): Promise<void> => {

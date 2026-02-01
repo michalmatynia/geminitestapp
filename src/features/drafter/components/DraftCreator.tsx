@@ -111,10 +111,11 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
   // Sync form with draft data
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (draftQuery.data) {
       const draft = draftQuery.data;
       // Use a timeout to avoid synchronous setState in effect
-      const timer = setTimeout((): void => {
+      timer = setTimeout((): void => {
         setName(draft.name);
         setDescription(draft.description || "");
         setSku(draft.sku || "");
@@ -149,10 +150,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         setSelectedTagIds(draft.tagIds || []);
         setParameterValues(draft.parameters || []);
       }, 0);
-      return (): void => clearTimeout(timer);
     } else if (!draftId) {
       // Reset form
-      const timer = setTimeout((): void => {
+      timer = setTimeout((): void => {
         setName("");
         setDescription("");
         setSku("");
@@ -183,8 +183,10 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         setSelectedTagIds([]);
         setParameterValues([]);
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [draftQuery.data, draftId]);
 
   const handleSave = async (): Promise<void> => {

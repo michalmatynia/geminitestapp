@@ -1,24 +1,24 @@
-__tests__/api/products/products.test.ts(115,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductCreateArgs>(args: SelectSubset<T, ProductCreateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
-  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; createdAt: Date; updatedAt: Date; weight: number | null; parameters: JsonValue; name_en: string | null; sku: string | null; ... 17 more ...; imageLinks: string[]; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
-__tests__/api/products/products.test.ts(128,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductUpdateArgs>(args: SelectSubset<T, ProductUpdateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
-  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; createdAt: Date; updatedAt: Date; weight: number | null; parameters: JsonValue; name_en: string | null; sku: string | null; ... 17 more ...; imageLinks: string[]; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
-__tests__/features/observability/services/client-error-logger.test.ts(3,32): error TS2307: Cannot find module '@/shared/lib/observability/log-redaction' or its corresponding type declarations.
-__tests__/features/observability/services/system-log-repository.test.ts(7,8): error TS2307: Cannot find module '@/shared/lib/observability/system-log-repository' or its corresponding type declarations.
-__tests__/shared/lib/observability/critical-error-notifier.test.ts(2,37): error TS2307: Cannot find module '@/shared/lib/observability/critical-error-notifier' or its corresponding type declarations.
-__tests__/shared/lib/observability/log-redaction.test.ts(2,64): error TS2307: Cannot find module '@/shared/lib/observability/log-redaction' or its corresponding type declarations.
-__tests__/shared/lib/observability/system-logger.test.ts(2,48): error TS2307: Cannot find module '@/shared/lib/observability/system-logger' or its corresponding type declarations.
-__tests__/shared/lib/observability/system-logger.test.ts(3,33): error TS2307: Cannot find module '@/shared/lib/observability/system-log-repository' or its corresponding type declarations.
-__tests__/shared/lib/observability/system-logger.test.ts(4,37): error TS2307: Cannot find module '@/shared/lib/observability/critical-error-notifier' or its corresponding type declarations.
-__tests__/shared/lib/transient-recovery-settings.test.ts(2,46): error TS2307: Cannot find module '@/shared/lib/transient-recovery/settings' or its corresponding type declarations.
-__tests__/shared/lib/transient-recovery-settings.test.ts(5,53): error TS2307: Cannot find module '@/shared/lib/transient-recovery/constants' or its corresponding type declarations.
-src/features/agentcreator/pages/AgentRunsPage.tsx(10,3): error TS6133: 'AgentSnapshot' is declared but its value is never read.
-src/features/integrations/components/listings/ProductListingsModal.tsx(4,10): error TS6133: 'useQuery' is declared but its value is never read.
-src/features/integrations/components/listings/ProductListingsModal.tsx(49,9): error TS6133: 'queryClient' is declared but its value is never read.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(9,3): error TS6196: 'ImageTransformOptions' is declared but never used.
-src/features/jobs/hooks/useJobMutations.ts(5,1): error TS6133: 'ProductAiJob' is declared but its value is never read.
-src/features/jobs/pages/ChatbotJobsPage.tsx(31,9): error TS6133: 'hasPending' is declared but its value is never read.
-src/features/notesapp/hooks/useNoteData.ts(23,3): error TS6196: 'NoteFileCreateInput' is declared but never used.
-src/shared/utils/transient-recovery.ts(1,57): error TS2307: Cannot find module '@/shared/lib/transient-recovery/with-recovery' or its corresponding type declarations.
-src/shared/utils/transient-recovery.ts(2,47): error TS2307: Cannot find module '@/shared/lib/transient-recovery/with-recovery' or its corresponding type declarations.
-src/shared/utils/transient-recovery.ts(3,46): error TS2307: Cannot find module '@/shared/lib/transient-recovery/settings' or its corresponding type declarations.
-src/shared/utils/transient-recovery.ts(4,48): error TS2307: Cannot find module '@/shared/lib/transient-recovery/constants' or its corresponding type declarations.
+src/features/integrations/components/listings/hooks/useBaseComSettings.ts(59,14): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/integrations/components/listings/hooks/useBaseComSettings.ts(76,12): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper.tsx(32,13): error TS7030: Not all code paths return a value.
+src/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper.tsx(66,13): error TS7030: Not all code paths return a value.
+src/features/integrations/hooks/useMarketplaceMutations.ts(41,5): error TS2322: Type '({ connectionId, catalogId, mappings }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string; }[]; }) => Promise<{ upserted: number; message: string; }>' is not assignable to type 'MutationFunction<{ upserted: number; message: string; }, { connectionId: string; catalogId: string; }>'.
+  Types of parameters '__0' and 'variables' are incompatible.
+    Property 'mappings' is missing in type '{ connectionId: string; catalogId: string; }' but required in type '{ connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string; }[]; }'.
+src/features/integrations/index.ts(3,10): error TS2305: Module '"./components/listings/ProductListingsModal"' has no exported member 'default'.
+src/features/jobs/components/ProductListingJobsPanel.tsx(128,18): error TS2345: Argument of type '(job: ProductJob) => ListingRow[]' is not assignable to parameter of type '(this: undefined, value: unknown, index: number, array: unknown[]) => ListingRow | readonly ListingRow[]'.
+  Types of parameters 'job' and 'value' are incompatible.
+    Type 'unknown' is not assignable to type 'ProductJob'.
+src/features/notesapp/components/NoteForm.tsx(164,37): error TS2345: Argument of type '(rel: NoteRecord) => { id: string; title: string; color: string | null; content: string; }' is not assignable to parameter of type '(value: RelatedNote, index: number, array: RelatedNote[]) => { id: string; title: string; color: string | null; content: string; }'.
+  Types of parameters 'rel' and 'value' are incompatible.
+    Type 'RelatedNote' is missing the following properties from type 'NoteRecord': content, editorType, isPinned, isArchived, and 4 more.
+src/features/notesapp/components/NoteForm.tsx(165,41): error TS2345: Argument of type '(rel: { targetNote: NoteRecord; }) => { id: string; title: string; color: string | null; content: string; }' is not assignable to parameter of type '(value: NoteRelationWithTarget, index: number, array: NoteRelationWithTarget[]) => { id: string; title: string; color: string | null; content: string; }'.
+  Types of parameters 'rel' and 'value' are incompatible.
+    Type 'NoteRelationWithTarget' is not assignable to type '{ targetNote: NoteRecord; }'.
+      Types of property 'targetNote' are incompatible.
+        Type 'RelatedNote' is missing the following properties from type 'NoteRecord': content, editorType, isPinned, isArchived, and 4 more.
+src/features/notesapp/components/NoteForm.tsx(166,39): error TS2345: Argument of type '(rel: { sourceNote: NoteRecord; }) => { id: string; title: string; color: string | null; content: string; }' is not assignable to parameter of type '(value: NoteRelationWithSource, index: number, array: NoteRelationWithSource[]) => { id: string; title: string; color: string | null; content: string; }'.
+  Types of parameters 'rel' and 'value' are incompatible.
+    Type 'NoteRelationWithSource' is not assignable to type '{ sourceNote: NoteRecord; }'.
+      Types of property 'sourceNote' are incompatible.
+        Type 'RelatedNote' is missing the following properties from type 'NoteRecord': content, editorType, isPinned, isArchived, and 4 more.

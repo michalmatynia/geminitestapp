@@ -875,3 +875,5 @@ export function ProductListingsModal({
     </ModalShell>
   );
 }
+
+export default ProductListingsModal;

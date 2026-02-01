@@ -102,9 +102,9 @@ export function PriceGroupModal({
           ...form,
           groupId: form.groupId.trim(),
           name: form.name.trim(),
-          description: form.description.trim() || undefined,
+          description: form.description.trim(),
           sourceGroupId: form.sourceGroupId || undefined,
-          type: form.groupType,
+          groupType: form.groupType,
         },
       });
 

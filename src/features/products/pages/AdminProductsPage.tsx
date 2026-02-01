@@ -26,8 +26,8 @@ import { logger } from "@/shared/utils/logger";
 import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 import { getProducts } from "@/features/products/api";
 
-const SelectIntegrationModal = dynamic(
-  () => import("@/features/integrations/components/listings/SelectIntegrationModal").then((mod) => ({ default: mod.SelectIntegrationModal })),
+const SelectIntegrationModal = dynamic<import("@/features/integrations/components/listings/SelectIntegrationModal").SelectIntegrationModalProps>(
+  () => import("@/features/integrations/components/listings/SelectIntegrationModal"),
   { ssr: false }
 );
 

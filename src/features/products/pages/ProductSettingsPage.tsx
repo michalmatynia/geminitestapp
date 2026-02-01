@@ -91,8 +91,9 @@ export function ProductSettingsPage(): React.JSX.Element {
   const defaultGroupId = priceGroups.find((g: import("@/features/products/types").PriceGroup) => g.isDefault)?.id ?? "";
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (catalogs.length > 0) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (!selectedCategoryCatalogId) {
           const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
           if (def) setSelectedCategoryCatalogId(def.id);
@@ -102,8 +103,10 @@ export function ProductSettingsPage(): React.JSX.Element {
           if (def) setSelectedTagCatalogId(def.id);
         }
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {

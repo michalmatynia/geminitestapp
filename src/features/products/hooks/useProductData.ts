@@ -73,7 +73,7 @@ export function useUpdateProductMutation(): UseMutationResult<ProductWithImages,
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }): Promise<ProductWithImages> => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductWithImages> | FormData }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const response = await fetch(`/api/products/${id}`, {
           method: "PUT",
@@ -182,14 +182,17 @@ export function useProductData({
   const hasInitialized = useRef(false);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (preferencesLoaded && !hasInitialized.current) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
         if (initialPageSize) setPageSize(initialPageSize);
         hasInitialized.current = true;
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
 
   const filters: UseProductsFilters = useMemo(() => ({

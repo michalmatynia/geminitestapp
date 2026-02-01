@@ -4,7 +4,7 @@ import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, NoteRecord } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
 import { useQuery, useQueries, UseQueryResult } from "@tanstack/react-query";
 
@@ -161,9 +161,9 @@ export function NoteForm({
   const initialCombinedRelations = useMemo((): RelatedNoteItem[] => {
     if (!note) return [];
     return [
-      ...(note.relations ?? []).map((rel: NoteRecord) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: "" })),
-      ...(note.relationsFrom ?? []).map((rel: { targetNote: NoteRecord }) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: "" })),
-      ...(note.relationsTo ?? []).map((rel: { sourceNote: NoteRecord }) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: "" })),
+      ...(note.relations ?? []).map((rel: import("@/shared/types/notes").RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: "" })),
+      ...(note.relationsFrom ?? []).map((rel: import("@/shared/types/notes").NoteRelationWithTarget) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: "" })),
+      ...(note.relationsTo ?? []).map((rel: import("@/shared/types/notes").NoteRelationWithSource) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: "" })),
     ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
   }, [note]);
 

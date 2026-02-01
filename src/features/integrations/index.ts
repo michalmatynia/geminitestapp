@@ -1,6 +1,6 @@
 export { default as ListProductModal } from "./components/listings/ListProductModal";
 export { default as MassListProductModal } from "./components/listings/MassListProductModal";
-export { default as ProductListingsModal } from "./components/listings/ProductListingsModal";
+export { ProductListingsModal } from "./components/listings/ProductListingsModal";
 export { default as SelectIntegrationModal } from "./components/listings/SelectIntegrationModal";
 export * from "./hooks/useIntegrationOperations";
 export { default as AddIntegrationPage } from "./pages/AddIntegrationPage";

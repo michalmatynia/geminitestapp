@@ -112,12 +112,13 @@ export default function ImportsPage(): React.JSX.Element {
 
   // Sync connections
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (integrationsWithConnections) {
       const baseIntegration = integrationsWithConnections.find(
         (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
       );
       const connections = baseIntegration?.connections ?? [];
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setBaseConnections(connections);
         if (connections.length > 0) {
           setIsBaseConnected(true);
@@ -126,22 +127,27 @@ export default function ImportsPage(): React.JSX.Element {
           }
         }
       }, 0);
-      return (): void => clearTimeout(timer);
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [integrationsWithConnections, selectedBaseConnectionId]);
 
   // Sync default catalog
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogsData.find((catalog: CatalogRecord) => catalog.isDefault);
       if (defaultCatalog) {
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           setCatalogId(defaultCatalog.id);
           hasInitializedCatalog.current = true;
         }, 0);
-        return (): void => clearTimeout(timer);
       }
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [catalogsData, catalogId]);
 
   // Preferences
@@ -224,6 +230,7 @@ export default function ImportsPage(): React.JSX.Element {
       }, 0);
       return (): void => clearTimeout(timer);
     }
+    return undefined;
   }, [lastImportTemplatePref, defaultExportInventoryPref, defaultConnectionPref, exportStockFallbackPref, imageRetryPresetsPref, sampleProductPref, baseConnections, exportInventoryId, exportStockFallbackEnabled, imageRetryPresets.length, importTemplateId, inventoryId]);
 
   // Apply templates when preferences and templates are available
@@ -296,6 +303,7 @@ export default function ImportsPage(): React.JSX.Element {
         return (): void => clearTimeout(timer);
       }
     }
+    return undefined;
   }, [inventories, inventoryId, exportInventoryId]);
 
   const warehousesQuery = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
@@ -341,6 +349,7 @@ export default function ImportsPage(): React.JSX.Element {
       }, 0);
       return (): void => clearTimeout(timer);
     }
+    return undefined;
   }, [importList]);
 
   // Actions
@@ -620,7 +629,7 @@ export default function ImportsPage(): React.JSX.Element {
         <TabsContent value="templates" className="mt-6 space-y-6">
           <div className="bg-gray-900 p-4 border border-border rounded-md">
              <div className="flex justify-between items-start gap-4 mb-4">
-                <Tabs value={templateScope} onValueChange={(v: "import" | "export") => setTemplateScope(v)}>
+                <Tabs value={templateScope} onValueChange={(v: string): void => setTemplateScope(v as "import" | "export")}>
                    <TabsList>
                       <TabsTrigger value="import">Import</TabsTrigger>
                       <TabsTrigger value="export">Export</TabsTrigger>

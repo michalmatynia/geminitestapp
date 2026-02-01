@@ -9,28 +9,28 @@ export const internationalizationKeys = {
   languages: () => [...internationalizationKeys.all, "languages"] as const,
 };
 
-export function useCurrencies(): UseQueryResult<unknown, Error> {
+export function useCurrencies(): UseQueryResult<CurrencyOption[], Error> {
   return useQuery({
     queryKey: internationalizationKeys.currencies(),
-    queryFn: api.getCurrencies,
+    queryFn: async (): Promise<CurrencyOption[]> => api.getCurrencies(),
   });
 }
 
-export function useCountries(): UseQueryResult<unknown, Error> {
+export function useCountries(): UseQueryResult<CountryOption[], Error> {
   return useQuery({
     queryKey: internationalizationKeys.countries(),
-    queryFn: api.getCountries,
+    queryFn: async (): Promise<CountryOption[]> => api.getCountries(),
   });
 }
 
-export function useLanguages(): UseQueryResult<unknown, Error> {
+export function useLanguages(): UseQueryResult<Language[], Error> {
   return useQuery({
     queryKey: internationalizationKeys.languages(),
-    queryFn: api.getLanguages,
+    queryFn: async (): Promise<Language[]> => api.getLanguages(),
   });
 }
 
-export function useDeleteCurrencyMutation(): UseMutationResult<unknown, Error, string> {
+export function useDeleteCurrencyMutation(): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteCurrency(id),
@@ -40,7 +40,7 @@ export function useDeleteCurrencyMutation(): UseMutationResult<unknown, Error, s
   });
 }
 
-export function useDeleteCountryMutation(): UseMutationResult<unknown, Error, string> {
+export function useDeleteCountryMutation(): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteCountry(id),
@@ -50,7 +50,7 @@ export function useDeleteCountryMutation(): UseMutationResult<unknown, Error, st
   });
 }
 
-export function useDeleteLanguageMutation(): UseMutationResult<unknown, Error, string> {
+export function useDeleteLanguageMutation(): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteLanguage(id),
@@ -60,30 +60,33 @@ export function useDeleteLanguageMutation(): UseMutationResult<unknown, Error, s
   });
 }
 
-export function useSaveCurrencyMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<CurrencyOption> }> {
+export function useSaveCurrencyMutation(): UseMutationResult<CurrencyOption, Error, { id?: string; data: Partial<CurrencyOption> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<CurrencyOption> }) => api.saveCurrency(id, data),
+    mutationFn: async ({ id, data }: { id?: string; data: Partial<CurrencyOption> }): Promise<CurrencyOption> => 
+      api.saveCurrency(id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: internationalizationKeys.currencies() });
     },
   });
 }
 
-export function useSaveCountryMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }> {
+export function useSaveCountryMutation(): UseMutationResult<CountryOption, Error, { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }) => api.saveCountry(id, data),
+    mutationFn: async ({ id, data }: { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }): Promise<CountryOption> => 
+      api.saveCountry(id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: internationalizationKeys.countries() });
     },
   });
 }
 
-export function useSaveLanguageMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<Language> & { countryIds?: string[] } }> {
+export function useSaveLanguageMutation(): UseMutationResult<Language, Error, { id?: string; data: Partial<Language> & { countryIds?: string[] } }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<Language> & { countryIds?: string[] } }) => api.saveLanguage(id, data),
+    mutationFn: async ({ id, data }: { id?: string; data: Partial<Language> & { countryIds?: string[] } }): Promise<Language> => 
+      api.saveLanguage(id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: internationalizationKeys.languages() });
     },

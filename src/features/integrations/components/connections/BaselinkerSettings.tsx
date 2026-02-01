@@ -29,16 +29,19 @@ export function BaselinkerSettings({
   const hasInitialized = useRef(false);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (settingsQuery.data && !hasInitialized.current) {
       const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
       if (found?.value) {
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
           setSyncIntervalMinutes(found.value);
           hasInitialized.current = true;
         }, 0);
-        return (): void => clearTimeout(timer);
       }
     }
+    return (): void => {
+      if (timer) clearTimeout(timer);
+    };
   }, [settingsQuery.data]);
 
   const handleSaveSyncInterval = async (): Promise<void> => {

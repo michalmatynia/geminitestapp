@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
+import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
 import { FileManager } from "@/features/files";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 
@@ -87,9 +87,14 @@ export function MediaLibraryPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
           <DialogTitle>Media Library</DialogTitle>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" aria-label="Close media library">
+              <X className="size-4" />
+            </Button>
+          </DialogClose>
         </DialogHeader>
 
         <div className="flex items-center gap-3">
@@ -114,7 +119,7 @@ export function MediaLibraryPanel({
           <p className="text-xs text-gray-500">Max 10MB per file</p>
         </div>
 
-        <div className="mt-4 rounded border border-border/40 bg-gray-900">
+        <div className="mt-4 rounded border border-border/40 bg-gray-900 flex-1 overflow-auto">
           <FileManager
             onSelectFile={handleSelect}
             selectionMode={selectionMode}

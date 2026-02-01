@@ -208,7 +208,7 @@ export default function ProductAiJobsPanel({
       meta.source,
       job.product?.name_en,
       job.product?.sku,
-    ].some((val: string | undefined) => val?.toLowerCase().includes(query.toLowerCase()));
+    ].some((val) => (typeof val === "string" ? val.toLowerCase().includes(query.toLowerCase()) : false));
   });
 
   const aiContent = (

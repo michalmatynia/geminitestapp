@@ -52,6 +52,13 @@ const THEME_SECTIONS = [
 
 const FONT_OPTIONS = [
   { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Bebas Neue", value: "'Bebas Neue', sans-serif" },
+  { label: "Space Grotesk", value: "'Space Grotesk', sans-serif" },
+  { label: "Manrope", value: "Manrope, sans-serif" },
+  { label: "Outfit", value: "Outfit, sans-serif" },
+  { label: "Plus Jakarta Sans", value: "'Plus Jakarta Sans', sans-serif" },
+  { label: "DM Sans", value: "'DM Sans', sans-serif" },
+  { label: "Sora", value: "Sora, sans-serif" },
   { label: "Arial", value: "Arial, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Times New Roman", value: "'Times New Roman', serif" },
@@ -839,9 +846,16 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                                 : "border-border/40 bg-gray-900/40 hover:border-border/70"
                             }`}
                           >
-                            <button
-                              type="button"
+                            <div
+                              role="button"
+                              tabIndex={0}
                               onClick={(): void => update("activeColorSchemeId", scheme.id)}
+                              onKeyDown={(event: React.KeyboardEvent): void => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  update("activeColorSchemeId", scheme.id);
+                                }
+                              }}
                               className="w-full text-left"
                             >
                               <div className="mb-2 flex items-start justify-between gap-2 text-[11px] text-gray-300">
@@ -918,7 +932,7 @@ export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean
                                   </div>
                                 </div>
                               </div>
-                            </button>
+                            </div>
                           </div>
                         );
                       })}

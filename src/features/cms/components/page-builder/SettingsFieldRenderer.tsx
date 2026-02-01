@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import NextImage from "next/image";
 import {
   Input,
@@ -18,7 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  useToast,
 } from "@/shared/ui";
+import { useQueryClient } from "@tanstack/react-query";
 import { Upload, FolderOpen, Link2, Search } from "lucide-react";
 import type { SettingsField, SettingsFieldOption } from "../../types/page-builder";
 import { useCmsSlugs } from "../../hooks/useCmsQueries";
@@ -27,9 +29,17 @@ import type { Slug } from "../../types";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import type { ColorScheme } from "@/features/cms/types/theme-settings";
+import type { ImageFileRecord } from "@/shared/types/files";
 
 const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
   { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Bebas Neue", value: "'Bebas Neue', sans-serif" },
+  { label: "Space Grotesk", value: "'Space Grotesk', sans-serif" },
+  { label: "Manrope", value: "Manrope, sans-serif" },
+  { label: "Outfit", value: "Outfit, sans-serif" },
+  { label: "Plus Jakarta Sans", value: "'Plus Jakarta Sans', sans-serif" },
+  { label: "DM Sans", value: "'DM Sans', sans-serif" },
+  { label: "Sora", value: "Sora, sans-serif" },
   { label: "Arial", value: "Arial, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Times New Roman", value: "'Times New Roman', serif" },
@@ -73,6 +83,8 @@ const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
   { label: "Scheme 5", value: "scheme-5" },
 ];
 
+const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 interface SettingsFieldRendererProps {
   field: SettingsField;
   value: unknown;
@@ -107,7 +119,47 @@ export function SettingsFieldRenderer({
   );
 
   const [mediaOpen, setMediaOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const imageValue = typeof value === "string" ? value : "";
+
+  const uploadSingleImage = async (file: File): Promise<ImageFileRecord> => {
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      throw new Error("File exceeds 10MB limit");
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/cms/media", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      throw new Error("Failed to upload image");
+    }
+    return (await res.json()) as ImageFileRecord;
+  };
+
+  const handleUploadImage = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = event.target.files;
+    event.target.value = "";
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const uploaded = await uploadSingleImage(file);
+      handleChange(uploaded.filepath ?? "");
+      toast("Upload complete.", { variant: "success" });
+      await queryClient.invalidateQueries({ queryKey: ["files"] });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      toast(message, { variant: "error" });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   return (
     <div className="space-y-1.5">
@@ -214,11 +266,19 @@ export function SettingsFieldRenderer({
               size="sm"
               variant="outline"
               className="flex-1 text-xs"
-              onClick={(): void => setMediaOpen(true)}
+              onClick={(): void => fileInputRef.current?.click()}
+              disabled={uploadingImage}
             >
               <Upload className="mr-1.5 size-3" />
-              {imageValue ? "Replace image" : "Upload image"}
+              {uploadingImage ? "Uploading..." : imageValue ? "Replace image" : "Upload image"}
             </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleUploadImage(e); }}
+            />
             <Button
               size="sm"
               variant="outline"

@@ -55,6 +55,13 @@ const COLOR_SCHEME_FALLBACK = [
 
 const FONT_FAMILY_OPTIONS = [
   { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Bebas Neue", value: "'Bebas Neue', sans-serif" },
+  { label: "Space Grotesk", value: "'Space Grotesk', sans-serif" },
+  { label: "Manrope", value: "Manrope, sans-serif" },
+  { label: "Outfit", value: "Outfit, sans-serif" },
+  { label: "Plus Jakarta Sans", value: "'Plus Jakarta Sans', sans-serif" },
+  { label: "DM Sans", value: "'DM Sans', sans-serif" },
+  { label: "Sora", value: "Sora, sans-serif" },
   { label: "Arial", value: "Arial, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Times New Roman", value: "'Times New Roman', serif" },

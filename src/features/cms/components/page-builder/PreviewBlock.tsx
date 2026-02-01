@@ -535,10 +535,13 @@ export function PreviewSection({
   if (section.type === "Grid") {
     const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === "Row");
     const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+    const gridImageBlocks = section.blocks.filter((b: BlockInstance) => b.type === "ImageElement");
     const sectionGap = (section.settings["gap"] as string) || "medium";
     const sectionGapClass = getGapClass(sectionGap);
     const gridBackgroundSettings = section.settings["backgroundImage"] as Record<string, unknown> | undefined;
-    const hasGridBackground = Boolean((gridBackgroundSettings?.["src"] as string) || "");
+    const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
+    const hasGridBackgroundLayers = gridImageBlocks.length > 0;
+    const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
     const rowCount = rowBlocks.length > 0 ? rowBlocks.length : directColumns.length > 0 ? 1 : 0;
     const canRemoveRow = rowCount > 1;
     const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
@@ -586,7 +589,13 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           <div className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
-            {hasGridBackground && renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
+            {hasGridBackgroundLayers &&
+              gridImageBlocks.map((block: BlockInstance) => (
+                <React.Fragment key={`grid-background-${block.id}`}>
+                  {renderBackgroundImageLayer(block.settings, mediaStyles)}
+                </React.Fragment>
+              ))}
+            {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
             <div className="relative z-10">
               {rowsToRender.length === 0 ? (
                 showEditorChrome ? (

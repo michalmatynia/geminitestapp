@@ -1,4 +1,5 @@
 
+import { Fragment } from "react";
 import type { BlockInstance } from "../../../types/page-builder";
 import type { GsapAnimationConfig } from "@/features/gsap";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSchemeColors } from "../theme-styles";
@@ -195,10 +196,13 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
   const directColumns = blocks.filter((b: BlockInstance) => b.type === "Column");
+  const gridImageBlocks = blocks.filter((b: BlockInstance) => b.type === "ImageElement");
   const sectionGap = (settings["gap"] as string) || "medium";
   const sectionGapClass = getGapClass(sectionGap);
   const gridBackgroundSettings = settings["backgroundImage"] as Record<string, unknown> | undefined;
-  const hasGridBackground = Boolean((gridBackgroundSettings?.["src"] as string) || "");
+  const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
+  const hasGridBackgroundLayers = gridImageBlocks.length > 0;
+  const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
 
   const rowsToRender: BlockInstance[] =
     rowBlocks.length > 0
@@ -211,7 +215,13 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
 
   return (
     <section style={sectionStyles} className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
-      {hasGridBackground && renderBackgroundImageLayer(gridBackgroundSettings)}
+      {hasGridBackgroundLayers &&
+        gridImageBlocks.map((block: BlockInstance) => (
+          <Fragment key={`grid-background-${block.id}`}>
+            {renderBackgroundImageLayer(block.settings)}
+          </Fragment>
+        ))}
+      {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
       <div className="relative z-10">
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
           <div className={`flex flex-col ${sectionGapClass}`}>

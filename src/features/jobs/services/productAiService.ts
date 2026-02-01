@@ -1,8 +1,8 @@
 import { productService } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
-import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
-import type { ProductAiJobType, ProductAiJob } from "@/shared/types/jobs";
+import type { ProductAiJobRecord, ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";
+import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from "@/shared/types/jobs";
 
 type ProductSummary = {
   name_en: string | null;
@@ -11,6 +11,29 @@ type ProductSummary = {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object";
+
+const toJobResult = (value: unknown): ProductAiJobResult | null => {
+  if (value === null || value === undefined) return null;
+  return isRecord(value) ? (value as ProductAiJobResult) : null;
+};
+
+const toIsoString = (value?: Date | null): string | null => {
+  if (!value) return null;
+  return value.toISOString();
+};
+
+const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
+  id: record.id,
+  productId: record.productId,
+  status: record.status,
+  type: record.type,
+  payload: record.payload,
+  result: toJobResult(record.result),
+  errorMessage: record.errorMessage ?? null,
+  createdAt: record.createdAt.toISOString(),
+  startedAt: toIsoString(record.startedAt),
+  finishedAt: toIsoString(record.finishedAt),
+});
 
 const toProductSummary = (product: Record<string, unknown> | null): ProductSummary | null => {
   if (!product) return null;
@@ -23,14 +46,15 @@ const toProductSummary = (product: Record<string, unknown> | null): ProductSumma
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
   const jobRepository = await getProductAiJobRepository();
-  const job = await jobRepository.createJob(productId, type, payload);
-  console.log(`[enqueueProductAiJob] Job created with id: ${job.id}`);
-  return job;
+  const jobRecord = await jobRepository.createJob(productId, type, payload);
+  console.log(`[enqueueProductAiJob] Job created with id: ${jobRecord.id}`);
+  return toProductAiJob(jobRecord);
 }
 
 export async function getProductAiJobs(productId?: string): Promise<(ProductAiJob & { product: { name_en: string | null; sku: string | null } | null })[]> {
   const jobRepository = await getProductAiJobRepository();
-  const jobs = await jobRepository.findJobs(productId);
+  const jobRecords = await jobRepository.findJobs(productId);
+  const jobs = jobRecords.map(toProductAiJob);
 
   const shouldFetchProduct = (job: { productId: string; payload: unknown }): boolean => {
     const payload =
@@ -85,8 +109,9 @@ export async function getProductAiJobs(productId?: string): Promise<(ProductAiJo
 
 export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { product: Record<string, unknown> | null }) | null> {
   const jobRepository = await getProductAiJobRepository();
-  const job = await jobRepository.findJobById(jobId);
-  if (!job) return null;
+  const jobRecord = await jobRepository.findJobById(jobId);
+  if (!jobRecord) return null;
+  const job = toProductAiJob(jobRecord);
 
   let product: Record<string, unknown> | null = null;
   const payload =
@@ -125,24 +150,26 @@ export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { 
 
 export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
-  return jobRepository.updateJob(jobId, data);
+  const updated = await jobRepository.updateJob(jobId, data);
+  return toProductAiJob(updated);
 }
 
 export async function cancelProductAiJob(jobId: string): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
-  const job = await jobRepository.findJobById(jobId);
-  if (!job) throw notFoundError("Job not found", { jobId });
-  if (job.status !== "pending" && job.status !== "running") {
+  const jobRecord = await jobRepository.findJobById(jobId);
+  if (!jobRecord) throw notFoundError("Job not found", { jobId });
+  if (jobRecord.status !== "pending" && jobRecord.status !== "running") {
     throw invalidStateError("Only pending or running jobs can be canceled", {
       jobId,
-      status: job.status,
+      status: jobRecord.status,
     });
   }
 
-  return jobRepository.updateJob(jobId, {
+  const updated = await jobRepository.updateJob(jobId, {
     status: "canceled",
     finishedAt: new Date(),
   });
+  return toProductAiJob(updated);
 }
 
 export async function deleteProductAiJob(jobId: string): Promise<void> {

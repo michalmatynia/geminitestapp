@@ -145,10 +145,29 @@ function createRowBlock(columnCount: number): BlockInstance {
   };
 }
 
+function splitGridBlocks(blocks: BlockInstance[]): {
+  rows: BlockInstance[];
+  columns: BlockInstance[];
+  extras: BlockInstance[];
+} {
+  const rows: BlockInstance[] = [];
+  const columns: BlockInstance[] = [];
+  const extras: BlockInstance[] = [];
+  for (const block of blocks) {
+    if (block.type === "Row") {
+      rows.push(block);
+    } else if (block.type === "Column") {
+      columns.push(block);
+    } else {
+      extras.push(block);
+    }
+  }
+  return { rows, columns, extras };
+}
+
 function ensureGridRows(section: SectionInstance): SectionInstance {
   if (section.type !== "Grid") return section;
-  const rows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
-  const columns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+  const { rows, columns, extras } = splitGridBlocks(section.blocks);
   if (rows.length > 0) {
     if (columns.length === 0) return section;
     const rowDef = getBlockDefinition("Row");
@@ -165,7 +184,7 @@ function ensureGridRows(section: SectionInstance): SectionInstance {
     );
     return {
       ...section,
-      blocks: allRows,
+      blocks: [...allRows, ...extras],
       settings: { ...section.settings, rows: allRows.length, columns: maxColumns },
     };
   }
@@ -174,7 +193,7 @@ function ensureGridRows(section: SectionInstance): SectionInstance {
   const columnsSetting = (section.settings["columns"] as number) ?? Math.max(1, columns.length || 1);
   if (columns.length === 0) {
     const rows = Array.from({ length: Math.max(1, rowsSetting) }, () => createRowBlock(columnsSetting));
-    return { ...section, blocks: rows, settings: { ...section.settings, rows: rows.length, columns: columnsSetting } };
+    return { ...section, blocks: [...rows, ...extras], settings: { ...section.settings, rows: rows.length, columns: columnsSetting } };
   }
   const row: BlockInstance = {
     id: uid(),
@@ -182,7 +201,7 @@ function ensureGridRows(section: SectionInstance): SectionInstance {
     settings: rowDef ? { ...rowDef.defaultSettings } : {},
     blocks: columns,
   };
-  return { ...section, blocks: [row], settings: { ...section.settings, rows: 1, columns: columns.length } };
+  return { ...section, blocks: [row, ...extras], settings: { ...section.settings, rows: 1, columns: columns.length } };
 }
 
 function updateColumnBlocks(
@@ -568,12 +587,16 @@ export function basePageBuilderReducer(
           if (s.id !== action.sectionId) return s;
           if (s.type !== "Grid") return s;
           const normalized = ensureGridRows(s);
-          const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+          const { rows, extras } = splitGridBlocks(normalized.blocks);
           const columnsPerRow =
             (normalized.settings["columns"] as number) ??
             Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
           const nextRows = [...rows, createRowBlock(columnsPerRow)];
-          return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow } };
+          return {
+            ...normalized,
+            blocks: [...nextRows, ...extras],
+            settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow },
+          };
         });
         return { ...state, sections: updatedSections };
       }
@@ -689,7 +712,7 @@ export function basePageBuilderReducer(
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
         const normalized = ensureGridRows(s);
-        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const { rows, extras } = splitGridBlocks(normalized.blocks);
         const targetCols = Math.max(1, action.columnCount);
         const nextRows = rows.map((row: BlockInstance) => {
           const cols = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
@@ -699,7 +722,11 @@ export function basePageBuilderReducer(
           }
           return { ...row, blocks: cols.slice(0, targetCols) };
         });
-        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, columns: targetCols, rows: nextRows.length } };
+        return {
+          ...normalized,
+          blocks: [...nextRows, ...extras],
+          settings: { ...normalized.settings, columns: targetCols, rows: nextRows.length },
+        };
       });
       return { ...state, sections: updatedSections };
     }
@@ -708,7 +735,7 @@ export function basePageBuilderReducer(
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
         const normalized = ensureGridRows(s);
-        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =
           (normalized.settings["columns"] as number) ??
           Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
@@ -720,7 +747,11 @@ export function basePageBuilderReducer(
         } else {
           nextRows = rows.slice(0, targetRows);
         }
-        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: targetRows, columns: columnsPerRow } };
+        return {
+          ...normalized,
+          blocks: [...nextRows, ...extras],
+          settings: { ...normalized.settings, rows: targetRows, columns: columnsPerRow },
+        };
       });
       return { ...state, sections: updatedSections };
     }
@@ -729,12 +760,16 @@ export function basePageBuilderReducer(
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
         const normalized = ensureGridRows(s);
-        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =
           (normalized.settings["columns"] as number) ??
           Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === "Column").length || 1);
         const nextRows = [...rows, createRowBlock(columnsPerRow)];
-        return { ...normalized, blocks: nextRows, settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow } };
+        return {
+          ...normalized,
+          blocks: [...nextRows, ...extras],
+          settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow },
+        };
       });
       return { ...state, sections: updatedSections };
     }
@@ -744,7 +779,7 @@ export function basePageBuilderReducer(
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== "Grid") return s;
         const normalized = ensureGridRows(s);
-        const rows = normalized.blocks.filter((b: BlockInstance) => b.type === "Row");
+        const { rows, extras } = splitGridBlocks(normalized.blocks);
         if (rows.length <= 1) return normalized;
         const nextRows = rows.filter((row: BlockInstance) => row.id !== action.rowId);
         if (nextRows.length === rows.length) return normalized;
@@ -755,7 +790,7 @@ export function basePageBuilderReducer(
         );
         return {
           ...normalized,
-          blocks: nextRows,
+          blocks: [...nextRows, ...extras],
           settings: { ...normalized.settings, rows: nextRows.length, columns: maxColumns },
         };
       });

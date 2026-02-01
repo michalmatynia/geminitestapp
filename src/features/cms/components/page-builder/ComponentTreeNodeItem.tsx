@@ -198,6 +198,9 @@ export function SectionNodeItem({
   const isHidden = Boolean(section.settings["isHidden"]);
   const gridRows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
   const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+  const gridLayerEntries = section.blocks.flatMap((block: BlockInstance, index: number) =>
+    block.type !== "Row" && block.type !== "Column" ? [{ block, index }] : []
+  );
   const resolveSectionDropPosition = (clientY: number, rect: DOMRect): "above" | "below" | null => {
     const threshold = Math.max(8, rect.height * 0.3);
     if (clientY - rect.top <= threshold) return "above";
@@ -225,9 +228,6 @@ export function SectionNodeItem({
       }}
       className="group/section"
     >
-      {sectionDropPosition === "above" && (
-        <div className="mx-2 my-1 h-2 rounded border border-dashed border-purple-500/60 bg-purple-600/10" />
-      )}
       <div
         role="button"
         tabIndex={0}
@@ -251,7 +251,8 @@ export function SectionNodeItem({
             setSectionDropPosition(null);
           }
         }}
-        onDragLeave={() => {
+        onDragLeave={(e: React.DragEvent) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
           setIsDragOver(false);
           setIsSectionDragOver(false);
           setSectionDropPosition(null);
@@ -309,7 +310,7 @@ export function SectionNodeItem({
             setDraggedFromSectionId(null);
           }
         }}
-        className={`flex w-full items-center gap-2 rounded px-2 py-2 text-sm font-medium transition ${
+        className={`relative flex w-full items-center gap-2 rounded px-2 py-2 text-sm font-medium transition ${
           isSectionDragOver
             ? "bg-purple-600/30 text-purple-200 ring-1 ring-purple-500/50"
             : isDragOver
@@ -321,6 +322,12 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
+        {sectionDropPosition === "above" && (
+          <div className="pointer-events-none absolute left-2 right-2 top-0 -translate-y-1/2 h-3 rounded border border-dashed border-purple-500/70 bg-purple-600/20" />
+        )}
+        {sectionDropPosition === "below" && (
+          <div className="pointer-events-none absolute left-2 right-2 bottom-0 translate-y-1/2 h-3 rounded border border-dashed border-purple-500/70 bg-purple-600/20" />
+        )}
         <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/section:opacity-100 active:cursor-grabbing" />
         <div className="shrink-0">
           {canToggle ? (
@@ -383,9 +390,7 @@ export function SectionNodeItem({
           </button>
         </div>
       </div>
-      {sectionDropPosition === "below" && (
-        <div className="mx-2 my-1 h-2 rounded border border-dashed border-purple-500/60 bg-purple-600/10" />
-      )}
+
 
       {isExpanded && section.type === "Grid" && (
         <div className="ml-4 border-l border-border/30 pl-1">
@@ -453,6 +458,33 @@ export function SectionNodeItem({
             ))
           ) : (
             <div className="py-2 text-xs text-gray-500">No rows yet.</div>
+          )}
+          {gridLayerEntries.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <div className="px-2 text-[10px] uppercase tracking-wide text-gray-500">
+                Grid backgrounds
+              </div>
+              {gridLayerEntries.map(({ block, index }: { block: BlockInstance; index: number }) => (
+                <BlockNodeItem
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  sectionId={section.id}
+                  selectedNodeId={selectedNodeId}
+                  onSelect={onSelect}
+                  onDropBlock={onDropBlock}
+                  onDropBlockToColumn={onDropBlockToColumn}
+                  draggedBlockId={draggedBlockId}
+                  setDraggedBlockId={setDraggedBlockId}
+                  draggedFromSectionId={draggedFromSectionId}
+                  setDraggedFromSectionId={setDraggedFromSectionId}
+                  draggedFromColumnId={draggedFromColumnId}
+                  setDraggedFromColumnId={setDraggedFromColumnId}
+                  draggedFromParentBlockId={draggedFromParentBlockId}
+                  setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                />
+              ))}
+            </div>
           )}
           <button
             type="button"

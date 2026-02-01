@@ -990,7 +990,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Grid",
     label: "Grid",
     icon: "LayoutGrid",
-    allowedBlockTypes: ["Row"],
+    allowedBlockTypes: ["Row", "ImageElement"],
     defaultSettings: {
       rows: 1,
       columns: 2,

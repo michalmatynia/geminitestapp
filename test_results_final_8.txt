@@ -1,0 +1,724 @@
+
+> libapp2@0.1.0 test
+> vitest --run
+
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests) 19ms
+stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products > should reject invalid product data (invalid price)
+System event: {
+  level: 'warn',
+  message: 'Invalid form data payload',
+  source: 'products.POST',
+  error: AppError: Invalid form data payload
+      at Module.badRequestError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:129:3)
+      at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:44:13)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:208:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5) {
+    code: 'BAD_REQUEST',
+    httpStatus: 400,
+    meta: {
+      error: TypeError: Content-Type was not one of "multipart/form-data" or "application/x-www-form-urlencoded".
+          at node:internal/deps/undici/undici:6203:19
+          at successSteps (node:internal/deps/undici/undici:6232:27)
+          at readAllBytes (node:internal/deps/undici/undici:5201:13)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'POST',
+    url: 'http://localhost/api/products',
+    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '2ad49c6c-3115-4381-86d8-fb5f7a4817dd',
+  statusCode: 400,
+  context: {
+    errorId: 'd26dd9f1-81b5-426d-9da0-e5768797ab1b',
+    code: 'BAD_REQUEST',
+    critical: false,
+    retryable: false,
+    meta: {
+      error: TypeError: Content-Type was not one of "multipart/form-data" or "application/x-www-form-urlencoded".
+          at node:internal/deps/undici/undici:6203:19
+          at successSteps (node:internal/deps/undici/undici:6232:27)
+          at readAllBytes (node:internal/deps/undici/undici:5201:13)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    }
+  }
+}
+
+stderr | __tests__/api/products/products.test.ts > Products API > POST /api/products > should reject invalid product data (invalid price)
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:59:5)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:208:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+
+stderr | __tests__/api/products/products.test.ts > Products API > POST /api/products > should successfully create a product with localized name and description fields
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.createProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:122:3)
+    at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:56:21)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.createProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:127:5)
+    at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:56:21)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:253:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+
+stdout | __tests__/api/products/products.test.ts > Products API > PUT /api/products/[id] > should return 404 when updating a non-existent product
+System event: {
+  level: 'warn',
+  message: 'Product not found',
+  source: 'products.[id].PUT',
+  error: AppError: Product not found
+      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
+      at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:69:13)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5) {
+    code: 'NOT_FOUND',
+    httpStatus: 404,
+    meta: { productId: 'non-existent-id' },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: {
+    headers: Headers {},
+    formData: [Function: formData],
+    url: 'http://localhost/api/products/non-existent-id',
+    method: 'PUT'
+  },
+  requestId: '5ba366dd-c8eb-47ca-8e65-990ec7bde677',
+  statusCode: 404,
+  context: {
+    errorId: '39cbf722-a528-40bd-a149-f9bffc769117',
+    code: 'NOT_FOUND',
+    critical: false,
+    retryable: false,
+    meta: { productId: 'non-existent-id' }
+  }
+}
+
+stderr | __tests__/api/products/products.test.ts > Products API > PUT /api/products/[id] > should return 404 when updating a non-existent product
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.updateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:166:3)
+    at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:67:38)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.updateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:171:5)
+    at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:67:38)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:73:5)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:277:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+
+stdout | __tests__/api/products/products.test.ts > Products API > DELETE /api/products/[id] > should return 404 when deleting a non-existent product
+System event: {
+  level: 'warn',
+  message: 'Product not found',
+  source: 'products.[id].DELETE',
+  error: AppError: Product not found
+      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
+      at DELETE_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:157:13)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:294:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5) {
+    code: 'NOT_FOUND',
+    httpStatus: 404,
+    meta: { productId: 'non-existent-id' },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'DELETE',
+    url: 'http://localhost/api/products/non-existent-id',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '0423758b-f7c6-47e8-933e-bcac50e2d50a',
+  statusCode: 404,
+  context: {
+    errorId: 'b6423d5b-f8c5-47be-addd-bcc44a996ba6',
+    code: 'NOT_FOUND',
+    critical: false,
+    retryable: false,
+    meta: { productId: 'non-existent-id' }
+  }
+}
+
+stderr | __tests__/api/products/products.test.ts > Products API > DELETE /api/products/[id] > should return 404 when deleting a non-existent product
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.deleteProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:217:3)
+    at DELETE_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:155:21)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:294:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.captureException (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:28:7)
+    at DELETE_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts:161:5)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:294:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+
+ ✓ __tests__/api/products/products.test.ts (9 tests) 22ms
+stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products/[id]/duplicate > should return 404 when product does not exist
+System event: {
+  level: 'warn',
+  message: 'Product not found',
+  source: 'products.DUPLICATE',
+  error: AppError: Product not found
+      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
+      at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/route.ts:35:13)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:333:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5) {
+    code: 'NOT_FOUND',
+    httpStatus: 404,
+    meta: { productId: 'non-existent-id' },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'POST',
+    url: 'http://localhost/api/products/non-existent-id/duplicate',
+    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: 'e63593de-10a7-441a-b85d-2fad60aaf5dc',
+  statusCode: 404,
+  context: {
+    errorId: '034de9c8-3f90-40b0-8860-00b5566b2c08',
+    code: 'NOT_FOUND',
+    critical: false,
+    retryable: false,
+    meta: { productId: 'non-existent-id' }
+  }
+}
+
+stderr | __tests__/api/products/products.test.ts > Products API > POST /api/products/[id]/duplicate > should return 404 when product does not exist
+[system-logger] Failed to write system log TypeError: Cannot read properties of undefined (reading 'create')
+    at Module.createSystemLog (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-log-repository.ts:288:44)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at logSystemEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/lib/system-logger.ts:169:21)
+    at Object.logInfo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/services/error-system.ts:97:7)
+    at Object.duplicateProduct (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:241:3)
+    at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/route.ts:33:21)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts:333:19
+    at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+    at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+    at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+
+ ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 567ms
+ ✓ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests) 10ms
+ ✓ __tests__/features/products/services/productService.test.ts (14 tests) 16ms
+stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should return 400 for invalid input
+System event: {
+  level: 'warn',
+  message: 'Invalid payload',
+  source: 'cms-pages',
+  error: AppError: Invalid payload
+      at Module.validationError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:74:3)
+      at Module.parseJsonBody (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/parse-json.ts:32:19)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/route.ts:69:20)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:134:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15) {
+    code: 'VALIDATION_ERROR',
+    httpStatus: 400,
+    meta: { issues: [Object] },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'POST',
+    url: 'http://localhost/api/cms/pages',
+    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '85085646-8f34-4b7d-a118-5abc52727f63',
+  statusCode: 400,
+  context: {
+    errorId: '5ac104f1-f62a-41c0-82fb-033ca298af7b',
+    code: 'VALIDATION_ERROR',
+    critical: false,
+    retryable: false,
+    meta: { issues: [Object] }
+  }
+}
+
+stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return 404 for non-existent page
+System event: {
+  level: 'warn',
+  message: 'Page not found',
+  source: 'cms.pages.[id].GET',
+  error: AppError: Page not found
+      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:43:13)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:152:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15) {
+    code: 'NOT_FOUND',
+    httpStatus: 404,
+    meta: undefined,
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/cms/pages/non-existent',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: 'ae158e1d-e233-444d-9305-f30894d8bee4',
+  statusCode: 404,
+  context: {
+    errorId: '4748c001-2cf1-47b5-995f-526476836b0a',
+    code: 'NOT_FOUND',
+    critical: false,
+    retryable: false
+  }
+}
+
+stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page
+System event: {
+  level: 'error',
+  message: 'Failed to update page',
+  source: 'cms.pages.[id].PUT',
+  error: Error: page not found
+      at Object.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts:137:31)
+      at Object.mockCall (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/spy/dist/index.js:61:17)
+      at Object.spy [as update] (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/tinyspy/dist/index.js:45:80)
+      at Object.updatePage (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts:80:25)
+      at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:75:45)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:213:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11),
+  request: Request {
+    method: 'PUT',
+    url: 'http://localhost/api/cms/pages/non-existent',
+    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '08f0cffc-501f-4cda-be12-5c41e0531a6f',
+  statusCode: 500,
+  context: {
+    errorId: '230eac42-c857-4ffe-b4d1-7a3bcfc57fea',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
+ ❯ __tests__/features/cms/api/cms-pages.test.ts (12 tests | 3 failed) 21ms
+   × CMS Pages API > POST /api/cms/pages > should create a new page with slugs 3ms
+     → expected +0 to be 2 // Object.is equality
+   × CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme 2ms
+     → expected +0 to be 2 // Object.is equality
+   × CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page 1ms
+     → expected 500 to be 404 // Object.is equality
+stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > renders notes from the API
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/themes
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/themes
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+
+stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/themes
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ✓ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests) 1228ms
+   ✓ Notes page UI > filters notes by search and tag 738ms
+ ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 229ms
+ ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 351ms
+ ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 783ms
+ ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 9ms
+ ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 7ms
+stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > rejects note creation without title/content
+System event: {
+  level: 'warn',
+  message: 'Invalid payload',
+  source: 'notes.POST',
+  error: AppError: Invalid payload
+      at Module.validationError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:74:3)
+      at Module.parseJsonBody (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/parse-json.ts:32:19)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at POST_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/route.ts:83:20)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts:155:17
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15) {
+    code: 'VALIDATION_ERROR',
+    httpStatus: 400,
+    meta: { issues: [Object] },
+    expected: true,
+    critical: false,
+    retryable: false,
+    retryAfterMs: undefined,
+    cause: undefined
+  },
+  request: Request {
+    method: 'POST',
+    url: 'http://localhost/api/notes',
+    headers: Headers { 'Content-Type': 'application/json' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '76e1e968-9c8e-48ed-bf9d-141c980b884e',
+  statusCode: 400,
+  context: {
+    errorId: '57db981c-579f-4cfb-ad20-b213aedd327a',
+    code: 'VALIDATION_ERROR',
+    critical: false,
+    retryable: false,
+    meta: { issues: [Object] }
+  }
+}
+
+stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > fetches a note by id and returns 404 when missing
+System event: {
+  level: 'error',
+  message: 'Failed to fetch note',
+  source: 'notes.[id].GET',
+  error: TypeError: (note.relationsFrom ?? []).map is not a function or its return value is not iterable
+      at buildRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:49:35)
+      at populateRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:75:20)
+      at Object.getById (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:89:12)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts:23:18)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts:169:17
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15),
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/notes/x',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: 'c35c72c7-ce99-484f-a838-a9bc1d74aead',
+  statusCode: 500,
+  context: {
+    errorId: '4303dce5-dd6b-491c-b026-cdce5ab0b742',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
+stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > updates a note with new relations
+System event: {
+  level: 'error',
+  message: 'Failed to update note',
+  source: 'notes.[id].PATCH',
+  error: TypeError: previousNote.relationsFrom?.map is not a function
+      at Object.update (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:106:37)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at PATCH_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts:58:18)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts:199:17
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5),
+  request: Request {
+    method: 'PATCH',
+    url: 'http://localhost/api/notes/mock-note-1769970452487-82514cfl4',
+    headers: Headers { 'Content-Type': 'application/json' },
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '6f902ebb-728a-4907-b35d-bbf91c68048a',
+  statusCode: 500,
+  context: {
+    errorId: 'caead84c-04db-450b-bfbe-0f258822bff7',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 6 failed) 42ms
+   × Notes API > returns notes with relations 30ms
+     → expected [] to have a length of 1 but got +0
+   × Notes API > filters notes by search scope and flags 2ms
+     → expected [] to have a length of 1 but got +0
+   × Notes API > filters notes by tags and categories 1ms
+     → expected [] to have a length of 1 but got +0
+   × Notes API > creates a note with tags and categories 2ms
+     → Cannot read properties of undefined (reading 'tag')
+   × Notes API > fetches a note by id and returns 404 when missing 2ms
+     → expected 500 to be 200 // Object.is equality
+   × Notes API > updates a note with new relations 2ms
+     → expected 500 to be 200 // Object.is equality
+stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtime - Engine > should exit if run not found
+[chatbot][agent][engine] Run not found { runId: 'run-123' }
+
+ ✓ __tests__/features/agent-runtime/services/engine.test.ts (5 tests) 6ms
+ ❯ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests | 5 failed) 31ms
+   × PageBuilderLayout Component > should render all panels by default 17ms
+     → useAdminLayout must be used within an AdminLayoutProvider
+   × PageBuilderLayout Component > should toggle left panel 2ms
+     → useAdminLayout must be used within an AdminLayoutProvider
+   × PageBuilderLayout Component > should toggle right panel 2ms
+     → useAdminLayout must be used within an AdminLayoutProvider
+   × PageBuilderLayout Component > should switch left panel modes 2ms
+     → useAdminLayout must be used within an AdminLayoutProvider
+   × PageBuilderLayout Component > should handle responsive auto-collapse of right panel 7ms
+     → useAdminLayout must be used within an AdminLayoutProvider
+ ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 22ms
+ ✓ __tests__/features/integrations/services/integration-repository.test.ts (8 tests) 6ms
+ ❯ __tests__/features/notesapp/services/note-service.test.ts (11 tests | 2 failed) 14ms
+   × NoteService > Relation Syncing > automatically creates bidirectional relations 2ms
+     → expected [] to include 'mock-note-1769970455110-hexlwca7q'
+   × NoteService > Categories and Tags > manages category trees 1ms
+     → expected undefined to be defined
+ ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 11ms
+ ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts (0 test)
+ ❯ __tests__/features/jobs/workers/productAiQueue.test.ts (0 test)

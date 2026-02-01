@@ -49,8 +49,13 @@ vi.mock("@/shared/lib/db/prisma", () => {
         return !matches(item, value);
       }
 
-      // Handle compound keys (e.g., runId_nodeId: { runId, nodeId })
-      if (typeof value === 'object' && value !== null && !('in' in value || 'contains' in value || 'gte' in value || 'some' in value || 'lt' in value || 'lte' in value || 'gt' in value)) {
+      // Handle compound keys or nested object matches
+      if (typeof value === 'object' && value !== null && !('in' in value || 'notIn' in value || 'contains' in value || 'gte' in value || 'some' in value || 'none' in value || 'every' in value || 'lt' in value || 'lte' in value || 'gt' in value)) {
+          const itemValue = item[key];
+          if (typeof itemValue === 'object' && itemValue !== null) {
+              return matches(itemValue, value);
+          }
+          // If it's a compound key like runId_nodeId: { runId, nodeId }
           return Object.entries(value).every(([vKey, vValue]) => item[vKey] === vValue);
       }
 
@@ -111,13 +116,13 @@ vi.mock("@/shared/lib/db/prisma", () => {
         data = data.filter(item => matches(item, args.where));
       }
       if (args?.orderBy) {
-        const orderBy = Array.isArray(args.orderBy) ? args.orderBy[0] : args.orderBy;
-        const [field, direction] = Object.entries(orderBy)[0] as [string, string];
+        const orderByArr = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
         data.sort((a, b) => {
-          const valA = a[field];
-          const valB = b[field];
-          if (valA < valB) return direction === 'asc' ? -1 : 1;
-          if (valA > valB) return direction === 'asc' ? 1 : -1;
+          for (const order of orderByArr) {
+            const [field, direction] = Object.entries(order)[0] as [string, string];
+            if (a[field] < b[field]) return direction === 'asc' ? -1 : 1;
+            if (a[field] > b[field]) return direction === 'asc' ? 1 : -1;
+          }
           return 0;
         });
       }
@@ -233,14 +238,11 @@ vi.mock("@/shared/lib/db/prisma", () => {
       const data = getStore(name);
       const index = data.findIndex(item => matches(item, args.where));
       if (index !== -1) {
-        // Handle update
         const updateData = { ...args.update };
         data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
         return { ...(MODEL_DEFAULTS[name] || {}), ...data[index] };
       } else {
-        // Handle create
         const createData = { ...args.create };
-        // Basic support for compound keys in create if they were in where
         if (args.where) {
             Object.entries(args.where).forEach(([key, value]) => {
                 if (typeof value === 'object' && value !== null && !('in' in value || 'contains' in value)) {

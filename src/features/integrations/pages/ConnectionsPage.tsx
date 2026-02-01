@@ -272,7 +272,7 @@ function IntegrationsContent(): React.JSX.Element {
   }, [connections, editingConnectionId]);
 
   useEffect(() => {
-    const loadPlaywrightUtils = async () => {
+    const loadPlaywrightUtils = async (): Promise<void> => {
       if (playwrightPersonas.length === 0) {
         setPlaywrightPersonaId(null);
         return;
@@ -284,7 +284,7 @@ function IntegrationsContent(): React.JSX.Element {
       );
       setPlaywrightPersonaId(match?.id ?? null);
     };
-    loadPlaywrightUtils();
+    void loadPlaywrightUtils();
   }, [playwrightPersonas, playwrightSettings]);
 
   const ensureIntegration = async (

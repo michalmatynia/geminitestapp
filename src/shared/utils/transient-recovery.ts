@@ -19,13 +19,13 @@ export type TransientRecoverySettings = {
 
 export const withTransientRecovery = async <T>(
   operation: () => Promise<T>,
-  options?: TransientRecoveryOptions
+  _options?: TransientRecoveryOptions
 ): Promise<T> => {
   // Stub implementation
   return operation();
 };
 
-export const isTransientError = (error: unknown): boolean => {
+export const isTransientError = (_error: unknown): boolean => {
   // Stub implementation
   return false;
 };

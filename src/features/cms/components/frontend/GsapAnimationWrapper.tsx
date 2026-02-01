@@ -21,7 +21,7 @@ export function GsapAnimationWrapper({
   useEffect(() => {
     if (!config || !ref.current) return;
 
-    const loadGsap = async () => {
+    const loadGsap = async (): Promise<void> => {
       const { gsap } = await import("gsap");
       const { ScrollTrigger } = await import("gsap/ScrollTrigger");
       const { MotionPathPlugin } = await import("gsap/MotionPathPlugin");

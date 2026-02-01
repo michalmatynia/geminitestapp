@@ -10,7 +10,7 @@ export function useFetchExternalCategoriesMutation(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ connectionId }) => {
+    mutationFn: async ({ connectionId }: { connectionId: string }): Promise<{ fetched: number; message: string }> => {
       const res = await fetch("/api/marketplace/categories/fetch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,7 +24,7 @@ export function useFetchExternalCategoriesMutation(): UseMutationResult<
 
       return (await res.json()) as { fetched: number; message: string };
     },
-    onSuccess: (_, { connectionId }) => {
+    onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
       void queryClient.invalidateQueries({ queryKey: ["marketplace-categories", connectionId] });
     },
   });
@@ -38,7 +38,7 @@ export function useSaveMappingsMutation(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ connectionId, catalogId, mappings }) => {
+    mutationFn: async ({ connectionId, catalogId, mappings }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string }[] }): Promise<{ upserted: number; message: string }> => {
       const res = await fetch("/api/marketplace/mappings/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,7 +56,7 @@ export function useSaveMappingsMutation(): UseMutationResult<
 
       return (await res.json()) as { upserted: number; message: string };
     },
-    onSuccess: (_, { connectionId, catalogId }) => {
+    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string }) => {
       void queryClient.invalidateQueries({ queryKey: ["category-mappings", connectionId, catalogId] });
     },
   });

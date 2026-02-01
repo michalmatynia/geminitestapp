@@ -150,7 +150,7 @@ export function useDisconnectAllegro(): UseMutationResult<Record<string, unknown
       }
       return (await res.json()) as Record<string, unknown>;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (_: Record<string, unknown>, variables: { integrationId: string; connectionId: string }) => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });
@@ -162,7 +162,7 @@ export function useBaseApiRequest(): UseMutationResult<
   { integrationId: string; connectionId: string; method: string; parameters: unknown }
 > {
   return useMutation({
-    mutationFn: async ({ integrationId, connectionId, method, parameters }) => {
+    mutationFn: async ({ integrationId, connectionId, method, parameters }: { integrationId: string; connectionId: string; method: string; parameters: unknown }): Promise<{ data?: unknown }> => {
       const res = await fetch(
         `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
         {
@@ -186,7 +186,7 @@ export function useAllegroApiRequest(): UseMutationResult<
   { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }
 > {
   return useMutation({
-    mutationFn: async ({ integrationId, connectionId, method, path, body }) => {
+    mutationFn: async ({ integrationId, connectionId, method, path, body }: { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }): Promise<{ status: number; statusText: string; data?: unknown; refreshed?: boolean }> => {
       const res = await fetch(
         `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
         {
@@ -221,7 +221,7 @@ export function useUpdatePreferredTemplate(): UseMutationResult<
   { templateId: string }
 > {
   return useMutation({
-    mutationFn: async ({ templateId }) => {
+    mutationFn: async ({ templateId }: { templateId: string }): Promise<void> => {
       await fetch("/api/integrations/exports/base/templates/preferred", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -237,7 +237,7 @@ export function useUpdatePreferredInventory(): UseMutationResult<
   { inventoryId: string; connectionId: string }
 > {
   return useMutation({
-    mutationFn: async ({ inventoryId, connectionId }) => {
+    mutationFn: async ({ inventoryId, connectionId }: { inventoryId: string; connectionId: string }): Promise<void> => {
       await fetch("/api/integrations/exports/base/inventories/preferred", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -246,4 +246,3 @@ export function useUpdatePreferredInventory(): UseMutationResult<
     },
   });
 }
-

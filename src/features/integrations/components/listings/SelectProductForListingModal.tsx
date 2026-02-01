@@ -145,8 +145,11 @@ export default function SelectProductForListingModal({
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
-      if (err instanceof Error && 'logs' in err && Array.isArray((err as any).logs)) {
-        setExportLogs((err as any).logs as CapturedLog[]);
+      if (err instanceof Error && 'logs' in err) {
+        const errWithLogs = err as Error & { logs: CapturedLog[] };
+        if (Array.isArray(errWithLogs.logs)) {
+          setExportLogs(errWithLogs.logs);
+        }
       }
     } finally {
       setSubmitting(false);

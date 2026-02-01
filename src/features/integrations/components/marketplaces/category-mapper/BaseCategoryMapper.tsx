@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast, Button, Label } from "@/shared/ui";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
 
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
@@ -22,17 +22,22 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   
   // Queries
   const catalogsQuery = useCatalogs();
-  const catalogs = catalogsQuery.data ?? [];
+  const catalogs = useMemo(() => catalogsQuery.data ?? [], [catalogsQuery.data]);
   const catalogsLoading = catalogsQuery.isLoading;
 
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+  const hasInitializedCatalog = useRef(false);
 
   // Auto-select default catalog
   useEffect(() => {
-    if (!selectedCatalogId && catalogs.length > 0) {
+    if (!selectedCatalogId && catalogs.length > 0 && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogs.find((c: Catalog) => c.isDefault) ?? catalogs[0];
       if (defaultCatalog) {
-        setSelectedCatalogId(defaultCatalog.id);
+        const timer = setTimeout(() => {
+          setSelectedCatalogId(defaultCatalog.id);
+          hasInitializedCatalog.current = true;
+        }, 0);
+        return (): void => clearTimeout(timer);
       }
     }
   }, [catalogs, selectedCatalogId]);
@@ -42,11 +47,11 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const internalCategoriesLoading = internalCategoriesQuery.isLoading;
 
   const externalCategoriesQuery = useExternalCategories(connectionId);
-  const externalCategories = externalCategoriesQuery.data ?? [];
+  const externalCategories = useMemo(() => externalCategoriesQuery.data ?? [], [externalCategoriesQuery.data]);
   const externalCategoriesLoading = externalCategoriesQuery.isLoading;
 
   const mappingsQuery = useCategoryMappings(connectionId, selectedCatalogId);
-  const mappings = mappingsQuery.data ?? [];
+  const mappings = useMemo(() => mappingsQuery.data ?? [], [mappingsQuery.data]);
   const mappingsLoading = mappingsQuery.isLoading;
 
   // Mutations
@@ -55,27 +60,35 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const hasInitializedExpansion = useRef(false);
 
   // Initialize expansion state
   useEffect(() => {
-    if (externalCategories.length > 0) {
-      setExpandedIds((prev) => {
-        // If we haven't initialized yet (or just reset), expand depth 0
-        if (prev.size === 0) {
-          return new Set(
-            externalCategories
-              .filter((c) => c.depth === 0)
-              .map((c) => c.id)
-          );
-        }
-        return prev;
-      });
+    if (externalCategories.length > 0 && !hasInitializedExpansion.current) {
+      const timer = setTimeout(() => {
+        setExpandedIds((prev: Set<string>) => {
+          // If we haven't initialized yet (or just reset), expand depth 0
+          if (prev.size === 0) {
+            return new Set(
+              externalCategories
+                .filter((c: ExternalCategory) => c.depth === 0)
+                .map((c: ExternalCategory) => c.id)
+            );
+          }
+          return prev;
+        });
+        hasInitializedExpansion.current = true;
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [externalCategories]);
 
   // Reset pending mappings when catalog changes
   useEffect(() => {
-    setPendingMappings(new Map());
+    const timer = setTimeout(() => {
+      setPendingMappings(new Map());
+    }, 0);
+    return (): void => clearTimeout(timer);
   }, [selectedCatalogId]);
 
   // Fetch categories from Base.com API
@@ -83,7 +96,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
     try {
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: "success" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch from Base.com:", error);
       const message = error instanceof Error ? error.message : "Failed to fetch categories";
       toast(message, { variant: "error" });
@@ -140,7 +153,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
       toast(result.message, { variant: "success" });
       setPendingMappings(new Map());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to save mappings:", error);
       const message = error instanceof Error ? error.message : "Failed to save mappings";
       toast(message, { variant: "error" });
@@ -149,7 +162,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Toggle category expansion
   const toggleExpand = (categoryId: string): void => {
-    setExpandedIds((prev) => {
+    setExpandedIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(categoryId)) {
         next.delete(categoryId);
@@ -164,8 +177,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   const categoryTree = useMemo((): ExternalCategory[] => {
     const buildLevel = (parentExternalId: string | null): ExternalCategory[] => {
       return externalCategories
-        .filter((c) => c.parentExternalId === parentExternalId)
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .filter((c: ExternalCategory) => c.parentExternalId === parentExternalId)
+        .sort((a: ExternalCategory, b: ExternalCategory) => a.name.localeCompare(b.name));
     };
 
     return buildLevel(null);
@@ -174,14 +187,14 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
   // Count statistics
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;
-    const mapped = externalCategories.filter((c) => getMappingForExternal(c.id) !== null).length;
+    const mapped = externalCategories.filter((c: ExternalCategory) => getMappingForExternal(c.id) !== null).length;
     const pending = pendingMappings.size;
     return { total, mapped, pending };
   }, [externalCategories, getMappingForExternal, pendingMappings.size]);
 
   // Render category row with children
   const renderCategory = (category: ExternalCategory, depth: number = 0): React.JSX.Element => {
-    const children = externalCategories.filter((c) => c.parentExternalId === category.externalId);
+    const children = externalCategories.filter((c: ExternalCategory) => c.parentExternalId === category.externalId);
     const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(category.id);
     const currentMapping = getMappingForExternal(category.id);
@@ -231,11 +244,11 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           </td>
         </tr>
         {hasChildren && isExpanded && (
-          <>
+          <React.Fragment>
             {children
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((child) => renderCategory(child, depth + 1))}
-          </>
+              .sort((a: ExternalCategory, b: ExternalCategory) => a.name.localeCompare(b.name))
+              .map((child: ExternalCategory) => renderCategory(child, depth + 1))}
+          </React.Fragment>
         )}
       </React.Fragment>
     );

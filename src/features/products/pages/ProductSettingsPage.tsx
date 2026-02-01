@@ -92,14 +92,17 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (catalogs.length > 0) {
-      if (!selectedCategoryCatalogId) {
-        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-        if (def) setSelectedCategoryCatalogId(def.id);
-      }
-      if (!selectedTagCatalogId) {
-        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-        if (def) setSelectedTagCatalogId(def.id);
-      }
+      const timer = setTimeout(() => {
+        if (!selectedCategoryCatalogId) {
+          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+          if (def) setSelectedCategoryCatalogId(def.id);
+        }
+        if (!selectedTagCatalogId) {
+          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+          if (def) setSelectedTagCatalogId(def.id);
+        }
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId]);
 

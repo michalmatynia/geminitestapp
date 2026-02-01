@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import * as api from "../api";
 import type { CurrencyOption, CountryOption, Language } from "../../../shared/types/internationalization";
 
@@ -9,28 +9,28 @@ export const internationalizationKeys = {
   languages: () => [...internationalizationKeys.all, "languages"] as const,
 };
 
-export function useCurrencies() {
+export function useCurrencies(): UseQueryResult<unknown, Error> {
   return useQuery({
     queryKey: internationalizationKeys.currencies(),
     queryFn: api.getCurrencies,
   });
 }
 
-export function useCountries() {
+export function useCountries(): UseQueryResult<unknown, Error> {
   return useQuery({
     queryKey: internationalizationKeys.countries(),
     queryFn: api.getCountries,
   });
 }
 
-export function useLanguages() {
+export function useLanguages(): UseQueryResult<unknown, Error> {
   return useQuery({
     queryKey: internationalizationKeys.languages(),
     queryFn: api.getLanguages,
   });
 }
 
-export function useDeleteCurrencyMutation() {
+export function useDeleteCurrencyMutation(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteCurrency(id),
@@ -40,7 +40,7 @@ export function useDeleteCurrencyMutation() {
   });
 }
 
-export function useDeleteCountryMutation() {
+export function useDeleteCountryMutation(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteCountry(id),
@@ -50,7 +50,7 @@ export function useDeleteCountryMutation() {
   });
 }
 
-export function useDeleteLanguageMutation() {
+export function useDeleteLanguageMutation(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteLanguage(id),
@@ -60,7 +60,7 @@ export function useDeleteLanguageMutation() {
   });
 }
 
-export function useSaveCurrencyMutation() {
+export function useSaveCurrencyMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<CurrencyOption> }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: Partial<CurrencyOption> }) => api.saveCurrency(id, data),
@@ -70,7 +70,7 @@ export function useSaveCurrencyMutation() {
   });
 }
 
-export function useSaveCountryMutation() {
+export function useSaveCountryMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }) => api.saveCountry(id, data),
@@ -80,7 +80,7 @@ export function useSaveCountryMutation() {
   });
 }
 
-export function useSaveLanguageMutation() {
+export function useSaveLanguageMutation(): UseMutationResult<unknown, Error, { id?: string; data: Partial<Language> & { countryIds?: string[] } }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: Partial<Language> & { countryIds?: string[] } }) => api.saveLanguage(id, data),

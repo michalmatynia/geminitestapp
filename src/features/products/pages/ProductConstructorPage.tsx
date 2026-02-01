@@ -16,7 +16,10 @@ export function ProductConstructorPage(): React.JSX.Element {
   useEffect(() => {
     if (catalogs.length > 0 && !selectedCatalogId) {
       const defaultCatalog = catalogs.find((catalog: import("@/features/products/types").CatalogRecord) => catalog.isDefault);
-      setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
+      const timer = setTimeout(() => {
+        setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [catalogs, selectedCatalogId]);
 

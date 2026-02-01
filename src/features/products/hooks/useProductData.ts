@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { 
   getProducts, 
   countProducts, 
@@ -85,7 +85,7 @@ export function useUpdateProductMutation(): UseMutationResult<ProductWithImages,
         return updateProduct(id, data);
       }
     },
-    onSuccess: (data: ProductWithImages) => {
+    onSuccess: (data: ProductWithImages): void => {
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["products", data.id] });
     },
@@ -183,9 +183,12 @@ export function useProductData({
 
   useEffect(() => {
     if (preferencesLoaded && !hasInitialized.current) {
-      if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
-      if (initialPageSize) setPageSize(initialPageSize);
-      hasInitialized.current = true;
+      const timer = setTimeout(() => {
+        if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
+        if (initialPageSize) setPageSize(initialPageSize);
+        hasInitialized.current = true;
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
 

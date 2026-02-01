@@ -2,10 +2,10 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 
-export function useCsvImportMutation(): UseMutationResult<any, Error, File> {
+export function useCsvImportMutation(): UseMutationResult<unknown, Error, File> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (file: File): Promise<unknown> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -14,7 +14,7 @@ export function useCsvImportMutation(): UseMutationResult<any, Error, File> {
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to import CSV");
-      return (await res.json()) as any;
+      return res.json();
     },
     onSuccess: () => {
       // Invalidate products as they might have been added/updated

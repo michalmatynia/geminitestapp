@@ -75,9 +75,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
   // Metadata queries based on selected catalogs
   const categoryQueries = useQueries({
-    queries: selectedCatalogIds.map(id => ({
+    queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ["categories", id],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductCategory[]> => {
         const res = await fetch(`/api/products/categories?catalogId=${id}`);
         return (await res.json()) as ProductCategory[];
       }
@@ -85,9 +85,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   });
 
   const tagQueries = useQueries({
-    queries: selectedCatalogIds.map(id => ({
+    queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ["tags", id],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductTag[]> => {
         const res = await fetch(`/api/products/tags?catalogId=${id}`);
         return (await res.json()) as ProductTag[];
       }
@@ -95,88 +95,95 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   });
 
   const parameterQueries = useQueries({
-    queries: selectedCatalogIds.map(id => ({
+    queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ["parameters", id],
-      queryFn: async () => {
+      queryFn: async (): Promise<ProductParameter[]> => {
         const res = await fetch(`/api/products/parameters?catalogId=${id}`);
         return (await res.json()) as ProductParameter[];
       }
     }))
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap(q => q.data || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap(q => q.data || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap(q => q.data || []), [parameterQueries]);
-  const parametersLoading = useMemo(() => parameterQueries.some(q => q.isLoading), [parameterQueries]);
+  const categories = useMemo(() => categoryQueries.flatMap((q: { data?: ProductCategory[] }) => q.data || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap((q: { data?: ProductTag[] }) => q.data || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap((q: { data?: ProductParameter[] }) => q.data || []), [parameterQueries]);
+  const parametersLoading = useMemo(() => parameterQueries.some((q: { isLoading: boolean }) => q.isLoading), [parameterQueries]);
 
   // Sync form with draft data
   useEffect(() => {
     if (draftQuery.data) {
       const draft = draftQuery.data;
-      setName(draft.name);
-      setDescription(draft.description || "");
-      setSku(draft.sku || "");
-      setEan(draft.ean || "");
-      setGtin(draft.gtin || "");
-      setAsin(draft.asin || "");
-      if (draft.asin) setIdentifierType("asin");
-      else if (draft.gtin) setIdentifierType("gtin");
-      else setIdentifierType("ean");
-      setNameEn(draft.name_en || "");
-      setNamePl(draft.name_pl || "");
-      setNameDe(draft.name_de || "");
-      setDescEn(draft.description_en || "");
-      setDescPl(draft.description_pl || "");
-      setDescDe(draft.description_de || "");
-      setWeight(draft.weight?.toString() || "");
-      setSizeLength(draft.sizeLength?.toString() || "");
-      setSizeWidth(draft.sizeWidth?.toString() || "");
-      setLength(draft.length?.toString() || "");
-      setPrice(draft.price?.toString() || "");
-      setSupplierName(draft.supplierName || "");
-      setSupplierLink(draft.supplierLink || "");
-      setPriceComment(draft.priceComment || "");
-      setStock(draft.stock?.toString() || "");
-      setBaseProductId(draft.baseProductId || "");
-      setActive(draft.active ?? true);
-      setIcon(draft.icon || null);
-      const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
-      setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
-      setSelectedCatalogIds(draft.catalogIds || []);
-      setSelectedCategoryIds(draft.categoryIds || []);
-      setSelectedTagIds(draft.tagIds || []);
-      setParameterValues(draft.parameters || []);
+      // Use a timeout to avoid synchronous setState in effect
+      const timer = setTimeout((): void => {
+        setName(draft.name);
+        setDescription(draft.description || "");
+        setSku(draft.sku || "");
+        setEan(draft.ean || "");
+        setGtin(draft.gtin || "");
+        setAsin(draft.asin || "");
+        if (draft.asin) setIdentifierType("asin");
+        else if (draft.gtin) setIdentifierType("gtin");
+        else setIdentifierType("ean");
+        setNameEn(draft.name_en || "");
+        setNamePl(draft.name_pl || "");
+        setNameDe(draft.name_de || "");
+        setDescEn(draft.description_en || "");
+        setDescPl(draft.description_pl || "");
+        setDescDe(draft.description_de || "");
+        setWeight(draft.weight?.toString() || "");
+        setSizeLength(draft.sizeLength?.toString() || "");
+        setSizeWidth(draft.sizeWidth?.toString() || "");
+        setLength(draft.length?.toString() || "");
+        setPrice(draft.price?.toString() || "");
+        setSupplierName(draft.supplierName || "");
+        setSupplierLink(draft.supplierLink || "");
+        setPriceComment(draft.priceComment || "");
+        setStock(draft.stock?.toString() || "");
+        setBaseProductId(draft.baseProductId || "");
+        setActive(draft.active ?? true);
+        setIcon(draft.icon || null);
+        const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
+        setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
+        setSelectedCatalogIds(draft.catalogIds || []);
+        setSelectedCategoryIds(draft.categoryIds || []);
+        setSelectedTagIds(draft.tagIds || []);
+        setParameterValues(draft.parameters || []);
+      }, 0);
+      return (): void => clearTimeout(timer);
     } else if (!draftId) {
       // Reset form
-      setName("");
-      setDescription("");
-      setSku("");
-      setEan("");
-      setGtin("");
-      setAsin("");
-      setNameEn("");
-      setNamePl("");
-      setNameDe("");
-      setDescEn("");
-      setDescPl("");
-      setDescDe("");
-      setWeight("");
-      setSizeLength("");
-      setSizeWidth("");
-      setLength("");
-      setPrice("");
-      setSupplierName("");
-      setSupplierLink("");
-      setPriceComment("");
-      setStock("");
-      setBaseProductId("");
-      setActive(true);
-      setIcon(null);
-      setImageLinks(Array(15).fill("") as string[]);
-      setSelectedCatalogIds([]);
-      setSelectedCategoryIds([]);
-      setSelectedTagIds([]);
-      setParameterValues([]);
+      const timer = setTimeout((): void => {
+        setName("");
+        setDescription("");
+        setSku("");
+        setEan("");
+        setGtin("");
+        setAsin("");
+        setNameEn("");
+        setNamePl("");
+        setNameDe("");
+        setDescEn("");
+        setDescPl("");
+        setDescDe("");
+        setWeight("");
+        setSizeLength("");
+        setSizeWidth("");
+        setLength("");
+        setPrice("");
+        setSupplierName("");
+        setSupplierLink("");
+        setPriceComment("");
+        setStock("");
+        setBaseProductId("");
+        setActive(true);
+        setIcon(null);
+        setImageLinks(Array(15).fill("") as string[]);
+        setSelectedCatalogIds([]);
+        setSelectedCategoryIds([]);
+        setSelectedTagIds([]);
+        setParameterValues([]);
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [draftQuery.data, draftId]);
 

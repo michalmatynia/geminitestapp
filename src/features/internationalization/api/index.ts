@@ -40,7 +40,7 @@ export async function saveCurrency(id: string | undefined, data: Partial<Currenc
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to save currency.");
-  return res.json();
+  return res.json() as Promise<CurrencyOption>;
 }
 
 export async function saveCountry(id: string | undefined, data: Partial<CountryOption>): Promise<CountryOption> {
@@ -50,7 +50,7 @@ export async function saveCountry(id: string | undefined, data: Partial<CountryO
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to save country.");
-  return res.json();
+  return res.json() as Promise<CountryOption>;
 }
 
 export async function saveLanguage(id: string | undefined, data: Partial<Language>): Promise<Language> {
@@ -60,5 +60,5 @@ export async function saveLanguage(id: string | undefined, data: Partial<Languag
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to save language.");
-  return res.json();
+  return res.json() as Promise<Language>;
 }

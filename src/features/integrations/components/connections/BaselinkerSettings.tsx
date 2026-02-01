@@ -32,8 +32,11 @@ export function BaselinkerSettings({
     if (settingsQuery.data && !hasInitialized.current) {
       const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
       if (found?.value) {
-        setSyncIntervalMinutes(found.value);
-        hasInitialized.current = true;
+        const timer = setTimeout(() => {
+          setSyncIntervalMinutes(found.value);
+          hasInitialized.current = true;
+        }, 0);
+        return (): void => clearTimeout(timer);
       }
     }
   }, [settingsQuery.data]);

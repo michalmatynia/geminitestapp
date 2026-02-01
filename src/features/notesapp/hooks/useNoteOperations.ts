@@ -99,10 +99,10 @@ export function useNoteOperations({
     try {
       const note = await queryClient.fetchQuery<NoteWithRelations>({
         queryKey: ["notes", noteId],
-        queryFn: async () => {
+        queryFn: async (): Promise<NoteWithRelations> => {
           const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
           if (!response.ok) throw new Error("Failed to fetch note");
-          return response.json();
+          return response.json() as Promise<NoteWithRelations>;
         }
       });
 
@@ -274,18 +274,18 @@ export function useNoteOperations({
       const [sourceNote, targetNote] = await Promise.all([
         queryClient.fetchQuery<NoteWithRelations>({
           queryKey: ["notes", sourceNoteId],
-          queryFn: async () => {
+          queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${sourceNoteId}`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch source note");
-            return res.json();
+            return res.json() as Promise<NoteWithRelations>;
           }
         }),
         queryClient.fetchQuery<NoteWithRelations>({
           queryKey: ["notes", targetNoteId],
-          queryFn: async () => {
+          queryFn: async (): Promise<NoteWithRelations> => {
             const res = await fetch(`/api/notes/${targetNoteId}`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch target note");
-            return res.json();
+            return res.json() as Promise<NoteWithRelations>;
           }
         }),
       ]);

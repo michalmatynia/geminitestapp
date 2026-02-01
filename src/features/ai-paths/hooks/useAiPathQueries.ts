@@ -33,7 +33,7 @@ export function useAiPathRunDetail(runId: string, enabled: boolean = true): UseQ
   });
 }
 
-export function useAiPathRequeueMutation(): UseMutationResult<any, Error, { runIds?: string[]; pathId?: string | null; query?: string | null; mode: "resume" | "replay" }> {
+export function useAiPathRequeueMutation(): UseMutationResult<unknown, Error, { runIds?: string[]; pathId?: string | null; query?: string | null; mode: "resume" | "replay" }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -48,7 +48,7 @@ export function useAiPathRequeueMutation(): UseMutationResult<any, Error, { runI
   });
 }
 
-export function useAiPathResumeMutation(): UseMutationResult<any, Error, { runId: string; mode: "resume" | "replay" }> {
+export function useAiPathResumeMutation(): UseMutationResult<unknown, Error, { runId: string; mode: "resume" | "replay" }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -57,14 +57,14 @@ export function useAiPathResumeMutation(): UseMutationResult<any, Error, { runId
       if (!response.ok) throw new Error(response.error || "Failed to resume run");
       return response.data;
     },
-    onSuccess: (_data: any, { runId }: { runId: string; mode: "resume" | "replay" }) => {
+    onSuccess: (_data: unknown, { runId }: { runId: string; mode: "resume" | "replay" }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },
   });
 }
 
-export function useAiPathRetryNodeMutation(): UseMutationResult<any, Error, { runId: string; nodeId: string }> {
+export function useAiPathRetryNodeMutation(): UseMutationResult<unknown, Error, { runId: string; nodeId: string }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -73,7 +73,7 @@ export function useAiPathRetryNodeMutation(): UseMutationResult<any, Error, { ru
       if (!response.ok) throw new Error(response.error || "Failed to retry node");
       return response.data;
     },
-    onSuccess: (_data: any, { runId }: { runId: string; nodeId: string }) => {
+    onSuccess: (_data: unknown, { runId }: { runId: string; nodeId: string }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },

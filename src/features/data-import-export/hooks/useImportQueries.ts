@@ -27,7 +27,7 @@ export const importKeys = {
 export function useIntegrationConnections(): UseQueryResult<IntegrationWithConnections[], Error> {
   return useQuery({
     queryKey: importKeys.connections(),
-    queryFn: async () => {
+    queryFn: async (): Promise<IntegrationWithConnections[]> => {
       const res = await fetch("/api/integrations/with-connections");
       if (!res.ok) throw new Error("Failed to load integrations");
       return (await res.json()) as IntegrationWithConnections[];
@@ -38,7 +38,7 @@ export function useIntegrationConnections(): UseQueryResult<IntegrationWithConne
 export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
   return useQuery({
     queryKey: importKeys.catalogs(),
-    queryFn: async () => {
+    queryFn: async (): Promise<CatalogRecord[]> => {
       const res = await fetch("/api/catalogs");
       if (!res.ok) throw new Error("Failed to load catalogs");
       return (await res.json()) as CatalogRecord[];
@@ -53,7 +53,7 @@ export function useTemplates(scope: "import" | "export"): UseQueryResult<Templat
     
   return useQuery({
     queryKey: importKeys.templates(scope),
-    queryFn: async () => {
+    queryFn: async (): Promise<Template[]> => {
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error(`Failed to load ${scope} templates`);
       return (await res.json()) as Template[];
@@ -64,7 +64,7 @@ export function useTemplates(scope: "import" | "export"): UseQueryResult<Templat
 export function useImportPreference<T>(key: string, endpoint: string): UseQueryResult<T, Error> {
   return useQuery({
     queryKey: importKeys.pref(key),
-    queryFn: async () => {
+    queryFn: async (): Promise<T> => {
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error(`Failed to load preference: ${key}`);
       return (await res.json()) as T;
@@ -74,20 +74,20 @@ export function useImportPreference<T>(key: string, endpoint: string): UseQueryR
 
 // --- Mutations ---
 
-export function useSavePreferenceMutation(): UseMutationResult<any, Error, { endpoint: string; data: any }> {
+export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, { endpoint: string; data: unknown }> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }): Promise<any> => {
+    mutationFn: async ({ endpoint, data }: { endpoint: string; data: unknown }): Promise<unknown> => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to save preference");
-      return (await res.json()) as any;
+      return res.json();
     },
-    onSuccess: (_data: any, { endpoint }: { endpoint: string; data: any }) => {
+    onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
       // Extract key from endpoint to invalidate specific pref
       const key = endpoint.split("/").pop();
       if (key) {
@@ -97,14 +97,14 @@ export function useSavePreferenceMutation(): UseMutationResult<any, Error, { end
   });
 }
 
-export function useTemplateMutation(scope: "import" | "export", id?: string): UseMutationResult<any, Error, { data?: any; isDelete?: boolean }> {
+export function useTemplateMutation(scope: "import" | "export", id?: string): UseMutationResult<unknown, Error, { data?: unknown; isDelete?: boolean }> {
   const queryClient = useQueryClient();
   const endpoint = scope === "import" 
     ? "/api/integrations/import-templates" 
     : "/api/integrations/export-templates";
     
   return useMutation({
-    mutationFn: async ({ data, isDelete = false }: { data?: any; isDelete?: boolean }): Promise<any> => {
+    mutationFn: async ({ data, isDelete = false }: { data?: unknown; isDelete?: boolean }): Promise<unknown> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
       const method = isDelete ? "DELETE" : (id ? "PUT" : "POST");
       
@@ -115,7 +115,7 @@ export function useTemplateMutation(scope: "import" | "export", id?: string): Us
       });
       
       if (!res.ok) throw new Error(`Failed to ${isDelete ? "delete" : "save"} template`);
-      return (await res.json()) as any;
+      return res.json();
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: importKeys.templates(scope) });
@@ -126,7 +126,7 @@ export function useTemplateMutation(scope: "import" | "export", id?: string): Us
 export function useInventories(connectionId?: string, enabled: boolean = true): UseQueryResult<BaseInventory[], Error> {
   return useQuery({
     queryKey: importKeys.inventories(connectionId),
-    queryFn: async () => {
+    queryFn: async (): Promise<BaseInventory[]> => {
       const res = await fetch("/api/integrations/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,7 +143,7 @@ export function useInventories(connectionId?: string, enabled: boolean = true): 
 export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true): UseQueryResult<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }, Error> {
   return useQuery({
     queryKey: importKeys.warehouses(inventoryId, connectionId, includeAll),
-    queryFn: async () => {
+    queryFn: async (): Promise<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> => {
       const res = await fetch("/api/integrations/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,7 +159,7 @@ export function useWarehouses(inventoryId: string, connectionId?: string, includ
 export function useParameters(inventoryId: string, productId: string, enabled: boolean = true): UseQueryResult<{ parameters?: Array<{ id: string; name: string }> }, Error> {
   return useQuery({
     queryKey: importKeys.parameters(inventoryId, productId),
-    queryFn: async () => {
+    queryFn: async (): Promise<{ parameters?: Array<{ id: string; name: string }> }> => {
       const res = await fetch("/api/integrations/imports/base/parameters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,7 +175,7 @@ export function useParameters(inventoryId: string, productId: string, enabled: b
 export function useImportList(inventoryId: string, limit?: string | number, uniqueOnly?: boolean, enabled: boolean = true): UseQueryResult<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number }, Error> {
   return useQuery({
     queryKey: importKeys.importList(inventoryId, limit, uniqueOnly),
-    queryFn: async () => {
+    queryFn: async (): Promise<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number }> => {
       const res = await fetch("/api/integrations/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,7 +249,7 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
       exportStockFallbackEnabled?: boolean;
       imageRetryPresets?: ImageRetryPreset[];
       exportWarehouseId?: string | null;
-    }) => {
+    }): Promise<void> => {
       const requests = [
         fetch("/api/integrations/exports/base/active-template", {
           method: "POST",

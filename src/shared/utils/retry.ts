@@ -18,7 +18,7 @@ type LogSystemEventParams = {
 };
 
 // Stub implementation to avoid features layer dependency
-const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+const logSystemEvent = (params: LogSystemEventParams): void => {
   // Implementation would be injected or moved to shared layer
   console.log('System event:', params);
 };

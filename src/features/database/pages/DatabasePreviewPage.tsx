@@ -67,9 +67,9 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const errorMeta = (queryError as Error & { payload?: { errorId?: string; stage?: string; backupName?: string; mode?: string } })?.payload || null;
 
   const content = payload?.content ?? "";
-  const groups: DatabasePreviewGroup[] = payload?.groups ?? [];
+  const groups: DatabasePreviewGroup[] = useMemo(() => payload?.groups ?? [], [payload?.groups]);
   const tables: DatabasePreviewTable[] = payload?.tables ?? [];
-  const tableRows: DatabasePreviewRow[] = payload?.tableRows ?? [];
+  const tableRows: DatabasePreviewRow[] = useMemo(() => payload?.tableRows ?? [], [payload?.tableRows]);
 
   const copyRaw = async (): Promise<void> => {
     if (!content) return;

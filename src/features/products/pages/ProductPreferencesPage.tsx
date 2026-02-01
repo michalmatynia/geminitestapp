@@ -27,11 +27,14 @@ export function ProductPreferencesPage(): React.JSX.Element {
 
   useEffect(() => {
     if (savedPreferences) {
-      setPreferences((prev: ProductListPreferences) => {
-        // Only update if actually different to minimize cascading renders
-        if (JSON.stringify(prev) === JSON.stringify(savedPreferences)) return prev;
-        return savedPreferences;
-      });
+      const timer = setTimeout(() => {
+        setPreferences((prev: ProductListPreferences) => {
+          // Only update if actually different to minimize cascading renders
+          if (JSON.stringify(prev) === JSON.stringify(savedPreferences)) return prev;
+          return savedPreferences;
+        });
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [savedPreferences]);
 

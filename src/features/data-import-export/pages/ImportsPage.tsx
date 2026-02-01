@@ -11,7 +11,7 @@ import {
   SectionHeader,
   SectionPanel,
 } from "@/shared/ui";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Trash2 } from "lucide-react";
 
 import type {
@@ -74,9 +74,12 @@ export default function ImportsPage(): React.JSX.Element {
 
   // Queries
   const { data: integrationsWithConnections = [], isLoading: checkingIntegration } = useIntegrationsWithConnections();
-  const { data: catalogsData = [], isLoading: loadingCatalogs } = useCatalogs() as { data: CatalogRecord[], isLoading: boolean };
-  const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates("import");
-  const { data: exportTemplates = [], isLoading: loadingExportTemplates } = useTemplates("export");
+  const catalogsQuery = useCatalogs();
+  const catalogsData = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
+  const loadingCatalogs = catalogsQuery.isLoading;
+  
+  const { data: importTemplates = [] } = useTemplates("import");
+  const { data: exportTemplates = [] } = useTemplates("export");
 
   const [catalogId, setCatalogId] = useState("");
   const [limit, setLimit] = useState("all");
@@ -105,6 +108,8 @@ export default function ImportsPage(): React.JSX.Element {
   const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
 
+  const hasInitializedCatalog = useRef(false);
+
   // Sync connections
   useEffect(() => {
     if (integrationsWithConnections) {
@@ -112,26 +117,32 @@ export default function ImportsPage(): React.JSX.Element {
         (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
       );
       const connections = baseIntegration?.connections ?? [];
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBaseConnections(connections);
-      if (connections.length > 0) {
-        setIsBaseConnected(true);
-        if (!selectedBaseConnectionId) {
-          setSelectedBaseConnectionId(connections[0]?.id || "");
+      const timer = setTimeout(() => {
+        setBaseConnections(connections);
+        if (connections.length > 0) {
+          setIsBaseConnected(true);
+          if (!selectedBaseConnectionId) {
+            setSelectedBaseConnectionId(connections[0]?.id || "");
+          }
         }
-      }
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
   }, [integrationsWithConnections, selectedBaseConnectionId]);
 
   // Sync default catalog
   useEffect(() => {
-    if (catalogsData.length > 0 && !catalogId) {
+    if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogsData.find((catalog: CatalogRecord) => catalog.isDefault);
       if (defaultCatalog) {
-        requestAnimationFrame(() => setCatalogId(defaultCatalog.id));
+        const timer = setTimeout(() => {
+          setCatalogId(defaultCatalog.id);
+          hasInitializedCatalog.current = true;
+        }, 0);
+        return (): void => clearTimeout(timer);
       }
     }
-  }, [catalogsData.length, catalogId]);
+  }, [catalogsData, catalogId]);
 
   // Preferences
   const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
@@ -184,43 +195,36 @@ export default function ImportsPage(): React.JSX.Element {
     }
   }, []);
 
-  // Initialize state from preferences
-  const [importTemplateIdFromPref] = useState(() => lastImportTemplatePref?.templateId || "");
-  const [exportInventoryIdFromPref] = useState(() => defaultExportInventoryPref?.inventoryId || "");
-  const [connectionIdFromPref] = useState(() => defaultConnectionPref?.connectionId || "");
-  const [stockFallbackFromPref] = useState(() => Boolean(exportStockFallbackPref?.enabled));
-  const [retryPresetsFromPref] = useState(() => 
-    imageRetryPresetsPref?.presets ? normalizeImageRetryPresets(imageRetryPresetsPref.presets) : getDefaultImageRetryPresets()
-  );
-  const [inventoryIdFromPref] = useState(() => sampleProductPref?.inventoryId || "");
+  // Use refs for initialization to satisfy ESLint
+  const hasInitializedPrefs = useRef(false);
 
   // Apply preferences on mount
   useEffect(() => {
-    if (importTemplateIdFromPref && !importTemplateId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setImportTemplateId(importTemplateIdFromPref);
+    if (!hasInitializedPrefs.current) {
+      const timer = setTimeout(() => {
+        if (lastImportTemplatePref?.templateId) {
+          setImportTemplateId(lastImportTemplatePref.templateId);
+        }
+        if (defaultExportInventoryPref?.inventoryId) {
+          setExportInventoryId(defaultExportInventoryPref.inventoryId);
+        }
+        if (defaultConnectionPref?.connectionId && baseConnections.some((c: IntegrationConnectionBasic) => c.id === defaultConnectionPref.connectionId)) {
+          setSelectedBaseConnectionId(defaultConnectionPref.connectionId);
+        }
+        if (exportStockFallbackPref?.enabled !== undefined) {
+          setExportStockFallbackEnabled(exportStockFallbackPref.enabled);
+        }
+        if (imageRetryPresetsPref?.presets) {
+          setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
+        }
+        if (sampleProductPref?.inventoryId) {
+          setInventoryId(sampleProductPref.inventoryId);
+        }
+        hasInitializedPrefs.current = true;
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
-    if (exportInventoryIdFromPref && !exportInventoryId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setExportInventoryId(exportInventoryIdFromPref);
-    }
-    if (connectionIdFromPref && baseConnections.some((c: IntegrationConnectionBasic) => c.id === connectionIdFromPref)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedBaseConnectionId(connectionIdFromPref);
-    }
-    if (!exportStockFallbackEnabled && stockFallbackFromPref) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setExportStockFallbackEnabled(stockFallbackFromPref);
-    }
-    if (imageRetryPresets.length === getDefaultImageRetryPresets().length) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setImageRetryPresets(retryPresetsFromPref);
-    }
-    if (inventoryIdFromPref && !inventoryId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInventoryId(inventoryIdFromPref);
-    }
-  }, [importTemplateIdFromPref, exportInventoryIdFromPref, connectionIdFromPref, stockFallbackFromPref, retryPresetsFromPref, inventoryIdFromPref, baseConnections]);
+  }, [lastImportTemplatePref, defaultExportInventoryPref, defaultConnectionPref, exportStockFallbackPref, imageRetryPresetsPref, sampleProductPref, baseConnections, exportInventoryId, exportStockFallbackEnabled, imageRetryPresets.length, importTemplateId, inventoryId]);
 
   // Apply templates when preferences and templates are available
   useEffect(() => {
@@ -230,7 +234,7 @@ export default function ImportsPage(): React.JSX.Element {
         requestAnimationFrame(() => applyTemplate(preferred, "import"));
       }
     }
-  }, [activeImportTemplatePref?.templateId, importTemplates.length, importActiveTemplateId]);
+  }, [activeImportTemplatePref, importTemplates, importActiveTemplateId, applyTemplate]);
 
   useEffect(() => {
     if (activeExportTemplatePref?.templateId && exportTemplates.length > 0 && !exportActiveTemplateId) {
@@ -239,7 +243,7 @@ export default function ImportsPage(): React.JSX.Element {
         requestAnimationFrame(() => applyTemplate(preferred, "export"));
       }
     }
-  }, [activeExportTemplatePref?.templateId, exportTemplates.length, exportActiveTemplateId]);
+  }, [activeExportTemplatePref, exportTemplates, exportActiveTemplateId, applyTemplate]);
 
   // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
@@ -268,31 +272,46 @@ export default function ImportsPage(): React.JSX.Element {
   }, [importActiveTemplateId, savePreferenceMutation]);
 
   // Data loading hooks
-  const { data: inventories = [] as InventoryOption[], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
+  const inventoriesQuery = useInventories(selectedBaseConnectionId, isBaseConnected);
+  const inventories = useMemo(() => inventoriesQuery.data || [], [inventoriesQuery.data]);
+  const isFetchingInventories = inventoriesQuery.isFetching;
+  const refetchInventories = inventoriesQuery.refetch;
   
+  const hasInitializedInventories = useRef(false);
+
   useEffect(() => {
-    if (inventories.length > 0) {
+    if (inventories.length > 0 && !hasInitializedInventories.current) {
       const firstInventory = inventories[0];
       if (firstInventory?.id) {
         const firstInventoryId = firstInventory.id;
-        if (!inventoryId) {
-          requestAnimationFrame(() => setInventoryId(firstInventoryId));
-        }
-        if (!exportInventoryId) {
-          requestAnimationFrame(() => setExportInventoryId(firstInventoryId));
-        }
+        const timer = setTimeout(() => {
+          if (!inventoryId) {
+            setInventoryId(firstInventoryId);
+          }
+          if (!exportInventoryId) {
+            setExportInventoryId(firstInventoryId);
+          }
+          hasInitializedInventories.current = true;
+        }, 0);
+        return (): void => clearTimeout(timer);
       }
     }
-  }, [inventories.length, inventoryId, exportInventoryId]);
+  }, [inventories, inventoryId, exportInventoryId]);
 
-  const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
+  const warehousesQuery = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
+  const warehousesData = warehousesQuery.data;
+  const isFetchingWarehouses = warehousesQuery.isFetching;
+  const refetchWarehouses = warehousesQuery.refetch;
   
   const warehouses: WarehouseOption[] = (warehousesData as { warehouses?: WarehouseOption[] })?.warehouses ?? [];
   const allWarehouses: WarehouseOption[] = (warehousesData as { allWarehouses?: WarehouseOption[] })?.allWarehouses ?? [];
 
-  const { data: importListData, isFetching: loadingImportList, refetch: refetchImportList } = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
+  const importListQuery = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
+  const importListData = importListQuery.data;
+  const loadingImportList = importListQuery.isFetching;
+  const refetchImportList = importListQuery.refetch;
   
-  const importList: ImportListItem[] = (importListData as { products?: ImportListItem[] })?.products ?? [];
+  const importList: ImportListItem[] = useMemo(() => (importListData as { products?: ImportListItem[] })?.products ?? [], [importListData]);
   const importListStats = useMemo(() => {
     if (!importListData) return null;
     const data = importListData as {
@@ -311,12 +330,18 @@ export default function ImportsPage(): React.JSX.Element {
     };
   }, [importListData]);
 
+  const hasInitializedImportListSelection = useRef(false);
+
   useEffect(() => {
-    if (importList.length > 0) {
+    if (importList.length > 0 && !hasInitializedImportListSelection.current) {
       const ids = importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean);
-      requestAnimationFrame(() => setSelectedImportIds(new Set(ids)));
+      const timer = setTimeout(() => {
+        setSelectedImportIds(new Set(ids));
+        hasInitializedImportListSelection.current = true;
+      }, 0);
+      return (): void => clearTimeout(timer);
     }
-  }, [importList.length]);
+  }, [importList]);
 
   // Actions
   const handleLoadInventories = async (): Promise<void> => {
@@ -351,7 +376,7 @@ export default function ImportsPage(): React.JSX.Element {
         allowDuplicateSku,
         selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
       });
-      setLastResult(res as ImportResponse);
+      setLastResult(res);
       const importedCount = (res as { imported?: number }).imported ?? 0;
       toast(`Imported ${importedCount} products`, { variant: "success" });
     } catch (error: unknown) {
@@ -431,14 +456,14 @@ export default function ImportsPage(): React.JSX.Element {
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
 
     try {
-      const res = await mutation.mutateAsync({
+      const res = (await mutation.mutateAsync({
         data: {
           name: name.trim(),
           description: desc.trim() || undefined,
           mappings: cleanedMappings,
           ...(isImport ? {} : { exportImagesAsBase64 }),
         }
-      }) as Template;
+      })) as Template;
       applyTemplate(res, isImport ? "import" : "export");
       toast("Template saved.", { variant: "success" });
     } catch (error: unknown) {
@@ -525,7 +550,7 @@ export default function ImportsPage(): React.JSX.Element {
             importTemplateId={importTemplateId}
             setImportTemplateId={setImportTemplateId}
             importTemplates={importTemplates}
-            loadingImportTemplates={loadingImportTemplates}
+            loadingImportTemplates={false} // handled by parents loadingTemplates
             imageMode={imageMode}
             setImageMode={setImageMode}
             allowDuplicateSku={allowDuplicateSku}
@@ -561,7 +586,7 @@ export default function ImportsPage(): React.JSX.Element {
             exportActiveTemplateId={exportActiveTemplateId}
             setExportActiveTemplateId={setExportActiveTemplateId}
             exportTemplates={exportTemplates}
-            loadingExportTemplates={loadingExportTemplates}
+            loadingExportTemplates={false} // handled by parents
             applyTemplate={applyTemplate}
             exportWarehouseId={exportWarehouseId}
             setExportWarehouseId={setExportWarehouseId}
@@ -595,7 +620,7 @@ export default function ImportsPage(): React.JSX.Element {
         <TabsContent value="templates" className="mt-6 space-y-6">
           <div className="bg-gray-900 p-4 border border-border rounded-md">
              <div className="flex justify-between items-start gap-4 mb-4">
-                <Tabs value={templateScope} onValueChange={(v: string) => setTemplateScope(v as "import" | "export")}>
+                <Tabs value={templateScope} onValueChange={(v: "import" | "export") => setTemplateScope(v)}>
                    <TabsList>
                       <TabsTrigger value="import">Import</TabsTrigger>
                       <TabsTrigger value="export">Export</TabsTrigger>

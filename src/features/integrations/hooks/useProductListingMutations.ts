@@ -12,7 +12,7 @@ export function useDeleteFromBaseMutation(productId: string): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ listingId, inventoryId }) => {
+    mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }): Promise<Record<string, unknown>> => {
       const body: { inventoryId?: string } = inventoryId ? { inventoryId } : {};
       const res = await fetch(
         `/api/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
@@ -42,7 +42,7 @@ export function usePurgeListingMutation(productId: string): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ listingId }) => {
+    mutationFn: async ({ listingId }: { listingId: string }): Promise<void> => {
       const res = await fetch(
         `/api/integrations/products/${productId}/listings/${listingId}/purge`,
         { method: "DELETE" }
@@ -65,7 +65,7 @@ export function useUpdateListingInventoryIdMutation(productId: string): UseMutat
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ listingId, inventoryId }) => {
+    mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId: string }): Promise<Record<string, unknown>> => {
       const res = await fetch(
         `/api/integrations/products/${productId}/listings/${listingId}`,
         {
@@ -107,7 +107,7 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload) => {
+    mutationFn: async (payload: ExportToBaseVariables): Promise<{ logs?: CapturedLog[]; error?: string; skuExists?: boolean }> => {
       const res = await fetch(`/api/integrations/products/${productId}/export-to-base`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,7 +138,7 @@ export function useCreateListingMutation(productId: string): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ integrationId, connectionId }) => {
+    mutationFn: async ({ integrationId, connectionId }: { integrationId: string; connectionId: string }): Promise<Record<string, unknown>> => {
       const res = await fetch(`/api/integrations/products/${productId}/listings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

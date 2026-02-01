@@ -4,9 +4,9 @@ import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, NoteRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, UseQueryResult } from "@tanstack/react-query";
 
 import { autoformatMarkdown } from "../utils";
 import { useUndo } from "@/shared/hooks/use-undo";
@@ -44,6 +44,13 @@ const FALLBACK_THEME = {
   relatedNoteBackgroundColor: "#1f2937", // gray-800
   relatedNoteTextColor: "#e5e7eb",     // gray-200
 };
+
+interface RelatedNoteItem {
+  id: string;
+  title: string;
+  color: string | null;
+  content: string;
+}
 
 export function NoteForm({
   note,
@@ -151,32 +158,32 @@ export function NoteForm({
   );
   
   // Hydrate related notes
-  const initialCombinedRelations = useMemo(() => {
+  const initialCombinedRelations = useMemo((): RelatedNoteItem[] => {
     if (!note) return [];
     return [
-      ...(note.relations ?? []).map(rel => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: "" })),
-      ...(note.relationsFrom ?? []).map(rel => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: "" })),
-      ...(note.relationsTo ?? []).map(rel => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: "" })),
-    ].filter((item, index, array) => array.findIndex(entry => entry.id === item.id) === index);
+      ...(note.relations ?? []).map((rel: NoteRecord) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: "" })),
+      ...(note.relationsFrom ?? []).map((rel: { targetNote: NoteRecord }) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: "" })),
+      ...(note.relationsTo ?? []).map((rel: { sourceNote: NoteRecord }) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: "" })),
+    ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
   }, [note]);
 
-  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState(initialCombinedRelations);
+  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState<RelatedNoteItem[]>(initialCombinedRelations);
 
   const relatedNotesQueries = useQueries({
-    queries: selectedRelatedNotes.map(rel => ({
+    queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => ({
       queryKey: ["notes", rel.id],
       queryFn: async (): Promise<NoteWithRelations> => {
         const res = await fetch(`/api/notes/${rel.id}`);
         if (!res.ok) throw new Error("Failed to fetch related note");
-        return res.json();
+        return res.json() as Promise<NoteWithRelations>;
       },
       staleTime: 1000 * 60 * 5,
     }))
   });
 
   useEffect(() => {
-    const updated = selectedRelatedNotes.map((item, index) => {
-      const q = relatedNotesQueries[index];
+    const updated = selectedRelatedNotes.map((item: RelatedNoteItem, index: number) => {
+      const q = relatedNotesQueries[index] as UseQueryResult<NoteWithRelations, Error>;
       if (q?.data) {
         return {
           ...item,
@@ -208,7 +215,7 @@ export function NoteForm({
       if (resolvedNotebookId) params.append("notebookId", resolvedNotebookId);
       const res = await fetch(`/api/notes?${params.toString()}`);
       if (!res.ok) return [];
-      return res.json();
+      return res.json() as Promise<NoteWithRelations[]>;
     },
     enabled: !!relatedNoteQuery,
   });
@@ -428,9 +435,10 @@ export function NoteForm({
       const newFile = await createFileMutation.mutateAsync({ slotIndex, file });
       setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
       toast("File uploaded successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to upload file:", error);
-      toast(error.message || "Failed to upload file");
+      const message = error instanceof Error ? error.message : "Failed to upload file";
+      toast(message);
     } finally {
       removeUploadingSlot(slotIndex);
     }
@@ -640,9 +648,10 @@ export function NoteForm({
 
       toast(note ? "Note updated successfully" : "Note created successfully");
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save note:", error);
-      toast(error.message || "Failed to save note", { variant: "error" });
+      const message = error instanceof Error ? error.message : "Failed to save note";
+      toast(message, { variant: "error" });
     }
   };
 

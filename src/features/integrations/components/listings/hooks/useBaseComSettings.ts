@@ -52,8 +52,11 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   useEffect((): void => {
     if (!isBaseComIntegration || !preferredTemplateId || hasInitializedTemplate.current) return;
     if (selectedTemplateId === "none") {
-      setSelectedTemplateId(preferredTemplateId);
-      hasInitializedTemplate.current = true;
+      const timer = setTimeout(() => {
+        setSelectedTemplateId(preferredTemplateId);
+        hasInitializedTemplate.current = true;
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
@@ -61,13 +64,16 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   useEffect((): void => {
     if (!isBaseComIntegration || selectedInventoryId || inventories.length === 0 || inventoriesQuery.isLoading || hasInitializedInventory.current) return;
     
-    if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
-      setSelectedInventoryId(preferredInventoryId);
-      hasInitializedInventory.current = true;
-    } else {
-      setSelectedInventoryId(inventories[0]?.id ?? "");
-      hasInitializedInventory.current = true;
-    }
+    const timer = setTimeout(() => {
+      if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
+        setSelectedInventoryId(preferredInventoryId);
+        hasInitializedInventory.current = true;
+      } else {
+        setSelectedInventoryId(inventories[0]?.id ?? "");
+        hasInitializedInventory.current = true;
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery.isLoading]);
 
   // Sync template preference when selected changes

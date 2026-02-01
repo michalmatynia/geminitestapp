@@ -42,7 +42,7 @@ export function useIntegrationOperations(): {
   const payload = listingsBadgeQuery.data || {};
   const entries = Object.entries(payload);
   const integrationBadgeStatuses = new Map(entries);
-  const integrationBadgeIds = new Set(entries.map(([productId]) => productId));
+  const integrationBadgeIds = new Set(entries.map(([productId]: [string, string]) => productId));
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings-badges"] });

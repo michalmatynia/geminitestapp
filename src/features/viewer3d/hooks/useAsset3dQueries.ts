@@ -65,16 +65,16 @@ export function useDeleteAsset3DMutation(): UseMutationResult<void, Error, strin
 export function useUpdateAsset3DMutation(): UseMutationResult<Asset3DRecord, Error, { id: string; data: Partial<Asset3DRecord> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Asset3DRecord> }): Promise<Asset3DRecord> => {
       const res = await fetch(`/api/assets3d/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update 3D asset");
-      return res.json();
+      return res.json() as Promise<Asset3DRecord>;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: Asset3DRecord) => {
       void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
       void queryClient.invalidateQueries({ queryKey: asset3dKeys.detail(data.id) });
     },

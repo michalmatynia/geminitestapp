@@ -72,3 +72,4 @@ docker.md
 /tests/e2e/.auth/
 /tests/e2e/.env
 /test-results/
+.aider*

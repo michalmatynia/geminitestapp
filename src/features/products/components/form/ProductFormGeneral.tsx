@@ -40,6 +40,14 @@ import {
   sanitizeEdges,
 } from "@/features/ai-paths/lib/core/utils/graph";
 
+const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
+  return nodes.map((node: AiNode) => ({
+    ...node,
+    id: (node.id as string) || `node-${Math.random().toString(36).substr(2, 9)}`,
+    title: (node.title as string) || (node.type as string) || "Untitled Node",
+  }));
+};
+
 export default function ProductFormGeneral(): React.JSX.Element {
   const queryClient = useQueryClient();
   const safeJsonStringify = (value: unknown): string => {
@@ -228,8 +236,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
       user: null,
       event: {
         id: triggerEvent,
-        nodeId: triggerNode.id,
-        nodeTitle: triggerNode.title,
+        nodeId: triggerNode.id as string,
+        nodeTitle: triggerNode.title as string,
         type: event?.type,
         pointer,
       },
@@ -289,25 +297,25 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
                 if (Array.isArray(parsedIndex)) {
                   settingsPathOrder = parsedIndex
-                    .map((meta: PathMeta) => meta?.id)
+                    .map((meta: PathMeta) => meta?.id as string)
                     .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0);
                   parsedIndex.forEach((meta: PathMeta) => {
                     if (!meta?.id) return;
-                    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+                    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id as string}`);
                     if (!configRaw) {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
+                      configs[meta.id as string] = createDefaultPathConfig(meta.id as string);
                       return;
                     }
                     try {
                       const parsedConfig = JSON.parse(configRaw) as PathConfig;
-                      configs[meta.id] = {
-                        ...createDefaultPathConfig(meta.id),
+                      configs[meta.id as string] = {
+                        ...createDefaultPathConfig(meta.id as string),
                         ...parsedConfig,
-                        id: meta.id,
-                        name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
+                        id: meta.id as string,
+                        name: (parsedConfig?.name as string) || (meta.name as string) || `Path ${meta.id as string}`,
                       };
                     } catch {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
+                      configs[meta.id as string] = createDefaultPathConfig(meta.id as string);
                     }
                   });
                 }
@@ -321,12 +329,12 @@ export default function ProductFormGeneral(): React.JSX.Element {
               if (legacyRaw) {
                 try {
                   const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
-                  const fallback = createDefaultPathConfig(parsedConfig.id ?? "default");
+                  const fallback = createDefaultPathConfig((parsedConfig.id as string) ?? "default");
                   configs[fallback.id] = {
                     ...fallback,
                     ...parsedConfig,
-                    id: parsedConfig.id ?? fallback.id,
-                    name: parsedConfig.name || fallback.name,
+                    id: (parsedConfig.id as string) ?? fallback.id,
+                    name: (parsedConfig.name as string) || fallback.name,
                   };
                 } catch {
                   const fallback = createDefaultPathConfig("default");
@@ -339,28 +347,28 @@ export default function ProductFormGeneral(): React.JSX.Element {
           // If settings fallback fails, keep configs empty.
         }
       }
-      const configsList = Object.values(configs);
-      const pathOrder = Array.isArray(prefs.aiPathsPathIndex)
+      const configsList: PathConfig[] = Object.values(configs);
+      const pathOrder: string[] = Array.isArray(prefs.aiPathsPathIndex)
         ? prefs.aiPathsPathIndex
             .map((item: { id?: string }) => item?.id)
             .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0)
         : settingsPathOrder;
-      const orderedConfigs = pathOrder.length
+      const orderedConfigs: PathConfig[] = pathOrder.length
         ? pathOrder
             .map((id: string) => configs[id])
             .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
         : configsList;
-      const triggerEvent = TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
-      const triggerCandidates = orderedConfigs.filter((config: PathConfig) =>
+      const triggerEvent = (TRIGGER_EVENTS[0]?.id as string) ?? "path_generate_description";
+      const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
         Array.isArray(config?.nodes)
-          ? config.nodes.some(
+          ? (config.nodes as AiNode[]).some(
               (node: AiNode) =>
-                node.type === "trigger" &&
-                (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+                (node.type as string) === "trigger" &&
+                ((node.config as { trigger?: { event?: string } })?.trigger?.event ?? triggerEvent) === triggerEvent
             )
           : false
       );
-      const selectedConfig = triggerCandidates[0] ?? orderedConfigs[0];
+      const selectedConfig: PathConfig | undefined = triggerCandidates[0] ?? orderedConfigs[0];
       if (!selectedConfig) {
         toast(
           "No AI Path found. Configure a path with the Path Generate Description trigger.",
@@ -369,40 +377,40 @@ export default function ProductFormGeneral(): React.JSX.Element {
         return;
       }
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
-      const nodes = normalizeNodes(
-        Array.isArray(selectedConfig.nodes) ? (selectedConfig.nodes as unknown as AiNode[]) : []
+      const nodes: AiNode[] = normalizeNodes(
+        Array.isArray(selectedConfig.nodes) ? (selectedConfig.nodes as AiNode[]) : []
       );
-      const edges = sanitizeEdges(
+      const edges: Edge[] = sanitizeEdges(
         nodes,
-        Array.isArray(selectedConfig.edges) ? (selectedConfig.edges as unknown as Edge[]) : []
+        Array.isArray(selectedConfig.edges) ? (selectedConfig.edges as Edge[]) : []
       );
-      const triggerNodes = nodes.filter(
+      const triggerNodes: AiNode[] = nodes.filter(
         (node: AiNode) =>
-          node.type === "trigger" &&
-          (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+          (node.type as string) === "trigger" &&
+          ((node.config as { trigger?: { event?: string } })?.trigger?.event ?? triggerEvent) === triggerEvent
       );
-      const triggerNode =
-        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
+      const triggerNode: AiNode | undefined =
+        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => (edge.from as string) === (node.id as string))) ??
         triggerNodes.find((node: AiNode) =>
-          edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
+          edges.some((edge: Edge) => (edge.from as string) === (node.id as string) || (edge.to as string) === (node.id as string))
         ) ??
         triggerNodes[0] ??
-        nodes.find((node: AiNode) => node.type === "trigger");
+        nodes.find((node: AiNode) => (node.type as string) === "trigger");
       if (!triggerNode) {
         toast("No trigger node found in the selected path.", { variant: "error" });
         return;
       }
-      const triggerContext = buildTriggerContext(triggerNode, triggerEvent, event, {
-        id: selectedConfig.id,
-        name: selectedConfig.name,
+      const triggerContext: Record<string, unknown> = buildTriggerContext(triggerNode, triggerEvent, event, {
+        id: selectedConfig.id as string,
+        name: selectedConfig.name as string,
       });
       const runAt = new Date().toISOString();
       const runtimeState: RuntimeState = await evaluateGraph({
         nodes,
         edges,
-        activePathId: selectedConfig.id ?? "path",
-        activePathName: selectedConfig.name ?? undefined,
-        triggerNodeId: triggerNode.id,
+        activePathId: (selectedConfig.id as string) ?? "path",
+        activePathName: (selectedConfig.name as string) ?? undefined,
+        triggerNodeId: triggerNode.id as string,
         triggerEvent,
         triggerContext,
         deferPoll: false,
@@ -430,39 +438,39 @@ export default function ProductFormGeneral(): React.JSX.Element {
           lastRunAt: runAt,
           updatedAt: runAt,
         };
-        const debugEntries = nodes
-          .filter((node: AiNode) => node.type === "database")
+        const debugEntries: PathDebugEntry[] = nodes
+          .filter((node: AiNode) => (node.type as string) === "database")
           .map((node: AiNode): PathDebugEntry | null => {
-            const output = runtimeState.outputs[node.id] as
+            const output = (runtimeState.outputs as Record<string, unknown>)[(node.id as string)] as
               | { debugPayload?: unknown }
               | undefined;
             const debugPayload = output?.debugPayload;
             if (debugPayload === undefined || debugPayload === null) return null;
             return {
-              nodeId: node.id,
-              title: node.title,
+              nodeId: node.id as string,
+              title: node.title as string,
               debug: debugPayload,
             };
           })
           .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => Boolean(entry));
         const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
           ? {
-              pathId: updatedConfig.id,
+              pathId: updatedConfig.id as string,
               runAt,
               entries: debugEntries,
             }
           : null;
-        configs[updatedConfig.id] = updatedConfig;
-        const orderedIds = pathOrder.length
+        configs[(updatedConfig.id as string)] = updatedConfig;
+        const orderedIds: string[] = pathOrder.length
           ? pathOrder
-          : orderedConfigs.map((config: PathConfig) => config.id);
-        const safeConfigs = safeJsonStringify(configs);
+          : orderedConfigs.map((config: PathConfig) => config.id as string);
+        const safeConfigs: string = safeJsonStringify(configs);
         await fetch("/api/user/preferences", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             aiPathsPathConfigs: safeConfigs || configs,
-            aiPathsActivePathId: updatedConfig.id,
+            aiPathsActivePathId: updatedConfig.id as string,
             ...(orderedIds.length > 0 && {
               aiPathsPathIndex: orderedIds.map((id: string) => ({ id })),
             }),
@@ -477,7 +485,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`,
+                key: `${PATH_CONFIG_PREFIX}${updatedConfig.id as string}`,
                 value: configValue,
               }),
             });
@@ -487,7 +495,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`,
+                key: `${PATH_DEBUG_PREFIX}${updatedConfig.id as string}`,
                 value: debugValue,
               }),
             });

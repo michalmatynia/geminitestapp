@@ -27,7 +27,7 @@ import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 import { getProducts } from "@/features/products/api";
 
 const SelectIntegrationModal = dynamic(
-  () => import("@/features/integrations/components/listings/SelectIntegrationModal").then((mod: typeof import("@/features/integrations/components/listings/SelectIntegrationModal")) => ({ default: mod.SelectIntegrationModal })),
+  () => import("@/features/integrations/components/listings/SelectIntegrationModal").then((mod) => ({ default: mod.SelectIntegrationModal })),
   { ssr: false }
 );
 

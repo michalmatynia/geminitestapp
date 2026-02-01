@@ -3,13 +3,13 @@ import "server-only";
 
 import { createHash } from "crypto";
 import type { SystemLogLevel } from "@/shared/types/system-logs";
-import { notifyCriticalError } from "@/shared/lib/observability/critical-error-notifier";
-import { createSystemLog } from "@/shared/lib/observability/system-log-repository";
+import { notifyCriticalError } from "./critical-error-notifier";
+import { createSystemLog } from "./system-log-repository";
 import {
   isSensitiveKey,
   REDACTED_VALUE,
   truncateString,
-} from "@/shared/lib/observability/log-redaction";
+} from "./log-redaction";
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;

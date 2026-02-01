@@ -75,7 +75,7 @@ describe("useCmsDomainSelection Hook", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.sharedWithDomains).toHaveLength(1);
-    expect(result.current.sharedWithDomains[0].id).toBe("d2");
+    expect(result.current.sharedWithDomains[0]!.id).toBe("d2");
   });
 
   it("should return canonical domain for an alias", async () => {

@@ -1,6 +1,6 @@
 import { vi, beforeEach, afterAll } from "vitest";
 import { describe, it, expect } from "vitest";
-import { GET, POST } from "@/app/api/products/parameters/route";
+import { GET } from "@/app/api/products/parameters/route";
 import { NextRequest } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 
@@ -55,8 +55,7 @@ describe("Product Parameters API", () => {
       vi.mocked(prisma.productParameter.findMany).mockResolvedValue(mockParams as any);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/parameters?catalogId=cat1"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/products/parameters?catalogId=cat1")
       );
       const data = await res.json();
       expect(res.status).toEqual(200);

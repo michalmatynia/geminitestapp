@@ -1,7 +1,6 @@
 import { vi, beforeEach, afterAll } from "vitest";
 import { describe, it, expect } from "vitest";
 import { GET, POST } from "@/app/api/products/tags/route";
-import { PUT, DELETE } from "@/app/api/products/tags/[id]/route";
 import { NextRequest } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 
@@ -10,7 +9,7 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
     const params = ctx?.params instanceof Promise ? ctx.params : Promise.resolve(ctx?.params ?? {});
-    return params.then(resolvedParams => handler(req, ctx, resolvedParams));
+    return params.then((resolvedParams: any) => handler(req, ctx, resolvedParams));
   },
 }));
 
@@ -63,8 +62,7 @@ describe("Product Tags API", () => {
       vi.mocked(prisma.productTag.findMany).mockResolvedValue(mockTags as any);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/tags?catalogId=cat1"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/products/tags?catalogId=cat1")
       );
       const data = await res.json();
       expect(res.status).toEqual(200);
@@ -82,8 +80,7 @@ describe("Product Tags API", () => {
         new NextRequest("http://localhost/api/products/tags", {
           method: "POST",
           body: JSON.stringify(newTag),
-        }),
-        { params: Promise.resolve({}) } as any
+        })
       );
       expect(res.status).toEqual(201);
     });

@@ -1,6 +1,6 @@
-import { vi, beforeEach, afterAll } from "vitest";
+import { vi, beforeEach } from "vitest";
 import { describe, it, expect } from "vitest";
-import { GET, DELETE } from "@/app/api/products/ai-jobs/route";
+import { GET } from "@/app/api/products/ai-jobs/route";
 import { POST as POST_ENQUEUE } from "@/app/api/products/ai-jobs/enqueue/route";
 import { NextRequest } from "next/server";
 
@@ -9,7 +9,7 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
     const params = ctx?.params instanceof Promise ? ctx.params : Promise.resolve(ctx?.params ?? {});
-    return params.then(resolvedParams => handler(req, ctx, resolvedParams));
+    return params.then((resolvedParams: any) => handler(req, ctx, resolvedParams));
   },
 }));
 
@@ -30,7 +30,7 @@ vi.mock("@/features/jobs/server", () => ({
 
 // Mock products server
 vi.mock("@/features/products/server", () => ({
-  parseJsonBody: async (req: any, schema: any) => {
+  parseJsonBody: async (req: any) => {
     try {
       const body = await req.json();
       return { ok: true, data: body };
@@ -48,8 +48,7 @@ describe("Product AI Jobs API", () => {
   describe("GET /api/products/ai-jobs", () => {
     it("should return jobs for a given productId", async () => {
       const res = await GET(
-        new NextRequest("http://localhost/api/products/ai-jobs?productId=prod1"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/products/ai-jobs?productId=prod1")
       );
       expect(res.status).toEqual(200);
     });
@@ -62,8 +61,7 @@ describe("Product AI Jobs API", () => {
         new NextRequest("http://localhost/api/products/ai-jobs/enqueue", {
           method: "POST",
           body: JSON.stringify(payload),
-        }),
-        { params: Promise.resolve({}) } as any
+        })
       );
       expect(res.status).toEqual(200);
     });

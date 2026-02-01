@@ -1,4 +1,4 @@
-import { logger } from "@/shared/utils/logger";
+import { logSystemEvent } from "@/features/observability/server";
 import { logAgentAudit } from "@/features/agent-runtime/server";
 
 export interface ErrorContext {
@@ -6,12 +6,13 @@ export interface ErrorContext {
   runId?: string; // For agent runs
   jobId?: string; // For background jobs
   productId?: string;
+  errorId?: string;
   [key: string]: unknown;
 }
 
 /**
  * Centralized error handling system.
- * Captures exceptions, logs them to the system log, and optionally
+ * Captures exceptions, logs them to the system log (DB), and optionally
  * synchronizes with domain-specific audit logs (like agentAuditLog).
  */
 export const ErrorSystem = {
@@ -22,13 +23,20 @@ export const ErrorSystem = {
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
     const message = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
     const service = context.service || "unknown";
 
-    // 1. Log to System Log (File/Console)
-    logger.error(`[${service}] ${message}`, {
-      ...context,
-      stack,
+    // 1. Log to System Log (DB + Console)
+    await logSystemEvent({
+      level: "error",
+      message: `[${service}] ${message}`,
+      source: service,
+      error,
+      context: {
+        ...context,
+        jobId: context.jobId,
+        runId: context.runId,
+        productId: context.productId
+      }
     });
 
     // 2. Domain-Specific Logging
@@ -38,15 +46,13 @@ export const ErrorSystem = {
       try {
         await logAgentAudit(context.runId, "error", message, {
           errorId: context.errorId || "unknown",
-          stack,
           ...context
         });
       } catch (auditError) {
-        logger.error(`[ErrorSystem] Failed to log to Agent Audit:`, auditError);
+        // Fallback to console if audit logging fails
+        console.error(`[ErrorSystem] Failed to log to Agent Audit:`, auditError);
       }
     }
-
-    // Future: Integration with external error tracking (Sentry, etc.) could go here
   },
 
   /**
@@ -55,13 +61,18 @@ export const ErrorSystem = {
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
     const service = context.service || "unknown";
     
-    logger.warn(`[${service}] ${message}`, context);
+    await logSystemEvent({
+      level: "warn",
+      message: `[${service}] ${message}`,
+      source: service,
+      context
+    });
 
     if (context.runId) {
        try {
         await logAgentAudit(context.runId, "warning", message, context);
       } catch (auditError) {
-        logger.warn(`[ErrorSystem] Failed to log warning to Agent Audit:`, auditError);
+        console.warn(`[ErrorSystem] Failed to log warning to Agent Audit:`, auditError);
       }
     }
   },
@@ -69,9 +80,14 @@ export const ErrorSystem = {
   /**
    * Log an operational info event.
    */
-  logInfo: (message: string, context: ErrorContext = {}): Promise<void> => {
+  logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
     const service = context.service || "unknown";
-    logger.info(`[${service}] ${message}`, context);
-    return Promise.resolve();
+    
+    await logSystemEvent({
+      level: "info",
+      message: `[${service}] ${message}`,
+      source: service,
+      context
+    });
   }
 };

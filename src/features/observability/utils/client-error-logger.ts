@@ -4,7 +4,7 @@ import {
   isSensitiveKey,
   REDACTED_VALUE,
   truncateString,
-} from "@/shared/lib/observability/log-redaction";
+} from "@/features/observability/server";
 
 type ClientErrorContext = Record<string, unknown>;
 type SerializedContext =

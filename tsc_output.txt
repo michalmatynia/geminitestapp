@@ -1,30 +1,30 @@
+__tests__/api/auth/register.test.ts(77,7): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/auth/register.test.ts(99,7): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/auth/register.test.ts(118,7): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/auth/register.test.ts(137,7): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/ai-jobs.test.ts(1,26): error TS6133: 'afterAll' is declared but its value is never read.
+__tests__/api/products/ai-jobs.test.ts(3,15): error TS6133: 'DELETE' is declared but its value is never read.
+__tests__/api/products/ai-jobs.test.ts(12,24): error TS7006: Parameter 'resolvedParams' implicitly has an 'any' type.
+__tests__/api/products/ai-jobs.test.ts(33,35): error TS6133: 'schema' is declared but its value is never read.
+__tests__/api/products/ai-jobs.test.ts(52,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/ai-jobs.test.ts(66,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/categories.test.ts(3,1): error TS6192: All imports in import declaration are unused.
+__tests__/api/products/categories.test.ts(5,1): error TS6192: All imports in import declaration are unused.
+__tests__/api/products/categories.test.ts(14,24): error TS7006: Parameter 'resolvedParams' implicitly has an 'any' type.
+__tests__/api/products/categories.test.ts(71,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/count.test.ts(38,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/migration.test.ts(1,26): error TS6133: 'afterAll' is declared but its value is never read.
+__tests__/api/products/migration.test.ts(3,15): error TS6133: 'POST' is declared but its value is never read.
+__tests__/api/products/migration.test.ts(15,35): error TS6133: 'schema' is declared but its value is never read.
+__tests__/api/products/migration.test.ts(34,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/parameters.test.ts(3,15): error TS6133: 'POST' is declared but its value is never read.
+__tests__/api/products/parameters.test.ts(59,9): error TS2554: Expected 1 arguments, but got 2.
 __tests__/api/products/products.test.ts(115,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductCreateArgs>(args: SelectSubset<T, ProductCreateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
-  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ id: string; name_en: string | null; name_pl: string | null; name_de: string | null; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 17 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; ... 17 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
 __tests__/api/products/products.test.ts(128,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductUpdateArgs>(args: SelectSubset<T, ProductUpdateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
-  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ id: string; name_en: string | null; name_pl: string | null; name_de: string | null; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 17 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(17,5): error TS2322: Type '{ id: string; type: "constant"; title: string; position: { x: number; y: number; }; inputs: never[]; outputs: string[]; config: { constant: { value: string; valueType: "string"; }; }; }' is not assignable to type 'AiNode'.
-  Property 'description' is missing in type '{ id: string; type: "constant"; title: string; position: { x: number; y: number; }; inputs: never[]; outputs: string[]; config: { constant: { value: string; valueType: "string"; }; }; }' but required in type 'NodeDefinition'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(26,5): error TS2322: Type '{ id: string; type: "constant"; title: string; position: { x: number; y: number; }; inputs: never[]; outputs: string[]; config: { constant: { value: string; valueType: "string"; }; }; }' is not assignable to type 'AiNode'.
-  Property 'description' is missing in type '{ id: string; type: "constant"; title: string; position: { x: number; y: number; }; inputs: never[]; outputs: string[]; config: { constant: { value: string; valueType: "string"; }; }; }' but required in type 'NodeDefinition'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(70,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(71,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(72,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(79,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(83,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(90,42): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(103,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(109,44): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(124,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(162,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(163,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/ai-paths/services/path-run-repository.test.ts(164,12): error TS2532: Object is possibly 'undefined'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; asin: string | null; ... 17 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/api/products/tags.test.ts(4,1): error TS6192: All imports in import declaration are unused.
+__tests__/api/products/tags.test.ts(13,24): error TS7006: Parameter 'resolvedParams' implicitly has an 'any' type.
+__tests__/api/products/tags.test.ts(67,9): error TS2554: Expected 1 arguments, but got 2.
+__tests__/api/products/tags.test.ts(86,9): error TS2554: Expected 1 arguments, but got 2.
 __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx(78,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/cms/hooks/useCmsDomainSelection.test.tsx(153,5): error TS2322: Type 'Location' is not assignable to type 'string & Location'.
-  Type 'Location' is not assignable to type 'string'.
-__tests__/features/observability/services/system-log-repository.test.ts(50,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/observability/services/system-log-repository.test.ts(59,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/observability/services/system-log-repository.test.ts(63,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/observability/services/system-log-repository.test.ts(72,12): error TS2532: Object is possibly 'undefined'.
-__tests__/features/observability/services/system-log-repository.test.ts(116,12): error TS2532: Object is possibly 'undefined'.
-src/features/products/components/list/ProductColumns.tsx(420,13): error TS2322: Type 'string | boolean' is not assignable to type 'boolean'.
-  Type 'string' is not assignable to type 'boolean'.

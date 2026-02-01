@@ -1,8 +1,6 @@
 import { vi, beforeEach, afterAll } from "vitest";
 import { describe, it, expect } from "vitest";
-import { GET, POST } from "@/app/api/products/categories/route";
 import { GET as GET_TREE } from "@/app/api/products/categories/tree/route";
-import { GET as GET_BY_ID, PUT, DELETE } from "@/app/api/products/categories/[id]/route";
 import { NextRequest } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 
@@ -11,7 +9,7 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
   apiHandler: (handler: any) => handler,
   apiHandlerWithParams: (handler: any) => (req: any, ctx: any) => {
     const params = ctx?.params instanceof Promise ? ctx.params : Promise.resolve(ctx?.params ?? {});
-    return params.then(resolvedParams => handler(req, ctx, resolvedParams));
+    return params.then((resolvedParams: any) => handler(req, ctx, resolvedParams));
   },
 }));
 
@@ -67,8 +65,7 @@ describe("Product Categories API", () => {
       vi.mocked(prisma.productCategory.findMany).mockResolvedValue(mockCategories as any);
 
       const res = await GET_TREE(
-        new NextRequest("http://localhost/api/products/categories/tree?catalogId=cat1"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/products/categories/tree?catalogId=cat1")
       );
       const data = await res.json();
       expect(res.status).toEqual(200);

@@ -34,8 +34,7 @@ describe("Products Count API", () => {
       vi.mocked(prisma.product.count).mockResolvedValue(10);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/products/count"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/products/count")
       );
       const data = (await res.json()) as { count: number };
       expect(res.status).toEqual(200);

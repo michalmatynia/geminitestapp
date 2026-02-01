@@ -233,30 +233,38 @@ export const pollGraphJob = async (
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const pollResult = await aiJobsApi.poll(jobId);
-    if (!pollResult.ok) {
-      throw new Error("Failed to fetch job status.");
-    }
-    const { status, result: jobResult, error: jobError } = pollResult.data;
-    if (!status) continue;
-    if (status === "completed") {
-      const result = jobResult as
-        | { result?: string }
-        | string
-        | null
-        | undefined;
-      if (result && typeof result === "object" && "result" in result) {
-        return (result as { result?: string }).result ?? "";
+    try {
+      const pollResult = await aiJobsApi.poll(jobId);
+      if (!pollResult.ok) {
+        throw new Error(`Connection error: ${pollResult.error}`);
       }
-      return typeof result === "string" ? result : JSON.stringify(result ?? "");
-    }
-    if (status === "failed") {
-      throw new Error(jobError || "AI job failed.");
-    }
-    if (status === "canceled") {
-      throw new Error("AI job was canceled.");
-    }
-    if (attempt < maxAttempts - 1) {
+      const { status, result: jobResult, error: jobError } = pollResult.data;
+      if (!status) continue;
+      if (status === "completed") {
+        const result = jobResult as
+          | { result?: string }
+          | string
+          | null
+          | undefined;
+        if (result && typeof result === "object" && "result" in result) {
+          return (result as { result?: string }).result ?? "";
+        }
+        return typeof result === "string" ? result : JSON.stringify(result ?? "");
+      }
+      if (status === "failed") {
+        throw new Error(jobError || "AI job failed.");
+      }
+      if (status === "canceled") {
+        throw new Error("AI job was canceled.");
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
+      }
+    } catch (error) {
+      if (attempt === maxAttempts - 1) {
+        throw new Error(`Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      // Wait before retrying on connection errors
       await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, Math.max(0, intervalMs)));
     }
   }

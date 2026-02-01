@@ -20,6 +20,14 @@ const nextConfig = {
         crypto: false,
         stream: false,
         util: false,
+        buffer: false,
+        events: false,
+        url: false,
+        querystring: false,
+        http: false,
+        https: false,
+        zlib: false,
+        assert: false,
       };
     }
     

@@ -14,9 +14,20 @@ const nextConfig = {
         net: false,
         tls: false,
         fs: false,
+        path: false,
         child_process: false,
       };
     }
+    
+    // Exclude playwright from client bundle
+    config.externals = config.externals || [];
+    if (!isServer) {
+      config.externals.push({
+        'playwright-core': 'commonjs playwright-core',
+        'playwright': 'commonjs playwright',
+      });
+    }
+    
     return config;
   },
   images: {

@@ -192,7 +192,7 @@ export default async function Home(): Promise<JSX.Element> {
           </header>
         ) : null}
 
-        <main className="flex-1">
+        <div className="flex-1">
           <section className="w-full py-12">
             <div className="container px-4 md:px-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -202,7 +202,7 @@ export default async function Home(): Promise<JSX.Element> {
               </div>
             </div>
           </section>
-        </main>
+        </div>
 
         {showFallbackHeader ? (
           <footer className="flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">

@@ -6,6 +6,18 @@ const nextConfig = {
     '@prisma/client',
     'bcrypt',
   ],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        child_process: false,
+      };
+    }
+    return config;
+  },
   images: {
     qualities: [75, 90],
     remotePatterns: [

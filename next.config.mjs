@@ -6,6 +6,7 @@ const nextConfig = {
     '@prisma/client',
     'bcrypt',
   ],
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

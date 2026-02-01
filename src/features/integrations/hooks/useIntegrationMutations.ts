@@ -36,6 +36,11 @@ type UpsertConnectionVariables = {
   payload: Record<string, unknown>;
 };
 
+type DeleteConnectionVariables = {
+  integrationId: string;
+  connectionId: string;
+};
+
 export function useUpsertConnection(): UseMutationResult<IntegrationConnection, Error, UpsertConnectionVariables> {
   const queryClient = useQueryClient();
 
@@ -73,17 +78,14 @@ export function useUpsertConnection(): UseMutationResult<IntegrationConnection, 
   return useMutation(mutationOptions);
 }
 
-export function useDeleteConnection(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string }> {
+export function useDeleteConnection(): UseMutationResult<Record<string, unknown>, Error, DeleteConnectionVariables> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Record<string, unknown>, Error, DeleteConnectionVariables>({
     mutationFn: async ({ 
       integrationId: _integrationId, 
       connectionId 
-    }: { 
-      integrationId: string; 
-      connectionId: string 
-    }): Promise<Record<string, unknown>> => {
+    }: DeleteConnectionVariables): Promise<Record<string, unknown>> => {
       const res = await fetch(`/api/integrations/connections/${connectionId}`, {
         method: "DELETE",
       });
@@ -93,7 +95,7 @@ export function useDeleteConnection(): UseMutationResult<Record<string, unknown>
       }
       return (await res.json()) as Record<string, unknown>;
     },
-    onSuccess: (_data: Record<string, unknown>, variables: { integrationId: string }): void => {
+    onSuccess: (_data: Record<string, unknown>, variables: DeleteConnectionVariables): void => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });

@@ -138,8 +138,9 @@ function ColumnRenderer({
       <div className={`flex flex-col ${shouldStretch ? "h-full" : "gap-4"}`} style={columnStyle}>
         {children.map((block: BlockInstance) => {
           const minHeight = getBlockMinHeight(block.type);
-          const wrapperStyle: React.CSSProperties = { minHeight: `${minHeight}px` };
-          if (shouldStretch) wrapperStyle.height = "100%";
+          const wrapperStyle: React.CSSProperties = shouldStretch
+            ? { height: "100%" }
+            : { minHeight: `${minHeight}px` };
           if (SECTION_BLOCK_TYPES.has(block.type)) {
             return (
               <div key={block.id} className={shouldStretch ? "flex-1" : ""} style={wrapperStyle}>

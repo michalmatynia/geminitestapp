@@ -27,6 +27,7 @@ import type { ProductFormData } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
 import type { ImageFileRecord } from "@/features/files/server";
+import { runDatabaseSync, type DatabaseSyncDirection } from "@/features/database/server";
 
 type LanguageRecord = {
   id: string;
@@ -48,6 +49,7 @@ type JobPayload = {
   vision?: boolean;
   source?: string;
   graph?: Record<string, unknown>;
+  direction?: DatabaseSyncDirection;
   [key: string]: unknown;
 };
 
@@ -194,6 +196,11 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     }
     throw error;
   }
+}
+
+export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
+  const direction = job.payload.direction ?? "mongo_to_prisma";
+  return runDatabaseSync(direction);
 }
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
@@ -673,6 +680,14 @@ const pollQueue = async (): Promise<void> => {
 
               console.log(`[productAiQueue] Graph model completed for job ${typedJob.id}`);
 
+            } else if (nextJob.type === "db_sync") {
+
+              console.log(`[productAiQueue] Processing database sync for job ${typedJob.id}`);
+
+              result = await processDatabaseSync(typedJob);
+
+              console.log(`[productAiQueue] Database sync completed for job ${typedJob.id}`);
+
             } else {
         throw operationFailedError(`Unknown job type: ${nextJob.type}`, undefined, {
           jobId: nextJob.id,
@@ -818,6 +833,10 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
       console.log(`[processSingleJob] Processing graph model for job ${job.id}`);
       result = await processGraphModel(typedJob);
       console.log(`[processSingleJob] Graph model completed for job ${job.id}`);
+    } else if (job.type === "db_sync") {
+      console.log(`[processSingleJob] Processing database sync for job ${job.id}`);
+      result = await processDatabaseSync(typedJob);
+      console.log(`[processSingleJob] Database sync completed for job ${job.id}`);
     } else {
       throw operationFailedError(`Unknown job type: ${job.type}`, undefined, {
         jobId: job.id,

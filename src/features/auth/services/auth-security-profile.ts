@@ -1,6 +1,8 @@
 import "server-only";
 
+import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 
 export type AuthSecurityProfile = {
   userId: string;
@@ -50,6 +52,24 @@ const normalizeProfile = (profile: AuthSecurityProfile): AuthSecurityProfile => 
 export const getAuthSecurityProfile = async (
   userId: string
 ): Promise<AuthSecurityProfile> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    const profile = await prisma.authSecurityProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) return buildDefaultProfile(userId);
+    return normalizeProfile({
+      userId: profile.userId,
+      mfaEnabled: profile.mfaEnabled,
+      mfaSecret: profile.mfaSecret ?? null,
+      recoveryCodes: profile.recoveryCodes ?? [],
+      allowedIps: profile.allowedIps ?? [],
+      disabledAt: profile.disabledAt ?? null,
+      bannedAt: profile.bannedAt ?? null,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+    });
+  }
   if (!process.env.MONGODB_URI) return buildDefaultProfile(userId);
   const mongo = await getMongoDb();
   const doc = await mongo
@@ -96,6 +116,20 @@ export const updateAuthSecurityProfile = async (
     payload.bannedAt = updates.bannedAt;
   }
 
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    await prisma.authSecurityProfile.upsert({
+      where: { userId },
+      update: payload,
+      create: {
+        userId,
+        ...(payload as AuthSecurityProfile),
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+    return getAuthSecurityProfile(userId);
+  }
   if (!process.env.MONGODB_URI) return buildDefaultProfile(userId);
   const mongo = await getMongoDb();
   await mongo.collection<MongoProfileDoc>(PROFILES_COLLECTION).updateOne(

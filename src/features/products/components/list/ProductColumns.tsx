@@ -35,7 +35,12 @@ function normalizeCurrencyCode(code?: string | null): string {
 }
 
 function getGroupCurrencyCode(group: PriceGroupForCalculation): string {
-  return normalizeCurrencyCode(group.currency?.code || group.currencyCode || group.groupId);
+  return normalizeCurrencyCode(
+    group.currency?.code ||
+      group.currencyCode ||
+      (typeof group.currencyId === "string" ? group.currencyId : undefined) ||
+      group.groupId
+  );
 }
 
 function calculatePriceForCurrency(
@@ -91,6 +96,12 @@ function calculatePriceForCurrency(
       return basePrice;
     }
 
+    if (group.type === "standard") {
+      const multiplier: number = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
+      const addToPrice: number = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
+      return basePrice * multiplier + addToPrice;
+    }
+
     if (group.type === "dependent" && group.sourceGroupId) {
       const source: PriceGroupForCalculation | undefined = findGroupById(group.sourceGroupId);
       const sourcePrice: number | null = resolvePriceForGroup(source, visited);
@@ -103,12 +114,28 @@ function calculatePriceForCurrency(
     return null;
   };
 
-  const targetGroup: PriceGroupForCalculation | undefined = priceGroups.find((group: PriceGroupForCalculation): boolean => {
-    const groupCode: string = getGroupCurrencyCode(group);
-    return groupCode === normalizedTarget || normalizeCurrencyCode(group.groupId) === normalizedTarget;
-  });
+  const targetCandidates: PriceGroupForCalculation[] = priceGroups.filter(
+    (group: PriceGroupForCalculation): boolean => {
+      const groupCode: string = getGroupCurrencyCode(group);
+      const groupIdCode = normalizeCurrencyCode(group.groupId);
+      const currencyIdCode =
+        typeof group.currencyId === "string" ? normalizeCurrencyCode(group.currencyId) : "";
+      return (
+        groupCode === normalizedTarget ||
+        groupIdCode === normalizedTarget ||
+        (currencyIdCode && currencyIdCode === normalizedTarget)
+      );
+    }
+  );
 
-  const resolved: number | null = resolvePriceForGroup(targetGroup);
+  let resolved: number | null = null;
+  for (const candidate of targetCandidates) {
+    const candidateResolved = resolvePriceForGroup(candidate);
+    if (candidateResolved !== null) {
+      resolved = candidateResolved;
+      break;
+    }
+  }
   if (resolved !== null) {
     return { price: resolved, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }

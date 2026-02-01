@@ -542,6 +542,29 @@ model PageSlug {
   @@id([pageId, slugId])
 }
 
+model CmsDomain {
+  id        String   @id @default(cuid())
+  domain    String
+  aliasOf   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slugs CmsDomainSlug[]
+}
+
+model CmsDomainSlug {
+  domainId   String
+  slugId     String
+  assignedAt DateTime @default(now())
+  isDefault  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  domain CmsDomain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  slug   Slug      @relation(fields: [slugId], references: [id], onDelete: Cascade)
+
+  @@id([domainId, slugId])
+}
+
 model PageComponent {
   id        String   @id @default(cuid())
   type      String // e.g., 'hero', 'text', 'image'
@@ -779,6 +802,20 @@ model AuthSecurityProfile {
   @@index([userId])
 }
 
+model AuthLoginChallenge {
+  id        String   @id @default(cuid())
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuthSecurityAttempt {
+  id        String   @id @default(cuid())
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model UserPreferences {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -869,6 +906,22 @@ enum AiPathRunEventLevel {
   info
   warning
   error
+}
+
+model AiConfiguration {
+  id                        String   @id @default(cuid())
+  type                      String?
+  descriptionGenerationModel String?
+  generationInputPrompt     String?
+  generationOutputEnabled   Boolean  @default(false)
+  generationOutputPrompt    String?
+  imageAnalysisModel        String?
+  visionInputPrompt         String?
+  visionOutputEnabled       Boolean  @default(false)
+  visionOutputPrompt        String?
+  testProductId             String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 model ProductAiJob {
@@ -990,6 +1043,7 @@ model ProductDraft {
   parameters          Json     @default("[]")
   defaultPriceGroupId String?
   active              Boolean  @default(true)
+  icon                String?
   imageLinks          Json     @default("[]")
   baseProductId       String?
   createdAt           DateTime @default(now())

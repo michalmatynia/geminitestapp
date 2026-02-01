@@ -2,12 +2,11 @@
 
 import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel, Card } from "@/shared/ui";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { serializeSetting } from "@/shared/utils/settings-json";
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
-import { buildPlaywrightSettings, fetchPlaywrightPersonas, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
+import { buildPlaywrightSettings, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
+import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from "@/features/playwright/hooks/usePlaywrightPersonas";
 import type {
   PlaywrightPersona,
   PlaywrightSettings,
@@ -35,9 +34,10 @@ const buildSummaryTags = (settings: PlaywrightSettings): string[] => {
 
 export function PlaywrightPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [personas, setPersonas] = useState<PlaywrightPersona[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  
+  const { data: personas = [], isLoading: loading } = usePlaywrightPersonas();
+  const { mutateAsync: savePersonas, isPending: saving } = useSavePlaywrightPersonasMutation();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
@@ -51,29 +51,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       return right.localeCompare(left);
     });
   }, [personas]);
-
-  useEffect((): (() => void) => {
-    let active = true;
-    const loadPersonas = async (): Promise<void> => {
-      try {
-        const stored = await fetchPlaywrightPersonas();
-        if (!active) return;
-        setPersonas(stored);
-      } catch (error) {
-        if (active) {
-          const message =
-            error instanceof Error ? error.message : "Failed to load personas.";
-          toast(message, { variant: "error" });
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    void loadPersonas();
-    return (): void => {
-      active = false;
-    };
-  }, [toast]);
 
   const resetDraft = (): void => {
     setEditingId(null);
@@ -100,36 +77,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     resetDraft();
   };
 
-  const persistPersonas = async (next: PlaywrightPersona[], message: string): Promise<boolean> => {
-    try {
-      setSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-          value: serializeSetting(next),
-        }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(payload?.error || "Failed to save personas.");
-      }
-      setPersonas(next);
-      toast(message, { variant: "success" });
-      return true;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to save personas.";
-      toast(errorMessage, { variant: "error" });
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSavePersona = async (): Promise<void> => {
     const name = draftName.trim();
     if (!name) {
@@ -154,18 +101,30 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         )
       : [...personas, nextPersona];
 
-    const saved = await persistPersonas(
-      next,
-      existing ? "Persona updated." : "Persona created."
-    );
-    if (saved) closeModal();
+    try {
+      await savePersonas({ personas: next });
+      toast(existing ? "Persona updated." : "Persona created.", { variant: "success" });
+      closeModal();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save personas.";
+      toast(errorMessage, { variant: "error" });
+    }
   };
 
   const handleDeletePersona = async (persona: PlaywrightPersona): Promise<void> => {
     const confirmed = window.confirm(`Delete persona "${persona.name}"?`);
     if (!confirmed) return;
     const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
-    await persistPersonas(next, "Persona deleted.");
+    
+    try {
+      await savePersonas({ personas: next });
+      toast("Persona deleted.", { variant: "success" });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save personas.";
+      toast(errorMessage, { variant: "error" });
+    }
   };
 
   return (

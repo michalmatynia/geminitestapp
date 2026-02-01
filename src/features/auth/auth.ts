@@ -8,8 +8,10 @@ import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import type { Provider } from "next-auth/providers";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { getMongoClient } from "@/shared/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
 import { findAuthUserByEmail, findAuthUserById } from "@/features/auth/services/auth-user-repository";
 import { getAuthAccessForUser } from "@/features/auth/services/auth-access";
 import {
@@ -23,6 +25,7 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/au
 import { consumeLoginChallenge } from "@/features/auth/services/auth-login-challenge";
 import { decryptAuthSecret } from "@/features/auth/utils/auth-encryption";
 import { hashRecoveryCode, verifyTotpToken } from "@/features/auth/services/totp";
+import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 import { authConfig } from "./auth.config";
 
 const credentialsProvider = Credentials({
@@ -258,14 +261,13 @@ const buildProviders = (): Provider[] => {
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
     await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
-    const hasMongo = Boolean(process.env.MONGODB_URI);
-    if (!hasMongo) {
-      throw new Error("MONGODB_URI is required for auth storage.");
-    }
-    const adapter = MongoDBAdapter(getMongoClient(), {
-      databaseName: process.env.MONGODB_DB ?? "app",
-    });
-    console.log("[AUTH] Adapter configured for mongodb.");
+    const configuredProvider = await getAuthDataProvider();
+    const provider = requireAuthProvider(configuredProvider);
+    const adapter =
+      provider === "prisma"
+        ? PrismaAdapter(prisma)
+        : MongoDBAdapter(getMongoClient(), { databaseName: process.env.MONGODB_DB ?? "app" });
+    console.log(`[AUTH] Adapter configured for ${provider}.`);
 
     return {
       ...authConfig,

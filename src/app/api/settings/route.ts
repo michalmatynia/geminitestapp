@@ -6,12 +6,13 @@ import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { APP_DB_PROVIDER_SETTING_KEY, getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/server";
+import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
+import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/features/products/constants";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -27,6 +28,7 @@ type SettingDocument = {
 const SETTINGS_COLLECTION = "settings";
 const productSettingKeys = new Set([
   APP_DB_PROVIDER_SETTING_KEY,
+  PRODUCT_DB_PROVIDER_SETTING_KEY,
   "ai_vision_model",
   "ai_vision_user_prompt",
   "ai_vision_prompt",

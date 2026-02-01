@@ -86,6 +86,41 @@ export function useUpdateListingInventoryIdMutation(productId: string): UseMutat
   });
 }
 
+export function useSyncBaseImagesMutation(productId: string): UseMutationResult<
+  { status: string; count: number; added: number },
+  Error,
+  { listingId: string; inventoryId?: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }): Promise<{ status: string; count: number; added: number }> => {
+      const body: { inventoryId?: string } = inventoryId ? { inventoryId } : {};
+      const res = await fetch(
+        `/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string; count?: number; added?: number };
+      if (!res.ok) {
+        throw new Error(payload.error || "Failed to sync images from Base.com");
+      }
+      return {
+        status: payload.status ?? "synced",
+        count: payload.count ?? 0,
+        added: payload.added ?? 0,
+      };
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings", productId] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
 export type ExportToBaseVariables = {
   connectionId: string;
   inventoryId: string;

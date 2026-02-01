@@ -210,7 +210,12 @@ export function ProductFormProvider({
   } = useProductMetadata({
     product,
     initialCatalogId,
-    initialCatalogIds: draft?.catalogIds,
+    initialCatalogIds:
+      draft?.catalogIds && draft.catalogIds.length > 0
+        ? draft.catalogIds
+        : initialCatalogId
+          ? [initialCatalogId]
+          : undefined,
     initialCategoryIds: draft?.categoryIds,
     initialTagIds: draft?.tagIds,
     setValue,

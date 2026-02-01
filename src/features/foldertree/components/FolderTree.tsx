@@ -10,6 +10,8 @@ import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui
 import { FolderNode } from "./tree/FolderNode";
 import { parseMultipleFolders, countMultipleFolders } from "@/features/foldertree/utils/folderImporter";
 
+import { useImportFolderMutation } from "@/features/foldertree/hooks/useFolderMutations";
+
 function FolderTreeBase({
   folders,
   selectedFolderId,
@@ -40,6 +42,7 @@ function FolderTreeBase({
   onRefreshFolders,
 }: FolderTreeProps): React.JSX.Element {
   const { toast } = useToast();
+  const importFolderMutation = useImportFolderMutation();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
@@ -171,34 +174,25 @@ function FolderTreeBase({
         return;
       }
 
-      const response = await fetch("/api/notes/import-folder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notebookId: selectedNotebookId,
-          parentFolderId: null,
-          structures,
-        }),
+      await importFolderMutation.mutateAsync({
+        notebookId: selectedNotebookId,
+        parentFolderId: null,
+        structures,
       });
 
-      if (response.ok) {
-        await response.json();
-        toast(`Successfully imported ${counts.folders} folders and ${counts.notes} notes`);
+      toast(`Successfully imported ${counts.folders} folders and ${counts.notes} notes`);
 
-        if (onRefreshFolders) {
-          await onRefreshFolders();
-        }
-      } else {
-        const error = (await response.json()) as { error?: string };
-        toast(error.error || "Failed to import folder structure", { variant: "error" });
+      if (onRefreshFolders) {
+        await onRefreshFolders();
       }
     } catch (error) {
       console.error("Failed to import folder:", error);
-      toast("An unexpected error occurred while importing", { variant: "error" });
+      const message = error instanceof Error ? error.message : "An unexpected error occurred while importing";
+      toast(message, { variant: "error" });
     } finally {
       setIsImporting(false);
     }
-  }, [selectedNotebookId, toast, onRefreshFolders]);
+  }, [selectedNotebookId, toast, onRefreshFolders, importFolderMutation]);
 
   const handleDropzoneDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();

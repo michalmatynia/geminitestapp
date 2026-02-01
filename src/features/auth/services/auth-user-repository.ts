@@ -1,4 +1,6 @@
+import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 
 type AuthUserRecord = {
   id: string;
@@ -23,15 +25,36 @@ export const findAuthUserByEmail = async (
   email: string
 ): Promise<AuthUserRecord | null> => {
   const normalized = normalizeEmail(email);
-  console.log(`[AUTH-REPO] Finding user ${normalized} using mongodb`);
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  console.log(`[AUTH-REPO] Finding user ${normalized} using ${provider}`);
+  if (provider === "prisma") {
+    const user = await prisma.user.findUnique({
+      where: { email: normalized },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        passwordHash: true,
+        image: true,
+        emailVerified: true,
+      },
+    });
+    if (!user?.email) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name ?? null,
+      passwordHash: user.passwordHash ?? null,
+      image: user.image ?? null,
+      emailVerified: user.emailVerified ?? null,
+    };
+  }
   if (!process.env.MONGODB_URI) {
     console.log("[AUTH-REPO] MONGODB_URI missing");
     return null;
   }
   const db = await getMongoDb();
-  const user = await db
-    .collection<MongoUserDoc>("users")
-    .findOne({ email: normalized });
+  const user = await db.collection<MongoUserDoc>("users").findOne({ email: normalized });
   if (!user || !user.email) {
     console.log("[AUTH-REPO] MongoDB user not found");
     return null;
@@ -49,13 +72,34 @@ export const findAuthUserByEmail = async (
 export const findAuthUserById = async (
   userId: string
 ): Promise<AuthUserRecord | null> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        passwordHash: true,
+        image: true,
+        emailVerified: true,
+      },
+    });
+    if (!user?.email) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name ?? null,
+      passwordHash: user.passwordHash ?? null,
+      image: user.image ?? null,
+      emailVerified: user.emailVerified ?? null,
+    };
+  }
   if (!process.env.MONGODB_URI) return null;
   const db = await getMongoDb();
   const { ObjectId } = await import("mongodb");
   if (!ObjectId.isValid(userId)) return null;
-  const user = await db
-    .collection<MongoUserDoc>("users")
-    .findOne({ _id: new ObjectId(userId) });
+  const user = await db.collection<MongoUserDoc>("users").findOne({ _id: new ObjectId(userId) });
   if (!user || !user.email) return null;
   return {
     id: userId,

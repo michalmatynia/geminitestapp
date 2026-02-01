@@ -21,6 +21,7 @@ interface ProductModalsProps {
   isCreateOpen: boolean;
   initialSku: string;
   createDraft?: ProductDraft | null;
+  initialCatalogId?: string | null;
   onCloseCreate: () => void;
   onCreateSuccess: () => void;
   editingProduct: ProductWithImages | null;
@@ -94,6 +95,7 @@ export function ProductModals({
   isCreateOpen,
   initialSku,
   createDraft,
+  initialCatalogId,
   onCloseCreate,
   onCreateSuccess,
   editingProduct,
@@ -126,6 +128,7 @@ export function ProductModals({
           key={createDraft?.id ?? "create"}
           onSuccess={onCreateSuccess}
           initialSku={initialSku}
+          initialCatalogId={initialCatalogId ?? undefined}
           draft={createDraft ?? undefined}
         >
           <ProductFormModalContent

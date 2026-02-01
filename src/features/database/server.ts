@@ -1,6 +1,7 @@
 import "server-only";
 
 export * from "./services/database-backup";
+export * from "./services/database-sync";
 export * from "./types";
 
 export {

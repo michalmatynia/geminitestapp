@@ -13,12 +13,49 @@ import {
   PresentationControls,
 } from "@react-three/drei";
 import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
-import { Suspense, useEffect, useRef, useMemo } from "react";
+import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from "react";
 import * as THREE from "three";
 import { DitheringPass } from "./shaders/DitheringEffect";
 import { PixelationPass } from "./shaders/PixelationEffect";
 import { OrderedDitheringPass } from "./shaders/OrderedDitheringEffect";
 import { ToneMappingMode, BlendFunction } from "postprocessing";
+
+// Error Boundary for 3D components
+class Model3DErrorBoundary extends Component<
+  { children: React.ReactNode; onError?: (error: Error) => void },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode; onError?: (error: Error) => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): { hasError: boolean; error: Error } {
+    return { hasError: true, error };
+  }
+
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error("3D Model Error:", error, errorInfo);
+    this.props.onError?.(error);
+  }
+
+  override render(): React.ReactNode {
+    if (this.state.hasError) {
+      return (
+        <Html center>
+          <div className="text-red-400 text-center p-4 bg-black/50 rounded">
+            <p>Failed to load 3D model</p>
+            <p className="text-sm text-gray-400 mt-2">
+              {this.state.error?.message || "Unknown error occurred"}
+            </p>
+          </div>
+        </Html>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Loading progress component
 function Loader(): React.JSX.Element {
@@ -68,7 +105,7 @@ interface Model3DProps {
 }
 
 function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true }: Model3DProps): React.JSX.Element {
-  const { scene } = useGLTF(url);
+  const { scene } = useGLTF(url, true); // Enable error handling
   const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
@@ -95,6 +132,19 @@ function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true
       onError(new Error("Failed to load model"));
     }
   }, [scene, onError]);
+
+  if (!scene) {
+    return (
+      <Html center>
+        <div className="text-red-400 text-center p-4 bg-black/50 rounded">
+          <p>Model not found</p>
+          <p className="text-sm text-gray-400 mt-2">
+            The 3D asset could not be loaded
+          </p>
+        </div>
+      </Html>
+    );
+  }
 
   /* eslint-disable react/no-unknown-property */
   return (
@@ -400,6 +450,22 @@ export function Viewer3D({
             >
               <Center>
                 <Bounds fit clip observe margin={1.2}>
+                  <Model3DErrorBoundary onError={onError}>
+                    <Model3D
+                      url={modelUrl}
+                      {...(onLoad && { onLoad })}
+                      {...(onError && { onError })}
+                      castShadow={enableShadows}
+                      receiveShadow={enableShadows}
+                    />
+                  </Model3DErrorBoundary>
+                </Bounds>
+              </Center>
+            </PresentationControls>
+          ) : (
+            <Center>
+              <Bounds fit clip observe margin={1.2}>
+                <Model3DErrorBoundary onError={onError}>
                   <Model3D
                     url={modelUrl}
                     {...(onLoad && { onLoad })}
@@ -407,19 +473,7 @@ export function Viewer3D({
                     castShadow={enableShadows}
                     receiveShadow={enableShadows}
                   />
-                </Bounds>
-              </Center>
-            </PresentationControls>
-          ) : (
-            <Center>
-              <Bounds fit clip observe margin={1.2}>
-                <Model3D
-                  url={modelUrl}
-                  {...(onLoad && { onLoad })}
-                  {...(onError && { onError })}
-                  castShadow={enableShadows}
-                  receiveShadow={enableShadows}
-                />
+                </Model3DErrorBoundary>
               </Bounds>
             </Center>
           )}

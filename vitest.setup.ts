@@ -22,7 +22,8 @@ const MODEL_DEFAULTS: Record<string, any> = {
   page: { slugs: [], components: [] },
   language: { countries: [] },
   country: { languages: [], currencies: [] },
-  category: { notes: [] },
+  category: { notes: [], children: [] },
+  imageFile: { products: [] },
 };
 
 // Mock Prisma client for all tests with simple in-memory state
@@ -55,7 +56,6 @@ vi.mock("@/shared/lib/db/prisma", () => {
           if (typeof itemValue === 'object' && itemValue !== null) {
               return matches(itemValue, value);
           }
-          // If it's a compound key like runId_nodeId: { runId, nodeId }
           return Object.entries(value).every(([vKey, vValue]) => item[vKey] === vValue);
       }
 
@@ -108,6 +108,57 @@ vi.mock("@/shared/lib/db/prisma", () => {
     });
   };
 
+  const applyInclude = (item: any, include: any, modelName: string) => {
+      if (!include || !item) return item;
+      const newItem = { ...item };
+      
+      Object.keys(include).forEach(key => {
+          if (include[key]) {
+              // Category.notes -> noteCategory -> note
+              if (modelName === 'category' && key === 'notes') {
+                  const junctionData = getStore('noteCategory').filter(nc => nc.categoryId === item.id);
+                  newItem.notes = junctionData.map(junc => {
+                      const note = getStore('note').find(n => n.id === junc.noteId);
+                      const noteWithDefaults = { ...(MODEL_DEFAULTS['note'] || {}), ...note };
+                      if (include.notes.include?.note?.include) {
+                          return { ...junc, note: applyInclude(noteWithDefaults, include.notes.include.note.include, 'note') };
+                      }
+                      return { ...junc, note: noteWithDefaults };
+                  });
+                  return;
+              }
+
+              // Page.slugs -> pageSlug -> slug
+              if (modelName === 'page' && key === 'slugs') {
+                  const junctionData = getStore('pageSlug').filter(ps => ps.pageId === item.id);
+                  newItem.slugs = junctionData.map(junc => {
+                      const slug = getStore('slug').find(s => s.id === junc.slugId);
+                      return { ...junc, slug: { ...(MODEL_DEFAULTS['slug'] || {}), ...slug } };
+                  });
+                  return;
+              }
+
+              // Note.categories -> noteCategory -> category
+              if (modelName === 'note' && key === 'categories') {
+                  const junctionData = getStore('noteCategory').filter(nc => nc.noteId === item.id);
+                  newItem.categories = junctionData.map(junc => {
+                      const category = getStore('category').find(c => c.id === junc.categoryId);
+                      return { ...junc, category: { ...(MODEL_DEFAULTS['category'] || {}), ...category } };
+                  });
+                  return;
+              }
+
+              // General case
+              const relatedStoreName = key;
+              const fk = modelName + 'Id';
+              if (store.has(relatedStoreName)) {
+                  newItem[key] = getStore(relatedStoreName).filter(relItem => relItem[fk] === item.id);
+              }
+          }
+      });
+      return newItem;
+  };
+
   // Helper to create a basic mock model with in-memory persistence
   const createMockModel = (name: string) => ({
     findMany: vi.fn().mockImplementation(async (args) => {
@@ -129,13 +180,17 @@ vi.mock("@/shared/lib/db/prisma", () => {
       if (args?.skip) data = data.slice(args.skip);
       if (args?.take) data = data.slice(0, args.take);
       
-      return data.map(item => ({ ...(MODEL_DEFAULTS[name] || {}), ...item }));
+      return data.map(item => {
+          const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
+          return applyInclude(withDefaults, args?.include, name);
+      });
     }),
     findUnique: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
       const item = data.find(item => matches(item, args.where)) || null;
       if (!item) return null;
-      return { ...(MODEL_DEFAULTS[name] || {}), ...item };
+      const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
+      return applyInclude(withDefaults, args?.include, name);
     }),
     findFirst: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -144,7 +199,8 @@ vi.mock("@/shared/lib/db/prisma", () => {
       else item = data.find(item => matches(item, args.where));
       
       if (!item) return null;
-      return { ...(MODEL_DEFAULTS[name] || {}), ...item };
+      const withDefaults = { ...(MODEL_DEFAULTS[name] || {}), ...item };
+      return applyInclude(withDefaults, args?.include, name);
     }),
     create: vi.fn().mockImplementation(async (args) => {
       const newItem = {
@@ -155,7 +211,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
         updatedAt: new Date(),
       };
       
-      // Basic support for connect in nested creates
+      // Handle nested connects
       Object.entries(args?.data || {}).forEach(([key, value]) => {
           if (typeof value === 'object' && value !== null && 'connect' in (value as any)) {
               newItem[key + 'Id'] = (value as any).connect.id;
@@ -163,7 +219,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       });
 
       getStore(name).push(newItem);
-      return newItem;
+      return applyInclude(newItem, args?.include, name);
     }),
     createMany: vi.fn().mockImplementation(async (args) => {
       const data = Array.isArray(args?.data) ? args.data : [args?.data];
@@ -197,7 +253,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       });
 
       data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-      return { ...(MODEL_DEFAULTS[name] || {}), ...data[index] };
+      return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
     }),
     updateMany: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -218,12 +274,12 @@ vi.mock("@/shared/lib/db/prisma", () => {
       return { ...(MODEL_DEFAULTS[name] || {}), ...deleted };
     }),
     deleteMany: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
       if (!args?.where || Object.keys(args.where).length === 0) {
-        const count = getStore(name).length;
+        const count = data.length;
         store.set(name, []);
         return { count };
       }
-      const data = getStore(name);
       let count = 0;
       for (let i = data.length - 1; i >= 0; i--) {
         const item = data[i];
@@ -240,11 +296,11 @@ vi.mock("@/shared/lib/db/prisma", () => {
       if (index !== -1) {
         const updateData = { ...args.update };
         data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-        return { ...(MODEL_DEFAULTS[name] || {}), ...data[index] };
+        return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
       } else {
         const createData = { ...args.create };
         if (args.where) {
-            Object.entries(args.where).forEach(([key, value]) => {
+            Object.entries(args.where).forEach(([_key, value]) => {
                 if (typeof value === 'object' && value !== null && !('in' in value || 'contains' in value)) {
                     Object.assign(createData, value);
                 }
@@ -259,7 +315,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
           updatedAt: new Date(),
         };
         data.push(newItem);
-        return newItem;
+        return applyInclude(newItem, args?.include, name);
       }
     }),
     count: vi.fn().mockImplementation(async (args) => {

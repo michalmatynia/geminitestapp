@@ -1,0 +1,143 @@
+
+> libapp2@0.1.0 lint
+> eslint . --no-cache
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-sync.ts
+    41:34  error  ' valu' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+    66:27  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+   136:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   160:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   182:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   212:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   236:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   253:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   280:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   294:58  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+   295:62  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+   317:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   344:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   362:39  error  Expected session to have a type annotation                                                     @typescript-eslint/typedef
+   372:43  error  Expected session to have a type annotation                                                     @typescript-eslint/typedef
+   373:29  error  Expected message to have a type annotation                                                     @typescript-eslint/typedef
+   373:38  error  Expected index to have a type annotation                                                       @typescript-eslint/typedef
+   396:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   424:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   456:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   479:27  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+   483:36  error  Expected country to have a type annotation                                                     @typescript-eslint/typedef
+   484:32  error  Expected currencyId to have a type annotation                                                  @typescript-eslint/typedef
+   506:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   526:27  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+   530:36  error  Expected lang to have a type annotation                                                        @typescript-eslint/typedef
+   531:27  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+   552:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   581:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   601:27  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+   605:44  error  Expected catalog to have a type annotation                                                     @typescript-eslint/typedef
+   606:32  error  Expected languageId to have a type annotation                                                  @typescript-eslint/typedef
+   606:44  error  Expected index to have a type annotation                                                       @typescript-eslint/typedef
+   624:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   648:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   670:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   693:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   719:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   804:27  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+   808:37  error  Expected product to have a type annotation                                                     @typescript-eslint/typedef
+   809:27  error  Expected image to have a type annotation                                                       @typescript-eslint/typedef
+   819:39  error  Expected product to have a type annotation                                                     @typescript-eslint/typedef
+   820:29  error  Expected catalog to have a type annotation                                                     @typescript-eslint/typedef
+   830:40  error  Expected product to have a type annotation                                                     @typescript-eslint/typedef
+   831:31  error  Expected category to have a type annotation                                                    @typescript-eslint/typedef
+   841:35  error  Expected product to have a type annotation                                                     @typescript-eslint/typedef
+   842:25  error  Expected tag to have a type annotation                                                         @typescript-eslint/typedef
+   859:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   907:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   928:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   952:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+   980:27  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+   984:41  error  Expected page to have a type annotation                                                        @typescript-eslint/typedef
+   985:28  error  Expected component to have a type annotation                                                   @typescript-eslint/typedef
+   985:39  error  Expected index to have a type annotation                                                       @typescript-eslint/typedef
+  1006:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1026:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1076:28  error  Expected a type annotation                                                                     @typescript-eslint/typedef
+  1080:37  error  Expected note to have a type annotation                                                        @typescript-eslint/typedef
+  1081:22  error  Expected tag to have a type annotation                                                         @typescript-eslint/typedef
+  1091:43  error  Expected note to have a type annotation                                                        @typescript-eslint/typedef
+  1092:28  error  Expected category to have a type annotation                                                    @typescript-eslint/typedef
+  1102:42  error  Expected note to have a type annotation                                                        @typescript-eslint/typedef
+  1103:31  error  Expected relation to have a type annotation                                                    @typescript-eslint/typedef
+  1120:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1148:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1170:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1196:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1218:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1249:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1276:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1287:54  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1288:36  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1289:50  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1290:34  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1316:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1328:38  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1329:40  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1347:13  error  Expected doc to have a type annotation                                                         @typescript-eslint/typedef
+  1356:42  error  'unknown' overrides all other types in this union type                                         @typescript-eslint/no-redundant-type-constituents
+  1378:35  error  Expected name to have a type annotation                                                        @typescript-eslint/typedef
+  1415:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1430:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1446:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1454:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1477:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1492:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1505:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1526:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1554:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1579:32  error  Expected session to have a type annotation                                                     @typescript-eslint/typedef
+  1582:39  error  Expected message to have a type annotation                                                     @typescript-eslint/typedef
+  1599:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1619:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1636:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1641:40  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1653:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1659:37  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1678:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1702:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1712:16  error  Expected a to have a type annotation                                                           @typescript-eslint/typedef
+  1712:19  error  Expected b to have a type annotation                                                           @typescript-eslint/typedef
+  1713:15  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1725:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1744:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1761:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1779:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1808:28  error  Expected product to have a type annotation                                                     @typescript-eslint/typedef
+  1836:35  error  Expected image to have a type annotation                                                       @typescript-eslint/typedef
+  1853:39  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1870:43  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1875:31  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  1890:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1933:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1949:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1968:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  1982:16  error  Expected a to have a type annotation                                                           @typescript-eslint/typedef
+  1982:19  error  Expected b to have a type annotation                                                           @typescript-eslint/typedef
+  1983:15  error  Expected component to have a type annotation                                                   @typescript-eslint/typedef
+  1998:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2019:29  error  Expected note to have a type annotation                                                        @typescript-eslint/typedef
+  2032:28  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  2038:40  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  2044:46  error  Expected entry to have a type annotation                                                       @typescript-eslint/typedef
+  2050:30  error  Expected file to have a type annotation                                                        @typescript-eslint/typedef
+  2072:29  error  Expected file to have a type annotation                                                        @typescript-eslint/typedef
+  2094:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2111:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2132:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2149:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2175:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2196:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2229:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+  2254:28  error  Expected row to have a type annotation                                                         @typescript-eslint/typedef
+
+✖ 134 problems (134 errors, 0 warnings)
+

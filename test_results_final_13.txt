@@ -5,7 +5,7 @@
 
  RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
 
- ✓ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests) 19ms
+ ✓ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests) 20ms
 stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products > should reject invalid product data (invalid price)
 System event: {
   level: 'warn',
@@ -54,10 +54,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '2ad49c6c-3115-4381-86d8-fb5f7a4817dd',
+  requestId: 'f20dcbf3-dfec-4880-9ed4-08c81d895a5d',
   statusCode: 400,
   context: {
-    errorId: 'd26dd9f1-81b5-426d-9da0-e5768797ab1b',
+    errorId: 'c7a32eff-d4b2-4e04-9df2-d80d963c6aa3',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false,
@@ -139,10 +139,10 @@ System event: {
     url: 'http://localhost/api/products/non-existent-id',
     method: 'PUT'
   },
-  requestId: '5ba366dd-c8eb-47ca-8e65-990ec7bde677',
+  requestId: '1a08564c-279c-4a4c-9144-e7abe9bf8a95',
   statusCode: 404,
   context: {
-    errorId: '39cbf722-a528-40bd-a149-f9bffc769117',
+    errorId: '0fb30a77-5fd6-4ddd-9c9a-642f7803d9e5',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -227,10 +227,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '0423758b-f7c6-47e8-933e-bcac50e2d50a',
+  requestId: 'c00eb3c5-9670-410b-9ec5-2a297d8a959e',
   statusCode: 404,
   context: {
-    errorId: 'b6423d5b-f8c5-47be-addd-bcc44a996ba6',
+    errorId: 'dd8d2009-66b9-427c-b953-d43e87a3036c',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -262,7 +262,6 @@ stderr | __tests__/api/products/products.test.ts > Products API > DELETE /api/pr
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/api/products/products.test.ts (9 tests) 22ms
 stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products/[id]/duplicate > should return 404 when product does not exist
 System event: {
   level: 'warn',
@@ -305,10 +304,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e63593de-10a7-441a-b85d-2fad60aaf5dc',
+  requestId: '00e6a582-44d4-495d-a2e0-b01bfdd36319',
   statusCode: 404,
   context: {
-    errorId: '034de9c8-3f90-40b0-8860-00b5566b2c08',
+    errorId: 'e80d08c9-3819-43da-94ea-e8f9c85eeab3',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -329,8 +328,9 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 567ms
- ✓ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests) 10ms
+ ✓ __tests__/api/products/products.test.ts (9 tests) 22ms
+ ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 570ms
+ ✓ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests) 9ms
  ✓ __tests__/features/products/services/productService.test.ts (14 tests) 16ms
 stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should return 400 for invalid input
 System event: {
@@ -374,10 +374,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '85085646-8f34-4b7d-a118-5abc52727f63',
+  requestId: 'e2715e05-0d6e-4184-a926-7d5e844012e3',
   statusCode: 400,
   context: {
-    errorId: '5ac104f1-f62a-41c0-82fb-033ca298af7b',
+    errorId: '6ccbd15c-feb6-44e7-b004-864bae7211c0',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -427,10 +427,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'ae158e1d-e233-444d-9305-f30894d8bee4',
+  requestId: '5c0b763e-4a60-4e7d-b202-2ed56523003e',
   statusCode: 404,
   context: {
-    errorId: '4748c001-2cf1-47b5-995f-526476836b0a',
+    errorId: '02414e3e-405e-4e1c-b082-16610e6734b0',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -443,7 +443,7 @@ System event: {
   message: 'Failed to update page',
   source: 'cms.pages.[id].PUT',
   error: Error: page not found
-      at Object.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts:137:31)
+      at Object.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts:184:31)
       at Object.mockCall (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/spy/dist/index.js:61:17)
       at Object.spy [as update] (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/tinyspy/dist/index.js:45:80)
       at Object.updatePage (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts:80:25)
@@ -470,20 +470,18 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '08f0cffc-501f-4cda-be12-5c41e0531a6f',
+  requestId: '456cf2a5-c3d7-410b-804e-3f7a1c7a9a83',
   statusCode: 500,
   context: {
-    errorId: '230eac42-c857-4ffe-b4d1-7a3bcfc57fea',
+    errorId: 'f180161c-fca3-4123-a6f3-3f9746a0d318',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
   }
 }
 
- ❯ __tests__/features/cms/api/cms-pages.test.ts (12 tests | 3 failed) 21ms
-   × CMS Pages API > POST /api/cms/pages > should create a new page with slugs 3ms
-     → expected +0 to be 2 // Object.is equality
-   × CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme 2ms
+ ❯ __tests__/features/cms/api/cms-pages.test.ts (12 tests | 2 failed) 22ms
+   × CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme 3ms
      → expected +0 to be 2 // Object.is equality
    × CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page 1ms
      → expected 500 to be 404 // Object.is equality
@@ -538,13 +536,14 @@ Read more: https://mswjs.io/docs/http/intercepting-requests
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
- ✓ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests) 1228ms
-   ✓ Notes page UI > filters notes by search and tag 738ms
- ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 229ms
- ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 351ms
- ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 783ms
- ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 9ms
- ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 7ms
+ ✓ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests) 1249ms
+   ✓ Notes page UI > filters notes by search and tag 732ms
+   ✓ Notes page UI > creates a new note from the modal 301ms
+ ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 231ms
+ ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 349ms
+ ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 826ms
+ ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 11ms
+ ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 6ms
 stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > rejects note creation without title/content
 System event: {
   level: 'warn',
@@ -587,10 +586,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '76e1e968-9c8e-48ed-bf9d-141c980b884e',
+  requestId: '6217be04-942e-4f4d-9c6b-09f979c307f2',
   statusCode: 400,
   context: {
-    errorId: '57db981c-579f-4cfb-ad20-b213aedd327a',
+    errorId: '5d6b40bc-6e84-4554-ae0a-688a297c800d',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -631,10 +630,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'c35c72c7-ce99-484f-a838-a9bc1d74aead',
+  requestId: 'b64a505e-3820-4f88-8598-f173ea879540',
   statusCode: 500,
   context: {
-    errorId: '4303dce5-dd6b-491c-b026-cdce5ab0b742',
+    errorId: '4beb615c-7fd6-4ea7-b991-bb4579fbe1f9',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
@@ -659,7 +658,7 @@ System event: {
       at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5),
   request: Request {
     method: 'PATCH',
-    url: 'http://localhost/api/notes/mock-note-1769970452487-82514cfl4',
+    url: 'http://localhost/api/notes/mock-note-1769971858617-bo29qpxbt',
     headers: Headers { 'Content-Type': 'application/json' },
     destination: '',
     referrer: 'about:client',
@@ -674,18 +673,18 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '6f902ebb-728a-4907-b35d-bbf91c68048a',
+  requestId: '1cc3fc23-5fa8-4640-9fdc-1289e29226d6',
   statusCode: 500,
   context: {
-    errorId: 'caead84c-04db-450b-bfbe-0f258822bff7',
+    errorId: 'c13650b4-b214-4593-bc7c-f043f6fdaf1b',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
   }
 }
 
- ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 6 failed) 42ms
-   × Notes API > returns notes with relations 30ms
+ ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 6 failed) 47ms
+   × Notes API > returns notes with relations 33ms
      → expected [] to have a length of 1 but got +0
    × Notes API > filters notes by search scope and flags 2ms
      → expected [] to have a length of 1 but got +0
@@ -701,8 +700,8 @@ stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtim
 [chatbot][agent][engine] Run not found { runId: 'run-123' }
 
  ✓ __tests__/features/agent-runtime/services/engine.test.ts (5 tests) 6ms
- ❯ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests | 5 failed) 31ms
-   × PageBuilderLayout Component > should render all panels by default 17ms
+ ❯ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests | 5 failed) 27ms
+   × PageBuilderLayout Component > should render all panels by default 18ms
      → useAdminLayout must be used within an AdminLayoutProvider
    × PageBuilderLayout Component > should toggle left panel 2ms
      → useAdminLayout must be used within an AdminLayoutProvider
@@ -710,23 +709,23 @@ stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtim
      → useAdminLayout must be used within an AdminLayoutProvider
    × PageBuilderLayout Component > should switch left panel modes 2ms
      → useAdminLayout must be used within an AdminLayoutProvider
-   × PageBuilderLayout Component > should handle responsive auto-collapse of right panel 7ms
+   × PageBuilderLayout Component > should handle responsive auto-collapse of right panel 2ms
      → useAdminLayout must be used within an AdminLayoutProvider
- ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 22ms
+ ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 24ms
  ✓ __tests__/features/integrations/services/integration-repository.test.ts (8 tests) 6ms
- ❯ __tests__/features/notesapp/services/note-service.test.ts (11 tests | 2 failed) 14ms
+ ❯ __tests__/features/notesapp/services/note-service.test.ts (11 tests | 2 failed) 16ms
    × NoteService > Relation Syncing > automatically creates bidirectional relations 2ms
-     → expected [] to include 'mock-note-1769970455110-hexlwca7q'
+     → expected [] to include 'mock-note-1769971861460-165z9u8hx'
    × NoteService > Categories and Tags > manages category trees 1ms
      → expected undefined to be defined
- ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 11ms
+ ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 19ms
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts (0 test)
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts (0 test)
  ✓ __tests__/features/agent-runtime/services/execution.test.ts (6 tests) 5ms
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 1 failed) 7ms
+ ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 1 failed) 8ms
    × AiPathRunRepository > should list runs with filters 3ms
      → expected +0 to be 1 // Object.is equality
- ✓ __tests__/features/agent-runtime/services/step-runner.test.ts (4 tests) 5ms
+ ✓ __tests__/features/agent-runtime/services/step-runner.test.ts (4 tests) 6ms
  ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts (10 tests | 3 failed) 8ms
    × prismaAsset3DRepository > should list assets3d with filters 3ms
      → expected [] to have a length of 1 but got +0
@@ -776,10 +775,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '46dd0b5f-65c8-4644-be50-983bc724b717',
+  requestId: 'b00a6d8b-a599-4cb7-b277-1e628ed808ed',
   statusCode: 400,
   context: {
-    errorId: '8227100b-eb7f-4bb2-b4a8-ed4a6386da8e',
+    errorId: '7bb045b1-3391-439c-8b1a-193fc552a116',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -787,8 +786,8 @@ System event: {
   }
 }
 
- ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 2 failed) 18ms
-   × Languages API > POST /api/languages > should create a language with country assignments 3ms
+ ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 2 failed) 19ms
+   × Languages API > POST /api/languages > should create a language with country assignments 4ms
      → expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
    × Languages API > PUT /api/languages/[id] > should update language fields and countries 3ms
      → expected [] to have a length of 1 but got +0
@@ -834,10 +833,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '5a64313d-854c-4d7c-81fe-0af68cba8930',
+  requestId: '9cd8d80f-724a-4dc1-bf15-cb766aa492e6',
   statusCode: 400,
   context: {
-    errorId: '2acfc380-1700-46ba-aeca-c5a6b18040da',
+    errorId: '06b93151-eeff-4174-9d86-7c507c9f92a9',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -845,7 +844,7 @@ System event: {
   }
 }
 
- ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 19ms
+ ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 18ms
    × Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call 6ms
      → expected 0 to be greater than 0
    × Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls 2ms
@@ -880,8 +879,8 @@ This will cause a hydration error.
 <select> cannot contain a nested <div>.
 See this log for the ancestor stack trace.
 
- ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 1 failed) 238ms
-   × SystemLogsPage > renders logs list and metrics 47ms
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 1 failed) 245ms
+   × SystemLogsPage > renders logs list and metrics 49ms
      → Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -1144,7 +1143,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 7:27:40 PM[0m
+                      [0m2/1/2026, 7:51:07 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1176,7 +1175,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 7:27:40 PM[0m
+                      [0m2/1/2026, 7:51:07 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1215,7 +1214,7 @@ Ignored nodes: comments, script, style
   [36m</div>[39m
 [36m</body>[39m
  ✓ __tests__/features/cms/services/cms-domain.test.ts (9 tests) 8ms
- ✓ __tests__/features/agent-runtime/services/llm-tools.test.ts (7 tests) 4ms
+ ✓ __tests__/features/agent-runtime/services/llm-tools.test.ts (7 tests) 5ms
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > GET > returns specific agent run
 [chatbot][agent][GET] Run loaded { runId: 'test-run-123', status: undefined, durationMs: 0 }
 
@@ -1261,10 +1260,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '5b83a14a-e5f9-4642-88d0-5d26a4625f1a',
+  requestId: 'e951682f-d968-433c-a551-b4586e0ca64a',
   statusCode: 404,
   context: {
-    errorId: 'c792a9c5-f285-4188-9756-04de1a4dd13c',
+    errorId: 'd488ed40-f0fb-46ea-9b04-18c502142b80',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -1273,15 +1272,15 @@ System event: {
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > stops a running agent
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'stop' }
-[chatbot][agent][POST] Stopped { runId: 'test-run-123', status: 'stopped', durationMs: 0 }
+[chatbot][agent][POST] Stopped { runId: 'test-run-123', status: 'stopped', durationMs: 1 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > resumes a stopped agent
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'resume' }
-[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 0 }
+[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 1 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > retries a specific step
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'retry_step' }
-[chatbot][agent][POST] Step retry queued { runId: 'test-run-123', stepId: 'step-1', durationMs: 1 }
+[chatbot][agent][POST] Step retry queued { runId: 'test-run-123', stepId: 'step-1', durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > DELETE > deletes a non-running agent
 [chatbot][agent][DELETE] Deleted { runId: 'test-run-123', durationMs: 1 }
@@ -1328,22 +1327,22 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'eb02741c-348d-4976-aa04-08cbf6807947',
+  requestId: '4bdbbc1b-8dc1-4576-a6b2-07950961450b',
   statusCode: 409,
   context: {
-    errorId: 'aed92215-a8a0-4fcf-9a2f-2ae2cdd9c49b',
+    errorId: '8b342e79-0c20-416b-be16-f3295b95b9fe',
     code: 'CONFLICT',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 15ms
- ✓ __tests__/features/auth/pages/signin-page.test.tsx (5 tests) 416ms
- ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 12ms
- ✓ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests) 519ms
- ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 50ms
- ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 195ms
+ ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 16ms
+ ✓ __tests__/features/auth/pages/signin-page.test.tsx (5 tests) 426ms
+ ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 14ms
+ ✓ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests) 602ms
+ ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 44ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 194ms
  ✓ __tests__/features/cms/services/repository.test.ts (9 tests) 5ms
  ✓ __tests__/features/agent-runtime/utils/utils.test.ts (15 tests) 11ms
 stdout | __tests__/features/cms/api/api-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return 404 if page not found
@@ -1388,17 +1387,17 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e115ae3c-e69a-4f33-aa4d-8198f3c451d6',
+  requestId: '7b40ed50-baeb-4c40-8f1f-0c621ca59f53',
   statusCode: 404,
   context: {
-    errorId: '7010eb09-72be-4f7d-adba-21ed157e13ff',
+    errorId: '4940a563-1ec7-417b-a7d8-11d6d3d396b9',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 15ms
+ ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 17ms
 stdout | __tests__/features/internationalization/api/price-groups.test.ts > Price Groups API > POST /api/price-groups > should fail validation for dependent group without source
 System event: {
   level: 'warn',
@@ -1441,10 +1440,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '56457680-3c71-4450-b9be-0ab9f1a137e1',
+  requestId: '4bde6d2b-ddd1-4ff8-9fb8-948ca39e5cf0',
   statusCode: 400,
   context: {
-    errorId: '69af2c45-886f-4942-958e-14de7ed6d2b7',
+    errorId: '8ee25f38-47ca-4e8c-918a-1b1967abfabc',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -1453,7 +1452,7 @@ System event: {
 }
 
  ✓ __tests__/features/internationalization/api/price-groups.test.ts (5 tests) 14ms
- ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 64ms
+ ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 57ms
 stdout | __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > creates a category and rejects empty names
 System event: {
   level: 'warn',
@@ -1496,10 +1495,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'b98bc573-21b1-45a0-a7b1-8a03f0eef7b0',
+  requestId: '177d4637-61a3-4d63-bf7e-6a4534e76395',
   statusCode: 400,
   context: {
-    errorId: '56f8f537-9e4c-43fc-84eb-fd5f00c5aa1a',
+    errorId: '26e864c6-47c4-488a-b277-c58860534e5f',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -1521,9 +1520,9 @@ stderr | __tests__/features/agent-runtime/services/planning.test.ts > Agent Runt
 stderr | __tests__/features/agent-runtime/services/planning.test.ts > Agent Runtime - Planning > buildPlanWithLLM > should fallback to heuristic on Invalid JSON
 [chatbot][agent][engine] Planner fallback { runId: undefined, error: 'Planner LLM returned invalid JSON.' }
 
- ✓ __tests__/features/agent-runtime/services/planning.test.ts (4 tests) 6ms
- ✓ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests) 6ms
- ✓ __tests__/features/cms/components/ComponentTreePanel.test.tsx (3 tests) 39ms
+ ✓ __tests__/features/agent-runtime/services/planning.test.ts (4 tests) 5ms
+ ✓ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests) 16ms
+ ✓ __tests__/features/cms/components/ComponentTreePanel.test.tsx (3 tests) 49ms
 stdout | __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
 System event: {
   level: 'warn',
@@ -1566,10 +1565,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e99df659-8e61-4885-ae46-0382b24bf72e',
+  requestId: 'b6004960-4997-4509-aca4-398990ab73de',
   statusCode: 404,
   context: {
-    errorId: '0f1c3d8c-59b5-4f55-ad2f-cb4d3268df17',
+    errorId: 'ac40ab4b-052a-44d7-b4a4-1e53ee1330b9',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -1618,17 +1617,17 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'ff169602-2f2d-45e7-9546-1fa5af51743b',
+  requestId: '92aa541f-6c8d-47c3-929c-5aafa6671ba7',
   statusCode: 404,
   context: {
-    errorId: 'a6337aa6-5cbd-4ec6-8668-fe55346dcff9',
+    errorId: 'ab77b673-4722-4508-be5c-ffc5c3fe6c19',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
   }
 }
 
- ❯ __tests__/features/files/api/files.test.ts (6 tests | 4 failed) 18ms
+ ❯ __tests__/features/files/api/files.test.ts (6 tests | 4 failed) 19ms
    × Files API > GET /api/files > should filter files by filename 3ms
      → expected +0 to be 1 // Object.is equality
    × Files API > GET /api/files > should filter files by product ID 1ms
@@ -1682,10 +1681,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'f5aa59f3-890d-4786-82e2-ac353b8d3711',
+  requestId: 'd0bef9b0-bf21-407b-a896-771ec548d104',
   statusCode: 500,
   context: {
-    errorId: 'c9300a3a-4761-4ba1-984c-234883db9a44',
+    errorId: '40f91099-8777-4eda-9905-0e9ff6873a3b',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
@@ -1721,7 +1720,7 @@ stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creat
     loopBackoffMaxMs: 12000
   }
 }
-[chatbot][agent][POST] Queued { runId: 'new-run', status: 'queued', durationMs: 1 }
+[chatbot][agent][POST] Queued { runId: 'new-run', status: 'queued', durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > POST > returns 400 if prompt is missing
 System event: {
@@ -1765,10 +1764,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '621c015e-808a-487d-91e3-c2add08113c2',
+  requestId: '0c4d85af-a957-4f35-bbad-80c7735efedf',
   statusCode: 400,
   context: {
-    errorId: 'a93978fc-9587-4bcb-af3c-286bef03c0e5',
+    errorId: 'b538b9b9-6f85-4075-b1e3-7e919c5da8c6',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -1778,6 +1777,7 @@ System event: {
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > DELETE > deletes terminal runs
 [chatbot][agent][DELETE] Deleted { count: 1, durationMs: 1 }
 
+ ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 15ms
 stdout | __tests__/features/agentcreator/api/agent-creator.test.ts > Agent Creator API > DELETE > returns 400 for unsupported scope
 System event: {
   level: 'warn',
@@ -1820,18 +1820,17 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '8a4928c8-8fed-4b5f-9f01-527070013eed',
+  requestId: 'd71ef59a-3c5a-4866-8a8c-dc5da72b63c2',
   statusCode: 400,
   context: {
-    errorId: 'e5ee23f4-2cab-403e-a236-025cc121debf',
+    errorId: 'b58134cf-34a1-4512-a0b8-afd0164af573',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 16ms
- ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 1 failed) 14ms
+ ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 1 failed) 9ms
    × productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite 6ms
      → expected 'SKU2' to be 'SKU1' // Object.is equality
  ✓ __tests__/features/agent-runtime/services/memory.test.ts (5 tests) 5ms
@@ -1877,10 +1876,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '48a9f741-bc61-48ec-9dd1-0beed2ef08e3',
+  requestId: '263b556b-ed67-4bfc-bdb1-2cb84b9b0b33',
   statusCode: 409,
   context: {
-    errorId: 'f02e0c6d-82e5-4b6a-8e5a-38c8e84f7e26',
+    errorId: '2f1ac65d-6d72-4207-89d5-fb90c5933ac9',
     code: 'CONFLICT',
     critical: false,
     retryable: false,
@@ -1930,22 +1929,22 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '94d81a6c-9ce7-4902-af8a-52145356911b',
+  requestId: '7865fdd5-87eb-4615-9710-f43f6fce8995',
   statusCode: 403,
   context: {
-    errorId: '85678179-1d44-4d7c-89fa-ee43df47f8ef',
+    errorId: '1cc31ba0-1b4d-4a6c-be28-a33316864468',
     code: 'FORBIDDEN',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/api/auth/register.test.ts (4 tests) 15ms
+ ✓ __tests__/api/auth/register.test.ts (4 tests) 16ms
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should list available Ollama models
 [chatbot][models] Loaded {
   count: 2,
-  durationMs: 10,
-  requestId: '5815d555-6895-46ed-b1b0-3ec1728bc8ee'
+  durationMs: 9,
+  requestId: '040a9c3f-5150-42af-9425-0e62b1fe6b1b'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return an error when model listing fails
@@ -1990,10 +1989,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '0f6dbac4-848f-484e-bd49-5791fee20dc4',
+  requestId: '01d696ee-8fa9-44b5-b8fd-46d4b07bcf2f',
   statusCode: 502,
   context: {
-    errorId: '22e0af84-e68b-400d-90fe-67580d023b5d',
+    errorId: '75dd68ac-d1cb-4944-a5a4-e26e2763731e',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
@@ -2042,10 +2041,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '4537af20-728b-43a1-8593-f53060884493',
+  requestId: '72a2aee9-82ae-45bd-9dcb-e61d051143b3',
   statusCode: 400,
   context: {
-    errorId: '29658cdd-1b58-4e5b-b4ae-f7e0914def68',
+    errorId: '22965e0f-2181-4822-a170-34c6016c52c8',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -2061,13 +2060,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should p
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '3f08dae0-a4e3-46cf-9867-a1081641f339'
+  requestId: 'b1c82dfc-0285-4ed5-83b3-32da7fd0e262'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '3f08dae0-a4e3-46cf-9867-a1081641f339'
+  requestId: 'b1c82dfc-0285-4ed5-83b3-32da7fd0e262'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return a debug errorId when chat proxy fails
@@ -2079,13 +2078,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '424f2936-d0c6-4030-9990-a7c100cc6e40'
+  requestId: 'adf1fa8c-099c-41d4-8365-c64d1358c18c'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '424f2936-d0c6-4030-9990-a7c100cc6e40'
+  requestId: 'adf1fa8c-099c-41d4-8365-c64d1358c18c'
 }
 System event: {
   level: 'error',
@@ -2128,10 +2127,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '0540416d-521b-4c7e-b8d8-c296f353c4f5',
+  requestId: '15defff2-41c0-49fc-a365-547a0c5c751a',
   statusCode: 502,
   context: {
-    errorId: '6fc175e4-cb13-4416-83ff-a3c3edef263d',
+    errorId: '36563430-aa00-4da7-9ec7-4a2775865a87',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
@@ -2147,13 +2146,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: 'eb75ceff-b737-4192-a195-bfff88db2403'
+  requestId: '56459b61-9f24-4b25-964b-0c30cc35cc59'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: 'eb75ceff-b737-4192-a195-bfff88db2403'
+  requestId: '56459b61-9f24-4b25-964b-0c30cc35cc59'
 }
 System event: {
   level: 'error',
@@ -2199,29 +2198,29 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'dcd7d914-0b72-4c7e-bbb6-ff073c2b5a69',
+  requestId: '5bf441be-21ef-4b4a-addc-27c2d19807e3',
   statusCode: 502,
   context: {
-    errorId: '0d25a951-9526-4413-bc29-b0a32d8c8463',
+    errorId: '42b44441-67e7-47df-9fa3-fa8126b815af',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
   }
 }
 
- ✓ __tests__/features/chatbot/api/chatbot.test.ts (6 tests) 37ms
- ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 8ms
- ❯ __tests__/features/auth/services/totp.test.ts (8 tests | 4 failed) 13ms
+ ✓ __tests__/features/chatbot/api/chatbot.test.ts (6 tests) 33ms
+ ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 5ms
+ ❯ __tests__/features/auth/services/totp.test.ts (8 tests | 4 failed) 15ms
    × TOTP Service > hashes recovery codes consistently 3ms
      → expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
    × TOTP Service > verifyTotpToken > verifies a valid token for the current time window 2ms
      → expected false to be true // Object.is equality
-   × TOTP Service > verifyTotpToken > verifies a valid token within the window 0ms
+   × TOTP Service > verifyTotpToken > verifies a valid token within the window 1ms
      → expected false to be true // Object.is equality
    × TOTP Service > verifyTotpToken > returns false for invalid tokens 0ms
      → vi.mocked(...).mockReturnValueOnce is not a function
- ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 19ms
- ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 119ms
+ ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 20ms
+ ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 125ms
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should reject missing prompt when creating a run
 System event: {
   level: 'warn',
@@ -2264,10 +2263,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '6e81c8a5-4132-4afb-99e6-185abc22f37f',
+  requestId: '5c0f4431-d68d-4050-97e1-acb8d4120fa2',
   statusCode: 400,
   context: {
-    errorId: '9b33e338-d0d5-4f8b-9edc-74db9940ab71',
+    errorId: 'ed76cac6-5366-41de-a29e-15f99dc91ce3',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -2275,11 +2274,11 @@ System event: {
 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
-[chatbot][agent][GET] Runs loaded { count: 1, durationMs: 1 }
+[chatbot][agent][GET] Runs loaded { count: 1, durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent logs for a run
 [chatbot][agent][logs] Loaded {
-  runId: 'mock-chatbotAgentRun-1769970479608-s8js1kq76',
+  runId: 'mock-chatbotAgentRun-1769971887262-mqe8sigui',
   stepId: null,
   count: 1,
   durationMs: 0
@@ -2287,13 +2286,13 @@ stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should 
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent audit logs for a run
 [chatbot][agent][audits] Loaded {
-  runId: 'mock-chatbotAgentRun-1769970479609-xj7dbbdgp',
+  runId: 'mock-chatbotAgentRun-1769971887264-rt4i33va0',
   count: 1,
   durationMs: 0
 }
 
- ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 1 failed) 13ms
-   × Agent API > should list agent runs with counts 2ms
+ ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 1 failed) 14ms
+   × Agent API > should list agent runs with counts 3ms
      → Cannot read properties of undefined (reading 'browserLogs')
 stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth User Repository > findAuthUserByEmail > finds user via MongoDB
 [AUTH-REPO] Finding user test@example.com using mongodb
@@ -2303,9 +2302,9 @@ stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth Us
 [AUTH-REPO] MongoDB user not found
 
  ✓ __tests__/features/auth/services/auth-user-repository.test.ts (5 tests) 49ms
- ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 138ms
- ❯ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests | 2 failed) 2297ms
-   × EditProductForm > renders the form with product data in the General tab 1159ms
+ ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 144ms
+ ❯ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests | 2 failed) 2266ms
+   × EditProductForm > renders the form with product data in the General tab 1154ms
      → Unable to find role="textbox" and name `/English Name/i`
 
 Ignored nodes: comments, script, style
@@ -2525,7 +2524,7 @@ Ignored nodes: comments, script, style
               [33maria-controls[39m=[32m"radix-_r_0_-content-images"[39m
               [33maria-selected[39m=[32m"false"[39m
               [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-n...
-   × EditProductForm > renders the price in the Other tab 1091ms
+   × EditProductForm > renders the price in the Other tab 1071ms
      → Unable to find a label with the text of: /Base Price/i
 
 Ignored nodes: comments, script, style
@@ -2748,19 +2747,19 @@ Ignored nodes: comments, script, style
 stderr | __tests__/features/products/components/products-list.test.tsx > Admin Products List UI > prompts for SKU before opening the create modal and pre-fills SKU
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 561ms
- ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 20ms
-   × RegisterPage > renders correctly 15ms
+ ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 536ms
+ ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 26ms
+   × RegisterPage > renders correctly 14ms
      → No QueryClient set, use QueryClientProvider to set one
    × RegisterPage > handles successful registration and signs in 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × RegisterPage > shows error message if signup is disabled 1ms
      → No QueryClient set, use QueryClientProvider to set one
-   × RegisterPage > shows error from registration failure 1ms
+   × RegisterPage > shows error from registration failure 6ms
      → No QueryClient set, use QueryClientProvider to set one
  ✓ __tests__/features/agent-runtime/planning/utils.test.ts (14 tests) 9ms
- ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 32ms
- ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 250ms
+ ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 27ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 230ms
 stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > successfully processes a run
 [aiPathRunQueue] Processing run run-1
 [aiPathRunQueue] Run run-1 completed
@@ -2776,11 +2775,11 @@ stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Qu
      → getPathRunRepository(...).updateRun is not a function
    × AI Path Run Queue Worker > processRun > moves to dead-letter on max retries 0ms
      → getPathRunRepository(...).updateRun is not a function
- ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 26ms
- ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 70ms
+ ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 25ms
+ ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 51ms
  ✓ __tests__/features/agent-runtime/services/plan-init.test.ts (3 tests) 4ms
- ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 5ms
- ✓ __tests__/shared/lib/observability/critical-error-notifier.test.ts (4 tests) 5ms
+ ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 4ms
+ ✓ __tests__/shared/lib/observability/critical-error-notifier.test.ts (4 tests) 4ms
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should render with initial asset data
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
@@ -2793,11 +2792,11 @@ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogCont
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should display error message if save fails
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 244ms
+ ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 207ms
 stderr | __tests__/features/cms/components/SectionPicker.test.tsx > SectionPicker Component > should call onSelect when a section type is clicked
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 143ms
+ ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 147ms
 stdout | __tests__/shared/utils/retry.test.ts > Retry Utils > withRetry > retries until success
 System event: {
   level: 'warn',
@@ -2898,11 +2897,11 @@ System event: {
   context: { circuitId: 'test-circuit', failures: 5, resetTimeoutMs: 60000 }
 }
 
- ✓ __tests__/shared/utils/retry.test.ts (5 tests) 18ms
- ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 234ms
- ✓ __tests__/features/files/services/image-file-repository.test.ts (6 tests) 4ms
- ✓ __tests__/features/products/api/pagination.test.ts (4 tests) 12ms
- ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 203ms
+ ✓ __tests__/shared/utils/retry.test.ts (5 tests) 16ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 232ms
+ ✓ __tests__/features/files/services/image-file-repository.test.ts (6 tests) 5ms
+ ✓ __tests__/features/products/api/pagination.test.ts (4 tests) 13ms
+ ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 204ms
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > GET: returns all sessions
 [chatbot][sessions][GET] Listed { count: 1, durationMs: 0 }
 
@@ -2912,7 +2911,7 @@ stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessi
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > PATCH: updates a session title
 [chatbot][sessions][PATCH] Request { sessionId: 's1', titleProvided: true }
-[chatbot][sessions][PATCH] Updated { sessionId: 's1', durationMs: 0 }
+[chatbot][sessions][PATCH] Updated { sessionId: 's1', durationMs: 1 }
 
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > DELETE: deletes a session
 [chatbot][sessions][DELETE] Request { sessionId: 's1' }
@@ -2961,10 +2960,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '31478aae-3540-4268-9e44-ab799f8f5e3e',
+  requestId: 'a4702b98-47fa-4cc0-8fd2-63e0f0823ff8',
   statusCode: 404,
   context: {
-    errorId: '2419bedd-4459-4826-a6d9-e9e9f38fdafb',
+    errorId: '55f97de8-6ae5-465e-a7af-1d02cf1573de',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -2972,20 +2971,20 @@ System event: {
   }
 }
 
- ✓ __tests__/features/chatbot/api/chatbot-sessions.test.ts (5 tests) 16ms
- ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 10ms
+ ✓ __tests__/features/chatbot/api/chatbot-sessions.test.ts (5 tests) 15ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 4ms
  ✓ __tests__/features/viewer3d/services/asset3dUploader.test.ts (4 tests) 6ms
- ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 96ms
- ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 9ms
- ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 108ms
- ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (5 tests | 5 failed) 31ms
-   × DraftCreator Component > should render the form with initial state 23ms
+ ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 95ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 8ms
+ ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 106ms
+ ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (5 tests | 5 failed) 22ms
+   × DraftCreator Component > should render the form with initial state 16ms
      → No QueryClient set, use QueryClientProvider to set one
-   × DraftCreator Component > should update name input correctly 2ms
+   × DraftCreator Component > should update name input correctly 1ms
      → No QueryClient set, use QueryClientProvider to set one
    × DraftCreator Component > should show validation error if saving without a name 1ms
      → No QueryClient set, use QueryClientProvider to set one
-   × DraftCreator Component > should toggle active switch 1ms
+   × DraftCreator Component > should toggle active switch 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × DraftCreator Component > should render icon buttons 1ms
      → No QueryClient set, use QueryClientProvider to set one
@@ -3031,10 +3030,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '982b1dc5-810c-489a-9bbc-8cebbb63ff07',
+  requestId: 'c76944c5-0014-465e-a096-9a13ded8e1fc',
   statusCode: 409,
   context: {
-    errorId: 'fbc5d4a8-9bb4-4224-bf46-8bec6e2ca3a7',
+    errorId: '949fa94c-f1d5-410a-8ca4-5028de862fcc',
     code: 'CONFLICT',
     critical: false,
     retryable: false,
@@ -3042,7 +3041,7 @@ System event: {
   }
 }
 
- ✓ __tests__/features/auth/api/register.test.ts (2 tests) 11ms
+ ✓ __tests__/features/auth/api/register.test.ts (2 tests) 10ms
 stdout | __tests__/features/products/services/aiTranslationService.test.ts > aiTranslationService > should successfully translate product data to target languages
 [aiTranslationService] Using model: mocked-value
 [aiTranslationService] Using Ollama at: http://localhost:11434
@@ -3097,21 +3096,21 @@ stderr | __tests__/features/products/services/aiTranslationService.test.ts > aiT
 [aiTranslationService] Skipping Polish due to error
 
  ✓ __tests__/features/products/services/aiTranslationService.test.ts (3 tests) 7ms
- ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 17ms
- ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 20ms
+ ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 14ms
+ ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 10ms
  ✓ __tests__/api/products/tags.test.ts (2 tests) 8ms
- ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests | 3 failed) 22ms
-   × AdminFrontManagePage > renders loading state 16ms
+ ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests | 3 failed) 18ms
+   × AdminFrontManagePage > renders loading state 14ms
      → No QueryClient set, use QueryClientProvider to set one
-   × AdminFrontManagePage > renders initial selected option from settings 2ms
+   × AdminFrontManagePage > renders initial selected option from settings 1ms
      → No QueryClient set, use QueryClientProvider to set one
-   × AdminFrontManagePage > allows changing selection and saving 2ms
+   × AdminFrontManagePage > allows changing selection and saving 1ms
      → No QueryClient set, use QueryClientProvider to set one
- ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 249ms
+ ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 244ms
  ✓ __tests__/features/notesapp/utils/index.test.ts (9 tests) 9ms
- ✓ __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 12ms
- ✓ __tests__/features/drafter/services/draft-repository-mongo.test.ts (4 tests) 6ms
- ❯ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests | 5 failed) 4ms
+ ✓ __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 9ms
+ ✓ __tests__/features/drafter/services/draft-repository-mongo.test.ts (4 tests) 5ms
+ ❯ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests | 5 failed) 3ms
    × ExportTemplateRepository > should create and list export templates 1ms
      → Cannot read properties of undefined (reading 'deleteMany')
    × ExportTemplateRepository > should filter out forbidden basehost mappings 0ms
@@ -3122,7 +3121,7 @@ stderr | __tests__/features/products/services/aiTranslationService.test.ts > aiT
      → Cannot read properties of undefined (reading 'deleteMany')
    × ExportTemplateRepository > should get and set active template id 0ms
      → Cannot read properties of undefined (reading 'deleteMany')
- ✓ __tests__/features/cms/api/cms-themes.test.ts (2 tests) 10ms
+ ✓ __tests__/features/cms/api/cms-themes.test.ts (2 tests) 9ms
 stdout | __tests__/features/notesapp/api/tags.test.ts > Notes Tags API > rejects tag creation without a name
 System event: {
   level: 'warn',
@@ -3165,10 +3164,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'd8d3e8bc-b39a-4d75-b6d3-6513aa4ed451',
+  requestId: 'ebdcf98d-2466-4593-9b58-6a7b4398087a',
   statusCode: 400,
   context: {
-    errorId: '1ba50a2f-4cee-488a-bbc0-0a2358168b24',
+    errorId: '662ff53b-8310-4a63-a8ac-a5927a9dfa30',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3176,14 +3175,14 @@ System event: {
   }
 }
 
- ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 16ms
-   × Notes Tags API > lists tags ordered by name 9ms
+ ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 15ms
+   × Notes Tags API > lists tags ordered by name 8ms
      → Cannot read properties of undefined (reading 'name')
  ✓ __tests__/features/agent-runtime/services/browser-tools.test.ts (2 tests) 4ms
  ✓ __tests__/features/observability/services/client-error-logger.test.ts (3 tests) 9ms
- ✓ __tests__/features/drafter/services/draft-repository.test.ts (6 tests) 108ms
- ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 41ms
-   × MediaLibraryPanel Component > should render when open 31ms
+ ✓ __tests__/features/drafter/services/draft-repository.test.ts (6 tests) 107ms
+ ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 40ms
+   × MediaLibraryPanel Component > should render when open 30ms
      → Unable to find an element by: [data-testid="file-manager"]
 
 Ignored nodes: comments, script, style
@@ -3282,7 +3281,7 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
-   × MediaLibraryPanel Component > should call onSelect when a file is selected 7ms
+   × MediaLibraryPanel Component > should call onSelect when a file is selected 8ms
      → Unable to find an element by: [data-testid="select-file-btn"]
 
 Ignored nodes: comments, script, style
@@ -3383,9 +3382,9 @@ Ignored nodes: comments, script, style
 [36m</body>[39m
  ✓ __tests__/features/playwright/utils/personas.test.ts (7 tests) 8ms
  ✓ __tests__/features/products/validations/product.test.ts (5 tests) 9ms
- ✓ __tests__/features/products/services/prismaProductRepository.test.ts (5 tests) 4ms
+ ✓ __tests__/features/products/services/prismaProductRepository.test.ts (5 tests) 5ms
  ✓ __tests__/features/observability/api/logs/logs.test.ts (3 tests) 12ms
- ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 13ms
+ ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 12ms
 stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /api/products/ai-jobs/enqueue > should enqueue a new job
 [api/products/ai-jobs/enqueue] Received request - productId: prod1, type: description
 [api/products/ai-jobs/enqueue] Job job1 created
@@ -3394,11 +3393,11 @@ stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /ap
 [api/products/ai-jobs/enqueue] Job job1 processing initiated successfully
 
  ✓ __tests__/api/products/ai-jobs.test.ts (2 tests) 12ms
- ✓ __tests__/features/agent-runtime/execution/loop-guard.test.ts (5 tests) 2ms
- ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 51ms
- ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 119ms
- ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 22ms
-   × AdminLayout > renders children correctly 16ms
+ ✓ __tests__/features/agent-runtime/execution/loop-guard.test.ts (5 tests) 3ms
+ ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 65ms
+ ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 107ms
+ ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 19ms
+   × AdminLayout > renders children correctly 14ms
      → No QueryClient set, use QueryClientProvider to set one
    × AdminLayout > renders the sidebar with Admin logo 1ms
      → No QueryClient set, use QueryClientProvider to set one
@@ -3406,7 +3405,6 @@ stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /ap
      → No QueryClient set, use QueryClientProvider to set one
    × AdminLayout > renders UserNav in the header 1ms
      → No QueryClient set, use QueryClientProvider to set one
- ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 13ms
 stdout | __tests__/features/cms/api/api-slugs.test.ts > CMS Slugs API > POST /api/cms/slugs > should return 400 if slug is missing
 System event: {
   level: 'warn',
@@ -3449,10 +3447,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '0e7cdd11-5ce1-4e54-a25a-e10a4d8583d6',
+  requestId: 'aa250340-531a-45f5-b237-4b25b9f06b17',
   statusCode: 400,
   context: {
-    errorId: '085ade48-0ebb-44f0-af6c-177322b3c377',
+    errorId: 'a3490571-12c6-495b-a507-5dd7862305c4',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3460,12 +3458,13 @@ System event: {
   }
 }
 
- ✓ __tests__/features/products/components/product-list-header.test.tsx (4 tests) 142ms
- ✓ __tests__/features/playwright/services/persona-utils.test.ts (8 tests) 8ms
+ ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 12ms
+ ✓ __tests__/features/products/components/product-list-header.test.tsx (4 tests) 135ms
+ ✓ __tests__/features/playwright/services/persona-utils.test.ts (8 tests) 9ms
  ✓ __tests__/features/agent-runtime/services/audit.test.ts (5 tests) 8ms
  ✓ __tests__/api/products/categories.test.ts (1 test) 7ms
- ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 81ms
-   × ErrorSystem > captures and logs an Error object 77ms
+ ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 70ms
+   × ErrorSystem > captures and logs an Error object 66ms
      → expected "spy" to be called with arguments: [ …(2) ]
 
 Received: 
@@ -3544,10 +3543,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'fc037894-1c3c-4a5b-aa6a-38ca3e5ca9ae',
+  requestId: '24d844e9-1d54-4113-8b6b-57351bd2d939',
   statusCode: 400,
   context: {
-    errorId: '13063ab5-5bd5-4dd0-b6db-f6388255111c',
+    errorId: 'aa217484-ee34-459a-9ac2-5a811a8cada9',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3555,14 +3554,14 @@ System event: {
   }
 }
 
- ✓ __tests__/features/internationalization/api/currencies.test.ts (3 tests) 10ms
+ ✓ __tests__/features/internationalization/api/currencies.test.ts (3 tests) 12ms
  ✓ __tests__/features/cms/api/cms.test.ts (4 tests) 9ms
  ✓ __tests__/features/viewer3d/services/validateAsset3d.test.ts (7 tests) 8ms
  ✓ __tests__/features/cms/services/cms-theme-settings.test.ts (3 tests) 4ms
  ✓ __tests__/shared/lib/transient-recovery-settings.test.ts (3 tests) 3ms
- ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 131ms
+ ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 109ms
  ✓ __tests__/features/agent-runtime/services/checkpoint.test.ts (4 tests) 4ms
- ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 240ms
+ ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 242ms
 stderr | __tests__/features/products/services/aiDescriptionService.test.ts > aiDescriptionService > should generate a description using mocked AI
 Prisma setting fetch failed for openai_api_key: TypeError: Cannot read properties of undefined (reading 'findUnique')
     at getSettingValue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/aiDescriptionService.ts:60:44)
@@ -3765,14 +3764,13 @@ Prisma setting fetch failed for ai_generation_output_enabled: TypeError: Cannot 
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 7ms
+ ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 10ms
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > GET: returns settings by key
 [chatbot][settings][GET] Loaded { key: 'default', found: true, durationMs: 0 }
 
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > POST: saves settings using upsert
 [chatbot][settings][POST] Saved { key: 'default', durationMs: 1 }
 
- ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 11ms
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > POST: returns 400 if settings missing
 System event: {
   level: 'warn',
@@ -3815,30 +3813,31 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e14ae835-a88e-4bba-be43-ceffa8316e1f',
+  requestId: '0cdbbecd-f62f-41cd-8527-70d26dd321a0',
   statusCode: 400,
   context: {
-    errorId: '71bba98d-610d-4e89-8e3f-8f5efe33d641',
+    errorId: '1570ead9-db3f-4570-9b38-dda50a740273',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 155ms
- ✓ __tests__/features/agent-runtime/utils/core-utils.test.ts (7 tests) 7ms
- ✓ __tests__/api/products/parameters.test.ts (1 test) 7ms
+ ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 12ms
+ ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 164ms
+ ✓ __tests__/features/agent-runtime/utils/core-utils.test.ts (7 tests) 8ms
+ ✓ __tests__/api/products/parameters.test.ts (1 test) 6ms
  ✓ __tests__/features/data-import-export/utils/image-retry-presets.test.ts (5 tests) 8ms
  ✓ __tests__/features/database/utils/mongo.test.ts (7 tests) 8ms
- ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 9ms
+ ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 10ms
  ✓ __tests__/features/observability/api/logs/metrics.test.ts (1 test) 6ms
- ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 96ms
+ ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 101ms
  ✓ __tests__/features/foldertree/utils/tree-utils.test.ts (6 tests) 7ms
  ✓ __tests__/features/ai-paths/lib/utils-json.test.ts (7 tests) 8ms
  ✓ __tests__/features/auth/utils/auth-security.test.ts (4 tests) 7ms
- ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 43ms
- ✓ __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts (3 tests) 16ms
- ✓ __tests__/shared/utils/markdown-utils.test.ts (5 tests) 8ms
+ ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 44ms
+ ✓ __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts (3 tests) 17ms
+ ✓ __tests__/shared/utils/markdown-utils.test.ts (5 tests) 7ms
 stderr | __tests__/features/agent-runtime/services/audit-logging.test.ts > Agent Runtime - Audit Logging > should gracefully handle database errors
 [chatbot][agent][audit] Failed to write audit log {
   runId: 'run-1',
@@ -3858,6 +3857,7 @@ stderr | __tests__/features/agent-runtime/services/audit-logging.test.ts > Agent
 }
 
  ✓ __tests__/features/agent-runtime/services/audit-logging.test.ts (3 tests) 4ms
+ ✓ __tests__/features/observability/api/client-errors.test.ts (2 tests) 13ms
 stdout | __tests__/features/observability/api/client-errors.test.ts > Client Errors API > should handle invalid payload
 System event: {
   level: 'warn',
@@ -3900,10 +3900,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '6a086c17-a962-4003-b4ff-e1025dbd5db7',
+  requestId: '2135a1bc-7a23-4c2e-899c-bb6b134b842f',
   statusCode: 400,
   context: {
-    errorId: '7a2b0f18-ae09-468c-8d1e-4b17dbf55cdc',
+    errorId: '86d58464-4cb6-45af-b3ac-87b94a99aebd',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3911,18 +3911,17 @@ System event: {
   }
 }
 
- ✓ __tests__/features/observability/api/client-errors.test.ts (2 tests) 12ms
- ✓ __tests__/features/agent-runtime/services/memory-context.test.ts (2 tests) 9ms
+ ✓ __tests__/features/agent-runtime/services/memory-context.test.ts (2 tests) 8ms
  ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 8ms
- ✓ __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 7ms
+ ✓ __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 10ms
  ✓ __tests__/features/auth/utils/auth-encryption.test.ts (3 tests) 9ms
- ✓ __tests__/features/foldertree/services/folder-importer.test.ts (3 tests) 8ms
- ✓ __tests__/features/app-embeds/lib/constants.test.ts (5 tests) 8ms
- ✓ __tests__/api/products/migration.test.ts (1 test) 11ms
+ ✓ __tests__/features/foldertree/services/folder-importer.test.ts (3 tests) 7ms
+ ✓ __tests__/features/app-embeds/lib/constants.test.ts (5 tests) 7ms
+ ✓ __tests__/api/products/migration.test.ts (1 test) 10ms
  ✓ __tests__/api/products/count.test.ts (1 test) 6ms
  ✓ __tests__/features/cms/services/selection.test.ts (2 tests) 7ms
  ✓ __tests__/features/gsap/utils/presets.test.ts (4 tests) 7ms
- ✓ __tests__/features/internationalization/lib/internationalizationDefaults.test.ts (3 tests) 8ms
+ ✓ __tests__/features/internationalization/lib/internationalizationDefaults.test.ts (3 tests) 7ms
  ✓ __tests__/features/files/utils/fileUploader.test.ts (2 tests) 2ms
  ✓ __tests__/shared/utils/color-utils.test.ts (3 tests) 7ms
  ✓ __tests__/features/cms/validations/slug.test.ts (2 tests) 7ms
@@ -3934,15 +3933,15 @@ System event: {
  FAIL  __tests__/features/database/api/databases.test.ts [ __tests__/features/database/api/databases.test.ts ]
  FAIL  __tests__/features/products/api/generate-description.test.ts [ __tests__/features/products/api/generate-description.test.ts ]
 ReferenceError: window is not defined
- ❯ vitest.setup.ts:392:23
-    390| 
-    391| // Polyfill for window.matchMedia (GSAP needs this)
-    392| Object.defineProperty(window, "matchMedia", {
+ ❯ vitest.setup.ts:449:23
+    447| 
+    448| // Polyfill for window.matchMedia (GSAP needs this)
+    449| Object.defineProperty(window, "matchMedia", {
        |                       ^
-    393|   writable: true,
-    394|   value: vi.fn().mockImplementation((query) => ({
+    450|   writable: true,
+    451|   value: vi.fn().mockImplementation((query) => ({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/75]⎯
 
  FAIL  __tests__/features/jobs/workers/chatbotJobQueue.test.ts [ __tests__/features/jobs/workers/chatbotJobQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -3958,7 +3957,7 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:6:16
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:24:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/75]⎯
 
  FAIL  __tests__/features/jobs/workers/productAiQueue.test.ts [ __tests__/features/jobs/workers/productAiQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -3974,9 +3973,9 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:7:16
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:32:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/75]⎯
 
-⎯⎯⎯⎯⎯⎯ Failed Tests 72 ⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Tests 71 ⎯⎯⎯⎯⎯⎯⎯
 
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders the sidebar with Admin logo
@@ -4000,7 +3999,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/75]⎯
 
  FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders loading state
  FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders initial selected option from settings
@@ -4023,7 +4022,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/75]⎯
 
  FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
 TestingLibraryElementError: Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -4288,7 +4287,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 7:27:40 PM[0m
+                      [0m2/1/2026, 7:51:07 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4320,7 +4319,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 7:27:40 PM[0m
+                      [0m2/1/2026, 7:51:07 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4370,7 +4369,7 @@ Ignored nodes: comments, script, style
     113|     expect(screen.getByText('Errors: 1')).toBeInTheDocument();
     114|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/75]⎯
 
  FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
 TypeError: Cannot read properties of undefined (reading 'browserLogs')
@@ -4382,7 +4381,92 @@ TypeError: Cannot read properties of undefined (reading 'browserLogs')
      68|     expect(data.runs[0]!._count.browserSnapshots).toBe(1);
      69|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/75]⎯
+
+ FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should list runs with filters
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:80:29
+     78| 
+     79|     const completed = await repo.listRuns({ status: "completed" });
+     80|     expect(completed.total).toBe(1);
+       |                             ^
+     81|     expect(completed.runs[0]!.pathId).toBe("path-1");
+     82| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/75]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
+AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
+
+Expected: "mockhash"
+Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
+
+ ❯ __tests__/features/auth/services/totp.test.ts:71:19
+     69|     const hash2 = hashRecoveryCode("abcd1234efgh");
+     70|     expect(hash1).toBe(hash2);
+     71|     expect(hash1).toBe("mockhash");
+       |                   ^
+     72|   });
+     73| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/75]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ __tests__/features/auth/services/totp.test.ts:91:51
+     89| 
+     90|       const validToken = "000000"; 
+     91|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+     92|       vi.useRealTimers();
+     93|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/75]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ __tests__/features/auth/services/totp.test.ts:102:51
+    100|       const validToken = "000000"; 
+    101|       // Current token is "000000". Offset +30s also results in "00000…
+    102|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+    103|       vi.useRealTimers();
+    104|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/75]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > returns false for invalid tokens
+TypeError: vi.mocked(...).mockReturnValueOnce is not a function
+ ❯ __tests__/features/auth/services/totp.test.ts:111:36
+    109|       
+    110|       // Override mock for this test to return something else
+    111|       vi.mocked(crypto.createHmac).mockReturnValueOnce({
+       |                                    ^
+    112|           update: vi.fn().mockReturnThis(),
+    113|           digest: vi.fn(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/75]⎯
 
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > renders correctly
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > handles successful registration and signs in
@@ -4406,111 +4490,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/76]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
-AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
-
-Expected: "mockhash"
-Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
-
- ❯ __tests__/features/auth/services/totp.test.ts:71:19
-     69|     const hash2 = hashRecoveryCode("abcd1234efgh");
-     70|     expect(hash1).toBe(hash2);
-     71|     expect(hash1).toBe("mockhash");
-       |                   ^
-     72|   });
-     73| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/76]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ __tests__/features/auth/services/totp.test.ts:91:51
-     89| 
-     90|       const validToken = "000000"; 
-     91|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-     92|       vi.useRealTimers();
-     93|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/76]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ __tests__/features/auth/services/totp.test.ts:102:51
-    100|       const validToken = "000000"; 
-    101|       // Current token is "000000". Offset +30s also results in "00000…
-    102|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-    103|       vi.useRealTimers();
-    104|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/76]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > returns false for invalid tokens
-TypeError: vi.mocked(...).mockReturnValueOnce is not a function
- ❯ __tests__/features/auth/services/totp.test.ts:111:36
-    109|       
-    110|       // Override mock for this test to return something else
-    111|       vi.mocked(crypto.createHmac).mockReturnValueOnce({
-       |                                    ^
-    112|           update: vi.fn().mockReturnThis(),
-    113|           digest: vi.fn(() => {
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/76]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should list runs with filters
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:80:29
-     78| 
-     79|     const completed = await repo.listRuns({ status: "completed" });
-     80|     expect(completed.total).toBe(1);
-       |                             ^
-     81|     expect(completed.runs[0]!.pathId).toBe("path-1");
-     82| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/76]⎯
-
- FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should create a new page with slugs
-AssertionError: expected +0 to be 2 // Object.is equality
-
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/cms/api/cms-pages.test.ts:98:38
-     96|       // Verify page in repository has slugs
-     97|       const savedPage = await cmsRepository.getPageById(data.id);
-     98|       expect(savedPage.slugs.length).toBe(2);
-       |                                      ^
-     99|     });
-    100| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/75]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme
 AssertionError: expected +0 to be 2 // Object.is equality
@@ -4529,7 +4509,7 @@ AssertionError: expected +0 to be 2 // Object.is equality
     198|       expect(updatedPage.slugs.length).toBe(1);
     199|       expect(updatedPage.slugs[0].slug.slug).toBe("updated-slug");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/75]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page
 AssertionError: expected 500 to be 404 // Object.is equality
@@ -4548,7 +4528,7 @@ AssertionError: expected 500 to be 404 // Object.is equality
     215|     });
     216|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/75]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should render when open
 TestingLibraryElementError: Unable to find an element by: [data-testid="file-manager"]
@@ -4661,7 +4641,7 @@ Ignored nodes: comments, script, style
      59|   });
      60| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/75]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should call onSelect when a file is selected
 TestingLibraryElementError: Unable to find an element by: [data-testid="select-file-btn"]
@@ -4774,7 +4754,7 @@ Ignored nodes: comments, script, style
      85|     fireEvent.click(selectBtn);
      86| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/75]⎯
 
  FAIL  __tests__/features/cms/components/PageBuilderLayout.test.tsx > PageBuilderLayout Component > should render all panels by default
  FAIL  __tests__/features/cms/components/PageBuilderLayout.test.tsx > PageBuilderLayout Component > should toggle left panel
@@ -4799,7 +4779,83 @@ Error: useAdminLayout must be used within an AdminLayoutProvider
  ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
  ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/75]⎯
+
+ FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by filename
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/files/api/files.test.ts:80:28
+     78|       const files = (await res.json()) as ImageFile[];
+     79|       expect(res.status).toBe(200);
+     80|       expect(files.length).toBe(1);
+       |                            ^
+     81|       expect(files[0]!.filename).toBe("test-image1.jpg");
+     82|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/75]⎯
+
+ FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product ID
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/files/api/files.test.ts:90:28
+     88|       const files = (await res.json()) as ImageFile[];
+     89|       expect(res.status).toBe(200);
+     90|       expect(files.length).toBe(1);
+       |                            ^
+     91|       expect(files[0]!.filename).toBe("test-image1.jpg");
+     92|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/75]⎯
+
+ FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product name
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/files/api/files.test.ts:100:28
+     98|       const files = (await res.json()) as ImageFile[];
+     99|       expect(res.status).toBe(200);
+    100|       expect(files.length).toBe(1);
+       |                            ^
+    101|       expect(files[0]!.filename).toBe("test-image1.jpg");
+    102|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/75]⎯
+
+ FAIL  __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
+AssertionError: expected 404 to be 204 // Object.is equality
+
+- Expected
++ Received
+
+- 204
++ 404
+
+ ❯ __tests__/features/files/api/files.test.ts:110:26
+    108|         params: Promise.resolve({ id: imageFile2.id }),
+    109|       } as unknown as { params: Promise<{ id: string }> });
+    110|       expect(res.status).toBe(204);
+       |                          ^
+    111| 
+    112|       const deletedFile = await prisma.imageFile.findUnique({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/75]⎯
 
  FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should render the form with initial state
  FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should update name input correctly
@@ -4824,83 +4880,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/76]⎯
-
- FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by filename
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/files/api/files.test.ts:80:28
-     78|       const files = (await res.json()) as ImageFile[];
-     79|       expect(res.status).toBe(200);
-     80|       expect(files.length).toBe(1);
-       |                            ^
-     81|       expect(files[0]!.filename).toBe("test-image1.jpg");
-     82|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/76]⎯
-
- FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product ID
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/files/api/files.test.ts:90:28
-     88|       const files = (await res.json()) as ImageFile[];
-     89|       expect(res.status).toBe(200);
-     90|       expect(files.length).toBe(1);
-       |                            ^
-     91|       expect(files[0]!.filename).toBe("test-image1.jpg");
-     92|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/76]⎯
-
- FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product name
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/files/api/files.test.ts:100:28
-     98|       const files = (await res.json()) as ImageFile[];
-     99|       expect(res.status).toBe(200);
-    100|       expect(files.length).toBe(1);
-       |                            ^
-    101|       expect(files[0]!.filename).toBe("test-image1.jpg");
-    102|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/76]⎯
-
- FAIL  __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
-AssertionError: expected 404 to be 204 // Object.is equality
-
-- Expected
-+ Received
-
-- 204
-+ 404
-
- ❯ __tests__/features/files/api/files.test.ts:110:26
-    108|         params: Promise.resolve({ id: imageFile2.id }),
-    109|       } as unknown as { params: Promise<{ id: string }> });
-    110|       expect(res.status).toBe(204);
-       |                          ^
-    111| 
-    112|       const deletedFile = await prisma.imageFile.findUnique({
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/75]⎯
 
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should create and list export templates
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should filter out forbidden basehost mappings
@@ -4916,7 +4896,7 @@ TypeError: Cannot read properties of undefined (reading 'deleteMany')
      17|       where: {
      18|         key: {
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/75]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call
 AssertionError: expected 0 to be greater than 0
@@ -4928,7 +4908,7 @@ AssertionError: expected 0 to be greater than 0
      52|       expect(pl.currencies[0]!.currency.code).toBe("PLN");
      53|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/75]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls
 AssertionError: expected 8 to deeply equal 4
@@ -4947,7 +4927,7 @@ AssertionError: expected 8 to deeply equal 4
      67|       expect(secondCount).toEqual(initialCount);
      68|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/75]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > POST /api/countries > should create a country with currencies
 AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
@@ -4959,7 +4939,7 @@ AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have proper
     118|       expect(country.currencies[0]!.currencyId).toBe(currency.id);
     119|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/75]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > PUT /api/countries/[id] > should update country currencies
 AssertionError: expected [] to have a length of 1 but got +0
@@ -4978,7 +4958,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     160|       expect(updated.currencies[0]!.currencyId).toBe(currency.id);
     161|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/75]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > POST /api/languages > should create a language with country assignments
 AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
@@ -4990,7 +4970,7 @@ AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have proper
      88|         expect(language.countries![0]!.countryId).toBe(country.id);
      89|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/75]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > PUT /api/languages/[id] > should update language fields and countries
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5009,7 +4989,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     131|       expect(updated.countries![0]!.countryId).toBe(country.id);
     132|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/75]⎯
 
  FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > retries on failure if attempts remaining
 TypeError: getPathRunRepository(...).updateRun is not a function
@@ -5022,7 +5002,7 @@ TypeError: getPathRunRepository(...).updateRun is not a function
      65|         retryCount,
  ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:66:7
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/75]⎯
 
  FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > moves to dead-letter on max retries
 TypeError: getPathRunRepository(...).updateRun is not a function
@@ -5035,7 +5015,7 @@ TypeError: getPathRunRepository(...).updateRun is not a function
      80|         retryCount,
  ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:84:7
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/75]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > lists categories
 AssertionError: expected [] to have a length of 2 but got +0
@@ -5054,7 +5034,7 @@ AssertionError: expected [] to have a length of 2 but got +0
      54|   });
      55| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/75]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > returns a hierarchical category tree
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5073,7 +5053,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     111|     expect(tree[0]!.children).toHaveLength(1);
     112|     expect(tree[0]!.children[0]!.notes).toHaveLength(1);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/75]⎯
 
  FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > deletes categories recursively with notes
 AssertionError: expected [ { tags: [], …(9) }, …(1) ] to have a length of +0 but got 2
@@ -5092,7 +5072,7 @@ AssertionError: expected [ { tags: [], …(9) }, …(1) ] to have a length of +0
     134|   });
     135| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > returns notes with relations
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5111,7 +5091,7 @@ AssertionError: expected [] to have a length of 1 but got +0
      88|     expect(notes[0]!.tags[0]!.tag.name).toBe("Work");
      89|     expect(notes[0]!.categories[0]!.category.name).toBe("Projects");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by search scope and flags
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5130,7 +5110,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     105|     expect(notes[0]!.title).toBe("Alpha");
     106|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by tags and categories
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5149,7 +5129,7 @@ AssertionError: expected [] to have a length of 1 but got +0
     128|     expect(notes[0]!.title).toBe("With relations");
     129|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > creates a note with tags and categories
 TypeError: Cannot read properties of undefined (reading 'tag')
@@ -5161,7 +5141,7 @@ TypeError: Cannot read properties of undefined (reading 'tag')
     151|     expect(note.categories[0]!.category.name).toBe("Home");
     152|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > fetches a note by id and returns 404 when missing
 AssertionError: expected 500 to be 200 // Object.is equality
@@ -5180,7 +5160,7 @@ AssertionError: expected 500 to be 200 // Object.is equality
     175|     expect(data.id).toBe(note.id);
     176| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/75]⎯
 
  FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > updates a note with new relations
 AssertionError: expected 500 to be 200 // Object.is equality
@@ -5199,7 +5179,7 @@ AssertionError: expected 500 to be 200 // Object.is equality
     215|     expect(data.title).toBe("Updated");
     216|     expect(data.tags[0]!.tag.id).toBe(tag2.id);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/75]⎯
 
  FAIL  __tests__/features/notesapp/api/tags.test.ts > Notes Tags API > lists tags ordered by name
 TypeError: Cannot read properties of undefined (reading 'name')
@@ -5211,10 +5191,10 @@ TypeError: Cannot read properties of undefined (reading 'name')
      36|     expect(tags[1]!.name).toBe("Beta");
      37|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/75]⎯
 
  FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Relation Syncing > automatically creates bidirectional relations
-AssertionError: expected [] to include 'mock-note-1769970455110-hexlwca7q'
+AssertionError: expected [] to include 'mock-note-1769971861460-165z9u8hx'
  ❯ __tests__/features/notesapp/services/note-service.test.ts:126:26
     124|       const updatedB = await noteService.getById(noteB.id);
     125|       const bRelations = updatedB?.relationsFrom?.map(r => r.targetNot…
@@ -5223,7 +5203,7 @@ AssertionError: expected [] to include 'mock-note-1769970455110-hexlwca7q'
     127|       
     128|       // Check population helper
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/75]⎯
 
  FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > Categories and Tags > manages category trees
 AssertionError: expected undefined to be defined
@@ -5235,7 +5215,7 @@ AssertionError: expected undefined to be defined
     182|       expect(parentInTree?.children.some(c => c.id === child.id)).toBe…
     183|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/75]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs an Error object
 AssertionError: expected "spy" to be called with arguments: [ …(2) ]
@@ -5254,7 +5234,7 @@ Number of calls: 0
      31|       '[test-service] Test exception',
      32|       expect.objectContaining({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/75]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs a string error
 AssertionError: expected "spy" to be called with arguments: [ '[ui] Something went wrong', …(1) ]
@@ -5273,7 +5253,7 @@ Number of calls: 0
      43|       '[ui] Something went wrong',
      44|       expect.objectContaining({ service: 'ui' })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/75]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs warnings and optionally to agent audit
 AssertionError: expected "spy" to be called with arguments: [ '[disk] Low disk space', …(1) ]
@@ -5292,7 +5272,7 @@ Number of calls: 0
      68| 
      69|     const agentContext = { service: 'agent', runId: 'run-123' };
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/75]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs info messages
 AssertionError: expected "spy" to be called with arguments: [ '[unknown] User logged in', …(1) ]
@@ -5311,7 +5291,7 @@ Number of calls: 0
      77|   });
      78| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/75]⎯
 
  FAIL  __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > renders the form with product data in the General tab
 TestingLibraryElementError: Unable to find role="textbox" and name `/English Name/i`
@@ -5543,7 +5523,7 @@ Ignored nodes: comments, script, style
      81|     expect(nameInput).toHaveValue("Test Product");
      82|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/75]⎯
 
  FAIL  __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > renders the price in the Other tab
 TestingLibraryElementError: Unable to find a label with the text of: /Base Price/i
@@ -5775,7 +5755,7 @@ Ignored nodes: comments, script, style
      99|     expect(priceInput).toHaveValue(100);
     100|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/75]⎯
 
  FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite
 AssertionError: expected 'SKU2' to be 'SKU1' // Object.is equality
@@ -5791,7 +5771,7 @@ Received: "SKU2"
      55|       expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe("SKU2…
      56|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/75]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should list assets3d with filters
 AssertionError: expected [] to have a length of 1 but got +0
@@ -5810,7 +5790,7 @@ AssertionError: expected [] to have a length of 1 but got +0
      89|     expect(tagged[0]?.name).toBe("Asset 2");
      90|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/75]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get distinct categories
 AssertionError: expected [] to include 'A'
@@ -5822,7 +5802,7 @@ AssertionError: expected [] to include 'A'
     175|     expect(categories).toContain("B");
     176|     expect(categories).toHaveLength(2);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/75]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get all distinct tags
 AssertionError: expected [] to include 'X'
@@ -5834,10 +5814,10 @@ AssertionError: expected [] to include 'X'
     189|     expect(tags).toContain("Y");
     190|     expect(tags).toContain("Z");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/76]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/75]⎯
 
  Test Files  28 failed | 134 passed (162)
-      Tests  72 failed | 757 passed (829)
-   Start at  19:27:20
-   Duration  101.71s (transform 2.30s, setup 12.92s, collect 18.08s, tests 12.00s, environment 38.21s, prepare 4.86s)
+      Tests  71 failed | 758 passed (829)
+   Start at  19:50:45
+   Duration  101.57s (transform 2.38s, setup 13.00s, collect 17.48s, tests 12.00s, environment 38.62s, prepare 4.91s)
 

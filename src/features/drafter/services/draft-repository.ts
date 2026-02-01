@@ -40,6 +40,7 @@ type MongoDraftDoc = {
   parameters?: ProductParameterValue[];
   defaultPriceGroupId?: string | null;
   active?: boolean;
+  icon?: string | null;
   imageLinks?: string[];
   baseProductId?: string | null;
   createdAt?: Date;
@@ -91,6 +92,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    icon: draft.icon || null,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -135,6 +137,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    icon: draft.icon || null,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -176,6 +179,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     categoryIds: input.categoryIds || [],
     tagIds: input.tagIds || [],
     parameters: input.parameters || [],
+    icon: input.icon || null,
     imageLinks: input.imageLinks || [],
     active: input.active ?? true,
     createdAt: now,
@@ -213,6 +217,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     parameters: draft.parameters || [],
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     active: draft.active ?? true,
+    icon: draft.icon || null,
     imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
     createdAt: now,
@@ -275,6 +280,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
       : [],
     defaultPriceGroupId: doc.defaultPriceGroupId || null,
     active: doc.active ?? true,
+    icon: doc.icon || null,
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     baseProductId: doc.baseProductId || null,
     createdAt: doc.createdAt || now,
@@ -351,6 +357,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
       parameters: input.parameters || [],
       defaultPriceGroupId: input.defaultPriceGroupId,
       active: input.active ?? true,
+      icon: input.icon,
       imageLinks: input.imageLinks || [],
       baseProductId: input.baseProductId,
     } as Prisma.ProductDraftCreateInput, // Type assertion needed due to exactOptionalPropertyTypes

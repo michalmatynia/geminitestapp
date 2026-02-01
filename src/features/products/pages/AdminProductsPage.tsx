@@ -433,6 +433,11 @@ export function AdminProductsPage(): React.JSX.Element {
         isCreateOpen={isCreateOpen}
         initialSku={initialSku}
         createDraft={createDraft}
+        initialCatalogId={
+          catalogFilter !== "all" && catalogFilter !== "unassigned"
+            ? catalogFilter
+            : null
+        }
         onCloseCreate={handleCloseCreate}
         onCreateSuccess={() => {
           handleCreateSuccess();

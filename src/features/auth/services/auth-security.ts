@@ -1,6 +1,8 @@
 import "server-only";
 
+import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 import {
   AUTH_SETTINGS_KEYS,
 } from "@/features/auth/utils/auth-management";
@@ -31,6 +33,8 @@ const memoryAttempts = new Map<string, AttemptRecord>();
 let indexesReady: Promise<void> | null = null;
 
 const ensureAuthSecurityIndexes = async (): Promise<void> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider !== "mongodb") return;
   if (!process.env.MONGODB_URI) return;
   if (!indexesReady) {
     indexesReady = (async (): Promise<void> => {
@@ -139,12 +143,29 @@ const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
   return doc ?? null;
 };
 
+const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
+  const row = await prisma.authSecurityAttempt.findUnique({ where: { id: key } });
+  if (!row) return null;
+  if (row.data && typeof row.data === "object") {
+    return row.data as AttemptRecord;
+  }
+  return null;
+};
+
 const setMongoAttempt = async (record: AttemptRecord): Promise<void> => {
   if (!process.env.MONGODB_URI) return;
   const mongo = await getMongoDb();
   await mongo
     .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
     .updateOne({ _id: record._id }, { $set: record }, { upsert: true });
+};
+
+const setPrismaAttempt = async (record: AttemptRecord): Promise<void> => {
+  await prisma.authSecurityAttempt.upsert({
+    where: { id: record._id },
+    update: { data: record },
+    create: { id: record._id, data: record },
+  });
 };
 
 const clearMongoAttempt = async (key: string): Promise<void> => {
@@ -155,7 +176,15 @@ const clearMongoAttempt = async (key: string): Promise<void> => {
     .deleteOne({ _id: key });
 };
 
+const clearPrismaAttempt = async (key: string): Promise<void> => {
+  await prisma.authSecurityAttempt.deleteMany({ where: { id: key } });
+};
+
 const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    return await getPrismaAttempt(key);
+  }
   if (process.env.MONGODB_URI) {
     return await getMongoAttempt(key);
   }
@@ -163,6 +192,11 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
 };
 
 const saveAttempt = async (record: AttemptRecord): Promise<void> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    await setPrismaAttempt(record);
+    return;
+  }
   if (process.env.MONGODB_URI) {
     await setMongoAttempt(record);
     return;
@@ -171,6 +205,11 @@ const saveAttempt = async (record: AttemptRecord): Promise<void> => {
 };
 
 const clearAttempt = async (key: string): Promise<void> => {
+  const provider = requireAuthProvider(await getAuthDataProvider());
+  if (provider === "prisma") {
+    await clearPrismaAttempt(key);
+    return;
+  }
   if (process.env.MONGODB_URI) {
     await clearMongoAttempt(key);
     return;

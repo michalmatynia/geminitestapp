@@ -1,4 +1,8 @@
-export type ProductAiJobType = "description_generation" | "translation" | "graph_model";
+export type ProductAiJobType =
+  | "description_generation"
+  | "translation"
+  | "graph_model"
+  | "db_sync";
 
 export type ProductAiJobResult = {
   visionModel?: string;

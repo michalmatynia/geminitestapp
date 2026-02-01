@@ -1,5 +1,5 @@
 "use client";
-import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/shared/ui";
+import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -20,6 +20,7 @@ import {
   usePurgeListingMutation,
   useUpdateListingInventoryIdMutation,
   useExportToBaseMutation,
+  useSyncBaseImagesMutation,
 } from "@/features/integrations/hooks/useProductListingMutations";
 
 type ProductListingsModalProps = {
@@ -54,7 +55,9 @@ export function ProductListingsModal({
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
+  const [syncingImages, setSyncingImages] = useState<string | null>(null);
   const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
+  const { toast } = useToast();
 
   const {
     integrations,
@@ -71,6 +74,7 @@ export function ProductListingsModal({
   const purgeListingMutation = usePurgeListingMutation(product.id);
   const updateInventoryIdMutation = useUpdateListingInventoryIdMutation(product.id);
   const exportToBaseMutation = useExportToBaseMutation(product.id);
+  const syncBaseImagesMutation = useSyncBaseImagesMutation(product.id);
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -89,6 +93,14 @@ export function ProductListingsModal({
   const filteredListings: ProductListingWithDetails[] = filterIntegrationSlug
     ? listings.filter((listing: ProductListingWithDetails): boolean => listing.integration.slug === filterIntegrationSlug)
     : listings;
+  const baseListing: ProductListingWithDetails | null = useMemo((): ProductListingWithDetails | null => {
+    return (
+      filteredListings.find(
+        (listing: ProductListingWithDetails): boolean =>
+          ["baselinker", "base-com"].includes(listing.integration.slug)
+      ) ?? null
+    );
+  }, [filteredListings]);
   const statusTargetLabel: string =
     filterIntegrationSlug === "baselinker"
       ? "Base.com"
@@ -292,6 +304,8 @@ export function ProductListingsModal({
   const SyncConfigurationPanel: React.FC = (): React.JSX.Element => {
     const syncFields: { name: string; value: string; hasValue: boolean; syncDirection: SyncDirection; description: string }[] = getSyncFields();
     const activeFields: { name: string; value: string; hasValue: boolean; syncDirection: SyncDirection; description: string }[] = syncFields.filter((f: { hasValue: boolean }): boolean => f.hasValue);
+    const imageLinkCount = Array.isArray(product.imageLinks) ? product.imageLinks.length : 0;
+    const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
 
     return (
       <div className="rounded-md border border-border bg-card/60 p-3">
@@ -365,6 +379,35 @@ export function ProductListingsModal({
             </div>
           </div>
         </div>
+
+        <div className="mt-4 rounded border border-border bg-card/50 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h5 className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              Images
+            </h5>
+            <span className="text-[10px] text-gray-500">
+              Links: {imageLinkCount} · Uploads: {uploadCount}
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-gray-500">
+            Sync Base.com image URLs into product links to keep backups even if uploads go missing.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!baseListing || syncingImages === baseListing.id}
+            onClick={(): void => { void handleSyncBaseImages(); }}
+            className="border-slate-500/40 text-slate-200 hover:bg-slate-500/10"
+          >
+            {syncingImages === baseListing?.id ? "Syncing..." : "Sync image URLs from Base.com"}
+          </Button>
+          {!baseListing && (
+            <p className="mt-2 text-[10px] text-gray-500">
+              Connect this product to Base.com to enable image sync.
+            </p>
+          )}
+        </div>
       </div>
     );
   };
@@ -429,6 +472,30 @@ export function ProductListingsModal({
       setError(err instanceof Error ? err.message : "Failed to save inventory ID");
     } finally {
       setSavingInventoryId(null);
+    }
+  };
+
+  const handleSyncBaseImages = async (): Promise<void> => {
+    if (!baseListing) {
+      setError("Base.com listing not found for this product.");
+      return;
+    }
+    if (!window.confirm("Sync image URLs from Base.com into this product? This will overwrite image links by slot.")) {
+      return;
+    }
+    try {
+      setSyncingImages(baseListing.id);
+      setError(null);
+      const inventoryId: string = (inventoryOverrides[baseListing.id] || baseListing.inventoryId || "").trim();
+      const response = await syncBaseImagesMutation.mutateAsync({
+        listingId: baseListing.id,
+        ...(inventoryId ? { inventoryId } : {}),
+      });
+      toast(`Synced ${response.count} image link(s) from Base.com`, { variant: "success" });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sync image URLs");
+    } finally {
+      setSyncingImages(null);
     }
   };
 

@@ -147,6 +147,11 @@ export function Asset3DPreviewModal({
   // UI State
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<"environment" | "effects" | "view">("environment");
+  const [modelError, setModelError] = useState<string | null>(null);
+
+  // Validate asset exists and has valid file path
+  const isValidAsset = asset && asset.filepath && asset.id;
+  const modelUrl = isValidAsset ? `/api/assets3d/${asset.id}/file` : null;
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -224,7 +229,7 @@ export function Asset3DPreviewModal({
                 <ChevronDown className="h-4 w-4 ml-1" />
               )}
             </Button>
-            <a href={asset.filepath} download={asset.filename}>
+            <a href={`/api/assets3d/${asset.id}/file`} download={asset.filename}>
               <Button variant="secondary" size="sm">
                 <Download className="h-4 w-4 mr-1" />
                 Download
@@ -240,8 +245,27 @@ export function Asset3DPreviewModal({
         <div className="flex flex-1 min-h-0">
           {/* Viewer */}
           <div className={cn("flex-1 bg-gray-950", showSettings ? "lg:w-2/3" : "w-full")}>
-            <Viewer3D
-              modelUrl={asset.filepath}
+            {!isValidAsset ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-gray-400">
+                  <p>Invalid asset</p>
+                  <p className="text-sm mt-2">The 3D asset is missing or corrupted</p>
+                </div>
+              </div>
+            ) : modelError ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-red-400">
+                  <p>Failed to load 3D model</p>
+                  <p className="text-sm mt-2 text-gray-400">{modelError}</p>
+                </div>
+              </div>
+            ) : (
+              <Viewer3D
+                modelUrl={modelUrl!}
+                onLoad={() => {}}
+                onError={(error: Error) => {
+                  setModelError(error.message);
+                }}
               backgroundColor={backgroundColor}
               autoRotate={autoRotate}
               autoRotateSpeed={autoRotateSpeed}
@@ -268,6 +292,7 @@ export function Asset3DPreviewModal({
               pixelSize={pixelSize}
               className="w-full h-[60vh]"
             />
+            )}
           </div>
 
           {/* Settings Panel */}

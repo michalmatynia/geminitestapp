@@ -4,67 +4,14 @@ import { Button, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsConten
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { logger } from "@/shared/utils/logger";
 import { cn } from "@/shared/utils";
 import { ProductFormData } from "@/features/products/types";
-import type { ProductAiJob } from "@/shared/types/jobs";
-import type {
-  AiNode,
-  PathConfig,
-  PathMeta,
-  PathDebugSnapshot,
-  PathDebugEntry,
-  Edge,
-  RuntimeState,
-} from "@/shared/types/ai-paths";
-import {
-  evaluateGraph,
-} from "@/features/ai-paths/lib/core/runtime/engine";
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_DEBUG_PREFIX,
-  PATH_INDEX_KEY,
-  TRIGGER_EVENTS,
-} from "@/features/ai-paths/lib/core/constants";
-import {
-  createDefaultPathConfig,
-} from "@/features/ai-paths/lib/core/utils/factory";
-import {
-  sanitizeEdges,
-} from "@/features/ai-paths/lib/core/utils/graph";
-
-const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
-  return nodes.map((node: AiNode) => ({
-    ...node,
-    id: node.id || `node-${Math.random().toString(36).substr(2, 9)}`,
-    title: node.title || node.type || "Untitled Node",
-  }));
-};
+import { useDescriptionGeneration } from "@/features/products/hooks/useDescriptionGeneration";
+import { useAiPathTrigger } from "@/features/products/hooks/useAiPathTrigger";
 
 export default function ProductFormGeneral(): React.JSX.Element {
-  const queryClient = useQueryClient();
-  const safeJsonStringify = (value: unknown): string => {
-    const seen = new WeakSet();
-    const replacer = (_key: string, val: unknown): unknown => {
-      if (typeof val === "bigint") return val.toString();
-      if (val instanceof Date) return val.toISOString();
-      if (val instanceof Set) return Array.from(val.values());
-      if (val instanceof Map) return Object.fromEntries(val.entries());
-      if (typeof val === "function" || typeof val === "symbol") return undefined;
-      if (val && typeof val === "object") {
-        if (seen.has(val)) return undefined;
-        seen.add(val);
-      }
-      return val;
-    };
-    try {
-      return JSON.stringify(value, replacer);
-    } catch {
-      return "";
-    }
-  };
   const {
     filteredLanguages,
     errors,
@@ -78,12 +25,23 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const { toast } = useToast();
 
-  const [generating, setGenerating] = useState<boolean>(false);
   const [translating, setTranslating] = useState<boolean>(false);
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
   const allValues = watch();
   const hasCatalogs = selectedCatalogIds.length > 0;
   const languagesReady = filteredLanguages.length > 0;
+
+  const { generate, generating } = useDescriptionGeneration({
+    productId: product?.id,
+    onSuccess: (description: string) => {
+      setValue("description_en", description);
+    },
+    onError: (error: string) => {
+      setGenerationError(error);
+    },
+  });
+
+  const { handlePathGenerateDescription: runPathTrigger } = useAiPathTrigger();
 
   useEffect((): void => {
     const vals = getValues();
@@ -96,422 +54,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
   const handleGenerateDescription = async (): Promise<void> => {
     logger.log("Generating description...");
-    setGenerating(true);
     setGenerationError(null);
     const productData = getValues();
-    const imageUrls = imageSlots
-      .filter((slot: import("@/features/products/types/products-ui").ProductImageSlot | null): slot is NonNullable<import("@/features/products/types/products-ui").ProductImageSlot> => slot !== null && 'previewUrl' in slot)
-      .map((slot: NonNullable<import("@/features/products/types/products-ui").ProductImageSlot>) => slot.previewUrl);
-
-    try {
-      if (product?.id) {
-        const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId: product.id,
-            type: "description_generation",
-            payload: {} 
-          }),
-        });
-
-        const enqueueData = (await enqueueRes.json()) as { error?: string; jobId?: string };
-        if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue generation job.");
-        const jobId = enqueueData.jobId;
-
-        let completed = false;
-        let attempts = 0;
-        while (!completed && attempts < 30) {
-          await new Promise((r: (value: void | PromiseLike<void>) => void) => setTimeout(r, 2000));
-          const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
-          if (!statusRes.ok) break;
-          const { job } = (await statusRes.json()) as { job: ProductAiJob };
-
-          if (job.status === "completed") {
-            const description = job.result?.description;
-            if (typeof description === "string") {
-              setValue("description_en", description);
-            }
-            completed = true;
-          } else if (job.status === "failed") {
-            throw new Error(job.errorMessage || "Generation failed.");
-          }
-          attempts++;
-        }
-        if (!completed) throw new Error("Generation is taking longer than expected. Check the AI Jobs page.");
-      } else {
-        const res = await fetch("/api/generate-description", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productData, imageUrls }),
-        });
-        if (!res.ok) {
-          const payload = (await res.json()) as { error?: string; errorId?: string };
-          throw new Error(payload?.error || "Failed to generate description");
-        }
-        const { description } = (await res.json()) as { description: string };
-        setValue("description_en", description);
-      }
-    } catch (error) {
-      logger.error("Failed to generate description:", error);
-      setGenerationError(error instanceof Error ? error.message : "Failed to generate description.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const buildTriggerContext = (
-    triggerNode: AiNode,
-    triggerEvent: string,
-    event?: React.MouseEvent<HTMLButtonElement>,
-    pathInfo?: { id?: string; name?: string }
-  ): Record<string, unknown> => {
-    const timestamp = new Date().toISOString();
-    const nativeEvent = event?.nativeEvent;
-    const pointer = nativeEvent
-      ? {
-          clientX: nativeEvent.clientX,
-          clientY: nativeEvent.clientY,
-          pageX: nativeEvent.pageX,
-          pageY: nativeEvent.pageY,
-          screenX: nativeEvent.screenX,
-          screenY: nativeEvent.screenY,
-          offsetX: "offsetX" in nativeEvent ? (nativeEvent as unknown as { offsetX: number }).offsetX : undefined,
-          offsetY: "offsetY" in nativeEvent ? (nativeEvent as unknown as { offsetY: number }).offsetY : undefined,
-          button: nativeEvent.button,
-          buttons: nativeEvent.buttons,
-          altKey: nativeEvent.altKey,
-          ctrlKey: nativeEvent.ctrlKey,
-          shiftKey: nativeEvent.shiftKey,
-          metaKey: nativeEvent.metaKey,
-        }
-      : undefined;
-    const location =
-      typeof window !== "undefined"
-        ? {
-            href: window.location.href,
-            origin: window.location.origin,
-            pathname: window.location.pathname,
-            search: window.location.search,
-            hash: window.location.hash,
-            referrer: document.referrer || undefined,
-          }
-        : {};
-    const ui =
-      typeof window !== "undefined"
-        ? {
-            viewport: {
-              width: window.innerWidth,
-              height: window.innerHeight,
-              devicePixelRatio: window.devicePixelRatio,
-            },
-            screen: {
-              width: window.screen?.width,
-              height: window.screen?.height,
-              availWidth: window.screen?.availWidth,
-              availHeight: window.screen?.availHeight,
-            },
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            languages: navigator.languages,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            documentTitle: document.title,
-            visibilityState: document.visibilityState,
-            scroll: {
-              x: window.scrollX,
-              y: window.scrollY,
-            },
-          }
-        : {};
-    return {
-      timestamp,
-      location,
-      ui,
-      user: null,
-      event: {
-        id: triggerEvent,
-        nodeId: triggerNode.id,
-        nodeTitle: triggerNode.title,
-        type: event?.type,
-        pointer,
-      },
-      source: {
-        pathId: pathInfo?.id,
-        pathName: pathInfo?.name ?? "Product Panel",
-        tab: "product",
-      },
-      extras: {
-        triggerLabel: "Path Generate Description",
-      },
-      entityId: product?.id,
-      productId: product?.id,
-      entityType: "product",
-    };
+    await generate(productData, imageSlots);
   };
 
   const handlePathGenerateDescription = async (
     event?: React.MouseEvent<HTMLButtonElement>
   ): Promise<void> => {
-    if (!product?.id) {
-      toast("Save the product before running a path trigger.", {
-        variant: "error",
-      });
-      return;
-    }
-    try {
-      const prefsRes = await fetch("/api/user/preferences", { cache: "no-store" });
-      if (!prefsRes.ok) {
-        throw new Error("Failed to load AI Paths preferences.");
-      }
-      const prefs = (await prefsRes.json()) as {
-        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-        aiPathsPathIndex?: Array<{ id?: string }> | null;
-      };
-      let configs: Record<string, PathConfig> = {};
-      let settingsPathOrder: string[] = [];
-      if (typeof prefs.aiPathsPathConfigs === "string") {
-        try {
-          const parsed = JSON.parse(prefs.aiPathsPathConfigs) as Record<string, PathConfig>;
-          configs = parsed && typeof parsed === "object" ? parsed : {};
-        } catch {
-          configs = {};
-        }
-      } else if (prefs.aiPathsPathConfigs && typeof prefs.aiPathsPathConfigs === "object") {
-        configs = prefs.aiPathsPathConfigs;
-      }
-      if (!configs || Object.keys(configs).length === 0) {
-        try {
-          const settingsRes = await fetch("/api/settings", { cache: "no-store" });
-          if (settingsRes.ok) {
-            const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
-            const map = new Map<string, string>(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-            const indexRaw = map.get(PATH_INDEX_KEY);
-            if (indexRaw) {
-              try {
-                const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
-                if (Array.isArray(parsedIndex)) {
-                  settingsPathOrder = parsedIndex
-                    .map((meta: PathMeta) => meta?.id)
-                    .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0);
-                  parsedIndex.forEach((meta: PathMeta) => {
-                    if (!meta?.id) return;
-                    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-                    if (!configRaw) {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
-                      return;
-                    }
-                    try {
-                      const parsedConfig = JSON.parse(configRaw) as PathConfig;
-                      configs[meta.id] = {
-                        ...createDefaultPathConfig(meta.id),
-                        ...parsedConfig,
-                        id: meta.id,
-                        name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
-                      };
-                    } catch {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
-                    }
-                  });
-                }
-              } catch {
-                settingsPathOrder = [];
-              }
-            }
-            if (Object.keys(configs).length === 0) {
-              const legacyRaw =
-                map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
-              if (legacyRaw) {
-                try {
-                  const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
-                  const fallback = createDefaultPathConfig(parsedConfig.id ?? "default");
-                  configs[fallback.id] = {
-                    ...fallback,
-                    ...parsedConfig,
-                    id: parsedConfig.id ?? fallback.id,
-                    name: parsedConfig.name || fallback.name,
-                  };
-                } catch {
-                  const fallback = createDefaultPathConfig("default");
-                  configs[fallback.id] = fallback;
-                }
-              }
-            }
-          }
-        } catch {
-          // If settings fallback fails, keep configs empty.
-        }
-      }
-      const configsList: PathConfig[] = Object.values(configs);
-      const pathOrder: string[] = Array.isArray(prefs.aiPathsPathIndex)
-        ? prefs.aiPathsPathIndex
-            .map((item: { id?: string }) => item?.id)
-            .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0)
-        : settingsPathOrder;
-      const orderedConfigs: PathConfig[] = pathOrder.length
-        ? pathOrder
-            .map((id: string) => configs[id])
-            .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
-        : configsList;
-      const triggerEvent = (TRIGGER_EVENTS[0]?.id as string) ?? "path_generate_description";
-      const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
-        Array.isArray(config?.nodes)
-          ? config.nodes.some(
-              (node: AiNode) =>
-                node.type === "trigger" &&
-                (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
-            )
-          : false
-      );
-      const selectedConfig: PathConfig | undefined = triggerCandidates[0] ?? orderedConfigs[0];
-      if (!selectedConfig) {
-        toast(
-          "No AI Path found. Configure a path with the Path Generate Description trigger.",
-          { variant: "error" }
-        );
-        return;
-      }
-      toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
-      const nodes: AiNode[] = normalizeNodes(
-        Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []
-      );
-      const edges: Edge[] = sanitizeEdges(
-        nodes,
-        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
-      );
-      const triggerNodes: AiNode[] = nodes.filter(
-        (node: AiNode) =>
-          node.type === "trigger" &&
-          (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
-      );
-      const triggerNode: AiNode | undefined =
-        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
-        triggerNodes.find((node: AiNode) =>
-          edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
-        ) ??
-        triggerNodes[0] ??
-        nodes.find((node: AiNode) => node.type === "trigger");
-      if (!triggerNode) {
-        toast("No trigger node found in the selected path.", { variant: "error" });
-        return;
-      }
-      const triggerContext: Record<string, unknown> = buildTriggerContext(triggerNode, triggerEvent, event, {
-        id: selectedConfig.id,
-        name: selectedConfig.name,
-      });
-      const runAt = new Date().toISOString();
-      const runtimeState: RuntimeState = await evaluateGraph({
-        nodes,
-        edges,
-        activePathId: selectedConfig.id ?? "path",
-        activePathName: selectedConfig.name ?? undefined,
-        triggerNodeId: triggerNode.id,
-        triggerEvent,
-        triggerContext,
-        deferPoll: false,
-        fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
-          if (entityType !== "product") return null;
-          const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, {
-            cache: "no-store",
-          });
-          if (!res.ok) return null;
-          return (await res.json()) as Record<string, unknown>;
-        },
-        reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
-          logger.error(summary ?? "AI Paths trigger failed", error, meta);
-        },
-        toast,
-      });
-      void queryClient.invalidateQueries({ queryKey: ["products"] });
-      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-      try {
-        const updatedConfig: PathConfig = {
-          ...selectedConfig,
-          nodes,
-          edges,
-          runtimeState,
-          lastRunAt: runAt,
-          updatedAt: runAt,
-        };
-        const debugEntries: PathDebugEntry[] = nodes
-          .filter((node: AiNode) => node.type === "database")
-          .map((node: AiNode): PathDebugEntry | null => {
-            const output = runtimeState.outputs[node.id] as
-              | { debugPayload?: unknown }
-              | undefined;
-            const debugPayload = output?.debugPayload;
-            if (debugPayload === undefined || debugPayload === null) return null;
-            return {
-              nodeId: node.id,
-              title: node.title,
-              debug: debugPayload,
-            };
-          })
-          .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => Boolean(entry));
-        const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
-          ? {
-              pathId: updatedConfig.id,
-              runAt,
-              entries: debugEntries,
-            }
-          : null;
-        configs[updatedConfig.id] = updatedConfig;
-        const orderedIds: string[] = pathOrder.length
-          ? pathOrder
-          : orderedConfigs.map((config: PathConfig) => config.id);
-        const safeConfigs: string = safeJsonStringify(configs);
-        await fetch("/api/user/preferences", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            aiPathsPathConfigs: safeConfigs || configs,
-            aiPathsActivePathId: updatedConfig.id,
-            ...(orderedIds.length > 0 && {
-              aiPathsPathIndex: orderedIds.map((id: string) => ({ id })),
-            }),
-          }),
-        });
-        try {
-          const configValue = safeJsonStringify(updatedConfig);
-          const indexValue = JSON.stringify(orderedIds.map((id: string) => ({ id })));
-          const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : "";
-          if (configValue) {
-            await fetch("/api/settings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`,
-                value: configValue,
-              }),
-            });
-          }
-          if (debugValue) {
-            await fetch("/api/settings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`,
-                value: debugValue,
-              }),
-            });
-          }
-          if (orderedIds.length > 0) {
-            await fetch("/api/settings", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
-            });
-          }
-        } catch (error) {
-          logger.error("Failed to persist AI Paths settings snapshot", error);
-        }
-      } catch (error) {
-        logger.error("Failed to persist AI Paths runtime state", error);
-      }
-    } catch (error) {
-      logger.error("Failed to run AI Path trigger", error);
-      toast("Failed to run AI Path trigger.", { variant: "error" });
-    }
+    await runPathTrigger(product || null, event);
   };
 
   const handleTranslate = async (): Promise<void> => {

@@ -33,7 +33,7 @@ describe("getCmsThemeSettings Service", () => {
     const settings = await getCmsThemeSettings();
 
     expect(prisma.setting.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { key: "cms_theme_settings" },
+      where: { key: "cms_theme_settings.v1" },
     }));
     expect(settings.primaryColor).toBe("#ff0000");
   });
@@ -43,12 +43,14 @@ describe("getCmsThemeSettings Service", () => {
     const mockCollection = {
       findOne: vi.fn().mockResolvedValue({ value: JSON.stringify({ primaryColor: "#00ff00" }) }),
     };
-    (getMongoDb as any).mockResolvedValue({
+    const mockDb = {
       collection: vi.fn().mockReturnValue(mockCollection),
-    });
+    };
+    (getMongoDb as any).mockResolvedValue(mockDb);
 
     const settings = await getCmsThemeSettings();
 
+    expect(mockDb.collection).toHaveBeenCalledWith("settings");
     expect(mockCollection.findOne).toHaveBeenCalled();
     expect(settings.primaryColor).toBe("#00ff00");
   });

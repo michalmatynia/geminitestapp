@@ -114,7 +114,7 @@ describe("ComponentSettingsPanel Component", () => {
 
   it("should show 'Select a page' message when no page is set", () => {
     (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: null },
+      state: { currentPage: null, inspectorSettings: { showEditorChrome: true } },
       dispatch: mockDispatch,
     });
 
@@ -129,7 +129,7 @@ describe("ComponentSettingsPanel Component", () => {
 
   it("should show page settings when nothing is selected", () => {
     (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage },
+      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true } },
       selectedSection: null,
       selectedBlock: null,
       selectedColumn: null,
@@ -157,7 +157,7 @@ describe("ComponentSettingsPanel Component", () => {
     };
 
     (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage },
+      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true } },
       selectedSection: mockSection,
       selectedBlock: null,
       selectedColumn: null,
@@ -179,7 +179,7 @@ describe("ComponentSettingsPanel Component", () => {
     const mockSection = { id: "sec-1", type: "Hero", settings: {} };
 
     (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage },
+      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true } },
       selectedSection: mockSection,
       selectedBlock: null,
       selectedColumn: null,
@@ -204,7 +204,7 @@ describe("ComponentSettingsPanel Component", () => {
 
   it("should update SEO settings", async () => {
     (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage },
+      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true } },
       selectedSection: null,
       selectedBlock: null,
       selectedColumn: null,

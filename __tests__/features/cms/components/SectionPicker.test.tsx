@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { SectionPicker } from "@/features/cms/components/page-builder/SectionPicker";
 import { usePageBuilder } from "@/features/cms/hooks/usePageBuilderContext";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Mock hooks
 vi.mock("@/features/cms/hooks/usePageBuilderContext", () => ({
@@ -43,6 +44,11 @@ vi.mock("@/shared/ui", async () => {
   };
 });
 
+const queryClient = new QueryClient();
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
 describe("SectionPicker Component", () => {
   const mockDispatch = vi.fn();
 
@@ -52,18 +58,14 @@ describe("SectionPicker Component", () => {
   });
 
   it("should render the add section button", () => {
-    render(<SectionPicker zone="template" onSelect={vi.fn()} />);
+    render(<SectionPicker zone="template" onSelect={vi.fn()} />, { wrapper });
     expect(screen.getByRole("button", { name: /Add section/i })).toBeInTheDocument();
   });
 
   it("should call onSelect when a section type is clicked", () => {
     const onSelect = vi.fn();
-    render(<SectionPicker zone="template" onSelect={onSelect} />);
+    render(<SectionPicker zone="template" onSelect={onSelect} />, { wrapper });
 
-    // Since we mocked Dialog, we might need to simulate opening or just check if it renders content when open
-    // For simplicity in unit test, we can check if content is rendered.
-    // In our mock, DialogContent is always rendered if we don't control 'open' state strictly.
-    
     const richTextOption = screen.getByText("Rich text");
     fireEvent.click(richTextOption);
 
@@ -71,7 +73,7 @@ describe("SectionPicker Component", () => {
   });
 
   it("should be disabled when the disabled prop is true", () => {
-    render(<SectionPicker zone="template" onSelect={vi.fn()} disabled={true} />);
+    render(<SectionPicker zone="template" onSelect={vi.fn()} disabled={true} />, { wrapper });
     const addButton = screen.getByRole("button", { name: /Add section/i });
     expect(addButton).toBeDisabled();
   });

@@ -23,6 +23,10 @@ vi.mock("@/shared/lib/db/mongo-client", () => ({
   getMongoDb: vi.fn(),
 }));
 
+vi.mock("@/features/cms/services/cms-domain-settings", () => ({
+  getCmsDomainSettings: vi.fn().mockResolvedValue({ zoningEnabled: true }),
+}));
+
 describe("CMS Domain Service", () => {
   const mockCollection = {
     findOne: vi.fn(),
@@ -115,8 +119,12 @@ describe("CMS Domain Service", () => {
     });
 
     it("should set domain alias", async () => {
-      const domain = { id: "d2", domain: "d2.com", aliasOf: null };
-      mockCollection.findOne.mockResolvedValueOnce(domain); // getDomainRecordById
+      const d2 = { id: "d2", domain: "d2.com", aliasOf: null };
+      const d1 = { id: "d1", domain: "d1.com", aliasOf: null };
+      
+      mockCollection.findOne
+        .mockResolvedValueOnce(d2) // getDomainRecordById("d2")
+        .mockResolvedValueOnce(d1); // resolveCmsDomainScopeById("d1") -> getDomainRecordById("d1")
       
       await setCmsDomainAlias("d2", "d1");
       expect(mockCollection.updateOne).toHaveBeenCalledWith(

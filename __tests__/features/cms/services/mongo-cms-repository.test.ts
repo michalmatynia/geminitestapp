@@ -33,8 +33,10 @@ describe("Mongo CMS Repository", () => {
   describe("Pages", () => {
     it("should get all pages", async () => {
       const mockDocs = [{ id: "1", name: "Home", components: [] }];
-      mockCollection.toArray.mockResolvedValueOnce(mockDocs); // pages
-      mockCollection.toArray.mockResolvedValueOnce([]); // slugs
+      mockCollection.toArray
+        .mockResolvedValueOnce(mockDocs) // pages
+        .mockResolvedValueOnce([]) // slugLinks
+        .mockResolvedValueOnce([]); // slugs
 
       const pages = await mongoCmsRepository.getPages();
 

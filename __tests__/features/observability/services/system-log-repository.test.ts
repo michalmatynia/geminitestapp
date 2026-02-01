@@ -25,7 +25,7 @@ describe("systemLogRepository", () => {
     (getAppDbProvider as any).mockResolvedValue("prisma");
     try {
       await prisma.systemLog.deleteMany({});
-    } catch (e) {
+    } catch (_e) {
       // Table might not exist in some environments
     }
   });

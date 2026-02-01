@@ -31,6 +31,7 @@ vi.mock("@/shared/ui", async () => {
     DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
     DialogTitle: ({ children }: any) => <div>{children}</div>,
+    DialogClose: ({ children }: any) => <div>{children}</div>,
   };
 });
 

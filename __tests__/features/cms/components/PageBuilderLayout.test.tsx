@@ -17,7 +17,12 @@ vi.mock("../../hooks/useBuilderKeyboardShortcuts", () => ({
 
 // We need to mock components using absolute paths
 vi.mock("@/features/cms/components/page-builder/ComponentTreePanel", () => ({
-  ComponentTreePanel: () => <div data-testid="component-tree-panel">Tree</div>,
+  ComponentTreePanel: () => (
+    <div data-testid="component-tree-panel">
+      Tree
+      <button aria-label="Hide left panel" onClick={() => {}}>Hide</button>
+    </div>
+  ),
 }));
 
 vi.mock("@/features/cms/components/page-builder/PagePreviewPanel", () => ({
@@ -25,7 +30,12 @@ vi.mock("@/features/cms/components/page-builder/PagePreviewPanel", () => ({
 }));
 
 vi.mock("@/features/cms/components/page-builder/ComponentSettingsPanel", () => ({
-  ComponentSettingsPanel: () => <div data-testid="component-settings-panel">Settings</div>,
+  ComponentSettingsPanel: () => (
+    <div data-testid="component-settings-panel">
+      Settings
+      <button aria-label="Hide right panel" onClick={() => {}}>Hide</button>
+    </div>
+  ),
 }));
 
 vi.mock("@/features/cms/components/page-builder/ThemeSettingsPanel", () => ({
@@ -85,7 +95,8 @@ describe("PageBuilderLayout Component", () => {
   it("should toggle right panel", () => {
     render(<PageBuilderLayout />, { wrapper });
     
-    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!.parentElement!;
+    // ComponentSettingsPanel is rendered inside the right panel container
+    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!;
     expect(rightPanel).toHaveClass("w-80");
     
     const hideBtn = screen.getByLabelText("Hide right panel");
@@ -143,17 +154,13 @@ describe("PageBuilderLayout Component", () => {
 
     const { rerender } = render(<PageBuilderLayout />, { wrapper });
     
-    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!.parentElement!;
+    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!;
     expect(rightPanel).toHaveClass("w-80"); // Initially open
     
     // Simulate narrow screen
     matches = true;
     if (changeHandler) changeHandler({ matches: true });
     
-    // Re-render to pick up state change if needed (though useEffect handles it)
-    // In this case, the event listener should have triggered the dispatch
-    
-    // We might need to wait for the transition or state update
     expect(rightPanel).toHaveClass("w-0");
     
     // Simulate wide screen again

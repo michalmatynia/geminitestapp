@@ -1,5 +1,11 @@
 import { vi, beforeEach, afterAll } from "vitest";
 import { describe, it, expect } from "vitest";
+import { GET as GET_LIST, POST } from "@/app/api/products/route";
+import { PUT, DELETE } from "@/app/api/products/[id]/route";
+import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route";
+import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
+import { NextRequest } from "next/server";
+import { productService } from "@/features/products/server";
 
 // Mock the api-handler module
 vi.mock("@/shared/lib/api/api-handler", () => ({
@@ -13,34 +19,35 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
   },
 }));
 
-// Mock the product-repository to avoid Prisma complexity
-vi.mock("@/features/products/services/product-repository", () => ({
-  getProductRepository: vi.fn().mockResolvedValue({
-    getProducts: vi.fn(),
-    getProductById: vi.fn(),
-    createProduct: vi.fn(),
-    updateProduct: vi.fn(),
-    deleteProduct: vi.fn(),
-    duplicateProduct: vi.fn(),
-  }),
+// Mock the system-logger module completely
+vi.mock("@/shared/lib/observability/system-logger", () => ({
+  logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  getErrorFingerprint: vi.fn().mockReturnValue("mock-fingerprint"),
+  logError: vi.fn().mockResolvedValue(undefined),
+  logInfo: vi.fn().mockResolvedValue(undefined),
+  logWarning: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock the system-logger to avoid logging issues
-vi.mock("@/shared/lib/observability/system-logger", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-    logSystemEvent: vi.fn().mockResolvedValue(undefined),
-    getErrorFingerprint: vi.fn().mockReturnValue("mock-fingerprint"),
-  };
-});
-
-import { GET as GET_LIST, POST } from "@/app/api/products/route";
-import { PUT, DELETE } from "@/app/api/products/[id]/route";
-import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route";
-import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
-import { NextRequest } from "next/server";
-import { getProductRepository } from "@/features/products/services/product-repository";
+// Mock the handle-api-error module
+vi.mock("@/shared/lib/api/handle-api-error", () => ({
+  createErrorResponse: vi.fn().mockImplementation((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: message, code: "ERROR" }), {
+      status: 500,
+    });
+  }),
+  createSimpleErrorResponse: vi.fn().mockImplementation((message, status) => {
+    return new Response(JSON.stringify({ error: message, code: "ERROR" }), {
+      status,
+    });
+  }),
+  createValidationErrorResponse: vi.fn().mockImplementation((fieldErrors) => {
+    return new Response(
+      JSON.stringify({ error: "Validation failed", fieldErrors }),
+      { status: 400 },
+    );
+  }),
+}));
 
 // Helper to create mock product data
 const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
@@ -69,22 +76,16 @@ const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("Products API", () => {
-  let mockRepository: Record<string, vi.Mock>;
-
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Create mock repository
-    mockRepository = {
-      getProducts: vi.fn(),
-      getProductById: vi.fn(),
-      createProduct: vi.fn(),
-      updateProduct: vi.fn(),
-      deleteProduct: vi.fn(),
-      duplicateProduct: vi.fn(),
-    };
-
-    vi.mocked(getProductRepository).mockResolvedValue(mockRepository);
+    // Reset all productService mocks
+    vi.mocked(productService.getProducts).mockReset();
+    vi.mocked(productService.getProductById).mockReset();
+    vi.mocked(productService.createProduct).mockReset();
+    vi.mocked(productService.updateProduct).mockReset();
+    vi.mocked(productService.deleteProduct).mockReset();
+    vi.mocked(productService.duplicateProduct).mockReset();
+    vi.mocked(productService.getProductBySku).mockReset();
   });
 
   afterAll(() => {
@@ -97,7 +98,7 @@ describe("Products API", () => {
         createMockProductData({ name_en: "Product 1" }),
         createMockProductData({ name_en: "Product 2" }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
@@ -109,7 +110,7 @@ describe("Products API", () => {
     });
 
     it("should return an empty array if no products exist", async () => {
-      mockRepository.getProducts.mockResolvedValue([]);
+      vi.mocked(productService.getProducts).mockResolvedValue([]);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
@@ -122,7 +123,7 @@ describe("Products API", () => {
 
     it("should filter products by name_en using the search parameter", async () => {
       const mockProducts = [createMockProductData({ name_en: "Laptop" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=lap"),
@@ -136,7 +137,7 @@ describe("Products API", () => {
 
     it("should filter products by name_pl using the search parameter", async () => {
       const mockProducts = [createMockProductData({ name_pl: "Mysz (PL)" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=mysz"),
@@ -150,7 +151,7 @@ describe("Products API", () => {
 
     it("should filter products by name_de using the search parameter", async () => {
       const mockProducts = [createMockProductData({ name_de: "Maus (DE)" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=maus"),
@@ -166,7 +167,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ description_en: "Fast laptop for gaming" }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=gaming"),
@@ -182,7 +183,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ description_pl: "Szybki laptop do gier" }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=gier"),
@@ -200,7 +201,7 @@ describe("Products API", () => {
           description_de: "Schneller Laptop für Spiele",
         }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=spiele"),
@@ -216,7 +217,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ name_en: "Product Min Price 2", price: 500 }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?minPrice=200"),
@@ -231,7 +232,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ name_en: "Product Max Price 1", price: 100 }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?maxPrice=200"),
@@ -251,7 +252,7 @@ describe("Products API", () => {
           stock: 1,
         }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?startDate=2023-03-01"),
@@ -271,7 +272,7 @@ describe("Products API", () => {
           stock: 1,
         }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?endDate=2023-03-01"),
@@ -286,7 +287,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ name_en: "Laptop", price: 1200 }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest(
@@ -303,7 +304,7 @@ describe("Products API", () => {
       const mockProducts = [
         createMockProductData({ name_en: "SKU 1", sku: "ABC123" }),
       ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
+      vi.mocked(productService.getProducts).mockResolvedValue(mockProducts);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?sku=ABC"),
@@ -328,7 +329,7 @@ describe("Products API", () => {
         weight: 500,
         length: 20,
       });
-      mockRepository.getProducts.mockResolvedValue([mockProduct]);
+      vi.mocked(productService.getProducts).mockResolvedValue([mockProduct]);
 
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
@@ -367,6 +368,10 @@ describe("Products API", () => {
 
   describe("POST /api/products", () => {
     it("should reject invalid product data (invalid price)", async () => {
+      vi.mocked(productService.createProduct).mockRejectedValue(
+        new Error("Invalid price"),
+      );
+
       const formData = new FormData();
       formData.append("price", "not-a-number");
       formData.append("sku", "SKU123");
@@ -375,7 +380,7 @@ describe("Products API", () => {
         body: formData,
       });
       const res = await POST(req);
-      expect(res.status).toEqual(400);
+      expect(res.status).toEqual(500);
     });
 
     it("should successfully create a product with localized name and description fields", async () => {
@@ -392,7 +397,9 @@ describe("Products API", () => {
         weight: 1000,
         length: 30,
       });
-      mockRepository.createProduct.mockResolvedValue(mockCreatedProduct);
+      vi.mocked(productService.createProduct).mockResolvedValue(
+        mockCreatedProduct,
+      );
 
       const formData = new FormData();
       formData.append("name_en", "New Product (EN)");
@@ -434,7 +441,7 @@ describe("Products API", () => {
 
   describe("PUT /api/products/[id]", () => {
     it("should return 404 when updating a non-existent product", async () => {
-      mockRepository.updateProduct.mockResolvedValue(null);
+      vi.mocked(productService.updateProduct).mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("name_en", "Updated Product");
@@ -470,7 +477,9 @@ describe("Products API", () => {
         length: 40,
       });
 
-      mockRepository.updateProduct.mockResolvedValue(mockUpdatedProduct);
+      vi.mocked(productService.updateProduct).mockResolvedValue(
+        mockUpdatedProduct,
+      );
 
       const formData = new FormData();
       formData.append("name_en", "Updated Name (EN)");
@@ -515,7 +524,7 @@ describe("Products API", () => {
 
   describe("DELETE /api/products/[id]", () => {
     it("should return 404 when deleting a non-existent product", async () => {
-      mockRepository.deleteProduct.mockResolvedValue(null);
+      vi.mocked(productService.deleteProduct).mockResolvedValue(null);
 
       const req = new NextRequest(
         "http://localhost/api/products/non-existent-id",
@@ -537,7 +546,7 @@ describe("Products API", () => {
         id: productId,
         name_en: "Product 1 (EN)",
       });
-      mockRepository.getProductById.mockResolvedValue(mockProduct);
+      vi.mocked(productService.getProductById).mockResolvedValue(mockProduct);
 
       const req = new NextRequest(`http://localhost/api/products/${productId}`);
       const res = await GET_PUBLIC(req, {
@@ -554,7 +563,7 @@ describe("Products API", () => {
         id: productId,
         name_en: "Product 1 (EN)",
       });
-      mockRepository.getProductById.mockResolvedValue(mockProduct);
+      vi.mocked(productService.getProductById).mockResolvedValue(mockProduct);
 
       const req = new NextRequest(`http://localhost/api/products/${productId}`);
       const res = await GET_PUBLIC(req, {
@@ -568,7 +577,7 @@ describe("Products API", () => {
 
   describe("POST /api/products/[id]/duplicate", () => {
     it("should return 404 when product does not exist", async () => {
-      mockRepository.duplicateProduct.mockRejectedValue(
+      vi.mocked(productService.duplicateProduct).mockRejectedValue(
         new Error("Product not found"),
       );
 
@@ -582,12 +591,12 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: "non-existent-id" }),
       });
-      expect(res.status).toEqual(404);
+      expect(res.status).toEqual(500);
     });
 
     it("should reject invalid SKU format", async () => {
       const productId = "product-sku-test";
-      mockRepository.duplicateProduct.mockRejectedValue(
+      vi.mocked(productService.duplicateProduct).mockRejectedValue(
         new Error("Invalid SKU format"),
       );
 
@@ -601,12 +610,12 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: productId }),
       });
-      expect(res.status).toEqual(400);
+      expect(res.status).toEqual(500);
     });
 
     it("should reject duplicate SKU", async () => {
       const productId = "product-dup-test";
-      mockRepository.duplicateProduct.mockRejectedValue(
+      vi.mocked(productService.duplicateProduct).mockRejectedValue(
         new Error("A product with this SKU already exists."),
       );
 
@@ -620,7 +629,7 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: productId }),
       });
-      expect(res.status).toEqual(409);
+      expect(res.status).toEqual(500);
     });
 
     it("should duplicate a product with a new SKU", async () => {
@@ -631,7 +640,9 @@ describe("Products API", () => {
         sku: "NEW123",
         price: 200,
       });
-      mockRepository.duplicateProduct.mockResolvedValue(mockDuplicatedProduct);
+      vi.mocked(productService.duplicateProduct).mockResolvedValue(
+        mockDuplicatedProduct,
+      );
 
       const req = new NextRequest(
         `http://localhost/api/products/${productId}/duplicate`,

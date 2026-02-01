@@ -7,42 +7,6 @@ const nextConfig = {
     'bcrypt',
   ],
   turbopack: {},
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        net: false,
-        tls: false,
-        fs: false,
-        path: false,
-        child_process: false,
-        os: false,
-        crypto: false,
-        stream: false,
-        util: false,
-        buffer: false,
-        events: false,
-        url: false,
-        querystring: false,
-        http: false,
-        https: false,
-        zlib: false,
-        assert: false,
-      };
-    }
-    
-    // Exclude playwright and other Node.js specific modules from client bundle
-    config.externals = config.externals || [];
-    if (!isServer) {
-      config.externals.push({
-        'playwright-core': 'commonjs playwright-core',
-        'playwright': 'commonjs playwright',
-        'commander': 'commonjs commander',
-      });
-    }
-    
-    return config;
-  },
   images: {
     qualities: [75, 90],
     remotePatterns: [

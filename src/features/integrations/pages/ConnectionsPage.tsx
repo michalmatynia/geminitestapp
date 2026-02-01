@@ -1057,7 +1057,7 @@ function IntegrationsContent(): React.JSX.Element {
           savingAllegroSandbox={savingAllegroSandbox}
           onToggleAllegroSandbox={(v: boolean): void => { void handleAllegroSandboxToggle(v); }}
           onAllegroAuthorize={(): void => { void handleAllegroAuthorize(); }}
-          onDisconnect={(): void => { void handleAllegroDisconnect(); }}
+          onAllegroDisconnect={(): void => { void handleAllegroDisconnect(); }}
           onAllegroSandboxConnect={(): void => { void handleAllegroSandboxConnect(); }}
           baseApiMethod={baseApiMethod}
           setBaseApiMethod={setBaseApiMethod}

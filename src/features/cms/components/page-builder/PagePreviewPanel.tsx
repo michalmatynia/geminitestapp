@@ -499,7 +499,7 @@ export function PagePreviewPanel(): React.ReactNode {
   }, [faithfulDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
   return (
-    <div className="relative flex flex-1 flex-col bg-gray-950">
+    <div className="relative flex min-w-0 flex-1 flex-col bg-gray-950">
       {/* Toolbar */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${

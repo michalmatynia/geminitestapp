@@ -10,57 +10,18 @@ src/features/cms/components/frontend/GsapAnimationWrapper.tsx(10,26): error TS11
   The file is in the program because:
     Referenced via 'observer.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
     Imported via "gsap/Observer" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Observer.d.ts@3.14.2'
-src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(299,15): error TS2322: Type 'string' is not assignable to type 'never'.
-src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1095,15): error TS2322: Type 'string' is not assignable to type 'never'.
-src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx(1273,15): error TS2322: Type 'string' is not assignable to type 'never'.
-src/features/cms/components/page-builder/MenuSettingsPanel.tsx(27,34): error TS6133: 'AnimationPreset' is declared but its value is never read.
-src/features/cms/services/cms-domain.ts(151,3): error TS2322: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
-  Types of property 'createdAt' are incompatible.
-    Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-domain.ts(167,5): error TS2322: Type 'CmsDomain | WithId<CmsDomainRecord>' is not assignable to type 'CmsDomain'.
-  Type 'WithId<CmsDomainRecord>' is not assignable to type 'CmsDomain'.
-    Types of property 'createdAt' are incompatible.
-      Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-domain.ts(179,3): error TS2322: Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
-  Types of property 'createdAt' are incompatible.
-    Type 'Date' is not assignable to type 'string'.
-src/features/cms/services/cms-domain.ts(188,3): error TS2322: Type 'CmsDomainRecord | null' is not assignable to type 'CmsDomain | null'.
-  Type 'CmsDomainRecord' is not assignable to type 'CmsDomain'.
-    Types of property 'createdAt' are incompatible.
-      Type 'Date' is not assignable to type 'string'.
-src/features/database/pages/DatabasesPage.tsx(116,15): error TS2339: Property 'ok' does not exist on type 'unknown'.
-src/features/database/pages/DatabasesPage.tsx(116,19): error TS2339: Property 'payload' does not exist on type 'unknown'.
-src/features/database/pages/DatabasesPage.tsx(189,11): error TS18046: 'result' is of type 'unknown'.
-src/features/database/pages/DatabasesPage.tsx(206,11): error TS18046: 'result' is of type 'unknown'.
-src/features/gsap/components/AnimationPreviewIcon.tsx(185,17): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'TweenTarget'.
-  Type 'undefined' is not assignable to type 'TweenTarget'.
-src/features/integrations/components/listings/ListProductModal.tsx(73,18): error TS2304: Cannot find name 'LocalIntegrationConnection'.
-src/features/integrations/components/listings/ListProductModal.tsx(188,9): error TS2304: Cannot find name 'LocalIntegration'.
-src/features/integrations/components/listings/ListProductModal.tsx(311,47): error TS2304: Cannot find name 'LocalIntegration'.
-src/features/integrations/components/listings/ListProductModal.tsx(312,44): error TS2304: Cannot find name 'LocalIntegration'.
-src/features/integrations/components/listings/ListProductModal.tsx(333,48): error TS2304: Cannot find name 'LocalIntegrationConnection'.
-src/features/integrations/components/listings/ListProductModal.tsx(334,45): error TS2304: Cannot find name 'LocalIntegrationConnection'.
-src/features/integrations/components/listings/MassListProductModal.tsx(21,1): error TS6192: All imports in import declaration are unused.
-src/features/integrations/components/listings/ProductListingsModal.tsx(548,7): error TS18004: No value exists in scope for the shorthand property 'allowDuplicateSku'. Either declare one or provide an initializer.
-src/features/integrations/components/listings/SelectProductForListingModal.tsx(204,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
-  Type 'null' is not assignable to type 'string'.
-src/features/integrations/hooks/useIntegrationMutations.ts(32,5): error TS2322: Type '({ integrationId, connectionId, payload }: { integrationId: string; connectionId?: string | null; payload: Record<string, unknown>; }) => Promise<IntegrationConnection>' is not assignable to type 'MutationFunction<IntegrationConnection, { integrationId: string; }>'.
-  Types of parameters '__0' and 'variables' are incompatible.
-    Property 'payload' is missing in type '{ integrationId: string; }' but required in type '{ integrationId: string; connectionId?: string | null | undefined; payload: Record<string, unknown>; }'.
-src/features/integrations/hooks/useIntegrationMutations.ts(67,5): error TS2322: Type '({ integrationId: _integrationId, connectionId }: { integrationId: string; connectionId: string; }) => Promise<Record<string, unknown>>' is not assignable to type 'MutationFunction<Record<string, unknown>, { integrationId: string; }>'.
-  Types of parameters '__0' and 'variables' are incompatible.
-    Property 'connectionId' is missing in type '{ integrationId: string; }' but required in type '{ integrationId: string; connectionId: string; }'.
-src/features/integrations/pages/ConnectionsPage.tsx(1060,11): error TS2322: Type '{ activeIntegration: Integration; connections: IntegrationConnection[]; onClose: () => void; editingConnectionId: string | null; setEditingConnectionId: Dispatch<...>; ... 58 more ...; onAllegroApiRequest: () => void; }' is not assignable to type 'IntrinsicAttributes & IntegrationModalProps'.
-  Property 'onDisconnect' does not exist on type 'IntrinsicAttributes & IntegrationModalProps'.
-src/features/integrations/services/imports/base-client.ts(92,3): error TS2322: Type '({ id: string; name: string; typedId: string | undefined; } | null)[]' is not assignable to type 'BaseWarehouse[]'.
-  Type '{ id: string; name: string; typedId: string | undefined; } | null' is not assignable to type 'BaseWarehouse'.
-    Type 'null' is not assignable to type 'BaseWarehouse'.
+src/features/cms/components/page-builder/PageBuilderLayout.tsx(73,11): error TS2339: Property 'addListener' does not exist on type 'never'.
+src/features/cms/components/page-builder/PageBuilderLayout.tsx(75,13): error TS2339: Property 'removeListener' does not exist on type 'never'.
 src/features/integrations/services/product-listing-repository.ts(157,3): error TS2322: Type '(id: string) => Promise<boolean>' is not assignable to type '(id: string) => Promise<void>'.
   Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
     Type 'boolean' is not assignable to type 'void'.
 src/features/integrations/services/product-listing-repository.ts(325,3): error TS2322: Type '(id: string) => Promise<boolean>' is not assignable to type '(id: string) => Promise<void>'.
   Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
     Type 'boolean' is not assignable to type 'void'.
+src/features/jobs/components/ProductAiJobsPanel.tsx(211,12): error TS2345: Argument of type '(val: string | undefined) => boolean | undefined' is not assignable to parameter of type '(value: string | null | undefined, index: number, array: (string | null | undefined)[]) => unknown'.
+  Types of parameters 'val' and 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
 src/features/jobs/server.ts(7,1): error TS2308: Module "./workers/chatbotJobQueue" has already exported a member named 'pollQueue'. Consider explicitly re-exporting to resolve the ambiguity.
 src/features/jobs/services/productAiService.ts(28,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
   Types of property 'result' are incompatible.
@@ -157,6 +118,20 @@ src/features/notesapp/api/useNoteMutations.ts(254,41): error TS2304: Cannot find
 src/features/notesapp/api/useNoteMutations.ts(262,57): error TS2304: Cannot find name 'DeleteResponse'.
 src/features/notesapp/api/useNoteMutations.ts(265,45): error TS2304: Cannot find name 'DeleteResponse'.
 src/features/notesapp/api/useNoteMutations.ts(268,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/notesapp/components/NoteCard.tsx(262,19): error TS2345: Argument of type '(crumb: { id: string; name: string; }, index: number, array: Array<{ id: string; name: string; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
+  Types of parameters 'crumb' and 'value' are incompatible.
+    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; }'.
+      Types of property 'id' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
+src/features/notesapp/components/NoteDetailView.tsx(245,15): error TS2345: Argument of type '(crumb: { id: string; name: string; isNote?: boolean; }, index: number, array: Array<{ id: string; name: string; isNote?: boolean; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
+  Types of parameters 'crumb' and 'value' are incompatible.
+    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; isNote?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
+src/features/notesapp/components/NoteForm.tsx(384,22): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
+src/features/notesapp/components/NoteForm.tsx(511,24): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
 src/features/notesapp/components/NoteForm.tsx(712,14): error TS2322: Type '() => void' is not assignable to type 'void'.
 src/features/notesapp/components/NoteForm.tsx(827,13): error TS2322: Type '(e: React.ClipboardEvent<HTMLTextAreaElement>) => void' is not assignable to type '(e: ClipboardEvent<HTMLTextAreaElement>) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
@@ -166,14 +141,13 @@ src/features/notesapp/components/NoteForm.tsx(848,9): error TS2322: Type '(files
   Type 'void' is not assignable to type 'Promise<void>'.
 src/features/notesapp/components/NoteForm.tsx(849,9): error TS2322: Type '(slotIndex: number) => void' is not assignable to type '(slotIndex: number) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/components/NoteListView.tsx(219,36): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/pages/AdminNotesPage.tsx(345,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
+src/features/notesapp/pages/AdminNotesPage.tsx(340,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
   Types of parameters 'parentId' and 'parentId' are incompatible.
     Type 'string | null | undefined' is not assignable to type 'string | null'.
       Type 'undefined' is not assignable to type 'string | null'.
-src/features/notesapp/pages/AdminNotesPage.tsx(370,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(365,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesPage.tsx(397,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(392,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
 src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
   Type 'boolean' is not assignable to type 'void'.
@@ -241,3 +215,11 @@ src/features/products/components/settings/modals/LanguageModal.tsx(38,3): error 
 src/features/products/components/settings/modals/PriceGroupModal.tsx(37,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 src/features/products/components/settings/modals/PriceGroupModal.tsx(38,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
 src/features/products/components/settings/modals/PriceGroupModal.tsx(51,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/mocks/handlers.ts(167,33): error TS2345: Argument of type '({ params, request }: RequestParamsContext) => Promise<HttpResponse<JsonBodyType>>' is not assignable to parameter of type 'HttpResponseResolver<PathParams, DefaultBodyType, JsonBodyType>'.
+  Types of parameters '__0' and 'info' are incompatible.
+    Type 'ResponseResolverInfo<HttpRequestResolverExtras<PathParams>, DefaultBodyType>' is not assignable to type 'RequestParamsContext'.
+      Types of property 'params' are incompatible.
+        Type 'PathParams' is not assignable to type 'Record<string, string>'.
+          'string' index signatures are incompatible.
+            Type 'string | readonly string[] | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.

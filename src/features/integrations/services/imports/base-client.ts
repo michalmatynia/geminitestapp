@@ -89,28 +89,27 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
     (payload.data as Record<string, unknown> | undefined)?.warehouses,
   ];
   const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
-  return raw
-    .map((entry: unknown) => {
-      if (!entry || typeof entry !== "object") return null;
-      const record = entry as Record<string, unknown>;
-      const id =
-        toStringId(record.warehouse_id) ??
-        toStringId(record.id) ??
-        toStringId(record.storage_id);
-      if (!id) return null;
-      const type =
-        typeof record.warehouse_type === "string" && record.warehouse_type.trim()
-          ? record.warehouse_type.trim().toLowerCase()
-          : null;
-      const typedId =
-        type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
-      const name =
-        (typeof record.name === "string" && record.name.trim()) ||
-        (typeof record.label === "string" && record.label.trim()) ||
-        id;
-      return { id, name, typedId };
-    })
-    .filter((entry: BaseWarehouse | null): entry is BaseWarehouse => Boolean(entry));
+  return raw.reduce<BaseWarehouse[]>((acc, entry: unknown) => {
+    if (!entry || typeof entry !== "object") return acc;
+    const record = entry as Record<string, unknown>;
+    const id =
+      toStringId(record.warehouse_id) ??
+      toStringId(record.id) ??
+      toStringId(record.storage_id);
+    if (!id) return acc;
+    const type =
+      typeof record.warehouse_type === "string" && record.warehouse_type.trim()
+        ? record.warehouse_type.trim().toLowerCase()
+        : null;
+    const typedId =
+      type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
+    const name =
+      (typeof record.name === "string" && record.name.trim()) ||
+      (typeof record.label === "string" && record.label.trim()) ||
+      id;
+    acc.push(typedId ? { id, name, typedId } : { id, name });
+    return acc;
+  }, []);
 };
 
 const extractProductIds = (payload: BaseApiResponse): string[] => {

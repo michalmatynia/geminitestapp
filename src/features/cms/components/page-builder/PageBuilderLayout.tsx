@@ -21,6 +21,8 @@ function PageBuilderInner(): React.ReactNode {
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
   const rightPanelRef = useRef<HTMLDivElement | null>(null);
+  const autoCollapsedRightRef = useRef(false);
+  const wasNarrowRef = useRef<boolean | null>(null);
   const [leftPanelMode, setLeftPanelMode] = useState<"sections" | "theme" | "menu" | "app-embeds">("sections");
   const leftPanelLabel =
     leftPanelMode === "sections"
@@ -35,6 +37,46 @@ function PageBuilderInner(): React.ReactNode {
     setIsProgrammaticallyCollapsed(true);
     return (): void => setIsProgrammaticallyCollapsed(false);
   }, [setIsProgrammaticallyCollapsed]);
+
+  useEffect((): (() => void) | void => {
+    if (typeof window === "undefined") return undefined;
+    const breakpoint = 1200;
+    const media = window.matchMedia(`(max-width: ${breakpoint}px)`);
+
+    const applyBreakpoint = (isNarrow: boolean): void => {
+      if (wasNarrowRef.current === isNarrow) return;
+      wasNarrowRef.current = isNarrow;
+
+      if (isNarrow) {
+        if (!state.rightPanelCollapsed) {
+          dispatch({ type: "TOGGLE_RIGHT_PANEL" });
+          autoCollapsedRightRef.current = true;
+        }
+      } else if (autoCollapsedRightRef.current) {
+        if (state.rightPanelCollapsed) {
+          dispatch({ type: "TOGGLE_RIGHT_PANEL" });
+        }
+        autoCollapsedRightRef.current = false;
+      }
+    };
+
+    const media: MediaQueryList = window.matchMedia(`(max-width: ${breakpoint}px)`);
+
+    applyBreakpoint(media.matches);
+    const handler = (event: MediaQueryListEvent): void => {
+      applyBreakpoint(event.matches);
+    };
+    if ("addEventListener" in media) {
+      (media as MediaQueryList).addEventListener("change", handler);
+      return (): void => {
+        (media as MediaQueryList).removeEventListener("change", handler);
+      };
+    }
+    (media as MediaQueryList).addListener(handler);
+    return (): void => {
+      (media as MediaQueryList).removeListener(handler);
+    };
+  }, [dispatch, state.rightPanelCollapsed]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white">

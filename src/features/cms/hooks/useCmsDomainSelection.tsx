@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain } from "@/features/cms/types";

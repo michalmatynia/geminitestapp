@@ -1,61 +1,56 @@
-import type { NextRequest } from "next/server";
-import type { SystemLogLevel } from "@/shared/types/system-logs";
+import { NextRequest } from "next/server";
 
-/**
- * Configuration options for the API handler wrapper.
- */
-export type ApiHandlerOptions = {
-  /** Identifier for logging purposes (e.g., "products.GET") */
-  source: string;
-  /** Default error message if error doesn't provide one */
-  fallbackMessage?: string;
-  /** Whether to include error details in response (use cautiously in production) */
-  includeDetails?: boolean;
-  /** Whether to log successful requests */
-  logSuccess?: boolean;
-  /** Custom success log level */
-  successLogLevel?: SystemLogLevel;
-};
+export interface ApiResponse<T = any> {
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
-/**
- * Result of API handler execution including timing and request ID.
- */
-export type ApiHandlerContext = {
-  /** Unique request identifier for tracing */
-  requestId: string;
-  /** Start time for performance measurement */
-  startTime: number;
-  /** Get elapsed time in milliseconds */
-  getElapsedMs: () => number;
-};
+export interface PaginatedResponse<T = any> {
+  data: T[];
+  total: number;
+  page?: number;
+  limit?: number;
+}
 
-/**
- * Type for API route handler functions.
- */
+export interface ApiError {
+  message: string;
+  code?: string;
+  status?: number;
+}
+
+export interface DeleteResponse {
+  success: boolean;
+  message?: string;
+}
+
+export interface ApiHandlerContext {
+  params?: Record<string, string | string[]>;
+}
+
+export interface ApiHandlerOptions {
+  requireAuth?: boolean;
+  allowedMethods?: string[];
+}
+
 export type ApiRouteHandler = (
-  request: NextRequest,
-  context: ApiHandlerContext
+  req: NextRequest,
+  context?: ApiHandlerContext
 ) => Promise<Response>;
 
-/**
- * Type for dynamic route handler with params.
- */
-export type ApiRouteHandlerWithParams<P extends Record<string, string>> = (
-  request: NextRequest,
+export type ApiRouteHandlerWithParams = (
+  req: NextRequest,
   context: ApiHandlerContext,
-  params: P
+  params: Record<string, string>
 ) => Promise<Response>;
 
-export type JsonParseResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; response: Response };
+export interface JsonParseResult<T = any> {
+  ok: boolean;
+  data?: T;
+  response?: Response;
+}
 
-export type ParseJsonOptions = {
-  logPrefix?: string;
+export interface ParseJsonOptions {
+  maxSize?: number;
   allowEmpty?: boolean;
-};
-
-/**
- * Standard response shape for successful DELETE operations.
- */
-export type DeleteResponse = { success: true };
+}

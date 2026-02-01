@@ -19,7 +19,7 @@ import {
   type AuthRole,
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 
 const slugify = (value: string): string =>
   value

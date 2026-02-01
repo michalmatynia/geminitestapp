@@ -11,9 +11,9 @@ import {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
   TRANSIENT_RECOVERY_KEYS,
   type TransientRecoverySettings,
-} from "@/shared/lib/transient-recovery/constants";
+} from "@/features/observability/server";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 
 const toNumber = (value: string, fallback: number, min: number = 0): number => {
   const parsed = Number(value);

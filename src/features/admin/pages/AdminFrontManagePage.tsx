@@ -7,7 +7,7 @@ import Link from "next/link";
 
 
 import { cn } from "@/shared/utils";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 
 
 type FrontAppOption = "products" | "chatbot" | "notes";

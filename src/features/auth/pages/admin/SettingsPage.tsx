@@ -26,7 +26,7 @@ import {
 } from "@/features/auth/utils/auth-security";
 import { useAuthUserSecurity } from "@/features/auth/hooks/useAuthQueries";
 import { disableMfa, setupMfa, verifyMfa } from "@/features/auth/api/mfa";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { useMutation } from "@tanstack/react-query";
 
 export default function AuthSettingsPage(): React.JSX.Element {

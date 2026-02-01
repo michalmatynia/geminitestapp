@@ -18,7 +18,7 @@ import Link from "next/link";
 
 
 
-import { useSettings, useUpdateSetting, type SystemSetting } from "@/shared/hooks/useSettings";
+import { useSettings, useUpdateSetting, type SystemSetting } from "@/shared/hooks/use-settings";
 
 
 

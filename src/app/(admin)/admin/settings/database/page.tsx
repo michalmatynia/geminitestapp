@@ -2,7 +2,7 @@
 
 import { useToast, Button, Label } from "@/shared/ui";
 import { useMemo, useState, ChangeEvent } from "react";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 
 
 

@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useToast } from "@/shared/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
-import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { dbApi, entityApi } from "@/features/ai-paths/lib";
 import { DOCS_DESCRIPTION_SNIPPET, DOCS_JOBS_SNIPPET, DOCS_WIRING_SNIPPET } from "./docs-snippets";
 import { useAiPathsCanvasInteractions } from "./useAiPathsCanvasInteractions";

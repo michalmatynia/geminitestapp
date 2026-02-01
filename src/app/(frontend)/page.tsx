@@ -18,7 +18,7 @@ import { buildColorSchemeMap, type ThemeSettings } from "@/features/cms/types/th
 import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
 import { auth } from "@/features/auth/auth";
 import type { Session } from "next-auth";
-import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
+import { getUserPreferences } from "@/features/auth/server";
 import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 
 const isAdminSession = (session: Session | null): boolean => {

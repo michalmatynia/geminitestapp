@@ -13,7 +13,7 @@ import {
   Checkbox,
   Button,
 } from "@/shared/ui";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import {
   CMS_MENU_SETTINGS_KEY,

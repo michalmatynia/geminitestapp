@@ -5,7 +5,7 @@ import { useState, ChangeEvent } from "react";
 
 import { CLIENT_LOGGING_KEYS } from "@/features/observability";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 
 
 export default function LoggingSettingsPage() {

@@ -9,7 +9,7 @@ import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 
 
 

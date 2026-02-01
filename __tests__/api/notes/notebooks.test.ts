@@ -51,8 +51,7 @@ describe("Notes Notebooks API", () => {
       vi.mocked(noteService.getAllNotebooks).mockResolvedValue(mockNotebooks as any);
 
       const res = await GET(
-        new NextRequest("http://localhost/api/notes/notebooks"),
-        { params: Promise.resolve({}) } as any
+        new NextRequest("http://localhost/api/notes/notebooks")
       );
       const data = await res.json();
       expect(res.status).toEqual(200);
@@ -68,8 +67,7 @@ describe("Notes Notebooks API", () => {
         new NextRequest("http://localhost/api/notes/notebooks", {
           method: "POST",
           body: JSON.stringify(newNotebook),
-        }),
-        { params: Promise.resolve({}) } as any
+        })
       );
       const data = await res.json();
       expect(res.status).toEqual(201);
@@ -84,8 +82,7 @@ describe("Notes Notebooks API", () => {
         new NextRequest("http://localhost/api/notes/notebooks", {
           method: "POST",
           body: JSON.stringify({}), // missing name
-        }),
-        { params: Promise.resolve({}) } as any
+        })
       );
       expect(res.status).toEqual(400);
     });

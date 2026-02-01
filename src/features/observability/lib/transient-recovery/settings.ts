@@ -8,7 +8,7 @@ import {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
   TRANSIENT_RECOVERY_KEYS,
   type TransientRecoverySettings,
-} from "@/shared/lib/transient-recovery/constants";
+} from "./constants";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 
 type SettingRecord = { _id?: string | ObjectId; key?: string; value?: string };

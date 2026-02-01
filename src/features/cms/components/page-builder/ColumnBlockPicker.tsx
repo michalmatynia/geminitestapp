@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
 import type { BlockDefinition } from "../../types/page-builder";
 import { getColumnAllowedBlockTypes } from "./section-registry";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 

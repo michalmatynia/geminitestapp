@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import { AdminLayout } from "@/features/admin";
 import { auth } from "@/features/auth/server";
-import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
+import { getUserPreferences } from "@/features/auth/server";
 
 export default async function Layout({
   children,

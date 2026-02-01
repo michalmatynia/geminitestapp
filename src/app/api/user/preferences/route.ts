@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/shared/lib/services/user-preferences-repository";
+import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/features/auth/server";
 import { z } from "zod";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

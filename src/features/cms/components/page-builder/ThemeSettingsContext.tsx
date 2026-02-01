@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import {
   CMS_THEME_SETTINGS_KEY,
   DEFAULT_THEME,

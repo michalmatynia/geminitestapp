@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
+import { useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import type {
   AiNode,
   ClusterPreset,

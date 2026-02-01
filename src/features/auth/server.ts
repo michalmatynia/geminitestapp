@@ -8,6 +8,7 @@ export type { AuthSecurityProfile } from "./services/auth-security-profile";
 export * from "./services/auth-security-profile";
 export * from "./services/auth-settings";
 export * from "./services/auth-user-repository";
+export * from "./services/user-preferences-repository";
 export * from "./services/totp";
 export * from "./types";
 export * from "./utils/auth-encryption";

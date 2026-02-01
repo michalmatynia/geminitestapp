@@ -15,7 +15,7 @@ import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from "@/features/auth/utils/auth-user-pages";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 
 export default function AuthUserPagesPage(): React.JSX.Element {
   const { toast } = useToast();

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { externalServiceError } from "@/shared/errors/app-error";
-import { withTransientRecovery } from "@/shared/utils/transient-recovery";
+import { withTransientRecovery } from "@/features/observability/server";
 
 type BaseApiResponse = {
   status?: string;

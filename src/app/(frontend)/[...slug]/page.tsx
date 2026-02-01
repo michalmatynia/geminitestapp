@@ -14,7 +14,7 @@ import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 import { getMediaInlineStyles, getMediaStyleVars } from "@/features/cms/components/frontend/theme-styles";
 import { auth } from "@/features/auth/auth";
 import type { Session } from "next-auth";
-import { getUserPreferences } from "@/shared/lib/services/user-preferences-repository";
+import { getUserPreferences } from "@/features/auth/server";
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;

@@ -31,7 +31,7 @@ import {
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
 } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 
 type CreateUserForm = typeof EMPTY_CREATE;
 

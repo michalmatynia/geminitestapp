@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { initClientErrorReporting, setClientErrorBaseContext } from "@/features/observability/utils/client-error-logger";
 import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 
 export default function ClientErrorReporter(): null {
   const pathname = usePathname();

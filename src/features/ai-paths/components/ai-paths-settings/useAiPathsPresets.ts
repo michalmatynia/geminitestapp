@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import type { ClusterPresetDraft } from "../cluster-presets-panel";
 import type { AiNode, ClusterPreset, DbNodePreset, DbQueryPreset, Edge } from "@/features/ai-paths/lib";
 import {

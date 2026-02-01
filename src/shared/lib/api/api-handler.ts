@@ -3,7 +3,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/shared/errors/resolve-error";
-import { getErrorFingerprint, logSystemEvent } from "@/shared/lib/observability/system-logger";
+import { getErrorFingerprint, logSystemEvent } from "@/features/observability/server";
 import { badRequestError } from "@/shared/errors/app-error";
 import type { SystemLogLevel } from "@/shared/types/system-logs";
 import type {

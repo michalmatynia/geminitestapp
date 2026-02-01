@@ -123,7 +123,7 @@ describe("Products API", () => {
         catalogs: [],
         categories: [],
         tags: [],
-      });
+      } as any);
     });
     vi.mocked(prisma.product.update).mockImplementation(async (args: any) => {
       return Promise.resolve({
@@ -135,7 +135,7 @@ describe("Products API", () => {
         catalogs: [],
         categories: [],
         tags: [],
-      });
+      } as any);
     });
     vi.mocked(prisma.product.delete).mockResolvedValue({} as any);
     vi.mocked(prisma.product.deleteMany).mockResolvedValue({ count: 0 });

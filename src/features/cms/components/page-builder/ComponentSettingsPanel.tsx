@@ -13,7 +13,7 @@ import { CmsDomainSelector } from "../CmsDomainSelector";
 import { getSectionDefinition, getBlockDefinition } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";

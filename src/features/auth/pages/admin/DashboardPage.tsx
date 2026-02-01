@@ -15,7 +15,7 @@ import {
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useAuthUsers } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import type { AuthUserSummary } from "@/features/auth/types";
 
 export default function AuthDashboardPage(): React.JSX.Element {

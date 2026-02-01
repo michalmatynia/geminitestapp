@@ -32,7 +32,7 @@ import {
   useDeleteSlug,
 } from "@/features/cms/hooks/useCmsQueries";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain, Slug } from "@/features/cms/types";

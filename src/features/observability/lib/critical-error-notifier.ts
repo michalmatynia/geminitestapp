@@ -9,7 +9,7 @@ import type {
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { withTransientRecovery } from "@/shared/utils/transient-recovery";
+import { withTransientRecovery } from "./transient-recovery/with-recovery";
 
 const SETTINGS_COLLECTION = "settings";
 

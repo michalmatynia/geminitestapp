@@ -9,7 +9,7 @@ import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useRegisterUser } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 
 
 

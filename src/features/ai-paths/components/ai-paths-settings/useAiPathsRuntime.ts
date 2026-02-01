@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import type {
   AiNode,
   DbQueryConfig,

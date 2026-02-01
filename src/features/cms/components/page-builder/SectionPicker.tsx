@@ -7,7 +7,7 @@ import type { BlockInstance, PageZone, SectionDefinition } from "../../types/pag
 import { getSectionTypesForZone } from "./section-registry";
 import { getTemplatesByCategory, type SectionTemplate } from "./section-templates";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, cloneGridTemplateSection, type GridTemplateRecord } from "./grid-templates";
 

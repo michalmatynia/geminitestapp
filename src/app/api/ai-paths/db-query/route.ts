@@ -89,7 +89,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         source: "ai-paths.db-query",
       });
     }
-    const data = parsed.data as z.infer<typeof querySchema>;
+    const data = parsed.data;
     const {
       collection,
       query,

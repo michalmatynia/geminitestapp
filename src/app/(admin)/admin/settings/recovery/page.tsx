@@ -40,7 +40,7 @@ export default function TransientRecoverySettingsPage() {
       const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import("@/features/observability/constants");
       setConstants({ DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS });
     };
-    loadConstants();
+    void loadConstants();
   }, []);
 
   if (settingsQuery.isLoading || !settingsQuery.data || !constants) {

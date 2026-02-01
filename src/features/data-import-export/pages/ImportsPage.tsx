@@ -126,9 +126,11 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     if (catalogsData.length > 0 && !catalogId) {
       const defaultCatalog = catalogsData.find((catalog: CatalogRecord) => catalog.isDefault);
-      if (defaultCatalog) setCatalogId(defaultCatalog.id);
+      if (defaultCatalog) {
+        requestAnimationFrame(() => setCatalogId(defaultCatalog.id));
+      }
     }
-  }, [catalogsData, catalogId]);
+  }, [catalogsData.length, catalogId]);
 
   // Preferences
   const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
@@ -181,54 +183,56 @@ export default function ImportsPage(): React.JSX.Element {
     }
   }, []);
 
-  // Sync preferences to state
-  useEffect(() => {
-    if (lastImportTemplatePref?.templateId) setImportTemplateId(lastImportTemplatePref.templateId);
-  }, [lastImportTemplatePref]);
+  // Initialize state from preferences
+  const [importTemplateIdFromPref] = useState(() => lastImportTemplatePref?.templateId || "");
+  const [exportInventoryIdFromPref] = useState(() => defaultExportInventoryPref?.inventoryId || "");
+  const [connectionIdFromPref] = useState(() => defaultConnectionPref?.connectionId || "");
+  const [stockFallbackFromPref] = useState(() => Boolean(exportStockFallbackPref?.enabled));
+  const [retryPresetsFromPref] = useState(() => 
+    imageRetryPresetsPref?.presets ? normalizeImageRetryPresets(imageRetryPresetsPref.presets) : getDefaultImageRetryPresets()
+  );
+  const [inventoryIdFromPref] = useState(() => sampleProductPref?.inventoryId || "");
 
+  // Apply preferences on mount
+  useEffect(() => {
+    if (importTemplateIdFromPref && !importTemplateId) {
+      setImportTemplateId(importTemplateIdFromPref);
+    }
+    if (exportInventoryIdFromPref && !exportInventoryId) {
+      setExportInventoryId(exportInventoryIdFromPref);
+    }
+    if (connectionIdFromPref && baseConnections.some((c: IntegrationConnectionBasic) => c.id === connectionIdFromPref)) {
+      setSelectedBaseConnectionId(connectionIdFromPref);
+    }
+    if (!exportStockFallbackEnabled && stockFallbackFromPref) {
+      setExportStockFallbackEnabled(stockFallbackFromPref);
+    }
+    if (imageRetryPresets.length === getDefaultImageRetryPresets().length) {
+      setImageRetryPresets(retryPresetsFromPref);
+    }
+    if (inventoryIdFromPref && !inventoryId) {
+      setInventoryId(inventoryIdFromPref);
+    }
+  }, [importTemplateIdFromPref, exportInventoryIdFromPref, connectionIdFromPref, stockFallbackFromPref, retryPresetsFromPref, inventoryIdFromPref, baseConnections]);
+
+  // Apply templates when preferences and templates are available
   useEffect(() => {
     if (activeImportTemplatePref?.templateId && importTemplates.length > 0 && !importActiveTemplateId) {
-      const preferred = importTemplates.find(t => t.id === activeImportTemplatePref.templateId);
-      if (preferred) applyTemplate(preferred, "import");
+      const preferred = importTemplates.find((t: Template) => t.id === activeImportTemplatePref.templateId);
+      if (preferred) {
+        requestAnimationFrame(() => applyTemplate(preferred, "import"));
+      }
     }
-  }, [activeImportTemplatePref, importTemplates, importActiveTemplateId, applyTemplate]);
+  }, [activeImportTemplatePref?.templateId, importTemplates.length, importActiveTemplateId]);
 
   useEffect(() => {
     if (activeExportTemplatePref?.templateId && exportTemplates.length > 0 && !exportActiveTemplateId) {
-      const preferred = exportTemplates.find(t => t.id === activeExportTemplatePref.templateId);
-      if (preferred) applyTemplate(preferred, "export");
-    }
-  }, [activeExportTemplatePref, exportTemplates, exportActiveTemplateId, applyTemplate]);
-
-  useEffect(() => {
-    if (defaultExportInventoryPref?.inventoryId) setExportInventoryId(defaultExportInventoryPref.inventoryId);
-  }, [defaultExportInventoryPref]);
-
-  useEffect(() => {
-    if (defaultConnectionPref?.connectionId && baseConnections.length > 0) {
-      if (baseConnections.some(c => c.id === defaultConnectionPref.connectionId)) {
-        setSelectedBaseConnectionId(defaultConnectionPref.connectionId);
+      const preferred = exportTemplates.find((t: Template) => t.id === activeExportTemplatePref.templateId);
+      if (preferred) {
+        requestAnimationFrame(() => applyTemplate(preferred, "export"));
       }
     }
-  }, [defaultConnectionPref, baseConnections]);
-
-  useEffect(() => {
-    if (exportStockFallbackPref?.enabled !== undefined) {
-      setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
-    }
-  }, [exportStockFallbackPref]);
-
-  useEffect(() => {
-    if (imageRetryPresetsPref?.presets) {
-      setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
-    }
-  }, [imageRetryPresetsPref]);
-
-  useEffect(() => {
-    if (sampleProductPref?.inventoryId && !inventoryId) {
-      setInventoryId(sampleProductPref.inventoryId);
-    }
-  }, [sampleProductPref, inventoryId]);
+  }, [activeExportTemplatePref?.templateId, exportTemplates.length, exportActiveTemplateId]);
 
   // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
@@ -261,20 +265,27 @@ export default function ImportsPage(): React.JSX.Element {
   
   useEffect(() => {
     if (inventories.length > 0) {
-      const firstInventoryId = inventories[0]?.id ?? "";
-      if (!inventoryId) setInventoryId(firstInventoryId);
-      if (!exportInventoryId) setExportInventoryId(firstInventoryId);
+      const firstInventory = inventories[0];
+      if (firstInventory?.id) {
+        const firstInventoryId = firstInventory.id;
+        if (!inventoryId) {
+          requestAnimationFrame(() => setInventoryId(firstInventoryId));
+        }
+        if (!exportInventoryId) {
+          requestAnimationFrame(() => setExportInventoryId(firstInventoryId));
+        }
+      }
     }
-  }, [inventories, inventoryId, exportInventoryId]);
+  }, [inventories.length, inventoryId, exportInventoryId]);
 
   const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
   
-  const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
-  const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
+  const warehouses: WarehouseOption[] = (warehousesData as { warehouses?: WarehouseOption[] })?.warehouses ?? [];
+  const allWarehouses: WarehouseOption[] = (warehousesData as { allWarehouses?: WarehouseOption[] })?.allWarehouses ?? [];
 
   const { data: importListData, isFetching: loadingImportList, refetch: refetchImportList } = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
   
-  const importList: ImportListItem[] = importListData?.products ?? [];
+  const importList: ImportListItem[] = (importListData as { products?: ImportListItem[] })?.products ?? [];
   const importListStats = useMemo(() => {
     if (!importListData) return null;
     const data = importListData as {
@@ -296,9 +307,9 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     if (importList.length > 0) {
       const ids = importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean);
-      setSelectedImportIds(new Set(ids));
+      requestAnimationFrame(() => setSelectedImportIds(new Set(ids)));
     }
-  }, [importList]);
+  }, [importList.length]);
 
   // Actions
   const handleLoadInventories = async (): Promise<void> => {
@@ -333,7 +344,7 @@ export default function ImportsPage(): React.JSX.Element {
         allowDuplicateSku,
         selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
       });
-      setLastResult(res);
+      setLastResult(res as ImportResponse);
       const importedCount = (res as { imported?: number }).imported ?? 0;
       toast(`Imported ${importedCount} products`, { variant: "success" });
     } catch (error: unknown) {
@@ -407,7 +418,7 @@ export default function ImportsPage(): React.JSX.Element {
     }
 
     const cleanedMappings = mappings
-      .map((m: TemplateMapping) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
+      .map((m: TemplateMapping, i: number) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
@@ -591,7 +602,7 @@ export default function ImportsPage(): React.JSX.Element {
              </div>
              <div className="grid md:grid-cols-[220px_1fr] gap-4">
                 <div className="bg-card/60 p-2 border border-border rounded-md max-h-64 overflow-auto">
-                   {currentTemplates.map(t => (
+                   {currentTemplates.map((t: Template) => (
                       <Button key={t.id} variant="ghost" className={`w-full justify-start text-xs mb-1 ${currentActiveTemplateId === t.id ? 'bg-emerald-500/20' : ''}`} onClick={() => applyTemplate(t, templateScope)}>
                          {t.name}
                       </Button>
@@ -609,12 +620,12 @@ export default function ImportsPage(): React.JSX.Element {
                       </div>
                    </div>
                    <div className="space-y-2">
-                      {currentTemplateMappings.map((m, i) => (
+                      {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
                          <div key={i} className="flex gap-2 items-center">
-                            <Input value={m.sourceKey} onChange={e => updateMapping(i, { sourceKey: e.target.value })} placeholder="Source" className="flex-1" />
-                            <select className="bg-gray-900 border border-border p-2 rounded text-sm flex-1" value={m.targetField} onChange={e => updateMapping(i, { targetField: e.target.value })}>
+                            <Input value={m.sourceKey} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })} placeholder="Source" className="flex-1" />
+                            <select className="bg-gray-900 border border-border p-2 rounded text-sm flex-1" value={m.targetField} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateMapping(i, { targetField: e.target.value })}>
                                <option value="">Target Field</option>
-                               {PRODUCT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                               {PRODUCT_FIELDS.map((f: { value: string; label: string }) => <option key={f.value} value={f.value}>{f.label}</option>)}
                             </select>
                             <Button variant="ghost" size="icon" onClick={() => removeMappingRow(i)}><Trash2 className="size-4" /></Button>
                          </div>

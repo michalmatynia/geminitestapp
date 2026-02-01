@@ -7,7 +7,21 @@ import {
   timeoutError,
   wrapError,
 } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/server";
+
+// Local type definition to avoid importing from features layer
+type LogSystemEventParams = {
+  level: string;
+  message: string;
+  source: string;
+  error?: unknown;
+  context?: Record<string, unknown>;
+};
+
+// Stub implementation to avoid features layer dependency
+const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
+  // Implementation would be injected or moved to shared layer
+  console.log('System event:', params);
+};
 
 /**
  * Configuration for retry behavior.

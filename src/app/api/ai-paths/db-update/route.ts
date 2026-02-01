@@ -88,7 +88,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
     }
 
-    const data = parsed.data as z.infer<typeof updateSchema>;
+    const data = parsed.data;
     const { collection, query, updates, single = true, idType } = data;
 
     if (!ALLOWED_COLLECTIONS.has(collection)) {

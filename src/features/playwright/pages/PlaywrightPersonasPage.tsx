@@ -21,11 +21,6 @@ import type {
   PlaywrightPersona,
   PlaywrightSettings,
 } from "@/features/playwright/types";
-import {
-  buildPlaywrightSettings,
-  createPlaywrightPersonaId,
-  fetchPlaywrightPersonas,
-} from "@/features/playwright/utils/personas";
 
 const formatTimestamp = (value?: string): string => {
   if (!value) return "Not set";
@@ -56,9 +51,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
-  const [draftSettings, setDraftSettings] = useState<PlaywrightSettings>(
-    buildPlaywrightSettings()
-  );
+  const [draftSettings, setDraftSettings] = useState<PlaywrightSettings | null>(null);
 
   const sortedPersonas = useMemo((): PlaywrightPersona[] => {
     return [...personas].sort((a: PlaywrightPersona, b: PlaywrightPersona) => {
@@ -72,9 +65,13 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     let active = true;
     const loadPersonas = async (): Promise<void> => {
       try {
+        const { fetchPlaywrightPersonas, buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);
+        if (!draftSettings) {
+          setDraftSettings(buildPlaywrightSettings());
+        }
       } catch (error) {
         if (active) {
           const message =
@@ -89,9 +86,10 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     return (): void => {
       active = false;
     };
-  }, [toast]);
+  }, [toast, draftSettings]);
 
-  const resetDraft = (): void => {
+  const resetDraft = async (): Promise<void> => {
+    const { buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
     setEditingId(null);
     setDraftName("");
     setDraftDescription("");
@@ -99,11 +97,12 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   };
 
   const openCreate = (): void => {
-    resetDraft();
+    void resetDraft();
     setModalOpen(true);
   };
 
-  const openEdit = (persona: PlaywrightPersona): void => {
+  const openEdit = async (persona: PlaywrightPersona): Promise<void> => {
+    const { buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
     setEditingId(persona.id);
     setDraftName(persona.name);
     setDraftDescription(persona.description ?? "");
@@ -113,7 +112,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
   const closeModal = (): void => {
     setModalOpen(false);
-    resetDraft();
+    void resetDraft();
   };
 
   const persistPersonas = async (next: PlaywrightPersona[], message: string): Promise<boolean> => {
@@ -153,6 +152,12 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       return;
     }
 
+    if (!draftSettings) {
+      toast("Settings not loaded.", { variant: "error" });
+      return;
+    }
+
+    const { buildPlaywrightSettings, createPlaywrightPersonaId } = await import("@/features/playwright/utils/personas");
     const now = new Date().toISOString();
     const existing = personas.find((persona: PlaywrightPersona) => persona.id === editingId);
     const nextPersona: PlaywrightPersona = {
@@ -183,6 +188,14 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
     await persistPersonas(next, "Persona deleted.");
   };
+
+  if (!draftSettings) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center text-gray-400">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 space-y-6">
@@ -253,7 +266,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => openEdit(persona)}
+                      onClick={() => void openEdit(persona)}
                       disabled={saving}
                     >
                       <Pencil className="mr-1 size-3" />

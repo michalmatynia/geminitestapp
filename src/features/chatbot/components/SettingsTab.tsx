@@ -10,7 +10,6 @@ import { useChatbotLogic } from "../hooks/useChatbotLogic";
 
 import { AgentCreatorSettingsSection } from "@/features/agentcreator";
 import type { PlaywrightPersona } from "@/features/playwright";
-import { fetchPlaywrightPersonas } from "@/features/playwright";
 
 type SettingsTabProps = ReturnType<typeof useChatbotLogic>;
 
@@ -52,6 +51,7 @@ export function SettingsTab({
     let active: boolean = true;
     const loadPersonas = async (): Promise<void> => {
       try {
+        const { fetchPlaywrightPersonas } = await import("@/features/playwright");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);

@@ -7,7 +7,8 @@ import userEvent from "@testing-library/user-event";
 import SignInPage from "@/features/auth/pages/public/SignInPage";
 import { signIn } from "next-auth/react";
 import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => ({
@@ -23,13 +24,22 @@ vi.mock("@/features/auth/hooks/useAuthQueries", () => ({
   useVerifyCredentials: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/useSettings", () => ({
+vi.mock("@/shared/hooks/use-settings", () => ({
   useSettingsMap: vi.fn(),
 }));
 
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
 describe("SignInPage", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
     
     // Default mocks for successful initial load
     vi.mocked(useSettingsMap).mockReturnValue({
@@ -44,9 +54,13 @@ describe("SignInPage", () => {
     } as any);
   });
 
-  it("renders correctly", () => {
-    render(<SignInPage />);
-    expect(screen.getByRole("heading", { name: /sign in/i })).toBeInTheDocument();
+  it("renders correctly", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SignInPage />
+      </QueryClientProvider>
+    );
+    expect(await screen.findByRole("heading", { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
@@ -60,9 +74,14 @@ describe("SignInPage", () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(<SignInPage />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SignInPage />
+      </QueryClientProvider>
+    );
 
-    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.type(emailInput, "test@example.com");
     await user.type(screen.getByLabelText(/password/i), "password123");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -87,9 +106,14 @@ describe("SignInPage", () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(<SignInPage />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SignInPage />
+      </QueryClientProvider>
+    );
 
-    await user.type(screen.getByLabelText(/email/i), "wrong@example.com");
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.type(emailInput, "wrong@example.com");
     await user.type(screen.getByLabelText(/password/i), "wrong");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -104,9 +128,14 @@ describe("SignInPage", () => {
     });
     vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
 
-    render(<SignInPage />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SignInPage />
+      </QueryClientProvider>
+    );
 
-    await user.type(screen.getByLabelText(/email/i), "mfa@example.com");
+    const emailInput = await screen.findByLabelText(/email/i);
+    await user.type(emailInput, "mfa@example.com");
     await user.type(screen.getByLabelText(/password/i), "password123");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -117,9 +146,13 @@ describe("SignInPage", () => {
 
   it("calls social sign in", async () => {
     const user = userEvent.setup();
-    render(<SignInPage />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SignInPage />
+      </QueryClientProvider>
+    );
 
-    const googleBtn = screen.getByRole("button", { name: /continue with google/i });
+    const googleBtn = await screen.findByRole("button", { name: /continue with google/i });
     await user.click(googleBtn);
 
     expect(signIn).toHaveBeenCalledWith("google", expect.anything());

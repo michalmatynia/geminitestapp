@@ -1,10 +1,9 @@
-
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
-import { useSettingsMap } from "@/shared/hooks/useSettings";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 
@@ -13,7 +12,7 @@ vi.mock("@/features/cms/hooks/useCmsQueries", () => ({
   useCmsDomains: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/useSettings", () => ({
+vi.mock("@/shared/hooks/use-settings", () => ({
   useSettingsMap: vi.fn(),
 }));
 

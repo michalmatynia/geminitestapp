@@ -5,7 +5,7 @@
 
  RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
 
- ✓ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests) 11ms
+ ✓ __tests__/features/ai-paths/lib/extensive-handlers.test.ts (23 tests) 20ms
 stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products > should reject invalid product data (invalid price)
 System event: {
   level: 'warn',
@@ -54,10 +54,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '5bbe6f1f-4006-474c-80d4-c3afb2fd3953',
+  requestId: '503d71a8-4eda-4360-b906-c3cf8f92dcd1',
   statusCode: 400,
   context: {
-    errorId: '5cb5f4cb-95ef-4d51-b29e-d573c62c7fc9',
+    errorId: '6d07548e-7315-427c-9597-088ac4a5f2b4',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false,
@@ -139,10 +139,10 @@ System event: {
     url: 'http://localhost/api/products/non-existent-id',
     method: 'PUT'
   },
-  requestId: '66f450ae-04c1-4ed1-a9ee-0b4b2ed2bfab',
+  requestId: '58282a78-dd64-4536-a4a7-27c8d4638329',
   statusCode: 404,
   context: {
-    errorId: '12b0d536-3422-4e0c-b7e3-f8d5b9ed934d',
+    errorId: '5be02378-0c01-4efa-827b-ce55cbb206ac',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -227,10 +227,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'f575b27c-da6b-4395-854f-51a8525b9bba',
+  requestId: '054043de-17fe-42ab-a112-64b8bc19bcf4',
   statusCode: 404,
   context: {
-    errorId: '026903bb-b2ea-4a88-a5cd-591852162873',
+    errorId: 'ef9b4a40-c3ea-4907-8150-8245b0d00db7',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -262,6 +262,7 @@ stderr | __tests__/api/products/products.test.ts > Products API > DELETE /api/pr
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
+ ✓ __tests__/api/products/products.test.ts (9 tests) 21ms
 stdout | __tests__/api/products/products.test.ts > Products API > POST /api/products/[id]/duplicate > should return 404 when product does not exist
 System event: {
   level: 'warn',
@@ -304,10 +305,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '1c92647c-ac86-4671-b633-9845a0483a36',
+  requestId: 'a0abc266-c5bc-4b7c-886c-b2bfecc5a733',
   statusCode: 404,
   context: {
-    errorId: '88fb525a-f683-4449-86ba-1fe1b5aac43e',
+    errorId: '0e8af800-27a7-4c42-a088-95e5bc511a45',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -328,30 +329,25 @@ stderr | __tests__/api/products/products.test.ts > Products API > POST /api/prod
     at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/api/products/products.test.ts (9 tests) 22ms
- ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 518ms
- ✓ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests) 6ms
- ❯ __tests__/features/products/services/productService.test.ts (14 tests | 10 failed) 17ms
-   × productService > getProductById > should return a product by ID 5ms
-     → expected undefined to be 'mock-product-1769964898092' // Object.is equality
+ ✓ __tests__/features/foldertree/components/folder-tree.test.tsx (18 tests) 629ms
+ ✓ __tests__/features/ai-paths/lib/evaluate-graph.test.ts (7 tests) 10ms
+ ❯ __tests__/features/products/services/productService.test.ts (14 tests | 8 failed) 16ms
+   × productService > getProductById > should return a product by ID 4ms
+     → Cannot read properties of undefined (reading 'map')
    × productService > getProducts > should return all products when no filters are provided 1ms
-     → expected +0 to be 2 // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × productService > getProducts > should filter products by search term 1ms
-     → expected +0 to be 1 // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × productService > createProduct > should successfully create a product from FormData 2ms
-     → expected undefined to be 'New Product' // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × productService > createProduct > should link catalogs if provided 1ms
-     → Cannot read properties of null (reading 'id')
+     → Cannot read properties of undefined (reading 'map')
    × productService > updateProduct > should update product fields 1ms
-     → expected undefined to be 'Updated Name' // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × productService > updateProduct > should update SKU 1ms
-     → expected undefined to be 'NEW-SKU' // Object.is equality
-   × productService > unlinkImageFromProduct > should unlink an image and NOT delete file if other products use it 0ms
-     → default.productImage.createMany is not a function
-   × productService > unlinkImageFromProduct > should unlink an image and delete file if it was the last link 1ms
-     → expected "spy" to be called at least once
+     → Cannot read properties of undefined (reading 'map')
    × productService > duplicateProduct > should successfully duplicate a product with a new SKU 1ms
-     → expected undefined to be 'NEW123' // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
 stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should return 400 for invalid input
 System event: {
   level: 'warn',
@@ -394,66 +390,14 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '9c1abe1e-ecb0-4a0b-99cd-83308a6e4e09',
+  requestId: 'c4da3e1d-032d-4def-9bf2-2a8e4fc8b40b',
   statusCode: 400,
   context: {
-    errorId: '66386121-4dc0-4483-af34-27a281f4e96b',
+    errorId: 'db4d214b-6368-4e4a-add5-31f257361795',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
     meta: { issues: [Object] }
-  }
-}
-
-stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return a page by ID
-System event: {
-  level: 'warn',
-  message: 'Page not found',
-  source: 'cms.pages.[id].GET',
-  error: AppError: Page not found
-      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
-      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:43:13)
-      at processTicksAndRejections (node:internal/process/task_queues:105:5)
-      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
-      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:143:19
-      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
-      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15) {
-    code: 'NOT_FOUND',
-    httpStatus: 404,
-    meta: undefined,
-    expected: true,
-    critical: false,
-    retryable: false,
-    retryAfterMs: undefined,
-    cause: undefined
-  },
-  request: Request {
-    method: 'GET',
-    url: 'http://localhost/api/cms/pages/mock-page-1769964898856',
-    headers: Headers {},
-    destination: '',
-    referrer: 'about:client',
-    referrerPolicy: '',
-    mode: 'cors',
-    credentials: 'same-origin',
-    cache: 'default',
-    redirect: 'follow',
-    integrity: '',
-    keepalive: false,
-    isReloadNavigation: false,
-    isHistoryNavigation: false,
-    signal: AbortSignal {}
-  },
-  requestId: 'c18c5a8e-7434-4a2e-8f8e-2ea4cea45581',
-  statusCode: 404,
-  context: {
-    errorId: 'e02d7cad-6f64-427d-967e-f381c89953df',
-    code: 'NOT_FOUND',
-    critical: false,
-    retryable: false
   }
 }
 
@@ -499,84 +443,32 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '42db1811-3cf3-4176-991e-8a9d6c7c6246',
+  requestId: 'd85959ea-b6af-4ddc-8ecd-03a614a52ec1',
   statusCode: 404,
   context: {
-    errorId: '8c8def9f-bba9-4e84-a678-5f81ecf3b284',
+    errorId: 'f539aab1-3e9c-4e4e-8dad-3a4666ecc935',
     code: 'NOT_FOUND',
     critical: false,
-    retryable: false
-  }
-}
-
-stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme
-System event: {
-  level: 'error',
-  message: 'Failed to update page',
-  source: 'cms.pages.[id].PUT',
-  error: TypeError: __vite_ssr_import_1__.default.pageComponent.createMany is not a function
-      at Object.replacePageComponents (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts:109:32)
-      at processTicksAndRejections (node:internal/process/task_queues:105:5)
-      at Object.updatePage (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts:87:7)
-      at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:75:25)
-      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
-      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:187:19
-      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
-      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15),
-  request: Request {
-    method: 'PUT',
-    url: 'http://localhost/api/cms/pages/mock-page-1769964898861',
-    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
-    destination: '',
-    referrer: 'about:client',
-    referrerPolicy: '',
-    mode: 'cors',
-    credentials: 'same-origin',
-    cache: 'default',
-    redirect: 'follow',
-    integrity: '',
-    keepalive: false,
-    isReloadNavigation: false,
-    isHistoryNavigation: false,
-    signal: AbortSignal {}
-  },
-  requestId: '0736b12a-0368-4068-a7d3-bb8dd28c1b0d',
-  statusCode: 500,
-  context: {
-    errorId: '2d70e014-7bc5-4f61-8bfe-16d6ca42c960',
-    code: 'INTERNAL_ERROR',
-    critical: true,
     retryable: false
   }
 }
 
 stdout | __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page
 System event: {
-  level: 'warn',
-  message: 'Page not found',
+  level: 'error',
+  message: 'Failed to update page',
   source: 'cms.pages.[id].PUT',
-  error: AppError: Page not found
-      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
-      at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:90:13)
+  error: Error: page not found
+      at Object.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.setup.ts:115:31)
+      at Object.mockCall (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/spy/dist/index.js:61:17)
+      at Object.spy [as update] (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/tinyspy/dist/index.js:45:80)
+      at Object.updatePage (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts:80:25)
+      at PUT_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts:75:45)
       at processTicksAndRejections (node:internal/process/task_queues:105:5)
       at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
       at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts:213:19
       at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
-      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15) {
-    code: 'NOT_FOUND',
-    httpStatus: 404,
-    meta: undefined,
-    expected: true,
-    critical: false,
-    retryable: false,
-    retryAfterMs: undefined,
-    cause: undefined
-  },
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11),
   request: Request {
     method: 'PUT',
     url: 'http://localhost/api/cms/pages/non-existent',
@@ -594,49 +486,31 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '520777a0-68bd-4a99-ad09-ab946c9ef35e',
-  statusCode: 404,
+  requestId: '5f0c17a2-df29-4794-bf97-ea15ef35da69',
+  statusCode: 500,
   context: {
-    errorId: '3825366b-deb7-46fc-8a9b-b68ce95762ef',
-    code: 'NOT_FOUND',
-    critical: false,
+    errorId: 'cd9dce33-717d-494e-825e-de98fccaaefa',
+    code: 'INTERNAL_ERROR',
+    critical: true,
     retryable: false
   }
 }
 
- ❯ __tests__/features/cms/api/cms-pages.test.ts (12 tests | 5 failed) 25ms
-   × CMS Pages API > GET /api/cms/pages > should return all pages 3ms
-     → expected +0 to be 2 // Object.is equality
-   × CMS Pages API > POST /api/cms/pages > should create a new page with slugs 1ms
-     → Cannot read properties of null (reading 'slugs')
-   × CMS Pages API > POST /api/cms/pages > should create a new page with a theme 1ms
-     → Cannot read properties of null (reading 'themeId')
-   × CMS Pages API > GET /api/cms/pages/[id] > should return a page by ID 4ms
-     → expected 404 to be 200 // Object.is equality
+ ❯ __tests__/features/cms/api/cms-pages.test.ts (12 tests | 3 failed) 22ms
+   × CMS Pages API > POST /api/cms/pages > should create a new page with slugs 2ms
+     → Cannot read properties of undefined (reading 'length')
    × CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme 2ms
-     → expected 500 to be 200 // Object.is equality
+     → Cannot read properties of undefined (reading 'length')
+   × CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page 3ms
+     → expected 500 to be 404 // Object.is equality
 stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > renders notes from the API
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/themes
 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
-[MSW] Error: intercepted a request without a matching request handler:
-
-  • GET /api/notes/categories
-
-If you still wish to intercept this unhandled request, please create a request handler for it.
-Read more: https://mswjs.io/docs/http/intercepting-requests
-
-stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > filters notes by search and tag
-[MSW] Error: intercepted a request without a matching request handler:
-
-  • GET /api/notes/themes
-
-If you still wish to intercept this unhandled request, please create a request handler for it.
-Read more: https://mswjs.io/docs/http/intercepting-requests
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/categories
 
@@ -644,13 +518,13 @@ If you still wish to intercept this unhandled request, please create a request h
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
 stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/themes
 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/categories
 
@@ -661,26 +535,32 @@ stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI >
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
 stderr | __tests__/features/notesapp/pages/notes-page.test.tsx > Notes page UI > creates a new note from the modal
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/themes
 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
-[MSW] Error: intercepted a request without a matching request handler:
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • GET /api/notes/categories
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+[MSW] Warning: intercepted a request without a matching request handler:
 
   • GET /api/notes/categories
 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
 
- ✓ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests) 1230ms
-   ✓ Notes page UI > filters notes by search and tag 749ms
- ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 225ms
- ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 343ms
- ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 765ms
- ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 5ms
- ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 6ms
+ ✓ __tests__/features/notesapp/pages/notes-page.test.tsx (3 tests) 1229ms
+   ✓ Notes page UI > filters notes by search and tag 738ms
+ ✓ __tests__/features/cms/components/ComponentSettingsPanel.test.tsx (5 tests) 235ms
+ ✓ __tests__/features/cms/hooks/useCmsQueries.test.tsx (12 tests) 355ms
+ ✓ __tests__/features/notesapp/pages/notes-advanced.test.tsx (6 tests) 801ms
+ ✓ __tests__/features/cms/services/page-builder-reducer.test.ts (12 tests) 9ms
+ ✓ __tests__/features/agent-runtime/services/tools.test.ts (4 tests) 7ms
 stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > rejects note creation without title/content
 System event: {
   level: 'warn',
@@ -723,10 +603,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '47efaef6-a4e9-4906-9480-8520969e4229',
+  requestId: 'abc8b4e2-478a-40f8-93e8-b8da545ffb32',
   statusCode: 400,
   context: {
-    errorId: '57e0e72c-2124-4bb3-8c54-84cb2a05884b',
+    errorId: '5a5fef7e-bfd7-4650-8f58-85ad5a092f6e',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -736,29 +616,20 @@ System event: {
 
 stdout | __tests__/features/notesapp/api/notes.test.ts > Notes API > fetches a note by id and returns 404 when missing
 System event: {
-  level: 'warn',
-  message: 'Note not found',
+  level: 'error',
+  message: 'Failed to fetch note',
   source: 'notes.[id].GET',
-  error: AppError: Note not found
-      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
-      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts:26:13)
+  error: TypeError: (note.relationsFrom ?? []).map is not a function or its return value is not iterable
+      at buildRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:49:35)
+      at populateRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:75:20)
+      at Object.getById (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:89:12)
       at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts:23:18)
       at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
       at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts:169:17
       at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
       at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
-      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5) {
-    code: 'NOT_FOUND',
-    httpStatus: 404,
-    meta: { noteId: 'mock-note-1769964905592' },
-    expected: true,
-    critical: false,
-    retryable: false,
-    retryAfterMs: undefined,
-    cause: undefined
-  },
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15),
   request: Request {
     method: 'GET',
     url: 'http://localhost/api/notes/x',
@@ -776,14 +647,13 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e852144a-3705-4ad6-abd6-4d6c24c137c5',
-  statusCode: 404,
+  requestId: '39e32118-0d2a-498b-854e-7ac191880290',
+  statusCode: 500,
   context: {
-    errorId: '7021668f-5fe9-4051-bd33-3cf106df42c1',
-    code: 'NOT_FOUND',
-    critical: false,
-    retryable: false,
-    meta: { noteId: 'mock-note-1769964905592' }
+    errorId: '23712569-88fd-439d-9a95-7bdddbbdb583',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
   }
 }
 
@@ -792,20 +662,20 @@ System event: {
   level: 'error',
   message: 'Failed to update note',
   source: 'notes.[id].PATCH',
-  error: TypeError: (note.relationsFrom ?? []).map is not a function or its return value is not iterable
-      at buildRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:49:35)
-      at populateRelations (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:75:20)
-      at Object.update (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:146:12)
+  error: TypeError: previousNote.relationsFrom?.map is not a function
+      at Object.update (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/index.ts:106:37)
       at processTicksAndRejections (node:internal/process/task_queues:105:5)
       at PATCH_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts:58:18)
       at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:150:24)
       at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts:199:17
       at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
       at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
-      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15),
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1262:5),
   request: Request {
     method: 'PATCH',
-    url: 'http://localhost/api/notes/mock-note-1769964905594',
+    url: 'http://localhost/api/notes/mock-note-1769966898436-vfko3r970',
     headers: Headers { 'Content-Type': 'application/json' },
     destination: '',
     referrer: 'about:client',
@@ -820,10 +690,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'f09daa37-8ab6-4722-82da-b916af96cfcf',
+  requestId: '59c2c58c-ddb1-4036-9eaa-52c3188feb91',
   statusCode: 500,
   context: {
-    errorId: '2caf5ce2-43fb-4859-9718-3f8b818948e7',
+    errorId: 'ebd3cc99-6dc7-4b80-90ac-6b2be363d2be',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
@@ -843,35 +713,35 @@ stderr | __tests__/features/notesapp/api/notes.test.ts > Notes API > deletes a n
     at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 6 failed) 50ms
-   × Notes API > returns notes with relations 35ms
+ ❯ __tests__/features/notesapp/api/notes.test.ts (8 tests | 6 failed) 41ms
+   × Notes API > returns notes with relations 28ms
      → expected [] to have a length of 1 but got +0
    × Notes API > filters notes by search scope and flags 2ms
      → expected [] to have a length of 1 but got +0
-   × Notes API > filters notes by tags and categories 3ms
+   × Notes API > filters notes by tags and categories 1ms
      → expected [] to have a length of 1 but got +0
    × Notes API > creates a note with tags and categories 2ms
      → Cannot read properties of undefined (reading 'tag')
-   × Notes API > fetches a note by id and returns 404 when missing 1ms
-     → expected 404 to be 200 // Object.is equality
+   × Notes API > fetches a note by id and returns 404 when missing 2ms
+     → expected 500 to be 200 // Object.is equality
    × Notes API > updates a note with new relations 2ms
      → expected 500 to be 200 // Object.is equality
 stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtime - Engine > should exit if run not found
 [chatbot][agent][engine] Run not found { runId: 'run-123' }
 
  ✓ __tests__/features/agent-runtime/services/engine.test.ts (5 tests) 5ms
- ❯ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests | 5 failed) 19ms
-   × PageBuilderLayout Component > should render all panels by default 13ms
+ ❯ __tests__/features/cms/components/PageBuilderLayout.test.tsx (5 tests | 5 failed) 31ms
+   × PageBuilderLayout Component > should render all panels by default 18ms
      → useAdminLayout must be used within an AdminLayoutProvider
-   × PageBuilderLayout Component > should toggle left panel 1ms
+   × PageBuilderLayout Component > should toggle left panel 2ms
      → useAdminLayout must be used within an AdminLayoutProvider
-   × PageBuilderLayout Component > should toggle right panel 1ms
+   × PageBuilderLayout Component > should toggle right panel 2ms
      → useAdminLayout must be used within an AdminLayoutProvider
    × PageBuilderLayout Component > should switch left panel modes 1ms
      → useAdminLayout must be used within an AdminLayoutProvider
-   × PageBuilderLayout Component > should handle responsive auto-collapse of right panel 1ms
+   × PageBuilderLayout Component > should handle responsive auto-collapse of right panel 7ms
      → useAdminLayout must be used within an AdminLayoutProvider
- ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 17ms
+ ✓ __tests__/features/cms/hooks/usePageBuilderContext.test.tsx (8 tests) 21ms
  ✓ __tests__/features/integrations/services/integration-repository.test.ts (8 tests) 5ms
  ❯ __tests__/features/notesapp/services/note-service.test.ts (11 tests | 11 failed) 4ms
    × NoteService > CRUD Operations > creates a note in the default notebook 1ms
@@ -896,39 +766,23 @@ stderr | __tests__/features/agent-runtime/services/engine.test.ts > Agent Runtim
      → Cannot read properties of undefined (reading 'deleteMany')
    × NoteService > Categories and Tags > manages category trees 0ms
      → Cannot read properties of undefined (reading 'deleteMany')
- ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 5ms
+ ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 18ms
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts (0 test)
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts (0 test)
  ✓ __tests__/features/agent-runtime/services/execution.test.ts (6 tests) 5ms
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 8 failed) 7ms
-   × AiPathRunRepository > should create and find a run 2ms
-     → expected null not to be null
-   × AiPathRunRepository > should list runs with filters 1ms
-     → expected +0 to be 3 // Object.is equality
-   × AiPathRunRepository > should claim next queued run 0ms
-     → expected null not to be null
-   × AiPathRunRepository > should claim run only if nextRetryAt is in the past or null 0ms
-     → expected null not to be null
-   × AiPathRunRepository > should create and list run nodes 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × AiPathRunRepository > should upsert run node 0ms
+ ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts (9 tests | 2 failed) 7ms
+   × AiPathRunRepository > should list runs with filters 3ms
      → expected +0 to be 1 // Object.is equality
-   × AiPathRunRepository > should create and list run events 0ms
-     → expected +0 to be 1 // Object.is equality
-   × AiPathRunRepository > should mark stale running runs as failed 0ms
+   × AiPathRunRepository > should upsert run node 1ms
      → expected +0 to be 1 // Object.is equality
  ✓ __tests__/features/agent-runtime/services/step-runner.test.ts (4 tests) 5ms
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts (10 tests | 5 failed) 5ms
-   × prismaAsset3DRepository > should get an asset3d by id 1ms
-     → expected undefined to be 'mock-asset3D-1769964911317' // Object.is equality
-   × prismaAsset3DRepository > should list assets3d with filters 0ms
-     → default.asset3D.createMany is not a function
-   × prismaAsset3DRepository > should list assets3d with filters 0ms
-     → expected undefined to be 'mock-asset3D-1769964911319' // Object.is equality
-   × prismaAsset3DRepository > should get distinct categories 0ms
-     → default.asset3D.createMany is not a function
+ ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts (10 tests | 3 failed) 7ms
+   × prismaAsset3DRepository > should list assets3d with filters 3ms
+     → expected [] to have a length of 1 but got +0
+   × prismaAsset3DRepository > should get distinct categories 1ms
+     → expected [] to include 'A'
    × prismaAsset3DRepository > should get all distinct tags 0ms
-     → default.asset3D.createMany is not a function
+     → expected [] to include 'X'
 stdout | __tests__/features/internationalization/api/languages.test.ts > Languages API > POST /api/languages > should reject invalid payload
 System event: {
   level: 'warn',
@@ -971,10 +825,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'c6f414a3-559c-492c-8f40-bd1d8c5b7b23',
+  requestId: 'ea061b86-35aa-4d7c-be14-620ff26e3508',
   statusCode: 400,
   context: {
-    errorId: '47f16365-8395-4399-89cd-4676da86e0a8',
+    errorId: '2f967b08-9369-4dbe-8136-fd572efe42b3',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -982,107 +836,11 @@ System event: {
   }
 }
 
-stdout | __tests__/features/internationalization/api/languages.test.ts > Languages API > PUT /api/languages/[id] > should update language fields and countries
-System event: {
-  level: 'warn',
-  message: 'Language not found.',
-  source: 'languages.[id].PUT',
-  error: AppError: Language not found.
-      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
-      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/languages/[id]/route.ts:133:15
-      at processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    code: 'NOT_FOUND',
-    httpStatus: 404,
-    meta: { languageId: 'mock-language-1769964912029' },
-    expected: true,
-    critical: false,
-    retryable: false,
-    retryAfterMs: undefined,
-    cause: undefined
-  },
-  request: Request {
-    method: 'PUT',
-    url: 'http://localhost/api/languages/mock-language-1769964912029',
-    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
-    destination: '',
-    referrer: 'about:client',
-    referrerPolicy: '',
-    mode: 'cors',
-    credentials: 'same-origin',
-    cache: 'default',
-    redirect: 'follow',
-    integrity: '',
-    keepalive: false,
-    isReloadNavigation: false,
-    isHistoryNavigation: false,
-    signal: AbortSignal {}
-  },
-  requestId: '5c3a48a0-edd1-4665-ae63-729e71a5c32b',
-  statusCode: 404,
-  context: {
-    errorId: '0a38a85c-50b8-4aed-a213-a61508e95956',
-    code: 'NOT_FOUND',
-    critical: false,
-    retryable: false,
-    meta: { languageId: 'mock-language-1769964912029' }
-  }
-}
-
-stdout | __tests__/features/internationalization/api/languages.test.ts > Languages API > DELETE /api/languages/[id] > should delete language and remove assignments
-System event: {
-  level: 'warn',
-  message: 'Language not found.',
-  source: 'languages.[id].DELETE',
-  error: AppError: Language not found.
-      at Module.notFoundError (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts:107:3)
-      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/languages/[id]/route.ts:235:15
-      at processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    code: 'NOT_FOUND',
-    httpStatus: 404,
-    meta: { languageId: 'mock-language-1769964912032' },
-    expected: true,
-    critical: false,
-    retryable: false,
-    retryAfterMs: undefined,
-    cause: undefined
-  },
-  request: Request {
-    method: 'GET',
-    url: 'http://localhost/api/languages/mock-language-1769964912032',
-    headers: Headers {},
-    destination: '',
-    referrer: 'about:client',
-    referrerPolicy: '',
-    mode: 'cors',
-    credentials: 'same-origin',
-    cache: 'default',
-    redirect: 'follow',
-    integrity: '',
-    keepalive: false,
-    isReloadNavigation: false,
-    isHistoryNavigation: false,
-    signal: AbortSignal {}
-  },
-  requestId: 'd23b6568-8dc8-4fee-9ade-02f9080c1c4e',
-  statusCode: 404,
-  context: {
-    errorId: 'bf375e9b-9d40-46f6-a8ad-3c7352f2ac47',
-    code: 'NOT_FOUND',
-    critical: false,
-    retryable: false,
-    meta: { languageId: 'mock-language-1769964912032' }
-  }
-}
-
- ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 4 failed) 20ms
-   × Languages API > GET /api/languages > should seed default languages on first call 8ms
-     → expected 0 to be greater than 0
-   × Languages API > POST /api/languages > should create a language with country assignments 1ms
+ ❯ __tests__/features/internationalization/api/languages.test.ts (6 tests | 2 failed) 16ms
+   × Languages API > POST /api/languages > should create a language with country assignments 3ms
+     → expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
+   × Languages API > PUT /api/languages/[id] > should update language fields and countries 2ms
      → Target cannot be null or undefined.
-   × Languages API > PUT /api/languages/[id] > should update language fields and countries 3ms
-     → expected 404 to deeply equal 200
-   × Languages API > DELETE /api/languages/[id] > should delete language and remove assignments 1ms
-     → expected 404 to deeply equal 204
 stdout | __tests__/features/internationalization/api/countries.test.ts > Countries API > POST /api/countries > should reject invalid payload
 System event: {
   level: 'warn',
@@ -1125,10 +883,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '281176a8-401b-46c5-8434-7bf4a6e2ebca',
+  requestId: 'a469baed-d6ae-4af7-9e7a-ff9669a907a6',
   statusCode: 400,
   context: {
-    errorId: 'fac30464-db08-439d-97bc-cc8f057d49e1',
+    errorId: '54f24cd1-647d-416d-816b-60176cfe4e8e',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -1136,51 +894,16 @@ System event: {
   }
 }
 
-stdout | __tests__/features/internationalization/api/countries.test.ts > Countries API > PUT /api/countries/[id] > should update country currencies
-System event: {
-  level: 'error',
-  message: 'Failed to update country',
-  source: 'countries.[id].PUT',
-  error: TypeError: tx.countryCurrency.createMany is not a function
-      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/countries/[id]/route.ts:150:36
-      at processTicksAndRejections (node:internal/process/task_queues:105:5),
-  request: Request {
-    method: 'PUT',
-    url: 'http://localhost/api/countries/mock-country-1769964912731',
-    headers: Headers { 'content-type': 'text/plain;charset=UTF-8' },
-    destination: '',
-    referrer: 'about:client',
-    referrerPolicy: '',
-    mode: 'cors',
-    credentials: 'same-origin',
-    cache: 'default',
-    redirect: 'follow',
-    integrity: '',
-    keepalive: false,
-    isReloadNavigation: false,
-    isHistoryNavigation: false,
-    signal: AbortSignal {}
-  },
-  requestId: 'ca96919e-e33e-426d-b337-bced73981cdf',
-  statusCode: 500,
-  context: {
-    errorId: '08aa9795-7079-4141-9731-8d0f88b06b42',
-    code: 'INTERNAL_ERROR',
-    critical: true,
-    retryable: false
-  }
-}
-
- ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 19ms
-   × Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call 7ms
-     → expected 0 to be greater than 0
+ ❯ __tests__/features/internationalization/api/countries.test.ts (6 tests | 4 failed) 17ms
+   × Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call 6ms
+     → Cannot read properties of undefined (reading 'length')
    × Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls 3ms
-     → expected 4 to deeply equal +0
+     → expected 8 to deeply equal 4
    × Countries API > POST /api/countries > should create a country with currencies 2ms
      → expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
-   × Countries API > PUT /api/countries/[id] > should update country currencies 2ms
-     → expected 500 to deeply equal 200
- ✓ __tests__/features/ai-paths/lib/core/runtime/engine.test.ts (5 tests) 5ms
+   × Countries API > PUT /api/countries/[id] > should update country currencies 1ms
+     → Target cannot be null or undefined.
+ ✓ __tests__/features/ai-paths/lib/core/runtime/engine.test.ts (5 tests) 10ms
 stderr | __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
 In HTML, <div> cannot be a child of <select>.
 This will cause a hydration error.
@@ -1206,8 +929,8 @@ This will cause a hydration error.
 <select> cannot contain a nested <div>.
 See this log for the ancestor stack trace.
 
- ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 1 failed) 232ms
-   × SystemLogsPage > renders logs list and metrics 43ms
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 1 failed) 235ms
+   × SystemLogsPage > renders logs list and metrics 47ms
      → Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
 
 Ignored nodes: comments, script, style
@@ -1470,7 +1193,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 5:55:13 PM[0m
+                      [0m2/1/2026, 6:28:26 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1502,7 +1225,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 5:55:13 PM[0m
+                      [0m2/1/2026, 6:28:26 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -1587,10 +1310,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'b8dc8a00-ca20-4d9d-b6cb-a656fc133cd5',
+  requestId: 'f313ca9e-e699-4ca0-a5b6-3c33d4971b5b',
   statusCode: 404,
   context: {
-    errorId: 'a9077d58-ed11-4202-bb1a-4c0c8fd917c7',
+    errorId: '3454c7b4-f913-486c-b4de-ee77539e230e',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -1599,15 +1322,15 @@ System event: {
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > stops a running agent
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'stop' }
-[chatbot][agent][POST] Stopped { runId: 'test-run-123', status: 'stopped', durationMs: 1 }
+[chatbot][agent][POST] Stopped { runId: 'test-run-123', status: 'stopped', durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > resumes a stopped agent
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'resume' }
-[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 1 }
+[chatbot][agent][POST] Resumed { runId: 'test-run-123', status: 'queued', durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > POST actions > retries a specific step
 [chatbot][agent][POST] Request { runId: 'test-run-123', action: 'retry_step' }
-[chatbot][agent][POST] Step retry queued { runId: 'test-run-123', stepId: 'step-1', durationMs: 0 }
+[chatbot][agent][POST] Step retry queued { runId: 'test-run-123', stepId: 'step-1', durationMs: 1 }
 
 stdout | __tests__/features/agentcreator/api/agent-run-id.test.ts > Agent Run [runId] API > DELETE > deletes a non-running agent
 [chatbot][agent][DELETE] Deleted { runId: 'test-run-123', durationMs: 1 }
@@ -1654,34 +1377,34 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '580c82e1-a88e-4987-ba14-4c72ea194bbd',
+  requestId: 'ac112c34-0b3c-4b04-8728-fa4df6b8da4d',
   statusCode: 409,
   context: {
-    errorId: '93b60985-09bf-445b-ba23-db1116bf7006',
+    errorId: '505cf9f4-001d-4eb6-8abb-18494351e2bf',
     code: 'CONFLICT',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 16ms
- ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 6ms
- ❯ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests | 1 failed) 543ms
-   × useCmsDomainSelection Hook > should disable zoning if setting is false 57ms
+ ✓ __tests__/features/agentcreator/api/agent-run-id.test.ts (7 tests) 15ms
+ ✓ __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 11ms
+ ❯ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx (6 tests | 1 failed) 501ms
+   × useCmsDomainSelection Hook > should disable zoning if setting is false 59ms
      → expected true to be false // Object.is equality
- ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 42ms
- ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 191ms
+ ✓ src/mocks/__tests__/handlers.test.ts (13 tests) 43ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx (5 tests) 194ms
  ✓ __tests__/features/cms/services/repository.test.ts (9 tests) 5ms
- ❯ __tests__/features/auth/services/totp.test.ts (9 tests | 4 failed) 9ms
-   × TOTP Service > generates a valid base32 secret 3ms
-     → expected 'ZUKOSX7ABRUMYPJ4PM623EOWTWB6FLBK' to be 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' // Object.is equality
+ ❯ __tests__/features/auth/services/totp.test.ts (9 tests | 4 failed) 16ms
+   × TOTP Service > generates a valid base32 secret 7ms
+     → expected 'HORHCDNKDIK47D7IZFVDXPV2GH7ZJUS5' to be 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' // Object.is equality
    × TOTP Service > hashes recovery codes consistently 1ms
      → expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
-   × TOTP Service > verifyTotpToken > verifies a valid token for the current time window 1ms
+   × TOTP Service > verifyTotpToken > verifies a valid token for the current time window 2ms
      → expected false to be true // Object.is equality
-   × TOTP Service > verifyTotpToken > verifies a valid token within the window 0ms
+   × TOTP Service > verifyTotpToken > verifies a valid token within the window 1ms
      → expected false to be true // Object.is equality
- ✓ __tests__/features/agent-runtime/utils/utils.test.ts (15 tests) 6ms
+ ✓ __tests__/features/agent-runtime/utils/utils.test.ts (15 tests) 11ms
 stdout | __tests__/features/cms/api/api-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return 404 if page not found
 System event: {
   level: 'warn',
@@ -1724,17 +1447,17 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '76ea362a-17f3-48a8-83dc-581c0460c0df',
+  requestId: '19ad471c-8d04-4381-9398-6e73ef6cbd8a',
   statusCode: 404,
   context: {
-    errorId: 'd775e5e9-cca4-4860-bbab-3bf2d03c5845',
+    errorId: '5901f535-c24c-4a83-8fa7-eb4ba4a36515',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 16ms
+ ✓ __tests__/features/cms/api/api-pages.test.ts (6 tests) 14ms
 stdout | __tests__/features/internationalization/api/price-groups.test.ts > Price Groups API > POST /api/price-groups > should fail validation for dependent group without source
 System event: {
   level: 'warn',
@@ -1777,10 +1500,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '95857832-cbaa-4588-93ff-e0518b4b9e4a',
+  requestId: '73cc0612-493b-448e-aa67-de40fe763fd5',
   statusCode: 400,
   context: {
-    errorId: '17f16b95-1ed5-42cf-bbdc-45df29f0db23',
+    errorId: '391b28fd-b5f2-45d0-a62d-5d12c6779348',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -1788,12 +1511,10 @@ System event: {
   }
 }
 
- ❯ __tests__/features/internationalization/api/price-groups.test.ts (5 tests | 1 failed) 15ms
-   × Price Groups API > GET /api/price-groups > should return created price groups 3ms
-     → expected [] to have a length of 1 but got +0
- ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 54ms
- ❯ __tests__/features/auth/pages/signin-page.test.tsx (5 tests | 5 failed) 17ms
-   × SignInPage > renders correctly 11ms
+ ✓ __tests__/features/internationalization/api/price-groups.test.ts (5 tests) 13ms
+ ✓ __tests__/features/files/components/FileManager.test.tsx (6 tests) 53ms
+ ❯ __tests__/features/auth/pages/signin-page.test.tsx (5 tests | 5 failed) 22ms
+   × SignInPage > renders correctly 15ms
      → No QueryClient set, use QueryClientProvider to set one
    × SignInPage > handles successful sign in 2ms
      → No QueryClient set, use QueryClientProvider to set one
@@ -1845,10 +1566,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'f17e3d66-2038-43ba-9a13-8b2e938faeba',
+  requestId: '1abe72e0-0e79-45f5-af61-24e1fa283aeb',
   statusCode: 400,
   context: {
-    errorId: '79b1b13f-fa11-43f7-98af-5d64938bcbbd',
+    errorId: 'd13040f2-c782-4222-bf84-fdb5623b5d9a',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -1856,39 +1577,70 @@ System event: {
   }
 }
 
- ❯ __tests__/features/notesapp/api/categories.test.ts (5 tests | 2 failed) 20ms
-   × Notes Categories API > lists categories 1ms
-     → default.category.createMany is not a function
-   × Notes Categories API > returns a hierarchical category tree 3ms
+ ❯ __tests__/features/notesapp/api/categories.test.ts (5 tests | 3 failed) 20ms
+   × Notes Categories API > lists categories 10ms
+     → expected [] to have a length of 2 but got +0
+   × Notes Categories API > returns a hierarchical category tree 1ms
      → expected [] to have a length of 1 but got +0
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts (4 tests | 4 failed) 6ms
-   × PathRunExecutor > should execute a run successfully 3ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunExecutor > should fail the run if graph is invalid 1ms
-     → Cannot read properties of null (reading 'status')
-   × PathRunExecutor > should update node records during execution 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunExecutor > should handle node errors correctly 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
+   × Notes Categories API > deletes categories recursively with notes 2ms
+     → expected [ { …(6) }, { …(6) } ] to have a length of +0 but got 2
+ ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts (4 tests | 2 failed) 9ms
+   × PathRunExecutor > should update node records during execution 3ms
+     → expected 'pending' to be 'completed' // Object.is equality
+   × PathRunExecutor > should handle node errors correctly 1ms
+     → expected 'pending' to be 'failed' // Object.is equality
 stderr | __tests__/features/agent-runtime/services/planning.test.ts > Agent Runtime - Planning > buildPlanWithLLM > should fallback to heuristic on LLM failure
 [chatbot][agent][engine] Planner fallback { runId: undefined, error: 'LLM Down' }
 
+ ✓ __tests__/features/agent-runtime/services/planning.test.ts (4 tests) 5ms
 stderr | __tests__/features/agent-runtime/services/planning.test.ts > Agent Runtime - Planning > buildPlanWithLLM > should fallback to heuristic on Invalid JSON
 [chatbot][agent][engine] Planner fallback { runId: undefined, error: 'Planner LLM returned invalid JSON.' }
 
- ✓ __tests__/features/agent-runtime/services/planning.test.ts (4 tests) 5ms
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests | 5 failed) 5ms
-   × PathRunService > enqueuePathRun > should create a new run and its nodes 2ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunService > enqueuePathRun > should pass meta options like backoffMs to the run 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunService > resumePathRun > should reset run status to queued 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunService > cancelPathRun > should set status to canceled and mark finishedAt 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
-   × PathRunService > retryPathRunNode > should reset specific node and re-queue the run 0ms
-     → prismaAny.aiPathRunNode.createMany is not a function
- ✓ __tests__/features/cms/components/ComponentTreePanel.test.tsx (3 tests) 35ms
+ ✓ __tests__/features/ai-paths/services/path-run-service.test.ts (5 tests) 5ms
+ ✓ __tests__/features/cms/components/ComponentTreePanel.test.tsx (3 tests) 36ms
+stdout | __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should return all files
+System event: {
+  level: 'error',
+  message: 'Failed to load files',
+  source: 'files.GET',
+  error: TypeError: Cannot read properties of undefined (reading 'map')
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+      at Array.map (<anonymous>)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:229:21)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/files/route.ts:28:22)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/files/api/files.test.ts:68:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15),
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/files',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '8db39d60-0206-43dc-9b6f-100eef93e609',
+  statusCode: 500,
+  context: {
+    errorId: 'a7dafa55-b6dc-4bf0-a228-786614d92ab3',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
 stdout | __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
 System event: {
   level: 'warn',
@@ -1931,10 +1683,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '88662df1-50d0-49ad-ae3e-4e34fc64c645',
+  requestId: '8aabeaff-a2fe-4b50-bb82-0153962ca1d3',
   statusCode: 404,
   context: {
-    errorId: '64713335-a6f7-4de9-ac7b-12beda10416a',
+    errorId: '23ad2bda-2ade-46d1-80f3-7d034bac19fd',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
@@ -1983,20 +1735,20 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '3f04d230-dc80-45ac-b767-75a217b1fb73',
+  requestId: '43c3d3e6-44aa-470d-aa57-2c5a8fa73a79',
   statusCode: 404,
   context: {
-    errorId: '9ad435e4-e41c-42fc-9029-1259ef0edf82',
+    errorId: 'b3940c91-1ea3-4922-a75b-00413c5d497f',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false
   }
 }
 
- ❯ __tests__/features/files/api/files.test.ts (6 tests | 5 failed) 17ms
-   × Files API > GET /api/files > should return all files 7ms
-     → expected +0 to be 2 // Object.is equality
-   × Files API > GET /api/files > should filter files by filename 1ms
+ ❯ __tests__/features/files/api/files.test.ts (6 tests | 5 failed) 20ms
+   × Files API > GET /api/files > should return all files 9ms
+     → expected 500 to be 200 // Object.is equality
+   × Files API > GET /api/files > should filter files by filename 2ms
      → expected +0 to be 1 // Object.is equality
    × Files API > GET /api/files > should filter files by product ID 1ms
      → expected +0 to be 1 // Object.is equality
@@ -2049,10 +1801,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'd8add3f5-a439-477d-baec-2ff1524a9320',
+  requestId: '8b0ac4f8-f9b2-477f-920b-dc183bc09ce9',
   statusCode: 500,
   context: {
-    errorId: 'f4c5dcb1-b96d-465f-918d-d973f9d60168',
+    errorId: 'd269697e-5950-4f57-bc48-c6f997d5e5e4',
     code: 'INTERNAL_ERROR',
     critical: true,
     retryable: false
@@ -2132,10 +1884,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '9eada0a9-1ada-415e-a9b8-a3751733b5f2',
+  requestId: '1a5925a4-7d2c-4c7e-b273-f7a9a9e86f2d',
   statusCode: 400,
   context: {
-    errorId: 'd74c31e6-4e16-4311-a43f-8c94b991f436',
+    errorId: '3e43e92b-1352-4d50-81d2-460cc0ee80e7',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -2187,26 +1939,24 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '90f0efad-7400-491b-bf07-b18af394e98f',
+  requestId: '878691d9-912e-4096-9551-222d09006f2b',
   statusCode: 400,
   context: {
-    errorId: '906c64ea-bb56-4840-9549-83af4b12dc3f',
+    errorId: '3615dc3b-d340-4c8e-9839-cce62d310da3',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 15ms
- ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 4 failed) 8ms
-   × productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite 5ms
-     → expected +0 to be 2 // Object.is equality
+ ✓ __tests__/features/agentcreator/api/agent-creator.test.ts (6 tests) 14ms
+ ❯ __tests__/features/products/services/productMigration.test.ts (4 tests | 3 failed) 8ms
+   × productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite 4ms
+     → Cannot read properties of undefined (reading 'map')
    × productMigration > prisma-to-mongo > should respect batchSize and cursor 1ms
-     → expected +0 to be 1 // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × productMigration > prisma-to-mongo > should not call bulkWrite in dryRun mode 0ms
-     → expected 0 to be greater than or equal to 1
-   × productMigration > mongo-to-prisma > should upsert products into Prisma from Mongo docs 1ms
-     → expected undefined to be 'MONGO-SKU-1' // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
  ✓ __tests__/features/agent-runtime/services/memory.test.ts (5 tests) 5ms
 stdout | __tests__/api/auth/register.test.ts > Auth Register API > should return 409 if user already exists
 System event: {
@@ -2250,10 +2000,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'dcaab32d-345b-40fc-8692-8ea9fef452a8',
+  requestId: '11886589-97d9-4b48-96b6-c42280a5605f',
   statusCode: 409,
   context: {
-    errorId: '5d74b6eb-52a1-4ad9-b539-b19726f71763',
+    errorId: '7542ac45-0587-4b12-b509-fa169c8f6820',
     code: 'CONFLICT',
     critical: false,
     retryable: false,
@@ -2303,22 +2053,22 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'f96358b6-781e-44a0-81d8-733a67ebed15',
+  requestId: '1a30265b-c180-4318-b97f-c6c41f5782cd',
   statusCode: 403,
   context: {
-    errorId: '9d15d261-ffe9-4d08-983c-58879362cb61',
+    errorId: '2feb9cb4-855b-4bd5-ad2b-6dabb49b8c0a',
     code: 'FORBIDDEN',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/api/auth/register.test.ts (4 tests) 11ms
+ ✓ __tests__/api/auth/register.test.ts (4 tests) 15ms
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should list available Ollama models
 [chatbot][models] Loaded {
   count: 2,
-  durationMs: 8,
-  requestId: 'e8f16bb6-9102-4791-9384-fb8aad813489'
+  durationMs: 9,
+  requestId: 'a408b197-c74f-4d12-8e1f-397d9d6c7fb8'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return an error when model listing fails
@@ -2363,10 +2113,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '8d83f927-162d-47d1-81e0-db9969c3d5a7',
+  requestId: '4ff0cb5e-a175-40cc-8abf-173fccd196ee',
   statusCode: 502,
   context: {
-    errorId: '587587a5-71cd-42dd-b81b-e8b1cde2b68b',
+    errorId: '7d023565-58e0-4afa-ac47-d874495936a6',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
@@ -2415,10 +2165,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '8a8f5cd2-8c87-42c0-a27d-3a712d535886',
+  requestId: 'be9930aa-82b8-42df-bfd9-136d87315939',
   statusCode: 400,
   context: {
-    errorId: 'a4c066a2-6d36-41a7-b6f9-e6efed2d407a',
+    errorId: 'd974383d-aa13-47f9-9adc-f99ffcf9c89a',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -2434,13 +2184,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should p
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: 'ea1c7b1c-0d49-4339-a497-ccb1215e3f3a'
+  requestId: '595ffa81-2649-438f-aa41-7883b414781c'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: 'ea1c7b1c-0d49-4339-a497-ccb1215e3f3a'
+  requestId: '595ffa81-2649-438f-aa41-7883b414781c'
 }
 
 stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should return a debug errorId when chat proxy fails
@@ -2452,13 +2202,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: '7c69a806-ad4b-4615-9691-cfedefdfbf72'
+  requestId: '31882efe-60cc-4aa6-b781-75f44433023e'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: '7c69a806-ad4b-4615-9691-cfedefdfbf72'
+  requestId: '31882efe-60cc-4aa6-b781-75f44433023e'
 }
 System event: {
   level: 'error',
@@ -2501,10 +2251,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '230b63fb-e9b5-4e66-a686-9d44e7757a0e',
+  requestId: 'a2d61f65-89b1-47c6-853e-2f063d6bf9cd',
   statusCode: 502,
   context: {
-    errorId: 'c1836cc6-0021-41f3-8678-ccef68b54d95',
+    errorId: 'd5b2c940-d7ca-4717-9d3b-61dada5ff2b8',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
@@ -2520,13 +2270,13 @@ stdout | __tests__/features/chatbot/api/chatbot.test.ts > Chatbot API > should r
   contentType: 'text/plain;charset=UTF-8',
   userContentChars: 5,
   durationMs: 0,
-  requestId: 'db156bc2-a843-4897-b5a0-3ae71597d576'
+  requestId: 'a2615a2a-724c-4283-821e-abd20976df91'
 }
 [chatbot][chat] Sending to Ollama {
   url: 'http://localhost:11434/api/chat',
   model: 'test-model',
   messageCount: 1,
-  requestId: 'db156bc2-a843-4897-b5a0-3ae71597d576'
+  requestId: 'a2615a2a-724c-4283-821e-abd20976df91'
 }
 System event: {
   level: 'error',
@@ -2572,20 +2322,20 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '9a32bbbe-437e-4bbb-940c-3b52a04a00f8',
+  requestId: '137bb3a0-39ed-4ea7-b5e7-f477b7fa1a56',
   statusCode: 502,
   context: {
-    errorId: '77c4a851-efe1-4738-98df-d5c525600cab',
+    errorId: '300840a3-b142-4b17-978b-c855081299fd',
     code: 'EXTERNAL_SERVICE_ERROR',
     critical: false,
     retryable: true
   }
 }
 
- ✓ __tests__/features/chatbot/api/chatbot.test.ts (6 tests) 29ms
- ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 3ms
- ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 4ms
- ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 110ms
+ ✓ __tests__/features/chatbot/api/chatbot.test.ts (6 tests) 30ms
+ ✓ __tests__/features/observability/services/system-log-repository.test.ts (6 tests) 4ms
+ ✓ __tests__/features/chatbot/services/chatbot-job-repository.test.ts (5 tests) 17ms
+ ✓ __tests__/features/cms/components/SettingsFieldRenderer.test.tsx (5 tests) 117ms
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should reject missing prompt when creating a run
 System event: {
   level: 'warn',
@@ -2628,10 +2378,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '548fbe36-a46c-41e9-bc05-ae06ead0cc91',
+  requestId: 'f740e1fc-8ee5-45f1-a41f-6183fca6cc96',
   statusCode: 400,
   context: {
-    errorId: '8b94d5b8-ad85-46bb-a96b-d9f73b56275e',
+    errorId: 'b1bd8aa1-e111-481e-820f-8e7eb6cbdbd9',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
@@ -2639,30 +2389,26 @@ System event: {
 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
-[chatbot][agent][GET] Runs loaded { count: 0, durationMs: 0 }
+[chatbot][agent][GET] Runs loaded { count: 1, durationMs: 0 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent logs for a run
 [chatbot][agent][logs] Loaded {
-  runId: 'mock-chatbotAgentRun-1769964931064',
+  runId: 'mock-chatbotAgentRun-1769966923114-y8fj2yvfi',
   stepId: null,
-  count: 0,
+  count: 1,
   durationMs: 0
 }
 
 stdout | __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent audit logs for a run
 [chatbot][agent][audits] Loaded {
-  runId: 'mock-chatbotAgentRun-1769964931065',
-  count: 0,
-  durationMs: 0
+  runId: 'mock-chatbotAgentRun-1769966923115-5g93asu4n',
+  count: 1,
+  durationMs: 1
 }
 
- ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 3 failed) 14ms
-   × Agent API > should list agent runs with counts 3ms
-     → expected [] to have a length of 1 but got +0
-   × Agent API > should return agent logs for a run 1ms
-     → expected [] to have a length of 1 but got +0
-   × Agent API > should return agent audit logs for a run 2ms
-     → expected [] to have a length of 1 but got +0
+ ❯ __tests__/features/agentcreator/api/agent.test.ts (4 tests | 1 failed) 12ms
+   × Agent API > should list agent runs with counts 2ms
+     → Cannot read properties of undefined (reading 'browserLogs')
 stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth User Repository > findAuthUserByEmail > finds user via MongoDB
 [AUTH-REPO] Finding user test@example.com using mongodb
 
@@ -2670,10 +2416,10 @@ stdout | __tests__/features/auth/services/auth-user-repository.test.ts > Auth Us
 [AUTH-REPO] Finding user unknown@example.com using mongodb
 [AUTH-REPO] MongoDB user not found
 
- ✓ __tests__/features/auth/services/auth-user-repository.test.ts (5 tests) 40ms
- ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 139ms
- ❯ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests | 2 failed) 2292ms
-   × EditProductForm > renders the form with product data in the General tab 1142ms
+ ✓ __tests__/features/auth/services/auth-user-repository.test.ts (5 tests) 50ms
+ ✓ __tests__/features/viewer3d/components/Asset3DCard.test.tsx (8 tests) 133ms
+ ❯ __tests__/features/products/pages/product-edit-page.test.tsx (3 tests | 2 failed) 2271ms
+   × EditProductForm > renders the form with product data in the General tab 1139ms
      → Unable to find role="textbox" and name `/English Name/i`
 
 Ignored nodes: comments, script, style
@@ -2893,7 +2639,7 @@ Ignored nodes: comments, script, style
               [33maria-controls[39m=[32m"radix-_r_0_-content-images"[39m
               [33maria-selected[39m=[32m"false"[39m
               [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-n...
-   × EditProductForm > renders the price in the Other tab 1093ms
+   × EditProductForm > renders the price in the Other tab 1080ms
      → Unable to find a label with the text of: /Base Price/i
 
 Ignored nodes: comments, script, style
@@ -3116,19 +2862,19 @@ Ignored nodes: comments, script, style
 stderr | __tests__/features/products/components/products-list.test.tsx > Admin Products List UI > prompts for SKU before opening the create modal and pre-fills SKU
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 483ms
- ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 15ms
-   × RegisterPage > renders correctly 10ms
+ ✓ __tests__/features/products/components/products-list.test.tsx (3 tests) 493ms
+ ❯ __tests__/features/auth/pages/register-page.test.tsx (4 tests | 4 failed) 25ms
+   × RegisterPage > renders correctly 14ms
      → No QueryClient set, use QueryClientProvider to set one
    × RegisterPage > handles successful registration and signs in 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × RegisterPage > shows error message if signup is disabled 1ms
      → No QueryClient set, use QueryClientProvider to set one
-   × RegisterPage > shows error from registration failure 1ms
+   × RegisterPage > shows error from registration failure 6ms
      → No QueryClient set, use QueryClientProvider to set one
- ✓ __tests__/features/agent-runtime/planning/utils.test.ts (14 tests) 4ms
- ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 23ms
- ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 227ms
+ ✓ __tests__/features/agent-runtime/planning/utils.test.ts (14 tests) 8ms
+ ✓ __tests__/features/viewer3d/api/asset3d-api.test.ts (8 tests) 28ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx (4 tests) 232ms
 stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > successfully processes a run
 [aiPathRunQueue] Processing run run-1
 [aiPathRunQueue] Run run-1 completed
@@ -3139,15 +2885,15 @@ stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Qu
 stdout | __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > moves to dead-letter on max retries
 [aiPathRunQueue] Processing run run-1
 
- ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts (5 tests | 2 failed) 5ms
-   × AI Path Run Queue Worker > processRun > retries on failure if attempts remaining 1ms
+ ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts (5 tests | 2 failed) 11ms
+   × AI Path Run Queue Worker > processRun > retries on failure if attempts remaining 2ms
      → getPathRunRepository(...).updateRun is not a function
-   × AI Path Run Queue Worker > processRun > moves to dead-letter on max retries 0ms
+   × AI Path Run Queue Worker > processRun > moves to dead-letter on max retries 1ms
      → getPathRunRepository(...).updateRun is not a function
- ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 20ms
- ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 46ms
- ✓ __tests__/features/agent-runtime/services/plan-init.test.ts (3 tests) 4ms
- ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 4ms
+ ✓ __tests__/features/cms/components/CmsPageRenderer.test.tsx (4 tests) 24ms
+ ✓ __tests__/features/ai-paths/components/RunHistoryPanel.test.tsx (6 tests) 50ms
+ ✓ __tests__/features/agent-runtime/services/plan-init.test.ts (3 tests) 5ms
+ ✓ __tests__/features/jobs/workers/agentQueue.test.ts (3 tests) 5ms
  ✓ __tests__/shared/lib/observability/critical-error-notifier.test.ts (4 tests) 5ms
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should render with initial asset data
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
@@ -3161,11 +2907,11 @@ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogCont
 stderr | __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx > Asset3DEditModal > should display error message if save fails
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 200ms
+ ✓ __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx (4 tests) 205ms
 stderr | __tests__/features/cms/components/SectionPicker.test.tsx > SectionPicker Component > should call onSelect when a section type is clicked
 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 
- ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 141ms
+ ✓ __tests__/features/cms/components/SectionPicker.test.tsx (3 tests) 142ms
 stdout | __tests__/shared/utils/retry.test.ts > Retry Utils > withRetry > retries until success
 System event: {
   level: 'warn',
@@ -3266,19 +3012,142 @@ System event: {
   context: { circuitId: 'test-circuit', failures: 5, resetTimeoutMs: 60000 }
 }
 
- ✓ __tests__/shared/utils/retry.test.ts (5 tests) 11ms
- ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 229ms
+ ✓ __tests__/shared/utils/retry.test.ts (5 tests) 15ms
+ ✓ __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx (4 tests) 232ms
  ✓ __tests__/features/files/services/image-file-repository.test.ts (6 tests) 4ms
- ❯ __tests__/features/products/api/pagination.test.ts (4 tests | 4 failed) 15ms
-   × Products API - Pagination and Count > GET /api/products/count > should return the total count of products 8ms
-     → expected +0 to deeply equal 3
-   × Products API - Pagination and Count > GET /api/products/count > should return the filtered count of products 2ms
-     → expected +0 to deeply equal 1
-   × Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return a limited number of products based on pageSize 1ms
-     → expected +0 to deeply equal 2
-   × Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return the correct page of products 2ms
-     → expected +0 to deeply equal 2
- ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 217ms
+stdout | __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return a limited number of products based on pageSize
+System event: {
+  level: 'error',
+  message: 'Failed to fetch products',
+  source: 'products.GET',
+  error: TypeError: Cannot read properties of undefined (reading 'map')
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+      at Array.map (<anonymous>)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:229:21)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:42:20)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:18:22)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/pagination.test.ts:50:19
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11),
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/products?pageSize=2',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: 'c054a7cb-179c-4af2-9987-0f7ab5ae49dc',
+  statusCode: 500,
+  context: {
+    errorId: 'acfb6324-1a9c-4274-bbde-6d9d412840be',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
+stdout | __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return the correct page of products
+System event: {
+  level: 'error',
+  message: 'Failed to fetch products',
+  source: 'products.GET',
+  error: TypeError: Cannot read properties of undefined (reading 'map')
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+      at Array.map (<anonymous>)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:229:21)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:42:20)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:18:22)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/pagination.test.ts:65:20
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11),
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/products?page=1&pageSize=2',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: 'a0c2b9b0-5dfa-4e44-af39-0e59411e8978',
+  statusCode: 500,
+  context: {
+    errorId: '31ecad85-ccba-473b-b916-544b1c7f3761',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+System event: {
+  level: 'error',
+  message: 'Failed to fetch products',
+  source: 'products.GET',
+  error: TypeError: Cannot read properties of undefined (reading 'map')
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+      at Array.map (<anonymous>)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts:229:21)
+      at processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at Object.getProducts (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts:42:20)
+      at GET_handler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/route.ts:18:22)
+      at Module.<anonymous> (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/api/api-handler.ts:89:24)
+      at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/pagination.test.ts:68:20
+      at file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:533:5
+      at runTest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1056:11),
+  request: Request {
+    method: 'GET',
+    url: 'http://localhost/api/products?page=2&pageSize=2',
+    headers: Headers {},
+    destination: '',
+    referrer: 'about:client',
+    referrerPolicy: '',
+    mode: 'cors',
+    credentials: 'same-origin',
+    cache: 'default',
+    redirect: 'follow',
+    integrity: '',
+    keepalive: false,
+    isReloadNavigation: false,
+    isHistoryNavigation: false,
+    signal: AbortSignal {}
+  },
+  requestId: '25e237e1-e43c-4a72-a2d6-a36e9ff8089e',
+  statusCode: 500,
+  context: {
+    errorId: '3c2a5ec9-69bf-4ade-9694-4e885d561251',
+    code: 'INTERNAL_ERROR',
+    critical: true,
+    retryable: false
+  }
+}
+
+ ❯ __tests__/features/products/api/pagination.test.ts (4 tests | 2 failed) 18ms
+   × Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return a limited number of products based on pageSize 6ms
+     → expected 500 to deeply equal 200
+   × Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return the correct page of products 3ms
+     → expected undefined to deeply equal 2
+ ✓ __tests__/features/agentcreator/components/agent-creator-settings.test.tsx (5 tests) 203ms
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > GET: returns all sessions
 [chatbot][sessions][GET] Listed { count: 1, durationMs: 0 }
 
@@ -3294,7 +3163,7 @@ stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessi
 [chatbot][sessions][DELETE] Request { sessionId: 's1' }
 [chatbot][sessions][DELETE] Deleted { sessionId: 's1', durationMs: 0 }
 
- ✓ __tests__/features/chatbot/api/chatbot-sessions.test.ts (5 tests) 20ms
+ ✓ __tests__/features/chatbot/api/chatbot-sessions.test.ts (5 tests) 13ms
 stdout | __tests__/features/chatbot/api/chatbot-sessions.test.ts > Chatbot Sessions API > DELETE: returns 404 if session not found
 [chatbot][sessions][DELETE] Request { sessionId: 'missing' }
 System event: {
@@ -3338,10 +3207,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e8d683fe-0dc6-4e2b-a228-1d265389949d',
+  requestId: 'fea3d47e-cc14-474f-b1c6-b3da2af60a9e',
   statusCode: 404,
   context: {
-    errorId: '7bb653eb-1ea7-4003-9240-befef276d40e',
+    errorId: '0e9eb75e-c6e8-4cb9-95d1-5e0f37d529f9',
     code: 'NOT_FOUND',
     critical: false,
     retryable: false,
@@ -3349,15 +3218,15 @@ System event: {
   }
 }
 
- ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 4ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 3ms
  ✓ __tests__/features/viewer3d/services/asset3dUploader.test.ts (4 tests) 6ms
- ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 90ms
- ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 4ms
- ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 105ms
- ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (5 tests | 5 failed) 17ms
-   × DraftCreator Component > should render the form with initial state 12ms
+ ✓ __tests__/features/cms/components/FrontendBlockRenderer.test.tsx (7 tests) 92ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (5 tests) 8ms
+ ✓ __tests__/features/cms/components/SectionTemplatePicker.test.tsx (2 tests) 101ms
+ ❯ __tests__/features/drafter/components/DraftCreator.test.tsx (5 tests | 5 failed) 23ms
+   × DraftCreator Component > should render the form with initial state 16ms
      → No QueryClient set, use QueryClientProvider to set one
-   × DraftCreator Component > should update name input correctly 1ms
+   × DraftCreator Component > should update name input correctly 2ms
      → No QueryClient set, use QueryClientProvider to set one
    × DraftCreator Component > should show validation error if saving without a name 1ms
      → No QueryClient set, use QueryClientProvider to set one
@@ -3407,10 +3276,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '95085ea7-266d-4fff-98c7-449d46507938',
+  requestId: 'c2188d03-2e34-421e-b1a1-30758a7f1bb3',
   statusCode: 409,
   context: {
-    errorId: '02a2d820-088a-44a8-94b6-629d898e44a5',
+    errorId: '2c13e31a-be7f-4665-b8c0-0f4ee845b907',
     code: 'CONFLICT',
     critical: false,
     retryable: false,
@@ -3418,7 +3287,7 @@ System event: {
   }
 }
 
- ✓ __tests__/features/auth/api/register.test.ts (2 tests) 11ms
+ ✓ __tests__/features/auth/api/register.test.ts (2 tests) 10ms
 stdout | __tests__/features/products/services/aiTranslationService.test.ts > aiTranslationService > should successfully translate product data to target languages
 [aiTranslationService] Using model: mocked-value
 [aiTranslationService] Using Ollama at: http://localhost:11434
@@ -3472,19 +3341,19 @@ stderr | __tests__/features/products/services/aiTranslationService.test.ts > aiT
 }
 [aiTranslationService] Skipping Polish due to error
 
- ✓ __tests__/features/products/services/aiTranslationService.test.ts (3 tests) 6ms
- ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 9ms
- ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 5ms
- ✓ __tests__/api/products/tags.test.ts (2 tests) 9ms
- ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests | 3 failed) 14ms
-   × AdminFrontManagePage > renders loading state 10ms
+ ✓ __tests__/features/products/services/aiTranslationService.test.ts (3 tests) 8ms
+ ✓ __tests__/api/notes/notebooks.test.ts (3 tests) 15ms
+ ✓ __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 19ms
+ ✓ __tests__/api/products/tags.test.ts (2 tests) 8ms
+ ❯ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests | 3 failed) 18ms
+   × AdminFrontManagePage > renders loading state 14ms
      → No QueryClient set, use QueryClientProvider to set one
    × AdminFrontManagePage > renders initial selected option from settings 1ms
      → No QueryClient set, use QueryClientProvider to set one
    × AdminFrontManagePage > allows changing selection and saving 1ms
      → No QueryClient set, use QueryClientProvider to set one
- ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 248ms
- ✓ __tests__/features/notesapp/utils/index.test.ts (9 tests) 4ms
+ ✓ __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx (5 tests) 243ms
+ ✓ __tests__/features/notesapp/utils/index.test.ts (9 tests) 9ms
  ✓ __tests__/features/auth/api/verify-credentials.test.ts (2 tests) 8ms
  ✓ __tests__/features/drafter/services/draft-repository-mongo.test.ts (4 tests) 4ms
  ❯ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests | 5 failed) 3ms
@@ -3541,10 +3410,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e79ab0b5-3ea3-431a-8223-ccbbb07eee22',
+  requestId: '258f3a2e-7610-4d6f-83de-022ad99a2cdf',
   statusCode: 400,
   context: {
-    errorId: 'd2a6f8ff-c2cb-4f5a-815d-d472128c1f17',
+    errorId: '5a516b03-63b2-471e-ba6b-c20efa9f32e4',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3552,20 +3421,14 @@ System event: {
   }
 }
 
- ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 17ms
-   × Notes Tags API > lists tags ordered by name 1ms
-     → default.tag.createMany is not a function
- ✓ __tests__/features/agent-runtime/services/browser-tools.test.ts (2 tests) 4ms
- ✓ __tests__/features/observability/services/client-error-logger.test.ts (3 tests) 5ms
- ❯ __tests__/features/drafter/services/draft-repository.test.ts (6 tests | 3 failed) 109ms
-   × DraftRepository (Prisma) > should create and retrieve a draft 2ms
-     → expected null not to be null
-   × DraftRepository (Prisma) > should list all drafts ordered by createdAt desc 104ms
-     → expected +0 to be 2 // Object.is equality
-   × DraftRepository (Prisma) > should update a draft 1ms
-     → expected undefined to be 'Updated Name' // Object.is equality
- ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 32ms
-   × MediaLibraryPanel Component > should render when open 26ms
+ ❯ __tests__/features/notesapp/api/tags.test.ts (5 tests | 1 failed) 15ms
+   × Notes Tags API > lists tags ordered by name 8ms
+     → Cannot read properties of undefined (reading 'name')
+ ✓ __tests__/features/agent-runtime/services/browser-tools.test.ts (2 tests) 5ms
+ ✓ __tests__/features/observability/services/client-error-logger.test.ts (3 tests) 9ms
+ ✓ __tests__/features/drafter/services/draft-repository.test.ts (6 tests) 105ms
+ ❯ __tests__/features/cms/components/MediaLibraryPanel.test.tsx (3 tests | 2 failed) 35ms
+   × MediaLibraryPanel Component > should render when open 29ms
      → Unable to find an element by: [data-testid="file-manager"]
 
 Ignored nodes: comments, script, style
@@ -3763,20 +3626,15 @@ Ignored nodes: comments, script, style
     [36m</div>[39m
   [36m</div>[39m
 [36m</body>[39m
- ✓ __tests__/features/playwright/utils/personas.test.ts (7 tests) 4ms
- ✓ __tests__/features/products/validations/product.test.ts (5 tests) 4ms
- ❯ __tests__/features/products/services/prismaProductRepository.test.ts (5 tests | 4 failed) 7ms
+ ✓ __tests__/features/playwright/utils/personas.test.ts (7 tests) 8ms
+ ✓ __tests__/features/products/validations/product.test.ts (5 tests) 8ms
+ ❯ __tests__/features/products/services/prismaProductRepository.test.ts (5 tests | 2 failed) 5ms
    × prismaProductRepository > should create and retrieve a product 2ms
-     → expected undefined to be 'Test Repository Product' // Object.is equality
-   × prismaProductRepository > should handle SKU conflicts 2ms
-     → promise resolved "{ …(26) }" instead of rejecting
-   × prismaProductRepository > should update a product 0ms
-     → expected undefined to be 'Updated' // Object.is equality
+     → Cannot read properties of undefined (reading 'map')
    × prismaProductRepository > should find products with filters 0ms
-     → expected +0 to be 1 // Object.is equality
- ✓ __tests__/features/observability/api/logs/logs.test.ts (3 tests) 11ms
- ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 6ms
- ✓ __tests__/api/products/ai-jobs.test.ts (2 tests) 7ms
+     → Cannot read properties of undefined (reading 'map')
+ ✓ __tests__/features/observability/api/logs/logs.test.ts (3 tests) 10ms
+ ✓ __tests__/shared/lib/observability/system-logger.test.ts (4 tests) 11ms
 stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /api/products/ai-jobs/enqueue > should enqueue a new job
 [api/products/ai-jobs/enqueue] Received request - productId: prod1, type: description
 [api/products/ai-jobs/enqueue] Job job1 created
@@ -3784,11 +3642,12 @@ stdout | __tests__/api/products/ai-jobs.test.ts > Product AI Jobs API > POST /ap
 [api/products/ai-jobs/enqueue] Returning response to client
 [api/products/ai-jobs/enqueue] Job job1 processing initiated successfully
 
- ✓ __tests__/features/agent-runtime/execution/loop-guard.test.ts (5 tests) 2ms
- ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 45ms
- ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 91ms
- ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 15ms
-   × AdminLayout > renders children correctly 10ms
+ ✓ __tests__/api/products/ai-jobs.test.ts (2 tests) 12ms
+ ✓ __tests__/features/agent-runtime/execution/loop-guard.test.ts (5 tests) 3ms
+ ✓ __tests__/features/cms/components/BlockPicker.test.tsx (3 tests) 57ms
+ ✓ __tests__/features/cms/pages/ThemesPage.test.tsx (4 tests) 98ms
+ ❯ __tests__/features/admin/components/AdminLayout.test.tsx (4 tests | 4 failed) 21ms
+   × AdminLayout > renders children correctly 16ms
      → No QueryClient set, use QueryClientProvider to set one
    × AdminLayout > renders the sidebar with Admin logo 1ms
      → No QueryClient set, use QueryClientProvider to set one
@@ -3838,10 +3697,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'e3915551-ec37-4918-a779-4f9388326705',
+  requestId: 'e663908a-a824-4f6c-b016-0476c94b28e5',
   statusCode: 400,
   context: {
-    errorId: '89c8816f-a8b6-45bc-a561-40774cc903bf',
+    errorId: '967ff0d0-d338-44eb-812a-ac49c10f14b2',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3849,13 +3708,13 @@ System event: {
   }
 }
 
- ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 12ms
- ✓ __tests__/features/products/components/product-list-header.test.tsx (4 tests) 127ms
- ✓ __tests__/features/playwright/services/persona-utils.test.ts (8 tests) 4ms
- ✓ __tests__/features/agent-runtime/services/audit.test.ts (5 tests) 3ms
+ ✓ __tests__/features/cms/api/api-slugs.test.ts (3 tests) 13ms
+ ✓ __tests__/features/products/components/product-list-header.test.tsx (4 tests) 137ms
+ ✓ __tests__/features/playwright/services/persona-utils.test.ts (8 tests) 8ms
+ ✓ __tests__/features/agent-runtime/services/audit.test.ts (5 tests) 8ms
  ✓ __tests__/api/products/categories.test.ts (1 test) 6ms
- ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 66ms
-   × ErrorSystem > captures and logs an Error object 62ms
+ ❯ __tests__/features/observability/services/ErrorSystem.test.ts (5 tests | 4 failed) 67ms
+   × ErrorSystem > captures and logs an Error object 63ms
      → expected "spy" to be called with arguments: [ …(2) ]
 
 Received: 
@@ -3934,10 +3793,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'cb2dfc34-e2eb-41c5-bd53-5432f88cc37e',
+  requestId: 'da1f4860-de82-4b89-a498-4570f8c33f32',
   statusCode: 400,
   context: {
-    errorId: 'caaee580-9d04-4d80-bb54-bcfe17a4c6f9',
+    errorId: '49c42aa2-2631-43e2-a6a9-f1e0dfc8ee42',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -3945,18 +3804,14 @@ System event: {
   }
 }
 
- ❯ __tests__/features/internationalization/api/currencies.test.ts (3 tests | 1 failed) 12ms
-   × Currencies API > GET /api/currencies > should seed default currencies on first call 7ms
-     → expected 0 to be greater than 0
- ❯ __tests__/features/cms/api/cms.test.ts (4 tests | 1 failed) 11ms
-   × CMS API > should fetch all slugs 3ms
-     → expected +0 to be 2 // Object.is equality
- ✓ __tests__/features/viewer3d/services/validateAsset3d.test.ts (7 tests) 3ms
- ✓ __tests__/features/cms/services/cms-theme-settings.test.ts (3 tests) 3ms
+ ✓ __tests__/features/internationalization/api/currencies.test.ts (3 tests) 10ms
+ ✓ __tests__/features/cms/api/cms.test.ts (4 tests) 9ms
+ ✓ __tests__/features/viewer3d/services/validateAsset3d.test.ts (7 tests) 8ms
+ ✓ __tests__/features/cms/services/cms-theme-settings.test.ts (3 tests) 4ms
  ✓ __tests__/shared/lib/transient-recovery-settings.test.ts (3 tests) 3ms
- ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 101ms
+ ✓ __tests__/features/chatbot/components/chatbot-interface.test.tsx (6 tests) 105ms
  ✓ __tests__/features/agent-runtime/services/checkpoint.test.ts (4 tests) 4ms
- ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 224ms
+ ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 236ms
 stderr | __tests__/features/products/services/aiDescriptionService.test.ts > aiDescriptionService > should generate a description using mocked AI
 Prisma setting fetch failed for openai_api_key: TypeError: Cannot read properties of undefined (reading 'findUnique')
     at getSettingValue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/aiDescriptionService.ts:60:44)
@@ -4159,14 +4014,13 @@ Prisma setting fetch failed for ai_generation_output_enabled: TypeError: Cannot 
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
     at runSuite (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/@vitest/runner/dist/index.js:1205:15)
 
- ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 7ms
+ ✓ __tests__/features/products/services/aiDescriptionService.test.ts (3 tests) 9ms
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > GET: returns settings by key
 [chatbot][settings][GET] Loaded { key: 'default', found: true, durationMs: 0 }
 
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > POST: saves settings using upsert
-[chatbot][settings][POST] Saved { key: 'default', durationMs: 1 }
+[chatbot][settings][POST] Saved { key: 'default', durationMs: 0 }
 
- ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 12ms
 stdout | __tests__/features/chatbot/api/chatbot-settings.test.ts > Chatbot Settings API > POST: returns 400 if settings missing
 System event: {
   level: 'warn',
@@ -4209,30 +4063,31 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: 'fa20c814-3f6f-4ed7-9a77-1d1eb9f16f45',
+  requestId: '5cc79fdf-3ad1-45a1-973a-28b7facd233b',
   statusCode: 400,
   context: {
-    errorId: 'd11c3e5e-5599-4bd4-b22b-1d507967cf2d',
+    errorId: '1daf31a0-44e8-46f0-b09f-b9f2b4b60268',
     code: 'BAD_REQUEST',
     critical: false,
     retryable: false
   }
 }
 
- ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 144ms
- ✓ __tests__/features/agent-runtime/utils/core-utils.test.ts (7 tests) 3ms
+ ✓ __tests__/features/chatbot/api/chatbot-settings.test.ts (3 tests) 12ms
+ ✓ __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx (4 tests) 163ms
+ ✓ __tests__/features/agent-runtime/utils/core-utils.test.ts (7 tests) 11ms
  ✓ __tests__/api/products/parameters.test.ts (1 test) 7ms
- ✓ __tests__/features/data-import-export/utils/image-retry-presets.test.ts (5 tests) 3ms
- ✓ __tests__/features/database/utils/mongo.test.ts (7 tests) 4ms
- ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 5ms
+ ✓ __tests__/features/data-import-export/utils/image-retry-presets.test.ts (5 tests) 8ms
+ ✓ __tests__/features/database/utils/mongo.test.ts (7 tests) 8ms
+ ✓ __tests__/features/database/utils/postgres.test.ts (7 tests) 9ms
  ✓ __tests__/features/observability/api/logs/metrics.test.ts (1 test) 7ms
- ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 90ms
- ✓ __tests__/features/foldertree/utils/tree-utils.test.ts (6 tests) 2ms
- ✓ __tests__/features/ai-paths/lib/utils-json.test.ts (7 tests) 3ms
- ✓ __tests__/features/auth/utils/auth-security.test.ts (4 tests) 3ms
- ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 32ms
- ✓ __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts (3 tests) 12ms
- ✓ __tests__/shared/utils/markdown-utils.test.ts (5 tests) 3ms
+ ✓ __tests__/features/products/components/product-table-footer.test.tsx (3 tests) 97ms
+ ✓ __tests__/features/foldertree/utils/tree-utils.test.ts (6 tests) 8ms
+ ✓ __tests__/features/ai-paths/lib/utils-json.test.ts (7 tests) 7ms
+ ✓ __tests__/features/auth/utils/auth-security.test.ts (4 tests) 8ms
+ ✓ __tests__/features/products/components/product-filters.test.tsx (3 tests) 45ms
+ ✓ __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts (3 tests) 16ms
+ ✓ __tests__/shared/utils/markdown-utils.test.ts (5 tests) 7ms
 stderr | __tests__/features/agent-runtime/services/audit-logging.test.ts > Agent Runtime - Audit Logging > should gracefully handle database errors
 [chatbot][agent][audit] Failed to write audit log {
   runId: 'run-1',
@@ -4294,10 +4149,10 @@ System event: {
     isHistoryNavigation: false,
     signal: AbortSignal {}
   },
-  requestId: '6ac7d322-0dd6-4394-9c28-01523fab1054',
+  requestId: 'e3ee6eb9-b877-415d-a55e-48fc243f98a2',
   statusCode: 400,
   context: {
-    errorId: '7beecd83-b51b-4e33-9106-1844cd1d1efc',
+    errorId: 'eb24f66d-f398-455c-a95f-99083981f808',
     code: 'VALIDATION_ERROR',
     critical: false,
     retryable: false,
@@ -4305,21 +4160,21 @@ System event: {
   }
 }
 
- ✓ __tests__/features/observability/api/client-errors.test.ts (2 tests) 11ms
- ✓ __tests__/features/agent-runtime/services/memory-context.test.ts (2 tests) 3ms
- ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 3ms
- ✓ __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 3ms
- ✓ __tests__/features/auth/utils/auth-encryption.test.ts (3 tests) 4ms
- ✓ __tests__/features/foldertree/services/folder-importer.test.ts (3 tests) 2ms
- ✓ __tests__/features/app-embeds/lib/constants.test.ts (5 tests) 3ms
- ✓ __tests__/api/products/migration.test.ts (1 test) 6ms
+ ✓ __tests__/features/observability/api/client-errors.test.ts (2 tests) 12ms
+ ✓ __tests__/features/agent-runtime/services/memory-context.test.ts (2 tests) 8ms
+ ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 7ms
+ ✓ __tests__/shared/lib/observability/log-redaction.test.ts (5 tests) 8ms
+ ✓ __tests__/features/auth/utils/auth-encryption.test.ts (3 tests) 8ms
+ ✓ __tests__/features/foldertree/services/folder-importer.test.ts (3 tests) 7ms
+ ✓ __tests__/features/app-embeds/lib/constants.test.ts (5 tests) 8ms
+ ✓ __tests__/api/products/migration.test.ts (1 test) 10ms
  ✓ __tests__/api/products/count.test.ts (1 test) 6ms
- ✓ __tests__/features/cms/services/selection.test.ts (2 tests) 2ms
- ✓ __tests__/features/gsap/utils/presets.test.ts (4 tests) 3ms
- ✓ __tests__/features/internationalization/lib/internationalizationDefaults.test.ts (3 tests) 3ms
+ ✓ __tests__/features/cms/services/selection.test.ts (2 tests) 8ms
+ ✓ __tests__/features/gsap/utils/presets.test.ts (4 tests) 7ms
+ ✓ __tests__/features/internationalization/lib/internationalizationDefaults.test.ts (3 tests) 8ms
  ✓ __tests__/features/files/utils/fileUploader.test.ts (2 tests) 2ms
- ✓ __tests__/shared/utils/color-utils.test.ts (3 tests) 2ms
- ✓ __tests__/features/cms/validations/slug.test.ts (2 tests) 2ms
+ ✓ __tests__/shared/utils/color-utils.test.ts (3 tests) 6ms
+ ✓ __tests__/features/cms/validations/slug.test.ts (2 tests) 6ms
  ❯ __tests__/features/database/api/databases.test.ts (0 test)
  ❯ __tests__/features/products/api/generate-description.test.ts (0 test)
 
@@ -4328,15 +4183,15 @@ System event: {
  FAIL  __tests__/features/database/api/databases.test.ts [ __tests__/features/database/api/databases.test.ts ]
  FAIL  __tests__/features/products/api/generate-description.test.ts [ __tests__/features/products/api/generate-description.test.ts ]
 ReferenceError: window is not defined
- ❯ vitest.setup.ts:195:23
-    193| 
-    194| // Polyfill for window.matchMedia (GSAP needs this)
-    195| Object.defineProperty(window, "matchMedia", {
+ ❯ vitest.setup.ts:318:23
+    316| 
+    317| // Polyfill for window.matchMedia (GSAP needs this)
+    318| Object.defineProperty(window, "matchMedia", {
        |                       ^
-    196|   writable: true,
-    197|   value: vi.fn().mockImplementation((query) => ({
+    319|   writable: true,
+    320|   value: vi.fn().mockImplementation((query) => ({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/109]⎯
 
  FAIL  __tests__/features/jobs/workers/chatbotJobQueue.test.ts [ __tests__/features/jobs/workers/chatbotJobQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -4352,7 +4207,7 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:6:16
  ❯ __tests__/features/jobs/workers/chatbotJobQueue.test.ts:24:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/109]⎯
 
  FAIL  __tests__/features/jobs/workers/productAiQueue.test.ts [ __tests__/features/jobs/workers/productAiQueue.test.ts ]
 Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
@@ -4368,9 +4223,9 @@ Caused by: ReferenceError: Cannot access 'mockPollQueue' before initialization
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:7:16
  ❯ __tests__/features/jobs/workers/productAiQueue.test.ts:32:25
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/109]⎯
 
-⎯⎯⎯⎯⎯⎯ Failed Tests 138 ⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Tests 105 ⎯⎯⎯⎯⎯⎯
 
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
  FAIL  __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders the sidebar with Admin logo
@@ -4394,7 +4249,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/109]⎯
 
  FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders loading state
  FAIL  __tests__/features/admin/pages/AdminFrontManagePage.test.tsx > AdminFrontManagePage > renders initial selected option from settings
@@ -4417,7 +4272,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/109]⎯
 
  FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
 TestingLibraryElementError: Unable to find an element with the text: Total: 2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
@@ -4682,7 +4537,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 5:55:13 PM[0m
+                      [0m2/1/2026, 6:28:26 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4714,7 +4569,7 @@ Ignored nodes: comments, script, style
                     [36m<span[39m
                       [33mclass[39m=[32m"text-xs text-gray-400"[39m
                     [36m>[39m
-                      [0m2/1/2026, 5:55:13 PM[0m
+                      [0m2/1/2026, 6:28:26 PM[0m
                     [36m</span>[39m
                   [36m</div>[39m
                   [36m<span[39m
@@ -4764,183 +4619,70 @@ Ignored nodes: comments, script, style
     113|     expect(screen.getByText('Errors: 1')).toBeInTheDocument();
     114|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/109]⎯
 
  FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should list agent runs with counts
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/agentcreator/api/agent.test.ts:66:23
-     64| 
+TypeError: Cannot read properties of undefined (reading 'browserLogs')
+ ❯ __tests__/features/agentcreator/api/agent.test.ts:67:33
      65|     expect(res.status).toBe(200);
      66|     expect(data.runs).toHaveLength(1);
-       |                       ^
      67|     expect(data.runs[0]!._count.browserLogs).toBe(1);
+       |                                 ^
      68|     expect(data.runs[0]!._count.browserSnapshots).toBe(1);
+     69|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/142]⎯
-
- FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent logs for a run
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/agentcreator/api/agent.test.ts:89:23
-     87| 
-     88|     expect(res.status).toBe(200);
-     89|     expect(data.logs).toHaveLength(1);
-       |                       ^
-     90|     expect(data.logs[0]!.message).toBe("Log entry");
-     91|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/142]⎯
-
- FAIL  __tests__/features/agentcreator/api/agent.test.ts > Agent API > should return agent audit logs for a run
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/agentcreator/api/agent.test.ts:112:25
-    110| 
-    111|     expect(res.status).toBe(200);
-    112|     expect(data.audits).toHaveLength(1);
-       |                         ^
-    113|     expect(data.audits[0]!.metadata).toBeDefined();
-    114|     expect((data.audits[0]!.metadata as { step: string }).step).toBe("…
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should execute a run successfully
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:54:16
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should fail the run if graph is invalid
-TypeError: Cannot read properties of null (reading 'status')
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:75:23
-     73| 
-     74|     const updatedRun = await repo.findRunById(run.id);
-     75|     expect(updatedRun.status).toBe("failed");
-       |                       ^
-     76|     expect(updatedRun.errorMessage).toBe("Run graph is missing or inva…
-     77|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/109]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should update node records during execution
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:91:16
+AssertionError: expected 'pending' to be 'completed' // Object.is equality
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/142]⎯
+Expected: "completed"
+Received: "pending"
+
+ ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:96:29
+     94| 
+     95|     const nodes = await repo.listRunNodes(run.id);
+     96|     expect(nodes[0].status).toBe("completed");
+       |                             ^
+     97|     expect(nodes[0].outputs).toEqual({ value: "done" });
+     98|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/109]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-executor.test.ts > PathRunExecutor > should handle node errors correctly
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:113:16
+AssertionError: expected 'pending' to be 'failed' // Object.is equality
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/142]⎯
+Expected: "failed"
+Received: "pending"
 
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should create and find a run
-AssertionError: expected null not to be null
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:53:23
-     51| 
-     52|     const found = await repo.findRunById(run.id);
-     53|     expect(found).not.toBeNull();
-       |                       ^
-     54|     expect(found!.id).toBe(run.id);
-     55|     expect(found!.pathName).toBe("Test Path");
+ ❯ __tests__/features/ai-paths/services/path-run-executor.test.ts:118:29
+    116| 
+    117|     const nodes = await repo.listRunNodes(run.id);
+    118|     expect(nodes[0].status).toBe("failed");
+       |                             ^
+    119|     expect(nodes[0].errorMessage).toBe("Node failed");
+    120| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/109]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should list runs with filters
-AssertionError: expected +0 to be 3 // Object.is equality
+AssertionError: expected +0 to be 1 // Object.is equality
 
 - Expected
 + Received
 
-- 3
+- 1
 + 0
 
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:77:23
-     75| 
-     76|     const all = await repo.listRuns();
-     77|     expect(all.total).toBe(3);
-       |                       ^
+ ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:80:29
      78| 
      79|     const completed = await repo.listRuns({ status: "completed" });
+     80|     expect(completed.total).toBe(1);
+       |                             ^
+     81|     expect(completed.runs[0]!.pathId).toBe("path-1");
+     82| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should claim next queued run
-AssertionError: expected null not to be null
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:95:25
-     93|     
-     94|     const claimed = await repo.claimNextQueuedRun();
-     95|     expect(claimed).not.toBeNull();
-       |                         ^
-     96|     expect(claimed!.status).toBe("running");
-     97|     expect(claimed!.startedAt).toBeDefined();
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should claim run only if nextRetryAt is in the past or null
-AssertionError: expected null not to be null
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:114:26
-    112|     
-    113|     const claimed2 = await repo.claimNextQueuedRun();
-    114|     expect(claimed2).not.toBeNull();
-       |                          ^
-    115|     expect(claimed2!.pathId).toBe("past");
-    116|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should create and list run nodes
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:120:16
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/109]⎯
 
  FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should upsert run node
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -4959,185 +4701,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
     150|     // Wait, let's check prisma implementation of upsert for attempt.
     151|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should create and list run events
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:163:27
-    161| 
-    162|     const events = await repo.listRunEvents(run.id);
-    163|     expect(events.length).toBe(1);
-       |                           ^
-    164|     expect(events[0]!.message).toBe("Started");
-    165|     expect(events[0]!.level).toBe("info");
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-repository.test.ts > AiPathRunRepository > should mark stale running runs as failed
-AssertionError: expected +0 to be 1 // Object.is equality
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/ai-paths/services/path-run-repository.test.ts:177:26
-    175| 
-    176|     const result = await repo.markStaleRunningRuns(50000); // 50s max …
-    177|     expect(result.count).toBe(1);
-       |                          ^
-    178| 
-    179|     const updated = await repo.findRunById(run.id);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-service.test.ts > PathRunService > enqueuePathRun > should create a new run and its nodes
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ Module.enqueuePathRun src/features/ai-paths/services/path-run-service.ts:46:14
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts:38:19
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-service.test.ts > PathRunService > enqueuePathRun > should pass meta options like backoffMs to the run
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ Module.enqueuePathRun src/features/ai-paths/services/path-run-service.ts:46:14
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts:60:19
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-service.test.ts > PathRunService > resumePathRun > should reset run status to queued
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ Module.enqueuePathRun src/features/ai-paths/services/path-run-service.ts:46:14
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts:77:19
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-service.test.ts > PathRunService > cancelPathRun > should set status to canceled and mark finishedAt
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ Module.enqueuePathRun src/features/ai-paths/services/path-run-service.ts:46:14
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts:97:19
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/142]⎯
-
- FAIL  __tests__/features/ai-paths/services/path-run-service.test.ts > PathRunService > retryPathRunNode > should reset specific node and re-queue the run
-TypeError: prismaAny.aiPathRunNode.createMany is not a function
- ❯ Object.createRunNodes src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts:229:36
-    227|       attempt: 0,
-    228|     }));
-    229|     await prismaAny.aiPathRunNode!.createMany({ data });
-       |                                    ^
-    230|   },
-    231| 
- ❯ Module.enqueuePathRun src/features/ai-paths/services/path-run-service.ts:46:14
- ❯ __tests__/features/ai-paths/services/path-run-service.test.ts:114:19
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/142]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > generates a valid base32 secret
-AssertionError: expected 'ZUKOSX7ABRUMYPJ4PM623EOWTWB6FLBK' to be 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' // Object.is equality
-
-Expected: "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
-Received: "ZUKOSX7ABRUMYPJ4PM623EOWTWB6FLBK"
-
- ❯ __tests__/features/auth/services/totp.test.ts:42:20
-     40|     const secret = generateTotpSecret();
-     41|     expect(secret).toMatch(/^[A-Z2-7]{32}$/);
-     42|     expect(secret).toBe("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"); // Based …
-       |                    ^
-     43|   });
-     44| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/142]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
-AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
-
-Expected: "mockhash"
-Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
-
- ❯ __tests__/features/auth/services/totp.test.ts:65:19
-     63|     const hash2 = hashRecoveryCode("abcd1234efgh");
-     64|     expect(hash1).toBe(hash2);
-     65|     expect(hash1).toBe("mockhash");
-       |                   ^
-     66|   });
-     67| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/142]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ __tests__/features/auth/services/totp.test.ts:95:51
-     93|       // Since HMAC is mocked to produce a predictable output that res…
-     94|       const validToken = "000000"; 
-     95|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-     96|       vi.useRealTimers();
-     97|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/142]⎯
-
- FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ __tests__/features/auth/services/totp.test.ts:105:51
-    103| 
-    104|       const validToken = "000000"; // Assuming the same HMAC mock
-    105|       expect(verifyTotpToken(secret, validToken)).toBe(true);
-       |                                                   ^
-    106|       vi.useRealTimers();
-    107|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/109]⎯
 
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > renders correctly
  FAIL  __tests__/features/auth/pages/register-page.test.tsx > RegisterPage > handles successful registration and signs in
@@ -5161,7 +4725,7 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/109]⎯
 
  FAIL  __tests__/features/auth/pages/signin-page.test.tsx > SignInPage > renders correctly
  FAIL  __tests__/features/auth/pages/signin-page.test.tsx > SignInPage > handles successful sign in
@@ -5186,126 +4750,120 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/109]⎯
 
- FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > GET /api/cms/pages > should return all pages
-AssertionError: expected +0 to be 2 // Object.is equality
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > generates a valid base32 secret
+AssertionError: expected 'HORHCDNKDIK47D7IZFVDXPV2GH7ZJUS5' to be 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ' // Object.is equality
+
+Expected: "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+Received: "HORHCDNKDIK47D7IZFVDXPV2GH7ZJUS5"
+
+ ❯ __tests__/features/auth/services/totp.test.ts:42:20
+     40|     const secret = generateTotpSecret();
+     41|     expect(secret).toMatch(/^[A-Z2-7]{32}$/);
+     42|     expect(secret).toBe("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"); // Based …
+       |                    ^
+     43|   });
+     44| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/109]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > hashes recovery codes consistently
+AssertionError: expected '72d21fed44fcb4ca886526fe3d1da2fa41976…' to be 'mockhash' // Object.is equality
+
+Expected: "mockhash"
+Received: "72d21fed44fcb4ca886526fe3d1da2fa41976d9a6284b36036f089955dc650fd"
+
+ ❯ __tests__/features/auth/services/totp.test.ts:65:19
+     63|     const hash2 = hashRecoveryCode("abcd1234efgh");
+     64|     expect(hash1).toBe(hash2);
+     65|     expect(hash1).toBe("mockhash");
+       |                   ^
+     66|   });
+     67| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/109]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token for the current time window
+AssertionError: expected false to be true // Object.is equality
 
 - Expected
 + Received
 
-- 2
-+ 0
+- true
++ false
 
- ❯ __tests__/features/cms/api/cms-pages.test.ts:45:27
-     43|       const data = await res.json() as Page[];
-     44|       expect(res.status).toBe(200);
-     45|       expect(data.length).toBe(2);
-       |                           ^
-     46|       expect(data.map(p => p.name)).toContain("Page 1");
-     47|       expect(data.map(p => p.name)).toContain("Page 2");
+ ❯ __tests__/features/auth/services/totp.test.ts:95:51
+     93|       // Since HMAC is mocked to produce a predictable output that res…
+     94|       const validToken = "000000"; 
+     95|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+     96|       vi.useRealTimers();
+     97|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/109]⎯
+
+ FAIL  __tests__/features/auth/services/totp.test.ts > TOTP Service > verifyTotpToken > verifies a valid token within the window
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ __tests__/features/auth/services/totp.test.ts:105:51
+    103| 
+    104|       const validToken = "000000"; // Assuming the same HMAC mock
+    105|       expect(verifyTotpToken(secret, validToken)).toBe(true);
+       |                                                   ^
+    106|       vi.useRealTimers();
+    107|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/109]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should create a new page with slugs
-TypeError: Cannot read properties of null (reading 'slugs')
- ❯ __tests__/features/cms/api/cms-pages.test.ts:98:24
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ __tests__/features/cms/api/cms-pages.test.ts:98:30
      96|       // Verify page in repository has slugs
      97|       const savedPage = await cmsRepository.getPageById(data.id);
      98|       expect(savedPage.slugs.length).toBe(2);
-       |                        ^
+       |                              ^
      99|     });
     100| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/142]⎯
-
- FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > POST /api/cms/pages > should create a new page with a theme
-TypeError: Cannot read properties of null (reading 'themeId')
- ❯ __tests__/features/cms/api/cms-pages.test.ts:125:24
-    123|       // Verify page in repository has the theme
-    124|       const savedPage = await cmsRepository.getPageById(data.id);
-    125|       expect(savedPage.themeId).toBe(theme.id);
-       |                        ^
-    126|     });
-    127| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/142]⎯
-
- FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > GET /api/cms/pages/[id] > should return a page by ID
-AssertionError: expected 404 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 404
-
- ❯ __tests__/features/cms/api/cms-pages.test.ts:146:26
-    144|       const data = await res.json() as Page;
-    145| 
-    146|       expect(res.status).toBe(200);
-       |                          ^
-    147|       expect(data.id).toBe(page.id);
-    148|       expect(data.name).toBe("Single Page");
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/109]⎯
 
  FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should update page basic info, components and theme
-AssertionError: expected 500 to be 200 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ __tests__/features/cms/api/cms-pages.test.ts:197:37
+    195|       // Verify in repository
+    196|       const updatedPage = await cmsRepository.getPageById(page.id);
+    197|       expect(updatedPage.components.length).toBe(2);
+       |                                     ^
+    198|       expect(updatedPage.slugs.length).toBe(1);
+    199|       expect(updatedPage.slugs[0].slug.slug).toBe("updated-slug");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/109]⎯
+
+ FAIL  __tests__/features/cms/api/cms-pages.test.ts > CMS Pages API > PUT /api/cms/pages/[id] > should return 404 when updating non-existent page
+AssertionError: expected 500 to be 404 // Object.is equality
 
 - Expected
 + Received
 
-- 200
+- 404
 + 500
 
- ❯ __tests__/features/cms/api/cms-pages.test.ts:190:26
-    188|       const data = await res.json() as Page;
-    189| 
-    190|       expect(res.status).toBe(200);
+ ❯ __tests__/features/cms/api/cms-pages.test.ts:214:26
+    212| 
+    213|       const res = await PUT_page(req, { params: Promise.resolve({ id: …
+    214|       expect(res.status).toBe(404);
        |                          ^
-    191|       expect(data.name).toBe("Updated Name");
-    192|       expect(data.status).toBe("published");
+    215|     });
+    216|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/142]⎯
-
- FAIL  __tests__/features/cms/api/cms.test.ts > CMS API > should fetch all slugs
-AssertionError: expected +0 to be 2 // Object.is equality
-
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/cms/api/cms.test.ts:56:25
-     54| 
-     55|     expect(res.status).toBe(200);
-     56|     expect(data.length).toBe(2);
-       |                         ^
-     57|   });
-     58| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/142]⎯
-
- FAIL  __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx > useCmsDomainSelection Hook > should disable zoning if setting is false
-AssertionError: expected true to be false // Object.is equality
-
-- Expected
-+ Received
-
-- false
-+ true
-
- ❯ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx:123:42
-    121|     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    122|     
-    123|     expect(result.current.zoningEnabled).toBe(false);
-       |                                          ^
-    124|     expect(result.current.activeDomainId).toBeNull();
-    125|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/109]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should render when open
 TestingLibraryElementError: Unable to find an element by: [data-testid="file-manager"]
@@ -5418,7 +4976,7 @@ Ignored nodes: comments, script, style
      59|   });
      60| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/109]⎯
 
  FAIL  __tests__/features/cms/components/MediaLibraryPanel.test.tsx > MediaLibraryPanel Component > should call onSelect when a file is selected
 TestingLibraryElementError: Unable to find an element by: [data-testid="select-file-btn"]
@@ -5531,7 +5089,7 @@ Ignored nodes: comments, script, style
      85|     fireEvent.click(selectBtn);
      86| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/109]⎯
 
  FAIL  __tests__/features/cms/components/PageBuilderLayout.test.tsx > PageBuilderLayout Component > should render all panels by default
  FAIL  __tests__/features/cms/components/PageBuilderLayout.test.tsx > PageBuilderLayout Component > should toggle left panel
@@ -5556,7 +5114,26 @@ Error: useAdminLayout must be used within an AdminLayoutProvider
  ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
  ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/109]⎯
+
+ FAIL  __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx > useCmsDomainSelection Hook > should disable zoning if setting is false
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx:123:42
+    121|     await waitFor(() => expect(result.current.isLoading).toBe(false));
+    122|     
+    123|     expect(result.current.zoningEnabled).toBe(false);
+       |                                          ^
+    124|     expect(result.current.activeDomainId).toBeNull();
+    125|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/109]⎯
 
  FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should render the form with initial state
  FAIL  __tests__/features/drafter/components/DraftCreator.test.tsx > DraftCreator Component > should update name input correctly
@@ -5581,76 +5158,26 @@ Error: No QueryClient set, use QueryClientProvider to set one
  ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
  ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/142]⎯
-
- FAIL  __tests__/features/drafter/services/draft-repository.test.ts > DraftRepository (Prisma) > should create and retrieve a draft
-AssertionError: expected null not to be null
- ❯ __tests__/features/drafter/services/draft-repository.test.ts:30:27
-     28| 
-     29|     const retrieved = await getDraft(created.id);
-     30|     expect(retrieved).not.toBeNull();
-       |                           ^
-     31|     expect(retrieved?.name).toBe("Test Draft");
-     32|     expect(retrieved?.price).toBe(1000);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/142]⎯
-
- FAIL  __tests__/features/drafter/services/draft-repository.test.ts > DraftRepository (Prisma) > should list all drafts ordered by createdAt desc
-AssertionError: expected +0 to be 2 // Object.is equality
-
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/drafter/services/draft-repository.test.ts:41:27
-     39| 
-     40|     const drafts = await listDrafts();
-     41|     expect(drafts.length).toBe(2);
-       |                           ^
-     42|     expect(drafts[0]!.name).toBe("Draft 2");
-     43|     expect(drafts[1]!.name).toBe("Draft 1");
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/142]⎯
-
- FAIL  __tests__/features/drafter/services/draft-repository.test.ts > DraftRepository (Prisma) > should update a draft
-AssertionError: expected undefined to be 'Updated Name' // Object.is equality
-
-- Expected: 
-"Updated Name"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/drafter/services/draft-repository.test.ts:54:29
-     52| 
-     53|     const retrieved = await getDraft(draft.id);
-     54|     expect(retrieved?.name).toBe("Updated Name");
-       |                             ^
-     55|   });
-     56| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/109]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should return all files
-AssertionError: expected +0 to be 2 // Object.is equality
+AssertionError: expected 500 to be 200 // Object.is equality
 
 - Expected
 + Received
 
-- 2
-+ 0
+- 200
++ 500
 
- ❯ __tests__/features/files/api/files.test.ts:71:28
+ ❯ __tests__/features/files/api/files.test.ts:70:26
+     68|       const res = await GET(new NextRequest("http://localhost/api/file…
      69|       const files = (await res.json()) as ImageFile[];
      70|       expect(res.status).toBe(200);
+       |                          ^
      71|       expect(files.length).toBe(2);
-       |                            ^
      72|     });
-     73| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/109]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by filename
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -5669,7 +5196,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
      81|       expect(files[0]!.filename).toBe("test-image1.jpg");
      82|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/109]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product ID
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -5688,7 +5215,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
      91|       expect(files[0]!.filename).toBe("test-image1.jpg");
      92|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/109]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > GET /api/files > should filter files by product name
 AssertionError: expected +0 to be 1 // Object.is equality
@@ -5707,7 +5234,7 @@ AssertionError: expected +0 to be 1 // Object.is equality
     101|       expect(files[0]!.filename).toBe("test-image1.jpg");
     102|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/109]⎯
 
  FAIL  __tests__/features/files/api/files.test.ts > Files API > DELETE /api/files/[id] > should delete a file
 AssertionError: expected 404 to be 204 // Object.is equality
@@ -5726,7 +5253,7 @@ AssertionError: expected 404 to be 204 // Object.is equality
     111| 
     112|       const deletedFile = await prisma.imageFile.findUnique({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/109]⎯
 
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should create and list export templates
  FAIL  __tests__/features/integrations/services/export-template-repository.test.ts > ExportTemplateRepository > should filter out forbidden basehost mappings
@@ -5742,28 +5269,28 @@ TypeError: Cannot read properties of undefined (reading 'deleteMany')
      17|       where: {
      18|         key: {
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/109]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should seed default countries, currencies, and languages on first call
-AssertionError: expected 0 to be greater than 0
- ❯ __tests__/features/internationalization/api/countries.test.ts:37:34
-     35|       // Verify seeding
-     36|       const dbCountries = await prisma.country.findMany();
-     37|       expect(dbCountries.length).toBeGreaterThan(0);
-       |                                  ^
-     38|       
-     39|       const dbCurrencies = await prisma.currency.findMany();
+TypeError: Cannot read properties of undefined (reading 'length')
+ ❯ __tests__/features/internationalization/api/countries.test.ts:51:28
+     49|       }
+     50|       expect(pl.name).toBe("Poland");
+     51|       expect(pl.currencies.length).toBeGreaterThan(0);
+       |                            ^
+     52|       expect(pl.currencies[0]!.currency.code).toBe("PLN");
+     53|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/109]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > GET /api/countries > should return existing countries without duplicating on subsequent calls
-AssertionError: expected 4 to deeply equal +0
+AssertionError: expected 8 to deeply equal 4
 
 - Expected
 + Received
 
-- 0
-+ 4
+- 4
++ 8
 
  ❯ __tests__/features/internationalization/api/countries.test.ts:66:32
      64| 
@@ -5773,7 +5300,7 @@ AssertionError: expected 4 to deeply equal +0
      67|       expect(secondCount).toEqual(initialCount);
      68|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/109]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > POST /api/countries > should create a country with currencies
 AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
@@ -5785,53 +5312,22 @@ AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have proper
     118|       expect(country.currencies[0]!.currencyId).toBe(currency.id);
     119|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/109]⎯
 
  FAIL  __tests__/features/internationalization/api/countries.test.ts > Countries API > PUT /api/countries/[id] > should update country currencies
-AssertionError: expected 500 to deeply equal 200
-
-- Expected
-+ Received
-
-- 200
-+ 500
-
- ❯ __tests__/features/internationalization/api/countries.test.ts:158:26
-    156|       const updated = (await res.json()) as CountryResponse;
+AssertionError: Target cannot be null or undefined.
+ ❯ __tests__/features/internationalization/api/countries.test.ts:159:34
     157| 
     158|       expect(res.status).toEqual(200);
-       |                          ^
     159|       expect(updated.currencies).toHaveLength(1);
-    160|       expect(updated.currencies[0]!.currencyId).toBe(currency.id);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/142]⎯
-
- FAIL  __tests__/features/internationalization/api/currencies.test.ts > Currencies API > GET /api/currencies > should seed default currencies on first call
-AssertionError: expected 0 to be greater than 0
- ❯ __tests__/features/internationalization/api/currencies.test.ts:31:35
-     29| 
-     30|       const dbCurrencies = await prisma.currency.findMany();
-     31|       expect(dbCurrencies.length).toBeGreaterThan(0);
-       |                                   ^
-     32| 
-     33|       const usd = currencies.find((c: CurrencyResponse) => c.code === …
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/142]⎯
-
- FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > GET /api/languages > should seed default languages on first call
-AssertionError: expected 0 to be greater than 0
- ❯ __tests__/features/internationalization/api/languages.test.ts:34:34
-     32| 
-     33|       const dbLanguages = await prisma.language.findMany();
-     34|       expect(dbLanguages.length).toBeGreaterThan(0);
        |                                  ^
-     35| 
-     36|       const en = languages.find((l: LanguageResponse) => l.code === "E…
+    160|       expect(updated.currencies[0]!.currencyId).toBe(currency.id);
+    161|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/109]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > POST /api/languages > should create a language with country assignments
-AssertionError: Target cannot be null or undefined.
+AssertionError: expected { createMany: { data: [ { …(1) } ] } } to have property 'length'
  ❯ __tests__/features/internationalization/api/languages.test.ts:87:36
      85| 
      86|         expect(res.status).toEqual(200);
@@ -5840,47 +5336,40 @@ AssertionError: Target cannot be null or undefined.
      88|         expect(language.countries![0]!.countryId).toBe(country.id);
      89|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/109]⎯
 
  FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > PUT /api/languages/[id] > should update language fields and countries
-AssertionError: expected 404 to deeply equal 200
-
-- Expected
-+ Received
-
-- 200
-+ 404
-
- ❯ __tests__/features/internationalization/api/languages.test.ts:128:26
-    126|       const updated = (await res.json()) as LanguageResponse;
-    127| 
+AssertionError: Target cannot be null or undefined.
+ ❯ __tests__/features/internationalization/api/languages.test.ts:130:33
     128|       expect(res.status).toEqual(200);
-       |                          ^
     129|       expect(updated.name).toBe("Polish Updated");
     130|       expect(updated.countries).toHaveLength(1);
+       |                                 ^
+    131|       expect(updated.countries![0]!.countryId).toBe(country.id);
+    132|     });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/109]⎯
 
- FAIL  __tests__/features/internationalization/api/languages.test.ts > Languages API > DELETE /api/languages/[id] > should delete language and remove assignments
-AssertionError: expected 404 to deeply equal 204
+ FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > lists categories
+AssertionError: expected [] to have a length of 2 but got +0
 
 - Expected
 + Received
 
-- 204
-+ 404
+- 2
++ 0
 
- ❯ __tests__/features/internationalization/api/languages.test.ts:158:26
-    156|       });
-    157| 
-    158|       expect(res.status).toEqual(204);
-       |                          ^
-    159|       const remainingLanguage = await prisma.language.findUnique({
-    160|         where: { id: language.id },
+ ❯ __tests__/features/notesapp/api/categories.test.ts:53:24
+     51| 
+     52|     expect(res.status).toBe(200);
+     53|     expect(categories).toHaveLength(2);
+       |                        ^
+     54|   });
+     55| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/109]⎯
 
- FAIL  __tests__/features/internationalization/api/price-groups.test.ts > Price Groups API > GET /api/price-groups > should return created price groups
+ FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > returns a hierarchical category tree
 AssertionError: expected [] to have a length of 1 but got +0
 
 - Expected
@@ -5889,15 +5378,153 @@ AssertionError: expected [] to have a length of 1 but got +0
 - 1
 + 0
 
- ❯ __tests__/features/internationalization/api/price-groups.test.ts:51:22
-     49|       const groups = (await res.json()) as PriceGroupResponse[];
-     50|       expect(res.status).toEqual(200);
-     51|       expect(groups).toHaveLength(1);
-       |                      ^
-     52|       expect(groups[0]!.groupId).toBe("PG1");
-     53|     });
+ ❯ __tests__/features/notesapp/api/categories.test.ts:110:18
+    108| 
+    109|     expect(res.status).toBe(200);
+    110|     expect(tree).toHaveLength(1);
+       |                  ^
+    111|     expect(tree[0]!.children).toHaveLength(1);
+    112|     expect(tree[0]!.children[0]!.notes).toHaveLength(1);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > deletes categories recursively with notes
+AssertionError: expected [ { …(6) }, { …(6) } ] to have a length of +0 but got 2
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ __tests__/features/notesapp/api/categories.test.ts:133:28
+    131|     const remainingNotes = await prisma.note.findMany({});
+    132|     expect(remainingCategories).toHaveLength(0);
+    133|     expect(remainingNotes).toHaveLength(0);
+       |                            ^
+    134|   });
+    135| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > returns notes with relations
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts:87:19
+     85| 
+     86|     expect(res.status).toBe(200);
+     87|     expect(notes).toHaveLength(1);
+       |                   ^
+     88|     expect(notes[0]!.tags[0]!.tag.name).toBe("Work");
+     89|     expect(notes[0]!.categories[0]!.category.name).toBe("Projects");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by search scope and flags
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts:104:19
+    102| 
+    103|     expect(res.status).toBe(200);
+    104|     expect(notes).toHaveLength(1);
+       |                   ^
+    105|     expect(notes[0]!.title).toBe("Alpha");
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by tags and categories
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts:127:19
+    125| 
+    126|     expect(res.status).toBe(200);
+    127|     expect(notes).toHaveLength(1);
+       |                   ^
+    128|     expect(notes[0]!.title).toBe("With relations");
+    129|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > creates a note with tags and categories
+TypeError: Cannot read properties of undefined (reading 'tag')
+ ❯ __tests__/features/notesapp/api/notes.test.ts:150:26
+    148| 
+    149|     expect(res.status).toBe(201);
+    150|     expect(note.tags[0]!.tag.name).toBe("Personal");
+       |                          ^
+    151|     expect(note.categories[0]!.category.name).toBe("Home");
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > fetches a note by id and returns 404 when missing
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts:174:24
+    172|     const data = (await res.json()) as { id: string };
+    173| 
+    174|     expect(res.status).toBe(200);
+       |                        ^
+    175|     expect(data.id).toBe(note.id);
+    176| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > updates a note with new relations
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ __tests__/features/notesapp/api/notes.test.ts:214:24
+    212|     const data = (await res.json()) as NoteWithRelations;
+    213| 
+    214|     expect(res.status).toBe(200);
+       |                        ^
+    215|     expect(data.title).toBe("Updated");
+    216|     expect(data.tags[0]!.tag.id).toBe(tag2.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/109]⎯
+
+ FAIL  __tests__/features/notesapp/api/tags.test.ts > Notes Tags API > lists tags ordered by name
+TypeError: Cannot read properties of undefined (reading 'name')
+ ❯ __tests__/features/notesapp/api/tags.test.ts:35:21
+     33| 
+     34|     expect(res.status).toBe(200);
+     35|     expect(tags[0]!.name).toBe("Alpha");
+       |                     ^
+     36|     expect(tags[1]!.name).toBe("Beta");
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/109]⎯
 
  FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > retries on failure if attempts remaining
 TypeError: getPathRunRepository(...).updateRun is not a function
@@ -5910,7 +5537,7 @@ TypeError: getPathRunRepository(...).updateRun is not a function
      65|         retryCount,
  ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:66:7
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/109]⎯
 
  FAIL  __tests__/features/jobs/workers/aiPathRunQueue.test.ts > AI Path Run Queue Worker > processRun > moves to dead-letter on max retries
 TypeError: getPathRunRepository(...).updateRun is not a function
@@ -5923,7 +5550,7 @@ TypeError: getPathRunRepository(...).updateRun is not a function
      80|         retryCount,
  ❯ __tests__/features/jobs/workers/aiPathRunQueue.test.ts:84:7
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/109]⎯
 
  FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > CRUD Operations > creates a note in the default notebook
  FAIL  __tests__/features/notesapp/services/note-service.test.ts > NoteService > CRUD Operations > retrieves notes with filters and populated relations
@@ -5945,7 +5572,7 @@ TypeError: Cannot read properties of undefined (reading 'deleteMany')
      16|     await prisma.noteTag.deleteMany({});
      17|     await prisma.noteCategory.deleteMany({});
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/109]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs an Error object
 AssertionError: expected "spy" to be called with arguments: [ …(2) ]
@@ -5964,7 +5591,7 @@ Number of calls: 0
      31|       '[test-service] Test exception',
      32|       expect.objectContaining({
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/109]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > captures and logs a string error
 AssertionError: expected "spy" to be called with arguments: [ '[ui] Something went wrong', …(1) ]
@@ -5983,7 +5610,7 @@ Number of calls: 0
      43|       '[ui] Something went wrong',
      44|       expect.objectContaining({ service: 'ui' })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/109]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs warnings and optionally to agent audit
 AssertionError: expected "spy" to be called with arguments: [ '[disk] Low disk space', …(1) ]
@@ -6002,7 +5629,7 @@ Number of calls: 0
      68| 
      69|     const agentContext = { service: 'agent', runId: 'run-123' };
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/109]⎯
 
  FAIL  __tests__/features/observability/services/ErrorSystem.test.ts > ErrorSystem > logs info messages
 AssertionError: expected "spy" to be called with arguments: [ '[unknown] User logged in', …(1) ]
@@ -6021,129 +5648,10 @@ Number of calls: 0
      77|   });
      78| });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/109]⎯
 
- FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > lists categories
-TypeError: default.category.createMany is not a function
- ❯ __tests__/features/notesapp/api/categories.test.ts:43:27
-     41| 
-     42|   it("lists categories", async () => {
-     43|     await prisma.category.createMany({
-       |                           ^
-     44|       data: [{ name: "Work" }, { name: "Home" }],
-     45|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/142]⎯
-
- FAIL  __tests__/features/notesapp/api/categories.test.ts > Notes Categories API > returns a hierarchical category tree
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/notesapp/api/categories.test.ts:110:18
-    108| 
-    109|     expect(res.status).toBe(200);
-    110|     expect(tree).toHaveLength(1);
-       |                  ^
-    111|     expect(tree[0]!.children).toHaveLength(1);
-    112|     expect(tree[0]!.children[0]!.notes).toHaveLength(1);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > returns notes with relations
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/notesapp/api/notes.test.ts:87:19
-     85| 
-     86|     expect(res.status).toBe(200);
-     87|     expect(notes).toHaveLength(1);
-       |                   ^
-     88|     expect(notes[0]!.tags[0]!.tag.name).toBe("Work");
-     89|     expect(notes[0]!.categories[0]!.category.name).toBe("Projects");
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by search scope and flags
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/notesapp/api/notes.test.ts:104:19
-    102| 
-    103|     expect(res.status).toBe(200);
-    104|     expect(notes).toHaveLength(1);
-       |                   ^
-    105|     expect(notes[0]!.title).toBe("Alpha");
-    106|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > filters notes by tags and categories
-AssertionError: expected [] to have a length of 1 but got +0
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/notesapp/api/notes.test.ts:127:19
-    125| 
-    126|     expect(res.status).toBe(200);
-    127|     expect(notes).toHaveLength(1);
-       |                   ^
-    128|     expect(notes[0]!.title).toBe("With relations");
-    129|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > creates a note with tags and categories
-TypeError: Cannot read properties of undefined (reading 'tag')
- ❯ __tests__/features/notesapp/api/notes.test.ts:150:26
-    148| 
-    149|     expect(res.status).toBe(201);
-    150|     expect(note.tags[0]!.tag.name).toBe("Personal");
-       |                          ^
-    151|     expect(note.categories[0]!.category.name).toBe("Home");
-    152|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > fetches a note by id and returns 404 when missing
-AssertionError: expected 404 to be 200 // Object.is equality
-
-- Expected
-+ Received
-
-- 200
-+ 404
-
- ❯ __tests__/features/notesapp/api/notes.test.ts:174:24
-    172|     const data = (await res.json()) as { id: string };
-    173| 
-    174|     expect(res.status).toBe(200);
-       |                        ^
-    175|     expect(data.id).toBe(note.id);
-    176| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/142]⎯
-
- FAIL  __tests__/features/notesapp/api/notes.test.ts > Notes API > updates a note with new relations
-AssertionError: expected 500 to be 200 // Object.is equality
+ FAIL  __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return a limited number of products based on pageSize
+AssertionError: expected 500 to deeply equal 200
 
 - Expected
 + Received
@@ -6151,93 +5659,24 @@ AssertionError: expected 500 to be 200 // Object.is equality
 - 200
 + 500
 
- ❯ __tests__/features/notesapp/api/notes.test.ts:214:24
-    212|     const data = (await res.json()) as NoteWithRelations;
-    213| 
-    214|     expect(res.status).toBe(200);
-       |                        ^
-    215|     expect(data.title).toBe("Updated");
-    216|     expect(data.tags[0]!.tag.id).toBe(tag2.id);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/142]⎯
-
- FAIL  __tests__/features/notesapp/api/tags.test.ts > Notes Tags API > lists tags ordered by name
-TypeError: default.tag.createMany is not a function
- ❯ __tests__/features/notesapp/api/tags.test.ts:25:22
-     23| 
-     24|   it("lists tags ordered by name", async () => {
-     25|     await prisma.tag.createMany({
-       |                      ^
-     26|       data: [{ name: "Beta" }, { name: "Alpha" }],
-     27|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/142]⎯
-
- FAIL  __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products/count > should return the total count of products
-AssertionError: expected +0 to deeply equal 3
-
-- Expected
-+ Received
-
-- 3
-+ 0
-
- ❯ __tests__/features/products/api/pagination.test.ts:29:26
-     27| 
-     28|       expect(res.status).toEqual(200);
-     29|       expect(data.count).toEqual(3);
-       |                          ^
-     30|     });
-     31| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/142]⎯
-
- FAIL  __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products/count > should return the filtered count of products
-AssertionError: expected +0 to deeply equal 1
-
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/products/api/pagination.test.ts:40:26
-     38| 
-     39|       expect(res.status).toEqual(200);
-     40|       expect(data.count).toEqual(1);
-       |                          ^
-     41|     });
-     42|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/142]⎯
-
- FAIL  __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return a limited number of products based on pageSize
-AssertionError: expected +0 to deeply equal 2
-
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/products/api/pagination.test.ts:54:31
+ ❯ __tests__/features/products/api/pagination.test.ts:53:26
+     51|       const products = (await res.json()) as Product[];
      52| 
      53|       expect(res.status).toEqual(200);
+       |                          ^
      54|       expect(products.length).toEqual(2);
-       |                               ^
      55|     });
-     56| 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/109]⎯
 
  FAIL  __tests__/features/products/api/pagination.test.ts > Products API - Pagination and Count > GET /api/products - Server-side Pagination > should return the correct page of products
-AssertionError: expected +0 to deeply equal 2
+AssertionError: expected undefined to deeply equal 2
 
-- Expected
-+ Received
+- Expected: 
+2
 
-- 2
-+ 0
++ Received: 
+undefined
 
  ❯ __tests__/features/products/api/pagination.test.ts:71:28
      69|       const page2 = (await res2.json()) as Product[];
@@ -6247,7 +5686,7 @@ AssertionError: expected +0 to deeply equal 2
      72|       expect(page2.length).toEqual(2);
      73|       expect(page1[0]!.id).not.toEqual(page2[0]!.id);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/109]⎯
 
  FAIL  __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > renders the form with product data in the General tab
 TestingLibraryElementError: Unable to find role="textbox" and name `/English Name/i`
@@ -6479,7 +5918,7 @@ Ignored nodes: comments, script, style
      81|     expect(nameInput).toHaveValue("Test Product");
      82|     
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/109]⎯
 
  FAIL  __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > renders the price in the Other tab
 TestingLibraryElementError: Unable to find a label with the text of: /Base Price/i
@@ -6711,220 +6150,154 @@ Ignored nodes: comments, script, style
      99|     expect(priceInput).toHaveValue(100);
     100|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/109]⎯
 
  FAIL  __tests__/features/products/services/prismaProductRepository.test.ts > prismaProductRepository > should create and retrieve a product
-AssertionError: expected undefined to be 'Test Repository Product' // Object.is equality
-
-- Expected: 
-"Test Repository Product"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/prismaProductRepository.test.ts:28:28
-     26|     const found = await prismaProductRepository.getProductById(created…
-     27|     expect(found).toBeDefined();
-     28|     expect(found?.name_en).toBe("Test Repository Product");
-       |                            ^
-     29|   });
-     30| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/142]⎯
-
- FAIL  __tests__/features/products/services/prismaProductRepository.test.ts > prismaProductRepository > should handle SKU conflicts
-AssertionError: promise resolved "{ …(26) }" instead of rejecting
-
-- Expected
-+ Received
-
-- [Error: rejected promise]
-+ Object {
-+   "asin": null,
-+   "baseProductId": null,
-+   "createdAt": 2026-02-01T16:56:02.389Z,
-+   "defaultPriceGroupId": null,
-+   "description_de": null,
-+   "description_en": null,
-+   "description_pl": null,
-+   "ean": null,
-+   "gtin": null,
-+   "id": "mock-product-1769964962389",
-+   "imageLinks": Array [],
-+   "length": null,
-+   "name_de": null,
-+   "name_en": "Product 1",
-+   "name_pl": null,
-+   "parameters": Array [],
-+   "price": null,
-+   "priceComment": null,
-+   "sizeLength": null,
-+   "sizeWidth": null,
-+   "sku": "CONFLICT-SKU",
-+   "stock": null,
-+   "supplierLink": null,
-+   "supplierName": null,
-+   "updatedAt": 2026-02-01T16:56:02.389Z,
-+   "weight": null,
-+ }
-
- ❯ __tests__/features/products/services/prismaProductRepository.test.ts:38:61
-     36|     await prismaProductRepository.createProduct(data);
-     37| 
-     38|     await expect(prismaProductRepository.createProduct(data)).rejects.…
-       |                                                             ^
-     39|   });
-     40| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/142]⎯
-
- FAIL  __tests__/features/products/services/prismaProductRepository.test.ts > prismaProductRepository > should update a product
-AssertionError: expected undefined to be 'Updated' // Object.is equality
-
-- Expected: 
-"Updated"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/prismaProductRepository.test.ts:45:30
-     43|     const updated = await prismaProductRepository.updateProduct(create…
-     44|     
-     45|     expect(updated?.name_en).toBe("Updated");
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ Object.getProductById src/features/products/services/product-repository/prisma-product-repository.ts:275:30
+    273|     return {
+    274|       ...toProductRecord(product),
+    275|       images: product.images.map((image: typeof product.images[number]…
        |                              ^
-     46|   });
-     47| 
+    276|         productId: image.productId,
+    277|         imageFileId: image.imageFileId,
+ ❯ __tests__/features/products/services/prismaProductRepository.test.ts:26:19
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/109]⎯
 
  FAIL  __tests__/features/products/services/prismaProductRepository.test.ts > prismaProductRepository > should find products with filters
-AssertionError: expected +0 to be 1 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+    229|     return products.map((product: typeof products[number]) => ({
+    230|       ...toProductRecord(product),
+    231|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    232|         productId: image.productId,
+    233|         imageFileId: image.imageFileId,
+ ❯ Object.getProducts src/features/products/services/product-repository/prisma-product-repository.ts:229:21
+ ❯ __tests__/features/products/services/prismaProductRepository.test.ts:60:19
 
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/products/services/prismaProductRepository.test.ts:61:26
-     59|     
-     60|     const apple = await prismaProductRepository.getProducts({ search: …
-     61|     expect(apple.length).toBe(1);
-       |                          ^
-     62|     expect(apple[0]?.name_en).toBe("Apple");
-     63| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/109]⎯
 
  FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > prisma-to-mongo > should process a batch of products and call bulkWrite
-AssertionError: expected +0 to be 2 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ buildProductDocument src/features/products/services/product-migration.ts:183:26
+    181|   createdAt: product.createdAt,
+    182|   updatedAt: product.updatedAt,
+    183|   images: product.images.map((image: ProductInput["images"][number]) =…
+       |                          ^
+    184|     productId: image.productId,
+    185|     imageFileId: image.imageFileId,
+ ❯ Module.migrateProductBatch src/features/products/services/product-migration.ts:233:27
+ ❯ __tests__/features/products/services/productMigration.test.ts:42:22
 
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/products/services/productMigration.test.ts:47:40
-     45|       });
-     46| 
-     47|       expect(result.productsProcessed).toBe(2);
-       |                                        ^
-     48|       expect(result.productsUpserted).toBe(2);
-     49|       expect(mockMongoCollection.bulkWrite).toHaveBeenCalled();
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/109]⎯
 
  FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > prisma-to-mongo > should respect batchSize and cursor
-AssertionError: expected +0 to be 1 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ buildProductDocument src/features/products/services/product-migration.ts:183:26
+    181|   createdAt: product.createdAt,
+    182|   updatedAt: product.updatedAt,
+    183|   images: product.images.map((image: ProductInput["images"][number]) =…
+       |                          ^
+    184|     productId: image.productId,
+    185|     imageFileId: image.imageFileId,
+ ❯ Module.migrateProductBatch src/features/products/services/product-migration.ts:233:27
+ ❯ __tests__/features/products/services/productMigration.test.ts:62:22
 
-- Expected
-+ Received
-
-- 1
-+ 0
-
- ❯ __tests__/features/products/services/productMigration.test.ts:67:40
-     65|       });
-     66| 
-     67|       expect(result.productsProcessed).toBe(1);
-       |                                        ^
-     68|       expect(result.nextCursor).toBeDefined();
-     69|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/109]⎯
 
  FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > prisma-to-mongo > should not call bulkWrite in dryRun mode
-AssertionError: expected 0 to be greater than or equal to 1
- ❯ __tests__/features/products/services/productMigration.test.ts:81:40
-     79|       // If other tests are running in parallel, this might be > 1
-     80|       // So we check >= 1
-     81|       expect(result.productsProcessed).toBeGreaterThanOrEqual(1);
-       |                                        ^
-     82|       expect(result.productsUpserted).toBe(0);
-     83|       expect(mockMongoCollection.bulkWrite).not.toHaveBeenCalled();
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ buildProductDocument src/features/products/services/product-migration.ts:183:26
+    181|   createdAt: product.createdAt,
+    182|   updatedAt: product.updatedAt,
+    183|   images: product.images.map((image: ProductInput["images"][number]) =…
+       |                          ^
+    184|     productId: image.productId,
+    185|     imageFileId: image.imageFileId,
+ ❯ Module.migrateProductBatch src/features/products/services/product-migration.ts:233:27
+ ❯ __tests__/features/products/services/productMigration.test.ts:74:22
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/142]⎯
-
- FAIL  __tests__/features/products/services/productMigration.test.ts > productMigration > mongo-to-prisma > should upsert products into Prisma from Mongo docs
-AssertionError: expected undefined to be 'MONGO-SKU-1' // Object.is equality
-
-- Expected: 
-"MONGO-SKU-1"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productMigration.test.ts:112:30
-    110|       const dbProduct = await prisma.product.findUnique({ where: { id:…
-    111|       expect(dbProduct).toBeDefined();
-    112|       expect(dbProduct?.sku).toBe("MONGO-SKU-1");
-       |                              ^
-    113|     });
-    114|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/109]⎯
 
  FAIL  __tests__/features/products/services/productService.test.ts > productService > getProductById > should return a product by ID
-AssertionError: expected undefined to be 'mock-product-1769964898092' // Object.is equality
+ FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should successfully create a product from FormData
+ FAIL  __tests__/features/products/services/productService.test.ts > productService > updateProduct > should update product fields
+ FAIL  __tests__/features/products/services/productService.test.ts > productService > duplicateProduct > should successfully duplicate a product with a new SKU
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ Object.getProductById src/features/products/services/product-repository/prisma-product-repository.ts:275:30
+    273|     return {
+    274|       ...toProductRecord(product),
+    275|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    276|         productId: image.productId,
+    277|         imageFileId: image.imageFileId,
 
-- Expected: 
-"mock-product-1769964898092"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productService.test.ts:57:25
-     55|       const found = await productService.getProductById(product.id);
-     56|       expect(found).toBeDefined();
-     57|       expect(found?.id).toBe(product.id);
-       |                         ^
-     58|       expect(found?.name_en).toBe("Test Product");
-     59|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[93/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/109]⎯
 
  FAIL  __tests__/features/products/services/productService.test.ts > productService > getProducts > should return all products when no filters are provided
-AssertionError: expected +0 to be 2 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+    229|     return products.map((product: typeof products[number]) => ({
+    230|       ...toProductRecord(product),
+    231|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    232|         productId: image.productId,
+    233|         imageFileId: image.imageFileId,
+ ❯ Object.getProducts src/features/products/services/product-repository/prisma-product-repository.ts:229:21
+ ❯ Object.getProducts src/features/products/services/productService.ts:42:20
+ ❯ __tests__/features/products/services/productService.test.ts:72:24
 
-- Expected
-+ Received
-
-- 2
-+ 0
-
- ❯ __tests__/features/products/services/productService.test.ts:73:31
-     71| 
-     72|       const products = await productService.getProducts({});
-     73|       expect(products.length).toBe(2);
-       |                               ^
-     74|     });
-     75| 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[94/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/109]⎯
 
  FAIL  __tests__/features/products/services/productService.test.ts > productService > getProducts > should filter products by search term
-AssertionError: expected +0 to be 1 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ src/features/products/services/product-repository/prisma-product-repository.ts:231:30
+    229|     return products.map((product: typeof products[number]) => ({
+    230|       ...toProductRecord(product),
+    231|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    232|         productId: image.productId,
+    233|         imageFileId: image.imageFileId,
+ ❯ Object.getProducts src/features/products/services/product-repository/prisma-product-repository.ts:229:21
+ ❯ Object.getProducts src/features/products/services/productService.ts:42:20
+ ❯ __tests__/features/products/services/productService.test.ts:80:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/109]⎯
+
+ FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should link catalogs if provided
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ Object.getProductById src/features/products/services/product-repository/prisma-product-repository.ts:275:30
+    273|     return {
+    274|       ...toProductRecord(product),
+    275|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    276|         productId: image.productId,
+    277|         imageFileId: image.imageFileId,
+ ❯ updateProductCatalogs src/features/products/services/productService.ts:421:21
+ ❯ Object.createProduct src/features/products/services/productService.ts:142:5
+ ❯ __tests__/features/products/services/productService.test.ts:115:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/109]⎯
+
+ FAIL  __tests__/features/products/services/productService.test.ts > productService > updateProduct > should update SKU
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ Object.getProductById src/features/products/services/product-repository/prisma-product-repository.ts:275:30
+    273|     return {
+    274|       ...toProductRecord(product),
+    275|       images: product.images.map((image: typeof product.images[number]…
+       |                              ^
+    276|         productId: image.productId,
+    277|         imageFileId: image.imageFileId,
+ ❯ moveLinkedTempImagesToSku src/features/products/services/productService.ts:493:19
+ ❯ Object.updateProduct src/features/products/services/productService.ts:183:7
+ ❯ __tests__/features/products/services/productService.test.ts:143:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/109]⎯
+
+ FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should list assets3d with filters
+AssertionError: expected [] to have a length of 1 but got +0
 
 - Expected
 + Received
@@ -6932,204 +6305,42 @@ AssertionError: expected +0 to be 1 // Object.is equality
 - 1
 + 0
 
- ❯ __tests__/features/products/services/productService.test.ts:81:31
-     79| 
-     80|       const products = await productService.getProducts({ search: "App…
-     81|       expect(products.length).toBe(1);
-       |                               ^
-     82|       expect(products[0]!.name_en).toBe("Apple");
-     83|     });
+ ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:88:20
+     86| 
+     87|     const tagged = await prismaAsset3DRepository.listAssets3D({ tags: …
+     88|     expect(tagged).toHaveLength(1);
+       |                    ^
+     89|     expect(tagged[0]?.name).toBe("Asset 2");
+     90|   });
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[95/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should successfully create a product from FormData
-AssertionError: expected undefined to be 'New Product' // Object.is equality
-
-- Expected: 
-"New Product"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productService.test.ts:96:32
-     94| 
-     95|       expect(product).toBeDefined();
-     96|       expect(product?.name_en).toBe("New Product");
-       |                                ^
-     97|       expect(product?.sku).toBe("NEW-SKU-123");
-     98|       expect(product?.price).toBe(500);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[96/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > createProduct > should link catalogs if provided
-TypeError: Cannot read properties of null (reading 'id')
- ❯ __tests__/features/products/services/productService.test.ts:118:38
-    116|       
-    117|       const productInCatalog = await prisma.productCatalog.findFirst({
-    118|         where: { productId: product!.id, catalogId: catalog.id },
-       |                                      ^
-    119|       });
-    120|       expect(productInCatalog).toBeDefined();
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[97/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > updateProduct > should update product fields
-AssertionError: expected undefined to be 'Updated Name' // Object.is equality
-
-- Expected: 
-"Updated Name"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productService.test.ts:133:32
-    131|       const updated = await productService.updateProduct(original.id, …
-    132|       
-    133|       expect(updated?.name_en).toBe("Updated Name");
-       |                                ^
-    134|       expect(updated?.sku).toBe("OLD-SKU");
-    135|     });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[98/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > updateProduct > should update SKU
-AssertionError: expected undefined to be 'NEW-SKU' // Object.is equality
-
-- Expected: 
-"NEW-SKU"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productService.test.ts:145:28
-    143|       const updated = await productService.updateProduct(original.id, …
-    144|       
-    145|       expect(updated?.sku).toBe("NEW-SKU");
-       |                            ^
-    146|     });
-    147|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[99/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > unlinkImageFromProduct > should unlink an image and NOT delete file if other products use it
-TypeError: default.productImage.createMany is not a function
- ❯ __tests__/features/products/services/productService.test.ts:163:33
-    161|       const p2 = await createMockProduct({ sku: "P2" });
-    162| 
-    163|       await prisma.productImage.createMany({
-       |                                 ^
-    164|         data: [
-    165|           { productId: p1.id, imageFileId: imageFile.id },
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[100/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > unlinkImageFromProduct > should unlink an image and delete file if it was the last link
-AssertionError: expected "spy" to be called at least once
- ❯ __tests__/features/products/services/productService.test.ts:205:25
-    203|       const dbImageFile = await prisma.imageFile.findUnique({ where: {…
-    204|       expect(dbImageFile).toBeNull();
-    205|       expect(fs.unlink).toHaveBeenCalled();
-       |                         ^
-    206|     });
-    207|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[101/142]⎯
-
- FAIL  __tests__/features/products/services/productService.test.ts > productService > duplicateProduct > should successfully duplicate a product with a new SKU
-AssertionError: expected undefined to be 'NEW123' // Object.is equality
-
-- Expected: 
-"NEW123"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/products/services/productService.test.ts:221:31
-    219|       expect(duplicated).toBeDefined();
-    220|       expect(duplicated?.id).not.toBe(original.id);
-    221|       expect(duplicated?.sku).toBe("NEW123");
-       |                               ^
-    222|       expect(duplicated?.name_en).toBe("Original Product");
-    223|       expect(duplicated?.price).toBe(100);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[102/142]⎯
-
- FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get an asset3d by id
-AssertionError: expected undefined to be 'mock-asset3D-1769964911317' // Object.is equality
-
-- Expected: 
-"mock-asset3D-1769964911317"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:47:23
-     45|     const found = await prismaAsset3DRepository.getAsset3DById(created…
-     46|     expect(found).toBeDefined();
-     47|     expect(found?.id).toBe(created.id);
-       |                       ^
-     48|     expect(found?.filename).toBe("test.glb");
-     49|   });
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[103/142]⎯
-
- FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should list assets3d with filters
-TypeError: default.asset3D.createMany is not a function
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:57:26
-     55| 
-     56|   it("should list assets3d with filters", async () => {
-     57|     await prisma.asset3D.createMany({
-       |                          ^
-     58|       data: [
-     59|         {
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[104/142]⎯
-
- FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should list assets3d with filters
-AssertionError: expected undefined to be 'mock-asset3D-1769964911319' // Object.is equality
-
-- Expected: 
-"mock-asset3D-1769964911319"
-
-+ Received: 
-undefined
-
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:158:25
-    156| 
-    157|     const deleted = await prismaAsset3DRepository.deleteAsset3D(create…
-    158|     expect(deleted?.id).toBe(created.id);
-       |                         ^
-    159| 
-    160|     const found = await prisma.asset3D.findUnique({ where: { id: creat…
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[105/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/109]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get distinct categories
-TypeError: default.asset3D.createMany is not a function
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:165:26
-    163| 
-    164|   it("should get distinct categories", async () => {
-    165|     await prisma.asset3D.createMany({
-       |                          ^
-    166|       data: [
-    167|         { filename: "f1", filepath: "p1", mimetype: "m", size: 1, cate…
+AssertionError: expected [] to include 'A'
+ ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:174:24
+    172| 
+    173|     const categories = await prismaAsset3DRepository.getCategories();
+    174|     expect(categories).toContain("A");
+       |                        ^
+    175|     expect(categories).toContain("B");
+    176|     expect(categories).toHaveLength(2);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[106/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/109]⎯
 
  FAIL  __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts > prismaAsset3DRepository > should get all distinct tags
-TypeError: default.asset3D.createMany is not a function
- ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:180:26
-    178| 
-    179|   it("should get all distinct tags", async () => {
-    180|     await prisma.asset3D.createMany({
-       |                          ^
-    181|       data: [
-    182|         { filename: "f1", filepath: "p1", mimetype: "m", size: 1, tags…
+AssertionError: expected [] to include 'X'
+ ❯ __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts:188:18
+    186| 
+    187|     const tags = await prismaAsset3DRepository.getTags();
+    188|     expect(tags).toContain("X");
+       |                  ^
+    189|     expect(tags).toContain("Y");
+    190|     expect(tags).toContain("Z");
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[107/142]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/109]⎯
 
- Test Files  39 failed | 123 passed (162)
-      Tests  138 failed | 692 passed (830)
-   Start at  17:54:54
-   Duration  95.82s (transform 2.09s, setup 12.26s, collect 16.49s, tests 10.83s, environment 36.41s, prepare 4.68s)
+ Test Files  34 failed | 128 passed (162)
+      Tests  105 failed | 725 passed (830)
+   Start at  18:28:06
+   Duration  95.59s (transform 2.09s, setup 12.23s, collect 16.26s, tests 11.32s, environment 36.11s, prepare 4.65s)
 

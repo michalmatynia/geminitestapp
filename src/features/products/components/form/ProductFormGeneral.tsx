@@ -373,11 +373,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
       const nodes: AiNode[] = normalizeNodes(
-        Array.isArray(selectedConfig.nodes) ? (selectedConfig.nodes as AiNode[]) : []
+        Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []
       );
       const edges: Edge[] = sanitizeEdges(
         nodes,
-        Array.isArray(selectedConfig.edges) ? (selectedConfig.edges as Edge[]) : []
+        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
       );
       const triggerNodes: AiNode[] = nodes.filter(
         (node: AiNode) =>

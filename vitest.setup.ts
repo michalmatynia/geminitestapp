@@ -14,36 +14,271 @@ vi.mock("@/shared/lib/db/app-db-provider", () => ({
   APP_DB_PROVIDER_SETTING_KEY: "app_db_provider",
 }));
 
-// Mock Prisma client for all tests
+// Define model defaults to prevent "map of undefined" errors
+const MODEL_DEFAULTS: Record<string, any> = {
+  product: { images: [], catalogs: [], categories: [], tags: [] },
+  note: { tags: [], categories: [], files: [], relationsFrom: [], relationsTo: [] },
+  catalog: { products: [], languages: [], categories: [], tags: [] },
+  page: { slugs: [], components: [] },
+  language: { countries: [] },
+  country: { languages: [], currencies: [] },
+  category: { notes: [] },
+};
+
+// Mock Prisma client for all tests with simple in-memory state
 vi.mock("@/shared/lib/db/prisma", () => {
-  // Helper to create a basic mock model
+  let store = new Map<string, any[]>();
+
+  const getStore = (name: string) => {
+    if (!store.has(name)) {
+      store.set(name, []);
+    }
+    return store.get(name)!;
+  };
+
+  const matches = (item: any, where: any): boolean => {
+    if (!where) return true;
+    return Object.entries(where).every(([key, value]) => {
+      if (key === 'OR' && Array.isArray(value)) {
+        return value.some(condition => matches(item, condition));
+      }
+      if (key === 'AND' && Array.isArray(value)) {
+        return value.every(condition => matches(item, condition));
+      }
+      if (key === 'NOT') {
+        return !matches(item, value);
+      }
+
+      // Handle compound keys (e.g., runId_nodeId: { runId, nodeId })
+      if (typeof value === 'object' && value !== null && !('in' in value || 'contains' in value || 'gte' in value || 'some' in value || 'lt' in value || 'lte' in value || 'gt' in value)) {
+          return Object.entries(value).every(([vKey, vValue]) => item[vKey] === vValue);
+      }
+
+      if (value === null || value === undefined) return item[key] === value;
+      
+      // Handle { in: [...] }
+      if (typeof value === 'object' && value !== null && 'in' in (value as any)) {
+        return (value as any).in.includes(item[key]);
+      }
+
+      // Handle { notIn: [...] }
+      if (typeof value === 'object' && value !== null && 'notIn' in (value as any)) {
+        return !(value as any).notIn.includes(item[key]);
+      }
+      
+      // Handle { contains: '...' } and { mode: 'insensitive' }
+      if (typeof value === 'object' && value !== null && 'contains' in (value as any)) {
+        const searchTerm = (value as any).contains;
+        const mode = (value as any).mode;
+        if (mode === 'insensitive') {
+          return String(item[key] || '').toLowerCase().includes(String(searchTerm || '').toLowerCase());
+        }
+        return String(item[key] || '').includes(String(searchTerm || ''));
+      }
+
+      // Handle { gte, lte, gt, lt }
+      if (typeof value === 'object' && value !== null) {
+        const v = value as any;
+        if ('gte' in v && !(item[key] >= v.gte)) return false;
+        if ('lte' in v && !(item[key] <= v.lte)) return false;
+        if ('gt' in v && !(item[key] > v.gt)) return false;
+        if ('lt' in v && !(item[key] < v.lt)) return false;
+        if (('gte' in v || 'lte' in v || 'gt' in v || 'lt' in v) && !('some' in v || 'none' in v || 'every' in v)) return true;
+      }
+
+      // Handle relation filters (some, none, every)
+      if (typeof value === 'object' && value !== null) {
+        const v = value as any;
+        if ('some' in v) {
+          const relationData = item[key] || [];
+          return Array.isArray(relationData) && relationData.some(relItem => matches(relItem, v.some));
+        }
+        if ('none' in v) {
+          const relationData = item[key] || [];
+          return Array.isArray(relationData) && !relationData.some(relItem => matches(relItem, v.none));
+        }
+      }
+
+      return item[key] === value;
+    });
+  };
+
+  // Helper to create a basic mock model with in-memory persistence
   const createMockModel = (name: string) => ({
-    findMany: vi.fn().mockResolvedValue([]),
-    findUnique: vi.fn().mockResolvedValue(null),
-    findFirst: vi.fn().mockResolvedValue(null),
-    create: vi.fn().mockImplementation((args) => ({
-      id: `mock-${name}-${Date.now()}`,
-      ...args?.data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    update: vi.fn().mockImplementation((args) => ({
-      id: args?.where?.id,
-      ...args?.data,
-      updatedAt: new Date(),
-    })),
-    updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-    delete: vi.fn().mockResolvedValue({}),
-    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-    upsert: vi.fn().mockImplementation((args) => ({
-      id: args?.where?.id || `mock-${name}-${Date.now()}`,
-      ...args?.create,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    count: vi.fn().mockResolvedValue(0),
-    aggregate: vi.fn().mockResolvedValue({ _count: { id: 0 }, _sum: {}, _min: {}, _max: {}, _avg: {} }),
+    findMany: vi.fn().mockImplementation(async (args) => {
+      let data = [...getStore(name)];
+      if (args?.where) {
+        data = data.filter(item => matches(item, args.where));
+      }
+      if (args?.orderBy) {
+        const orderBy = Array.isArray(args.orderBy) ? args.orderBy[0] : args.orderBy;
+        const [field, direction] = Object.entries(orderBy)[0] as [string, string];
+        data.sort((a, b) => {
+          const valA = a[field];
+          const valB = b[field];
+          if (valA < valB) return direction === 'asc' ? -1 : 1;
+          if (valA > valB) return direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      if (args?.skip) data = data.slice(args.skip);
+      if (args?.take) data = data.slice(0, args.take);
+      
+      return data.map(item => ({ ...(MODEL_DEFAULTS[name] || {}), ...item }));
+    }),
+    findUnique: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      const item = data.find(item => matches(item, args.where)) || null;
+      if (!item) return null;
+      return { ...(MODEL_DEFAULTS[name] || {}), ...item };
+    }),
+    findFirst: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      let item;
+      if (!args?.where) item = data[0];
+      else item = data.find(item => matches(item, args.where));
+      
+      if (!item) return null;
+      return { ...(MODEL_DEFAULTS[name] || {}), ...item };
+    }),
+    create: vi.fn().mockImplementation(async (args) => {
+      const newItem = {
+        id: args?.data?.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...(MODEL_DEFAULTS[name] || {}),
+        ...args?.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      // Basic support for connect in nested creates
+      Object.entries(args?.data || {}).forEach(([key, value]) => {
+          if (typeof value === 'object' && value !== null && 'connect' in (value as any)) {
+              newItem[key + 'Id'] = (value as any).connect.id;
+          }
+      });
+
+      getStore(name).push(newItem);
+      return newItem;
+    }),
+    createMany: vi.fn().mockImplementation(async (args) => {
+      const data = Array.isArray(args?.data) ? args.data : [args?.data];
+      const newItems = data.map((item: any) => ({
+        id: item.id || `mock-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...(MODEL_DEFAULTS[name] || {}),
+        ...item,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      getStore(name).push(...newItems);
+      return { count: newItems.length, length: newItems.length };
+    }),
+    update: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      const index = data.findIndex(item => matches(item, args.where));
+      if (index === -1) throw new Error(`${name} not found`);
+      
+      const updateData = { ...args.data };
+      Object.entries(updateData).forEach(([key, value]) => {
+          if (typeof value === 'object' && value !== null) {
+              if ('connect' in (value as any)) {
+                  updateData[key + 'Id'] = (value as any).connect.id;
+                  delete updateData[key];
+              } else if ('deleteMany' in (value as any)) {
+                  delete updateData[key];
+              } else if ('create' in (value as any)) {
+                  delete updateData[key];
+              }
+          }
+      });
+
+      data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
+      return { ...(MODEL_DEFAULTS[name] || {}), ...data[index] };
+    }),
+    updateMany: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      let count = 0;
+      data.forEach((item, index) => {
+        if (matches(item, args.where)) {
+          data[index] = { ...item, ...args.data, updatedAt: new Date() };
+          count++;
+        }
+      });
+      return { count };
+    }),
+    delete: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      const index = data.findIndex(item => matches(item, args.where));
+      if (index === -1) throw new Error(`${name} not found`);
+      const deleted = data.splice(index, 1)[0];
+      return { ...(MODEL_DEFAULTS[name] || {}), ...deleted };
+    }),
+    deleteMany: vi.fn().mockImplementation(async (args) => {
+      if (!args?.where || Object.keys(args.where).length === 0) {
+        const count = getStore(name).length;
+        store.set(name, []);
+        return { count };
+      }
+      const data = getStore(name);
+      let count = 0;
+      for (let i = data.length - 1; i >= 0; i--) {
+        const item = data[i];
+        if (matches(item, args.where)) {
+          data.splice(i, 1);
+          count++;
+        }
+      }
+      return { count };
+    }),
+    upsert: vi.fn().mockImplementation(async (args) => {
+      const data = getStore(name);
+      const index = data.findIndex(item => matches(item, args.where));
+      if (index !== -1) {
+        // Handle update
+        const updateData = { ...args.update };
+        data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
+        return { ...(MODEL_DEFAULTS[name] || {}), ...data[index] };
+      } else {
+        // Handle create
+        const createData = { ...args.create };
+        // Basic support for compound keys in create if they were in where
+        if (args.where) {
+            Object.entries(args.where).forEach(([key, value]) => {
+                if (typeof value === 'object' && value !== null && !('in' in value || 'contains' in value)) {
+                    Object.assign(createData, value);
+                }
+            });
+        }
+
+        const newItem = {
+          id: createData.id || `mock-${name}-${Date.now()}`,
+          ...(MODEL_DEFAULTS[name] || {}),
+          ...createData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        data.push(newItem);
+        return newItem;
+      }
+    }),
+    count: vi.fn().mockImplementation(async (args) => {
+      let data = getStore(name);
+      if (args?.where) {
+        data = data.filter(item => matches(item, args.where));
+      }
+      return data.length;
+    }),
+    aggregate: vi.fn().mockImplementation(async (args) => {
+        const data = getStore(name).filter(item => matches(item, args?.where || {}));
+        const result: any = { _count: { id: data.length }, _sum: {}, _min: {}, _max: {}, _avg: {} };
+        if (args?._max) {
+            Object.keys(args._max).forEach(key => {
+                result._max[key] = data.length > 0 ? Math.max(...data.map(item => item[key] || 0)) : null;
+            });
+        }
+        return result;
+    }),
     groupBy: vi.fn().mockResolvedValue([]),
+    $reset: () => store.set(name, []),
   });
 
   const mockPrismaClient = {
@@ -54,34 +289,10 @@ vi.mock("@/shared/lib/db/prisma", () => {
       return Promise.resolve(callback);
     }),
 
-    product: {
-      ...createMockModel("product"),
-      create: vi.fn().mockImplementation((args) => ({
-        id: `mock-product-${Date.now()}`,
-        ...args?.data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        images: [],
-        catalogs: [],
-        categories: [],
-        tags: [],
-      })),
-    },
+    product: createMockModel("product"),
     productImage: createMockModel("productImage"),
     imageFile: createMockModel("imageFile"),
-    catalog: {
-      ...createMockModel("catalog"),
-      create: vi.fn().mockImplementation((args) => ({
-        id: `mock-catalog-${Date.now()}`,
-        ...args?.data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        products: [],
-        languages: [],
-        categories: [],
-        tags: [],
-      })),
-    },
+    catalog: createMockModel("catalog"),
     productCatalog: createMockModel("productCatalog"),
     productCategory: createMockModel("productCategory"),
     productCategoryAssignment: createMockModel("productCategoryAssignment"),
@@ -96,22 +307,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
     cmsTheme: createMockModel("cmsTheme"),
     pageSlug: createMockModel("pageSlug"),
     pageComponent: createMockModel("pageComponent"),
-    
-    // Notes models
-    note: {
-      ...createMockModel("note"),
-      create: vi.fn().mockImplementation((args) => ({
-        id: `mock-note-${Date.now()}`,
-        ...args?.data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: [],
-        categories: [],
-        files: [],
-        relationsFrom: [],
-        relationsTo: [],
-      })),
-    },
+    note: createMockModel("note"),
     notebook: createMockModel("notebook"),
     tag: createMockModel("tag"),
     category: createMockModel("category"),
@@ -119,16 +315,13 @@ vi.mock("@/shared/lib/db/prisma", () => {
     noteTag: createMockModel("noteTag"),
     noteCategory: createMockModel("noteCategory"),
     noteRelation: createMockModel("noteRelation"),
-    
-    // Auth models
+    noteFile: createMockModel("noteFile"),
     user: createMockModel("user"),
     account: createMockModel("account"),
     session: createMockModel("session"),
     userPreferences: createMockModel("userPreferences"),
     authSecurityProfile: createMockModel("authSecurityProfile"),
     verificationToken: createMockModel("verificationToken"),
-
-    // Chatbot models
     chatbotSession: createMockModel("chatbotSession"),
     chatbotMessage: createMockModel("chatbotMessage"),
     chatbotJob: createMockModel("chatbotJob"),
@@ -139,8 +332,6 @@ vi.mock("@/shared/lib/db/prisma", () => {
     agentAuditLog: createMockModel("agentAuditLog"),
     agentBrowserSnapshot: createMockModel("agentBrowserSnapshot"),
     agentBrowserLog: createMockModel("agentBrowserLog"),
-
-    // Price groups
     priceGroup: createMockModel("priceGroup"),
     currency: createMockModel("currency"),
     country: createMockModel("country"),
@@ -152,6 +343,10 @@ vi.mock("@/shared/lib/db/prisma", () => {
     categoryMapping: createMockModel("categoryMapping"),
     asset3D: createMockModel("asset3D"),
     productDraft: createMockModel("productDraft"),
+
+    $resetAll: () => {
+      store = new Map<string, any[]>();
+    }
   };
 
   return {
@@ -213,13 +408,19 @@ Object.defineProperty(window, "matchMedia", {
 beforeAll(() => {
   // Start the MSW server before all tests
   server.listen({
-    onUnhandledRequest: "error",
+    onUnhandledRequest: "warn",
   });
 });
 
-afterEach(() => {
+afterEach(async () => {
   // Reset handlers after each test to ensure test isolation
   server.resetHandlers();
+  
+  // Reset Prisma mock store
+  const { default: prisma } = await import("@/shared/lib/db/prisma");
+  if ((prisma as any).$resetAll) {
+    (prisma as any).$resetAll();
+  }
 });
 
 afterAll(() => {

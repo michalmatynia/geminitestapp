@@ -50,7 +50,10 @@ export const PRODUCT_FIELDS = [
   { value: "images_all", label: "Images (All: slots + links)" },
 ] as const;
 
-export const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_: unknown, index: number) => `image_slot_${index + 1}`);
+export const IMAGE_SLOT_KEYS = Array.from(
+  { length: 15 },
+  (_: unknown, index: number) => `image_slot_${index + 1}`,
+);
 
 export const ALL_IMAGE_KEYS = [
   ...IMAGE_SLOT_KEYS,
@@ -68,17 +71,38 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: "weight", description: "Weight (kg)." },
   { key: "name", description: "Product name (default language)." },
   { key: "name|en", description: "Product name (English)." },
-  { key: "description", description: "Product description (default language)." },
+  {
+    key: "description",
+    description: "Product description (default language).",
+  },
   { key: "description|en", description: "Product description (English)." },
   { key: "text_fields.name", description: "Name inside text_fields object." },
-  { key: "text_fields.description", description: "Description inside text_fields object." },
-  { key: "text_fields.name|en", description: "English name inside text_fields." },
-  { key: "text_fields.description|en", description: "English description inside text_fields." },
+  {
+    key: "text_fields.description",
+    description: "Description inside text_fields object.",
+  },
+  {
+    key: "text_fields.name|en",
+    description: "English name inside text_fields.",
+  },
+  {
+    key: "text_fields.description|en",
+    description: "English description inside text_fields.",
+  },
   { key: "prices.0", description: "Price for price group 0." },
-  { key: "prices.<price_group_id>", description: "Price for a specific price group." },
+  {
+    key: "prices.<price_group_id>",
+    description: "Price for a specific price group.",
+  },
   { key: "stock", description: "Inventory-level stock (no warehouse)." },
-  { key: "stock.<warehouse_id>", description: "Stock for a specific warehouse." },
-  { key: "stock.bl_<warehouse_id>", description: "Baselinker stock key format." },
+  {
+    key: "stock.<warehouse_id>",
+    description: "Stock for a specific warehouse.",
+  },
+  {
+    key: "stock.bl_<warehouse_id>",
+    description: "Baselinker stock key format.",
+  },
   { key: "images", description: "All product image URLs." },
   { key: "image", description: "Single product image URL." },
   { key: "image_links_all", description: "All image links." },
@@ -91,5 +115,5 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
 ];
 
 export const EXPORT_PARAMETER_KEYS = Array.from(
-  new Set(EXPORT_PARAMETER_DOCS.map((entry: ExportParameterDoc) => entry.key))
+  new Set(EXPORT_PARAMETER_DOCS.map((entry: ExportParameterDoc) => entry.key)),
 );

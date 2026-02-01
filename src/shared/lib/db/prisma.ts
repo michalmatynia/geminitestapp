@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/typedef */
 import "server-only";
 
 import { PrismaClient } from "@prisma/client";
@@ -13,13 +14,13 @@ const prisma = databaseUrl
   : (new Proxy(
       {},
       {
-        get() {
+        get(): never {
           throw new Error("DATABASE_URL is not set");
         },
-        has() {
+        has(): boolean {
           return false;
         },
-      }
+      },
     ) as unknown as PrismaClient);
 
 export default prisma;

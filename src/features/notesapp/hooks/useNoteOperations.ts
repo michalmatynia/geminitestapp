@@ -316,7 +316,7 @@ export function useNoteOperations({
           });
         })
       );
-      if (responses.some((res) => !res.ok)) {
+      if (responses.some((res: Response) => !res.ok)) {
         throw new Error("Failed to reorder folders");
       }
       await fetchFolderTree();

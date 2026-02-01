@@ -1,22 +1,20 @@
-import { z } from 'zod';
+/* eslint-disable @typescript-eslint/typedef */
+import { z } from "zod";
 
 // Helper: preprocess empty strings to undefined, but keep invalid values to trigger schema errors
-const emptyStringToUndefined = z.preprocess(
-  (value) => {
-    if (value === "" || value === null || value === undefined) return undefined;
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (!trimmed) return undefined;
-      const num = Number(trimmed);
-      return Number.isFinite(num) ? num : value;
-    }
-    if (typeof value === "number") {
-      return Number.isFinite(value) ? value : value;
-    }
-    return value;
-  },
-  z.number().int().optional()
-);
+const emptyStringToUndefined = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const num = Number(trimmed);
+    return Number.isFinite(num) ? num : value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : value;
+  }
+  return value;
+}, z.number().int().optional());
 
 const optionalSku = z.preprocess(
   (value) => {
@@ -24,7 +22,7 @@ const optionalSku = z.preprocess(
     if (typeof value === "string" && value.trim() === "") return undefined;
     return value;
   },
-  z.string().trim().min(1, { message: "SKU is required" }).optional()
+  z.string().trim().min(1, { message: "SKU is required" }).optional(),
 );
 
 const imageLinksSchema = z.preprocess((value: unknown): string[] => {

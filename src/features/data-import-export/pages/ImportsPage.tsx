@@ -1,11 +1,20 @@
 "use client";
-import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, Checkbox, Label, SectionHeader, SectionPanel } from "@/shared/ui";
+import {
+  Button,
+  Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useToast,
+  Checkbox,
+  Label,
+  SectionHeader,
+  SectionPanel,
+} from "@/shared/ui";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { GripVertical, Trash2 } from "lucide-react";
-
-
-
 
 import type {
   IntegrationConnectionBasic,
@@ -33,12 +42,10 @@ import type {
   ExportParameterDoc,
 } from "@/features/data-import-export/types/imports";
 
-
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from "@/features/data-import-export/utils/image-retry-presets";
-
 
 export default function ImportsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -83,12 +90,12 @@ export default function ImportsPage(): React.JSX.Element {
   const [loadingImportList, setLoadingImportList] = useState(false);
   const [importSearch, setImportSearch] = useState("");
   const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(
-    () => new Set()
+    () => new Set(),
   );
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const [templateScope, setTemplateScope] = useState<"import" | "export">(
-    "import"
+    "import",
   );
   const [importTemplates, setImportTemplates] = useState<Template[]>([]);
   const [exportTemplates, setExportTemplates] = useState<Template[]>([]);
@@ -97,20 +104,30 @@ export default function ImportsPage(): React.JSX.Element {
   const [importTemplateId, setImportTemplateId] = useState("");
   const [importTemplatePreferenceLoaded, setImportTemplatePreferenceLoaded] =
     useState(false);
-  const [importActiveTemplatePreferenceLoaded, setImportActiveTemplatePreferenceLoaded] =
-    useState(false);
-  const [exportActiveTemplatePreferenceLoaded, setExportActiveTemplatePreferenceLoaded] =
-    useState(false);
-  const [importActiveTemplatePreferenceId, setImportActiveTemplatePreferenceId] =
-    useState<string | null>(null);
-  const [exportActiveTemplatePreferenceId, setExportActiveTemplatePreferenceId] =
-    useState<string | null>(null);
+  const [
+    importActiveTemplatePreferenceLoaded,
+    setImportActiveTemplatePreferenceLoaded,
+  ] = useState(false);
+  const [
+    exportActiveTemplatePreferenceLoaded,
+    setExportActiveTemplatePreferenceLoaded,
+  ] = useState(false);
+  const [
+    importActiveTemplatePreferenceId,
+    setImportActiveTemplatePreferenceId,
+  ] = useState<string | null>(null);
+  const [
+    exportActiveTemplatePreferenceId,
+    setExportActiveTemplatePreferenceId,
+  ] = useState<string | null>(null);
   const [importActiveTemplateId, setImportActiveTemplateId] = useState("");
   const [exportActiveTemplateId, setExportActiveTemplateId] = useState("");
   const [importTemplateName, setImportTemplateName] = useState("");
   const [exportTemplateName, setExportTemplateName] = useState("");
-  const [importTemplateDescription, setImportTemplateDescription] = useState("");
-  const [exportTemplateDescription, setExportTemplateDescription] = useState("");
+  const [importTemplateDescription, setImportTemplateDescription] =
+    useState("");
+  const [exportTemplateDescription, setExportTemplateDescription] =
+    useState("");
   const [importTemplateMappings, setImportTemplateMappings] = useState<
     TemplateMapping[]
   >([{ sourceKey: "", targetField: "" }]);
@@ -122,27 +139,26 @@ export default function ImportsPage(): React.JSX.Element {
     useState(false);
   const [exportStockFallbackLoaded, setExportStockFallbackLoaded] =
     useState(false);
-  const [imageRetryPresets, setImageRetryPresets] = useState<ImageRetryPreset[]>(
-    getDefaultImageRetryPresets()
-  );
-  const [imageRetryPresetsLoaded, setImageRetryPresetsLoaded] =
-    useState(false);
+  const [imageRetryPresets, setImageRetryPresets] = useState<
+    ImageRetryPreset[]
+  >(getDefaultImageRetryPresets());
+  const [imageRetryPresetsLoaded, setImageRetryPresetsLoaded] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
   const [savingExportSettings, setSavingExportSettings] = useState(false);
   const [parameterKeys, setParameterKeys] = useState<string[]>([]);
-  const [parameterValues, setParameterValues] = useState<Record<string, string>>(
-    {}
-  );
+  const [parameterValues, setParameterValues] = useState<
+    Record<string, string>
+  >({});
   const [loadingParameters, setLoadingParameters] = useState(false);
   const [parameterProductId, setParameterProductId] = useState("");
   const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
   const [draggedMappingIndex, setDraggedMappingIndex] = useState<number | null>(
-    null
+    null,
   );
-  const [dragOverMappingIndex, setDragOverMappingIndex] = useState<number | null>(
-    null
-  );
+  const [dragOverMappingIndex, setDragOverMappingIndex] = useState<
+    number | null
+  >(null);
   const lastParameterProductIdRef = useRef<string | null>(null);
   const lastWarehouseInventoryIdRef = useRef<string | null>(null);
   const autoInventoriesLoadedRef = useRef(false);
@@ -156,7 +172,9 @@ export default function ImportsPage(): React.JSX.Element {
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
 
   const isImportTemplateScope = templateScope === "import";
-  const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
+  const currentTemplates = isImportTemplateScope
+    ? importTemplates
+    : exportTemplates;
   const currentActiveTemplateId = isImportTemplateScope
     ? importActiveTemplateId
     : exportActiveTemplateId;
@@ -172,12 +190,17 @@ export default function ImportsPage(): React.JSX.Element {
   const currentLoadingTemplates = isImportTemplateScope
     ? loadingImportTemplates
     : loadingExportTemplates;
-  const exportParameterValues = EXPORT_PARAMETER_DOCS.reduce<Record<string, string>>(
-    (acc: Record<string, string>, entry: ExportParameterDoc): Record<string, string> => {
+  const exportParameterValues = EXPORT_PARAMETER_DOCS.reduce<
+    Record<string, string>
+  >(
+    (
+      acc: Record<string, string>,
+      entry: ExportParameterDoc,
+    ): Record<string, string> => {
       acc[entry.key] = entry.description;
       return acc;
     },
-    {}
+    {},
   );
   const currentParameterValues = isImportTemplateScope
     ? parameterValues
@@ -185,19 +208,28 @@ export default function ImportsPage(): React.JSX.Element {
   const currentParameterKeys = isImportTemplateScope
     ? Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]))
     : EXPORT_PARAMETER_KEYS;
-  const inventoryWarehouseIds = new Set(warehouses.map((warehouse: WarehouseOption): string => warehouse.id));
+  const inventoryWarehouseIds = new Set(
+    warehouses.map((warehouse: WarehouseOption): string => warehouse.id),
+  );
   const warehouseOptions =
     showAllWarehouses && allWarehouses.length > 0 ? allWarehouses : warehouses;
-  const normalizeWarehouseId = (value: string): string => value.trim().toLowerCase();
-  const inferTypedWarehouseId = (value: string): { typed: string; numeric: string } | null => {
+  const normalizeWarehouseId = (value: string): string =>
+    value.trim().toLowerCase();
+  const inferTypedWarehouseId = (
+    value: string,
+  ): { typed: string; numeric: string } | null => {
     const match = value.match(/([a-z]+)[_-]?(\d+)/i);
     if (!match?.[1] || !match?.[2]) return null;
-    return { typed: `${match[1].toLowerCase()}_${match[2]}`, numeric: match[2] };
+    return {
+      typed: `${match[1].toLowerCase()}_${match[2]}`,
+      numeric: match[2],
+    };
   };
   const acceptedWarehouseIds = new Set<string>();
   const warehouseAliases: Record<string, string> = {};
   for (const warehouse of warehouses) {
-    const typed = warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
+    const typed =
+      warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
     if (typed) {
       acceptedWarehouseIds.add(normalizeWarehouseId(typed));
       const numeric = inferTypedWarehouseId(typed)?.numeric;
@@ -217,12 +249,21 @@ export default function ImportsPage(): React.JSX.Element {
     });
   const invalidStockMappings =
     acceptedWarehouseIds.size > 0
-              ? stockMappingEntries.filter(
-                  ({ suffix, normalized }: { suffix: string; normalized: string }): boolean => !!suffix && !acceptedWarehouseIds.has(normalized)
-                )      : [];
+      ? stockMappingEntries.filter(
+          ({
+            suffix,
+            normalized,
+          }: {
+            suffix: string;
+            normalized: string;
+          }): boolean => !!suffix && !acceptedWarehouseIds.has(normalized),
+        )
+      : [];
   const hasStockMappingMismatch =
     !isImportTemplateScope && invalidStockMappings.length > 0;
-  const invalidStockMappingLabels = invalidStockMappings.map(({ key }: { key: string }): string => key);
+  const invalidStockMappingLabels = invalidStockMappings.map(
+    ({ key }: { key: string }): string => key,
+  );
   const stockMappingSuggestions = invalidStockMappings
     .map(({ suffix }: { suffix: string }): string | null => {
       const numeric = suffix.match(/(\d+)/)?.[1];
@@ -231,24 +272,27 @@ export default function ImportsPage(): React.JSX.Element {
     })
     .filter((value: string | null): value is string => Boolean(value));
 
-  const applyTemplate = useCallback((template: Template, scope: "import" | "export"): void => {
-    const nextMappings =
-      template.mappings && template.mappings.length > 0
-        ? template.mappings
-        : [{ sourceKey: "", targetField: "" }];
-    if (scope === "import") {
-      setImportActiveTemplateId(template.id);
-      setImportTemplateName(template.name);
-      setImportTemplateDescription(template.description ?? "");
-      setImportTemplateMappings(nextMappings);
-      return;
-    }
-    setExportActiveTemplateId(template.id);
-    setExportTemplateName(template.name);
-    setExportTemplateDescription(template.description ?? "");
-    setExportTemplateMappings(nextMappings);
-    setExportImagesAsBase64(template.exportImagesAsBase64 ?? false);
-  }, []);
+  const applyTemplate = useCallback(
+    (template: Template, scope: "import" | "export"): void => {
+      const nextMappings =
+        template.mappings && template.mappings.length > 0
+          ? template.mappings
+          : [{ sourceKey: "", targetField: "" }];
+      if (scope === "import") {
+        setImportActiveTemplateId(template.id);
+        setImportTemplateName(template.name);
+        setImportTemplateDescription(template.description ?? "");
+        setImportTemplateMappings(nextMappings);
+        return;
+      }
+      setExportActiveTemplateId(template.id);
+      setExportTemplateName(template.name);
+      setExportTemplateDescription(template.description ?? "");
+      setExportTemplateMappings(nextMappings);
+      setExportImagesAsBase64(template.exportImagesAsBase64 ?? false);
+    },
+    [],
+  );
 
   useEffect(() => {
     const checkIntegration = async (): Promise<void> => {
@@ -256,12 +300,16 @@ export default function ImportsPage(): React.JSX.Element {
         const res = await fetch("/api/integrations/with-connections");
         if (res.ok) {
           const data = (await res.json()) as IntegrationWithConnections[];
-          const baseIntegration = data.find((i: IntegrationWithConnections): boolean => i.slug === "baselinker");
+          const baseIntegration = data.find(
+            (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
+          );
           const connections = baseIntegration?.connections ?? [];
           setBaseConnections(connections);
           if (connections.length > 0) {
             setIsBaseConnected(true);
-            setSelectedBaseConnectionId((prev: string): string => prev || connections[0]?.id || "");
+            setSelectedBaseConnectionId(
+              (prev: string): string => prev || connections[0]?.id || "",
+            );
           }
         }
       } catch (error) {
@@ -280,13 +328,16 @@ export default function ImportsPage(): React.JSX.Element {
 
     const loadDefaultConnection = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/exports/base/default-connection");
+        const res = await fetch(
+          "/api/integrations/exports/base/default-connection",
+        );
         if (!res.ok) return;
         const payload = (await res.json()) as { connectionId?: string | null };
         if (payload.connectionId) {
           // Check if the saved connection still exists in current connections
           const connectionExists = baseConnections.some(
-            (conn: IntegrationConnectionBasic) => conn.id === payload.connectionId
+            (conn: IntegrationConnectionBasic) =>
+              conn.id === payload.connectionId,
           );
           if (connectionExists) {
             setSelectedBaseConnectionId(payload.connectionId);
@@ -307,7 +358,9 @@ export default function ImportsPage(): React.JSX.Element {
         const payload = (await res.json()) as CatalogOption[];
         if (!res.ok) return;
         setCatalogs(payload);
-        const defaultCatalog = payload.find((catalog: CatalogOption) => catalog.isDefault);
+        const defaultCatalog = payload.find(
+          (catalog: CatalogOption) => catalog.isDefault,
+        );
         if (defaultCatalog) {
           setCatalogId(defaultCatalog.id);
         }
@@ -356,11 +409,13 @@ export default function ImportsPage(): React.JSX.Element {
 
   const handleSelectTemplate = useCallback(
     (id: string): void => {
-      const template = currentTemplates.find((item: Template) => item.id === id);
+      const template = currentTemplates.find(
+        (item: Template) => item.id === id,
+      );
       if (!template) return;
       applyTemplate(template, isImportTemplateScope ? "import" : "export");
     },
-    [applyTemplate, currentTemplates, isImportTemplateScope]
+    [applyTemplate, currentTemplates, isImportTemplateScope],
   );
 
   useEffect(() => {
@@ -384,12 +439,17 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     const loadActiveTemplatePreference = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/imports/base/active-template");
+        const res = await fetch(
+          "/api/integrations/imports/base/active-template",
+        );
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
         setImportActiveTemplatePreferenceId(payload.templateId ?? null);
       } catch (error) {
-        console.error("Failed to load active import template preference", error);
+        console.error(
+          "Failed to load active import template preference",
+          error,
+        );
       } finally {
         setImportActiveTemplatePreferenceLoaded(true);
       }
@@ -400,7 +460,9 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     const loadExportActiveTemplate = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/exports/base/active-template");
+        const res = await fetch(
+          "/api/integrations/exports/base/active-template",
+        );
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
         setExportActiveTemplatePreferenceId(payload.templateId ?? null);
@@ -416,7 +478,9 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     const loadExportDefaultInventory = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/exports/base/default-inventory");
+        const res = await fetch(
+          "/api/integrations/exports/base/default-inventory",
+        );
         const payload = (await res.json()) as { inventoryId?: string | null };
         if (!res.ok) return;
         if (payload.inventoryId) {
@@ -434,7 +498,9 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     const loadExportStockFallback = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/exports/base/stock-fallback");
+        const res = await fetch(
+          "/api/integrations/exports/base/stock-fallback",
+        );
         const payload = (await res.json()) as { enabled?: boolean };
         if (!res.ok) return;
         setExportStockFallbackEnabled(Boolean(payload.enabled));
@@ -451,7 +517,7 @@ export default function ImportsPage(): React.JSX.Element {
     const loadImageRetryPresets = async (): Promise<void> => {
       try {
         const res = await fetch(
-          "/api/integrations/exports/base/image-retry-presets"
+          "/api/integrations/exports/base/image-retry-presets",
         );
         const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
         if (!res.ok) return;
@@ -478,8 +544,8 @@ export default function ImportsPage(): React.JSX.Element {
       try {
         const res = await fetch(
           `/api/integrations/imports/base/export-warehouse?inventoryId=${encodeURIComponent(
-            exportInventoryId
-          )}`
+            exportInventoryId,
+          )}`,
         );
         const payload = (await res.json()) as { warehouseId?: string | null };
         if (!res.ok) return;
@@ -523,7 +589,10 @@ export default function ImportsPage(): React.JSX.Element {
           }),
         });
       } catch (error) {
-        console.error("Failed to save active import template preference", error);
+        console.error(
+          "Failed to save active import template preference",
+          error,
+        );
       }
     };
     void saveActiveTemplatePreference();
@@ -532,7 +601,10 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     if (!exportInventoryPreferenceLoaded) return;
     if (!inventories.length) return;
-    if (exportInventoryId && inventories.some((inv: InventoryOption) => inv.id === exportInventoryId)) {
+    if (
+      exportInventoryId &&
+      inventories.some((inv: InventoryOption) => inv.id === exportInventoryId)
+    ) {
       return;
     }
     setExportInventoryId(inventories[0]?.id ?? "");
@@ -543,7 +615,7 @@ export default function ImportsPage(): React.JSX.Element {
     if (loadingImportTemplates) return;
     if (!importTemplateId) return;
     const exists = importTemplates.some(
-      (template: Template) => template.id === importTemplateId
+      (template: Template) => template.id === importTemplateId,
     );
     if (!exists) {
       setImportTemplateId("");
@@ -562,7 +634,7 @@ export default function ImportsPage(): React.JSX.Element {
     if (importActiveTemplateId) return;
     if (importActiveTemplatePreferenceId) return;
     const preferred = importTemplates.find(
-      (template: Template) => template.id === importTemplateId
+      (template: Template) => template.id === importTemplateId,
     );
     if (!preferred) return;
     applyTemplate(preferred, "import");
@@ -582,7 +654,7 @@ export default function ImportsPage(): React.JSX.Element {
     if (importActiveTemplateId) return;
     if (!importActiveTemplatePreferenceId) return;
     const preferred = importTemplates.find(
-      (template: Template) => template.id === importActiveTemplatePreferenceId
+      (template: Template) => template.id === importActiveTemplatePreferenceId,
     );
     if (!preferred) return;
     applyTemplate(preferred, "import");
@@ -601,7 +673,7 @@ export default function ImportsPage(): React.JSX.Element {
     if (exportActiveTemplateId) return;
     if (!exportActiveTemplatePreferenceId) return;
     const preferred = exportTemplates.find(
-      (template: Template) => template.id === exportActiveTemplatePreferenceId
+      (template: Template) => template.id === exportActiveTemplatePreferenceId,
     );
     if (!preferred) return;
     applyTemplate(preferred, "export");
@@ -617,7 +689,9 @@ export default function ImportsPage(): React.JSX.Element {
   useEffect(() => {
     const loadSampleProduct = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/integrations/imports/base/sample-product");
+        const res = await fetch(
+          "/api/integrations/imports/base/sample-product",
+        );
         const payload = (await res.json()) as {
           productId?: string | null;
           inventoryId?: string | null;
@@ -670,7 +744,10 @@ export default function ImportsPage(): React.JSX.Element {
     }
     if (lastParameterProductIdRef.current === parameterProductId) return;
     lastParameterProductIdRef.current = parameterProductId;
-    if (parameterKeys.length === 0 && Object.keys(parameterValues).length === 0) {
+    if (
+      parameterKeys.length === 0 &&
+      Object.keys(parameterValues).length === 0
+    ) {
       return;
     }
     setParameterKeys([]);
@@ -742,7 +819,7 @@ export default function ImportsPage(): React.JSX.Element {
     const incompleteMappings = currentTemplateMappings.some(
       (m: TemplateMapping) =>
         (m.sourceKey.trim() && !m.targetField.trim()) ||
-        (!m.sourceKey.trim() && m.targetField.trim())
+        (!m.sourceKey.trim() && m.targetField.trim()),
     );
 
     if (incompleteMappings) {
@@ -757,7 +834,10 @@ export default function ImportsPage(): React.JSX.Element {
         sourceKey: mapping.sourceKey.trim(),
         targetField: mapping.targetField.trim(),
       }))
-      .filter((mapping: { sourceKey: string; targetField: string }) => mapping.sourceKey && mapping.targetField);
+      .filter(
+        (mapping: { sourceKey: string; targetField: string }) =>
+          mapping.sourceKey && mapping.targetField,
+      );
 
     const templateEndpoint = isImportTemplateScope
       ? "/api/integrations/import-templates"
@@ -767,7 +847,9 @@ export default function ImportsPage(): React.JSX.Element {
     setSavingTemplate(true);
     try {
       const res = await fetch(
-        activeTemplateId ? `${templateEndpoint}/${activeTemplateId}` : templateEndpoint,
+        activeTemplateId
+          ? `${templateEndpoint}/${activeTemplateId}`
+          : templateEndpoint,
         {
           method: activeTemplateId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
@@ -777,7 +859,7 @@ export default function ImportsPage(): React.JSX.Element {
             mappings: cleanedMappings,
             ...(isImportTemplateScope ? {} : { exportImagesAsBase64 }),
           }),
-        }
+        },
       );
       const payload = (await res.json()) as Template & { error?: string };
       if (!res.ok) {
@@ -920,7 +1002,10 @@ export default function ImportsPage(): React.JSX.Element {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inventoryId }),
       });
-      const payload = (await res.json()) as { productId?: string; error?: string };
+      const payload = (await res.json()) as {
+        productId?: string;
+        error?: string;
+      };
       if (!res.ok) {
         toast(payload.error || "Failed to load sample product.", {
           variant: "error",
@@ -947,7 +1032,7 @@ export default function ImportsPage(): React.JSX.Element {
         : "/api/integrations/export-templates";
       const res = await fetch(
         `${templateEndpoint}/${currentActiveTemplateId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -958,14 +1043,14 @@ export default function ImportsPage(): React.JSX.Element {
       }
       if (isImportTemplateScope) {
         setImportTemplates((prev: Template[]) =>
-          prev.filter((item: Template) => item.id !== currentActiveTemplateId)
+          prev.filter((item: Template) => item.id !== currentActiveTemplateId),
         );
         if (importTemplateId === currentActiveTemplateId) {
           setImportTemplateId("");
         }
       } else {
         setExportTemplates((prev: Template[]) =>
-          prev.filter((item: Template) => item.id !== currentActiveTemplateId)
+          prev.filter((item: Template) => item.id !== currentActiveTemplateId),
         );
       }
       handleNewTemplate();
@@ -985,14 +1070,17 @@ export default function ImportsPage(): React.JSX.Element {
         setExportTemplateMappings(updater);
       }
     },
-    [isImportTemplateScope]
+    [isImportTemplateScope],
   );
 
-  const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
+  const updateMapping = (
+    index: number,
+    patch: Partial<TemplateMapping>,
+  ): void => {
     updateTemplateMappings((prev: TemplateMapping[]) =>
       prev.map((mapping: TemplateMapping, i: number) =>
-        i === index ? { ...mapping, ...patch } : mapping
-      )
+        i === index ? { ...mapping, ...patch } : mapping,
+      ),
     );
   };
 
@@ -1007,7 +1095,7 @@ export default function ImportsPage(): React.JSX.Element {
     updateTemplateMappings((prev: TemplateMapping[]) =>
       prev.length === 1
         ? [{ sourceKey: "", targetField: "" }]
-        : prev.filter((_: TemplateMapping, i: number) => i !== index)
+        : prev.filter((_: TemplateMapping, i: number) => i !== index),
     );
   };
 
@@ -1028,7 +1116,7 @@ export default function ImportsPage(): React.JSX.Element {
 
   const handleMappingDragStart = (
     event: React.DragEvent<HTMLButtonElement>,
-    index: number
+    index: number,
   ): void => {
     event.dataTransfer.setData("mappingIndex", String(index));
     event.dataTransfer.setData("text/plain", String(index));
@@ -1039,7 +1127,9 @@ export default function ImportsPage(): React.JSX.Element {
     target.style.opacity = "0.5";
   };
 
-  const handleMappingDragEnd = (event: React.DragEvent<HTMLButtonElement>): void => {
+  const handleMappingDragEnd = (
+    event: React.DragEvent<HTMLButtonElement>,
+  ): void => {
     const target = event.currentTarget as HTMLElement;
     target.style.opacity = "1";
     setDraggedMappingIndex(null);
@@ -1048,7 +1138,7 @@ export default function ImportsPage(): React.JSX.Element {
 
   const handleMappingDragOver = (
     event: React.DragEvent<HTMLDivElement>,
-    index: number
+    index: number,
   ): void => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -1065,7 +1155,7 @@ export default function ImportsPage(): React.JSX.Element {
 
   const handleMappingDrop = (
     event: React.DragEvent<HTMLDivElement>,
-    index: number
+    index: number,
   ): void => {
     event.preventDefault();
     const rawIndex =
@@ -1085,7 +1175,9 @@ export default function ImportsPage(): React.JSX.Element {
     const combined = currentParameterKeys;
     if (!query) return combined;
     const lowered = query.toLowerCase();
-    return combined.filter((key: string) => key.toLowerCase().includes(lowered));
+    return combined.filter((key: string) =>
+      key.toLowerCase().includes(lowered),
+    );
   };
 
   const handleLoadInventories = useCallback(async (): Promise<void> => {
@@ -1118,14 +1210,18 @@ export default function ImportsPage(): React.JSX.Element {
       setInventories(nextInventories);
       if (nextInventories.length) {
         const hasCurrent = inventoryId
-          ? nextInventories.some((inv: InventoryOption) => inv.id === inventoryId)
+          ? nextInventories.some(
+              (inv: InventoryOption) => inv.id === inventoryId,
+            )
           : false;
         if (!hasCurrent) {
           setInventoryId(nextInventories[0]?.id ?? "");
         }
         if (exportInventoryPreferenceLoaded) {
           const hasExportCurrent = exportInventoryId
-            ? nextInventories.some((inv: InventoryOption) => inv.id === exportInventoryId)
+            ? nextInventories.some(
+                (inv: InventoryOption) => inv.id === exportInventoryId,
+              )
             : false;
           if (!hasExportCurrent) {
             setExportInventoryId(nextInventories[0]?.id ?? "");
@@ -1160,7 +1256,9 @@ export default function ImportsPage(): React.JSX.Element {
       return;
     }
     if (!exportInventoryId) {
-      toast("Select an inventory before loading warehouses.", { variant: "error" });
+      toast("Select an inventory before loading warehouses.", {
+        variant: "error",
+      });
       return;
     }
     setLoadingWarehouses(true);
@@ -1277,7 +1375,12 @@ export default function ImportsPage(): React.JSX.Element {
     if (lastWarehouseInventoryIdRef.current === exportInventoryId) return;
     lastWarehouseInventoryIdRef.current = exportInventoryId;
     void handleLoadWarehouses();
-  }, [exportInventoryId, isBaseConnected, exportWarehouseLoaded, handleLoadWarehouses]);
+  }, [
+    exportInventoryId,
+    isBaseConnected,
+    exportWarehouseLoaded,
+    handleLoadWarehouses,
+  ]);
 
   useEffect(() => {
     if (includeAllWarehouses) return;
@@ -1333,7 +1436,7 @@ export default function ImportsPage(): React.JSX.Element {
               warehouseId: exportWarehouseId || null,
               inventoryId: exportInventoryId,
             }),
-          })
+          }),
         );
       }
       const responses = await Promise.all(requests);
@@ -1392,7 +1495,9 @@ export default function ImportsPage(): React.JSX.Element {
         return;
       }
       setLastResult(payload);
-      const skippedMsg = payload.skipped ? `, ${payload.skipped} skipped (duplicate SKU)` : "";
+      const skippedMsg = payload.skipped
+        ? `, ${payload.skipped} skipped (duplicate SKU)`
+        : "";
       toast(`Imported ${payload.imported} product(s)${skippedMsg}.`, {
         variant: "success",
       });
@@ -1443,8 +1548,8 @@ export default function ImportsPage(): React.JSX.Element {
         new Set(
           (payload.products ?? [])
             .map((item: ImportListItem) => item.baseProductId)
-            .filter((id: string | undefined): id is string => Boolean(id))
-        )
+            .filter((id: string | undefined): id is string => Boolean(id)),
+        ),
       );
       setImportListStats(
         payload.total !== undefined
@@ -1455,7 +1560,7 @@ export default function ImportsPage(): React.JSX.Element {
               existing: payload.existing ?? 0,
               skuDuplicates: payload.skuDuplicates ?? 0,
             }
-          : null
+          : null,
       );
     } catch (_error) {
       toast("Failed to load import list.", { variant: "error" });
@@ -1474,17 +1579,20 @@ export default function ImportsPage(): React.JSX.Element {
           item.description ?? "",
         ];
         return fields.some((field: string) =>
-          field.toLowerCase().includes(normalizedImportQuery)
+          field.toLowerCase().includes(normalizedImportQuery),
         );
       })
     : importList;
   const selectedImportCount = selectedImportIds.size;
   const allVisibleSelected =
     filteredImportList.length > 0 &&
-    filteredImportList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
+    filteredImportList.every((item: ImportListItem) =>
+      selectedImportIds.has(item.baseProductId),
+    );
   const isSomeVisibleSelected =
-    filteredImportList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) &&
-    !allVisibleSelected;
+    filteredImportList.some((item: ImportListItem) =>
+      selectedImportIds.has(item.baseProductId),
+    ) && !allVisibleSelected;
 
   if (checkingIntegration) {
     return (
@@ -1520,14 +1628,14 @@ export default function ImportsPage(): React.JSX.Element {
       <SectionHeader
         title="Product Import/Export"
         description="Import products from Base.com or export your products to Base.com using templates for field mapping."
-        actions={(
+        actions={
           <Link
             href="/admin/import"
             className="text-sm font-semibold text-blue-300 hover:text-blue-200"
           >
             CSV Import
           </Link>
-        )}
+        }
         className="mb-6"
       />
 
@@ -1650,16 +1758,18 @@ export default function ImportsPage(): React.JSX.Element {
                       <Input
                         className="mt-2 w-full"
                         value={parameterProductId}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                          setParameterProductId(event.target.value)
-                        }
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                        ): void => setParameterProductId(event.target.value)}
                         placeholder="Base product ID to fetch parameters"
                       />
                     </div>
                     <div className="flex flex-col items-center">
                       <Button
                         type="button"
-                        onClick={(): void => { void handleLoadParameters(); }}
+                        onClick={(): void => {
+                          void handleLoadParameters();
+                        }}
                         disabled={loadingParameters}
                       >
                         {loadingParameters
@@ -1685,7 +1795,9 @@ export default function ImportsPage(): React.JSX.Element {
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={(): void => { void handleUseExampleProduct(); }}
+                        onClick={(): void => {
+                          void handleUseExampleProduct();
+                        }}
                         disabled={loadingParameters}
                       >
                         Use example
@@ -1709,25 +1821,33 @@ export default function ImportsPage(): React.JSX.Element {
                   </div>
                 )}
               </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="secondary"
-                                  onClick={(): void => { void handleNewTemplate(); }}
-                                  type="button"
-                                >
-                                  New template
-                                </Button>
-                                <Button
-                                  onClick={(): void => { void handleSaveTemplate(); }}
-                                  disabled={savingTemplate}
-                                >
-                                  {savingTemplate ? "Saving..." : "Save template"}
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={(): void => { void handleDeleteTemplate(); }}
-                                  disabled={!currentActiveTemplateId || deletingTemplate}
-                                >                  {deletingTemplate ? "Deleting..." : "Delete"}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={(): void => {
+                    void handleNewTemplate();
+                  }}
+                  type="button"
+                >
+                  New template
+                </Button>
+                <Button
+                  onClick={(): void => {
+                    void handleSaveTemplate();
+                  }}
+                  disabled={savingTemplate}
+                >
+                  {savingTemplate ? "Saving..." : "Save template"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={(): void => {
+                    void handleDeleteTemplate();
+                  }}
+                  disabled={!currentActiveTemplateId || deletingTemplate}
+                >
+                  {" "}
+                  {deletingTemplate ? "Deleting..." : "Delete"}
                 </Button>
               </div>
             </div>
@@ -1735,7 +1855,9 @@ export default function ImportsPage(): React.JSX.Element {
             <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
               <div className="space-y-2">
                 <Label className="text-xs text-gray-400">
-                  {isImportTemplateScope ? "Import templates" : "Export templates"}
+                  {isImportTemplateScope
+                    ? "Import templates"
+                    : "Export templates"}
                 </Label>
                 <div className="max-h-64 overflow-auto rounded-md border border-border bg-card/60 p-2">
                   {currentTemplates.length === 0 ? (
@@ -1747,18 +1869,24 @@ export default function ImportsPage(): React.JSX.Element {
                   ) : (
                     currentTemplates
                       .slice()
-                      .sort((a: Template, b: Template) => a.name.localeCompare(b.name))
+                      .sort((a: Template, b: Template) =>
+                        a.name.localeCompare(b.name),
+                      )
                       .map((template: Template) => (
                         <Button
                           key={template.id}
                           type="button"
-                                                      className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
-                                                        currentActiveTemplateId === template.id
-                                                          ? "bg-emerald-500/20 text-emerald-100"
-                                                          : "text-gray-300 hover:bg-muted/50/60"
-                                                      }`}
-                                                      onClick={(): void => { void handleSelectTemplate(template.id); }}
-                                                    >                          <span>{template.name}</span>
+                          className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
+                            currentActiveTemplateId === template.id
+                              ? "bg-emerald-500/20 text-emerald-100"
+                              : "text-gray-300 hover:bg-muted/50/60"
+                          }`}
+                          onClick={(): void => {
+                            void handleSelectTemplate(template.id);
+                          }}
+                        >
+                          {" "}
+                          <span>{template.name}</span>
                         </Button>
                       ))
                   )}
@@ -1774,7 +1902,9 @@ export default function ImportsPage(): React.JSX.Element {
                     <Input
                       className="mt-2"
                       value={currentTemplateName}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      onChange={(
+                        event: React.ChangeEvent<HTMLInputElement>,
+                      ): void => {
                         const value = event.target.value;
                         if (isImportTemplateScope) {
                           setImportTemplateName(value);
@@ -1786,13 +1916,13 @@ export default function ImportsPage(): React.JSX.Element {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-gray-400">
-                      Description
-                    </Label>
+                    <Label className="text-xs text-gray-400">Description</Label>
                     <Input
                       className="mt-2"
                       value={currentTemplateDescription}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      onChange={(
+                        event: React.ChangeEvent<HTMLInputElement>,
+                      ): void => {
                         const value = event.target.value;
                         if (isImportTemplateScope) {
                           setImportTemplateDescription(value);
@@ -1809,7 +1939,10 @@ export default function ImportsPage(): React.JSX.Element {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="exportImagesAsBase64"
-                      checked={exportImagesAsBase64} onCheckedChange={(checked: boolean | "indeterminate"): void => setExportImagesAsBase64(Boolean(checked))}
+                      checked={exportImagesAsBase64}
+                      onCheckedChange={(
+                        checked: boolean | "indeterminate",
+                      ): void => setExportImagesAsBase64(Boolean(checked))}
                       className="h-4 w-4 rounded border-border bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
                     />
                     <Label
@@ -1832,7 +1965,8 @@ export default function ImportsPage(): React.JSX.Element {
                         warehouses. Base.com will reject stock for these keys.
                       </p>
                       <p className="mt-1 text-amber-300/80">
-                        Invalid stock keys: {invalidStockMappingLabels.join(", ")}
+                        Invalid stock keys:{" "}
+                        {invalidStockMappingLabels.join(", ")}
                       </p>
                       {stockMappingSuggestions.length > 0 ? (
                         <p className="mt-1 text-amber-300/80">
@@ -1842,120 +1976,138 @@ export default function ImportsPage(): React.JSX.Element {
                     </div>
                   ) : null}
                   <div className="mt-2 space-y-2">
-                    {currentTemplateMappings.map((mapping: TemplateMapping, index: number) => (
-                      <div
-                        key={index}
-                        onDragOver={(event: React.DragEvent<HTMLDivElement>): void => handleMappingDragOver(event, index)}
-                        onDragLeave={handleMappingDragLeave}
-                        onDrop={(event: React.DragEvent<HTMLDivElement>): void => handleMappingDrop(event, index)}
-                        className={`grid gap-2 rounded-md transition md:grid-cols-[auto_1fr_1fr_auto] ${
-                          dragOverMappingIndex === index
-                            ? "bg-emerald-500/10 ring-1 ring-emerald-500/60"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            draggable
-                            onDragStart={(event: React.DragEvent<HTMLButtonElement>): void =>
-                              handleMappingDragStart(event, index)
-                            }
-                            onDragEnd={handleMappingDragEnd}
-                            aria-label="Drag mapping to reorder"
-                            className={`text-gray-400 hover:text-white ${
-                              draggedMappingIndex === index
-                                ? "cursor-grabbing"
-                                : "cursor-grab"
-                            }`}
-                          >
-                            <GripVertical className="size-4" />
-                          </Button>
+                    {currentTemplateMappings.map(
+                      (mapping: TemplateMapping, index: number) => (
+                        <div
+                          key={index}
+                          onDragOver={(
+                            event: React.DragEvent<HTMLDivElement>,
+                          ): void => handleMappingDragOver(event, index)}
+                          onDragLeave={handleMappingDragLeave}
+                          onDrop={(
+                            event: React.DragEvent<HTMLDivElement>,
+                          ): void => handleMappingDrop(event, index)}
+                          className={`grid gap-2 rounded-md transition md:grid-cols-[auto_1fr_1fr_auto] ${
+                            dragOverMappingIndex === index
+                              ? "bg-emerald-500/10 ring-1 ring-emerald-500/60"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              draggable
+                              onDragStart={(
+                                event: React.DragEvent<HTMLButtonElement>,
+                              ): void => handleMappingDragStart(event, index)}
+                              onDragEnd={handleMappingDragEnd}
+                              aria-label="Drag mapping to reorder"
+                              className={`text-gray-400 hover:text-white ${
+                                draggedMappingIndex === index
+                                  ? "cursor-grabbing"
+                                  : "cursor-grab"
+                              }`}
+                            >
+                              <GripVertical className="size-4" />
+                            </Button>
+                          </div>
+                          <div className="relative">
+                            <Input
+                              value={mapping.sourceKey}
+                              onChange={(
+                                event: React.ChangeEvent<HTMLInputElement>,
+                              ): void =>
+                                updateMapping(index, {
+                                  sourceKey: event.target.value,
+                                })
+                              }
+                              onFocus={(): void => setOpenKeyIndex(index)}
+                              onBlur={(): void => {
+                                window.setTimeout(() => {
+                                  setOpenKeyIndex((current: number | null) =>
+                                    current === index ? null : current,
+                                  );
+                                }, 120);
+                              }}
+                              placeholder={
+                                isImportTemplateScope
+                                  ? "Base parameter key (e.g. material)"
+                                  : "Export parameter key (e.g. prices.0)"
+                              }
+                            />
+                            {openKeyIndex === index && (
+                              <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-card shadow-lg">
+                                {filterKeys(mapping.sourceKey).map(
+                                  (key: string) => (
+                                    <Button
+                                      key={key}
+                                      type="button"
+                                      className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-muted/50"
+                                      onMouseDown={(
+                                        event: React.MouseEvent<HTMLButtonElement>,
+                                      ): void => {
+                                        event.preventDefault();
+                                        updateMapping(index, {
+                                          sourceKey: key,
+                                        });
+                                        setOpenKeyIndex(null);
+                                      }}
+                                    >
+                                      {key}
+                                    </Button>
+                                  ),
+                                )}
+                                {filterKeys(mapping.sourceKey).length === 0 ? (
+                                  <div className="px-3 py-2 text-xs text-gray-500">
+                                    No matches
+                                  </div>
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+                          <div className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-500">
+                            {mapping.sourceKey &&
+                            currentParameterValues[mapping.sourceKey]
+                              ? currentParameterValues[mapping.sourceKey]
+                              : "—"}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                              value={mapping.targetField}
+                              onChange={(
+                                event: React.ChangeEvent<HTMLSelectElement>,
+                              ): void =>
+                                updateMapping(index, {
+                                  targetField: event.target.value,
+                                })
+                              }
+                            >
+                              <option value="">Select product field</option>
+                              {PRODUCT_FIELDS.map(
+                                (field: { value: string; label: string }) => (
+                                  <option key={field.value} value={field.value}>
+                                    {field.label}
+                                  </option>
+                                ),
+                              )}
+                            </select>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={(): void => removeMappingRow(index)}
+                              aria-label="Remove mapping"
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="relative">
-                          <Input
-                            value={mapping.sourceKey}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                              updateMapping(index, {
-                                sourceKey: event.target.value,
-                              })
-                            }
-                            onFocus={(): void => setOpenKeyIndex(index)}
-                            onBlur={(): void => {
-                              window.setTimeout(() => {
-                                setOpenKeyIndex((current: number | null) =>
-                                  current === index ? null : current
-                                );
-                              }, 120);
-                            }}
-                            placeholder={
-                              isImportTemplateScope
-                                ? "Base parameter key (e.g. material)"
-                                : "Export parameter key (e.g. prices.0)"
-                            }
-                          />
-                          {openKeyIndex === index && (
-                            <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-card shadow-lg">
-                              {filterKeys(mapping.sourceKey).map((key: string) => (
-                                  <Button
-                                    key={key}
-                                    type="button"
-                                    className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-muted/50"
-                                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                      event.preventDefault();
-                                      updateMapping(index, { sourceKey: key });
-                                      setOpenKeyIndex(null);
-                                    }}
-                                  >
-                                    {key}
-                                  </Button>
-                                ))}
-                              {filterKeys(mapping.sourceKey).length === 0 ? (
-                                <div className="px-3 py-2 text-xs text-gray-500">
-                                  No matches
-                                </div>
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-                        <div className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-500">
-                          {mapping.sourceKey &&
-                          currentParameterValues[mapping.sourceKey]
-                            ? currentParameterValues[mapping.sourceKey]
-                            : "—"}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <select
-                            className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                            value={mapping.targetField}
-                            onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                              updateMapping(index, {
-                                targetField: event.target.value,
-                              })
-                            }
-                          >
-                            <option value="">Select product field</option>
-                            {PRODUCT_FIELDS.map((field: { value: string; label: string }) => (
-                              <option key={field.value} value={field.value}>
-                                {field.label}
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={(): void => removeMappingRow(index)}
-                            aria-label="Remove mapping"
-                            className="text-gray-400 hover:text-white"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                   <div className="mt-3">
                     <Button

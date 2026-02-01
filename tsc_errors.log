@@ -1,123 +1,4 @@
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(7,22): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Flip.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/flip.d.ts' only in casing.
-  The file is in the program because:
-    Referenced via 'flip.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
-    Imported via "gsap/Flip" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Flip.d.ts@3.14.2'
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(8,27): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Draggable.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/draggable.d.ts' only in casing.
-  The file is in the program because:
-    Referenced via 'draggable.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
-    Imported via "gsap/Draggable" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Draggable.d.ts@3.14.2'
-src/features/cms/components/frontend/GsapAnimationWrapper.tsx(10,26): error TS1149: File name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/Observer.d.ts' differs from already included file name '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/observer.d.ts' only in casing.
-  The file is in the program because:
-    Referenced via 'observer.d.ts' from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/gsap/types/index.d.ts'
-    Imported via "gsap/Observer" from file '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx' with packageId 'gsap/types/Observer.d.ts@3.14.2'
-src/features/cms/components/page-builder/PageBuilderLayout.tsx(73,11): error TS2339: Property 'addListener' does not exist on type 'never'.
-src/features/cms/components/page-builder/PageBuilderLayout.tsx(75,13): error TS2339: Property 'removeListener' does not exist on type 'never'.
-src/features/integrations/services/product-listing-repository.ts(157,3): error TS2322: Type '(id: string) => Promise<boolean>' is not assignable to type '(id: string) => Promise<void>'.
-  Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
-    Type 'boolean' is not assignable to type 'void'.
-src/features/integrations/services/product-listing-repository.ts(325,3): error TS2322: Type '(id: string) => Promise<boolean>' is not assignable to type '(id: string) => Promise<void>'.
-  Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
-    Type 'boolean' is not assignable to type 'void'.
-src/features/jobs/components/ProductAiJobsPanel.tsx(211,12): error TS2345: Argument of type '(val: string | undefined) => boolean | undefined' is not assignable to parameter of type '(value: string | null | undefined, index: number, array: (string | null | undefined)[]) => unknown'.
-  Types of parameters 'val' and 'value' are incompatible.
-    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
-      Type 'null' is not assignable to type 'string | undefined'.
-src/features/jobs/server.ts(7,1): error TS2308: Module "./workers/chatbotJobQueue" has already exported a member named 'pollQueue'. Consider explicitly re-exporting to resolve the ambiguity.
-src/features/jobs/services/productAiService.ts(28,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
-  Types of property 'result' are incompatible.
-    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(55,52): error TS2345: Argument of type '(j: ProductAiJob) => string' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => string'.
-  Types of parameters 'j' and 'value' are incompatible.
-    Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
-      Types of property 'result' are incompatible.
-        Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(80,3): error TS2322: Type '{ product: ProductSummary | null; id: string; productId: string; status: "running" | "pending" | "failed" | "completed" | "canceled"; type: string; payload: unknown; result: ProductAiJobResult | null; errorMessage: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null; }[]' is not assignable to type '(ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; })[]'.
-  Type '{ product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; ... 4 more ...; finishedAt: string | null; }' is not assignable to type 'ProductAiJob & { product: { name_en: string | null; sku: string | null; } | null; }'.
-    Type '{ product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; type: string; payload: unknown; ... 4 more ...; finishedAt: string | null; }' is not assignable to type 'ProductAiJob'.
-      Types of property 'product' are incompatible.
-        Type 'ProductSummary | null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
-          Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; } | undefined'.
-src/features/jobs/services/productAiService.ts(80,19): error TS2345: Argument of type '(job: ProductAiJob) => { product: ProductSummary | null; id: string; productId: string; status: "pending" | "running" | "completed" | "failed" | "canceled"; ... 6 more ...; finishedAt: string | null; }' is not assignable to parameter of type '(value: ProductAiJobRecord, index: number, array: ProductAiJobRecord[]) => { product: ProductSummary | null; id: string; ... 8 more ...; finishedAt: string | null; }'.
-  Types of parameters 'job' and 'value' are incompatible.
-    Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
-      Types of property 'result' are incompatible.
-        Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(122,5): error TS2322: Type 'Record<string, unknown> | null' is not assignable to type '{ name_en: string | null; sku: string | null; } & Record<string, unknown>'.
-  Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; } & Record<string, unknown>'.
-    Type 'null' is not assignable to type '{ name_en: string | null; sku: string | null; }'.
-src/features/jobs/services/productAiService.ts(128,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
-  Types of property 'result' are incompatible.
-    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(142,3): error TS2322: Type 'ProductAiJobRecord' is not assignable to type 'ProductAiJob'.
-  Types of property 'result' are incompatible.
-    Type 'unknown' is not assignable to type 'ProductAiJobResult | null'.
-src/features/jobs/services/productAiService.ts(155,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
-src/features/jobs/services/productAiService.ts(160,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
-src/features/jobs/services/productAiService.ts(165,3): error TS2322: Type '{ count: number; }' is not assignable to type 'number'.
-src/features/notesapp/api/useNoteMutations.ts(5,52): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(5,78): error TS2304: Cannot find name 'NoteCreateInput'.
-src/features/notesapp/api/useNoteMutations.ts(9,33): error TS2304: Cannot find name 'NoteCreateInput'.
-src/features/notesapp/api/useNoteMutations.ts(9,59): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(16,41): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(25,52): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(25,98): error TS2304: Cannot find name 'NoteUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(29,58): error TS2304: Cannot find name 'NoteUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(29,86): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(36,41): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(38,24): error TS2304: Cannot find name 'NoteWithRelations'.
-src/features/notesapp/api/useNoteMutations.ts(46,52): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(50,45): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(55,41): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(64,58): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(68,105): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(75,41): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(83,58): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(83,101): error TS2304: Cannot find name 'CategoryUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(87,58): error TS2304: Cannot find name 'CategoryUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(87,90): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(94,41): error TS2304: Cannot find name 'CategoryRecord'.
-src/features/notesapp/api/useNoteMutations.ts(103,58): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(107,101): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(113,41): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(122,56): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(125,61): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(132,41): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(140,56): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(143,77): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(150,41): error TS2304: Cannot find name 'NotebookRecord'.
-src/features/notesapp/api/useNoteMutations.ts(158,56): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(161,45): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(164,41): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(176,55): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(179,5): error TS2322: Type '(payload: { name: string; notebookId: string; color?: string; }) => Promise<TagRecord>' is not assignable to type 'MutationFunction<TagRecord, { notebookId: string; }>'.
-  Types of parameters 'payload' and 'variables' are incompatible.
-    Property 'name' is missing in type '{ notebookId: string; }' but required in type '{ name: string; notebookId: string; color?: string | undefined; }'.
-src/features/notesapp/api/useNoteMutations.ts(179,96): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(186,41): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(188,24): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(194,55): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(194,93): error TS2304: Cannot find name 'TagUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(197,58): error TS2304: Cannot find name 'TagUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(197,85): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(204,41): error TS2304: Cannot find name 'TagRecord'.
-src/features/notesapp/api/useNoteMutations.ts(212,55): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(215,45): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(218,41): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(226,57): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(229,5): error TS2322: Type '(payload: { name: string; notebookId: string; colors: Record<string, string>; }) => Promise<ThemeRecord>' is not assignable to type 'MutationFunction<ThemeRecord, { notebookId: string; }>'.
-  Types of parameters 'payload' and 'variables' are incompatible.
-    Type '{ notebookId: string; }' is missing the following properties from type '{ name: string; notebookId: string; colors: Record<string, string>; }': name, colors
-src/features/notesapp/api/useNoteMutations.ts(229,112): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(236,41): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(238,24): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(244,57): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(244,97): error TS2304: Cannot find name 'ThemeUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(247,58): error TS2304: Cannot find name 'ThemeUpdateInput'.
-src/features/notesapp/api/useNoteMutations.ts(247,87): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(254,41): error TS2304: Cannot find name 'ThemeRecord'.
-src/features/notesapp/api/useNoteMutations.ts(262,57): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(265,45): error TS2304: Cannot find name 'DeleteResponse'.
-src/features/notesapp/api/useNoteMutations.ts(268,41): error TS2304: Cannot find name 'DeleteResponse'.
+src/features/cms/components/page-builder/AnimationConfigPanel.tsx(239,9): error TS2322: Type 'string' is not assignable to type '"custom" | "children" | "self" | "descendants"'.
 src/features/notesapp/components/NoteCard.tsx(262,19): error TS2345: Argument of type '(crumb: { id: string; name: string; }, index: number, array: Array<{ id: string; name: string; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
   Types of parameters 'crumb' and 'value' are incompatible.
     Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; }'.
@@ -145,9 +26,9 @@ src/features/notesapp/pages/AdminNotesPage.tsx(340,15): error TS2322: Type '(par
   Types of parameters 'parentId' and 'parentId' are incompatible.
     Type 'string | null | undefined' is not assignable to type 'string | null'.
       Type 'undefined' is not assignable to type 'string | null'.
-src/features/notesapp/pages/AdminNotesPage.tsx(365,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(368,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesPage.tsx(392,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(395,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
   Type 'void' is not assignable to type 'Promise<void>'.
 src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
   Type 'boolean' is not assignable to type 'void'.
@@ -182,6 +63,11 @@ src/features/notesapp/services/notes/index.ts(88,30): error TS2769: No overload 
     Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'NoteWithRelations'.
       Type 'null' is not assignable to type 'NoteWithRelations'.
         Type 'null' is not assignable to type 'NoteRecord'.
+src/features/notesapp/services/notes/note-repository/prisma/category-impl.ts(111,11): error TS2322: Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; } | { parent: { connect: { id: string; }; }; sortIndex?: number | ... 1 more ... | undefined; color?: string | ... 1 more ... | undefined; description?: string | ... 1 more ...' is not assignable to type 'CategoryUpdateInput'.
+  Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; }' is not assignable to type 'CategoryUpdateInput'.
+    Types of property 'sortIndex' are incompatible.
+      Type 'number | null | undefined' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
+        Type 'null' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
 src/features/products/components/form/ProductFormGeneral.tsx(98,12): error TS2345: Argument of type '(slot: { previewUrl: string; }) => string' is not assignable to parameter of type '(value: ProductImageSlot, index: number, array: ProductImageSlot[]) => string'.
   Types of parameters 'slot' and 'value' are incompatible.
     Type 'ProductImageSlot' is not assignable to type '{ previewUrl: string; }'.
@@ -191,30 +77,51 @@ src/features/products/components/list/ProductColumns.tsx(328,13): error TS2322: 
 src/features/products/components/list/ProductColumns.tsx(420,13): error TS2322: Type 'boolean | ""' is not assignable to type 'boolean | null'.
   Type '""' is not assignable to type 'boolean | null'.
 src/features/products/components/list/ProductColumns.tsx(442,16): error TS18047: 'displayPrice' is possibly 'null'.
-src/features/products/components/settings/modals/CatalogModal.tsx(42,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(43,29): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(44,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(49,57): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(50,53): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(51,59): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(52,71): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(53,45): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(55,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CatalogModal.tsx(141,30): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CountryModal.tsx(33,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CountryModal.tsx(34,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CountryModal.tsx(38,57): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CountryModal.tsx(40,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CurrencyModal.tsx(27,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CurrencyModal.tsx(28,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/CurrencyModal.tsx(34,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/LanguageModal.tsx(30,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/LanguageModal.tsx(31,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/LanguageModal.tsx(36,55): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/LanguageModal.tsx(38,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/PriceGroupModal.tsx(37,31): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/PriceGroupModal.tsx(38,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
-src/features/products/components/settings/modals/PriceGroupModal.tsx(51,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/features/products/components/ProductListPanel.tsx(17,7): error TS2345: Argument of type '(mod: { ProductListHeader: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
+  Types of parameters 'mod' and 'value' are incompatible.
+    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")' is not assignable to type '{ ProductListHeader: ComponentType<Record<string, unknown>>; }'.
+      Types of property 'ProductListHeader' are incompatible.
+        Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
+          Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
+            Types of parameters 'props' and 'props' are incompatible.
+              Type 'Record<string, unknown>' is missing the following properties from type 'ProductListHeaderProps': onCreateProduct, page, totalPages, setPage, and 11 more.
+src/features/products/components/ProductListPanel.tsx(25,7): error TS2345: Argument of type '(mod: { ProductFilters: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
+  Types of parameters 'mod' and 'value' are incompatible.
+    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")' is not assignable to type '{ ProductFilters: ComponentType<Record<string, unknown>>; }'.
+      Types of property 'ProductFilters' are incompatible.
+        Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
+          Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
+            Types of parameters 'props' and 'props' are incompatible.
+              Type 'Record<string, unknown>' is missing the following properties from type 'ProductFiltersProps': search, setSearch, sku, setSku, and 8 more.
+src/features/products/services/aiDescriptionService.ts(216,5): error TS2322: Type '({ type: "image_url"; image_url: { url: string; }; } | null)[]' is not assignable to type 'ChatCompletionContentPart[]'.
+  Type '{ type: "image_url"; image_url: { url: string; }; } | null' is not assignable to type 'ChatCompletionContentPart'.
+    Type 'null' is not assignable to type 'ChatCompletionContentPart'.
+src/features/products/services/aiDescriptionService.ts(216,79): error TS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'ChatCompletionContentPart' is not assignable to type '{ type: "image_url"; image_url: { url: string; }; } | null'.
+    Property 'image_url' is missing in type 'ChatCompletionContentPartText' but required in type '{ type: "image_url"; image_url: { url: string; }; }'.
+src/features/products/services/product-repository/mongo-product-repository.ts(247,72): error TS2345: Argument of type '(p: { parameterId: string; value?: string; }) => { parameterId: string; value: string; }' is not assignable to parameter of type '(value: { parameterId: string; value?: string | null | undefined; }, index: number, array: { parameterId: string; value?: string | null | undefined; }[]) => { parameterId: string; value: string; }'.
+  Types of parameters 'p' and 'value' are incompatible.
+    Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type '{ parameterId: string; value?: string | undefined; }'.
+      Types of property 'value' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+src/features/products/services/product-repository/mongo-product-repository.ts(307,78): error TS2345: Argument of type '(p: { parameterId: string; value?: string; }) => { parameterId: string; value: string; }' is not assignable to parameter of type '(value: { parameterId: string; value?: string | null | undefined; }, index: number, array: { parameterId: string; value?: string | null | undefined; }[]) => { parameterId: string; value: string; }'.
+  Types of parameters 'p' and 'value' are incompatible.
+    Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type '{ parameterId: string; value?: string | undefined; }'.
+      Types of property 'value' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+src/features/products/services/productService.ts(19,34): error TS6196: 'ProductImageRecord' is declared but never used.
+src/features/products/services/productService.ts(19,54): error TS6196: 'ProductRecord' is declared but never used.
+src/features/products/services/productService.ts(33,3): error TS2322: Type '{ images: (ProductImageRecord | null)[]; id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; gtin: string | null; ... 22 more ...; tags?: { ...; }[] | undefined; }[]' is not assignable to type 'ProductWithImages[]'.
+  Type '{ images: (ProductImageRecord | null)[]; id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 23 more ...; tags?: { tagId: string; }[]; }' is not assignable to type 'ProductWithImages'.
+    Type '{ images: (ProductImageRecord | null)[]; id: string; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 23 more ...; tags?: { tagId: string; }[]; }' is not assignable to type '{ images: ProductImageRecord[]; catalogs: ProductCatalogRecord[]; categories?: { categoryId: string; }[] | undefined; tags?: { tagId: string; }[] | undefined; }'.
+      Types of property 'images' are incompatible.
+        Type '(ProductImageRecord | null)[]' is not assignable to type 'ProductImageRecord[]'.
+          Type 'ProductImageRecord | null' is not assignable to type 'ProductImageRecord'.
+            Type 'null' is not assignable to type 'ProductImageRecord'.
+src/features/products/types/index.ts(103,3): error TS2300: Duplicate identifier 'ProductRecord'.
+src/features/products/types/index.ts(110,15): error TS2300: Duplicate identifier 'ProductRecord'.
 src/mocks/handlers.ts(167,33): error TS2345: Argument of type '({ params, request }: RequestParamsContext) => Promise<HttpResponse<JsonBodyType>>' is not assignable to parameter of type 'HttpResponseResolver<PathParams, DefaultBodyType, JsonBodyType>'.
   Types of parameters '__0' and 'info' are incompatible.
     Type 'ResponseResolverInfo<HttpRequestResolverExtras<PathParams>, DefaultBodyType>' is not assignable to type 'RequestParamsContext'.

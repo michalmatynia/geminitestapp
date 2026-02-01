@@ -26,7 +26,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   aiPathsExpandedGroups: ["Triggers"],
 };
 
-export function ProductPreferencesPage() {
+export function ProductPreferencesPage(): React.JSX.Element {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ export function ProductPreferencesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
       try {
         setLoading(true);
 
@@ -70,7 +70,7 @@ export function ProductPreferencesPage() {
     void loadData();
   }, [toast]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     try {
       setSaving(true);
 
@@ -94,7 +94,7 @@ export function ProductPreferencesPage() {
     }
   };
 
-  const handleResetToDefault = async () => {
+  const handleResetToDefault = async (): Promise<void> => {
     try {
       setSaving(true);
 
@@ -157,8 +157,8 @@ export function ProductPreferencesPage() {
                 <Label htmlFor="nameLocale">Product Name Language</Label>
                 <Select
                   value={preferences.productListNameLocale || "name_en"}
-                  onValueChange={(value) =>
-                    setPreferences((prev) => ({
+                  onValueChange={(value: string) =>
+                    setPreferences((prev: UserPreferences) => ({
                       ...prev,
                       productListNameLocale: value,
                     }))
@@ -183,8 +183,8 @@ export function ProductPreferencesPage() {
                 <Label htmlFor="catalogFilter">Default Catalog Filter</Label>
                 <Select
                   value={preferences.productListCatalogFilter || "all"}
-                  onValueChange={(value) =>
-                    setPreferences((prev) => ({
+                  onValueChange={(value: string) =>
+                    setPreferences((prev: UserPreferences) => ({
                       ...prev,
                       productListCatalogFilter: value,
                     }))
@@ -195,7 +195,7 @@ export function ProductPreferencesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Catalogs</SelectItem>
-                    {catalogs.map((catalog) => (
+                    {catalogs.map((catalog: Catalog) => (
                       <SelectItem key={catalog.id} value={catalog.id}>
                         {catalog.name}
                       </SelectItem>
@@ -213,8 +213,8 @@ export function ProductPreferencesPage() {
                 <Input
                   id="currencyCode"
                   value={preferences.productListCurrencyCode || ""}
-                  onChange={(e) =>
-                    setPreferences((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPreferences((prev: UserPreferences) => ({
                       ...prev,
                       productListCurrencyCode: e.target.value || null,
                     }))
@@ -231,8 +231,8 @@ export function ProductPreferencesPage() {
                 <Label htmlFor="pageSize">Products Per Page</Label>
                 <Select
                   value={String(preferences.productListPageSize || 50)}
-                  onValueChange={(value) =>
-                    setPreferences((prev) => ({
+                  onValueChange={(value: string) =>
+                    setPreferences((prev: UserPreferences) => ({
                       ...prev,
                       productListPageSize: parseInt(value, 10),
                     }))

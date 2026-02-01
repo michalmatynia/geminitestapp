@@ -4,11 +4,13 @@ import Image from "next/image";
 
 import { notFound } from "next/navigation";
 
+import type { JSX } from "react";
+
 export async function ProductPublicPage({
   params,
 }: {
   params: { id: string };
-}) {
+}): Promise<JSX.Element> {
   const { id } = params;
   const product = await productService.getProductById(id);
 

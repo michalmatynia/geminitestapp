@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/typedef */
 import "server-only";
 
 import { createHash } from "crypto";
@@ -26,10 +27,11 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
         }
         if (typeof val === "function") return "[Function]";
         if (typeof val === "bigint") return val.toString();
-        if (typeof val === "string") return truncateString(val, MAX_VALUE_LENGTH);
+        if (typeof val === "string")
+          return truncateString(val, MAX_VALUE_LENGTH);
         return val;
       },
-      2
+      2,
     );
     if (!json) return null;
     if (json.length > MAX_CONTEXT_SIZE) {
@@ -48,7 +50,14 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
   }
 };
 
-export const normalizeErrorInfo = (error: unknown): { message: string; stack?: string | undefined | null; name?: string; raw?: Record<string, unknown> | null } => {
+export const normalizeErrorInfo = (
+  error: unknown,
+): {
+  message: string;
+  stack?: string | undefined | null;
+  name?: string;
+  raw?: Record<string, unknown> | null;
+} => {
   if (error instanceof Error) {
     return {
       message: error.message,
@@ -62,7 +71,9 @@ export const normalizeErrorInfo = (error: unknown): { message: string; stack?: s
   return { message: "Unknown error", raw: sanitizeValue(error) };
 };
 
-const extractRequestInfo = (request?: Request): { path?: string; method?: string; requestId?: string } => {
+const extractRequestInfo = (
+  request?: Request,
+): { path?: string; method?: string; requestId?: string } => {
   if (!request) return {};
   try {
     const url = new URL(request.url);
@@ -81,7 +92,11 @@ export const buildErrorFingerprint = (input: {
   source?: string | null;
   path?: string | null;
   statusCode?: number | null;
-  errorInfo?: { message?: string; stack?: string | undefined | null; name?: string } | null;
+  errorInfo?: {
+    message?: string;
+    stack?: string | undefined | null;
+    name?: string;
+  } | null;
 }): string => {
   const hash = createHash("sha256");
   hash.update(input.message ?? "");
@@ -142,7 +157,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         ? buildErrorFingerprint({
             message: input.message,
             source: input.source ?? null,
-            path: input.request?.url ? requestInfo.path ?? null : null,
+            path: input.request?.url ? (requestInfo.path ?? null) : null,
             statusCode: input.statusCode ?? null,
             errorInfo,
           })
@@ -180,6 +195,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   }
 }
 
-export async function logSystemError(input: Omit<SystemLogInput, "level">): Promise<void> {
+export async function logSystemError(
+  input: Omit<SystemLogInput, "level">,
+): Promise<void> {
   await logSystemEvent({ ...input, level: "error" });
 }

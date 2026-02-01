@@ -7,7 +7,7 @@ import {
 } from "@/features/playwright/constants/playwright";
 import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright/types";
 
-export const createPlaywrightPersonaId = () => {
+export const createPlaywrightPersonaId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -27,7 +27,7 @@ export const normalizePlaywrightPersonas = (
   if (!Array.isArray(value)) return [];
 
   return value
-    .map((item) => {
+    .map((item: unknown): PlaywrightPersona | null => {
       if (!item || typeof item !== "object") return null;
       const raw = item as PlaywrightPersona;
       const name = typeof raw.name === "string" ? raw.name.trim() : "";
@@ -59,13 +59,13 @@ export const normalizePlaywrightPersonas = (
         updatedAt,
       } as PlaywrightPersona;
     })
-    .filter((item): item is PlaywrightPersona => Boolean(item));
+    .filter((item: PlaywrightPersona | null): item is PlaywrightPersona => Boolean(item));
 };
 
 export const arePlaywrightSettingsEqual = (
   left: PlaywrightSettings,
   right: PlaywrightSettings
-) => {
+): boolean => {
   const proxyPasswordEqual =
     !left.proxyPassword || !right.proxyPassword
       ? true
@@ -95,9 +95,9 @@ export const arePlaywrightSettingsEqual = (
 export const findPlaywrightPersonaMatch = (
   settings: PlaywrightSettings,
   personas: PlaywrightPersona[]
-) => {
+): PlaywrightPersona | null => {
   return (
-    personas.find((persona) =>
+    personas.find((persona: PlaywrightPersona) =>
       arePlaywrightSettingsEqual(settings, persona.settings)
     ) ?? null
   );
@@ -109,7 +109,7 @@ export const fetchPlaywrightPersonas = async (): Promise<PlaywrightPersona[]> =>
     throw new Error("Failed to load Playwright personas.");
   }
   const data = (await res.json()) as Array<{ key: string; value: string }>;
-  const map = new Map(data.map((item) => [item.key, item.value]));
+  const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
   const stored = parseJsonSetting<PlaywrightPersona[]>(
     map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY),
     []

@@ -26,7 +26,7 @@ export function TagsSettings({
   selectedCatalogId,
   onCatalogChange,
   onRefresh,
-}: TagsSettingsProps) {
+}: TagsSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,7 +37,7 @@ export function TagsSettings({
     catalogId: "",
   });
 
-  const openCreateModal = () => {
+  const openCreateModal = (): void => {
     if (!selectedCatalogId) {
       toast("Please select a catalog first.", { variant: "error" });
       return;
@@ -51,7 +51,7 @@ export function TagsSettings({
     setShowModal(true);
   };
 
-  const openEditModal = (tag: ProductTag) => {
+  const openEditModal = (tag: ProductTag): void => {
     setEditingTag(tag);
     setFormData({
       name: tag.name,
@@ -61,7 +61,7 @@ export function TagsSettings({
     setShowModal(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!formData.name.trim()) {
       toast("Tag name is required.", { variant: "error" });
       return;
@@ -103,7 +103,7 @@ export function TagsSettings({
     }
   };
 
-  const handleDelete = async (tag: ProductTag) => {
+  const handleDelete = async (tag: ProductTag): Promise<void> => {
     const confirmed = window.confirm(`Delete tag "${tag.name}"?`);
     if (!confirmed) return;
     try {
@@ -123,7 +123,7 @@ export function TagsSettings({
     }
   };
 
-  const selectedCatalog = catalogs.find((catalog) => catalog.id === selectedCatalogId);
+  const selectedCatalog = catalogs.find((catalog: Catalog) => catalog.id === selectedCatalogId);
 
   return (
     <div className="space-y-5">
@@ -141,7 +141,7 @@ export function TagsSettings({
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>
-              {catalogs.map((catalog) => (
+              {catalogs.map((catalog: Catalog) => (
                 <SelectItem key={catalog.id} value={catalog.id}>
                   {catalog.name}
                   {catalog.isDefault ? " (Default)" : ""}
@@ -179,7 +179,7 @@ export function TagsSettings({
               </div>
             ) : (
               <div className="space-y-2">
-                {tags.map((tag) => (
+                {tags.map((tag: ProductTag) => (
                   <div
                     key={tag.id}
                     className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
@@ -196,14 +196,14 @@ export function TagsSettings({
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        onClick={() => openEditModal(tag)}
+                        onClick={(): void => openEditModal(tag)}
                         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
                       >
                         Edit
                       </Button>
                       <Button
                         type="button"
-                        onClick={() => void handleDelete(tag)}
+                        onClick={(): void => { void handleDelete(tag); }}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete tag"
                       >
@@ -227,7 +227,7 @@ export function TagsSettings({
       {showModal && (
         <AppModal
           open={showModal}
-          onOpenChange={(open) => !open && setShowModal(false)}
+          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
           title={editingTag ? "Edit Tag" : "Create Tag"}
         >
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
@@ -238,7 +238,7 @@ export function TagsSettings({
               <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={(): void => setShowModal(false)}
               >
                 Close
               </Button>
@@ -250,8 +250,8 @@ export function TagsSettings({
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Tag name"
                 />
@@ -262,14 +262,14 @@ export function TagsSettings({
                 <select
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                    setFormData((prev: { name: string; color: string; catalogId: string }) => ({
                       ...prev,
                       catalogId: e.target.value,
                     }))
                   }
                 >
-                  {catalogs.map((catalog) => (
+                  {catalogs.map((catalog: Catalog) => (
                     <option key={catalog.id} value={catalog.id}>
                       {catalog.name}
                       {catalog.isDefault ? " (Default)" : ""}
@@ -285,16 +285,16 @@ export function TagsSettings({
                     type="color"
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
                     type="text"
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#38bdf8"
                   />
@@ -305,14 +305,14 @@ export function TagsSettings({
                 <Button
                   className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={(): void => setShowModal(false)}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
-                  onClick={() => void handleSave()}
+                  onClick={(): void => { void handleSave(); }}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save"}

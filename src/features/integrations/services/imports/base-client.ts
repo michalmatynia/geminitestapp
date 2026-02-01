@@ -89,7 +89,7 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
     (payload.data as Record<string, unknown> | undefined)?.warehouses,
   ];
   const raw = candidates.map(toArray).find((list: unknown[]) => list.length > 0) ?? [];
-  return raw.reduce<BaseWarehouse[]>((acc, entry: unknown) => {
+  return raw.reduce<BaseWarehouse[]>((acc: BaseWarehouse[], entry: unknown) => {
     if (!entry || typeof entry !== "object") return acc;
     const record = entry as Record<string, unknown>;
     const id =
@@ -136,7 +136,7 @@ const extractProductIds = (payload: BaseApiResponse): string[] => {
   } else if (rawProducts && typeof rawProducts === "object") {
     for (const [key, value] of Object.entries(
       rawProducts as Record<string, unknown>
-    ) as [string, unknown][]) {
+    )) {
       const record = value && typeof value === "object" ? value : null;
       const id =
         (record as Record<string, unknown> | null)?.product_id ??

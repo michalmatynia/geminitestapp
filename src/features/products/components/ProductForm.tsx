@@ -26,7 +26,7 @@ interface ProductFormProps {
 export default function ProductForm({
   submitButtonText: _submitButtonText,
   skuRequired: _skuRequired = false,
-}: ProductFormProps) {
+}: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
     uploadError,
@@ -42,7 +42,7 @@ export default function ProductForm({
   }, [searchParams]);
 
   return (
-    <form onSubmit={(e) => { void handleSubmit(e); }} className="relative min-h-[400px] pb-10">
+    <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className="relative min-h-[400px] pb-10">
       {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-5">

@@ -46,7 +46,7 @@ import { CurrencyModal } from "@/features/products/components/settings/modals/Cu
 import { CountryModal } from "@/features/products/components/settings/modals/CountryModal";
 
 
-export function ProductSettingsPage() {
+export function ProductSettingsPage(): React.JSX.Element {
   const [activeSection, setActiveSection] =
     useState<(typeof settingSections)[number]>("Categories");
   
@@ -212,7 +212,7 @@ export function ProductSettingsPage() {
 
   useEffect(() => {
     if (catalogs.length > 0 && !selectedCategoryCatalogId) {
-      const def = catalogs.find((c) => c.isDefault) || catalogs[0];
+      const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
       if (def) {
         setSelectedCategoryCatalogId(def.id);
         void refreshCategories(def.id);
@@ -222,7 +222,7 @@ export function ProductSettingsPage() {
 
   useEffect(() => {
     if (catalogs.length > 0 && !selectedTagCatalogId) {
-      const def = catalogs.find((c) => c.isDefault) || catalogs[0];
+      const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
       if (def) {
         setSelectedTagCatalogId(def.id);
         void refreshTags(def.id);
@@ -230,8 +230,8 @@ export function ProductSettingsPage() {
     }
   }, [catalogs, selectedTagCatalogId, refreshTags]);
 
-  const handleSetDefaultGroup = async (groupId: string) => {
-    const group = priceGroups.find((g) => g.id === groupId);
+  const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
+    const group = priceGroups.find((g: PriceGroup) => g.id === groupId);
     if (!group) return;
     setDefaultGroupSaving(true);
     try {
@@ -251,7 +251,7 @@ export function ProductSettingsPage() {
     }
   };
 
-  const handleDeleteCatalog = async (catalog: Catalog) => {
+  const handleDeleteCatalog = async (catalog: Catalog): Promise<void> => {
     if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
     try {
       const res = await fetch(`/api/catalogs/${catalog.id}`, { method: "DELETE" });
@@ -259,7 +259,7 @@ export function ProductSettingsPage() {
     } catch (err) { console.error(err); }
   };
 
-  const handleDeleteGroup = async (group: PriceGroup) => {
+  const handleDeleteGroup = async (group: PriceGroup): Promise<void> => {
     if (priceGroups.length <= 1) {
       toast("At least one price group is required.", { variant: "error" });
       return;
@@ -280,7 +280,7 @@ export function ProductSettingsPage() {
       <div className="grid gap-6 md:grid-cols-[240px_1fr]">
         <SectionPanel className="p-4">
           <div className="flex flex-col gap-2">
-            {settingSections.map((section) => (
+            {settingSections.map((section: typeof settingSections[number]) => (
               <Button
                 key={section}
                 onClick={() => setActiveSection(section)}
@@ -302,7 +302,7 @@ export function ProductSettingsPage() {
               categories={productCategories}
               catalogs={catalogs}
               selectedCatalogId={selectedCategoryCatalogId}
-              onCatalogChange={(id) => { setSelectedCategoryCatalogId(id); void refreshCategories(id); }}
+              onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); void refreshCategories(id); }}
               onRefresh={() => void refreshCategories(selectedCategoryCatalogId)}
             />
           )}
@@ -312,7 +312,7 @@ export function ProductSettingsPage() {
               tags={productTags}
               catalogs={catalogs}
               selectedCatalogId={selectedTagCatalogId}
-              onCatalogChange={(id) => { setSelectedTagCatalogId(id); void refreshTags(id); }}
+              onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); void refreshTags(id); }}
               onRefresh={() => void refreshTags(selectedTagCatalogId)}
             />
           )}
@@ -321,11 +321,11 @@ export function ProductSettingsPage() {
               loadingGroups={loadingGroups}
               priceGroups={priceGroups}
               defaultGroupId={defaultGroupId}
-              onDefaultGroupChange={(id) => { void handleSetDefaultGroup(id); }}
+              onDefaultGroupChange={(id: string): void => { void handleSetDefaultGroup(id); }}
               defaultGroupSaving={defaultGroupSaving}
-              handleOpenCreate={() => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
-              handleEditGroup={(g) => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
-              handleDeleteGroup={(g) => { void handleDeleteGroup(g); }}
+              handleOpenCreate={(): void => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
+              handleEditGroup={(g: PriceGroup): void => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
+              handleDeleteGroup={(g: PriceGroup): void => { void handleDeleteGroup(g); }}
             />
           )}
           {activeSection === "Catalogs" && (
@@ -333,18 +333,18 @@ export function ProductSettingsPage() {
               loadingCatalogs={loadingCatalogs}
               catalogs={catalogs}
               languages={languages}
-              handleOpenCatalogModal={() => { setEditingCatalog(null); setShowCatalogModal(true); }}
-              handleEditCatalog={(c) => { setEditingCatalog(c); setShowCatalogModal(true); }}
-              handleDeleteCatalog={(c) => { void handleDeleteCatalog(c); }}
+              handleOpenCatalogModal={(): void => { setEditingCatalog(null); setShowCatalogModal(true); }}
+              handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
+              handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
             />
           )}
           {activeSection === "Internationalization" && (
             <InternationalizationSettings
               loadingCurrencies={loadingCurrencies}
               currencyOptions={currencyOptions}
-              handleOpenCurrencyModal={(c) => { setEditingCurrency(c ?? null); setShowCurrencyModal(true); }}
-              handleDeleteCurrency={(c) => { 
-                void (async () => {
+              handleOpenCurrencyModal={(c: CurrencyOption | undefined): void => { setEditingCurrency(c ?? null); setShowCurrencyModal(true); }}
+              handleDeleteCurrency={(c: CurrencyOption): void => { 
+                void (async (): Promise<void> => {
                   if (confirm(`Delete ${c.code}?`)) {
                     await fetch(`/api/currencies/${c.id}`, { method: "DELETE" });
                     await refreshCurrencies();
@@ -355,9 +355,9 @@ export function ProductSettingsPage() {
               filteredCountries={countries}
               countrySearch=""
               setCountrySearch={() => {}}
-              handleOpenCountryModal={(c) => { setEditingCountry(c ?? null); setShowCountryModal(true); }}
-              handleDeleteCountry={(c) => {
-                void (async () => {
+              handleOpenCountryModal={(c: CountryOption | undefined): void => { setEditingCountry(c ?? null); setShowCountryModal(true); }}
+              handleDeleteCountry={(c: CountryOption): void => {
+                void (async (): Promise<void> => {
                   if (confirm(`Delete ${c.name}?`)) {
                     await fetch(`/api/countries/${c.id}`, { method: "DELETE" });
                     await refreshCountries();
@@ -367,10 +367,10 @@ export function ProductSettingsPage() {
               languagesLoading={languagesLoading}
               languagesError={languagesError}
               languages={languages}
-              handleOpenNewLanguageModal={() => { setEditingLanguage(null); setShowLanguageModal(true); }}
-              handleOpenLanguageModal={(l) => { setEditingLanguage(l); setShowLanguageModal(true); }}
-              handleDeleteLanguage={(l) => {
-                void (async () => {
+              handleOpenNewLanguageModal={(): void => { setEditingLanguage(null); setShowLanguageModal(true); }}
+              handleOpenLanguageModal={(l: Language): void => { setEditingLanguage(l); setShowLanguageModal(true); }}
+              handleDeleteLanguage={(l: Language): void => {
+                void (async (): Promise<void> => {
                   if (confirm(`Delete ${l.name}?`)) {
                     await fetch(`/api/languages/${l.id}`, { method: "DELETE" });
                     await refreshLanguages();
@@ -388,7 +388,7 @@ export function ProductSettingsPage() {
       <CatalogModal
         isOpen={showCatalogModal}
         onClose={() => setShowCatalogModal(false)}
-        onSuccess={() => { void (async () => { setShowCatalogModal(false); await refreshCatalogs(); })(); }}
+        onSuccess={(): void => { void (async (): Promise<void> => { setShowCatalogModal(false); await refreshCatalogs(); })(); }}
         catalog={editingCatalog}
         languages={languages}
         languagesLoading={languagesLoading}
@@ -401,7 +401,7 @@ export function ProductSettingsPage() {
       <LanguageModal
         isOpen={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}
-        onSuccess={() => { void (async () => { setShowLanguageModal(false); await refreshLanguages(); })(); }}
+        onSuccess={(): void => { void (async (): Promise<void> => { setShowLanguageModal(false); await refreshLanguages(); })(); }}
         language={editingLanguage}
         countries={countries}
       />
@@ -409,7 +409,7 @@ export function ProductSettingsPage() {
       <PriceGroupModal
         isOpen={showPriceGroupModal}
         onClose={() => setShowPriceGroupModal(false)}
-        onSuccess={() => { void (async () => { setShowPriceGroupModal(false); await refreshPriceGroups(); })(); }}
+        onSuccess={(): void => { void (async (): Promise<void> => { setShowPriceGroupModal(false); await refreshPriceGroups(); })(); }}
         priceGroup={editingPriceGroup}
         currencyOptions={currencyOptions}
         loadingCurrencies={loadingCurrencies}
@@ -419,14 +419,14 @@ export function ProductSettingsPage() {
       <CurrencyModal
         isOpen={showCurrencyModal}
         onClose={() => setShowCurrencyModal(false)}
-        onSuccess={() => { void (async () => { setShowCurrencyModal(false); await refreshCurrencies(); })(); }}
+        onSuccess={(): void => { void (async (): Promise<void> => { setShowCurrencyModal(false); await refreshCurrencies(); })(); }}
         currency={editingCurrency}
       />
 
       <CountryModal
         isOpen={showCountryModal}
         onClose={() => setShowCountryModal(false)}
-        onSuccess={() => { void (async () => { setShowCountryModal(false); await refreshCountries(); })(); }}
+        onSuccess={(): void => { void (async (): Promise<void> => { setShowCountryModal(false); await refreshCountries(); })(); }}
         country={editingCountry}
         currencyOptions={currencyOptions}
         loadingCurrencies={loadingCurrencies}

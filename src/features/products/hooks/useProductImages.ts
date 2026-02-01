@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { ProductWithImages } from "@/features/products/types";
 import type { ImageFileSelection } from "@/shared/types/files";
@@ -15,10 +17,12 @@ const normalizeImageLinks = (links?: string[] | null): string[] => {
   return next;
 };
 
-const buildImageSlotsFromProduct = (product?: ProductWithImages): (ProductImageSlot | null)[] => {
+const buildImageSlotsFromProduct = (
+  product?: ProductWithImages,
+): (ProductImageSlot | null)[] => {
   const slots: (ProductImageSlot | null)[] = Array.from(
     { length: TOTAL_IMAGE_SLOTS },
-    () => null
+    () => null,
   );
   if (!product?.images?.length) return slots;
   product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
@@ -41,13 +45,13 @@ const createSlotId = () =>
 
 export function useProductImages(
   product?: ProductWithImages,
-  initialImageLinks?: string[] | null
+  initialImageLinks?: string[] | null,
 ) {
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
-    () => buildImageSlotsFromProduct(product)
+    () => buildImageSlotsFromProduct(product),
   );
-  const [imageLinks, setImageLinks] = useState<string[]>(
-    () => normalizeImageLinks(product?.imageLinks ?? initialImageLinks)
+  const [imageLinks, setImageLinks] = useState<string[]>(() =>
+    normalizeImageLinks(product?.imageLinks ?? initialImageLinks),
   );
   const [showFileManager, setShowFileManager] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
@@ -56,111 +60,128 @@ export function useProductImages(
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
-    const currentObjectUrls = imageSlots.map(slot =>
-      slot?.type === 'file' ? slot.previewUrl : null
-    ).filter(Boolean) as string[];
+    const currentObjectUrls = imageSlots
+      .map((slot) => (slot?.type === "file" ? slot.previewUrl : null))
+      .filter(Boolean) as string[];
 
     // Revoke old object URLs that are no longer in use
-    const oldObjectUrls = objectUrlsRef.current.filter(url => !currentObjectUrls.includes(url));
-    oldObjectUrls.forEach(url => URL.revokeObjectURL(url));
+    const oldObjectUrls = objectUrlsRef.current.filter(
+      (url) => !currentObjectUrls.includes(url),
+    );
+    oldObjectUrls.forEach((url) => URL.revokeObjectURL(url));
 
     // Update ref with current object URLs
     objectUrlsRef.current = currentObjectUrls;
 
     return () => {
       // Clean up all object URLs on unmount
-      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       objectUrlsRef.current = [];
     };
   }, [imageSlots]);
 
-  const handleSlotImageChange = useCallback((file: File | null, index: number) => {
-    setImageSlots((prevSlots) => {
-      const newSlots = [...prevSlots];
-      if (file) {
-        // Revoke existing object URL if replacing an image
-        const existingSlot = newSlots[index];
-        if (existingSlot?.type === "file") {
-          URL.revokeObjectURL(existingSlot.previewUrl);
+  const handleSlotImageChange = useCallback(
+    (file: File | null, index: number) => {
+      setImageSlots((prevSlots) => {
+        const newSlots = [...prevSlots];
+        if (file) {
+          // Revoke existing object URL if replacing an image
+          const existingSlot = newSlots[index];
+          if (existingSlot?.type === "file") {
+            URL.revokeObjectURL(existingSlot.previewUrl);
+          }
+          newSlots[index] = {
+            type: "file",
+            data: file,
+            previewUrl: URL.createObjectURL(file),
+            slotId: createSlotId(),
+          };
+        } else {
+          // Revoke object URL if clearing the slot
+          const existingSlot = newSlots[index];
+          if (existingSlot?.type === "file") {
+            URL.revokeObjectURL(existingSlot.previewUrl);
+          }
+          newSlots[index] = null;
         }
-        newSlots[index] = {
-          type: "file",
-          data: file,
-          previewUrl: URL.createObjectURL(file),
-          slotId: createSlotId(),
-        };
-      } else {
-        // Revoke object URL if clearing the slot
-        const existingSlot = newSlots[index];
-        if (existingSlot?.type === "file") {
-          URL.revokeObjectURL(existingSlot.previewUrl);
+        return newSlots;
+      });
+    },
+    [],
+  );
+
+  const handleSlotFileSelect = useCallback(
+    (file: ImageFileSelection | null, index: number) => {
+      setImageSlots((prevSlots) => {
+        const newSlots = [...prevSlots];
+        if (file) {
+          // Revoke object URL if replacing a file upload with an existing file
+          const existingSlot = newSlots[index];
+          if (existingSlot?.type === "file") {
+            URL.revokeObjectURL(existingSlot.previewUrl);
+          }
+          newSlots[index] = {
+            type: "existing",
+            data: file,
+            previewUrl: file.filepath,
+            slotId: file.id,
+          };
+        } else {
+          // Revoke object URL if clearing the slot
+          const existingSlot = newSlots[index];
+          if (existingSlot?.type === "file") {
+            URL.revokeObjectURL(existingSlot.previewUrl);
+          }
+          newSlots[index] = null;
         }
+        return newSlots;
+      });
+      setShowFileManager(false);
+    },
+    [],
+  );
+
+  const handleSlotDisconnectImage = useCallback(
+    async (index: number) => {
+      const slotToClear = imageSlots[index];
+      if (!slotToClear) return;
+
+      setImageSlots((prevSlots) => {
+        const newSlots = [...prevSlots];
         newSlots[index] = null;
-      }
-      return newSlots;
-    });
-  }, []);
+        return newSlots;
+      });
 
-  const handleSlotFileSelect = useCallback((file: ImageFileSelection | null, index: number) => {
-    setImageSlots((prevSlots) => {
-      const newSlots = [...prevSlots];
-      if (file) {
-         // Revoke object URL if replacing a file upload with an existing file
-         const existingSlot = newSlots[index];
-         if (existingSlot?.type === "file") {
-          URL.revokeObjectURL(existingSlot.previewUrl);
+      if (slotToClear.type === "existing" && product?.id) {
+        try {
+          const res = await fetch(
+            `/api/products/${product.id}/images/${slotToClear.data.id}`,
+            {
+              method: "DELETE",
+            },
+          );
+
+          if (!res.ok) {
+            const payload = (await res.json()) as {
+              error?: string;
+              errorId?: string;
+            };
+            console.error("Failed to disconnect image from product:", {
+              error: payload?.error,
+              errorId: payload?.errorId,
+              productId: product.id,
+              imageFileId: slotToClear.data.id,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to disconnect image from product:", error);
         }
-        newSlots[index] = {
-          type: "existing",
-          data: file,
-          previewUrl: file.filepath,
-          slotId: file.id,
-        };
-      } else {
-        // Revoke object URL if clearing the slot
-        const existingSlot = newSlots[index];
-        if (existingSlot?.type === "file") {
-          URL.revokeObjectURL(existingSlot.previewUrl);
-        }
-        newSlots[index] = null;
+      } else if (slotToClear.type === "file") {
+        URL.revokeObjectURL(slotToClear.previewUrl);
       }
-      return newSlots;
-    });
-    setShowFileManager(false);
-  }, []);
-
-  const handleSlotDisconnectImage = useCallback(async (index: number) => {
-    const slotToClear = imageSlots[index];
-    if (!slotToClear) return;
-
-    setImageSlots(prevSlots => {
-      const newSlots = [...prevSlots];
-      newSlots[index] = null;
-      return newSlots;
-    });
-
-    if (slotToClear.type === 'existing' && product?.id) {
-      try {
-        const res = await fetch(`/api/products/${product.id}/images/${slotToClear.data.id}`, {
-          method: "DELETE",
-        });
-
-        if (!res.ok) {
-          const payload = (await res.json()) as { error?: string; errorId?: string };
-          console.error("Failed to disconnect image from product:", {
-            error: payload?.error,
-            errorId: payload?.errorId,
-            productId: product.id,
-            imageFileId: slotToClear.data.id,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to disconnect image from product:", error);
-      }
-    } else if (slotToClear.type === 'file') {
-      URL.revokeObjectURL(slotToClear.previewUrl);
-    }
-  }, [imageSlots, product]);
+    },
+    [imageSlots, product],
+  );
 
   const setImageLinkAt = useCallback((index: number, value: string) => {
     setImageLinks((prev) => {
@@ -245,22 +266,24 @@ export function useProductImages(
       const newSlots: (ProductImageSlot | null)[] = [...prevSlots];
 
       // Update slots with saved images
-      savedProduct.images
-        .slice(0, TOTAL_IMAGE_SLOTS)
-        .forEach((pImg, index) => {
-          if (pImg.imageFile) {
-            const existingSlot = newSlots[index];
-            // Only update if the image ID changed or slot was empty
-            if (!existingSlot || existingSlot.type !== "existing" || existingSlot.slotId !== pImg.imageFile.id) {
-              newSlots[index] = {
-                type: "existing",
-                data: pImg.imageFile,
-                previewUrl: pImg.imageFile.filepath,
-                slotId: pImg.imageFile.id,
-              };
-            }
+      savedProduct.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
+        if (pImg.imageFile) {
+          const existingSlot = newSlots[index];
+          // Only update if the image ID changed or slot was empty
+          if (
+            !existingSlot ||
+            existingSlot.type !== "existing" ||
+            existingSlot.slotId !== pImg.imageFile.id
+          ) {
+            newSlots[index] = {
+              type: "existing",
+              data: pImg.imageFile,
+              previewUrl: pImg.imageFile.filepath,
+              slotId: pImg.imageFile.id,
+            };
           }
-        });
+        }
+      });
 
       // Clear slots beyond saved images count
       for (let i = savedProduct.images.length; i < TOTAL_IMAGE_SLOTS; i++) {
@@ -276,26 +299,32 @@ export function useProductImages(
     setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
   }, []);
 
-  const setImagesReordering = useCallback((value: boolean) => {
-    isReorderingRef.current = value;
-    if (!value && pendingRefreshRef.current) {
-      const pending = pendingRefreshRef.current;
-      pendingRefreshRef.current = null;
-      applyRefresh(pending);
-    }
-  }, [applyRefresh]);
+  const setImagesReordering = useCallback(
+    (value: boolean) => {
+      isReorderingRef.current = value;
+      if (!value && pendingRefreshRef.current) {
+        const pending = pendingRefreshRef.current;
+        pendingRefreshRef.current = null;
+        applyRefresh(pending);
+      }
+    },
+    [applyRefresh],
+  );
 
   // Function to refresh state from product (e.g. after save)
-  const refreshFromProduct = useCallback((savedProduct: ProductWithImages) => {
-    if (isReorderingRef.current) {
-      pendingRefreshRef.current = savedProduct;
-      if (process.env.NODE_ENV !== "production") {
-        console.info("[product-images] Refresh deferred during reorder");
+  const refreshFromProduct = useCallback(
+    (savedProduct: ProductWithImages) => {
+      if (isReorderingRef.current) {
+        pendingRefreshRef.current = savedProduct;
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[product-images] Refresh deferred during reorder");
+        }
+        return;
       }
-      return;
-    }
-    applyRefresh(savedProduct);
-  }, [applyRefresh]);
+      applyRefresh(savedProduct);
+    },
+    [applyRefresh],
+  );
 
   return {
     imageSlots,

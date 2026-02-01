@@ -2,16 +2,27 @@
 
 import React, { useRef, useEffect, type ReactNode } from "react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { Flip } from "gsap/Flip";
-import { Draggable } from "gsap/Draggable";
-import { CustomEase } from "gsap/CustomEase";
-import { Observer } from "gsap/Observer";
-import type { GsapAnimationConfig, RevealStyle, TextEffect } from "@/features/gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";                     
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";              
+import { Flip } from "gsap/Flip";                         
+import { Draggable } from "gsap/Draggable";                            
+import { CustomEase } from "gsap/CustomEase";                           
+import { Observer } from "gsap/Observer";    
+import type {
+  GsapAnimationConfig,
+  RevealStyle,
+  TextEffect,
+} from "@/features/gsap";
 import { getGsapFromVars, getParallaxDefaults } from "@/features/gsap";
 
-gsap.registerPlugin(ScrollTrigger, MotionPathPlugin, Flip, Draggable, CustomEase, Observer);
+gsap.registerPlugin(
+  ScrollTrigger,
+  MotionPathPlugin,
+  Flip,
+  Draggable,
+  CustomEase,
+  Observer,
+);
 
 interface GsapAnimationWrapperProps {
   config?: GsapAnimationConfig | undefined;
@@ -56,7 +67,9 @@ const KEYFRAME_PRESETS: Record<string, gsap.TweenVars> = {
   },
 };
 
-function getRevealVars(style: RevealStyle): { from: gsap.TweenVars; to: gsap.TweenVars } | null {
+function getRevealVars(
+  style: RevealStyle,
+): { from: gsap.TweenVars; to: gsap.TweenVars } | null {
   switch (style) {
     case "clipUp":
       return {
@@ -106,14 +119,21 @@ function hashString(value: string): string {
   return Math.abs(hash).toString(36);
 }
 
-function getVelocityValue(velocity: number, config: GsapAnimationConfig): number {
+function getVelocityValue(
+  velocity: number,
+  config: GsapAnimationConfig,
+): number {
   const strength = config.velocityStrength ?? 0.15;
   const max = config.velocityMax ?? 20;
   const raw = (velocity / 1000) * strength * 100;
   return gsap.utils.clamp(-max, max, raw);
 }
 
-function applyVelocityEffect(targets: HTMLElement[], velocity: number, config: GsapAnimationConfig): void {
+function applyVelocityEffect(
+  targets: HTMLElement[],
+  velocity: number,
+  config: GsapAnimationConfig,
+): void {
   if (!targets.length) return;
   const effect = config.velocityEffect ?? "none";
   if (effect === "none") return;
@@ -132,7 +152,10 @@ function applyVelocityEffect(targets: HTMLElement[], velocity: number, config: G
   gsap.to(targets, vars);
 }
 
-function resetVelocityEffect(targets: HTMLElement[], config: GsapAnimationConfig): void {
+function resetVelocityEffect(
+  targets: HTMLElement[],
+  config: GsapAnimationConfig,
+): void {
   if (!targets.length) return;
   const effect = config.velocityEffect ?? "none";
   if (effect === "none") return;
@@ -158,13 +181,16 @@ function resolveEase(config: GsapAnimationConfig): string | gsap.EaseFunction {
   try {
     const name = `cmsEase-${hashString(custom)}`;
     return CustomEase.create(name, custom);
-  } catch (error) {
+  } catch (error: unknown) {
     console.warn("Invalid custom ease string:", error);
     return "power2.out";
   }
 }
 
-function splitTextElement(element: HTMLElement, mode: TextEffect): { targets: HTMLElement[]; cleanup: () => void } | null {
+function splitTextElement(
+  element: HTMLElement,
+  mode: TextEffect,
+): { targets: HTMLElement[]; cleanup: () => void } | null {
   if (!["splitChars", "splitWords", "splitLines"].includes(mode)) return null;
   const originalHtml = element.innerHTML;
   const originalText = element.textContent ?? "";
@@ -180,8 +206,12 @@ function splitTextElement(element: HTMLElement, mode: TextEffect): { targets: HT
 
   if (mode === "splitChars") {
     const chars = Array.from(originalText);
-    const spans = chars.map((char: string): HTMLSpanElement => createSpan(char));
-    spans.forEach((span: HTMLSpanElement): void => { element.appendChild(span); });
+    const spans = chars.map(
+      (char: string): HTMLSpanElement => createSpan(char),
+    );
+    spans.forEach((span: HTMLSpanElement): void => {
+      element.appendChild(span);
+    });
     return {
       targets: spans,
       cleanup: (): void => {
@@ -250,7 +280,10 @@ function splitTextElement(element: HTMLElement, mode: TextEffect): { targets: HT
   };
 }
 
-function resolveTargets(el: HTMLDivElement, config: GsapAnimationConfig): gsap.DOMTarget {
+function resolveTargets(
+  el: HTMLDivElement,
+  config: GsapAnimationConfig,
+): gsap.DOMTarget {
   const selector = config.selector?.trim();
 
   if (!selector) {
@@ -261,7 +294,9 @@ function resolveTargets(el: HTMLDivElement, config: GsapAnimationConfig): gsap.D
     return el;
   }
 
-  const scopedSelector = selector.startsWith(">") ? `:scope ${selector}` : selector;
+  const scopedSelector = selector.startsWith(">")
+    ? `:scope ${selector}`
+    : selector;
   const selectorFn = gsap.utils.selector(el);
 
   try {
@@ -274,33 +309,44 @@ function resolveTargets(el: HTMLDivElement, config: GsapAnimationConfig): gsap.D
   return el;
 }
 
-export function GsapAnimationWrapper({ config, children, className }: GsapAnimationWrapperProps): React.ReactNode {
+export function GsapAnimationWrapper({
+  config,
+  children,
+  className,
+}: GsapAnimationWrapperProps): React.ReactNode {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!config || !ref.current) return;
 
     const hasCoreAnimation = config.preset !== "none";
-    const hasParallax = config.parallaxPreset !== undefined && config.parallaxPreset !== "none";
-    const hasVelocity = config.velocityEffect !== undefined && config.velocityEffect !== "none";
-    const hasMotionPath = Boolean(config.motionPathEnabled && config.motionPathPath);
+    const hasParallax =
+      config.parallaxPreset !== undefined && config.parallaxPreset !== "none";
+    const hasVelocity =
+      config.velocityEffect !== undefined && config.velocityEffect !== "none";
+    const hasMotionPath = Boolean(
+      config.motionPathEnabled && config.motionPathPath,
+    );
 
-    if (!hasCoreAnimation && !hasParallax && !hasVelocity && !hasMotionPath) return;
+    if (!hasCoreAnimation && !hasParallax && !hasVelocity && !hasMotionPath)
+      return;
 
     const el = ref.current;
     const cleanupFns: Array<() => void> = [];
     const ctx = gsap.context(() => {
       const fromVars = getGsapFromVars(config.preset);
-      const { transformOrigin, transformPerspective, ...tweenFromVars } = fromVars as gsap.TweenVars & {
-        transformOrigin?: string;
-        transformPerspective?: number | string;
-      };
+      const { transformOrigin, transformPerspective, ...tweenFromVars } =
+        fromVars as gsap.TweenVars & {
+          transformOrigin?: string;
+          transformPerspective?: number | string;
+        };
       const duration = config.duration ?? 1;
       const delay = config.delay ?? 0;
       const resolvedEase = resolveEase(config);
 
       // For bounce preset, override easing
-      const finalEase = config.preset === "bounce" ? "bounce.out" : resolvedEase;
+      const finalEase =
+        config.preset === "bounce" ? "bounce.out" : resolvedEase;
       const targets = resolveTargets(el, config);
       const targetsArray = gsap.utils.toArray<HTMLElement>(targets);
       const revealVars = getRevealVars(config.revealStyle ?? "none");
@@ -309,7 +355,10 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
       const scrollMode = config.scrollMode ?? "none";
       const scrollStart = config.scrollStart ?? "top 85%";
       const scrollEnd = config.scrollEnd ?? "bottom top";
-      const isScrubMode = scrollMode === "scrub" || scrollMode === "pin" || scrollMode === "story";
+      const isScrubMode =
+        scrollMode === "scrub" ||
+        scrollMode === "pin" ||
+        scrollMode === "story";
       const baseScrollTrigger =
         scrollMode === "none"
           ? config.trigger === "scroll"
@@ -330,7 +379,11 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                 start: scrollStart,
                 end: scrollEnd,
                 scrub: config.scrollScrub ?? 0.6,
-                pin: scrollMode === "pin" || scrollMode === "story" || config.scrollPin || false,
+                pin:
+                  scrollMode === "pin" ||
+                  scrollMode === "story" ||
+                  config.scrollPin ||
+                  false,
                 anticipatePin: scrollMode === "story" ? 1 : undefined,
               };
 
@@ -343,7 +396,9 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
 
       const timelineModeRaw = config.timelineMode ?? "none";
       const effectiveTimelineMode =
-        timelineModeRaw === "none" && scrollMode === "story" && targetsArray.length > 1
+        timelineModeRaw === "none" &&
+        scrollMode === "story" &&
+        targetsArray.length > 1
           ? "sequence"
           : timelineModeRaw;
       const timelineGap = config.timelineGap ?? 0.15;
@@ -358,17 +413,28 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
       const timelineRepeatDelay = config.timelineRepeatDelay ?? 0.2;
 
       const orderedTargets =
-        timelineRandomize && targetsArray.length > 1 ? shuffleArray(targetsArray) : targetsArray;
+        timelineRandomize && targetsArray.length > 1
+          ? shuffleArray(targetsArray)
+          : targetsArray;
 
-      const pickAxisVelocity = (axis: string, vx: number, vy: number): number => {
+      const pickAxisVelocity = (
+        axis: string,
+        vx: number,
+        vy: number,
+      ): number => {
         if (axis === "x") return vx;
         if (axis === "y") return vy;
         return Math.abs(vx) > Math.abs(vy) ? vx : vy;
       };
 
-      const makeScrollTrigger = (withLabels: boolean): gsap.TweenVars["scrollTrigger"] => {
+      const makeScrollTrigger = (
+        withLabels: boolean,
+      ): gsap.TweenVars["scrollTrigger"] => {
         if (!baseScrollTrigger) return undefined;
-        const triggerConfig = { ...baseScrollTrigger } as Record<string, unknown>;
+        const triggerConfig = { ...baseScrollTrigger } as Record<
+          string,
+          unknown
+        >;
         if (withLabels && config.scrollSnap) {
           triggerConfig.snap = {
             snapTo: "labelsDirectional",
@@ -382,7 +448,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
       const applyTimelineTween = (
         tl: gsap.core.Timeline,
         target: gsap.TweenTarget,
-        position: gsap.Position
+        position: gsap.Position,
       ): void => {
         if (keyframePreset) {
           tl.to(
@@ -392,7 +458,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               duration,
               ease: keyframePreset.ease ?? finalEase,
             },
-            position
+            position,
           );
           return;
         }
@@ -406,7 +472,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               duration,
               ease: finalEase,
             },
-            position
+            position,
           );
           return;
         }
@@ -419,7 +485,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               duration,
               ease: finalEase,
             },
-            position
+            position,
           );
           return;
         }
@@ -431,7 +497,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
             duration,
             ease: finalEase,
           },
-          position
+          position,
         );
       };
 
@@ -449,9 +515,13 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           if (timelineScrollTrigger) {
             timelineVars.scrollTrigger = timelineScrollTrigger;
           }
-          const tl = gsap.timeline(timelineVars);
+          const tl: gsap.core.Timeline = gsap.timeline(timelineVars);
 
-          if (effectiveTimelineMode === "cascade" || effectiveTimelineMode === "wave" || effectiveTimelineMode === "ripple") {
+          if (
+            effectiveTimelineMode === "cascade" ||
+            effectiveTimelineMode === "wave" ||
+            effectiveTimelineMode === "ripple"
+          ) {
             const staggerConfig: gsap.StaggerVars = {
               each: timelineStaggerEach,
               from: effectiveTimelineMode === "cascade" ? "start" : "center",
@@ -473,7 +543,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                   ease: finalEase,
                   stagger: staggerConfig,
                 },
-                0
+                0,
               );
             } else if (isFadeOut) {
               tl.to(
@@ -484,7 +554,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                   ease: finalEase,
                   stagger: staggerConfig,
                 },
-                0
+                0,
               );
             } else {
               tl.from(
@@ -495,7 +565,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                   ease: finalEase,
                   stagger: staggerConfig,
                 },
-                0
+                0,
               );
             }
 
@@ -505,27 +575,31 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
             });
           } else {
             let cursor = 0;
-            orderedTargets.forEach((target: HTMLElement, index: number): void => {
-              let position = cursor;
-              if (effectiveTimelineMode === "sequence") {
-                position = index * (duration + timelineGap);
-              } else if (effectiveTimelineMode === "overlap") {
-                position = cursor;
-                cursor += Math.max(0, duration - timelineOverlap);
-              } else if (effectiveTimelineMode === "domino") {
-                position = cursor;
-                cursor += Math.max(0, duration - timelineOverlap);
-              } else if (effectiveTimelineMode === "callResponse") {
-                position = index * timelineGap + (index % 2 === 1 ? timelineResponseOffset : 0);
-              }
+            orderedTargets.forEach(
+              (target: HTMLElement, index: number): void => {
+                let position = cursor;
+                if (effectiveTimelineMode === "sequence") {
+                  position = index * (duration + timelineGap);
+                } else if (effectiveTimelineMode === "overlap") {
+                  position = cursor;
+                  cursor += Math.max(0, duration - timelineOverlap);
+                } else if (effectiveTimelineMode === "domino") {
+                  position = cursor;
+                  cursor += Math.max(0, duration - timelineOverlap);
+                } else if (effectiveTimelineMode === "callResponse") {
+                  position =
+                    index * timelineGap +
+                    (index % 2 === 1 ? timelineResponseOffset : 0);
+                }
 
-              applyTimelineTween(tl, target, position);
-              tl.addLabel(`step-${index}`, position);
+                applyTimelineTween(tl, target, position);
+                tl.addLabel(`step-${index}`, position);
 
-              if (effectiveTimelineMode === "sequence") {
-                cursor = position + duration + timelineGap;
-              }
-            });
+                if (effectiveTimelineMode === "sequence") {
+                  cursor = position + duration + timelineGap;
+                }
+              },
+            );
           }
         } else {
           const allowLoop = timelineLoop && !isScrubMode;
@@ -571,7 +645,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                 delay,
                 ease: finalEase,
                 ...(scrollTrigger ? { scrollTrigger } : {}),
-              }
+              },
             );
           } else {
             const tweenFn = isFadeOut ? gsap.to : gsap.from;
@@ -628,7 +702,8 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               case "layers":
                 return signedBase * (1 + index * layerStrength);
               case "random": {
-                const seed = Math.sin(randomSeed * 999 + index * 78.233) * 43758.5453;
+                const seed =
+                  Math.sin(randomSeed * 999 + index * 78.233) * 43758.5453;
                 const rand = seed - Math.floor(seed);
                 const multiplier = 0.6 + rand * 0.8;
                 return signedBase * multiplier;
@@ -673,8 +748,9 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           const baseEnd = config.motionPathEnd ?? 1;
           const motionPathBase: MotionPath.Vars = {
             path,
-            autoRotate:
-              config.motionPathAutoRotate ? config.motionPathRotateOffset ?? 0 : false,
+            autoRotate: config.motionPathAutoRotate
+              ? (config.motionPathRotateOffset ?? 0)
+              : false,
             start: baseStart,
             end: baseEnd,
             ...(config.motionPathAlign ? { align: path } : {}),
@@ -713,7 +789,9 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         const selector = config.svgDrawSelector?.trim();
         const svgTargets = selector
           ? el.querySelectorAll<SVGGeometryElement>(selector)
-          : el.querySelectorAll<SVGGeometryElement>("path, line, circle, rect, polyline, polygon");
+          : el.querySelectorAll<SVGGeometryElement>(
+              "path, line, circle, rect, polyline, polygon",
+            );
         const fromPercent = config.svgDrawFrom ?? 0;
         const toPercent = config.svgDrawTo ?? 100;
         const scrollTrigger = makeScrollTrigger(false);
@@ -743,7 +821,10 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         const selector = config.svgMorphSelector?.trim() || "path";
         const svgTargets = el.querySelectorAll<SVGPathElement>(selector);
         let morphPath = config.svgMorphTo.trim();
-        if (morphPath && (morphPath.startsWith("#") || morphPath.startsWith("."))) {
+        if (
+          morphPath &&
+          (morphPath.startsWith("#") || morphPath.startsWith("."))
+        ) {
           const refPath = document.querySelector<SVGPathElement>(morphPath);
           if (refPath?.getAttribute("d")) {
             morphPath = refPath.getAttribute("d") ?? morphPath;
@@ -767,13 +848,16 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         const scrollTrigger = makeScrollTrigger(false);
         const effect = config.textEffect;
         const textTargets = targetsArray.filter(
-          (node: HTMLElement): node is HTMLElement => node instanceof HTMLElement
+          (node: HTMLElement): node is HTMLElement =>
+            node instanceof HTMLElement,
         );
 
         textTargets.forEach((target: HTMLElement): void => {
           if (effect === "scramble") {
             const original = target.textContent ?? "";
-            const chars = config.textScrambleChars ?? "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const chars =
+              config.textScrambleChars ??
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             const tweenState = { progress: 0 };
             gsap.to(tweenState, {
               progress: 1,
@@ -781,12 +865,16 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               ease: finalEase,
               ...(scrollTrigger ? { scrollTrigger } : {}),
               onUpdate: (): void => {
-                const revealCount = Math.floor(tweenState.progress * original.length);
+                const revealCount = Math.floor(
+                  tweenState.progress * original.length,
+                );
                 const scrambled = original
                   .split("")
                   .map((char: string, idx: number): string => {
                     if (idx < revealCount || char === " ") return char;
-                    const randomIndex = Math.floor(Math.random() * chars.length);
+                    const randomIndex = Math.floor(
+                      Math.random() * chars.length,
+                    );
                     return chars.charAt(randomIndex) || char;
                   })
                   .join("");
@@ -814,7 +902,12 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               cursorEl.style.marginLeft = "2px";
               cursorEl.style.display = "inline-block";
               target.appendChild(cursorEl);
-              gsap.to(cursorEl, { opacity: 0.2, repeat: -1, yoyo: true, duration: 0.4 });
+              gsap.to(cursorEl, {
+                opacity: 0.2,
+                repeat: -1,
+                yoyo: true,
+                duration: 0.4,
+              });
             }
 
             const tweenState = { progress: 0 };
@@ -847,8 +940,10 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           if (effect === "countUp") {
             const raw = target.textContent ?? "";
             const parsed = Number.parseFloat(raw.replace(/[^0-9.-]/g, ""));
-            const fromValue = config.textCountFrom ?? (Number.isNaN(parsed) ? 0 : parsed);
-            const toValue = config.textCountTo ?? (Number.isNaN(parsed) ? 100 : parsed);
+            const fromValue =
+              config.textCountFrom ?? (Number.isNaN(parsed) ? 0 : parsed);
+            const toValue =
+              config.textCountTo ?? (Number.isNaN(parsed) ? 100 : parsed);
             const decimals = config.textCountDecimals ?? 0;
             const tweenState = { value: fromValue };
 
@@ -901,12 +996,16 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         if (config.visualFilterTo) toVars.filter = config.visualFilterTo;
         if (config.visualClipFrom) fromVars.clipPath = config.visualClipFrom;
         if (config.visualClipTo) toVars.clipPath = config.visualClipTo;
-        if (config.visualRadiusFrom) fromVars.borderRadius = config.visualRadiusFrom;
+        if (config.visualRadiusFrom)
+          fromVars.borderRadius = config.visualRadiusFrom;
         if (config.visualRadiusTo) toVars.borderRadius = config.visualRadiusTo;
-        if (config.visualShadowFrom) fromVars.boxShadow = config.visualShadowFrom;
+        if (config.visualShadowFrom)
+          fromVars.boxShadow = config.visualShadowFrom;
         if (config.visualShadowTo) toVars.boxShadow = config.visualShadowTo;
-        if (config.visualBackgroundFrom) fromVars.background = config.visualBackgroundFrom;
-        if (config.visualBackgroundTo) toVars.background = config.visualBackgroundTo;
+        if (config.visualBackgroundFrom)
+          fromVars.background = config.visualBackgroundFrom;
+        if (config.visualBackgroundTo)
+          toVars.background = config.visualBackgroundTo;
 
         if (Object.keys(fromVars).length && Object.keys(toVars).length) {
           gsap.fromTo(
@@ -917,7 +1016,7 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
               duration,
               ease: finalEase,
               ...(scrollTrigger ? { scrollTrigger } : {}),
-            }
+            },
           );
         } else if (Object.keys(toVars).length) {
           gsap.to(targetsArray, {
@@ -966,7 +1065,10 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
 
       // Draggable interactions
       if (config.draggableEnabled) {
-        const velocityMap = new WeakMap<Draggable, { x: number; y: number; t: number; vx: number; vy: number }>();
+        const velocityMap = new WeakMap<
+          Draggable,
+          { x: number; y: number; t: number; vx: number; vy: number }
+        >();
         const useCarousel = config.draggableCarousel ?? false;
         const dragAxis = config.draggableType ?? "x,y";
         let dragTargets: HTMLElement[] = targetsArray;
@@ -976,20 +1078,25 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
 
         if (useCarousel) {
           const trackSelector = config.draggableCarouselSelector?.trim();
-          const track = trackSelector ? el.querySelector<HTMLElement>(trackSelector) : el;
+          const track = trackSelector
+            ? el.querySelector<HTMLElement>(trackSelector)
+            : el;
           if (track) {
             dragTargets = [track];
             dragType = dragAxis === "y" ? "y" : "x";
             const items = Array.from(track.children) as HTMLElement[];
             if (items.length) {
               const positions = items.map((item: HTMLElement): number =>
-                dragType === "y" ? -item.offsetTop : -item.offsetLeft
+                dragType === "y" ? -item.offsetTop : -item.offsetLeft,
               );
               const firstPosition = positions[0];
               if (firstPosition !== undefined) {
                 const min = Math.min(...positions);
                 const max = Math.max(...positions);
-                bounds = dragType === "y" ? { minY: min, maxY: max } : { minX: min, maxX: max };
+                bounds =
+                  dragType === "y"
+                    ? { minY: min, maxY: max }
+                    : { minX: min, maxX: max };
                 if (config.draggableCarouselSnap ?? true) {
                   const snapFn = (value: number): number => {
                     let closest = firstPosition;
@@ -1012,21 +1119,26 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           }
         } else {
           const boundsSelector = config.draggableBounds?.trim();
-          bounds = boundsSelector ? document.querySelector(boundsSelector) ?? undefined : undefined;
+          bounds = boundsSelector
+            ? (document.querySelector(boundsSelector) ?? undefined)
+            : undefined;
           if (config.draggableSnap && config.draggableSnap > 0) {
             snap = {
-              x: (value: number): number => Math.round(value / config.draggableSnap!) * config.draggableSnap!,
-              y: (value: number): number => Math.round(value / config.draggableSnap!) * config.draggableSnap!,
+              x: (value: number): number =>
+                Math.round(value / config.draggableSnap!) *
+                config.draggableSnap!,
+              y: (value: number): number =>
+                Math.round(value / config.draggableSnap!) *
+                config.draggableSnap!,
             };
           }
         }
 
         if (dragTargets.length) {
-          const draggableInstances = Draggable.create(dragTargets, {
+          const draggableInstances: Draggable[] = Draggable.create(dragTargets, {
             type: dragType,
             bounds: bounds ?? undefined,
             inertia: false,
-            // eslint-disable-next-line react-hooks/unsupported-syntax
             onPress: function (this: Draggable): void {
               const now = performance.now();
               velocityMap.set(this, {
@@ -1049,7 +1161,11 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                 state.y = this.y;
                 state.t = now;
               }
-              const axisVelocity = pickAxisVelocity(dragAxis, state.vx, state.vy);
+              const axisVelocity = pickAxisVelocity(
+                dragAxis,
+                state.vx,
+                state.vy,
+              );
               applyVelocityEffect(targetsArray, axisVelocity, config);
             },
             onDragEnd: function (this: Draggable): void {
@@ -1097,7 +1213,11 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
                 overwrite: "auto",
               });
             }
-            const velocity = pickAxisVelocity(axis, self.velocityX, self.velocityY);
+            const velocity = pickAxisVelocity(
+              axis,
+              self.velocityX,
+              self.velocityY,
+            );
             applyVelocityEffect(targetsArray, velocity, config);
           },
           onStop: (): void => {
@@ -1175,14 +1295,16 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
           el.removeEventListener("pointerleave", handleLeave);
         });
       }
-          }, ref);
-    
-          return (): void => {
-            cleanupFns.forEach((fn: () => void): void => { fn(); });
-            ctx.revert();
-          };
-        }, [config]);
-      // If no animation configured, render children directly without a wrapper div
+    }, ref);
+
+    return (): void => {
+      cleanupFns.forEach((fn: () => void): void => {
+        fn();
+      });
+      ctx.revert();
+    };
+  }, [config]);
+  // If no animation configured, render children directly without a wrapper div
   if (!config || config.preset === "none") {
     return <>{children}</>;
   }

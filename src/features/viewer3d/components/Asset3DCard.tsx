@@ -21,14 +21,14 @@ export function Asset3DCard({
   onDelete,
   isDeleting = false,
   className,
-}: Asset3DCardProps) {
-  const formatFileSize = (bytes: number) => {
+}: Asset3DCardProps): React.JSX.Element {
+  const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    if (bytes < 1024 * 1024) return `${((bytes / 1024)).toFixed(1)} KB`;
+    return `${((bytes / 1024 / 1024)).toFixed(2)} MB`;
   };
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string): string => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -48,7 +48,7 @@ export function Asset3DCard({
       {/* Preview Area */}
       <div
         className="h-40 bg-muted/30 flex items-center justify-center cursor-pointer relative"
-        onClick={() => onPreview(asset)}
+        onClick={(): void => onPreview(asset)}
       >
         <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-blue-400 transition-colors">
           <Box className="h-12 w-12" />
@@ -112,7 +112,7 @@ export function Asset3DCard({
         {/* Tags */}
         {asset.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {asset.tags.slice(0, 3).map((tag) => (
+            {asset.tags.slice(0, 3).map((tag: string) => (
               <span
                 key={tag}
                 className="px-1.5 py-0.5 text-xs bg-muted text-muted-foreground rounded"
@@ -140,7 +140,7 @@ export function Asset3DCard({
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-blue-400"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent): void => {
                 e.stopPropagation();
                 onEdit(asset);
               }}
@@ -151,7 +151,7 @@ export function Asset3DCard({
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-red-400"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent): void => {
                 e.stopPropagation();
                 onDelete(asset);
               }}

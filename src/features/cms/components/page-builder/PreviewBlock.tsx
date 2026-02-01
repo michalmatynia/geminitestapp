@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useId, useCallback } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
 import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2 } from "lucide-react";
@@ -180,7 +180,8 @@ const InspectorHover = ({
   const [open, setOpen] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const timerRef = useRef<number | null>(null);
-  const tooltipIdRef = useRef<string>(`inspector-${Math.random().toString(36).slice(2, 10)}`);
+  const reactId = useId();
+  const tooltipId = `inspector-${reactId.replace(/:/g, "")}`;
   const isTooltipEnabled = enabled && showTooltip;
   const effectiveOpen = isTooltipEnabled ? open : false;
 
@@ -191,7 +192,7 @@ const InspectorHover = ({
     }
   };
 
-  const updateTooltipPosition = (): void => {
+  const updateTooltipPosition = useCallback((): void => {
     const viewport = typeof document !== "undefined"
       ? document.querySelector("[data-cms-canvas-viewport='true']")
       : null;
@@ -202,7 +203,7 @@ const InspectorHover = ({
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const margin = 12;
-    const index = Math.max(0, getInspectorTooltipIndex(tooltipIdRef.current));
+    const index = Math.max(0, getInspectorTooltipIndex(tooltipId));
     const offset = index * (INSPECTOR_TOOLTIP_WIDTH + INSPECTOR_TOOLTIP_GAP);
     const minRightEdge = margin + INSPECTOR_TOOLTIP_WIDTH;
     const rightEdge = rect.right - margin - offset;
@@ -210,7 +211,7 @@ const InspectorHover = ({
       top: rect.bottom - margin,
       left: Math.max(minRightEdge, rightEdge),
     });
-  };
+  }, [tooltipId]);
 
   useEffect((): void | (() => void) => {
     if (!isTooltipEnabled) {
@@ -228,7 +229,7 @@ const InspectorHover = ({
     clearTimer();
     if (showTooltip) {
       timerRef.current = window.setTimeout(() => {
-        registerInspectorTooltip(tooltipIdRef.current);
+        registerInspectorTooltip(tooltipId);
         updateTooltipPosition();
         setOpen(true);
       }, INSPECTOR_TOOLTIP_DELAY_MS);
@@ -240,7 +241,7 @@ const InspectorHover = ({
     onHover?.(fallbackNodeId ?? null);
     clearTimer();
     setOpen(false);
-    unregisterInspectorTooltip(tooltipIdRef.current);
+    unregisterInspectorTooltip(tooltipId);
   };
 
   useEffect((): void | (() => void) => {
@@ -253,13 +254,13 @@ const InspectorHover = ({
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleResize);
     };
-  }, [open, isTooltipEnabled]);
+  }, [open, isTooltipEnabled, updateTooltipPosition]);
 
   useEffect((): (() => void) => {
     return () => {
-      unregisterInspectorTooltip(tooltipIdRef.current);
+      unregisterInspectorTooltip(tooltipId);
     };
-  }, []);
+  }, [tooltipId]);
 
   return (
     <div

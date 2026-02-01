@@ -208,7 +208,7 @@ export default function ProductAiJobsPanel({
       meta.source,
       job.product?.name_en,
       job.product?.sku,
-    ].some((val) => (typeof val === "string" ? val.toLowerCase().includes(query.toLowerCase()) : false));
+    ].some((val: string | number | boolean | undefined | null) => (typeof val === "string" ? val.toLowerCase().includes(query.toLowerCase()) : false));
   });
 
   const aiContent = (
@@ -270,8 +270,8 @@ export default function ProductAiJobsPanel({
                     <div className="text-[10px] text-gray-600">{job.id}</div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium 
-                      ${job.status === "completed" ? "bg-green-500/10 text-green-400" : 
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                      ${job.status === "completed" ? "bg-green-500/10 text-green-400" :
                         job.status === "failed" ? "bg-red-500/10 text-red-400" :
                         job.status === "running" ? "bg-blue-500/10 text-blue-400" :
                         job.status === "canceled" ? "bg-gray-500/10 text-gray-400" :
@@ -292,18 +292,18 @@ export default function ProductAiJobsPanel({
                   </td>
                   <td className="px-4 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-blue-500 hover:text-blue-400"
                         onClick={(): void => setSelectedJob(job)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       {(job.status === "pending" || job.status === "running") && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-yellow-500 hover:text-yellow-400"
                           onClick={(): void => { void cancelJob(job.id); }}
                           disabled={actionId === job.id}
@@ -311,9 +311,9 @@ export default function ProductAiJobsPanel({
                           {actionId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                         </Button>
                       )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-400"
                         onClick={(): void => { void deleteJob(job.id); }}
                         disabled={actionId === job.id}

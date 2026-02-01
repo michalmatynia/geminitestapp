@@ -6,7 +6,7 @@ import { useFormContext } from "react-hook-form";
 
 import { ProductFormData } from "@/features/products/types";
 
-export default function ProductFormImportInfo() {
+export default function ProductFormImportInfo(): React.JSX.Element {
   const { register } = useFormContext<ProductFormData>();
 
   return (

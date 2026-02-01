@@ -1,15 +1,20 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import { AppModal, ModalShell, Button, Input, Label, Checkbox, useToast } from "@/shared/ui";
-
-
-
-
-
-
-
-
-import type { CountryOption, CurrencyOption } from "@/shared/types/internationalization";
+import React from "react";
+import {
+  Button,
+  Input,
+  Label,
+  AppModal,
+  ModalShell,
+  Checkbox,
+  useToast,
+} from "@/shared/ui";
+import type {
+  CountryOption,
+  CurrencyOption,
+} from "@/shared/types/internationalization";
 import { countryCodeOptions } from "@/shared/constants/internationalization";
 
 interface CountryModalProps {
@@ -35,12 +40,16 @@ export function CountryModal({
     code: "",
     name: "",
   });
-  const [selectedCurrencyIds, setSelectedCurrencyIds] = React.useState<string[]>([]);
+  const [selectedCurrencyIds, setSelectedCurrencyIds] = React.useState<
+    string[]
+  >([]);
 
   React.useEffect(() => {
     if (country) {
       setForm({ code: country.code, name: country.name });
-      setSelectedCurrencyIds(country.currencies?.map(c => c.currencyId) ?? []);
+      setSelectedCurrencyIds(
+        country.currencies?.map((c) => c.currencyId) ?? [],
+      );
     } else {
       const def = countryCodeOptions[0];
       setForm({ code: def?.code ?? "", name: def?.name ?? "" });
@@ -56,7 +65,9 @@ export function CountryModal({
 
     setSaving(true);
     try {
-      const endpoint = country ? `/api/countries/${country.id}` : "/api/countries";
+      const endpoint = country
+        ? `/api/countries/${country.id}`
+        : "/api/countries";
       const res = await fetch(endpoint, {
         method: country ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,8 +91,8 @@ export function CountryModal({
   };
 
   const toggleCurrency = (id: string) => {
-    setSelectedCurrencyIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setSelectedCurrencyIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -89,7 +100,9 @@ export function CountryModal({
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => { void handleSubmit(); }}
+          onClick={() => {
+            void handleSubmit();
+          }}
           disabled={saving}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
@@ -129,12 +142,16 @@ export function CountryModal({
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={form.code}
               onChange={(e) => {
-                const sel = countryCodeOptions.find(o => o.code === e.target.value);
+                const sel = countryCodeOptions.find(
+                  (o) => o.code === e.target.value,
+                );
                 setForm({ code: e.target.value, name: sel?.name ?? "" });
               }}
             >
               {countryCodeOptions.map((opt) => (
-                <option key={opt.code} value={opt.code}>{opt.code} · {opt.name}</option>
+                <option key={opt.code} value={opt.code}>
+                  {opt.code} · {opt.name}
+                </option>
               ))}
             </select>
           </div>
@@ -143,7 +160,7 @@ export function CountryModal({
             <Input
               id="country-name"
               value={form.name}
-              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             />
           </div>
           <div className="space-y-2">

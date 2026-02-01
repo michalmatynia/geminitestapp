@@ -8,9 +8,9 @@ import React, { useRef, useState } from "react";
 
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { PlusIcon, XIcon, GripVertical } from "lucide-react";
-import { DebugInfo } from "@/features/products/types/products-ui";
+import { DebugInfo, ProductImageSlot } from "@/features/products/types/products-ui";
 
-export default function ProductImageManager() {
+export default function ProductImageManager(): React.JSX.Element {
   const {
     imageSlots,
     imageLinks,
@@ -70,14 +70,14 @@ export default function ProductImageManager() {
     }
   }
 
-  const pushDebug = (info: Omit<DebugInfo, "timestamp">) => {
+  const pushDebug = (info: Omit<DebugInfo, "timestamp">): void => {
     setDebugInfo({
       ...info,
       timestamp: new Date().toISOString(),
     });
   };
 
-  const triggerFileInput = (index: number) => {
+  const triggerFileInput = (index: number): void => {
     if (index < 0 || index >= imageSlots.length) {
       pushDebug({
         action: "trigger-file-input",
@@ -90,7 +90,7 @@ export default function ProductImageManager() {
     fileInputRef.current?.click();
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
 
     if (!file) {
@@ -112,7 +112,7 @@ export default function ProductImageManager() {
     } else {
       try {
         handleSlotImageChange(file, slotIndex);
-      } catch (error) {
+      } catch (error: unknown) {
         pushDebug({
           action: "file-change",
           message:
@@ -130,7 +130,7 @@ export default function ProductImageManager() {
     currentSlotIndexRef.current = null;
   };
 
-  const triggerFileManager = (index: number) => {
+  const triggerFileManager = (index: number): void => {
     if (index < 0 || index >= imageSlots.length) {
       pushDebug({
         action: "trigger-file-manager",
@@ -144,7 +144,7 @@ export default function ProductImageManager() {
   };
 
   // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number): void => {
     const slot = imageSlots[index];
     if (!slot) return; // Don't allow dragging empty slots
 
@@ -155,14 +155,14 @@ export default function ProductImageManager() {
     e.dataTransfer.setData("text/plain", String(index));
   };
 
-  const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>): void => {
     setDraggedIndex(null);
     setDragOverIndex(null);
     setIsReordering(false);
     setImagesReordering(false);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number): void => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
@@ -172,7 +172,7 @@ export default function ProductImageManager() {
     }
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>): void => {
     // Only clear drag over if we're actually leaving the element
     const rect = e.currentTarget.getBoundingClientRect();
     const { clientX: x, clientY: y } = e;
@@ -189,7 +189,7 @@ export default function ProductImageManager() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number): void => {
     e.preventDefault();
     setDragOverIndex(null);
 
@@ -200,7 +200,7 @@ export default function ProductImageManager() {
       swapImageSlots(fromIndex, toIndex);
 
       // Swap the view modes to follow the content
-      setSlotViewModes((prev) => {
+      setSlotViewModes((prev: Array<"upload" | "link">) => {
         const next = [...prev];
         const tempMode = next[fromIndex];
         const toMode = next[toIndex];
@@ -228,7 +228,7 @@ export default function ProductImageManager() {
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => setShowDebug((prev) => !prev)}
+          onClick={() => setShowDebug((prev: boolean) => !prev)}
           className="h-7 px-2 text-xs"
         >
           {showDebug ? "Hide debug" : "Show debug"}
@@ -256,7 +256,7 @@ export default function ProductImageManager() {
       )}
 
       <div className="grid grid-cols-5 gap-2">
-        {imageSlots.map((slot, index) => {
+        {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
           const hasUpload = slot !== null;
@@ -293,8 +293,8 @@ export default function ProductImageManager() {
                 </div>
                 <Switch
                   checked={prefersLink}
-                  onCheckedChange={(checked) => {
-                    setSlotViewModes((prev) => {
+                  onCheckedChange={(checked: boolean) => {
+                    setSlotViewModes((prev: Array<"upload" | "link">) => {
                       const next = [...prev];
                       next[index] = checked ? "link" : "upload";
                       return next;
@@ -307,11 +307,11 @@ export default function ProductImageManager() {
               </div>
               <div
                 draggable={hasUpload}
-                onDragStart={(e) => handleDragStart(e, index)}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, index)}
+                onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
                 className={`
                   relative flex h-24 w-24 items-center justify-center rounded-md border-2 bg-gray-800
                   ${!isReordering ? "transition-all" : ""}
@@ -350,7 +350,7 @@ export default function ProductImageManager() {
                           size="icon"
                           className="absolute right-0 top-0 h-6 w-6 rounded-full"
                           onClick={() => {
-                            handleSlotDisconnectImage(index).catch((error) => {
+                            handleSlotDisconnectImage(index).catch((error: unknown) => {
                               pushDebug({
                                 action: "remove-image",
                                 message:
@@ -398,7 +398,7 @@ export default function ProductImageManager() {
               <Input
                 type="url"
                 value={linkValue}
-                onChange={(event) => setImageLinkAt(index, event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setImageLinkAt(index, event.target.value)}
                 placeholder="Image link"
                 className="h-7 w-24 px-2 text-[10px]"
                 aria-label={`Image link for slot ${index + 1}`}

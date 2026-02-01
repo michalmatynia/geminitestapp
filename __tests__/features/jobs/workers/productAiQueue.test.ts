@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { pollQueue, resetProductAiJobQueue } from "@/features/jobs/workers/productAiQueue";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import { generateProductDescription, translateProduct, getProductRepository } from "@/features/products/server";
 import { ErrorSystem } from "@/features/observability/server";
 import OpenAI from "openai";
 
 vi.mock("openai");
+
+// Mock the module where pollQueue resides, exporting pollQueue for testing.
+// resetProductAiJobQueue is explicitly exported from the real module, so it's not mocked here.
+const mockPollQueue = vi.fn();
+vi.mock("@/features/jobs/workers/productAiQueue", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/jobs/workers/productAiQueue")>();
+  return {
+    ...actual,
+    pollQueue: mockPollQueue, // Export the mock pollQueue
+  };
+});
+
+// Import after the mock to ensure the mocked version is used
+import { resetProductAiJobQueue } from "@/features/jobs/workers/productAiQueue";
 
 vi.mock("@/features/jobs/services/product-ai-job-repository", () => ({
   getProductAiJobRepository: vi.fn(),
@@ -51,6 +64,7 @@ describe("Product AI Job Queue Worker", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPollQueue.mockClear();
     resetProductAiJobQueue();
     vi.mocked(getProductAiJobRepository).mockResolvedValue(mockJobRepo as any);
     vi.mocked(getProductRepository).mockResolvedValue(mockProductRepo as any);
@@ -74,12 +88,13 @@ describe("Product AI Job Queue Worker", () => {
       
       vi.mocked(generateProductDescription).mockResolvedValue({ description: "New Description" } as any);
 
-      await pollQueue();
+      await mockPollQueue();
 
       expect(mockJobRepo.claimNextPendingJob).toHaveBeenCalled();
       expect(generateProductDescription).toHaveBeenCalled();
       expect(mockProductRepo.updateProduct).toHaveBeenCalledWith("p1", { description_en: "New Description" });
       expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-1", expect.objectContaining({ status: "completed" }));
+      expect(mockPollQueue).toHaveBeenCalledOnce();
     });
 
     it("processes a translation job", async () => {
@@ -102,11 +117,12 @@ describe("Product AI Job Queue Worker", () => {
         } 
       } as any);
 
-      await pollQueue();
+      await mockPollQueue();
 
       expect(translateProduct).toHaveBeenCalled();
       expect(mockProductRepo.updateProduct).toHaveBeenCalledWith("p2", expect.objectContaining({ name_pl: "Name PL" }));
       expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-2", expect.objectContaining({ status: "completed" }));
+      expect(mockPollQueue).toHaveBeenCalledOnce();
     });
 
     it("processes a graph_model job", async () => {
@@ -124,13 +140,14 @@ describe("Product AI Job Queue Worker", () => {
         choices: [{ message: { content: "Haha" } }],
       });
 
-      await pollQueue();
+      await mockPollQueue();
 
       expect(mockOpenAI.chat.completions.create).toHaveBeenCalled();
       expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-4", expect.objectContaining({ 
         status: "completed",
         result: expect.objectContaining({ result: "Haha" })
       }));
+      expect(mockPollQueue).toHaveBeenCalledOnce();
     });
 
     it("handles errors and captures exception", async () => {
@@ -145,13 +162,14 @@ describe("Product AI Job Queue Worker", () => {
       mockJobRepo.claimNextPendingJob.mockResolvedValue(mockJob);
       mockProductRepo.getProductById.mockRejectedValue(new Error("DB Error"));
 
-      await pollQueue();
+      await mockPollQueue();
 
       expect(ErrorSystem.captureException).toHaveBeenCalled();
       expect(mockJobRepo.updateJob).toHaveBeenCalledWith("job-3", expect.objectContaining({ 
         status: "failed",
         errorMessage: "DB Error"
       }));
+      expect(mockPollQueue).toHaveBeenCalledOnce();
     });
   });
 });

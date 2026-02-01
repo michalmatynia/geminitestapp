@@ -1,10 +1,11 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
-import type { Filter, WithId } from "mongodb";
+import type { Document, Filter, WithId } from "mongodb";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { conflictError } from "@/shared/errors/app-error";
-import type { ProductRecord, ProductWithImages } from "@/features/products/types";
+import type { ProductRecord, ProductWithImages, ProductImageRecord, CatalogRecord } from "@/features/products/types";
+import type { ImageFileRecord } from "@/shared/types/files";
 import { mongoCatalogRepository } from "@/features/products/services/catalog-repository/mongo-catalog-repository";
 import { mongoImageFileRepository } from "@/features/files/server";
 import type {
@@ -243,7 +244,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: typeof data.sizeWidth === "number" ? data.sizeWidth : null,
       weight: typeof data.weight === "number" ? data.weight : null,
       length: typeof data.length === "number" ? data.length : null,
-      parameters: Array.isArray(data.parameters) ? data.parameters.map(p => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+      parameters: Array.isArray(data.parameters) ? data.parameters.map((p: { parameterId: string; value?: string }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       createdAt: now,
       updatedAt: now,
@@ -303,7 +304,7 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-            parameters: Array.isArray(data.parameters) ? data.parameters.map(p => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+            parameters: Array.isArray(data.parameters) ? data.parameters.map((p: { parameterId: string; value?: string }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
           }
         : null),
       ...(data.imageLinks !== undefined
@@ -404,7 +405,7 @@ export const mongoProductRepository: ProductRepository = {
       imageFileIds
     );
     const now = new Date();
-    const incoming = imageFiles.map((imageFile) => ({
+    const incoming = imageFiles.map((imageFile: ImageFileRecord) => ({
       productId,
       imageFileId: imageFile.id,
       assignedAt: now,
@@ -416,9 +417,9 @@ export const mongoProductRepository: ProductRepository = {
     const existing = Array.isArray(product?.images) ? product.images : [];
     const merged = [
       ...existing.filter(
-        (entry) =>
+        (entry: ProductImageRecord) =>
           !incoming.some(
-            (next) => next.imageFileId === entry.imageFileId
+            (next: ProductImageRecord) => next.imageFileId === entry.imageFileId
           )
       ),
       ...incoming,
@@ -445,7 +446,7 @@ export const mongoProductRepository: ProductRepository = {
     const uniqueIds = Array.from(new Set(catalogIds));
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(uniqueIds);
     const now = new Date();
-    const catalogEntries = catalogs.map((catalog) => ({
+    const catalogEntries = catalogs.map((catalog: CatalogRecord) => ({
       productId,
       catalogId: catalog.id,
       assignedAt: now,
@@ -476,7 +477,7 @@ export const mongoProductRepository: ProductRepository = {
       .find({ id: { $in: uniqueIds } })
       .toArray();
     const now = new Date();
-    const categoryEntries = categories.map((category) => ({
+    const categoryEntries = categories.map((category: Document) => ({
       productId,
       categoryId: (category as unknown as { id: string }).id,
       assignedAt: now,
@@ -506,7 +507,7 @@ export const mongoProductRepository: ProductRepository = {
       .find({ id: { $in: uniqueIds } })
       .toArray();
     const now = new Date();
-    const tagEntries = tags.map((tag) => ({
+    const tagEntries = tags.map((tag: Document) => ({
       productId,
       tagId: (tag as unknown as { id: string }).id,
       assignedAt: now,

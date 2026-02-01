@@ -96,7 +96,7 @@ export const ProductFormContext = createContext<ProductFormContextType | null>(
   null
 );
 
-export const useProductFormContext = () => {
+export const useProductFormContext = (): ProductFormContextType => {
   const context = useContext(ProductFormContext);
   if (!context) {
     throw new Error(
@@ -126,7 +126,7 @@ export function ProductFormProvider({
   requireSku?: boolean | undefined;
   initialSku?: string | undefined;
   initialCatalogId?: string | undefined;
-}) {
+}): React.ReactNode {
   const formSchema = product || requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
@@ -218,7 +218,7 @@ export function ProductFormProvider({
     input?: ProductParameterValue[] | null
   ): ProductParameterValue[] => {
     if (!Array.isArray(input)) return [];
-    return input.map((entry) => ({
+    return input.map((entry: ProductParameterValue) => ({
       parameterId: typeof entry?.parameterId === "string" ? entry.parameterId : "",
       value: typeof entry?.value === "string" ? entry.value : "",
     }));
@@ -232,17 +232,17 @@ export function ProductFormProvider({
     setParameterValues(normalizeParameterValues(product?.parameters ?? draft?.parameters ?? []));
   }, [product?.id, draft?.id, product?.parameters, draft?.parameters]);
 
-  useEffect(() => {
-    return () => {
+  useEffect((): (() => void) => {
+    return (): void => {
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
       }
     };
   }, []);
 
-  const onSubmit = async (data: ProductFormData) => {
+  const onSubmit = async (data: ProductFormData): Promise<void> => {
     const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
-    const hasTempImages = imageSlots.some((slot) => {
+    const hasTempImages = imageSlots.some((slot: ProductImageSlot | null): boolean => {
       if (!slot) return false;
       if (slot.type === "file") return true;
       return slot.previewUrl.startsWith("/uploads/products/temp/");
@@ -262,37 +262,43 @@ export function ProductFormProvider({
     setUploadSuccess(false);
 
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
       if (value !== null && value !== undefined) {
-        formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else if (typeof value === "string") {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value as number | boolean));
+        }
       }
     });
-    const normalizedLinks = imageLinks.map((link) => link.trim());
+    const normalizedLinks = imageLinks.map((link: string): string => link.trim());
     formData.append("imageLinks", JSON.stringify(normalizedLinks));
 
     // Process image slots
-    imageSlots.forEach(slot => {
+    imageSlots.forEach((slot: ProductImageSlot | null): void => {
       if (slot?.type === 'file') {
         formData.append("images", slot.data); // Append actual File object
       } else if (slot?.type === 'existing') {
         formData.append("imageFileIds", slot.data.id); // Append existing ImageFile ID
       }
     });
-    selectedCatalogIds.forEach((catalogId) => {
+    selectedCatalogIds.forEach((catalogId: string): void => {
       formData.append("catalogIds", catalogId);
     });
-    selectedCategoryIds.forEach((categoryId) => {
+    selectedCategoryIds.forEach((categoryId: string): void => {
       formData.append("categoryIds", categoryId);
     });
-    selectedTagIds.forEach((tagId) => {
+    selectedTagIds.forEach((tagId: string): void => {
       formData.append("tagIds", tagId);
     });
     const normalizedParameters = parameterValues
-      .map((entry) => ({
+      .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
         parameterId: entry.parameterId?.trim(),
         value: typeof entry.value === "string" ? entry.value.trim() : "",
       }))
-      .filter((entry) => entry.parameterId);
+      .filter((entry: { parameterId: string | undefined; value: string }): boolean => !!entry.parameterId);
     formData.append("parameters", JSON.stringify(normalizedParameters));
 
     try {
@@ -406,24 +412,24 @@ export function ProductFormProvider({
           parameters,
           parametersLoading,
           parameterValues,
-          addParameterValue: () =>
-            setParameterValues((prev) => [...prev, { parameterId: "", value: "" }]),
-          updateParameterId: (index, parameterId) =>
-            setParameterValues((prev) => {
+          addParameterValue: (): void =>
+            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: "", value: "" }]),
+          updateParameterId: (index: number, parameterId: string): void =>
+            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
               const next = [...prev];
               if (!next[index]) return prev;
               next[index] = { ...next[index], parameterId };
               return next;
             }),
-          updateParameterValue: (index, value) =>
-            setParameterValues((prev) => {
+          updateParameterValue: (index: number, value: string): void =>
+            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
               const next = [...prev];
               if (!next[index]) return prev;
               next[index] = { ...next[index], value };
               return next;
             }),
-          removeParameterValue: (index) =>
-            setParameterValues((prev) => prev.filter((_, i) => i !== index)),
+          removeParameterValue: (index: number): void =>
+            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_: ProductParameterValue, i: number): boolean => i !== index)),
           filteredLanguages,
           filteredPriceGroups,
           generationError,

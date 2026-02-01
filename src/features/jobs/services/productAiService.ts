@@ -183,15 +183,18 @@ export async function deleteProductAiJob(jobId: string): Promise<void> {
 
 export async function deleteTerminalProductAiJobs(): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
-  return jobRepository.deleteTerminalJobs();
+  const { count } = await jobRepository.deleteTerminalJobs();
+  return count;
 }
 
 export async function deleteAllProductAiJobs(): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
-  return jobRepository.deleteAllJobs();
+  const { count } = await jobRepository.deleteAllJobs();
+  return count;
 }
 
 export async function cleanupStaleRunningProductAiJobs(maxAgeMs: number): Promise<number> {
   const jobRepository = await getProductAiJobRepository();
-  return jobRepository.markStaleRunningJobs(maxAgeMs);
+  const { count } = await jobRepository.markStaleRunningJobs(maxAgeMs);
+  return count;
 }

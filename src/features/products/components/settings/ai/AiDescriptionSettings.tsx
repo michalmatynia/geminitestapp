@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 
 
-import { ProductWithImages } from "@/features/products/types";
+import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 
 const STATIC_VISION_MODELS = [
   { id: "gpt-4o", name: "GPT-4o" },
@@ -58,7 +58,7 @@ interface JobData {
   errorMessage?: string;
 }
 
-export function AiDescriptionSettings() {
+export function AiDescriptionSettings(): React.JSX.Element {
   const [imageAnalysisModel, setImageAnalysisModel] = useState("");
   
   // Path 1
@@ -84,13 +84,13 @@ export function AiDescriptionSettings() {
   const [queuing, setQueuing] = useState(false);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
       try {
         const settingsRes = await fetch("/api/settings");
         let settingsMap = new Map<string, string>();
         if (settingsRes.ok) {
           const data = (await settingsRes.json()) as { key: string, value: string }[];
-          settingsMap = new Map(data.map(item => [item.key, item.value]));
+          settingsMap = new Map(data.map((item: { key: string, value: string }) => [item.key, item.value]));
         }
 
         setImageAnalysisModel(settingsMap.get("ai_vision_model") || "gpt-4o");
@@ -120,7 +120,7 @@ export function AiDescriptionSettings() {
         if (chatbotRes.ok) {
           const data = (await chatbotRes.json()) as { models?: string[] };
           if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map(name => ({ id: name, name })));
+            setOllamaModels(data.models.map((name: string) => ({ id: name, name })));
           }
         }
       } catch (error) {
@@ -133,7 +133,7 @@ export function AiDescriptionSettings() {
     void loadData();
   }, [toast]);
 
-  const handleTest = async () => {
+  const handleTest = async (): Promise<void> => {
     if (!testProductId) {
       toast("Please enter a Product ID or SKU.", { variant: "error" });
       return;
@@ -163,7 +163,7 @@ export function AiDescriptionSettings() {
       }
 
       const uploadedImages = Array.isArray(product.images) 
-        ? product.images.map((img) => img.imageFile?.filepath).filter((p): p is string => Boolean(p)) 
+        ? product.images.map((img: ProductImageRecord) => img.imageFile?.filepath).filter((p: string | undefined): p is string => Boolean(p)) 
         : [];
       const externalImages = Array.isArray(product.imageLinks) ? product.imageLinks : [];
       const allImageUrls = [...externalImages, ...uploadedImages];
@@ -195,7 +195,7 @@ export function AiDescriptionSettings() {
       let completed = false;
       let attempts = 0;
       while (!completed && attempts < 60) { // 2 minutes max
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise((r: (value: void) => void) => setTimeout(r, 2000));
         const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
         if (!statusRes.ok) break;
         const { job } = (await statusRes.json()) as { job: JobData };
@@ -248,7 +248,7 @@ export function AiDescriptionSettings() {
     }
   };
 
-  const handleQueueAll = async () => {
+  const handleQueueAll = async (): Promise<void> => {
     if (!window.confirm("This will queue description generation for ALL products using the current configuration. Proceed?")) return;
     setQueuing(true);
     try {
@@ -273,7 +273,7 @@ export function AiDescriptionSettings() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setSaving(true);
     try {
       const payloads = [
@@ -322,13 +322,13 @@ export function AiDescriptionSettings() {
     }
   };
 
-  const copyResult = (text?: string) => {
+  const copyResult = (text?: string): void => {
     if (!text) return;
     void navigator.clipboard.writeText(text);
     toast("Result copied to clipboard.");
   };
 
-  const clearTestResults = async () => {
+  const clearTestResults = async (): Promise<void> => {
     setTestResult(null);
     try {
       await fetch("/api/settings", {
@@ -359,7 +359,7 @@ export function AiDescriptionSettings() {
             <Input
               placeholder="Product ID or SKU"
               value={testProductId}
-              onChange={(e) => setTestProductId(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestProductId(e.target.value)}
               className="w-[180px] bg-gray-900 border text-white h-9 text-sm"
             />
             <Button variant="secondary" onClick={() => void handleTest()} disabled={testing} className="gap-2 h-9">
@@ -392,7 +392,7 @@ export function AiDescriptionSettings() {
                   <DialogDescription>Use these placeholders to inject dynamic data into your prompts.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2 mt-4">
-                  {AVAILABLE_PLACEHOLDERS.map((ph) => (
+                  {AVAILABLE_PLACEHOLDERS.map((ph: { key: string, description: string }) => (
                     <div key={ph.key} className="flex items-center justify-between text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
                       <code className="text-purple-400 font-bold bg-purple-500/10 px-1 py-0.5 rounded">[{ph.key}]</code>
                       <span className="text-gray-500 italic text-xs">{ph.description}</span>
@@ -419,7 +419,7 @@ export function AiDescriptionSettings() {
                   <Textarea
                     rows={4}
                     value={visionInputPrompt}
-                    onChange={(e) => setVisionInputPrompt(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVisionInputPrompt(e.target.value)}
                     className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                   />
                 </div>
@@ -447,12 +447,12 @@ export function AiDescriptionSettings() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>OpenAI</SelectLabel>
-                      {STATIC_VISION_MODELS.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                      {STATIC_VISION_MODELS.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
                     </SelectGroup>
                     {ollamaModels.length > 0 && (
                       <SelectGroup>
                         <SelectLabel>Ollama</SelectLabel>
-                        {ollamaModels.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                        {ollamaModels.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
                       </SelectGroup>
                     )}
                   </SelectContent>
@@ -464,7 +464,7 @@ export function AiDescriptionSettings() {
                   <Checkbox 
                     id="v-output-enabled" 
                     checked={visionOutputEnabled} 
-                    onCheckedChange={(checked) => setVisionOutputEnabled(!!checked)} 
+                    onCheckedChange={(checked: boolean | "indeterminate") => setVisionOutputEnabled(!!checked)} 
                   />
                   <Label htmlFor="v-output-enabled" className="text-blue-400 cursor-pointer">Enable Output Prompt (Refinement using {imageAnalysisModel})</Label>
                 </div>
@@ -475,7 +475,7 @@ export function AiDescriptionSettings() {
                       <Textarea
                         rows={4}
                         value={visionOutputPrompt}
-                        onChange={(e) => setVisionOutputPrompt(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVisionOutputPrompt(e.target.value)}
                         className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                         placeholder="Refine result... use [result] for initial analysis."
                       />
@@ -517,7 +517,7 @@ export function AiDescriptionSettings() {
                   <Textarea
                     rows={6}
                     value={generationInputPrompt}
-                    onChange={(e) => setGenerationInputPrompt(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setGenerationInputPrompt(e.target.value)}
                     className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                   />
                 </div>
@@ -545,12 +545,12 @@ export function AiDescriptionSettings() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>OpenAI</SelectLabel>
-                      {STATIC_TEXT_MODELS.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                      {STATIC_TEXT_MODELS.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
                     </SelectGroup>
                     {ollamaModels.length > 0 && (
                       <SelectGroup>
                         <SelectLabel>Ollama</SelectLabel>
-                        {ollamaModels.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                        {ollamaModels.map((m: { id: string, name: string }) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
                       </SelectGroup>
                     )}
                   </SelectContent>
@@ -562,7 +562,7 @@ export function AiDescriptionSettings() {
                   <Checkbox 
                     id="g-output-enabled" 
                     checked={generationOutputEnabled} 
-                    onCheckedChange={(checked) => setGenerationOutputEnabled(!!checked)} 
+                    onCheckedChange={(checked: boolean | "indeterminate") => setGenerationOutputEnabled(!!checked)} 
                   />
                   <Label htmlFor="g-output-enabled" className="text-purple-400 cursor-pointer">Enable Output Prompt (Refinement using {descriptionGenerationModel})</Label>
                 </div>
@@ -573,7 +573,7 @@ export function AiDescriptionSettings() {
                       <Textarea
                         rows={6}
                         value={generationOutputPrompt}
-                        onChange={(e) => setGenerationOutputPrompt(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setGenerationOutputPrompt(e.target.value)}
                         className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                         placeholder="Final polish... use [result] for initial description."
                       />

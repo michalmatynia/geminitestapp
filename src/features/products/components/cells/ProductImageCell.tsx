@@ -16,7 +16,7 @@ const OFFSET_Y = -90;
 export const ProductImageCell = React.memo(function ProductImageCell({
   imageUrl,
   productName,
-}: ProductImageCellProps) {
+}: ProductImageCellProps): React.JSX.Element {
   const [showPreview, setShowPreview] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
@@ -24,7 +24,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
   const rafRef = useRef<number | null>(null);
   const pendingPosRef = useRef({ x: 0, y: 0 });
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>): void => {
     pendingPosRef.current = { x: e.clientX, y: e.clientY };
     if (rafRef.current !== null) return;
     rafRef.current = window.requestAnimationFrame(() => {
@@ -33,13 +33,13 @@ export const ProductImageCell = React.memo(function ProductImageCell({
     });
   }, []);
 
-  useEffect(() => {
-    const updateViewport = () => {
+  useEffect((): (() => void) => {
+    const updateViewport = (): void => {
       setViewport({ w: window.innerWidth, h: window.innerHeight });
     };
     updateViewport();
     window.addEventListener("resize", updateViewport);
-    return () => {
+    return (): void => {
       window.removeEventListener("resize", updateViewport);
       if (rafRef.current !== null) {
         window.cancelAnimationFrame(rafRef.current);
@@ -73,7 +73,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
         <div
           className="fixed z-50 pointer-events-none"
           style={{
-            left: `${(() => {
+            left: `${((): number => {
               const margin = 8;
               const left = mousePos.x - PREVIEW_SIZE - OFFSET_X;
               const right = mousePos.x + OFFSET_X;
@@ -83,7 +83,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
               if (fitsRight) return right;
               return Math.max(margin, Math.min(viewport.w - PREVIEW_SIZE - margin, left));
             })()}px`,
-            top: `${(() => {
+            top: `${((): number => {
               const margin = 8;
               const below = mousePos.y + OFFSET_Y;
               const above = mousePos.y - PREVIEW_SIZE - OFFSET_Y;

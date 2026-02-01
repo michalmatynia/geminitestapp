@@ -3,23 +3,21 @@
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { useMemo } from "react";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-
-
-
+import type { ProductParameter, ProductParameterValue } from "@/features/products/types";
 
 import { X } from "lucide-react";
 
 const getParameterLabel = (
   parameter: { name_en: string; name_pl?: string | null; name_de?: string | null },
   preferredLocale?: string
-) => {
+): string => {
   const preferred = preferredLocale?.toLowerCase();
   if (preferred === "pl" && parameter.name_pl) return parameter.name_pl;
   if (preferred === "de" && parameter.name_de) return parameter.name_de;
   return parameter.name_en || parameter.name_pl || parameter.name_de || "Unnamed parameter";
 };
 
-export default function ProductFormParameters() {
+export default function ProductFormParameters(): React.JSX.Element {
   const {
     parameters,
     parametersLoading,
@@ -34,7 +32,7 @@ export default function ProductFormParameters() {
 
   const preferredLocale = filteredLanguages[0]?.code ?? "en";
   const selectedIds = useMemo(
-    () => parameterValues.map((entry) => entry.parameterId).filter(Boolean),
+    () => parameterValues.map((entry: ProductParameterValue) => entry.parameterId).filter(Boolean),
     [parameterValues]
   );
 
@@ -79,9 +77,9 @@ export default function ProductFormParameters() {
         </div>
       ) : (
         <div className="space-y-3">
-          {parameterValues.map((entry, index) => {
+          {parameterValues.map((entry: ProductParameterValue, index: number) => {
             const availableOptions = parameters.filter(
-              (param) =>
+              (param: ProductParameter) =>
                 !selectedIds.includes(param.id) || param.id === entry.parameterId
             );
             return (
@@ -92,13 +90,13 @@ export default function ProductFormParameters() {
                 <div className="w-full md:w-64">
                   <Select
                     value={entry.parameterId}
-                    onValueChange={(value) => updateParameterId(index, value)}
+                    onValueChange={(value: string) => updateParameterId(index, value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select parameter" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableOptions.map((param) => (
+                      {availableOptions.map((param: ProductParameter) => (
                         <SelectItem key={param.id} value={param.id}>
                           {getParameterLabel(param, preferredLocale)}
                         </SelectItem>
@@ -109,7 +107,7 @@ export default function ProductFormParameters() {
                 <div className="flex-1">
                   <Input
                     value={entry.value}
-                    onChange={(event) =>
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                       updateParameterValue(index, event.target.value)
                     }
                     placeholder="Value"

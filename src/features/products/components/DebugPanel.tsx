@@ -3,7 +3,7 @@
 import { useContext } from "react";
 import { ProductFormContext } from "@/features/products/context/ProductFormContext";
 
-export default function DebugPanel() {
+export default function DebugPanel(): React.JSX.Element | null {
   // Directly use the context to avoid throwing an error when it's not available.
   const context = useContext(ProductFormContext);
 
@@ -14,9 +14,9 @@ export default function DebugPanel() {
   }
 
   // A function to handle circular references in the context for JSON.stringify
-  const getCircularReplacer = () => {
+  const getCircularReplacer = (): ((key: string, value: unknown) => unknown) => {
     const seen = new WeakSet();
-    return (_key: string, value: unknown) => {
+    return (_key: string, value: unknown): unknown => {
       if (typeof value === "object" && value !== null) {
         if (seen.has(value)) {
           return; // Omit circular reference

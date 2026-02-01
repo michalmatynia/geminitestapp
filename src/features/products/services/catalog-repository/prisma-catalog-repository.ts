@@ -30,8 +30,8 @@ const toRecord = (catalog: {
   updatedAt: catalog.updatedAt,
   // Sort by position to ensure correct ordering
   languageIds: catalog.languages
-    ?.sort((a, b) => a.position - b.position)
-    .map((entry) => entry.languageId) ?? [],
+    ?.sort((a: { languageId: string; position: number }, b: { languageId: string; position: number }) => a.position - b.position)
+    .map((entry: { languageId: string; position: number }) => entry.languageId) ?? [],
   priceGroupIds: Array.isArray(catalog.priceGroupIds)
     ? catalog.priceGroupIds
     : [],
@@ -83,11 +83,11 @@ export const prismaCatalogRepository: CatalogRepository = {
         where: { id: { in: input.languageIds } },
         select: { id: true },
       });
-      const validIds = new Set(existing.map((entry) => entry.id));
-      const languageIds = input.languageIds.filter((id) => validIds.has(id));
+      const validIds = new Set(existing.map((entry: { id: string }) => entry.id));
+      const languageIds = input.languageIds.filter((id: string) => validIds.has(id));
       if (languageIds.length > 0) {
         await prisma.catalogLanguage.createMany({
-          data: languageIds.map((languageId, index) => ({
+          data: languageIds.map((languageId: string, index: number) => ({
             catalogId: catalog.id,
             languageId,
             position: index,
@@ -136,12 +136,12 @@ export const prismaCatalogRepository: CatalogRepository = {
         where: { id: { in: input.languageIds } },
         select: { id: true },
       });
-      const validIds = new Set(existing.map((entry) => entry.id));
-      const languageIds = input.languageIds.filter((id) => validIds.has(id));
+      const validIds = new Set(existing.map((entry: { id: string }) => entry.id));
+      const languageIds = input.languageIds.filter((id: string) => validIds.has(id));
       await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
       if (languageIds.length > 0) {
         await prisma.catalogLanguage.createMany({
-          data: languageIds.map((languageId, index) => ({
+          data: languageIds.map((languageId: string, index: number) => ({
             catalogId: id,
             languageId,
             position: index,

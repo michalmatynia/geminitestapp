@@ -7,7 +7,7 @@ import { useProductFormContext } from "@/features/products/context/ProductFormCo
 
 import ProductImageManager from "../ProductImageManager";
 
-export default function ProductFormImages() {
+export default function ProductFormImages(): React.JSX.Element {
   const { setShowFileManager, handleMultiImageChange } = useProductFormContext();
 
   return (
@@ -34,7 +34,7 @@ export default function ProductFormImages() {
           type="file"
           id="multi-image-upload"
           accept="image/*"
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             if (e.target.files) {
               // Convert FileList to an array before passing
               handleMultiImageChange(Array.from(e.target.files));

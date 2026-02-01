@@ -23,11 +23,11 @@ import { logger } from "@/shared/utils/logger";
 import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 
 const SelectIntegrationModal = dynamic(
-  () => import("@/features/integrations").then((mod) => mod.SelectIntegrationModal),
+  () => import("@/features/integrations").then((mod: typeof import("@/features/integrations")) => mod.SelectIntegrationModal),
   { ssr: false }
 );
 
-export function AdminProductsPage() {
+export function AdminProductsPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -37,7 +37,7 @@ export function AdminProductsPage() {
   const queryClient = useQueryClient();
 
   const { data: allDrafts = [] } = useDrafts();
-  const activeDrafts = useMemo(() => allDrafts.filter((d) => d.active !== false), [allDrafts]);
+  const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
 
   // Load user preferences
   const {
@@ -173,7 +173,7 @@ export function AdminProductsPage() {
 
   useEffect(() => {
     if (!languageOptions.length) return;
-    const allowed = new Set(languageOptions.map((option) => option.value));
+    const allowed = new Set(languageOptions.map((option: { label: string; value: "name_en" | "name_pl" | "name_de" }) => option.value));
     if (allowed.has(preferences.nameLocale)) return;
     const nextLocale = (fallbackNameLocale && allowed.has(fallbackNameLocale))
       ? fallbackNameLocale
@@ -181,8 +181,8 @@ export function AdminProductsPage() {
     updateNameLocale(nextLocale);
   }, [languageOptions, fallbackNameLocale, preferences.nameLocale, updateNameLocale]);
 
-  const handleCreateFromDraft = useCallback((draftId: string) => {
-    const run = async () => {
+  const handleCreateFromDraft = useCallback((draftId: string): void => {
+    const run = async (): Promise<void> => {
       try {
         const draft = await queryClient.fetchQuery({
             queryKey: draftKeys.detail(draftId),
@@ -248,7 +248,7 @@ export function AdminProductsPage() {
   const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string) => {
     setShowIntegrationModal(false);
     if (isMassListing) {
-       const ids = Object.keys(rowSelection).filter(id => rowSelection[id]);
+       const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
        setMassListProductIds(ids);
        setMassListIntegration({ integrationId, connectionId });
     }
@@ -264,7 +264,7 @@ export function AdminProductsPage() {
     setMassListIntegration(null);
     setMassListProductIds([]);
     setIsMassListing(false);
-    setRefreshTrigger((prev) => prev + 1);
+    setRefreshTrigger((prev: number) => prev + 1);
     toast("Products listed successfully.", { variant: "success" });
     void refreshListingBadges();
   }, [toast, refreshListingBadges]);
@@ -295,7 +295,7 @@ export function AdminProductsPage() {
       const allProducts = (await res.json()) as ProductWithImages[];
 
       const newSelection: RowSelectionState = {};
-      allProducts.forEach((p) => {
+      allProducts.forEach((p: ProductWithImages) => {
         newSelection[p.id] = true;
       });
       setRowSelection(newSelection);
@@ -311,7 +311,7 @@ export function AdminProductsPage() {
   const handleMassDelete = useCallback(async () => {
     logger.log("Mass delete initiated.");
     const selectedProductIds = Object.keys(rowSelection).filter(
-      (id) => rowSelection[id]
+      (id: string) => rowSelection[id]
     );
 
     if (selectedProductIds.length === 0) return;
@@ -322,11 +322,11 @@ export function AdminProductsPage() {
       )
     ) {
       try {
-        const deletePromises = selectedProductIds.map((id) =>
+        const deletePromises = selectedProductIds.map((id: string) =>
           fetch(`/api/products/${id}`, { method: "DELETE" })
         );
         const results = await Promise.all(deletePromises);
-        const failedDeletions = results.filter((res) => !res.ok);
+        const failedDeletions = results.filter((res: Response) => !res.ok);
 
         if (failedDeletions.length > 0) {
           setActionError("Some products could not be deleted.");
@@ -339,7 +339,7 @@ export function AdminProductsPage() {
         void queryClient.invalidateQueries({ queryKey: ["products-count"] });
         
         setRowSelection({});
-        setRefreshTrigger((prev) => prev + 1);
+        setRefreshTrigger((prev: number) => prev + 1);
       } catch (error) {
         logger.error("Error during mass deletion:", error);
         setActionError("An error occurred during deletion.");
@@ -368,7 +368,7 @@ export function AdminProductsPage() {
   );
 
   const handleProductsTableRender = useCallback<ProfilerOnRenderCallback>(
-    (_id, _phase, actualDuration, _baseDuration, _startTime, commitTime) => {
+    (_id: string, _phase: "mount" | "update" | "nested-update", actualDuration: number, _baseDuration: number, _startTime: number, commitTime: number) => {
       if (!isDebugOpen || typeof performance === "undefined") return;
       performance.measure("products:tableRender", {
         start: commitTime - actualDuration,

@@ -78,8 +78,7 @@ export const createCategory = async (
     where: { notebookId: resolvedNotebookId, parentId },
     _max: { sortIndex: true },
   });
-  const nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
-
+      const nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
   const createData: Prisma.CategoryCreateInput = {
     name: data.name,
     notebook: { connect: { id: resolvedNotebookId } },
@@ -107,7 +106,7 @@ export const updateCategory = async (
         where: { notebookId: resolvedNotebookId, parentId },
         _max: { sortIndex: true },
       });
-      nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
+      nextSortIndex = ((maxSort._max.sortIndex ?? -1) + 1);
     }
     const updateData: Prisma.CategoryUpdateInput = {
       ...(data.name !== undefined && { name: data.name }),

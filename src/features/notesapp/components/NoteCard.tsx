@@ -259,12 +259,14 @@ function NoteCardBase({
               note.categories[0]?.categoryId || null,
               null,
               folderTree
-            ).map((crumb: { id: string; name: string }, index: number, array: Array<{ id: string; name: string }>) => (
+            ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
               <React.Fragment key={index}>
                 <Button
                   onClick={(e: React.MouseEvent): void => {
                     e.stopPropagation();
-                    onSelectFolder(crumb.id);
+                    if (crumb.id) { // Ensure id is not null before passing to onSelectFolder
+                      onSelectFolder(crumb.id);
+                    }
                   }}
                   className="cursor-pointer hover:underline whitespace-nowrap"
                 >

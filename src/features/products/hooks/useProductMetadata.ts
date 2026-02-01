@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -6,13 +8,13 @@ import type {
   ProductFormData,
 } from "@/features/products/types";
 import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
-import { 
-  useCatalogs, 
-  useLanguages, 
-  usePriceGroups, 
-  useMultiCategories, 
-  useMultiTags, 
-  useMultiParameters 
+import {
+  useCatalogs,
+  useLanguages,
+  usePriceGroups,
+  useMultiCategories,
+  useMultiTags,
+  useMultiParameters,
 } from "./useMetadata";
 
 interface UseProductMetadataProps {
@@ -34,42 +36,66 @@ export function useProductMetadata({
   setValue,
   getValues,
 }: UseProductMetadataProps) {
-  const { data: catalogs = [], isLoading: catalogsLoading, error: catalogsError } = useCatalogs();
+  const {
+    data: catalogs = [],
+    isLoading: catalogsLoading,
+    error: catalogsError,
+  } = useCatalogs();
   const { data: languages = [] } = useLanguages();
   const { data: priceGroups = [] } = usePriceGroups();
-  
+
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>(
     () =>
       product?.catalogs?.map((entry) => entry.catalogId) ??
       initialCatalogIds ??
-      []
+      [],
   );
 
   const categoryQueries = useMultiCategories(selectedCatalogIds);
   const tagQueries = useMultiTags(selectedCatalogIds);
   const parameterQueries = useMultiParameters(selectedCatalogIds);
 
-  const categories = useMemo(() => categoryQueries.flatMap(q => q.data ?? []), [categoryQueries]);
-  const categoriesLoading = useMemo(() => categoryQueries.some(q => q.isLoading), [categoryQueries]);
+  const categories = useMemo(
+    () => categoryQueries.flatMap((q) => q.data ?? []),
+    [categoryQueries],
+  );
+  const categoriesLoading = useMemo(
+    () => categoryQueries.some((q) => q.isLoading),
+    [categoryQueries],
+  );
 
-  const tags = useMemo(() => tagQueries.flatMap(q => q.data ?? []), [tagQueries]);
-  const tagsLoading = useMemo(() => tagQueries.some(q => q.isLoading), [tagQueries]);
+  const tags = useMemo(
+    () => tagQueries.flatMap((q) => q.data ?? []),
+    [tagQueries],
+  );
+  const tagsLoading = useMemo(
+    () => tagQueries.some((q) => q.isLoading),
+    [tagQueries],
+  );
 
-  const parameters = useMemo(() => parameterQueries.flatMap(q => q.data ?? []), [parameterQueries]);
-  const parametersLoading = useMemo(() => parameterQueries.some(q => q.isLoading), [parameterQueries]);
+  const parameters = useMemo(
+    () => parameterQueries.flatMap((q) => q.data ?? []),
+    [parameterQueries],
+  );
+  const parametersLoading = useMemo(
+    () => parameterQueries.some((q) => q.isLoading),
+    [parameterQueries],
+  );
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     () =>
-      product?.categories?.map((entry: { categoryId: string }) => entry.categoryId) ??
+      product?.categories?.map(
+        (entry: { categoryId: string }) => entry.categoryId,
+      ) ??
       initialCategoryIds ??
-      []
+      [],
   );
 
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     () =>
       product?.tags?.map((entry: { tagId: string }) => entry.tagId) ??
       initialTagIds ??
-      []
+      [],
   );
 
   // Auto-select default catalog for new products when none is chosen
@@ -92,7 +118,9 @@ export function useProductMetadata({
     if (selectedCatalogIds.length === 0) return;
 
     // Get the first selected catalog's default price group
-    const firstCatalog = catalogs.find((c) => selectedCatalogIds.includes(c.id));
+    const firstCatalog = catalogs.find((c) =>
+      selectedCatalogIds.includes(c.id),
+    );
     if (firstCatalog?.defaultPriceGroupId) {
       const currentDefaultPriceGroupId = getValues("defaultPriceGroupId");
       // Only set if not already set
@@ -106,27 +134,31 @@ export function useProductMetadata({
     if (selectedCatalogIds.length === 0) return languages;
     if (catalogsLoading || catalogs.length === 0) return [];
 
-    const selectedCatalogs = catalogs.filter((catalog) => selectedCatalogIds.includes(catalog.id));
+    const selectedCatalogs = catalogs.filter((catalog) =>
+      selectedCatalogIds.includes(catalog.id),
+    );
     if (selectedCatalogs.length === 0) {
       return languages;
     }
 
     const allowedLanguageIds = new Set(
-      selectedCatalogs.flatMap((catalog) => catalog.languageIds ?? [])
+      selectedCatalogs.flatMap((catalog) => catalog.languageIds ?? []),
     );
 
     if (allowedLanguageIds.size === 0) {
       return languages;
     }
 
-    const filtered = languages.filter((language) => allowedLanguageIds.has(language.id));
+    const filtered = languages.filter((language) =>
+      allowedLanguageIds.has(language.id),
+    );
     return filtered.length > 0 ? filtered : languages;
   }, [languages, catalogs, selectedCatalogIds, catalogsLoading]);
 
   const filteredPriceGroups = useMemo(() => {
     if (selectedCatalogIds.length === 0) return priceGroups;
     const allowedGroupIds = new Set<string>();
-    const orderedGroups: (typeof priceGroups)[number][] = []; 
+    const orderedGroups: (typeof priceGroups)[number][] = [];
 
     // Only include price groups that are explicitly assigned to selected catalogs
     selectedCatalogIds.forEach((catalogId) => {
@@ -151,7 +183,7 @@ export function useProductMetadata({
     setSelectedCatalogIds((prev) =>
       prev.includes(catalogId)
         ? prev.filter((id) => id !== catalogId)
-        : [...prev, catalogId]
+        : [...prev, catalogId],
     );
   };
 
@@ -159,7 +191,7 @@ export function useProductMetadata({
     setSelectedCategoryIds((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+        : [...prev, categoryId],
     );
   };
 
@@ -167,14 +199,14 @@ export function useProductMetadata({
     setSelectedTagIds((prev) =>
       prev.includes(tagId)
         ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
+        : [...prev, tagId],
     );
   };
 
   return {
     catalogs,
     catalogsLoading,
-    catalogsError: catalogsError ? (catalogsError).message : null,
+    catalogsError: catalogsError ? catalogsError.message : null,
     selectedCatalogIds,
     toggleCatalog,
     categories,

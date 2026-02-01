@@ -165,7 +165,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   const revealStyleOptions: { label: string; value: RevealStyle }[] = REVEAL_STYLES;
 
   const handlePresetChange = useCallback(
-    (preset: AnimationPreset) => {
+    (preset: AnimationPreset): void => {
       if (preset === "none") {
         onChange({ ...DEFAULT_ANIMATION_CONFIG, preset: "none" });
       } else {
@@ -210,14 +210,14 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleTriggerChange = useCallback(
-    (trigger: string) => {
+    (trigger: string): void => {
       onChange({ ...config, trigger: trigger as AnimationTrigger });
     },
     [config, onChange]
   );
 
   const handleSelectorChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       onChange({ ...config, selector: e.target.value });
     },
     [config, onChange]
@@ -236,7 +236,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
-  const resolvedNodeTarget: "self" | "children" | "descendants" | "custom" = (() => {
+  const resolvedNodeTarget: "self" | "children" | "descendants" | "custom" = ((): string => {
     const normalized = selectorValue.trim();
     if (!normalized || normalized === ":scope") return "self";
     if (normalized === ":scope > *") return "children";
@@ -245,14 +245,14 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   })();
 
   const handleQuickSelector = useCallback(
-    (selector: string) => {
+    (selector: string): void => {
       onChange({ ...config, selector });
     },
     [config, onChange]
   );
 
   const handleParallaxPresetChange = useCallback(
-    (value: string) => {
+    (value: string): void => {
       const preset = value as ParallaxPreset;
       const defaults = PARALLAX_DEFAULTS[preset];
       onChange({
@@ -265,14 +265,14 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleParallaxAxisChange = useCallback(
-    (value: string) => {
+    (value: string): void => {
       onChange({ ...config, parallaxAxis: value as ParallaxAxis });
     },
     [config, onChange]
   );
 
   const handleParallaxOffsetChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       const val = parseFloat(e.target.value);
       if (!isNaN(val)) {
         onChange({ ...config, parallaxOffset: Math.max(-300, Math.min(300, val)) });
@@ -282,7 +282,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleParallaxScrubChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       const val = parseFloat(e.target.value);
       if (!isNaN(val)) {
         onChange({ ...config, parallaxScrub: Math.max(0, Math.min(2, val)) });
@@ -292,7 +292,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
   );
 
   const handleParallaxStartChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       onChange({ ...config, parallaxStart: e.target.value });
     },
     [config, onChange]

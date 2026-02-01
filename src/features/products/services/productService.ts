@@ -11,31 +11,33 @@ import {
 } from "@/features/products/validations";
 import { getDiskPathFromPublicPath, uploadFile } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/services/product-repository";
-import type { ProductFilters } from "@/features/products/types/services/product-repository";
+import type { ProductFilters, ProductRepository } from "@/features/products/types/services/product-repository";
 import { getImageFileRepository } from "@/features/files/server";
+import type { ImageFileRepository } from "@/features/files/types/services/image-file-repository";
 import { getCatalogRepository } from "@/features/products/services/catalog-repository";
 import { badRequestError } from "@/shared/errors/app-error";
+import type { ProductWithImages, ProductImageRecord, ProductRecord } from "@/features/products/types";
 
-const resolveProductRepository = async () => getProductRepository();
-const resolveImageFileRepository = async () => getImageFileRepository();
+const resolveProductRepository = async (): Promise<ProductRepository> => getProductRepository();
+const resolveImageFileRepository = async (): Promise<ImageFileRepository> => getImageFileRepository();
 
 /**
  * Retrieves a list of products based on the provided filters.
  * @param filters - The filter criteria.
  * @returns A list of products.
  */
-async function getProducts(filters: ProductFilters) {
+async function getProducts(filters: ProductFilters): Promise<ProductWithImages[]> {
   const productRepository = await resolveProductRepository();
   const products = await productRepository.getProducts(filters);
 
   return Promise.all(
-    products.map(async (product) => {
+    products.map(async (product: ProductWithImages): Promise<ProductWithImages> => {
       if (!product.images?.length) {
         return product;
       }
 
       const filteredImages = await Promise.all(
-        product.images.map(async (image) => {
+        product.images.map(async (image: ProductImageRecord): Promise<ProductImageRecord | null> => {
           const filepath = image.imageFile?.filepath;
           if (!filepath) {
             return null;
@@ -56,7 +58,7 @@ async function getProducts(filters: ProductFilters) {
 
       return {
         ...product,
-        images: filteredImages.filter(Boolean),
+        images: filteredImages.filter((img: ProductImageRecord | null): img is ProductImageRecord => img !== null),
       };
     })
   );
@@ -67,7 +69,7 @@ async function getProducts(filters: ProductFilters) {
  * @param filters - The filter criteria.
  * @returns The total count.
  */
-async function countProducts(filters: ProductFilters) {
+async function countProducts(filters: ProductFilters): Promise<number> {
   const productRepository = await resolveProductRepository();
   return productRepository.countProducts(filters);
 }
@@ -77,12 +79,12 @@ async function countProducts(filters: ProductFilters) {
  * @param id - The ID of the product to retrieve.
  * @returns The product, or null if not found.
  */
-async function getProductById(id: string) {
+async function getProductById(id: string): Promise<ProductWithImages | null> {
   const productRepository = await resolveProductRepository();
   return productRepository.getProductById(id);
 }
 
-async function getProductBySku(sku: string) {
+async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
   const productRepository = await resolveProductRepository();
   const product = await productRepository.getProductBySku(sku);
   if (!product) return null;
@@ -94,7 +96,7 @@ async function getProductBySku(sku: string) {
  * @param formData - The product data from the form.
  * @returns The newly created product.
  */
-async function createProduct(formData: FormData) {
+async function createProduct(formData: FormData): Promise<ProductWithImages | null> {
   await ErrorSystem.logInfo("Creating product...");
   try {
     const validatedData = productCreateSchema.parse(
@@ -135,7 +137,7 @@ async function createProduct(formData: FormData) {
  * @param formData - The updated product data from the form.
  * @returns The updated product, or null if not found.
  */
-async function updateProduct(id: string, formData: FormData) {
+async function updateProduct(id: string, formData: FormData): Promise<ProductWithImages | null> {
   await ErrorSystem.logInfo(`Updating product ${id}...`);
   try {
     const validatedData = productUpdateSchema.parse(
@@ -186,7 +188,7 @@ async function updateProduct(id: string, formData: FormData) {
  * @param id - The ID of the product to delete.
  * @returns The deleted product, or null if not found.
  */
-async function deleteProduct(id: string) {
+async function deleteProduct(id: string): Promise<ProductRecord | null> {
   await ErrorSystem.logInfo(`Deleting product ${id}...`);
   try {
     const productRepository = await resolveProductRepository();
@@ -207,7 +209,7 @@ async function deleteProduct(id: string) {
  * @param sku - The new SKU for the duplicated product.
  * @returns The duplicated product, or null if not found.
  */
-async function duplicateProduct(id: string, sku: string) {
+async function duplicateProduct(id: string, sku: string): Promise<ProductWithImages | null> {
   await ErrorSystem.logInfo(`Duplicating product ${id} with new SKU ${sku}...`);
   try {
     const trimmedSku = sku.trim();
@@ -250,7 +252,7 @@ async function duplicateProduct(id: string, sku: string) {
 // and folder after confirming no other products reference this image. This prevents
 // accidental data loss if the same image is reused and orphaned disk directories
 // from cluttering the storage.
-async function unlinkImageFromProduct(productId: string, imageFileId: string) {
+async function unlinkImageFromProduct(productId: string, imageFileId: string): Promise<null> {
   const productRepository = await resolveProductRepository();
   const imageFileRepository = await resolveImageFileRepository();
   await productRepository.removeProductImage(productId, imageFileId);
@@ -308,7 +310,7 @@ async function linkImagesToProduct(
   images: File[],
   imageFileIds: string[],
   productSku?: string | null
-) {
+): Promise<void> {
   const productRepository = await resolveProductRepository();
   const allImageFileIds = [...imageFileIds];
 
@@ -339,25 +341,25 @@ const tempProductPathPrefix = "/uploads/products/temp/";
 // Why: HTML form's getAll("catalogIds") returns entries for EACH selected item.
 // Normalize to trim whitespace (user selection artifacts) and filter empty strings
 // (unchecked checkboxes). This prevents invalid IDs from entering the database.
-function normalizeCatalogIds(entries: FormDataEntryValue[]) {
+function normalizeCatalogIds(entries: FormDataEntryValue[]): string[] {
   return entries
-    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
-    .filter((entry) => entry.length > 0);
+    .map((entry: FormDataEntryValue): string => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry: string): boolean => entry.length > 0);
 }
 
-function normalizeCategoryIds(entries: FormDataEntryValue[]) {
+function normalizeCategoryIds(entries: FormDataEntryValue[]): string[] {
   return entries
-    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
-    .filter((entry) => entry.length > 0);
+    .map((entry: FormDataEntryValue): string => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry: string): boolean => entry.length > 0);
 }
 
-function normalizeTagIds(entries: FormDataEntryValue[]) {
+function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
   return entries
-    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
-    .filter((entry) => entry.length > 0);
+    .map((entry: FormDataEntryValue): string => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry: string): boolean => entry.length > 0);
 }
 
-async function updateProductCatalogs(productId: string, catalogIds: string[]) {
+async function updateProductCatalogs(productId: string, catalogIds: string[]): Promise<void> {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductCatalogs(productId, catalogIds);
 
@@ -379,12 +381,12 @@ async function updateProductCatalogs(productId: string, catalogIds: string[]) {
   }
 }
 
-async function updateProductCategories(productId: string, categoryIds: string[]) {
+async function updateProductCategories(productId: string, categoryIds: string[]): Promise<void> {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductCategories(productId, categoryIds);
 }
 
-async function updateProductTags(productId: string, tagIds: string[]) {
+async function updateProductTags(productId: string, tagIds: string[]): Promise<void> {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductTags(productId, tagIds);
 }
@@ -393,7 +395,7 @@ async function updateProductTags(productId: string, tagIds: string[]) {
 // SKU is assigned, we permanently organize images by SKU for easy product recovery.
 // Sanitization (replacing non-alphanumeric with underscore) prevents path injection
 // and filesystem-specific naming issues across different OS environments.
-async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
+async function moveTempImageFilesToSku(imageFileIds: string[], sku: string): Promise<void> {
   const imageFileRepository = await resolveImageFileRepository();
   const imageFiles = await imageFileRepository.findImageFilesByIds(
     imageFileIds
@@ -425,15 +427,15 @@ async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
   }
 }
 
-async function moveLinkedTempImagesToSku(productId: string, sku: string) {
+async function moveLinkedTempImagesToSku(productId: string, sku: string): Promise<void> {
   const productRepository = await resolveProductRepository();
   const product = await productRepository.getProductById(productId);
   const imageFileIds =
     product?.images
-      .filter((image) =>
+      .filter((image: ProductImageRecord): boolean =>
         image.imageFile.filepath.startsWith(tempProductPathPrefix)
       )
-      .map((image) => image.imageFileId) ?? [];
+      .map((image: ProductImageRecord): string => image.imageFileId) ?? [];
   if (imageFileIds.length > 0) {
     await moveTempImageFilesToSku(imageFileIds, sku);
   }

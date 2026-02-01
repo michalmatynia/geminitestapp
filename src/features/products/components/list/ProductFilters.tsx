@@ -38,10 +38,10 @@ export const ProductFilters = memo(function ProductFilters({
   setStartDate,
   endDate,
   setEndDate,
-}: ProductFiltersProps) {
+}: ProductFiltersProps): React.JSX.Element {
   const hasActiveFilters = search || sku || minPrice || maxPrice || startDate || endDate;
 
-  const handleResetFilters = () => {
+  const handleResetFilters = (): void => {
     setSearch("");
     setSku("");
     setMinPrice(undefined);
@@ -81,7 +81,7 @@ export const ProductFilters = memo(function ProductFilters({
             id="search-name"
             placeholder="Search by name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             className="h-8 text-sm"
           />
         </div>
@@ -95,7 +95,7 @@ export const ProductFilters = memo(function ProductFilters({
             id="search-sku"
             placeholder="Search by SKU..."
             value={sku}
-            onChange={(e) => setSku(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSku(e.target.value)}
             className="h-8 text-sm"
           />
         </div>
@@ -110,7 +110,7 @@ export const ProductFilters = memo(function ProductFilters({
             type="number"
             placeholder="Min price"
             value={minPrice || ""}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setMinPrice(
                 e.target.value ? parseInt(e.target.value, 10) : undefined
               )
@@ -129,7 +129,7 @@ export const ProductFilters = memo(function ProductFilters({
             type="number"
             placeholder="Max price"
             value={maxPrice || ""}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setMaxPrice(
                 e.target.value ? parseInt(e.target.value, 10) : undefined
               )
@@ -147,7 +147,7 @@ export const ProductFilters = memo(function ProductFilters({
             id="start-date"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
             className="h-8 text-sm"
           />
         </div>
@@ -161,7 +161,7 @@ export const ProductFilters = memo(function ProductFilters({
             id="end-date"
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
             className="h-8 text-sm"
           />
         </div>
@@ -183,7 +183,7 @@ interface ProductSelectionActionsProps {
 export const ProductSelectionActions = memo(function ProductSelectionActions({
   data = [],
   rowSelection = {},
-  setRowSelection = () => {},
+  setRowSelection = (): void => {},
   onSelectAllGlobal,
   loadingGlobal,
   onDeleteSelected,
@@ -207,28 +207,28 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
     }
   }, [onDeleteSelected]);
 
-  const handleSelectPage = useCallback(() => {
+  const handleSelectPage = useCallback((): void => {
     const newSelection = { ...rowSelection };
-    data.forEach((product) => {
+    data.forEach((product: ProductWithImages) => {
       newSelection[product.id] = true;
     });
     setRowSelection(newSelection);
   }, [data, rowSelection, setRowSelection]);
 
-  const handleDeselectPage = useCallback(() => {
+  const handleDeselectPage = useCallback((): void => {
     const newSelection = { ...rowSelection };
-    data.forEach((product) => {
+    data.forEach((product: ProductWithImages) => {
       delete newSelection[product.id];
     });
     setRowSelection(newSelection);
   }, [data, rowSelection, setRowSelection]);
 
-  const handleDeselectAll = useCallback(() => {
+  const handleDeselectAll = useCallback((): void => {
     setRowSelection({});
   }, [setRowSelection]);
 
   const selectedCount = useMemo(
-    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
+    () => Object.keys(rowSelection).filter((key: string) => rowSelection[key]).length,
     [rowSelection]
   );
   const hasSelection = selectedCount > 0;

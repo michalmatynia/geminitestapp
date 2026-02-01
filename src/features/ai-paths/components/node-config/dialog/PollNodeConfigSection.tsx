@@ -1,6 +1,16 @@
 "use client";
 
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui";
 import type {
   AiNode,
   DbQueryConfig,
@@ -9,7 +19,11 @@ import type {
   PollConfig,
   RuntimeState,
 } from "@/features/ai-paths/lib";
-import { DB_COLLECTION_OPTIONS, renderTemplate, toNumber } from "@/features/ai-paths/lib";
+import {
+  DB_COLLECTION_OPTIONS,
+  renderTemplate,
+  toNumber,
+} from "@/features/ai-paths/lib";
 
 type PollNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -33,7 +47,7 @@ export function PollNodeConfigSection({
     preset: "by_id",
     field: "_id",
     idType: "string",
-    queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+    queryTemplate: '{\n  "_id": "{{value}}"\n}',
     limit: 20,
     sort: "",
     projection: "",
@@ -55,7 +69,8 @@ export function PollNodeConfigSection({
   };
   const queryConfig = resolvedPollConfig.dbQuery!;
   const collectionOption = DB_COLLECTION_OPTIONS.some(
-    (option: { label: string; value: string }) => option.value === queryConfig.collection
+    (option: { label: string; value: string }) =>
+      option.value === queryConfig.collection,
   )
     ? queryConfig.collection
     : "custom";
@@ -67,19 +82,23 @@ export function PollNodeConfigSection({
       },
     });
 
-  const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
-  const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
-    (acc: Record<string, unknown>, input: string): Record<string, unknown> => {
-      const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-      const directValue = runtimeInputs[input];
-      if (directValue !== undefined) {
-        acc[input] = directValue;
-        return acc;
-      }
-      const matchingEdges = connections.filter(
-        (edge: Edge): boolean => edge.toPort === input || !edge.toPort
-      );
-      const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
+  const connections = edges.filter(
+    (edge: Edge): boolean => edge.to === selectedNode.id,
+  );
+  const resolvedRuntimeInputs = selectedNode.inputs.reduce<
+    Record<string, unknown>
+  >((acc: Record<string, unknown>, input: string): Record<string, unknown> => {
+    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const directValue = runtimeInputs[input];
+    if (directValue !== undefined) {
+      acc[input] = directValue;
+      return acc;
+    }
+    const matchingEdges = connections.filter(
+      (edge: Edge): boolean => edge.toPort === input || !edge.toPort,
+    );
+    const merged = matchingEdges.reduce<unknown>(
+      (current: unknown, edge: Edge): unknown => {
         const fromOutput = runtimeState.outputs[edge.from];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
@@ -89,14 +108,14 @@ export function PollNodeConfigSection({
         if (current === undefined) return value;
         if (Array.isArray(current)) return [...(current as unknown[]), value];
         return [current, value];
-      }, undefined);
-      if (merged !== undefined) {
-        acc[input] = merged;
-      }
-      return acc;
-    },
-    {}
-  );
+      },
+      undefined,
+    );
+    if (merged !== undefined) {
+      acc[input] = merged;
+    }
+    return acc;
+  }, {});
   const inputValue =
     (resolvedRuntimeInputs.value as string) ??
     (resolvedRuntimeInputs.jobId as string) ??
@@ -104,7 +123,7 @@ export function PollNodeConfigSection({
   const queryPreviewText = renderTemplate(
     queryConfig.queryTemplate ?? "{}",
     resolvedRuntimeInputs,
-    inputValue
+    inputValue,
   );
 
   return (
@@ -138,7 +157,7 @@ export function PollNodeConfigSection({
               updatePollConfig({
                 intervalMs: toNumber(
                   event.target.value,
-                  resolvedPollConfig.intervalMs
+                  resolvedPollConfig.intervalMs,
                 ),
               })
             }
@@ -155,7 +174,7 @@ export function PollNodeConfigSection({
               updatePollConfig({
                 maxAttempts: toNumber(
                   event.target.value,
-                  resolvedPollConfig.maxAttempts
+                  resolvedPollConfig.maxAttempts,
                 ),
               })
             }
@@ -164,7 +183,8 @@ export function PollNodeConfigSection({
       </div>
       {resolvedPollConfig.mode === "job" && (
         <p className="text-[11px] text-gray-500">
-          Polls /api/products/ai-jobs/{"{{jobId}}"} until completion and outputs result + status.
+          Polls /api/products/ai-jobs/{"{{jobId}}"} until completion and outputs
+          result + status.
         </p>
       )}
       {resolvedPollConfig.mode === "database" && (
@@ -200,7 +220,8 @@ export function PollNodeConfigSection({
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
-                      collection: value === "custom" ? queryConfig.collection : value,
+                      collection:
+                        value === "custom" ? queryConfig.collection : value,
                     },
                   })
                 }
@@ -209,11 +230,16 @@ export function PollNodeConfigSection({
                   <SelectValue placeholder="Select collection" />
                 </SelectTrigger>
                 <SelectContent className="border-border bg-gray-900">
-                  {DB_COLLECTION_OPTIONS.map((option: { label: string; value: string }): React.JSX.Element => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {DB_COLLECTION_OPTIONS.map(
+                    (option: {
+                      label: string;
+                      value: string;
+                    }): React.JSX.Element => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ),
+                  )}
                   <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
@@ -323,7 +349,9 @@ export function PollNodeConfigSection({
                   className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                   value={queryConfig.field}
                   disabled={queryConfig.preset !== "by_field"}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                  ): void =>
                     updatePollConfig({
                       dbQuery: {
                         ...queryConfig,
@@ -341,7 +369,9 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.queryTemplate}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                onChange={(
+                  event: React.ChangeEvent<HTMLTextAreaElement>,
+                ): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -351,7 +381,8 @@ export function PollNodeConfigSection({
                 }
               />
               <p className="mt-2 text-[11px] text-gray-500">
-                Supports placeholders like {"{{value}}"}, {"{{entityId}}"}, {"{{jobId}}"}.
+                Supports placeholders like {"{{value}}"}, {"{{entityId}}"},{" "}
+                {"{{jobId}}"}.
               </p>
             </div>
           )}
@@ -377,7 +408,8 @@ export function PollNodeConfigSection({
               <span>Single result</span>
               <Button
                 type="button"
-                className={`rounded border px-3 py-1 text-xs ${ queryConfig.single
+                className={`rounded border px-3 py-1 text-xs ${
+                  queryConfig.single
                     ? "text-emerald-200 hover:bg-emerald-500/10"
                     : "text-gray-300 hover:bg-muted/50"
                 }`}
@@ -400,7 +432,9 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.sort}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                onChange={(
+                  event: React.ChangeEvent<HTMLTextAreaElement>,
+                ): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -415,7 +449,9 @@ export function PollNodeConfigSection({
               <Textarea
                 className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryConfig.projection}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                onChange={(
+                  event: React.ChangeEvent<HTMLTextAreaElement>,
+                ): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -443,8 +479,11 @@ export function PollNodeConfigSection({
                 value={resolvedPollConfig.successOperator ?? "equals"}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
-                    successOperator:
-                      value as "truthy" | "equals" | "contains" | "notEquals",
+                    successOperator: value as
+                      | "truthy"
+                      | "equals"
+                      | "contains"
+                      | "notEquals",
                   })
                 }
               >
@@ -483,7 +522,8 @@ export function PollNodeConfigSection({
             </div>
           </div>
           <p className="text-[11px] text-gray-500">
-            Polls MongoDB using the query settings. Use Success path/value to stop polling when a record matches.
+            Polls MongoDB using the query settings. Use Success path/value to
+            stop polling when a record matches.
           </p>
         </div>
       )}

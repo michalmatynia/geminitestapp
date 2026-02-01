@@ -93,7 +93,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             <PlusIcon className="h-6 w-6" />
           </Button>
           <div className="flex flex-wrap items-center gap-1.5">
-            {activeDrafts.map((draft) => {
+            {activeDrafts.map((draft: ProductDraft) => {
               const IconComponent = draft.icon ? iconMap[draft.icon] : null;
               return (
                 <Button
@@ -158,7 +158,7 @@ export const ProductListHeader = memo(function ProductListHeader({
           {/* Page size selector */}
           <Select
             value={String(pageSize)}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               setPageSize(Number(value));
               setPage(1);
             }}
@@ -170,7 +170,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[12, 24, 48, 96].map((size) => (
+              {[12, 24, 48, 96].map((size: number) => (
                 <SelectItem key={size} value={String(size)}>
                   {size} per page
                 </SelectItem>
@@ -183,7 +183,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
           <Select
             value={nameLocale}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               setNameLocale(value as "name_en" | "name_pl" | "name_de")
             }
           >
@@ -194,7 +194,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
-              {languageOptions.map((option) => (
+              {languageOptions.map((option: { value: "name_en" | "name_pl" | "name_de"; label: string }) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -210,7 +210,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectValue placeholder="Currency" />
             </SelectTrigger>
             <SelectContent>
-              {currencyOptions.map((code) => (
+              {currencyOptions.map((code: string) => (
                 <SelectItem key={code} value={code}>
                   {code}
                 </SelectItem>
@@ -228,7 +228,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             <SelectContent>
               <SelectItem value="all">All catalogs</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {catalogs.map((catalog) => (
+              {catalogs.map((catalog: Catalog) => (
                 <SelectItem key={catalog.id} value={catalog.id}>
                   {catalog.name}
                 </SelectItem>

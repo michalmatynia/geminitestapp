@@ -27,7 +27,7 @@ interface TranslationResult {
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-function getClient(modelName: string, apiKey: string | null) {
+function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
   const modelLower = modelName.toLowerCase();
   const isOpenAI = (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
                    modelLower.startsWith("ft:gpt-") ||

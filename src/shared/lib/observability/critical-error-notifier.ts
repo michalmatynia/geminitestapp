@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/typedef */
 import "server-only";
 
 import { createHash } from "crypto";
-import type { SystemLogLevel, SystemLogRecord } from "@/shared/types/system-logs";
+import type {
+  SystemLogLevel,
+  SystemLogRecord,
+} from "@/shared/types/system-logs";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
@@ -84,25 +88,31 @@ const levelPriority: Record<SystemLogLevel, number> = {
   error: 3,
 };
 
-const shouldNotifyForLevel = (level: SystemLogLevel, minLevel: SystemLogLevel) =>
-  levelPriority[level] >= levelPriority[minLevel];
+const shouldNotifyForLevel = (
+  level: SystemLogLevel,
+  minLevel: SystemLogLevel,
+) => levelPriority[level] >= levelPriority[minLevel];
 
 const getNotificationConfig = async (): Promise<NotificationConfig> => {
-  const [enabledSetting, webhookSetting, minLevelSetting, throttleSetting] = await Promise.all([
-    readSettingValue(NOTIFICATION_SETTINGS_KEYS.enabled),
-    readSettingValue(NOTIFICATION_SETTINGS_KEYS.webhookUrl),
-    readSettingValue(NOTIFICATION_SETTINGS_KEYS.minLevel),
-    readSettingValue(NOTIFICATION_SETTINGS_KEYS.throttleSeconds),
-  ]);
+  const [enabledSetting, webhookSetting, minLevelSetting, throttleSetting] =
+    await Promise.all([
+      readSettingValue(NOTIFICATION_SETTINGS_KEYS.enabled),
+      readSettingValue(NOTIFICATION_SETTINGS_KEYS.webhookUrl),
+      readSettingValue(NOTIFICATION_SETTINGS_KEYS.minLevel),
+      readSettingValue(NOTIFICATION_SETTINGS_KEYS.throttleSeconds),
+    ]);
 
   const enabled =
     parseBoolean(enabledSetting) ||
     parseBoolean(process.env.CRITICAL_ERROR_NOTIFICATIONS_ENABLED);
-  const webhookUrl = webhookSetting ?? process.env.CRITICAL_ERROR_WEBHOOK_URL ?? null;
-  const minLevel = parseMinLevel(minLevelSetting ?? process.env.CRITICAL_ERROR_MIN_LEVEL);
+  const webhookUrl =
+    webhookSetting ?? process.env.CRITICAL_ERROR_WEBHOOK_URL ?? null;
+  const minLevel = parseMinLevel(
+    minLevelSetting ?? process.env.CRITICAL_ERROR_MIN_LEVEL,
+  );
   const throttleSeconds = parseNumber(
     throttleSetting ?? process.env.CRITICAL_ERROR_THROTTLE_SECONDS,
-    DEFAULT_THROTTLE_SECONDS
+    DEFAULT_THROTTLE_SECONDS,
   );
 
   return {
@@ -154,7 +164,8 @@ const buildPayload = (log: SystemLogRecord, critical: boolean) => ({
   statusCode: log.statusCode ?? null,
   requestId: log.requestId ?? null,
   userId: log.userId ?? null,
-  createdAt: log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
+  createdAt:
+    log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
   context: log.context ?? null,
   stack: log.stack ?? null,
   environment: process.env.NODE_ENV ?? "development",
@@ -163,7 +174,7 @@ const buildPayload = (log: SystemLogRecord, critical: boolean) => ({
 
 export const notifyCriticalError = async (
   log: SystemLogRecord,
-  critical: boolean
+  critical: boolean,
 ): Promise<{ delivered: boolean; throttled: boolean }> => {
   try {
     const config = await getNotificationConfig();
@@ -201,7 +212,7 @@ export const notifyCriticalError = async (
           maxDelayMs: 10000,
           timeoutMs: 8000,
         },
-      }
+      },
     );
     if (!res.ok) {
       console.error("[critical-error-notifier] Webhook failed", {

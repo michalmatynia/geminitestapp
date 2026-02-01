@@ -9,7 +9,7 @@ import type { NoteFileRecord } from "@/shared/types/notes";
 // Extracting prevents form component bloat and makes attachment logic testable.
 export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []): {
   noteFiles: NoteFileRecord[];
-  setNoteFiles: (files: NoteFileRecord[]) => void;
+  setNoteFiles: React.Dispatch<React.SetStateAction<NoteFileRecord[]>>;
   uploadingSlots: Set<number>;
   addUploadingSlot: (slotIndex: number) => void;
   removeUploadingSlot: (slotIndex: number) => void;

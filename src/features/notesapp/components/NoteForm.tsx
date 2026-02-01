@@ -824,7 +824,7 @@ export function NoteForm({
             contentBackground={contentBackground}
             contentTextColor={contentTextColor}
             previewTypographyStyle={previewTypographyStyle}
-            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): void => { void handlePaste(e); }}
+            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => { void handlePaste(e); }}
             setLightboxImage={setLightboxImage}
             isCodeMode={editorMode === "code"}
           />
@@ -844,9 +844,9 @@ export function NoteForm({
         maxSlots={MAX_SLOTS}
         uploadingSlots={uploadingSlots}
         getNextAvailableSlot={getNextAvailableSlot}
-        onFileUpload={(slotIndex: number, file: File): void => { void handleFileUpload(slotIndex, file); }}
-        onMultiFileUpload={(files: FileList | File[]): void => { void handleMultiFileUpload(files); }}
-        onFileDelete={(slotIndex: number): void => { void handleFileDelete(slotIndex); }}
+        onFileUpload={(slotIndex: number, file: File): Promise<void> => { void handleFileUpload(slotIndex, file); }}
+        onMultiFileUpload={(files: FileList | File[]): Promise<void> => { void handleMultiFileUpload(files); }}
+        onFileDelete={(slotIndex: number): Promise<void> => { void handleFileDelete(slotIndex); }}
         onInsertFileReference={insertFileReference}
         formatFileSize={formatFileSize}
         isImageFile={isImageFile}

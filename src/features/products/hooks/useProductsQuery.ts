@@ -1,8 +1,14 @@
 "use client";
 
-import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueries,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import { getProducts, countProducts } from "@/features/products/api";
 import { useCallback } from "react";
+import type { ProductWithImages } from "@/features/products/types";
 
 interface UseProductsFilters {
   search?: string | undefined;
@@ -23,8 +29,8 @@ interface UseProductsOptions {
 
 export function useProducts(
   filters: UseProductsFilters,
-  options: UseProductsOptions = {}
-) {
+  options: UseProductsOptions = {},
+): UseQueryResult<ProductWithImages[], Error> {
   const { enabled = true } = options;
 
   return useQuery({
@@ -36,8 +42,8 @@ export function useProducts(
 
 export function useProductsCount(
   filters: UseProductsFilters,
-  options: UseProductsOptions = {}
-) {
+  options: UseProductsOptions = {},
+): UseQueryResult<number, Error> {
   const { enabled = true } = options;
 
   return useQuery({
@@ -49,8 +55,15 @@ export function useProductsCount(
 
 export function useProductsWithCount(
   filters: UseProductsFilters,
-  options: UseProductsOptions = {}
-) {
+  options: UseProductsOptions = {},
+): {
+  products: ProductWithImages[];
+  total: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: unknown;
+  refetch: () => Promise<void>;
+} {
   const { enabled = true } = options;
   const queryClient = useQueryClient();
 
@@ -58,12 +71,12 @@ export function useProductsWithCount(
     queries: [
       {
         queryKey: ["products", filters],
-        queryFn: () => getProducts(filters),
+        queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
         enabled,
       },
       {
         queryKey: ["products-count", filters],
-        queryFn: () => countProducts(filters),
+        queryFn: (): Promise<number> => countProducts(filters),
         enabled,
       },
     ],
@@ -71,7 +84,7 @@ export function useProductsWithCount(
 
   const [productsQuery, countQuery] = results;
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback(async (): Promise<void> => {
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ["products"] }),
       queryClient.refetchQueries({ queryKey: ["products-count"] }),

@@ -28,7 +28,7 @@ export function ParametersSettings({
   selectedCatalogId,
   onCatalogChange,
   onRefresh,
-}: ParametersSettingsProps) {
+}: ParametersSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,7 +40,7 @@ export function ParametersSettings({
     catalogId: "",
   });
 
-  const openCreateModal = () => {
+  const openCreateModal = (): void => {
     if (!selectedCatalogId) {
       toast("Please select a catalog first.", { variant: "error" });
       return;
@@ -55,7 +55,7 @@ export function ParametersSettings({
     setShowModal(true);
   };
 
-  const openEditModal = (parameter: ProductParameter) => {
+  const openEditModal = (parameter: ProductParameter): void => {
     setEditingParameter(parameter);
     setFormData({
       name_en: parameter.name_en,
@@ -66,7 +66,7 @@ export function ParametersSettings({
     setShowModal(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!formData.name_en.trim()) {
       toast("English name is required.", { variant: "error" });
       return;
@@ -109,7 +109,7 @@ export function ParametersSettings({
     }
   };
 
-  const handleDelete = async (parameter: ProductParameter) => {
+  const handleDelete = async (parameter: ProductParameter): Promise<void> => {
     const confirmed = window.confirm(
       `Delete parameter "${parameter.name_en}"?`
     );
@@ -132,7 +132,7 @@ export function ParametersSettings({
   };
 
   const selectedCatalog = catalogs.find(
-    (catalog) => catalog.id === selectedCatalogId
+    (catalog: CatalogRecord): boolean => catalog.id === selectedCatalogId
   );
 
   return (
@@ -151,7 +151,7 @@ export function ParametersSettings({
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>
-              {catalogs.map((catalog) => (
+              {catalogs.map((catalog: CatalogRecord) => (
                 <SelectItem key={catalog.id} value={catalog.id}>
                   {catalog.name}
                   {catalog.isDefault ? " (Default)" : ""}
@@ -189,7 +189,7 @@ export function ParametersSettings({
               </div>
             ) : (
               <div className="space-y-2">
-                {parameters.map((parameter) => (
+                {parameters.map((parameter: ProductParameter) => (
                   <div
                     key={parameter.id}
                     className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
@@ -210,14 +210,14 @@ export function ParametersSettings({
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        onClick={() => openEditModal(parameter)}
+                        onClick={(): void => openEditModal(parameter)}
                         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
                       >
                         Edit
                       </Button>
                       <Button
                         type="button"
-                        onClick={() => void handleDelete(parameter)}
+                        onClick={(): void => { void handleDelete(parameter); }}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete parameter"
                       >
@@ -241,7 +241,7 @@ export function ParametersSettings({
       {showModal && (
         <AppModal
           open={showModal}
-          onOpenChange={(open) => !open && setShowModal(false)}
+          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
           title={editingParameter ? "Edit Parameter" : "Create Parameter"}
         >
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
@@ -255,8 +255,8 @@ export function ParametersSettings({
                 <Label className="text-sm">Name (EN)</Label>
                 <Input
                   value={formData.name_en}
-                  onChange={(event) =>
-                    setFormData((prev) => ({
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: typeof formData) => ({
                       ...prev,
                       name_en: event.target.value,
                     }))
@@ -268,8 +268,8 @@ export function ParametersSettings({
                 <Label className="text-sm">Name (PL)</Label>
                 <Input
                   value={formData.name_pl}
-                  onChange={(event) =>
-                    setFormData((prev) => ({
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: typeof formData) => ({
                       ...prev,
                       name_pl: event.target.value,
                     }))
@@ -281,8 +281,8 @@ export function ParametersSettings({
                 <Label className="text-sm">Name (DE)</Label>
                 <Input
                   value={formData.name_de}
-                  onChange={(event) =>
-                    setFormData((prev) => ({
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: typeof formData) => ({
                       ...prev,
                       name_de: event.target.value,
                     }))
@@ -293,10 +293,10 @@ export function ParametersSettings({
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowModal(false)}>
+              <Button variant="outline" onClick={(): void => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => void handleSave()} disabled={saving}>
+              <Button onClick={(): void => { void handleSave(); }} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
               </Button>
             </div>

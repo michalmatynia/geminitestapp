@@ -20,23 +20,23 @@ export function CatalogsSettings({
   handleOpenCatalogModal,
   handleEditCatalog,
   handleDeleteCatalog,
-}: CatalogsSettingsProps) {
-  const getLanguageDisplay = (languageId: string) => {
-    const language = languages.find((l) => l.id === languageId);
+}: CatalogsSettingsProps): React.JSX.Element {
+  const getLanguageDisplay = (languageId: string): string => {
+    const language = languages.find((l: Language) => l.id === languageId);
     return language ? `${language.name} (${language.code})` : languageId;
   };
   const languageIdMap = new Map<string, string>();
-  languages.forEach((language) => {
+  languages.forEach((language: Language) => {
     if (language.id) languageIdMap.set(language.id, language.id);
     if (language.code) languageIdMap.set(language.code, language.id);
   });
-  const normalizeLanguageId = (value?: string | null) =>
+  const normalizeLanguageId = (value?: string | null): string | null =>
     value ? languageIdMap.get(value) ?? null : null;
-  const resolveCatalogLanguageIds = (catalog: Catalog) => {
+  const resolveCatalogLanguageIds = (catalog: Catalog): string[] => {
     const unique = Array.from(new Set(catalog.languageIds ?? []));
     const normalized = unique
-      .map((id) => normalizeLanguageId(id))
-      .filter((id): id is string => Boolean(id));
+      .map((id: string) => normalizeLanguageId(id))
+      .filter((id: string | null): id is string => Boolean(id));
     return normalized.length > 0 ? normalized : unique;
   };
   return (
@@ -45,7 +45,7 @@ export function CatalogsSettings({
         <Button
           className="min-w-[100px] border border-white/20 hover:border-white/40"
           type="button"
-          onClick={() => handleOpenCatalogModal()}
+          onClick={(): void => handleOpenCatalogModal()}
         >
           Add Catalog
         </Button>
@@ -62,7 +62,7 @@ export function CatalogsSettings({
           </div>
         ) : (
           <div className="mt-4 space-y-3">
-            {catalogs.map((catalog) => (
+            {catalogs.map((catalog: Catalog) => (
               <div
                 key={catalog.id}
                 className="flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
@@ -82,7 +82,7 @@ export function CatalogsSettings({
                   {catalog.languageIds && catalog.languageIds.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
                       {resolveCatalogLanguageIds(catalog).map(
-                        (languageId, index) => (
+                        (languageId: string, index: number) => (
                           <span
                             key={languageId}
                             className={`rounded-full border px-2 py-0.5 ${
@@ -110,14 +110,14 @@ export function CatalogsSettings({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => handleEditCatalog(catalog)}
+                        onClick={(): void => handleEditCatalog(catalog)}
                         className="cursor-pointer"
                       >
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-400 focus:text-red-400 cursor-pointer"
-                        onClick={() => handleDeleteCatalog(catalog)}
+                        onClick={(): void => handleDeleteCatalog(catalog)}
                       >
                         Delete
                       </DropdownMenuItem>

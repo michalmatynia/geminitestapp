@@ -1,3 +1,4 @@
+import React from "react";
 import { Button, Label } from "@/shared/ui";
 import { PriceGroup } from "@/features/products/types";
 
@@ -22,7 +23,7 @@ export function PriceGroupsSettings({
   handleOpenCreate,
   handleEditGroup,
   handleDeleteGroup,
-}: PriceGroupsSettingsProps) {
+}: PriceGroupsSettingsProps): React.JSX.Element {
   return (
     <div className="space-y-4">
       <div>
@@ -50,7 +51,7 @@ export function PriceGroupsSettings({
         </div>
       ) : (
         <div className="space-y-3">
-          {priceGroups.map((group) => (
+          {priceGroups.map((group: PriceGroup) => (
             <div
               key={group.id}
               className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
@@ -104,10 +105,10 @@ export function PriceGroupsSettings({
         <select
           className="mt-3 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
           value={defaultGroupId}
-          onChange={(event) => onDefaultGroupChange(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onDefaultGroupChange(event.target.value)}
           disabled={priceGroups.length === 0 || defaultGroupSaving}
         >
-          {priceGroups.map((group) => (
+          {priceGroups.map((group: PriceGroup) => (
             <option key={group.id} value={group.id}>
               {group.name} ({group.groupId})
             </option>

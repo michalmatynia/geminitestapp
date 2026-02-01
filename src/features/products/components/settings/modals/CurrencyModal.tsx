@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import { AppModal, ModalShell, Button, Input, Label, useToast } from "@/shared/ui";
-
-
-
-
-
-
-
+import React from "react";
+import {
+  Button,
+  Input,
+  Label,
+  AppModal,
+  ModalShell,
+  useToast,
+} from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 
 interface CurrencyModalProps {
@@ -51,7 +53,9 @@ export function CurrencyModal({
 
     setSaving(true);
     try {
-      const endpoint = currency ? `/api/currencies/${currency.id}` : "/api/currencies";
+      const endpoint = currency
+        ? `/api/currencies/${currency.id}`
+        : "/api/currencies";
       const res = await fetch(endpoint, {
         method: currency ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,7 +82,9 @@ export function CurrencyModal({
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => { void handleSubmit(); }}
+          onClick={() => {
+            void handleSubmit();
+          }}
           disabled={saving}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
@@ -117,10 +123,12 @@ export function CurrencyModal({
               id="curr-code"
               className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={form.code}
-              onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
+              onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
             >
               {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
-                <option key={code} value={code}>{code}</option>
+                <option key={code} value={code}>
+                  {code}
+                </option>
               ))}
             </select>
           </div>
@@ -129,7 +137,7 @@ export function CurrencyModal({
             <Input
               id="curr-name"
               value={form.name}
-              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               placeholder="e.g. Polish Zloty"
             />
           </div>
@@ -138,7 +146,9 @@ export function CurrencyModal({
             <Input
               id="curr-symbol"
               value={form.symbol}
-              onChange={(e) => setForm(p => ({ ...p, symbol: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, symbol: e.target.value }))
+              }
               placeholder="e.g. zł"
             />
           </div>

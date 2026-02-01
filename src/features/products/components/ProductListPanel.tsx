@@ -14,7 +14,7 @@ import type { PriceGroupWithDetails, ProductWithImages } from "@/features/produc
 const ProductListHeader = dynamic(
   () =>
     import("@/features/products/components/list/ProductListHeader").then(
-      (mod) => mod.ProductListHeader
+      (mod: { ProductListHeader: React.ComponentType<Record<string, unknown>> }) => mod.ProductListHeader
     ),
   { ssr: false }
 );
@@ -22,7 +22,7 @@ const ProductListHeader = dynamic(
 const ProductFilters = dynamic(
   () =>
     import("@/features/products/components/list/ProductFilters").then(
-      (mod) => mod.ProductFilters
+      (mod: { ProductFilters: React.ComponentType<Record<string, unknown>> }) => mod.ProductFilters
     ),
   { ssr: false }
 );
@@ -30,7 +30,7 @@ const ProductFilters = dynamic(
 const ProductSelectionActions = dynamic(
   () =>
     import("@/features/products/components/list/ProductFilters").then(
-      (mod) => mod.ProductSelectionActions
+      (mod: { ProductSelectionActions: React.ComponentType<Record<string, unknown>> }) => mod.ProductSelectionActions
     ),
   { ssr: false }
 );

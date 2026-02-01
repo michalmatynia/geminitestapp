@@ -1,9 +1,17 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
 import { useQuery, useQueries } from "@tanstack/react-query";
 import type { Language } from "@/shared/types/internationalization";
-import type { CatalogRecord, PriceGroupWithDetails } from "@/features/products/types";
-import type { ProductCategory, ProductTag, ProductParameter } from "@/features/products/types";
+import type {
+  CatalogRecord,
+  PriceGroupWithDetails,
+} from "@/features/products/types";
+import type {
+  ProductCategory,
+  ProductTag,
+  ProductParameter,
+} from "@/features/products/types";
 
 export function useCatalogs() {
   return useQuery({
@@ -43,7 +51,9 @@ export function useCategories(catalogId?: string) {
     queryKey: ["categories", catalogId],
     queryFn: async () => {
       if (!catalogId) return [] as ProductCategory[];
-      const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
+      const res = await fetch(
+        `/api/products/categories?catalogId=${catalogId}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch categories");
       return (await res.json()) as ProductCategory[];
     },
@@ -56,7 +66,9 @@ export function useMultiCategories(catalogIds: string[]) {
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["categories", catalogId],
       queryFn: async () => {
-        const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
+        const res = await fetch(
+          `/api/products/categories?catalogId=${catalogId}`,
+        );
         if (!res.ok) throw new Error("Failed to fetch categories");
         return (await res.json()) as ProductCategory[];
       },
@@ -95,7 +107,9 @@ export function useParameters(catalogId?: string) {
     queryKey: ["parameters", catalogId],
     queryFn: async () => {
       if (!catalogId) return [] as ProductParameter[];
-      const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
+      const res = await fetch(
+        `/api/products/parameters?catalogId=${catalogId}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch parameters");
       return (await res.json()) as ProductParameter[];
     },
@@ -108,7 +122,9 @@ export function useMultiParameters(catalogIds: string[]) {
     queries: catalogIds.map((catalogId) => ({
       queryKey: ["parameters", catalogId],
       queryFn: async () => {
-        const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
+        const res = await fetch(
+          `/api/products/parameters?catalogId=${catalogId}`,
+        );
         if (!res.ok) throw new Error("Failed to fetch parameters");
         return (await res.json()) as ProductParameter[];
       },

@@ -10,7 +10,7 @@ import {
 } from "@/features/products/context/ProductFormContext";
 import { ProductWithImages } from "@/features/products/types";
 
-function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
+function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
   return (
     <svg
       {...props}
@@ -30,7 +30,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function EditProductForm() {
+function EditProductForm(): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect, uploading, handleSubmit } = useProductFormContext();
   const router = useRouter();
 
@@ -38,7 +38,7 @@ function EditProductForm() {
     <div className="rounded-lg bg-card p-6 shadow-lg">
       <div className="mb-6 flex items-center gap-4 border-b border-border pb-4">
         <Button
-          onClick={(e) => { void handleSubmit(e); }}
+          onClick={(e: React.FormEvent | React.MouseEvent) => { void handleSubmit(e); }}
           disabled={uploading}
           aria-disabled={uploading}
           className="min-w-[100px] text-foreground"
@@ -68,7 +68,7 @@ export default function EditProductPage({
   product,
 }: {
   product: ProductWithImages;
-}) {
+}): React.JSX.Element {
   return (
     <ProductFormProvider product={product}>
       <EditProductForm />

@@ -1,0 +1,114 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/layout.tsx
+  32:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
+  1142:32  warning  Compilation Skipped: `this` is not supported syntax
+
+React Compiler does not support compiling functions that use `this`.
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx:1142:32
+  1140 |             bounds: bounds ?? undefined,
+  1141 |             inertia: false,
+> 1142 |             onPress: function (this: Draggable): void {
+       |                                ^^^^^^^^^^^^^^^ `this` was used here
+  1143 |               const now = performance.now();
+  1144 |               velocityMap.set(this, {
+  1145 |                 x: this.x,  react-hooks/unsupported-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductDataWithQuery.ts
+  12:8   error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  12:8   error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  38:15  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  47:15  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductsMutations.ts
+  13:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  13:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  28:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  28:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  50:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  50:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductsQuery.ts
+  24:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  24:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  37:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  37:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  50:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  50:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
+  61:9  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+  66:9  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/aiDescriptionService.ts
+  216:66  error  Expected img to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts
+   19:54  error  'ProductRecord' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   82:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+   82:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+   87:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+   87:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+   99:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+   99:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+  140:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  140:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+  191:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  191:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+  212:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  212:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+  255:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  255:1   error  Missing return type on function                                                  @typescript-eslint/explicit-module-boundary-types
+  308:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  344:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  346:11  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  347:14  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  350:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  352:11  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  353:14  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  356:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  358:11  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  359:14  error  Expected entry to have a type annotation                                         @typescript-eslint/typedef
+  362:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  384:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  389:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  398:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  430:1   error  Missing return type on function                                                  @typescript-eslint/explicit-function-return-type
+  435:16  error  Expected image to have a type annotation                                         @typescript-eslint/typedef
+  438:13  error  Expected image to have a type annotation                                         @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/components/Asset3DCard.tsx
+   17:8   error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+   17:8   error  Missing return type on function         @typescript-eslint/explicit-module-boundary-types
+   25:42  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+   31:44  error  Missing return type on function         @typescript-eslint/explicit-function-return-type
+  115:42  error  Expected tag to have a type annotation  @typescript-eslint/typedef
+  143:25  error  Expected e to have a type annotation    @typescript-eslint/typedef
+  154:25  error  Expected e to have a type annotation    @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/use-undo.ts
+  26:19  error  Expected a type annotation               @typescript-eslint/typedef
+  31:19  error  Expected prev to have a type annotation  @typescript-eslint/typedef
+  40:17  error  Expected prev to have a type annotation  @typescript-eslint/typedef
+  50:17  error  Expected prev to have a type annotation  @typescript-eslint/typedef
+  57:17  error  Expected prev to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/useSettings.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-function-return-type')
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-module-boundary-types')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/db/prisma.ts
+  2:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-function-return-type' or '@typescript-eslint/explicit-module-boundary-types')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/observability/critical-error-notifier.ts
+  2:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-module-boundary-types')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/observability/system-log-repository.ts
+  2:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-function-return-type', '@typescript-eslint/explicit-module-boundary-types', or '@typescript-eslint/typedef')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/observability/system-logger.ts
+  2:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/explicit-function-return-type', '@typescript-eslint/explicit-module-boundary-types', or '@typescript-eslint/typedef')
+
+✖ 71 problems (63 errors, 8 warnings)
+  0 errors and 6 warnings potentially fixable with the `--fix` option.
+

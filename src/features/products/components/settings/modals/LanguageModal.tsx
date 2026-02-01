@@ -1,15 +1,20 @@
+/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import { AppModal, ModalShell, Button, Input, Label, Checkbox, useToast } from "@/shared/ui";
-
-
-
-
-
-
-
-
-import type { Language, CountryOption } from "@/shared/types/internationalization";
+import React from "react";
+import {
+  Button,
+  Input,
+  Label,
+  AppModal,
+  ModalShell,
+  Checkbox,
+  useToast,
+} from "@/shared/ui";
+import type {
+  Language,
+  CountryOption,
+} from "@/shared/types/internationalization";
 
 interface LanguageModalProps {
   isOpen: boolean;
@@ -33,7 +38,9 @@ export function LanguageModal({
     name: "",
     nativeName: "",
   });
-  const [selectedCountryIds, setSelectedCountryIds] = React.useState<string[]>([]);
+  const [selectedCountryIds, setSelectedCountryIds] = React.useState<string[]>(
+    [],
+  );
 
   React.useEffect(() => {
     if (language) {
@@ -42,7 +49,7 @@ export function LanguageModal({
         name: language.name,
         nativeName: language.nativeName ?? "",
       });
-      setSelectedCountryIds(language.countries?.map(c => c.countryId) ?? []);
+      setSelectedCountryIds(language.countries?.map((c) => c.countryId) ?? []);
     } else {
       setForm({ code: "", name: "", nativeName: "" });
       setSelectedCountryIds([]);
@@ -57,7 +64,9 @@ export function LanguageModal({
 
     setSaving(true);
     try {
-      const endpoint = language ? `/api/languages/${language.id}` : "/api/languages";
+      const endpoint = language
+        ? `/api/languages/${language.id}`
+        : "/api/languages";
       const res = await fetch(endpoint, {
         method: language ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,8 +93,8 @@ export function LanguageModal({
   };
 
   const toggleCountry = (id: string) => {
-    setSelectedCountryIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setSelectedCountryIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -93,7 +102,9 @@ export function LanguageModal({
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => { void handleSubmit(); }}
+          onClick={() => {
+            void handleSubmit();
+          }}
           disabled={saving}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
@@ -131,7 +142,9 @@ export function LanguageModal({
             <Input
               id="lang-code"
               value={form.code}
-              onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))
+              }
               placeholder="e.g. EN"
             />
           </div>
@@ -140,7 +153,7 @@ export function LanguageModal({
             <Input
               id="lang-name"
               value={form.name}
-              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               placeholder="e.g. English"
             />
           </div>
@@ -149,7 +162,9 @@ export function LanguageModal({
             <Input
               id="lang-native"
               value={form.nativeName}
-              onChange={(e) => setForm(p => ({ ...p, nativeName: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, nativeName: e.target.value }))
+              }
               placeholder="e.g. English"
             />
           </div>

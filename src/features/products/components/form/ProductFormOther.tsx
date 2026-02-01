@@ -10,9 +10,15 @@ import { useProductFormContext } from "@/features/products/context/ProductFormCo
 import { X } from "lucide-react";
 
 
-import { ProductFormData } from "@/features/products/types";
+import { ProductFormData, CatalogRecord, ProductCategory, ProductTag, PriceGroupWithDetails } from "@/features/products/types";
 
-export default function ProductFormOther() {
+interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
+  calculatedPrice: number | null;
+  isCalculated: boolean;
+  sourceGroupName: string | undefined;
+}
+
+export default function ProductFormOther(): React.JSX.Element {
   const {
     errors,
     catalogs,
@@ -38,33 +44,33 @@ export default function ProductFormOther() {
   const selectedDefaultPriceGroupId = watch("defaultPriceGroupId");
   const hasCatalogs = selectedCatalogIds.length > 0;
   const selectedCatalogLabels = catalogs
-    .filter((catalog) => selectedCatalogIds.includes(catalog.id))
-    .map((catalog) => catalog.name);
+    .filter((catalog: CatalogRecord) => selectedCatalogIds.includes(catalog.id))
+    .map((catalog: CatalogRecord) => catalog.name);
   const selectedCatalogSummary = selectedCatalogLabels.length
     ? selectedCatalogLabels.join(", ")
     : "Select catalogs";
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
-  const selectedCatalog = catalogs.find((c) => selectedCatalogIds.includes(c.id));
+  const selectedCatalog = catalogs.find((c: CatalogRecord) => selectedCatalogIds.includes(c.id));
   const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
   const [categoryQuery, setCategoryQuery] = useState("");
   const [tagQuery, setTagQuery] = useState("");
   const filteredCategories = useMemo(() => {
     const normalized = categoryQuery.trim().toLowerCase();
     if (!normalized) return categories;
-    return categories.filter((category) =>
+    return categories.filter((category: ProductCategory) =>
       category.name.toLowerCase().includes(normalized)
     );
   }, [categories, categoryQuery]);
   const filteredTags = useMemo(() => {
     const normalized = tagQuery.trim().toLowerCase();
     if (!normalized) return tags;
-    return tags.filter((tag) => tag.name.toLowerCase().includes(normalized));
+    return tags.filter((tag: ProductTag) => tag.name.toLowerCase().includes(normalized));
   }, [tags, tagQuery]);
 
   // Calculate prices for all price groups
-  const priceGroupPrices = filteredPriceGroups.map((group) => {
+  const priceGroupPrices = filteredPriceGroups.map((group: PriceGroupWithDetails) => {
     if (!group.sourceGroupId || !group.priceMultiplier) {
       // This is a base price group (not dependent)
       return {
@@ -77,7 +83,7 @@ export default function ProductFormOther() {
 
     // This is a dependent price group
     // Find the source group's price
-    const sourceGroup = filteredPriceGroups.find((g) => g.id === group.sourceGroupId);
+    const sourceGroup = filteredPriceGroups.find((g: PriceGroupWithDetails) => g.id === group.sourceGroupId);
     if (!sourceGroup) {
       return {
         ...group,
@@ -131,7 +137,7 @@ export default function ProductFormOther() {
               )}
             </Label>
             <Select
-              onValueChange={(value) => setValue("defaultPriceGroupId", value)}
+              onValueChange={(value: string) => setValue("defaultPriceGroupId", value)}
               value={getValues("defaultPriceGroupId") || ""}
               disabled={isPriceGroupAutoAssigned}
             >
@@ -139,7 +145,7 @@ export default function ProductFormOther() {
                 <SelectValue placeholder="Select default price group" />
               </SelectTrigger>
               <SelectContent>
-                {filteredPriceGroups.map((group) => (
+                {filteredPriceGroups.map((group: PriceGroupWithDetails) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name} {group.isDefault ? "(Default)" : ""}{" "}
                     ({group.currency?.code ?? group.currencyCode})
@@ -161,7 +167,7 @@ export default function ProductFormOther() {
                     </tr>
                   </thead>
                   <tbody>
-                    {priceGroupPrices.map((group) => (
+                    {priceGroupPrices.map((group: PriceGroupWithCalculatedPrice) => (
                       <tr key={group.id} className="border-b last:border-0">
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
@@ -271,7 +277,7 @@ export default function ProductFormOther() {
             ) : catalogs.length === 0 ? (
               <div className="p-2 text-sm text-muted-foreground">No catalogs found</div>
             ) : (
-              catalogs.map((catalog) => (
+              catalogs.map((catalog: CatalogRecord) => (
                 <DropdownMenuCheckboxItem
                   key={catalog.id}
                   checked={selectedCatalogIds.includes(catalog.id)}
@@ -307,7 +313,7 @@ export default function ProductFormOther() {
                   <div className="relative">
                     <Input
                       value={categoryQuery}
-                      onChange={(event) => setCategoryQuery(event.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCategoryQuery(event.target.value)}
                       placeholder="Search categories..."
                       className="h-8 pr-8"
                     />
@@ -326,7 +332,7 @@ export default function ProductFormOther() {
                 {filteredCategories.length === 0 ? (
                   <div className="px-2 pb-2 text-sm text-muted-foreground">No matching categories</div>
                 ) : (
-                  filteredCategories.map((category) => (
+                  filteredCategories.map((category: ProductCategory) => (
                     <DropdownMenuCheckboxItem
                       key={category.id}
                       checked={selectedCategoryIds.includes(category.id)}
@@ -364,7 +370,7 @@ export default function ProductFormOther() {
                   <div className="relative">
                     <Input
                       value={tagQuery}
-                      onChange={(event) => setTagQuery(event.target.value)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTagQuery(event.target.value)}
                       placeholder="Search tags..."
                       className="h-8 pr-8"
                     />
@@ -383,7 +389,7 @@ export default function ProductFormOther() {
                 {filteredTags.length === 0 ? (
                   <div className="px-2 pb-2 text-sm text-muted-foreground">No matching tags</div>
                 ) : (
-                  filteredTags.map((tag) => (
+                  filteredTags.map((tag: ProductTag) => (
                     <DropdownMenuCheckboxItem
                       key={tag.id}
                       checked={selectedTagIds.includes(tag.id)}

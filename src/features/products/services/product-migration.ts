@@ -147,7 +147,7 @@ const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
   updatedAt: catalog.updatedAt,
   languageIds: Array.isArray(catalog.languageIds)
     ? catalog.languageIds
-    : catalog.languages?.map((entry) => entry.languageId) ?? [],
+    : catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],
   priceGroupIds: Array.isArray(catalog.priceGroupIds)
     ? catalog.priceGroupIds
     : [],
@@ -180,13 +180,13 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
-  images: product.images.map((image) => ({
+  images: product.images.map((image: ProductInput["images"][number]) => ({
     productId: image.productId,
     imageFileId: image.imageFileId,
     assignedAt: image.assignedAt,
     imageFile: toImageFileRecord(image.imageFile),
   })),
-  catalogs: product.catalogs.map((entry) => ({
+  catalogs: product.catalogs.map((entry: ProductInput["catalogs"][number]) => ({
     productId: entry.productId,
     catalogId: entry.catalogId,
     assignedAt: entry.assignedAt,
@@ -194,7 +194,7 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   })),
 });
 
-export async function getProductMigrationTotal(direction: MigrationDirection) {
+export async function getProductMigrationTotal(direction: MigrationDirection): Promise<number> {
   if (direction === "prisma-to-mongo") {
     return prisma.product.count();
   }
@@ -233,7 +233,7 @@ export async function migrateProductBatch({
     const docs = products.map(buildProductDocument);
     if (!dryRun) {
       await mongo.collection<ProductDocument>(PRODUCT_COLLECTION).bulkWrite(
-        docs.map((doc) => ({
+        docs.map((doc: ProductDocument) => ({
           replaceOne: {
             filter: { _id: doc._id },
             replacement: doc,
@@ -332,7 +332,7 @@ export async function migrateProductBatch({
           select: { id: true },
         });
         const validLanguageIds = new Set(
-          existingLanguages.map((entry) => entry.id)
+          existingLanguages.map((entry: { id: string }) => entry.id)
         );
         await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
         const filteredLanguageIds: string[] = [];
@@ -343,7 +343,7 @@ export async function migrateProductBatch({
         }
         if (filteredLanguageIds.length > 0) {
           await prisma.catalogLanguage.createMany({
-            data: filteredLanguageIds.map((languageId) => ({
+            data: filteredLanguageIds.map((languageId: string) => ({
               catalogId: id,
               languageId,
             })),
@@ -378,13 +378,13 @@ export async function migrateProductBatch({
     where: { id: { in: Array.from(catalogIds) } },
     select: { id: true },
   });
-  const existingImageIds = new Set(existingImages.map((img) => img.id));
-  const existingCatalogIds = new Set(existingCatalogs.map((cat) => cat.id));
+  const existingImageIds = new Set(existingImages.map((img: { id: string }) => img.id));
+  const existingCatalogIds = new Set(existingCatalogs.map((cat: { id: string }) => cat.id));
   const missingImageFileIds = Array.from(imageFileIds).filter(
-    (id) => !existingImageIds.has(id)
+    (id: string) => !existingImageIds.has(id)
   );
   const missingCatalogIds = Array.from(catalogIds).filter(
-    (id) => !existingCatalogIds.has(id)
+    (id: string) => !existingCatalogIds.has(id)
   );
 
   if (!dryRun) {
@@ -496,7 +496,7 @@ export async function migrateProductBatch({
       await prisma.productImage.deleteMany({ where: { productId: doc.id } });
       if (validImageIds.length > 0) {
         await prisma.productImage.createMany({
-          data: validImageIds.map((imageFileId) => ({
+          data: validImageIds.map((imageFileId: string) => ({
             productId: doc.id,
             imageFileId,
           })),
@@ -507,7 +507,7 @@ export async function migrateProductBatch({
       await prisma.productCatalog.deleteMany({ where: { productId: doc.id } });
       if (validCatalogIds.length > 0) {
         await prisma.productCatalog.createMany({
-          data: validCatalogIds.map((catalogId) => ({
+          data: validCatalogIds.map((catalogId: string) => ({
             productId: doc.id,
             catalogId,
           })),

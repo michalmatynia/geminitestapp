@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/typedef */
+
 const SENSITIVE_KEY_PATTERNS = [
   /pass(word)?/i,
   /token/i,

@@ -16,26 +16,26 @@ export const EditableCell = memo(function EditableCell({
   productId,
   field,
   onUpdate,
-}: EditableCellProps) {
+}: EditableCellProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value ?? ""));
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
+  useEffect((): void => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
   }, [isEditing]);
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (): void => {
     setIsEditing(true);
     setEditValue(String(value ?? ""));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (isSaving) return;
 
     const numValue = parseFloat(editValue);
@@ -79,7 +79,7 @@ export const EditableCell = memo(function EditableCell({
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === "Enter") {
       void handleSave();
     } else if (e.key === "Escape") {
@@ -88,7 +88,7 @@ export const EditableCell = memo(function EditableCell({
     }
   };
 
-  const handleBlur = () => {
+  const handleBlur = (): void => {
     if (!isSaving) {
       setEditValue(String(value ?? ""));
       setIsEditing(false);
@@ -103,7 +103,7 @@ export const EditableCell = memo(function EditableCell({
         step={field === "price" ? "0.01" : "1"}
         min="0"
         value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         disabled={isSaving}
@@ -122,7 +122,7 @@ export const EditableCell = memo(function EditableCell({
     </div>
   );
 },
-(prev, next) =>
+(prev: EditableCellProps, next: EditableCellProps): boolean =>
   prev.value === next.value &&
   prev.productId === next.productId &&
   prev.field === next.field

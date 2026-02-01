@@ -47,7 +47,7 @@ export const mongoCatalogRepository: CatalogRepository = {
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
-    return docs.map((doc) => toRecord({ ...doc, _id: doc._id }));
+    return docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }));
   },
 
   async getCatalogById(id: string) {
@@ -135,7 +135,7 @@ export const mongoCatalogRepository: CatalogRepository = {
       .collection<CatalogDocument>(CATALOG_COLLECTION)
       .find({ $or: [{ _id: { $in: Array.from(ids) } }, { id: { $in: ids } }] })
       .toArray();
-    return docs.map((doc) => toRecord({ ...doc, _id: doc._id }));
+    return docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }));
   },
 
   async setDefaultCatalog(id: string) {

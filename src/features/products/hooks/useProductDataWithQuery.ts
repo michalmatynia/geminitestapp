@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
+import type { ProductWithImages } from "@/features/products/types";
 
 interface UseProductDataWithQueryProps {
   initialCatalogFilter?: string;
@@ -9,11 +10,40 @@ interface UseProductDataWithQueryProps {
   preferencesLoaded?: boolean;
 }
 
+interface UseProductDataWithQueryReturn {
+  data: ProductWithImages[];
+  total: number;
+  totalPages: number;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  search: string;
+  setSearch: (value: string) => void;
+  sku: string;
+  setSku: (value: string) => void;
+  minPrice: number | undefined;
+  setMinPrice: (value: number | undefined) => void;
+  maxPrice: number | undefined;
+  setMaxPrice: (value: number | undefined) => void;
+  startDate: string;
+  setStartDate: (value: string) => void;
+  endDate: string;
+  setEndDate: (value: string) => void;
+  catalogFilter: string;
+  setCatalogFilter: (filter: string) => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  resetFilters: () => void;
+}
+
 export function useProductDataWithQuery({
   initialCatalogFilter = "all",
   initialPageSize = 24,
   preferencesLoaded = true,
-}: UseProductDataWithQueryProps = {}) {
+}: UseProductDataWithQueryProps = {}): UseProductDataWithQueryReturn {
   // Filter state
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -30,22 +60,22 @@ export function useProductDataWithQuery({
   const [pageSize, setPageSize] = useState(initialPageSize);
 
   // Debounce search
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
     }, 300);
-    return () => clearTimeout(timer);
-  });
+    return (): void => clearTimeout(timer);
+  }, [search]);
 
   // Debounce SKU
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSku(sku);
       setPage(1);
     }, 300);
-    return () => clearTimeout(timer);
-  });
+    return (): void => clearTimeout(timer);
+  }, [sku]);
 
   const filters = useMemo(
     () => ({
@@ -59,18 +89,29 @@ export function useProductDataWithQuery({
       pageSize,
       catalogId: catalogFilter === "all" ? undefined : catalogFilter,
     }),
-    [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter]
+    [
+      debouncedSearch,
+      debouncedSku,
+      minPrice,
+      maxPrice,
+      startDate,
+      endDate,
+      page,
+      pageSize,
+      catalogFilter,
+    ],
   );
 
-  const { products, total, isLoading, isFetching, error, refetch } = useProductsWithCount(filters, {
-    enabled: preferencesLoaded,
-  });
+  const { products, total, isLoading, isFetching, error, refetch } =
+    useProductsWithCount(filters, {
+      enabled: preferencesLoaded,
+    });
 
-  const totalPages = useMemo(() => {
+  const totalPages = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [total, pageSize]);
 
-  const resetFilters = useCallback(() => {
+  const resetFilters = useCallback((): void => {
     setSearch("");
     setDebouncedSearch("");
     setSku("");
@@ -106,7 +147,11 @@ export function useProductDataWithQuery({
     setCatalogFilter,
     isLoading,
     isFetching,
-    error: error ? (error instanceof Error ? error.message : "Failed to load products") : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : "Failed to load products"
+      : null,
     refetch,
     resetFilters,
   };

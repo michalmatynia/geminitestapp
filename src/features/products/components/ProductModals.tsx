@@ -51,7 +51,7 @@ function ProductFormModalContent({
   onClose: () => void;
   title: string;
   submitButtonText: string;
-}) {
+}): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect, handleSubmit, uploading } =
     useProductFormContext();
 
@@ -112,12 +112,12 @@ export function ProductModals({
   massListProductIds,
   onCloseMassList,
   onMassListSuccess,
-}: ProductModalsProps) {
+}: ProductModalsProps): React.JSX.Element {
   return (
     <>
       <AppModal
         open={isCreateOpen}
-        onOpenChange={(open) => !open && onCloseCreate()}
+        onOpenChange={(open: boolean) => !open && onCloseCreate()}
         title="Create Product"
       >
         <ProductFormProvider
@@ -136,7 +136,7 @@ export function ProductModals({
 
       <AppModal
         open={!!editingProduct}
-        onOpenChange={(open) => !open && onCloseEdit()}
+        onOpenChange={(open: boolean) => !open && onCloseEdit()}
         title="Edit Product"
       >
         {editingProduct && (
@@ -156,7 +156,7 @@ export function ProductModals({
 
       <AppModal
         open={!!integrationsProduct && !showListProductModal}
-        onOpenChange={(open) => !open && onCloseIntegrations()}
+        onOpenChange={(open: boolean) => !open && onCloseIntegrations()}
         title="Product Listings"
       >
         {integrationsProduct && (
@@ -171,7 +171,7 @@ export function ProductModals({
 
       <AppModal
         open={!!integrationsProduct && showListProductModal}
-        onOpenChange={(open) => !open && onCloseListProduct()}
+        onOpenChange={(open: boolean) => !open && onCloseListProduct()}
         title="List Product"
       >
         {integrationsProduct && (
@@ -187,7 +187,7 @@ export function ProductModals({
 
       <AppModal
         open={!!exportSettingsProduct && !!onCloseExportSettings}
-        onOpenChange={(open) => !open && onCloseExportSettings?.()}
+        onOpenChange={(open: boolean) => !open && onCloseExportSettings?.()}
         title="Export Settings"
       >
         {exportSettingsProduct && onCloseExportSettings && (
@@ -202,7 +202,7 @@ export function ProductModals({
 
       <AppModal
         open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
-        onOpenChange={(open) => !open && onCloseMassList?.()}
+        onOpenChange={(open: boolean) => !open && onCloseMassList?.()}
         title="Mass List Products"
       >
         {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (

@@ -16,7 +16,7 @@ import type {
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
-  Object.keys(newObj).forEach((key) => {
+  Object.keys(newObj).forEach((key: string) => {
     if (newObj[key as keyof T] === undefined) {
       delete newObj[key as keyof T];
     }
@@ -24,7 +24,7 @@ function removeUndefined<T extends object>(obj: T): T {
   return newObj;
 }
 
-const buildProductWhere = (filters: ProductFilters) => {
+const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
 
   if (filters.sku) {
@@ -134,7 +134,7 @@ const toCatalogRecord = (catalog: {
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
-  languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
+  languageIds: catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],
   priceGroupIds: Array.isArray(catalog.priceGroupIds)
     ? catalog.priceGroupIds
     : [],
@@ -226,15 +226,15 @@ export const prismaProductRepository: ProductRepository = {
       take: pageSize,
     });
 
-    return products.map((product) => ({
+    return products.map((product: typeof products[number]) => ({
       ...toProductRecord(product),
-      images: product.images.map((image) => ({
+      images: product.images.map((image: typeof product.images[number]) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
         assignedAt: image.assignedAt,
         imageFile: toImageFileRecord(image.imageFile),
       })),
-      catalogs: product.catalogs.map((entry) => ({
+      catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
@@ -272,13 +272,13 @@ export const prismaProductRepository: ProductRepository = {
     if (!product) return null;
     return {
       ...toProductRecord(product),
-      images: product.images.map((image) => ({
+      images: product.images.map((image: typeof product.images[number]) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
         assignedAt: image.assignedAt,
         imageFile: toImageFileRecord(image.imageFile),
       })),
-      catalogs: product.catalogs.map((entry) => ({
+      catalogs: product.catalogs.map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
@@ -396,7 +396,7 @@ export const prismaProductRepository: ProductRepository = {
   async addProductImages(productId: string, imageFileIds: string[]) {
     if (imageFileIds.length === 0) return;
     await prisma.productImage.createMany({
-      data: imageFileIds.map((imageFileId) => ({ productId, imageFileId })),
+      data: imageFileIds.map((imageFileId: string) => ({ productId, imageFileId })),
       skipDuplicates: true,
     });
   },
@@ -409,11 +409,11 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry) => entry.id));
-    const validIds = uniqueIds.filter((id) => existingIds.has(id));
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productCatalog.createMany({
-      data: validIds.map((catalogId) => ({ productId, catalogId })),
+      data: validIds.map((catalogId: string) => ({ productId, catalogId })),
     });
   },
 
@@ -425,11 +425,11 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry) => entry.id));
-    const validIds = uniqueIds.filter((id) => existingIds.has(id));
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productCategoryAssignment.createMany({
-      data: validIds.map((categoryId) => ({ productId, categoryId })),
+      data: validIds.map((categoryId: string) => ({ productId, categoryId })),
     });
   },
 
@@ -441,11 +441,11 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry) => entry.id));
-    const validIds = uniqueIds.filter((id) => existingIds.has(id));
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productTagAssignment.createMany({
-      data: validIds.map((tagId) => ({ productId, tagId })),
+      data: validIds.map((tagId: string) => ({ productId, tagId })),
     });
   },
 

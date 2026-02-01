@@ -20,7 +20,7 @@ export type MapStatusOptions = {
   retryAfterMs?: number;
 };
 
-const safeMessage = (message: string | null | undefined, fallback: string) =>
+const safeMessage = (message: string | null | undefined, fallback: string): string =>
   message && message.trim() ? message : fallback;
 
 export const mapStatusToAppError = (

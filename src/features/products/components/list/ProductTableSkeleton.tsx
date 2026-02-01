@@ -1,4 +1,4 @@
-
+import { Skeleton, TableRow, TableCell } from "@/shared/ui";
 
 interface ProductTableSkeletonProps {
   rows?: number;
@@ -6,10 +6,10 @@ interface ProductTableSkeletonProps {
 
 export function ProductTableSkeleton({
   rows = 12
-}: ProductTableSkeletonProps) {
+}: ProductTableSkeletonProps): React.JSX.Element {
   return (
     <>
-      {Array.from({ length: rows }).map((_, rowIndex) => (
+      {Array.from({ length: rows }).map((_: unknown, rowIndex: number) => (
         <TableRow key={rowIndex} className="border-border">
           {/* Checkbox column */}
           <TableCell>
@@ -62,4 +62,3 @@ export function ProductTableSkeleton({
     </>
   );
 }
-import { Skeleton, TableRow, TableCell } from "@/shared/ui";

@@ -27,14 +27,14 @@ import {
   fetchPlaywrightPersonas,
 } from "@/features/playwright/utils/personas";
 
-const formatTimestamp = (value?: string) => {
+const formatTimestamp = (value?: string): string => {
   if (!value) return "Not set";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Not set";
   return date.toLocaleString();
 };
 
-const buildSummaryTags = (settings: PlaywrightSettings) => {
+const buildSummaryTags = (settings: PlaywrightSettings): string[] => {
   const tags = [
     settings.headless ? "Headless" : "Headful",
     settings.emulateDevice ? `Device: ${settings.deviceName}` : "Device: default",
@@ -47,7 +47,7 @@ const buildSummaryTags = (settings: PlaywrightSettings) => {
   return tags;
 };
 
-export function PlaywrightPersonasPage() {
+export function PlaywrightPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
   const [personas, setPersonas] = useState<PlaywrightPersona[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,17 +60,17 @@ export function PlaywrightPersonasPage() {
     buildPlaywrightSettings()
   );
 
-  const sortedPersonas = useMemo(() => {
-    return [...personas].sort((a, b) => {
+  const sortedPersonas = useMemo((): PlaywrightPersona[] => {
+    return [...personas].sort((a: PlaywrightPersona, b: PlaywrightPersona) => {
       const left = a.updatedAt ?? a.createdAt ?? "";
       const right = b.updatedAt ?? b.createdAt ?? "";
       return right.localeCompare(left);
     });
   }, [personas]);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     let active = true;
-    const loadPersonas = async () => {
+    const loadPersonas = async (): Promise<void> => {
       try {
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
@@ -86,24 +86,24 @@ export function PlaywrightPersonasPage() {
       }
     };
     void loadPersonas();
-    return () => {
+    return (): void => {
       active = false;
     };
   }, [toast]);
 
-  const resetDraft = () => {
+  const resetDraft = (): void => {
     setEditingId(null);
     setDraftName("");
     setDraftDescription("");
     setDraftSettings(buildPlaywrightSettings());
   };
 
-  const openCreate = () => {
+  const openCreate = (): void => {
     resetDraft();
     setModalOpen(true);
   };
 
-  const openEdit = (persona: PlaywrightPersona) => {
+  const openEdit = (persona: PlaywrightPersona): void => {
     setEditingId(persona.id);
     setDraftName(persona.name);
     setDraftDescription(persona.description ?? "");
@@ -111,12 +111,12 @@ export function PlaywrightPersonasPage() {
     setModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = (): void => {
     setModalOpen(false);
     resetDraft();
   };
 
-  const persistPersonas = async (next: PlaywrightPersona[], message: string) => {
+  const persistPersonas = async (next: PlaywrightPersona[], message: string): Promise<boolean> => {
     try {
       setSaving(true);
       const res = await fetch("/api/settings", {
@@ -146,7 +146,7 @@ export function PlaywrightPersonasPage() {
     }
   };
 
-  const handleSavePersona = async () => {
+  const handleSavePersona = async (): Promise<void> => {
     const name = draftName.trim();
     if (!name) {
       toast("Persona name is required.", { variant: "error" });
@@ -154,7 +154,7 @@ export function PlaywrightPersonasPage() {
     }
 
     const now = new Date().toISOString();
-    const existing = personas.find((persona) => persona.id === editingId);
+    const existing = personas.find((persona: PlaywrightPersona) => persona.id === editingId);
     const nextPersona: PlaywrightPersona = {
       id: existing?.id ?? createPlaywrightPersonaId(),
       name,
@@ -165,7 +165,7 @@ export function PlaywrightPersonasPage() {
     };
 
     const next = existing
-      ? personas.map((persona) =>
+      ? personas.map((persona: PlaywrightPersona) =>
           persona.id === existing.id ? nextPersona : persona
         )
       : [...personas, nextPersona];
@@ -177,10 +177,10 @@ export function PlaywrightPersonasPage() {
     if (saved) closeModal();
   };
 
-  const handleDeletePersona = async (persona: PlaywrightPersona) => {
+  const handleDeletePersona = async (persona: PlaywrightPersona): Promise<void> => {
     const confirmed = window.confirm(`Delete persona "${persona.name}"?`);
     if (!confirmed) return;
-    const next = personas.filter((item) => item.id !== persona.id);
+    const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
     await persistPersonas(next, "Persona deleted.");
   };
 
@@ -226,7 +226,7 @@ export function PlaywrightPersonasPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sortedPersonas.map((persona) => {
+          {sortedPersonas.map((persona: PlaywrightPersona) => {
             const tags = buildSummaryTags(persona.settings);
             return (
               <Card
@@ -272,7 +272,7 @@ export function PlaywrightPersonasPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {tags.map((tag) => (
+                  {tags.map((tag: string) => (
                     <span
                       key={tag}
                       className="rounded-full border px-2 py-1 text-[11px] text-gray-300"
@@ -293,7 +293,7 @@ export function PlaywrightPersonasPage() {
 
       <AppModal
         open={modalOpen}
-        onOpenChange={(open) => !open && closeModal()}
+        onOpenChange={(open: boolean) => !open && closeModal()}
         title={editingId ? "Edit persona" : "New persona"}
       >
         <ModalShell
@@ -327,7 +327,7 @@ export function PlaywrightPersonasPage() {
                 </Label>
                 <Input
                   value={draftName}
-                  onChange={(event) => setDraftName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
                   placeholder="Example: Safe desktop headless"
                 />
               </div>
@@ -337,7 +337,7 @@ export function PlaywrightPersonasPage() {
                 </Label>
                 <Textarea
                   value={draftDescription}
-                  onChange={(event) =>
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setDraftDescription(event.target.value)
                   }
                   placeholder="Optional notes for this persona"

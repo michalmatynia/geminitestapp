@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/typedef */
 import "server-only";
 
 import OpenAI from "openai";
@@ -6,6 +7,7 @@ import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getImageFileRepository } from "@/features/files/server";
 import type { ProductFormData } from "@/features/products/types";
+import type { ImageFileRecord } from "@/shared/types/files";
 import fs from "fs/promises";
 import path from "path";
 import {
@@ -80,7 +82,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   return value;
 }
 
-function getClient(modelName: string, apiKey: string | null) {
+function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
   // Check if it's a real OpenAI model (not gpt-oss or other Ollama variants)
   const modelLower = modelName.toLowerCase();
   const isOpenAI = (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
@@ -104,12 +106,25 @@ function getClient(modelName: string, apiKey: string | null) {
   };
 }
 
+interface GenerateProductDescriptionResult {
+  analysisInitial: string;
+  analysisFinal: string;
+  descriptionInitial: string;
+  descriptionFinal: string;
+  description: string;
+  analysis: string;
+  visionModel: string;
+  generationModel: string;
+  visionOutputEnabled: boolean;
+  generationOutputEnabled: boolean;
+}
+
 export async function generateProductDescription(params: {
   productData: ProductFormData;
   imageUrls?: string[] | undefined;
   visionOutputEnabled?: boolean | undefined;
   generationOutputEnabled?: boolean | undefined;
-}) {
+}): Promise<GenerateProductDescriptionResult> {
   const { productData, imageUrls = [], visionOutputEnabled, generationOutputEnabled } = params;
 
   if (!productData?.name_en) {
@@ -149,7 +164,7 @@ export async function generateProductDescription(params: {
   const generationOutputPrompt = generationOutputPromptSetting?.trim() || "";
   const isGenerationOutputEnabled = generationOutputEnabled !== undefined ? generationOutputEnabled : (generationOutputEnabledSetting === "true");
 
-  const processPrompt = (text: string, currentResult: string = "", analysisResult: string = "", descriptionInitial: string = "") => {
+  const processPrompt = (text: string, currentResult: string = "", analysisResult: string = "", descriptionInitial: string = ""): { text: string; attachImages: boolean } => {
     let processed = text;
     const hasImagesPlaceholder = processed.includes("[images]");
     processed = processed.replace(/\[analysis\]/g, analysisResult);
@@ -177,9 +192,9 @@ export async function generateProductDescription(params: {
   if (imageUrls.length > 0) {
     const imageFileRepository = await getImageFileRepository();
     const imageFiles = await imageFileRepository.listImageFiles();
-    const imageFileMap = new Map(imageFiles.map((file) => [file.filepath, file]));
+    const imageFileMap = new Map(imageFiles.map((file: ImageFileRecord) => [file.filepath, file]));
 
-    const imagePromises = imageUrls.map(async (item) => {
+    const imagePromises = imageUrls.map(async (item: string) => {
       try {
         let base64Image: string;
         let mimetype: string = "image/jpeg";
@@ -199,7 +214,7 @@ export async function generateProductDescription(params: {
         return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } };
       } catch { return null; }
     });
-    processedImages = (await Promise.all(imagePromises)).filter((img) => img !== null) as ChatCompletionContentPart[];
+    processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);
   }
 
   let analysisInitial = "";

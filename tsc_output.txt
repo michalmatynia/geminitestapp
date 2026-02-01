@@ -1,0 +1,104 @@
+src/features/cms/components/page-builder/AnimationConfigPanel.tsx(239,9): error TS2322: Type 'string' is not assignable to type '"custom" | "children" | "self" | "descendants"'.
+src/features/notesapp/components/NoteCard.tsx(262,19): error TS2345: Argument of type '(crumb: { id: string; name: string; }, index: number, array: Array<{ id: string; name: string; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
+  Types of parameters 'crumb' and 'value' are incompatible.
+    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; }'.
+      Types of property 'id' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
+src/features/notesapp/components/NoteDetailView.tsx(245,15): error TS2345: Argument of type '(crumb: { id: string; name: string; isNote?: boolean; }, index: number, array: Array<{ id: string; name: string; isNote?: boolean; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
+  Types of parameters 'crumb' and 'value' are incompatible.
+    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; isNote?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
+src/features/notesapp/components/NoteForm.tsx(384,22): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
+src/features/notesapp/components/NoteForm.tsx(511,24): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
+src/features/notesapp/components/NoteForm.tsx(712,14): error TS2322: Type '() => void' is not assignable to type 'void'.
+src/features/notesapp/components/NoteForm.tsx(827,13): error TS2322: Type '(e: React.ClipboardEvent<HTMLTextAreaElement>) => void' is not assignable to type '(e: ClipboardEvent<HTMLTextAreaElement>) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(847,9): error TS2322: Type '(slotIndex: number, file: File) => void' is not assignable to type '(slotIndex: number, file: File) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(848,9): error TS2322: Type '(files: FileList | File[]) => void' is not assignable to type '(files: FileList | File[]) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/components/NoteForm.tsx(849,9): error TS2322: Type '(slotIndex: number) => void' is not assignable to type '(slotIndex: number) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(340,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
+  Types of parameters 'parentId' and 'parentId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+src/features/notesapp/pages/AdminNotesPage.tsx(368,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesPage.tsx(395,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
+  Type 'void' is not assignable to type 'Promise<void>'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(394,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(407,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(423,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(439,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(455,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(471,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(491,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(509,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(527,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(545,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
+  Type 'boolean' is not assignable to type 'void'.
+src/features/notesapp/services/notes/index.ts(88,30): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(data: null): null', gave the following error.
+    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'null'.
+      Type 'NoteWithRelations' is not assignable to type 'null'.
+  Overload 2 of 3, '(data: NoteWithRelations[]): NoteWithRelations[]', gave the following error.
+    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'NoteWithRelations[]'.
+      Type 'null' is not assignable to type 'NoteWithRelations[]'.
+  Overload 3 of 3, '(data: NoteWithRelations): NoteWithRelations', gave the following error.
+    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'NoteWithRelations'.
+      Type 'null' is not assignable to type 'NoteWithRelations'.
+        Type 'null' is not assignable to type 'NoteRecord'.
+src/features/notesapp/services/notes/note-repository/prisma/category-impl.ts(111,11): error TS2322: Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; } | { parent: { connect: { id: string; }; }; sortIndex?: number | ... 1 more ... | undefined; color?: string | ... 1 more ... | undefined; description?: string | ... 1 more ...' is not assignable to type 'CategoryUpdateInput'.
+  Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; }' is not assignable to type 'CategoryUpdateInput'.
+    Types of property 'sortIndex' are incompatible.
+      Type 'number | null | undefined' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
+        Type 'null' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
+src/features/products/components/form/ProductFormGeneral.tsx(98,12): error TS2345: Argument of type '(slot: { previewUrl: string; }) => string' is not assignable to parameter of type '(value: ProductImageSlot, index: number, array: ProductImageSlot[]) => string'.
+  Types of parameters 'slot' and 'value' are incompatible.
+    Type 'ProductImageSlot' is not assignable to type '{ previewUrl: string; }'.
+      Type 'null' is not assignable to type '{ previewUrl: string; }'.
+src/features/products/components/list/ProductColumns.tsx(328,13): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/features/products/components/list/ProductColumns.tsx(420,13): error TS2322: Type 'boolean | ""' is not assignable to type 'boolean | null'.
+  Type '""' is not assignable to type 'boolean | null'.
+src/features/products/components/list/ProductColumns.tsx(442,16): error TS18047: 'displayPrice' is possibly 'null'.
+src/features/products/components/ProductListPanel.tsx(17,7): error TS2345: Argument of type '(mod: { ProductListHeader: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
+  Types of parameters 'mod' and 'value' are incompatible.
+    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")' is not assignable to type '{ ProductListHeader: ComponentType<Record<string, unknown>>; }'.
+      Types of property 'ProductListHeader' are incompatible.
+        Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
+          Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
+            Types of parameters 'props' and 'props' are incompatible.
+              Type 'Record<string, unknown>' is missing the following properties from type 'ProductListHeaderProps': onCreateProduct, page, totalPages, setPage, and 11 more.
+src/features/products/components/ProductListPanel.tsx(25,7): error TS2345: Argument of type '(mod: { ProductFilters: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
+  Types of parameters 'mod' and 'value' are incompatible.
+    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")' is not assignable to type '{ ProductFilters: ComponentType<Record<string, unknown>>; }'.
+      Types of property 'ProductFilters' are incompatible.
+        Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
+          Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
+            Types of parameters 'props' and 'props' are incompatible.
+              Type 'Record<string, unknown>' is missing the following properties from type 'ProductFiltersProps': search, setSearch, sku, setSku, and 8 more.
+src/features/products/utils/productUtils.ts(4,15): error TS2305: Module '"@/features/products/types"' has no exported member 'Product'.
+src/mocks/handlers.ts(167,33): error TS2345: Argument of type '({ params, request }: RequestParamsContext) => Promise<HttpResponse<JsonBodyType>>' is not assignable to parameter of type 'HttpResponseResolver<PathParams, DefaultBodyType, JsonBodyType>'.
+  Types of parameters '__0' and 'info' are incompatible.
+    Type 'ResponseResolverInfo<HttpRequestResolverExtras<PathParams>, DefaultBodyType>' is not assignable to type 'RequestParamsContext'.
+      Types of property 'params' are incompatible.
+        Type 'PathParams' is not assignable to type 'Record<string, string>'.
+          'string' index signatures are incompatible.
+            Type 'string | readonly string[] | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.

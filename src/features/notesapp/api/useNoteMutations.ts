@@ -1,6 +1,19 @@
 "use client";
 
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import type {
+  NoteWithRelations,
+  NoteCreateInput,
+  NoteUpdateInput,
+  CategoryRecord,
+  CategoryUpdateInput,
+  NotebookRecord,
+  TagRecord,
+  TagUpdateInput,
+  ThemeRecord,
+  ThemeUpdateInput,
+} from "@/shared/types/notes";
+import type { DeleteResponse } from "@/shared/types/api";
 
 export function useCreateNote(): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> {
   const queryClient = useQueryClient();
@@ -185,7 +198,7 @@ export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, { name: 
       if (!response.ok) throw new Error("Failed to create tag");
       return (await response.json()) as TagRecord;
     },
-    onSuccess: (_data: TagRecord, variables: { notebookId: string }): void => {
+    onSuccess: (_data: TagRecord, variables: { name: string; notebookId: string; color?: string }): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-tags", variables.notebookId] });
     },
   });
@@ -235,7 +248,7 @@ export function useCreateNoteTheme(): UseMutationResult<ThemeRecord, Error, { na
       if (!response.ok) throw new Error("Failed to create theme");
       return (await response.json()) as ThemeRecord;
     },
-    onSuccess: (_data: ThemeRecord, variables: { notebookId: string }): void => {
+    onSuccess: (_data: ThemeRecord, variables: { name: string; notebookId: string; colors: Record<string, string> }): void => {
       void queryClient.invalidateQueries({ queryKey: ["note-themes", variables.notebookId] });
     },
   });

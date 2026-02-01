@@ -8,7 +8,7 @@ interface ProductCardProps {
   product: ProductWithImages;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps): React.JSX.Element {
   const imageUrl =
     Array.isArray(product.images) && product.images.length > 0
       ? (product.images[0]?.imageFile?.filepath ?? null)

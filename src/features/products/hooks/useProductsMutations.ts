@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products/types";
 import type { DeleteResponse } from "@/shared/types/api";
 import { delay } from "@/shared/utils";
@@ -10,11 +10,11 @@ interface UpdateProductPayload {
   data: Partial<ProductWithImages>;
 }
 
-export function useCreateProduct() {
+export function useCreateProduct(): UseMutationResult<unknown, Error, FormData, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    onSuccess: async () => {
+    onSuccess: async (): Promise<void> => {
       // Small delay to ensure DB consistency before refetch
       await delay(500);
       await Promise.all([
@@ -25,11 +25,11 @@ export function useCreateProduct() {
   });
 }
 
-export function useUpdateProduct() {
+export function useUpdateProduct(): UseMutationResult<ProductWithImages, Error, UpdateProductPayload, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: UpdateProductPayload) => {
+    mutationFn: async ({ id, data }: UpdateProductPayload): Promise<ProductWithImages> => {
       const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -38,7 +38,7 @@ export function useUpdateProduct() {
       if (!response.ok) throw new Error("Failed to update product");
       return (await response.json()) as ProductWithImages;
     },
-    onSuccess: async () => {
+    onSuccess: async (): Promise<void> => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["products"] }),
         queryClient.invalidateQueries({ queryKey: ["products-count"] }),
@@ -47,18 +47,18 @@ export function useUpdateProduct() {
   });
 }
 
-export function useDeleteProduct() {
+export function useDeleteProduct(): UseMutationResult<DeleteResponse, Error, string, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string): Promise<DeleteResponse> => {
       const response = await fetch(`/api/products/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete product");
       return (await response.json()) as DeleteResponse;
     },
-    onSuccess: async () => {
+    onSuccess: async (): Promise<void> => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["products"] }),
         queryClient.invalidateQueries({ queryKey: ["products-count"] }),

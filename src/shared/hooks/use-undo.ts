@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface UseUndoResult<T> {
   state: T;
@@ -10,56 +10,56 @@ interface UseUndoResult<T> {
   resetHistory: (initialState: T) => void;
 }
 
-export function useUndo<T>(initialState: T, limit: number = 50): UseUndoResult<T> {
+export function useUndo<T>(
+  initialState: T,
+  limit: number = 50,
+): UseUndoResult<T> {
   const [state, setInnerState] = useState<T>(initialState);
   const [history, setHistory] = useState<T[]>([initialState]);
   const [index, setIndex] = useState(0);
+  const limitRef = useRef(limit);
 
   // We use a ref to track if we should merge rapid updates (optional, usually good for typing)
   // For now, straightforward implementation.
 
   const setState = useCallback(
-    (newState: T, skipHistory = false) => {
+    (newState: T, skipHistory: boolean = false): void => {
       setInnerState(newState);
 
       if (skipHistory) return;
 
-      setHistory((prev) => {
+      setHistory((prev: T[]) => {
         const currentHistory = prev.slice(0, index + 1);
         const nextHistory = [...currentHistory, newState];
-        if (nextHistory.length > limit) {
+        if (nextHistory.length > limitRef.current) {
           nextHistory.shift();
-          setIndex((i) => i); // Index stays same relative to end, but since we shifted... wait.
-          // If we shift, index should arguably decrease? No, we are appending.
-          // If length 51, limit 50. Remove 0. Index was 49 (end). New item at 50.
-          // Slice 1..51. New index 49.
           return nextHistory;
         }
         return nextHistory;
       });
-      setIndex((prev) => {
+      setIndex((prev: number) => {
         const next = prev + 1;
-        return next >= limit ? limit - 1 : next;
+        return next >= limitRef.current ? limitRef.current - 1 : next;
       });
     },
-    [index, limit]
+    [index],
   );
 
-  const undo = useCallback(() => {
+  const undo = useCallback((): void => {
     if (index > 0) {
-      setIndex((prev) => prev - 1);
+      setIndex((prev: number) => prev - 1);
       setInnerState(history[index - 1]!);
     }
   }, [history, index]);
 
-  const redo = useCallback(() => {
+  const redo = useCallback((): void => {
     if (index < history.length - 1) {
-      setIndex((prev) => prev + 1);
+      setIndex((prev: number) => prev + 1);
       setInnerState(history[index + 1]!);
     }
   }, [history, index]);
 
-  const resetHistory = useCallback((newState: T) => {
+  const resetHistory = useCallback((newState: T): void => {
     setInnerState(newState);
     setHistory([newState]);
     setIndex(0);

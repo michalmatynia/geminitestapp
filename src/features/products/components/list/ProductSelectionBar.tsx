@@ -48,7 +48,7 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
 
   const handleSelectPage = useCallback(() => {
     const newSelection = { ...rowSelection };
-    data.forEach((product) => {
+    data.forEach((product: ProductWithImages) => {
       newSelection[product.id] = true;
     });
     setRowSelection(newSelection);
@@ -56,7 +56,7 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
 
   const handleDeselectPage = useCallback(() => {
     const newSelection = { ...rowSelection };
-    data.forEach((product) => {
+    data.forEach((product: ProductWithImages) => {
       delete newSelection[product.id];
     });
     setRowSelection(newSelection);
@@ -67,7 +67,7 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
   }, [setRowSelection]);
 
   const hasSelection = useMemo(
-    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length > 0,
+    () => Object.keys(rowSelection).filter((key: string) => rowSelection[key]).length > 0,
     [rowSelection]
   );
 

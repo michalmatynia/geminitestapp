@@ -2,7 +2,7 @@
 import React, { JSX, memo, useState } from "react";
 
 import { Button, useToast, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui";
-import { Table as ReactTable } from "@tanstack/react-table";
+import { Table as ReactTable, Row } from "@tanstack/react-table";
 
 import { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
@@ -26,11 +26,11 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
   const { toast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleMassDelete = async () => {
+  const handleMassDelete = async (): Promise<void> => {
     logger.log("Mass delete initiated.");
     const selectedProductIds = table
       .getSelectedRowModel()
-      .rows.map((row) => (row.original as ProductWithImages)?.id)
+      .rows.map((row: Row<TData>) => (row.original as ProductWithImages)?.id)
       .filter(Boolean);
 
     if (selectedProductIds.length === 0) {
@@ -39,14 +39,14 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
     }
 
     try {
-      const deletePromises = selectedProductIds.map((id) =>
+      const deletePromises = selectedProductIds.map((id: string) =>
         fetch(`/api/products/${id}`, {
           method: "DELETE",
         })
       );
       const results = await Promise.all(deletePromises);
 
-      const failedDeletions = results.filter((res) => !res.ok);
+      const failedDeletions = results.filter((res: Response) => !res.ok);
 
       if (failedDeletions.length > 0) {
         let errorIdSuffix = "";
@@ -73,7 +73,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
         });
       }
       table.setRowSelection({}); // Clear selection after deletion
-      setRefreshTrigger((prev) => prev + 1); // Refresh the product list
+      setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
       logger.error("Error during mass deletion:", error);

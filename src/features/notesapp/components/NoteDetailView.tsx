@@ -242,7 +242,7 @@ export function NoteDetailView({
           selectedNote.categories[0]?.categoryId || null,
           selectedNote.title,
           folderTree
-        ).map((crumb: { id: string; name: string; isNote?: boolean }, index: number, array: Array<{ id: string; name: string; isNote?: boolean }>) => (
+        ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
           <React.Fragment key={index}>
             {crumb.isNote ? (
               <span className="text-gray-300">{crumb.name}</span>

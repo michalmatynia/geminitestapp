@@ -5,7 +5,9 @@ import { MongoClient } from "mongodb";
 let client: MongoClient | null = null;
 let clientPromise: Promise<MongoClient> | null = null;
 
-const getMongoUri = () => {
+import type { Db } from "mongodb";
+
+const getMongoUri = (): string => {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error("MONGODB_URI is not set.");
@@ -13,7 +15,7 @@ const getMongoUri = () => {
   return uri;
 };
 
-export async function getMongoClient() {
+export async function getMongoClient(): Promise<MongoClient> {
   if (client) return client;
   if (!clientPromise) {
     clientPromise = new MongoClient(getMongoUri()).connect();
@@ -22,7 +24,7 @@ export async function getMongoClient() {
   return client;
 }
 
-export async function getMongoDb() {
+export async function getMongoDb(): Promise<Db> {
   const dbName = process.env.MONGODB_DB || "app";
   const mongoClient = await getMongoClient();
   return mongoClient.db(dbName);

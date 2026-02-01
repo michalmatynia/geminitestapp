@@ -32,7 +32,9 @@ export const DEFAULT_IMAGE_RETRY_PRESETS: ImageRetryPreset[] = [
 export const getDefaultImageRetryPresets = (): ImageRetryPreset[] =>
   DEFAULT_IMAGE_RETRY_PRESETS.map(clonePreset);
 
-export const buildImageRetryPresetLabel = (preset: ImageRetryPreset): string => {
+export const buildImageRetryPresetLabel = (
+  preset: ImageRetryPreset,
+): string => {
   const maxDimension = preset.transform.maxDimension;
   const jpegQuality = preset.transform.jpegQuality;
   switch (preset.id) {
@@ -50,7 +52,7 @@ export const buildImageRetryPresetLabel = (preset: ImageRetryPreset): string => 
 };
 
 export const buildImageRetryPresetDescription = (
-  preset: ImageRetryPreset
+  preset: ImageRetryPreset,
 ): string => {
   const maxDimension = preset.transform.maxDimension;
   const jpegQuality = preset.transform.jpegQuality;
@@ -71,7 +73,7 @@ export const buildImageRetryPresetDescription = (
 };
 
 export const withImageRetryPresetLabels = (
-  preset: ImageRetryPreset
+  preset: ImageRetryPreset,
 ): ImageRetryPreset => ({
   ...preset,
   label: buildImageRetryPresetLabel(preset),
@@ -79,13 +81,15 @@ export const withImageRetryPresetLabels = (
 });
 
 export const normalizeImageRetryPresets = (
-  value: unknown
+  value: unknown,
 ): ImageRetryPreset[] => {
   if (!Array.isArray(value) || value.length === 0) {
     return getDefaultImageRetryPresets();
   }
   const defaults = getDefaultImageRetryPresets();
-  const byId = new Map(defaults.map((preset: ImageRetryPreset) => [preset.id, preset]));
+  const byId = new Map(
+    defaults.map((preset: ImageRetryPreset) => [preset.id, preset]),
+  );
   const normalized = value
     .filter((entry: unknown) => entry && typeof entry === "object")
     .map((entry: unknown) => {
@@ -104,18 +108,20 @@ export const normalizeImageRetryPresets = (
         label:
           typeof record.label === "string" && record.label.trim()
             ? record.label
-            : fallback?.label ?? "Image retry preset",
+            : (fallback?.label ?? "Image retry preset"),
         description:
           typeof record.description === "string" && record.description.trim()
             ? record.description
-            : fallback?.description ?? "Adjust image export settings.",
+            : (fallback?.description ?? "Adjust image export settings."),
         imageBase64Mode:
           record.imageBase64Mode ?? fallback?.imageBase64Mode ?? "base-only",
         transform,
       };
       return withImageRetryPresetLabels(preset);
     })
-    .filter((entry: ImageRetryPreset | null): entry is ImageRetryPreset => Boolean(entry));
+    .filter((entry: ImageRetryPreset | null): entry is ImageRetryPreset =>
+      Boolean(entry),
+    );
 
   return normalized.length > 0 ? normalized : defaults;
 };

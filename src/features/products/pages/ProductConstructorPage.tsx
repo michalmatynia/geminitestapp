@@ -8,7 +8,7 @@ import type { CatalogRecord } from "@/features/products/types";
 import type { ProductParameter } from "@/features/products/types";
 import { ParametersSettings } from "@/features/products/components/constructor/ParametersSettings";
 
-export function ProductConstructorPage() {
+export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();
   const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function ProductConstructorPage() {
   const [loadingParameters, setLoadingParameters] = useState(false);
 
   useEffect(() => {
-    const loadCatalogs = async () => {
+    const loadCatalogs = async (): Promise<void> => {
       try {
         const res = await fetch("/api/catalogs");
         if (!res.ok) {
@@ -25,7 +25,7 @@ export function ProductConstructorPage() {
         const data = (await res.json()) as CatalogRecord[];
         setCatalogs(data);
         if (!selectedCatalogId && data.length > 0) {
-          const defaultCatalog = data.find((catalog) => catalog.isDefault);
+          const defaultCatalog = data.find((catalog: CatalogRecord) => catalog.isDefault);
           setSelectedCatalogId(defaultCatalog?.id ?? data[0]!.id);
         }
       } catch (error) {

@@ -12,7 +12,7 @@ const STATIC_TRANSLATION_MODELS = [
   { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo" },
 ];
 
-export function AiTranslationSettings() {
+export function AiTranslationSettings(): React.JSX.Element {
   const [translationModel, setTranslationModel] = useState("");
   const [ollamaModels, setOllamaModels] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,13 +20,13 @@ export function AiTranslationSettings() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (): Promise<void> => {
       try {
         const settingsRes = await fetch("/api/settings");
         let settingsMap = new Map<string, string>();
         if (settingsRes.ok) {
           const data = await settingsRes.json() as { key: string, value: string }[];
-          settingsMap = new Map(data.map(item => [item.key, item.value]));
+          settingsMap = new Map(data.map((item: { key: string, value: string }) => [item.key, item.value]));
         }
 
         setTranslationModel(settingsMap.get("ai_translation_model") || "gpt-4o");
@@ -35,7 +35,7 @@ export function AiTranslationSettings() {
         if (chatbotRes.ok) {
           const data = await chatbotRes.json() as { models?: string[] };
           if (Array.isArray(data.models)) {
-            setOllamaModels(data.models.map(name => ({ id: name, name })));
+            setOllamaModels(data.models.map((name: string) => ({ id: name, name })));
           }
         }
       } catch (error) {
@@ -48,7 +48,7 @@ export function AiTranslationSettings() {
     void loadData();
   }, [toast]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setSaving(true);
     try {
       await fetch("/api/settings", {
@@ -94,7 +94,7 @@ export function AiTranslationSettings() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>OpenAI</SelectLabel>
-                    {STATIC_TRANSLATION_MODELS.map((m) => (
+                    {STATIC_TRANSLATION_MODELS.map((m: { id: string, name: string }) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.name}
                       </SelectItem>
@@ -103,7 +103,7 @@ export function AiTranslationSettings() {
                   {ollamaModels.length > 0 && (
                     <SelectGroup>
                       <SelectLabel>Ollama</SelectLabel>
-                      {ollamaModels.map((m) => (
+                      {ollamaModels.map((m: { id: string, name: string }) => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.name}
                         </SelectItem>

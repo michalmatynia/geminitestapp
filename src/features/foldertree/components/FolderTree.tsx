@@ -265,6 +265,7 @@ function FolderTreeBase({
       onRenameNote,
       onDropNote,
       onDropFolder,
+      onReorderFolder,
       onRelateNotes,
       draggedFolderId,
       draggedNoteId,

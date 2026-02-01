@@ -1,18 +1,20 @@
-import { TestLogEntry, TestStatus } from "@/features/integrations/types/integrations-ui";
+import {
+  TestLogEntry,
+  TestStatus,
+} from "@/features/integrations/types/integrations-ui";
 
 export const coerceStatus = (value: unknown): TestStatus => {
-  return value === "pending" || value === "ok" || value === "failed"
-    ? value
-    : "failed";
+  if (value === "pending" || value === "ok" || value === "failed") {
+    return value;
+  }
+  return "failed";
 };
 
 export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
   return value.map((raw: unknown): TestLogEntry => {
     const s =
-      raw && typeof raw === "object"
-        ? (raw as Record<string, unknown>)
-        : {};
+      raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     const stepValue = s?.step;
     return {
       step:

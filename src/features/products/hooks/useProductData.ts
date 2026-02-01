@@ -63,8 +63,8 @@ export function useCreateProductMutation(): UseMutationResult<unknown, Error, Fo
   return useMutation({
     mutationFn: (formData: FormData) => createProduct(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
@@ -73,21 +73,21 @@ export function useUpdateProductMutation(): UseMutationResult<ProductWithImages,
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
         const response = await fetch(`/api/products/${id}`, {
           method: "PUT",
           body: data,
         });
         if (!response.ok) throw new Error("Failed to update product");
-        return response.json();
+        return response.json() as Promise<ProductWithImages>;
       } else {
         return updateProduct(id, data);
       }
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products", data.id] });
+    onSuccess: (data: ProductWithImages) => {
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products", data.id] });
     },
   });
 }
@@ -98,8 +98,8 @@ export function useDeleteProductMutation(): UseMutationResult<DeleteResponse, Er
   return useMutation({
     mutationFn: (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
@@ -108,16 +108,16 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: bo
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async (ids: string[]): Promise<{ success: boolean }> => {
       const responses = await Promise.all(
-        ids.map(id => deleteProduct(id))
+        ids.map((id: string) => deleteProduct(id))
       );
-      if (responses.some(r => !r.success)) throw new Error("Failed to delete some products");
+      if (responses.some((r: { success: boolean }) => !r.success)) throw new Error("Failed to delete some products");
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
@@ -130,7 +130,7 @@ export interface UseProductDataProps {
   initialPageSize?: number | null;
   preferencesLoaded: boolean;
   currencyCode?: string | null;
-  priceGroups?: any[];
+  priceGroups?: unknown[];
   searchLanguage?: string | null;
 }
 
@@ -181,16 +181,11 @@ export function useProductData({
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || "all");
 
   useEffect(() => {
-    if (preferencesLoaded && initialCatalogFilter) {
-      setCatalogFilter(initialCatalogFilter);
+    if (preferencesLoaded) {
+      if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
+      if (initialPageSize) setPageSize(initialPageSize);
     }
-  }, [preferencesLoaded, initialCatalogFilter]);
-
-  useEffect(() => {
-    if (preferencesLoaded && initialPageSize) {
-      setPageSize(initialPageSize);
-    }
-  }, [preferencesLoaded, initialPageSize]);
+  }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
 
   const filters: UseProductsFilters = useMemo(() => ({
     search: search || undefined,

@@ -62,14 +62,35 @@ export function useParameters(catalogId: string): UseQueryResult<ProductParamete
     enabled: !!catalogId,
   });
 }
+
+export interface ProductMetadataHookResult {
+  catalogs: CatalogRecord[];
+  catalogsLoading: boolean;
+  catalogsError: string | null;
+  selectedCatalogIds: string[];
+  toggleCatalog: (catalogId: string) => void;
+  categories: ProductCategory[];
+  categoriesLoading: boolean;
+  selectedCategoryIds: string[];
+  toggleCategory: (categoryId: string) => void;
+  tags: ProductTag[];
+  tagsLoading: boolean;
+  selectedTagIds: string[];
+  toggleTag: (tagId: string) => void;
+  parameters: ProductParameter[];
+  parametersLoading: boolean;
+  filteredLanguages: unknown[];
+  filteredPriceGroups: unknown[];
+}
+
 // Composite hook that combines all metadata functionality
 export function useProductMetadata({
   initialCatalogId,
 }: {
   initialCatalogId?: string;
   // Other props ignored for now to fix tsc errors
-  [key: string]: any;
-}) {
+  [key: string]: unknown;
+}): ProductMetadataHookResult {
   const catalogsQuery = useCatalogs();
   const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>([]);
@@ -80,26 +101,26 @@ export function useProductMetadata({
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
 
-  const toggleCatalog = (catalogId: string) => {
-    setSelectedCatalogIds(prev => 
+  const toggleCatalog = (catalogId: string): void => {
+    setSelectedCatalogIds((prev: string[]) => 
       prev.includes(catalogId) 
-        ? prev.filter(id => id !== catalogId)
+        ? prev.filter((id: string) => id !== catalogId)
         : [...prev, catalogId]
     );
   };
 
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategoryIds(prev => 
+  const toggleCategory = (categoryId: string): void => {
+    setSelectedCategoryIds((prev: string[]) => 
       prev.includes(categoryId) 
-        ? prev.filter(id => id !== categoryId)
+        ? prev.filter((id: string) => id !== categoryId)
         : [...prev, categoryId]
     );
   };
 
-  const toggleTag = (tagId: string) => {
-    setSelectedTagIds(prev => 
+  const toggleTag = (tagId: string): void => {
+    setSelectedTagIds((prev: string[]) => 
       prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId)
+        ? prev.filter((id: string) => id !== tagId)
         : [...prev, tagId]
     );
   };

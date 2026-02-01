@@ -16,6 +16,12 @@ type TagsSettingsProps = {
   onRefresh: () => void;
 };
 
+type TagFormData = {
+  name: string;
+  color: string;
+  catalogId: string;
+};
+
 export function TagsSettings({
   loading,
   tags,
@@ -27,7 +33,7 @@ export function TagsSettings({
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingTag, setEditingTag] = useState<ProductTag | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TagFormData>({
     name: "",
     color: "#38bdf8",
     catalogId: "",
@@ -236,7 +242,7 @@ export function TagsSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    setFormData((prev: TagFormData) => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Tag name"
                 />
@@ -248,7 +254,7 @@ export function TagsSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev) => ({
+                    setFormData((prev: TagFormData) => ({
                       ...prev,
                       catalogId: e.target.value,
                     }))
@@ -271,7 +277,7 @@ export function TagsSettings({
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
@@ -279,7 +285,7 @@ export function TagsSettings({
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#38bdf8"
                   />

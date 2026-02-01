@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ProductImageSlot } from "@/features/products/types/products-ui";
 
@@ -9,7 +9,7 @@ const TOTAL_IMAGE_SLOTS = 15;
 const normalizeImageLinks = (links?: string[] | null): string[] => {
   const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
   if (Array.isArray(links)) {
-    links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link, index) => {
+    links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link: string, index: number) => {
       next[index] = typeof link === "string" ? link : "";
     });
   }
@@ -24,7 +24,7 @@ const buildImageSlotsFromProduct = (
     () => null,
   );
   if (!product?.images?.length) return slots;
-  product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
+  product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
     if (pImg.imageFile) {
       slots[index] = {
         type: "existing",
@@ -37,15 +37,31 @@ const buildImageSlotsFromProduct = (
   return slots;
 };
 
-const createSlotId = () =>
+const createSlotId = (): string =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+export interface ProductImagesHookResult {
+  imageSlots: (ProductImageSlot | null)[];
+  imageLinks: string[];
+  showFileManager: boolean;
+  setShowFileManager: (show: boolean) => void;
+  handleSlotImageChange: (file: File | null, index: number) => void;
+  handleSlotFileSelect: (file: ImageFileSelection | null, index: number) => void;
+  handleSlotDisconnectImage: (index: number) => Promise<void>;
+  handleMultiImageChange: (files: File[]) => void;
+  handleMultiFileSelect: (files: ImageFileSelection[]) => void;
+  swapImageSlots: (fromIndex: number, toIndex: number) => void;
+  setImageLinkAt: (index: number, value: string) => void;
+  refreshFromProduct: (savedProduct: ProductWithImages) => void;
+  setImagesReordering: (value: boolean) => void;
+}
+
 export function useProductImages(
   product?: ProductWithImages,
   initialImageLinks?: string[] | null,
-) {
+): ProductImagesHookResult {
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
     () => buildImageSlotsFromProduct(product),
   );
@@ -59,7 +75,7 @@ export function useProductImages(
   
   const queryClient = useQueryClient();
   const disconnectImageMutation = useMutation({
-    mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }) => {
+    mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }): Promise<void> => {
       const res = await fetch(`/api/products/${productId}/images/${imageFileId}`, {
         method: "DELETE",
       });
@@ -73,28 +89,28 @@ export function useProductImages(
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
     const currentObjectUrls = imageSlots
-      .map((slot) => (slot?.type === "file" ? slot.previewUrl : null))
-      .filter(Boolean) as string[];
+      .map((slot: ProductImageSlot | null): string | null => (slot?.type === "file" ? slot.previewUrl : null))
+      .filter((url: string | null): url is string => Boolean(url));
 
     // Revoke old object URLs that are no longer in use
     const oldObjectUrls = objectUrlsRef.current.filter(
-      (url) => !currentObjectUrls.includes(url),
+      (url: string) => !currentObjectUrls.includes(url),
     );
-    oldObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    oldObjectUrls.forEach((url: string) => URL.revokeObjectURL(url));
 
     // Update ref with current object URLs
     objectUrlsRef.current = currentObjectUrls;
 
     return () => {
       // Clean up all object URLs on unmount
-      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      objectUrlsRef.current.forEach((url: string) => URL.revokeObjectURL(url));
       objectUrlsRef.current = [];
     };
   }, [imageSlots]);
 
   const handleSlotImageChange = useCallback(
-    (file: File | null, index: number) => {
-      setImageSlots((prevSlots) => {
+    (file: File | null, index: number): void => {
+      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
         const newSlots = [...prevSlots];
         if (file) {
           // Revoke existing object URL if replacing an image
@@ -123,8 +139,8 @@ export function useProductImages(
   );
 
   const handleSlotFileSelect = useCallback(
-    (file: ImageFileSelection | null, index: number) => {
-      setImageSlots((prevSlots) => {
+    (file: ImageFileSelection | null, index: number): void => {
+      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
         const newSlots = [...prevSlots];
         if (file) {
           // Revoke object URL if replacing a file upload with an existing file
@@ -154,11 +170,11 @@ export function useProductImages(
   );
 
   const handleSlotDisconnectImage = useCallback(
-    async (index: number) => {
+    async (index: number): Promise<void> => {
       const slotToClear = imageSlots[index];
       if (!slotToClear) return;
 
-      setImageSlots((prevSlots) => {
+      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
         const newSlots = [...prevSlots];
         newSlots[index] = null;
         return newSlots;
@@ -180,8 +196,8 @@ export function useProductImages(
     [imageSlots, product, disconnectImageMutation],
   );
 
-  const setImageLinkAt = useCallback((index: number, value: string) => {
-    setImageLinks((prev) => {
+  const setImageLinkAt = useCallback((index: number, value: string): void => {
+    setImageLinks((prev: string[]) => {
       const next = [...prev];
       if (index < 0 || index >= next.length) return prev;
       next[index] = value;
@@ -189,8 +205,8 @@ export function useProductImages(
     });
   }, []);
 
-  const handleMultiImageChange = useCallback((files: File[]) => {
-    setImageSlots((prevSlots) => {
+  const handleMultiImageChange = useCallback((files: File[]): void => {
+    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
@@ -211,8 +227,8 @@ export function useProductImages(
     });
   }, []);
 
-  const handleMultiFileSelect = useCallback((files: ImageFileSelection[]) => {
-    setImageSlots((prevSlots) => {
+  const handleMultiFileSelect = useCallback((files: ImageFileSelection[]): void => {
+    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
@@ -234,12 +250,12 @@ export function useProductImages(
     setShowFileManager(false);
   }, []);
 
-  const swapImageSlots = useCallback((fromIndex: number, toIndex: number) => {
+  const swapImageSlots = useCallback((fromIndex: number, toIndex: number): void => {
     if (fromIndex === toIndex) return;
     if (fromIndex < 0 || fromIndex >= TOTAL_IMAGE_SLOTS) return;
     if (toIndex < 0 || toIndex >= TOTAL_IMAGE_SLOTS) return;
 
-    setImageSlots((prevSlots) => {
+    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
       const newSlots = [...prevSlots];
       const temp = newSlots[fromIndex];
       newSlots[fromIndex] = newSlots[toIndex]!;
@@ -247,7 +263,7 @@ export function useProductImages(
       return newSlots;
     });
 
-    setImageLinks((prevLinks) => {
+    setImageLinks((prevLinks: string[]) => {
       const newLinks = [...prevLinks];
       const temp = newLinks[fromIndex];
       newLinks[fromIndex] = newLinks[toIndex]!;
@@ -256,14 +272,14 @@ export function useProductImages(
     });
   }, []);
 
-  const applyRefresh = useCallback((savedProduct: ProductWithImages) => {
-    setImageSlots((prevSlots) => {
+  const applyRefresh = useCallback((savedProduct: ProductWithImages): void => {
+    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
       // Instead of replacing all slots, update only what changed
       // This prevents flickering by keeping existing references when possible
       const newSlots: (ProductImageSlot | null)[] = [...prevSlots];
 
       // Update slots with saved images
-      savedProduct.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
+      savedProduct.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
         if (pImg.imageFile) {
           const existingSlot = newSlots[index];
           // Only update if the image ID changed or slot was empty
@@ -297,7 +313,7 @@ export function useProductImages(
   }, []);
 
   const setImagesReordering = useCallback(
-    (value: boolean) => {
+    (value: boolean): void => {
       isReorderingRef.current = value;
       if (!value && pendingRefreshRef.current) {
         const pending = pendingRefreshRef.current;
@@ -310,7 +326,7 @@ export function useProductImages(
 
   // Function to refresh state from product (e.g. after save)
   const refreshFromProduct = useCallback(
-    (savedProduct: ProductWithImages) => {
+    (savedProduct: ProductWithImages): void => {
       if (isReorderingRef.current) {
         pendingRefreshRef.current = savedProduct;
         if (process.env.NODE_ENV !== "production") {

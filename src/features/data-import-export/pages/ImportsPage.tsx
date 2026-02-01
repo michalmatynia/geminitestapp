@@ -197,21 +197,27 @@ export default function ImportsPage(): React.JSX.Element {
   // Apply preferences on mount
   useEffect(() => {
     if (importTemplateIdFromPref && !importTemplateId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImportTemplateId(importTemplateIdFromPref);
     }
     if (exportInventoryIdFromPref && !exportInventoryId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExportInventoryId(exportInventoryIdFromPref);
     }
     if (connectionIdFromPref && baseConnections.some((c: IntegrationConnectionBasic) => c.id === connectionIdFromPref)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedBaseConnectionId(connectionIdFromPref);
     }
     if (!exportStockFallbackEnabled && stockFallbackFromPref) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExportStockFallbackEnabled(stockFallbackFromPref);
     }
     if (imageRetryPresets.length === getDefaultImageRetryPresets().length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageRetryPresets(retryPresetsFromPref);
     }
     if (inventoryIdFromPref && !inventoryId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInventoryId(inventoryIdFromPref);
     }
   }, [importTemplateIdFromPref, exportInventoryIdFromPref, connectionIdFromPref, stockFallbackFromPref, retryPresetsFromPref, inventoryIdFromPref, baseConnections]);
@@ -262,7 +268,7 @@ export default function ImportsPage(): React.JSX.Element {
   }, [importActiveTemplateId, savePreferenceMutation]);
 
   // Data loading hooks
-  const { data: inventories = [], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
+  const { data: inventories = [] as InventoryOption[], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
   
   useEffect(() => {
     if (inventories.length > 0) {
@@ -419,7 +425,7 @@ export default function ImportsPage(): React.JSX.Element {
     }
 
     const cleanedMappings = mappings
-      .map((m: TemplateMapping, i: number) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
+      .map((m: TemplateMapping) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
@@ -459,7 +465,7 @@ export default function ImportsPage(): React.JSX.Element {
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
     const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings((prev: TemplateMapping[]) => prev.map((m, i) => i === index ? { ...m, ...patch } : m));
+    setMappings((prev: TemplateMapping[]) => prev.map((m: TemplateMapping, i: number) => i === index ? { ...m, ...patch } : m));
   };
 
   const addMappingRow = (): void => {
@@ -469,7 +475,7 @@ export default function ImportsPage(): React.JSX.Element {
 
   const removeMappingRow = (index: number): void => {
     const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings((prev: TemplateMapping[]) => prev.length === 1 ? [{ sourceKey: "", targetField: "" }] : prev.filter((_, i) => i !== index));
+    setMappings((prev: TemplateMapping[]) => prev.length === 1 ? [{ sourceKey: "", targetField: "" }] : prev.filter((_: TemplateMapping, i: number) => i !== index));
   };
 
   const isImportTemplateScope = templateScope === "import";
@@ -597,8 +603,8 @@ export default function ImportsPage(): React.JSX.Element {
                 </Tabs>
                 <div className="flex gap-2">
                    <Button variant="secondary" onClick={handleNewTemplate}>New</Button>
-                   <Button onClick={handleSaveTemplate} disabled={saveImportTemplateMutation.isPending || saveExportTemplateMutation.isPending}>Save</Button>
-                   <Button variant="destructive" onClick={handleDeleteTemplate} disabled={!currentActiveTemplateId}>Delete</Button>
+                   <Button onClick={() => { void handleSaveTemplate(); }} disabled={saveImportTemplateMutation.isPending || saveExportTemplateMutation.isPending}>Save</Button>
+                   <Button variant="destructive" onClick={() => { void handleDeleteTemplate(); }} disabled={!currentActiveTemplateId}>Delete</Button>
                 </div>
              </div>
              <div className="grid md:grid-cols-[220px_1fr] gap-4">
@@ -613,11 +619,11 @@ export default function ImportsPage(): React.JSX.Element {
                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label>Name</Label>
-                        <Input value={isImportTemplateScope ? importTemplateName : exportTemplateName} onChange={e => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)} />
+                        <Input value={isImportTemplateScope ? importTemplateName : exportTemplateName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)} />
                       </div>
                       <div className="space-y-1">
                         <Label>Description</Label>
-                        <Input value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} onChange={e => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)} />
+                        <Input value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)} />
                       </div>
                    </div>
                    <div className="space-y-2">

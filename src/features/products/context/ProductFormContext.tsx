@@ -321,10 +321,10 @@ export function ProductFormProvider({
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = (await response.json().catch(() => ({}))) as { error?: string };
           throw new Error(errorData.error || "Failed to update product");
         }
-        savedProduct = await response.json();
+        savedProduct = (await response.json()) as ProductWithImages;
       } else {
         savedProduct = (await createMutation.mutateAsync(formData)) as ProductWithImages;
       }

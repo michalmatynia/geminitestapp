@@ -21,8 +21,8 @@ export function useDescriptionGeneration({ productId, onSuccess, onError }: UseD
   const generate = async (productData: Record<string, unknown>, imageSlots: (ProductImageSlot | null)[]): Promise<void> => {
     setGenerating(true);
     const imageUrls = imageSlots
-      .filter((slot: ProductImageSlot | null): slot is ProductImageSlot => slot !== null)
-      .map((slot: ProductImageSlot) => slot.previewUrl);
+      .filter((slot: ProductImageSlot | null): slot is NonNullable<ProductImageSlot> => slot !== null)
+      .map((slot) => (slot as NonNullable<ProductImageSlot>).previewUrl);
 
     try {
       if (productId) {

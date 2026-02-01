@@ -1,19 +1,26 @@
 "use client";
 
 import { Button, Input, Label, Switch, useToast } from "@/shared/ui";
-import { useState, type ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 
-
-
-
-
-import {
-  DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
-  TRANSIENT_RECOVERY_KEYS,
-  type TransientRecoverySettings,
-} from "@/features/observability/server";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+
+type TransientRecoverySettings = {
+  enabled: boolean;
+  retry: {
+    enabled: boolean;
+    maxAttempts: number;
+    initialDelayMs: number;
+    maxDelayMs: number;
+    timeoutMs: number | null;
+  };
+  circuit: {
+    enabled: boolean;
+    failureThreshold: number;
+    resetTimeoutMs: number;
+  };
+};
 
 const toNumber = (value: string, fallback: number, min: number = 0): number => {
   const parsed = Number(value);
@@ -22,59 +29,73 @@ const toNumber = (value: string, fallback: number, min: number = 0): number => {
 };
 
 export default function TransientRecoverySettingsPage() {
+  const [constants, setConstants] = useState<{
+    DEFAULT_TRANSIENT_RECOVERY_SETTINGS: TransientRecoverySettings;
+    TRANSIENT_RECOVERY_KEYS: { settings: string };
+  } | null>(null);
   const settingsQuery = useSettingsMap();
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  useEffect(() => {
+    const loadConstants = async () => {
+      const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import("@/features/observability/server");
+      setConstants({ DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS });
+    };
+    loadConstants();
+  }, []);
+
+  if (settingsQuery.isLoading || !settingsQuery.data || !constants) {
     return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
   }
 
   const stored = parseJsonSetting<TransientRecoverySettings | null>(
-    settingsQuery.data.get(TRANSIENT_RECOVERY_KEYS.settings),
+    settingsQuery.data.get(constants.TRANSIENT_RECOVERY_KEYS.settings),
     null
   );
 
   const initialSettings: TransientRecoverySettings = stored
     ? {
-        enabled: stored.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
+        enabled: stored.enabled ?? constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
         retry: {
           enabled:
-            stored.retry?.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.enabled,
+            stored.retry?.enabled ?? constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.enabled,
           maxAttempts:
             stored.retry?.maxAttempts ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts,
           initialDelayMs:
             stored.retry?.initialDelayMs ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs,
           maxDelayMs:
             stored.retry?.maxDelayMs ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxDelayMs,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxDelayMs,
           timeoutMs:
             stored.retry?.timeoutMs === null
               ? 0
               : stored.retry?.timeoutMs ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.timeoutMs,
+                constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.timeoutMs,
         },
         circuit: {
           enabled:
             stored.circuit?.enabled ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.enabled,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.enabled,
           failureThreshold:
             stored.circuit?.failureThreshold ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.failureThreshold,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.failureThreshold,
           resetTimeoutMs:
             stored.circuit?.resetTimeoutMs ??
-            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.resetTimeoutMs,
+            constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.resetTimeoutMs,
         },
       }
-    : DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
+    : constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
 
-  return <TransientRecoverySettingsForm initialSettings={initialSettings} />;
+  return <TransientRecoverySettingsForm initialSettings={initialSettings} recoveryKeys={constants.TRANSIENT_RECOVERY_KEYS} />;
 }
 
 function TransientRecoverySettingsForm({
   initialSettings,
+  recoveryKeys,
 }: {
   initialSettings: TransientRecoverySettings;
+  recoveryKeys: { settings: string };
 }) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
@@ -123,7 +144,7 @@ function TransientRecoverySettingsForm({
         },
       };
       await updateSetting.mutateAsync({
-        key: TRANSIENT_RECOVERY_KEYS.settings,
+        key: recoveryKeys.settings,
         value: serializeSetting(payload),
       });
       setDirty(false);

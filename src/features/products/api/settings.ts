@@ -31,7 +31,7 @@ export async function deletePriceGroup(id: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete price group");
 }
 
-export async function savePriceGroup(id: string | undefined, data: any): Promise<PriceGroup> {
+export async function savePriceGroup(id: string | undefined, data: Partial<PriceGroup>): Promise<PriceGroup> {
   const url = id ? `/api/price-groups/${id}` : "/api/price-groups";
   const method = id ? "PUT" : "POST";
   const res = await fetch(url, {

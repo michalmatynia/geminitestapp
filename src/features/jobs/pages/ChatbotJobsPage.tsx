@@ -135,7 +135,7 @@ export default function ChatbotJobsPage(): React.JSX.Element {
         {jobsQuery.isLoading ? (
           <p className="text-sm text-gray-400">Loading jobs...</p>
         ) : jobsQuery.error ? (
-          <p className="text-sm text-red-400">{(jobsQuery.error as Error).message}</p>
+          <p className="text-sm text-red-400">{(jobsQuery.error).message}</p>
         ) : filteredJobs.length === 0 ? (
           <p className="text-sm text-gray-400">No jobs yet.</p>
         ) : (

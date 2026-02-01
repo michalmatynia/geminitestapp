@@ -113,7 +113,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   // Sync form with draft data
   useEffect(() => {
     if (draftQuery.data) {
-      const draft = draftQuery.data as ProductDraft;
+      const draft = draftQuery.data;
       setName(draft.name);
       setDescription(draft.description || "");
       setSku(draft.sku || "");

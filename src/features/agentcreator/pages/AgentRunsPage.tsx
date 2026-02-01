@@ -49,6 +49,7 @@ export default function AgentRunsPage(): React.ReactElement {
 
   useEffect(() => {
     if (!selectedAgentRunId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedAuditIds({});
     setAgentStreamStatus("connecting");
     const source = new EventSource(

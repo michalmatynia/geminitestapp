@@ -1,16 +1,16 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 import { runsApi } from "@/features/ai-paths/lib";
 import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from "@/shared/types/ai-paths";
 
 export const aiPathKeys = {
   all: ["ai-paths"] as const,
-  deadLetter: (filters: any) => [...aiPathKeys.all, "dead-letter", filters] as const,
+  deadLetter: (filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }) => [...aiPathKeys.all, "dead-letter", filters] as const,
   run: (runId: string) => [...aiPathKeys.all, "runs", runId] as const,
 };
 
-export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }) {
+export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: string; query?: string; limit: number; offset: number }): UseQueryResult<{ runs: AiPathRunRecord[]; total: number }, Error> {
   return useQuery({
     queryKey: aiPathKeys.deadLetter(filters),
     queryFn: async () => {
@@ -21,7 +21,7 @@ export function useAiPathDeadLetterRuns(filters: { status: string; pathId?: stri
   });
 }
 
-export function useAiPathRunDetail(runId: string, enabled: boolean = true) {
+export function useAiPathRunDetail(runId: string, enabled: boolean = true): UseQueryResult<{ run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] }, Error> {
   return useQuery({
     queryKey: aiPathKeys.run(runId),
     queryFn: async () => {
@@ -33,7 +33,7 @@ export function useAiPathRunDetail(runId: string, enabled: boolean = true) {
   });
 }
 
-export function useAiPathRequeueMutation() {
+export function useAiPathRequeueMutation(): UseMutationResult<any, Error, { runIds?: string[]; pathId?: string | null; query?: string | null; mode: "resume" | "replay" }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -48,7 +48,7 @@ export function useAiPathRequeueMutation() {
   });
 }
 
-export function useAiPathResumeMutation() {
+export function useAiPathResumeMutation(): UseMutationResult<any, Error, { runId: string; mode: "resume" | "replay" }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -57,14 +57,14 @@ export function useAiPathResumeMutation() {
       if (!response.ok) throw new Error(response.error || "Failed to resume run");
       return response.data;
     },
-    onSuccess: (_, { runId }) => {
+    onSuccess: (_data: any, { runId }: { runId: string }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },
   });
 }
 
-export function useAiPathRetryNodeMutation() {
+export function useAiPathRetryNodeMutation(): UseMutationResult<any, Error, { runId: string; nodeId: string }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -73,7 +73,7 @@ export function useAiPathRetryNodeMutation() {
       if (!response.ok) throw new Error(response.error || "Failed to retry node");
       return response.data;
     },
-    onSuccess: (_, { runId }) => {
+    onSuccess: (_data: any, { runId }: { runId: string }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },

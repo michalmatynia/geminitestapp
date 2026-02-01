@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 
 // Dynamically import the PageBuilderPage to avoid server-side rendering issues
 const PageBuilderPage = dynamic(
-  () => import("@/features/cms").then((mod) => ({ default: mod.PageBuilderPage })),
+  () => import("@/features/cms/pages/builder/PageBuilderPage"),
   {
     ssr: false,
     loading: () => (

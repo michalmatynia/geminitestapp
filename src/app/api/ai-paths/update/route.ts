@@ -72,7 +72,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
     if (!parsed.ok) return parsed.response;
 
-    const data = parsed.data as z.infer<typeof updateSchema>;
+    const data = parsed.data;
     const { entityType, entityId, updates, mode } = data;
     const normalizedUpdates =
       updates && typeof updates === "object" ? updates : {};

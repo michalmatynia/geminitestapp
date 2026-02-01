@@ -246,7 +246,7 @@ export function useProductData({
     setEndDate,
     catalogFilter,
     setCatalogFilter,
-    loadError: (productsQuery.error || countQuery.error) as Error | null,
+    loadError: (productsQuery.error || countQuery.error),
     isLoading: productsQuery.isLoading || countQuery.isLoading,
     isFetching: productsQuery.isFetching || countQuery.isFetching,
     refresh,

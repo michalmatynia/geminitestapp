@@ -104,15 +104,15 @@ export default function SystemLogsPage(): React.JSX.Element {
   const rebuildIndexesMutation = useRebuildIndexesMutation();
 
   useEffect(() => {
-    if (logsQuery.error) toast((logsQuery.error as Error).message, { variant: "error" });
+    if (logsQuery.error) toast((logsQuery.error).message, { variant: "error" });
   }, [logsQuery.error, toast]);
 
   useEffect(() => {
-    if (metricsQuery.error) toast((metricsQuery.error as Error).message, { variant: "error" });
+    if (metricsQuery.error) toast((metricsQuery.error).message, { variant: "error" });
   }, [metricsQuery.error, toast]);
 
   useEffect(() => {
-    if (mongoDiagnosticsQuery.error) toast((mongoDiagnosticsQuery.error as Error).message, { variant: "error" });
+    if (mongoDiagnosticsQuery.error) toast((mongoDiagnosticsQuery.error).message, { variant: "error" });
   }, [mongoDiagnosticsQuery.error, toast]);
 
   const logs = logsQuery.data?.logs ?? [];

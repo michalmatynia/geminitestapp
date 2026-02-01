@@ -38,7 +38,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const secret = decryptAuthSecret(profile.mfaSecret);
-    const ok = verifyTotpToken(secret, parsed.data?.token!);
+    const ok = verifyTotpToken(secret, parsed.data?.token);
     if (!ok) {
       throw validationError("Invalid MFA token.");
     }

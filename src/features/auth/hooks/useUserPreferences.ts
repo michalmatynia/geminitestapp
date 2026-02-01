@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 
 export interface UserPreferences {
   adminMenuCollapsed?: boolean | null;
 }
 
-export function useUserPreferences() {
+export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: ["user-preferences"],
     queryFn: async (): Promise<UserPreferences> => {
@@ -13,15 +13,15 @@ export function useUserPreferences() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to load user preferences.");
-      return await res.json();
+      return (await res.json()) as UserPreferences;
     },
   });
 }
 
-export function useUpdateUserPreferencesMutation() {
+export function useUpdateUserPreferencesMutation(): UseMutationResult<UserPreferences, Error, UserPreferences> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: UserPreferences) => {
+    mutationFn: async (data: UserPreferences): Promise<UserPreferences> => {
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -29,9 +29,9 @@ export function useUpdateUserPreferencesMutation() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update user preferences.");
-      return await res.json();
+      return (await res.json()) as UserPreferences;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: UserPreferences) => {
       queryClient.setQueryData(["user-preferences"], data);
     },
   });

@@ -78,10 +78,10 @@ export async function createProduct(formData: FormData): Promise<ProductWithImag
     body: formData,
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
+    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(errorData.error || "Failed to create product");
   }
-  return res.json();
+  return res.json() as Promise<ProductWithImages>;
 }
 
 export async function updateProduct(id: string, data: Partial<ProductWithImages>): Promise<ProductWithImages> {
@@ -91,10 +91,10 @@ export async function updateProduct(id: string, data: Partial<ProductWithImages>
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
+    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(errorData.error || "Failed to update product");
   }
-  return res.json();
+  return res.json() as Promise<ProductWithImages>;
 }
 
 export async function deleteProduct(id: string): Promise<{ success: boolean }> {
@@ -102,8 +102,8 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
     method: "DELETE",
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
+    const errorData = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(errorData.error || "Failed to delete product");
   }
-  return res.json();
+  return res.json() as Promise<{ success: boolean }>;
 }

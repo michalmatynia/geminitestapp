@@ -252,7 +252,7 @@ export async function generateProductDescription(params: {
       }
     });
     processedImages = (await Promise.all(imagePromises)).filter(
-      (img): img is ChatCompletionContentPart => img !== null,
+      (img: ChatCompletionContentPart | null): img is ChatCompletionContentPart => img !== null,
     );
   }
 

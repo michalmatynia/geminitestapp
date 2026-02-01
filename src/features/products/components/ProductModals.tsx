@@ -3,11 +3,11 @@ import { ModalShell, Button, AppModal } from "@/shared/ui";
 
 
 
-import { FileManager } from "@/features/files";
+import { FileManager } from "@/features/files/components/FileManager";
 import ProductForm from "@/features/products/components/ProductForm";
-import { ProductListingsModal } from "@/features/integrations";
-import { ListProductModal } from "@/features/integrations";
-import { MassListProductModal } from "@/features/integrations";
+import { ProductListingsModal } from "@/features/integrations/components/listings/ProductListingsModal";
+import { ListProductModal } from "@/features/integrations/components/listings/ListProductModal";
+import { MassListProductModal } from "@/features/integrations/components/listings/MassListProductModal";
 import {
   ProductFormProvider,
   useProductFormContext,

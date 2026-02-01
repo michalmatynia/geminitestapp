@@ -9,14 +9,14 @@ import { useCatalogs, useParameters } from "@/features/products/hooks/useProduct
 export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();
   const catalogsQuery = useCatalogs();
-  const catalogs = catalogsQuery.data || [];
+  const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
   
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
 
   useEffect(() => {
     if (catalogs.length > 0 && !selectedCatalogId) {
-      const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
-      setSelectedCatalogId(defaultCatalog?.id ?? catalogs[0]!.id);
+      const defaultCatalog = catalogs.find((catalog: import("@/features/products/types").CatalogRecord) => catalog.isDefault);
+      setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
     }
   }, [catalogs, selectedCatalogId]);
 

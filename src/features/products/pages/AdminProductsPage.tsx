@@ -12,7 +12,7 @@ import {
   useBulkDeleteProductsMutation,
 } from "@/features/products/hooks/useProductData";
 import { useProductOperations } from "@/features/products/hooks/useProductOperations";
-import { useIntegrationOperations } from "@/features/integrations";
+import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
 import { ProductListPanel } from "@/features/products/components/ProductListPanel";

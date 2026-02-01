@@ -20,14 +20,18 @@ export function ProductPreferencesPage(): React.JSX.Element {
   const router = useRouter();
   const { preferences: savedPreferences, loading: prefsLoading } = useUserPreferences();
   const catalogsQuery = useCatalogs();
-  const catalogs = (catalogsQuery.data || []) as Catalog[];
+  const catalogs = useMemo(() => (catalogsQuery.data || []) as Catalog[], [catalogsQuery.data]);
   
   const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
   const updateMutation = useUpdateUserPreferencesMutation();
 
   useEffect(() => {
     if (savedPreferences) {
-      setPreferences(savedPreferences);
+      setPreferences((prev: ProductListPreferences) => {
+        // Only update if actually different to minimize cascading renders
+        if (JSON.stringify(prev) === JSON.stringify(savedPreferences)) return prev;
+        return savedPreferences;
+      });
     }
   }, [savedPreferences]);
 
@@ -93,7 +97,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 <Select
                   value={preferences.nameLocale || "name_en"}
                   onValueChange={(value: "name_en" | "name_pl" | "name_de") =>
-                    setPreferences((prev) => ({
+                    setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
                       nameLocale: value,
                     }))
@@ -119,7 +123,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 <Select
                   value={preferences.catalogFilter || "all"}
                   onValueChange={(value: string) =>
-                    setPreferences((prev) => ({
+                    setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
                       catalogFilter: value,
                     }))
@@ -149,7 +153,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   id="currencyCode"
                   value={preferences.currencyCode || ""}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setPreferences((prev) => ({
+                    setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
                       currencyCode: e.target.value || "PLN",
                     }))
@@ -167,7 +171,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 <Select
                   value={String(preferences.pageSize || 50)}
                   onValueChange={(value: string) =>
-                    setPreferences((prev) => ({
+                    setPreferences((prev: ProductListPreferences) => ({
                       ...prev,
                       pageSize: parseInt(value, 10),
                     }))

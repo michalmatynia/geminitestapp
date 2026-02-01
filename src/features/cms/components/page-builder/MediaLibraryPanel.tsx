@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
-import { FileManager } from "@/features/files";
+import { FileManager } from "@/features/files/components/FileManager";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 
 interface MediaLibraryPanelProps {

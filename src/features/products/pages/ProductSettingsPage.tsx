@@ -88,21 +88,20 @@ export function ProductSettingsPage(): React.JSX.Element {
   const deleteCountryMutation = useDeleteCountryMutation();
   const deleteLanguageMutation = useDeleteLanguageMutation();
 
-  const defaultGroupId = priceGroups.find((g) => g.isDefault)?.id ?? "";
+  const defaultGroupId = priceGroups.find((g: import("@/features/products/types").PriceGroup) => g.isDefault)?.id ?? "";
 
   useEffect(() => {
-    if (catalogs.length > 0 && !selectedCategoryCatalogId) {
-      const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-      if (def) setSelectedCategoryCatalogId(def.id);
+    if (catalogs.length > 0) {
+      if (!selectedCategoryCatalogId) {
+        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+        if (def) setSelectedCategoryCatalogId(def.id);
+      }
+      if (!selectedTagCatalogId) {
+        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+        if (def) setSelectedTagCatalogId(def.id);
+      }
     }
-  }, [catalogs, selectedCategoryCatalogId]);
-
-  useEffect(() => {
-    if (catalogs.length > 0 && !selectedTagCatalogId) {
-      const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-      if (def) setSelectedTagCatalogId(def.id);
-    }
-  }, [catalogs, selectedTagCatalogId]);
+  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
     const group = priceGroups.find((g: PriceGroup) => g.id === groupId);

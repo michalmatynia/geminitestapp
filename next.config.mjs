@@ -16,15 +16,20 @@ const nextConfig = {
         fs: false,
         path: false,
         child_process: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        util: false,
       };
     }
     
-    // Exclude playwright from client bundle
+    // Exclude playwright and other Node.js specific modules from client bundle
     config.externals = config.externals || [];
     if (!isServer) {
       config.externals.push({
         'playwright-core': 'commonjs playwright-core',
         'playwright': 'commonjs playwright',
+        'commander': 'commonjs commander',
       });
     }
     

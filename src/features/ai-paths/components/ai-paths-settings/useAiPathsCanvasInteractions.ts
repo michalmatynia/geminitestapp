@@ -624,9 +624,14 @@ export function useAiPathsCanvasInteractions({
     node: AiNode,
     port: string
   ): void => {
+    console.log('handleCompleteConnection called:', { node: node.type, port, connecting });
     event.stopPropagation();
-    if (!connecting) return;
+    if (!connecting) {
+      console.log('No connecting state');
+      return;
+    }
     if (connecting.fromNodeId === node.id && connecting.fromPort === port) {
+      console.log('Same node/port, canceling connection');
       setConnecting(null);
       setConnectingPos(null);
       return;
@@ -634,6 +639,7 @@ export function useAiPathsCanvasInteractions({
 
     const fromNode = nodes.find((n: AiNode): boolean => n.id === connecting.fromNodeId);
     if (!fromNode) {
+      console.log('From node not found:', connecting.fromNodeId);
       setConnecting(null);
       setConnectingPos(null);
       return;
@@ -646,12 +652,21 @@ export function useAiPathsCanvasInteractions({
       port
     );
 
+    console.log('Validation result:', validation);
+
     if (!validation.valid) {
       toast(validation.message ?? "Invalid connection.", { variant: "error" });
       setConnecting(null);
       setConnectingPos(null);
       return;
     }
+
+    console.log('Creating edge:', {
+      from: connecting.fromNodeId,
+      to: node.id,
+      fromPort: connecting.fromPort,
+      toPort: port
+    });
 
     setEdges((prev: Edge[]): Edge[] => [
       ...prev,

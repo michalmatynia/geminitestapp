@@ -112,6 +112,7 @@ export default function ImportsPage(): React.JSX.Element {
         (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
       );
       const connections = baseIntegration?.connections ?? [];
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBaseConnections(connections);
       if (connections.length > 0) {
         setIsBaseConnected(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations";
 import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset } from "@/features/data-import-export/types/imports";
 
@@ -24,7 +24,7 @@ export const importKeys = {
 
 // --- Queries ---
 
-export function useIntegrationConnections() {
+export function useIntegrationConnections(): UseQueryResult<IntegrationWithConnections[], Error> {
   return useQuery({
     queryKey: importKeys.connections(),
     queryFn: async () => {
@@ -35,7 +35,7 @@ export function useIntegrationConnections() {
   });
 }
 
-export function useCatalogs() {
+export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
   return useQuery({
     queryKey: importKeys.catalogs(),
     queryFn: async () => {
@@ -46,7 +46,7 @@ export function useCatalogs() {
   });
 }
 
-export function useTemplates(scope: "import" | "export") {
+export function useTemplates(scope: "import" | "export"): UseQueryResult<Template[], Error> {
   const endpoint = scope === "import" 
     ? "/api/integrations/import-templates" 
     : "/api/integrations/export-templates";
@@ -61,7 +61,7 @@ export function useTemplates(scope: "import" | "export") {
   });
 }
 
-export function useImportPreference<T>(key: string, endpoint: string) {
+export function useImportPreference<T>(key: string, endpoint: string): UseQueryResult<T, Error> {
   return useQuery({
     queryKey: importKeys.pref(key),
     queryFn: async () => {
@@ -74,20 +74,20 @@ export function useImportPreference<T>(key: string, endpoint: string) {
 
 // --- Mutations ---
 
-export function useSavePreferenceMutation() {
+export function useSavePreferenceMutation(): UseMutationResult<any, Error, { endpoint: string; data: any }> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }) => {
+    mutationFn: async ({ endpoint, data }: { endpoint: string; data: any }): Promise<any> => {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to save preference");
-      return res.json();
+      return (await res.json()) as any;
     },
-    onSuccess: (_, { endpoint }) => {
+    onSuccess: (_data: any, { endpoint }: { endpoint: string }) => {
       // Extract key from endpoint to invalidate specific pref
       const key = endpoint.split("/").pop();
       if (key) {
@@ -97,14 +97,14 @@ export function useSavePreferenceMutation() {
   });
 }
 
-export function useTemplateMutation(scope: "import" | "export", id?: string) {
+export function useTemplateMutation(scope: "import" | "export", id?: string): UseMutationResult<any, Error, { data?: any; isDelete?: boolean }> {
   const queryClient = useQueryClient();
   const endpoint = scope === "import" 
     ? "/api/integrations/import-templates" 
     : "/api/integrations/export-templates";
     
   return useMutation({
-    mutationFn: async ({ data, isDelete = false }: { data?: any; isDelete?: boolean }) => {
+    mutationFn: async ({ data, isDelete = false }: { data?: any; isDelete?: boolean }): Promise<any> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
       const method = isDelete ? "DELETE" : (id ? "PUT" : "POST");
       
@@ -115,7 +115,7 @@ export function useTemplateMutation(scope: "import" | "export", id?: string) {
       });
       
       if (!res.ok) throw new Error(`Failed to ${isDelete ? "delete" : "save"} template`);
-      return res.json();
+      return (await res.json()) as any;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: importKeys.templates(scope) });
@@ -123,7 +123,7 @@ export function useTemplateMutation(scope: "import" | "export", id?: string) {
   });
 }
 
-export function useInventories(connectionId?: string, enabled: boolean = true) {
+export function useInventories(connectionId?: string, enabled: boolean = true): UseQueryResult<BaseInventory[], Error> {
   return useQuery({
     queryKey: importKeys.inventories(connectionId),
     queryFn: async () => {
@@ -133,14 +133,14 @@ export function useInventories(connectionId?: string, enabled: boolean = true) {
         body: JSON.stringify({ action: "inventories", connectionId }),
       });
       if (!res.ok) throw new Error("Failed to load inventories");
-      const data = await res.json();
-      return data.inventories as any[];
+      const data = await res.json() as { inventories: BaseInventory[] };
+      return data.inventories;
     },
     enabled,
   });
 }
 
-export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true) {
+export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true): UseQueryResult<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }, Error> {
   return useQuery({
     queryKey: importKeys.warehouses(inventoryId, connectionId, includeAll),
     queryFn: async () => {
@@ -150,13 +150,13 @@ export function useWarehouses(inventoryId: string, connectionId?: string, includ
         body: JSON.stringify({ action: "warehouses", inventoryId, connectionId, includeAllWarehouses: includeAll }),
       });
       if (!res.ok) throw new Error("Failed to load warehouses");
-      return await res.json();
+      return (await res.json()) as { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] };
     },
     enabled: enabled && !!inventoryId,
   });
 }
 
-export function useParameters(inventoryId: string, productId: string, enabled: boolean = true) {
+export function useParameters(inventoryId: string, productId: string, enabled: boolean = true): UseQueryResult<{ parameters?: Array<{ id: string; name: string }> }, Error> {
   return useQuery({
     queryKey: importKeys.parameters(inventoryId, productId),
     queryFn: async () => {
@@ -166,13 +166,13 @@ export function useParameters(inventoryId: string, productId: string, enabled: b
         body: JSON.stringify({ inventoryId, productId }),
       });
       if (!res.ok) throw new Error("Failed to load parameters");
-      return await res.json();
+      return (await res.json()) as { parameters?: Array<{ id: string; name: string }> };
     },
     enabled: enabled && !!inventoryId && !!productId,
   });
 }
 
-export function useImportList(inventoryId: string, limit?: string | number, uniqueOnly?: boolean, enabled: boolean = true) {
+export function useImportList(inventoryId: string, limit?: string | number, uniqueOnly?: boolean, enabled: boolean = true): UseQueryResult<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number }, Error> {
   return useQuery({
     queryKey: importKeys.importList(inventoryId, limit, uniqueOnly),
     queryFn: async () => {
@@ -187,13 +187,22 @@ export function useImportList(inventoryId: string, limit?: string | number, uniq
         }),
       });
       if (!res.ok) throw new Error("Failed to load import list");
-      return await res.json();
+      return (await res.json()) as { products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number };
     },
     enabled: enabled && !!inventoryId,
   });
 }
 
-export function useImportMutation() {
+export function useImportMutation(): UseMutationResult<ImportResponse, Error, {
+  inventoryId: string;
+  catalogId: string;
+  templateId?: string;
+  limit?: number;
+  imageMode: "links" | "download";
+  uniqueOnly: boolean;
+  allowDuplicateSku: boolean;
+  selectedIds?: string[];
+}> {
   return useMutation({
     mutationFn: async (params: {
       inventoryId: string;
@@ -204,7 +213,7 @@ export function useImportMutation() {
       uniqueOnly: boolean;
       allowDuplicateSku: boolean;
       selectedIds?: string[];
-    }) => {
+    }): Promise<ImportResponse> => {
       const res = await fetch("/api/integrations/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -214,15 +223,22 @@ export function useImportMutation() {
         }),
       });
       if (!res.ok) {
-        const payload = await res.json();
+        const payload = await res.json() as { error?: string };
         throw new Error(payload.error || "Import failed");
       }
-      return res.json();
+      return (await res.json()) as ImportResponse;
     },
   });
 }
 
-export function useSaveExportSettingsMutation() {
+export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, {
+  exportActiveTemplateId?: string | null;
+  exportInventoryId?: string | null;
+  selectedBaseConnectionId?: string | null;
+  exportStockFallbackEnabled?: boolean;
+  imageRetryPresets?: ImageRetryPreset[];
+  exportWarehouseId?: string | null;
+}> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -276,7 +292,7 @@ export function useSaveExportSettingsMutation() {
       }
       
       const responses = await Promise.all(requests);
-      if (responses.some(r => !r.ok)) throw new Error("Failed to save some settings");
+      if (responses.some((r: Response) => !r.ok)) throw new Error("Failed to save some settings");
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });

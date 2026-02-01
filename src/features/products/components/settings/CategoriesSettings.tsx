@@ -208,6 +208,14 @@ function CategoryNode({
   );
 }
 
+type CategoryFormData = {
+  name: string;
+  description: string;
+  color: string;
+  parentId: string | null;
+  catalogId: string;
+};
+
 export function CategoriesSettings({
   loading,
   categories,
@@ -222,11 +230,11 @@ export function CategoriesSettings({
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CategoryFormData>({
     name: "",
     description: "",
     color: "#10b981",
-    parentId: null as string | null,
+    parentId: null,
     catalogId: "",
   });
 
@@ -487,7 +495,7 @@ export function CategoriesSettings({
     if (!formData.parentId) return;
     const stillValid: boolean = parentOptions.some((opt: { id: string }): boolean => opt.id === formData.parentId);
     if (!stillValid) {
-      setFormData((prev) => ({ ...prev, parentId: null }));
+      setFormData((prev: CategoryFormData) => ({ ...prev, parentId: null }));
     }
   }, [showModal, parentOptions, formData.parentId]);
 
@@ -629,7 +637,7 @@ export function CategoriesSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    setFormData((prev: CategoryFormData) => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Category name"
                 />
@@ -642,7 +650,7 @@ export function CategoriesSettings({
                   rows={3}
                   value={formData.description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                    setFormData((prev) => ({
+                    setFormData((prev: CategoryFormData) => ({
                       ...prev,
                       description: e.target.value,
                     }))
@@ -658,7 +666,7 @@ export function CategoriesSettings({
                   value={formData.catalogId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
                     const nextCatalogId: string = e.target.value;
-                    setFormData((prev) => ({
+                    setFormData((prev: CategoryFormData) => ({
                       ...prev,
                       catalogId: nextCatalogId,
                       parentId:
@@ -682,7 +690,7 @@ export function CategoriesSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.parentId ?? ""}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev) => ({
+                    setFormData((prev: CategoryFormData) => ({
                       ...prev,
                       parentId: e.target.value ? e.target.value : null,
                     }))
@@ -718,7 +726,7 @@ export function CategoriesSettings({
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
@@ -726,7 +734,7 @@ export function CategoriesSettings({
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#10b981"
                   />

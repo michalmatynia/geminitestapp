@@ -14,7 +14,7 @@ export function useCsvImportMutation(): UseMutationResult<any, Error, File> {
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to import CSV");
-      return res.json();
+      return (await res.json()) as any;
     },
     onSuccess: () => {
       // Invalidate products as they might have been added/updated

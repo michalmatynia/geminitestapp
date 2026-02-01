@@ -57,7 +57,7 @@ export function useAiPathResumeMutation(): UseMutationResult<any, Error, { runId
       if (!response.ok) throw new Error(response.error || "Failed to resume run");
       return response.data;
     },
-    onSuccess: (_data: any, { runId }: { runId: string }) => {
+    onSuccess: (_data: any, { runId }: { runId: string; mode: "resume" | "replay" }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },
@@ -73,7 +73,7 @@ export function useAiPathRetryNodeMutation(): UseMutationResult<any, Error, { ru
       if (!response.ok) throw new Error(response.error || "Failed to retry node");
       return response.data;
     },
-    onSuccess: (_data: any, { runId }: { runId: string }) => {
+    onSuccess: (_data: any, { runId }: { runId: string; nodeId: string }) => {
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.run(runId) });
       void queryClient.invalidateQueries({ queryKey: aiPathKeys.all });
     },

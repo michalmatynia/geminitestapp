@@ -11,7 +11,7 @@ import {
 } from "@/shared/ui";
 import Link from "next/link";
 
-import { useAdminLayout } from "@/features/admin/hooks/useAdminLayout";
+import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
 import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
 import { CmsDomainSelector } from "@/features/cms/components/CmsDomainSelector";

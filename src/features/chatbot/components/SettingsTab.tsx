@@ -51,7 +51,7 @@ export function SettingsTab({
     let active: boolean = true;
     const loadPersonas = async (): Promise<void> => {
       try {
-        const { fetchPlaywrightPersonas } = await import("@/features/playwright/services/playwright-personas");
+        const { fetchPlaywrightPersonas } = await import("@/features/playwright/utils/personas");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);

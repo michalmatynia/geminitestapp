@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow } from "lucide-react";
 import { Button } from "@/shared/ui";
-import { useAdminLayout } from "@/features/admin/hooks/useAdminLayout";
+import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { PageBuilderProvider, usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useBuilderKeyboardShortcuts } from "../../hooks/useBuilderKeyboardShortcuts";
 import { ComponentTreePanel } from "./ComponentTreePanel";

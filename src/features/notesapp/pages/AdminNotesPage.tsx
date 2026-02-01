@@ -1,7 +1,7 @@
 "use client";
 import { useToast, SectionPanel } from "@/shared/ui";
 import React, { useState, useCallback, useMemo } from "react";
-import { useAdminLayout } from "@/features/admin/hooks/useAdminLayout";
+import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { FolderTree } from "@/features/foldertree/components/FolderTree";
 import { NoteListView } from "@/features/notesapp/components/NoteListView";

@@ -26,16 +26,19 @@ import type {
 } from "@/features/ai-paths/types";
 import {
   evaluateGraph,
-} from "@/features/ai-paths/services/graph-evaluator";
+} from "@/features/ai-paths/lib/core/runtime/engine";
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
+} from "@/features/ai-paths/lib/core/constants";
+import {
   createDefaultPathConfig,
-  normalizeNodes,
+} from "@/features/ai-paths/lib/core/utils/factory";
+import {
   sanitizeEdges,
-} from "@/features/ai-paths/utils";
+} from "@/features/ai-paths/lib/core/utils/graph";
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const queryClient = useQueryClient();

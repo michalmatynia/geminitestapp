@@ -78,7 +78,7 @@ export default function ProductListingJobsPanel({
 }: ProductListingJobsPanelProps): React.JSX.Element {
   // Queries
   const jobsQuery = useIntegrationJobs();
-  const jobs = jobsQuery.data || [];
+  const jobs = useMemo(() => jobsQuery.data || [], [jobsQuery.data]);
 
   // Mutations
   const cancelMutation = useCancelListingMutation();

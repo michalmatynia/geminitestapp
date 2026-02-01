@@ -3,10 +3,7 @@
 import React, { useRef, useEffect, type ReactNode } from "react";
 import type {
   GsapAnimationConfig,
-  RevealStyle,
-  TextEffect,
 } from "@/features/gsap";
-import { getGsapFromVars, getParallaxDefaults } from "@/features/gsap";
 
 interface GsapAnimationWrapperProps {
   config?: GsapAnimationConfig | undefined;
@@ -47,7 +44,7 @@ export function GsapAnimationWrapper({
       // but you would move all the animation code from the original useEffect here
     };
 
-    loadGsap();
+    void loadGsap();
   }, [config]);
 
   if (!config || config.preset === "none") {
@@ -60,5 +57,3 @@ export function GsapAnimationWrapper({
     </div>
   );
 }
-
-

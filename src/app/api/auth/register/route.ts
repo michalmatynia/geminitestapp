@@ -38,7 +38,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (!parsed.ok) {
       return parsed.response;
     }
-    const data = parsed.data;
+    const data = parsed.data!;
     const pageSettings = await getAuthUserPageSettings();
     if (!pageSettings.allowSignup) {
       throw forbiddenError("Registration is disabled.");

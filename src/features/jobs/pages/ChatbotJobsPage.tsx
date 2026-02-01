@@ -27,16 +27,7 @@ export default function ChatbotJobsPage(): React.JSX.Element {
   const [query, setQuery] = useState("");
 
   const jobsQuery = useChatbotJobs("all");
-  // Polling if any jobs are pending/running
-  const hasPending = useMemo(() => 
-    (jobsQuery.data as any)?.jobs?.some((j: any) => j.status === "pending" || j.status === "running"),
-    [jobsQuery.data]
-  );
   
-  // Re-fetch every 5s if pending
-  // Note: useChatbotJobs doesn't support options yet in my implementation, but I can add it or manually refetch
-  // For now I'll just use the basic query.
-
   const chatbotMutation = useChatbotJobMutation();
   const deleteMutation = useDeleteChatbotJobMutation();
   const clearMutation = useClearChatbotJobsMutation();

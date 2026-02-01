@@ -24,8 +24,8 @@ export function Asset3DCard({
 }: Asset3DCardProps): React.JSX.Element {
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${((bytes / 1024)).toFixed(1)} KB`;
-    return `${((bytes / 1024 / 1024)).toFixed(2)} MB`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
   };
 
   const formatDate = (date: Date | string): string => {
@@ -42,7 +42,7 @@ export function Asset3DCard({
     <div
       className={cn(
         "rounded-lg border border-border bg-card/60 overflow-hidden transition-colors group hover:border-blue-500/60",
-        className
+        className,
       )}
     >
       {/* Preview Area */}
@@ -64,7 +64,7 @@ export function Asset3DCard({
             "absolute top-2 right-2 px-2 py-1 rounded text-xs flex items-center gap-1",
             asset.isPublic
               ? "bg-emerald-500/10 text-emerald-400"
-              : "bg-muted text-muted-foreground"
+              : "bg-muted text-muted-foreground",
           )}
         >
           {asset.isPublic ? (

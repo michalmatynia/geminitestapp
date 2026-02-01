@@ -91,20 +91,6 @@ const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-// Helper to create mock image file
-// const createMockImageFile = (id?: string) => ({
-//   id: id || `image-${Date.now()}`,
-//   filename: "test.jpg",
-//   filepath: "/uploads/test.jpg",
-//   mimetype: "image/jpeg",
-//   size: 1234,
-//   width: 100,
-//   height: 100,
-//   tags: [],
-//   createdAt: new Date(),
-//   updatedAt: new Date(),
-// });
-
 describe("Products API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -112,9 +98,11 @@ describe("Products API", () => {
     // Default mock implementations
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.product.create).mockImplementation(async (args: any) => {
+    
+    // Using any-casts to satisfy Prisma client return types which are complex
+    (prisma.product.create as any).mockImplementation((args: any) => {
       const data = args.data;
-      return Promise.resolve({
+      return {
         id: `created-${Date.now()}`,
         ...data,
         createdAt: new Date(),
@@ -123,10 +111,11 @@ describe("Products API", () => {
         catalogs: [],
         categories: [],
         tags: [],
-      } as any);
+      };
     });
-    vi.mocked(prisma.product.update).mockImplementation(async (args: any) => {
-      return Promise.resolve({
+
+    (prisma.product.update as any).mockImplementation((args: any) => {
+      return {
         ...args.data,
         id: args.where.id,
         createdAt: new Date(),
@@ -135,8 +124,9 @@ describe("Products API", () => {
         catalogs: [],
         categories: [],
         tags: [],
-      } as any);
+      };
     });
+
     vi.mocked(prisma.product.delete).mockResolvedValue({} as any);
     vi.mocked(prisma.product.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.product.updateMany).mockResolvedValue({ count: 0 });
@@ -146,7 +136,7 @@ describe("Products API", () => {
     vi.mocked(prisma.productImage.findMany).mockResolvedValue([]);
     vi.mocked(prisma.productImage.createMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.imageFile.deleteMany).mockResolvedValue({ count: 0 });
-    vi.mocked(prisma.imageFile.create).mockImplementation((args: any) => ({
+    (prisma.imageFile.create as any).mockImplementation((args: any) => ({
       id: `image-${Date.now()}`,
       ...args.data,
       createdAt: new Date(),
@@ -253,8 +243,8 @@ describe("Products API", () => {
         weight: 1000,
         length: 30,
       });
-      vi.mocked(prisma.product.create).mockResolvedValue(
-        mockCreatedProduct as any,
+      (prisma.product.create as any).mockResolvedValue(
+        mockCreatedProduct
       );
       vi.mocked(prisma.product.findUnique)
         .mockResolvedValueOnce(null) // SKU check

@@ -54,7 +54,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       throw internalError("MongoDB is not configured.");
     }
 
-    const email = normalizeAuthEmail(parsed.data.email);
+    const email = normalizeAuthEmail(parsed.data?.email!);
     const ip = extractClientIp(req);
     const allowed = await checkLoginAllowed({ email, ip });
     if (!allowed.allowed) {
@@ -107,7 +107,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       return NextResponse.json({ ok: false, message: "MFA is enabled. Use MFA login." });
     }
 
-    const isValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+    const isValid = await bcrypt.compare(parsed.data?.password!, user.passwordHash);
     if (!isValid) {
       await recordLoginFailure({ email, ip, request: req });
     } else {

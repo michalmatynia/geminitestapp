@@ -34,7 +34,7 @@ vi.mock("@/features/products/server", () => ({
     try {
       const body = await req.json();
       return { ok: true, data: body };
-    } catch (e) {
+    } catch {
       return { ok: false, response: new Response("Invalid JSON", { status: 400 }) };
     }
   },

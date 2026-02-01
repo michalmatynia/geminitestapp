@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products/types";
 import type { DeleteResponse } from "@/shared/types/api";
 import { delay } from "@/shared/utils";
@@ -10,7 +14,12 @@ interface UpdateProductPayload {
   data: Partial<ProductWithImages>;
 }
 
-export function useCreateProduct(): UseMutationResult<unknown, Error, FormData, unknown> {
+export function useCreateProduct(): UseMutationResult<
+  unknown,
+  Error,
+  FormData,
+  unknown
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -25,11 +34,19 @@ export function useCreateProduct(): UseMutationResult<unknown, Error, FormData, 
   });
 }
 
-export function useUpdateProduct(): UseMutationResult<ProductWithImages, Error, UpdateProductPayload, unknown> {
+export function useUpdateProduct(): UseMutationResult<
+  ProductWithImages,
+  Error,
+  UpdateProductPayload,
+  unknown
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: UpdateProductPayload): Promise<ProductWithImages> => {
+    mutationFn: async ({
+      id,
+      data,
+    }: UpdateProductPayload): Promise<ProductWithImages> => {
       const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -47,7 +64,12 @@ export function useUpdateProduct(): UseMutationResult<ProductWithImages, Error, 
   });
 }
 
-export function useDeleteProduct(): UseMutationResult<DeleteResponse, Error, string, unknown> {
+export function useDeleteProduct(): UseMutationResult<
+  DeleteResponse,
+  Error,
+  string,
+  unknown
+> {
   const queryClient = useQueryClient();
 
   return useMutation({

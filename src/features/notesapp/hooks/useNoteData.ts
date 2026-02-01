@@ -20,7 +20,6 @@ import type {
   CategoryUpdateInput,
   ThemeCreateInput,
   ThemeUpdateInput,
-  NoteFileCreateInput,
   NoteFileRecord,
   CategoryWithChildren,
 } from "@/shared/types/notes";

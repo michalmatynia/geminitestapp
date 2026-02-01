@@ -7,7 +7,6 @@ import Link from "next/link";
 import {
   AgentAuditLog,
   AgentBrowserLog,
-  AgentSnapshot,
 } from "@/shared/types/chatbot";
 import { AiPathRunRecord } from "@/shared/types/ai-paths";
 import {

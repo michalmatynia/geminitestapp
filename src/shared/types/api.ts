@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
 }
 
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   data: T[];
   total: number;
   page?: number;
@@ -53,11 +53,9 @@ export type ApiRouteHandlerWithParams<P extends Record<string, string | string[]
 ) => Promise<Response>;
 
 
-export interface JsonParseResult<T = any> {
-  ok: boolean;
-  data?: T;
-  response: Response;
-}
+export type JsonParseResult<T = unknown> =
+  | { ok: true; data: T; response?: Response | undefined }
+  | { ok: false; response: Response; data?: undefined };
 
 export interface ParseJsonOptions {
   maxSize?: number;

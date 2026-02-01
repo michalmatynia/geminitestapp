@@ -1,0 +1,24 @@
+__tests__/api/products/products.test.ts(115,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductCreateArgs>(args: SelectSubset<T, ProductCreateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; createdAt: Date; updatedAt: Date; weight: number | null; parameters: JsonValue; name_en: string | null; sku: string | null; ... 17 more ...; imageLinks: string[]; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/api/products/products.test.ts(128,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductUpdateArgs>(args: SelectSubset<T, ProductUpdateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ length: number | null; id: string; createdAt: Date; updatedAt: Date; weight: number | null; parameters: JsonValue; name_en: string | null; sku: string | null; ... 17 more ...; imageLinks: string[]; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/features/observability/services/client-error-logger.test.ts(3,32): error TS2307: Cannot find module '@/shared/lib/observability/log-redaction' or its corresponding type declarations.
+__tests__/features/observability/services/system-log-repository.test.ts(7,8): error TS2307: Cannot find module '@/shared/lib/observability/system-log-repository' or its corresponding type declarations.
+__tests__/shared/lib/observability/critical-error-notifier.test.ts(2,37): error TS2307: Cannot find module '@/shared/lib/observability/critical-error-notifier' or its corresponding type declarations.
+__tests__/shared/lib/observability/log-redaction.test.ts(2,64): error TS2307: Cannot find module '@/shared/lib/observability/log-redaction' or its corresponding type declarations.
+__tests__/shared/lib/observability/system-logger.test.ts(2,48): error TS2307: Cannot find module '@/shared/lib/observability/system-logger' or its corresponding type declarations.
+__tests__/shared/lib/observability/system-logger.test.ts(3,33): error TS2307: Cannot find module '@/shared/lib/observability/system-log-repository' or its corresponding type declarations.
+__tests__/shared/lib/observability/system-logger.test.ts(4,37): error TS2307: Cannot find module '@/shared/lib/observability/critical-error-notifier' or its corresponding type declarations.
+__tests__/shared/lib/transient-recovery-settings.test.ts(2,46): error TS2307: Cannot find module '@/shared/lib/transient-recovery/settings' or its corresponding type declarations.
+__tests__/shared/lib/transient-recovery-settings.test.ts(5,53): error TS2307: Cannot find module '@/shared/lib/transient-recovery/constants' or its corresponding type declarations.
+src/features/agentcreator/pages/AgentRunsPage.tsx(10,3): error TS6133: 'AgentSnapshot' is declared but its value is never read.
+src/features/integrations/components/listings/ProductListingsModal.tsx(4,10): error TS6133: 'useQuery' is declared but its value is never read.
+src/features/integrations/components/listings/ProductListingsModal.tsx(49,9): error TS6133: 'queryClient' is declared but its value is never read.
+src/features/integrations/components/listings/SelectProductForListingModal.tsx(9,3): error TS6196: 'ImageTransformOptions' is declared but never used.
+src/features/jobs/hooks/useJobMutations.ts(5,1): error TS6133: 'ProductAiJob' is declared but its value is never read.
+src/features/jobs/pages/ChatbotJobsPage.tsx(31,9): error TS6133: 'hasPending' is declared but its value is never read.
+src/features/notesapp/hooks/useNoteData.ts(23,3): error TS6196: 'NoteFileCreateInput' is declared but never used.
+src/shared/utils/transient-recovery.ts(1,57): error TS2307: Cannot find module '@/shared/lib/transient-recovery/with-recovery' or its corresponding type declarations.
+src/shared/utils/transient-recovery.ts(2,47): error TS2307: Cannot find module '@/shared/lib/transient-recovery/with-recovery' or its corresponding type declarations.
+src/shared/utils/transient-recovery.ts(3,46): error TS2307: Cannot find module '@/shared/lib/transient-recovery/settings' or its corresponding type declarations.
+src/shared/utils/transient-recovery.ts(4,48): error TS2307: Cannot find module '@/shared/lib/transient-recovery/constants' or its corresponding type declarations.

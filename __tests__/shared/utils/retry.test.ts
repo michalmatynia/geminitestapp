@@ -6,7 +6,7 @@ import { externalServiceError } from "@/shared/errors/app-error";
 vi.mock("server-only", () => ({}));
 
 // Mock system logger to avoid DB/network calls
-vi.mock("@/shared/lib/observability/system-logger", () => ({
+vi.mock("@/features/observability/lib/system-logger", () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
 }));
 

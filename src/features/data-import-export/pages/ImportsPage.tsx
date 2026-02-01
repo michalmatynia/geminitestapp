@@ -213,16 +213,20 @@ export default function ImportsPage(): React.JSX.Element {
   }, [defaultConnectionPref, baseConnections]);
 
   useEffect(() => {
-    if (exportStockFallbackPref) setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
+    if (exportStockFallbackPref?.enabled !== undefined) {
+      setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
+    }
   }, [exportStockFallbackPref]);
 
   useEffect(() => {
-    if (imageRetryPresetsPref?.presets) setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
+    if (imageRetryPresetsPref?.presets) {
+      setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
+    }
   }, [imageRetryPresetsPref]);
 
   useEffect(() => {
-    if (sampleProductPref) {
-      if (sampleProductPref.inventoryId && !inventoryId) setInventoryId(sampleProductPref.inventoryId);
+    if (sampleProductPref?.inventoryId && !inventoryId) {
+      setInventoryId(sampleProductPref.inventoryId);
     }
   }, [sampleProductPref, inventoryId]);
 
@@ -257,53 +261,62 @@ export default function ImportsPage(): React.JSX.Element {
   
   useEffect(() => {
     if (inventories.length > 0) {
-      if (!inventoryId) setInventoryId(inventories[0]?.id ?? "");
-      if (!exportInventoryId) setExportInventoryId(inventories[0]?.id ?? "");
+      const firstInventoryId = inventories[0]?.id ?? "";
+      if (!inventoryId) setInventoryId(firstInventoryId);
+      if (!exportInventoryId) setExportInventoryId(firstInventoryId);
     }
   }, [inventories, inventoryId, exportInventoryId]);
 
   const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
   
-  const warehouses = warehousesData?.warehouses ?? [];
-  const allWarehouses = warehousesData?.allWarehouses ?? [];
+  const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
+  const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
 
   const { data: importListData, isFetching: loadingImportList, refetch: refetchImportList } = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
   
-  const importList = (importListData?.products ?? []) as ImportListItem[];
+  const importList: ImportListItem[] = importListData?.products ?? [];
   const importListStats = useMemo(() => {
     if (!importListData) return null;
+    const data = importListData as {
+      total?: number;
+      filtered?: number;
+      available?: number;
+      existing?: number;
+      skuDuplicates?: number;
+    };
     return {
-      total: importListData.total ?? 0,
-      filtered: importListData.filtered ?? 0,
-      available: importListData.available ?? importListData.filtered ?? 0,
-      existing: importListData.existing ?? 0,
-      skuDuplicates: importListData.skuDuplicates ?? 0,
+      total: data.total ?? 0,
+      filtered: data.filtered ?? 0,
+      available: data.available ?? data.filtered ?? 0,
+      existing: data.existing ?? 0,
+      skuDuplicates: data.skuDuplicates ?? 0,
     };
   }, [importListData]);
 
   useEffect(() => {
     if (importList.length > 0) {
-      setSelectedImportIds(new Set(importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean)));
+      const ids = importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean);
+      setSelectedImportIds(new Set(ids));
     }
   }, [importList]);
 
   // Actions
-  const handleLoadInventories = async () => {
+  const handleLoadInventories = async (): Promise<void> => {
     await refetchInventories();
     toast("Inventories reloaded", { variant: "success" });
   };
 
-  const handleLoadWarehouses = async () => {
+  const handleLoadWarehouses = async (): Promise<void> => {
     await refetchWarehouses();
     toast("Warehouses reloaded", { variant: "success" });
   };
 
-  const handleLoadImportList = async () => {
+  const handleLoadImportList = async (): Promise<void> => {
     await refetchImportList();
     toast("Import list reloaded", { variant: "success" });
   };
 
-  const handleImport = async () => {
+  const handleImport = async (): Promise<void> => {
     if (!inventoryId || !catalogId) {
       toast("Inventory and catalog are required", { variant: "error" });
       return;
@@ -321,13 +334,15 @@ export default function ImportsPage(): React.JSX.Element {
         selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
       });
       setLastResult(res);
-      toast(`Imported ${res.imported} products`, { variant: "success" });
-    } catch (error: any) {
-      toast(error.message, { variant: "error" });
+      const importedCount = (res as { imported?: number }).imported ?? 0;
+      toast(`Imported ${importedCount} products`, { variant: "success" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Import failed';
+      toast(message, { variant: "error" });
     }
   };
 
-  const handleSaveExportSettings = async () => {
+  const handleSaveExportSettings = async (): Promise<void> => {
     try {
       await saveExportSettingsMutation.mutateAsync({
         exportActiveTemplateId,
@@ -338,8 +353,9 @@ export default function ImportsPage(): React.JSX.Element {
         exportWarehouseId,
       });
       toast("Export settings saved", { variant: "success" });
-    } catch (error: any) {
-      toast(error.message, { variant: "error" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Save failed';
+      toast(message, { variant: "error" });
     }
   };
 
@@ -359,7 +375,7 @@ export default function ImportsPage(): React.JSX.Element {
         })
       ]);
       toast("Inventory cleared.", { variant: "success" });
-    } catch (_error) {
+    } catch {
       toast("Failed to clear inventory.", { variant: "error" });
     }
   };
@@ -391,8 +407,8 @@ export default function ImportsPage(): React.JSX.Element {
     }
 
     const cleanedMappings = mappings
-      .map(m => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
-      .filter(m => m.sourceKey && m.targetField);
+      .map((m: TemplateMapping) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
+      .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
 
@@ -404,11 +420,12 @@ export default function ImportsPage(): React.JSX.Element {
           mappings: cleanedMappings,
           ...(isImport ? {} : { exportImagesAsBase64 }),
         }
-      });
+      }) as Template;
       applyTemplate(res, isImport ? "import" : "export");
       toast("Template saved.", { variant: "success" });
-    } catch (error: any) {
-      toast(error.message, { variant: "error" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Template save failed';
+      toast(message, { variant: "error" });
     }
   };
 
@@ -422,24 +439,25 @@ export default function ImportsPage(): React.JSX.Element {
       await mutation.mutateAsync({ isDelete: true });
       handleNewTemplate();
       toast("Template deleted.", { variant: "success" });
-    } catch (error: any) {
-      toast(error.message, { variant: "error" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Template delete failed';
+      toast(message, { variant: "error" });
     }
   };
 
-  const updateMapping = (index: number, patch: Partial<TemplateMapping>) => {
+  const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
     const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings(prev => prev.map((m, i) => i === index ? { ...m, ...patch } : m));
+    setMappings((prev: TemplateMapping[]) => prev.map((m, i) => i === index ? { ...m, ...patch } : m));
   };
 
-  const addMappingRow = () => {
+  const addMappingRow = (): void => {
     const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings(prev => [...prev, { sourceKey: "", targetField: "" }]);
+    setMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: "", targetField: "" }]);
   };
 
-  const removeMappingRow = (index: number) => {
+  const removeMappingRow = (index: number): void => {
     const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings(prev => prev.length === 1 ? [{ sourceKey: "", targetField: "" }] : prev.filter((_, i) => i !== index));
+    setMappings((prev: TemplateMapping[]) => prev.length === 1 ? [{ sourceKey: "", targetField: "" }] : prev.filter((_, i) => i !== index));
   };
 
   const isImportTemplateScope = templateScope === "import";
@@ -448,9 +466,13 @@ export default function ImportsPage(): React.JSX.Element {
   const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
 
   const normalizedImportQuery = importSearch.trim().toLowerCase();
-  const filteredImportList = normalizedImportQuery
-    ? importList.filter((item: ImportListItem) => [item.baseProductId, item.name, item.sku ?? "", item.description ?? ""].some(f => (f as string).toLowerCase().includes(normalizedImportQuery)))
-    : importList;
+  const filteredImportList = useMemo(() => {
+    if (!normalizedImportQuery) return importList;
+    return importList.filter((item: ImportListItem) => {
+      const searchFields = [item.baseProductId, item.name, item.sku ?? "", item.description ?? ""];
+      return searchFields.some((field: string) => field.toLowerCase().includes(normalizedImportQuery));
+    });
+  }, [importList, normalizedImportQuery]);
   const selectedImportCount = selectedImportIds.size;
   const allVisibleSelected = filteredImportList.length > 0 && filteredImportList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
   const isSomeVisibleSelected = filteredImportList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
@@ -528,7 +550,7 @@ export default function ImportsPage(): React.JSX.Element {
             warehouseOptions={warehouses}
             showAllWarehouses={showAllWarehouses}
             setShowAllWarehouses={setShowAllWarehouses}
-            inventoryWarehouseIds={new Set(warehouses.map((w: any) => w.id))}
+            inventoryWarehouseIds={new Set(warehouses.map((w: WarehouseOption) => w.id))}
             exportStockFallbackEnabled={exportStockFallbackEnabled}
             setExportStockFallbackEnabled={setExportStockFallbackEnabled}
             exportStockFallbackLoaded={true}

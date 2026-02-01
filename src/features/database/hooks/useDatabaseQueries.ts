@@ -24,7 +24,7 @@ export function useDatabasePreview(input: {
       });
       if (!ok) {
         const error = new Error(payload.error || "Failed to fetch database preview");
-        (error as any).payload = payload;
+        (error as Error & { payload: unknown }).payload = payload;
         throw error;
       }
       return payload;

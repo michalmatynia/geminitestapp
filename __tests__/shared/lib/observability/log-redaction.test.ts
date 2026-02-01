@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isSensitiveKey, truncateString, REDACTED_VALUE } from "@/shared/lib/observability/log-redaction";
+import { isSensitiveKey, truncateString, REDACTED_VALUE } from "@/features/observability/lib/log-redaction";
 
 describe("log-redaction", () => {
   it("should identify sensitive keys", () => {

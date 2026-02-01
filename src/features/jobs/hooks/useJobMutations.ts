@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import { jobKeys } from "./useJobQueries";
-import type { ProductAiJob } from "@/shared/types/jobs";
 
 export function useProductAiJobMutation(): UseMutationResult<any, Error, { jobId: string; action: "retry" | "cancel" }> {
   const queryClient = useQueryClient();

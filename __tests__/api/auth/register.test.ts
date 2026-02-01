@@ -43,7 +43,7 @@ vi.mock("@/features/products/server", () => ({
         return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
       }
       return { ok: true, data: result.data };
-    } catch (e) {
+    } catch {
       return { ok: false, response: new Response("Invalid JSON", { status: 400 }) };
     }
   },

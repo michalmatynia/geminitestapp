@@ -6,7 +6,6 @@ import { useMutation } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products";
 import type {
   ImageRetryPreset,
-  ImageTransformOptions,
   Template,
   BaseInventory,
 } from "@/features/data-import-export";
@@ -37,7 +36,7 @@ export default function SelectProductForListingModal({
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const { data: products = [], isLoading: loadingProducts } = useProducts({ pageSize: 1000 });
+  const { data: products = [] } = useProducts({ pageSize: 1000 });
 
   // Integration & connection selection
   const {
@@ -189,7 +188,7 @@ export default function SelectProductForListingModal({
     return product.name_en || product.name_pl || product.name_de || product.sku || "Unnamed product";
   };
 
-  const loading = loadingProducts || loadingIntegrations;
+  const loading = loadingIntegrations;
 
   return (
     <ModalShell

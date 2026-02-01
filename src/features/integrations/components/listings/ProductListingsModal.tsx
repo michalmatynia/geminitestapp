@@ -1,8 +1,6 @@
 "use client";
 import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { QueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
 import type { ProductWithImages } from "@/features/products";
@@ -46,7 +44,6 @@ export default function ProductListingsModal({
   filterIntegrationSlug,
   onListingsUpdated,
 }: ProductListingsModalProps): React.JSX.Element {
-  const queryClient: QueryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
   const [purgingListing, setPurgingListing] = useState<string | null>(null);

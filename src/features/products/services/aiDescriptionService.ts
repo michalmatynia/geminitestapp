@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/typedef */
 import "server-only";
 
 import OpenAI from "openai";
@@ -43,7 +42,9 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection<MongoSetting>("settings").findOne({ _id: key });
+      const doc = await mongo
+        .collection<MongoSetting>("settings")
+        .findOne({ _id: key });
       if (doc && typeof doc.value === "string") {
         value = doc.value;
         return value; // Return immediately if found in MongoDB
@@ -70,7 +71,9 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && !AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection<MongoSetting>("settings").findOne({ _id: key });
+      const doc = await mongo
+        .collection<MongoSetting>("settings")
+        .findOne({ _id: key });
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }
@@ -82,12 +85,16 @@ export async function getSettingValue(key: string): Promise<string | null> {
   return value;
 }
 
-function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
+function getClient(
+  modelName: string,
+  apiKey: string | null,
+): { openai: OpenAI; isOllama: boolean } {
   // Check if it's a real OpenAI model (not gpt-oss or other Ollama variants)
   const modelLower = modelName.toLowerCase();
-  const isOpenAI = (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
-                   modelLower.startsWith("ft:gpt-") ||
-                   modelLower.startsWith("o1-");
+  const isOpenAI =
+    (modelLower.startsWith("gpt-") && !modelLower.includes("oss")) ||
+    modelLower.startsWith("ft:gpt-") ||
+    modelLower.startsWith("o1-");
 
   if (isOpenAI) {
     if (!apiKey) {
@@ -102,7 +109,7 @@ function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; 
       baseURL: `${OLLAMA_BASE_URL}/v1`,
       apiKey: "ollama",
     }),
-    isOllama: true
+    isOllama: true,
   };
 }
 
@@ -125,7 +132,12 @@ export async function generateProductDescription(params: {
   visionOutputEnabled?: boolean | undefined;
   generationOutputEnabled?: boolean | undefined;
 }): Promise<GenerateProductDescriptionResult> {
-  const { productData, imageUrls = [], visionOutputEnabled, generationOutputEnabled } = params;
+  const {
+    productData,
+    imageUrls = [],
+    visionOutputEnabled,
+    generationOutputEnabled,
+  } = params;
 
   if (!productData?.name_en) {
     throw badRequestError("Product name is required", { field: "name_en" });
@@ -155,16 +167,30 @@ export async function generateProductDescription(params: {
 
   const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
   const visionModel = visionModelSetting?.trim() || "gemma3:27b";
-  const visionInputPrompt = visionInputPromptSetting?.trim() || "Analyze these product images...";
+  const visionInputPrompt =
+    visionInputPromptSetting?.trim() || "Analyze these product images...";
   const visionOutputPrompt = visionOutputPromptSetting?.trim() || "";
-  const isVisionOutputEnabled = visionOutputEnabled !== undefined ? visionOutputEnabled : (visionOutputEnabledSetting === "true");
+  const isVisionOutputEnabled =
+    visionOutputEnabled !== undefined
+      ? visionOutputEnabled
+      : visionOutputEnabledSetting === "true";
 
   const generationModel = generationModelSetting?.trim() || "qwen3-vl:30b";
-  const generationInputPrompt = generationInputPromptSetting?.trim() || "Generate description for [name_en]";
+  const generationInputPrompt =
+    generationInputPromptSetting?.trim() ||
+    "Generate description for [name_en]";
   const generationOutputPrompt = generationOutputPromptSetting?.trim() || "";
-  const isGenerationOutputEnabled = generationOutputEnabled !== undefined ? generationOutputEnabled : (generationOutputEnabledSetting === "true");
+  const isGenerationOutputEnabled =
+    generationOutputEnabled !== undefined
+      ? generationOutputEnabled
+      : generationOutputEnabledSetting === "true";
 
-  const processPrompt = (text: string, currentResult: string = "", analysisResult: string = "", descriptionInitial: string = ""): { text: string; attachImages: boolean } => {
+  const processPrompt = (
+    text: string,
+    currentResult: string = "",
+    analysisResult: string = "",
+    descriptionInitial: string = "",
+  ): { text: string; attachImages: boolean } => {
     let processed = text;
     const hasImagesPlaceholder = processed.includes("[images]");
     processed = processed.replace(/\[analysis\]/g, analysisResult);
@@ -179,8 +205,12 @@ export async function generateProductDescription(params: {
         if (Object.prototype.hasOwnProperty.call(productData, key)) {
           const value = productData[key as keyof ProductFormData];
           if (value !== null && value !== undefined) {
-            const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
-            processed = processed.replace(new RegExp(`\\[${key}\\]`, 'g'), stringValue);
+            const stringValue =
+              typeof value === "object" ? JSON.stringify(value) : String(value);
+            processed = processed.replace(
+              new RegExp(`\\[${key}\\]`, "g"),
+              stringValue,
+            );
           }
         }
       }
@@ -192,7 +222,9 @@ export async function generateProductDescription(params: {
   if (imageUrls.length > 0) {
     const imageFileRepository = await getImageFileRepository();
     const imageFiles = await imageFileRepository.listImageFiles();
-    const imageFileMap = new Map(imageFiles.map((file: ImageFileRecord) => [file.filepath, file]));
+    const imageFileMap = new Map(
+      imageFiles.map((file: ImageFileRecord) => [file.filepath, file]),
+    );
 
     const imagePromises = imageUrls.map(async (item: string) => {
       try {
@@ -211,105 +243,156 @@ export async function generateProductDescription(params: {
           const record = imageFileMap.get(item);
           if (record) mimetype = record.mimetype;
         }
-        return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } } as ChatCompletionContentPart;
-      } catch { return null; }
+        return {
+          type: "image_url" as const,
+          image_url: { url: `data:${mimetype};base64,${base64Image}` },
+        } as ChatCompletionContentPart;
+      } catch {
+        return null;
+      }
     });
-    processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);
+    processedImages = (await Promise.all(imagePromises)).filter(
+      (img): img is ChatCompletionContentPart => img !== null,
+    );
   }
 
   let analysisInitial = "";
   let analysisFinal = "";
-  const { openai: visionClient, isOllama: isVisionOllama } = getClient(visionModel, apiKey);
+  const { openai: visionClient, isOllama: isVisionOllama } = getClient(
+    visionModel,
+    apiKey,
+  );
 
   try {
     const prompt1_1 = processPrompt(visionInputPrompt);
-    const content1_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_1.text }];
+    const content1_1: ChatCompletionContentPart[] = [
+      { type: "text", text: prompt1_1.text },
+    ];
     if (prompt1_1.attachImages) content1_1.push(...processedImages);
 
     const visionCompletion = await visionClient.chat.completions.create({
       model: visionModel,
       messages: [
         { role: "system", content: "You are an AI assistant." },
-        { role: "user", content: content1_1 }
+        { role: "user", content: content1_1 },
       ],
       max_tokens: 500,
     });
-    analysisInitial = visionCompletion.choices[0]?.message.content?.trim() || "";
+    analysisInitial =
+      visionCompletion.choices[0]?.message.content?.trim() || "";
 
     if (isVisionOutputEnabled && visionOutputPrompt) {
-      const prompt1_2 = processPrompt(visionOutputPrompt, analysisInitial, analysisInitial);
-      const content1_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_2.text }];
+      const prompt1_2 = processPrompt(
+        visionOutputPrompt,
+        analysisInitial,
+        analysisInitial,
+      );
+      const content1_2: ChatCompletionContentPart[] = [
+        { type: "text", text: prompt1_2.text },
+      ];
       if (prompt1_2.attachImages) content1_2.push(...processedImages);
       const refineCompletion = await visionClient.chat.completions.create({
         model: visionModel,
         messages: [
           { role: "system", content: "You are an AI assistant." },
-          { role: "user", content: content1_2 }
+          { role: "user", content: content1_2 },
         ],
         max_tokens: 500,
       });
-      analysisFinal = refineCompletion.choices[0]?.message.content?.trim() || "";
+      analysisFinal =
+        refineCompletion.choices[0]?.message.content?.trim() || "";
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
-                             errorMessage.includes("fetch failed") || 
-                             errorMessage.includes("failed to fetch");
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError =
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("fetch failed") ||
+      errorMessage.includes("failed to fetch");
 
     if (isVisionOllama && isConnectionError) {
       throw operationFailedError(
         `Description generation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
         undefined,
-        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: visionModel }
+        {
+          originalError: errorMessage,
+          url: OLLAMA_BASE_URL,
+          model: visionModel,
+        },
       );
     }
     throw error;
   }
 
   const visionResultForNext = analysisFinal || analysisInitial;
-  const { openai: generationClient, isOllama: isGenerationOllama } = getClient(generationModel, apiKey);
+  const { openai: generationClient, isOllama: isGenerationOllama } = getClient(
+    generationModel,
+    apiKey,
+  );
   let descriptionInitial = "";
   let descriptionFinal = "";
 
   try {
-    const prompt2_1 = processPrompt(generationInputPrompt, visionResultForNext, visionResultForNext);
-    const content2_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_1.text }];
+    const prompt2_1 = processPrompt(
+      generationInputPrompt,
+      visionResultForNext,
+      visionResultForNext,
+    );
+    const content2_1: ChatCompletionContentPart[] = [
+      { type: "text", text: prompt2_1.text },
+    ];
     if (prompt2_1.attachImages) content2_1.push(...processedImages);
     const genCompletion = await generationClient.chat.completions.create({
       model: generationModel,
       messages: [
         { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: content2_1 }
+        { role: "user", content: content2_1 },
       ],
       max_tokens: 1000,
     });
-    descriptionInitial = genCompletion.choices[0]?.message.content?.trim() || "";
+    descriptionInitial =
+      genCompletion.choices[0]?.message.content?.trim() || "";
 
     if (isGenerationOutputEnabled && generationOutputPrompt) {
-      const prompt2_2 = processPrompt(generationOutputPrompt, descriptionInitial, visionResultForNext, descriptionInitial);
-      const content2_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_2.text }];
+      const prompt2_2 = processPrompt(
+        generationOutputPrompt,
+        descriptionInitial,
+        visionResultForNext,
+        descriptionInitial,
+      );
+      const content2_2: ChatCompletionContentPart[] = [
+        { type: "text", text: prompt2_2.text },
+      ];
       if (prompt2_2.attachImages) content2_2.push(...processedImages);
-      const refineGenCompletion = await generationClient.chat.completions.create({
-        model: generationModel,
-        messages: [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: content2_2 }
-        ],
-        max_tokens: 1000,
-      });
-      descriptionFinal = refineGenCompletion.choices[0]?.message.content?.trim() || "";
+      const refineGenCompletion =
+        await generationClient.chat.completions.create({
+          model: generationModel,
+          messages: [
+            { role: "system", content: "You are a helpful assistant." },
+            { role: "user", content: content2_2 },
+          ],
+          max_tokens: 1000,
+        });
+      descriptionFinal =
+        refineGenCompletion.choices[0]?.message.content?.trim() || "";
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
-                             errorMessage.includes("fetch failed") || 
-                             errorMessage.includes("failed to fetch");
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError =
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("fetch failed") ||
+      errorMessage.includes("failed to fetch");
 
     if (isGenerationOllama && isConnectionError) {
       throw operationFailedError(
         `Description generation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
         undefined,
-        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: generationModel }
+        {
+          originalError: errorMessage,
+          url: OLLAMA_BASE_URL,
+          model: generationModel,
+        },
       );
     }
     throw error;
@@ -326,6 +409,6 @@ export async function generateProductDescription(params: {
     visionModel,
     generationModel,
     visionOutputEnabled: isVisionOutputEnabled,
-    generationOutputEnabled: isGenerationOutputEnabled
+    generationOutputEnabled: isGenerationOutputEnabled,
   };
 }

@@ -28,7 +28,7 @@ export function useUpdateSetting(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ key, value }) => {
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

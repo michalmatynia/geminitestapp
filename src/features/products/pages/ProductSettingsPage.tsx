@@ -2,7 +2,6 @@
 
 import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import {
-  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -13,22 +12,8 @@ import {
 import {
   PriceGroup,
   Catalog,
-  ProductCategoryWithChildren,
-  ProductTag,
-  PriceGroupType,
 } from "@/features/products/types";
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
-
-interface ApiPriceGroup extends Omit<PriceGroup, "currencyCode" | "groupType"> {
-  currency: { code: string };
-  type: PriceGroupType;
-}
-
-interface ApiCatalog extends Omit<Catalog, "description" | "priceGroupIds" | "defaultPriceGroupId"> {
-  description: string | null;
-  priceGroupIds: string[] | null;
-  defaultPriceGroupId: string | null;
-}
 
 import { PriceGroupsSettings } from "@/features/products/components/settings/pricing/PriceGroupsSettings";
 import { CatalogsSettings } from "@/features/products/components/settings/catalogs/CatalogsSettings";
@@ -282,7 +267,7 @@ export function ProductSettingsPage(): React.JSX.Element {
 
       <PriceGroupModal
         isOpen={showPriceGroupModal}
-        onClose={() => setShowPriceGroupModal(true)} // Fix: this was false in previous version but should probably be false. Wait, no, it should be false.
+        onClose={() => setShowPriceGroupModal(false)}
         onSuccess={(): void => { setShowPriceGroupModal(false); }}
         priceGroup={editingPriceGroup}
         currencyOptions={currencies}

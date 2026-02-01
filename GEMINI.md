@@ -2,7 +2,7 @@
 
 ## IMPORTANT: Read-Only Unless Asked
 
-Do not modify `GEMINI.md` unless a user explicitly requests it. (Gemini CLI has been reverting changes.)
+Do not modify `GEMINI.md` unless a user explicitly requests it. When asked, keep edits minimal and scoped to the request. (Gemini CLI has been reverting changes.)
 
 ## Project Snapshot (Verified)
 
@@ -128,10 +128,9 @@ src/
 
 - **Prisma** is the primary ORM; `DATABASE_URL` can point to SQLite (dev) or Postgres (prod).
 - **MongoDB** is used by auth/user storage and various services; auth routes error without `MONGODB_URI`.
-- **Providers** are selectable for certain domains:
-  - Products: `PRODUCT_DB_PROVIDER` / app settings
-  - Integrations: `INTEGRATION_DB_PROVIDER` / app settings
-- **AI Paths** repository chooses Prisma when `DATABASE_URL` is set, otherwise MongoDB (requires `MONGODB_URI`).
+- **App-wide provider**: `app_db_provider` setting (stored in DB) or `APP_DB_PROVIDER` env; fallback prefers Mongo when `MONGODB_URI` is set, else Prisma (requires `DATABASE_URL` for Prisma).
+- **CMS, products, integrations, notes, internationalization** use `getAppDbProvider` (app-wide selection).
+- **AI Paths** repository chooses Prisma when `DATABASE_URL` is set, otherwise MongoDB (requires `MONGODB_URI` if Prisma is not configured).
 
 ## Integrations
 
@@ -144,6 +143,7 @@ src/
 - CMS pages, blocks, themes, and domain-scoped slugs.
 - Frontend CMS rendering supports GSAP animations via `GsapAnimationWrapper`.
 - App embeds are supported (e.g., chatbot blocks).
+- Grid/row/column backgrounds can use ImageElement settings stored as `backgroundImage` for layered backgrounds.
 
 ## AI + Automation
 
@@ -174,8 +174,7 @@ src/
 DATABASE_URL=
 MONGODB_URI=
 MONGODB_DB=
-PRODUCT_DB_PROVIDER=prisma|mongodb
-INTEGRATION_DB_PROVIDER=prisma|mongodb
+APP_DB_PROVIDER=prisma|mongodb
 
 # Auth
 NEXTAUTH_SECRET=

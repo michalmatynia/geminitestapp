@@ -619,7 +619,7 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   return result as unknown as Record<string, unknown>;
 }
 
-export const pollQueue = async (): Promise<void> => {
+const pollQueue = async (): Promise<void> => {
   if (isProcessing) {
     console.log("[productAiQueue] Already processing a job, skipping poll");
     return;

@@ -34,7 +34,7 @@ export const getAllCategories = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   return prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: { name: "asc" },
+    orderBy: [{ sortIndex: "asc" }, { name: "asc" }],
   });
 };
 
@@ -51,7 +51,7 @@ export const getCategoryTree = async (
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const categories: CategoryTreeRecord[] = await prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
-    orderBy: { name: "asc" },
+    orderBy: [{ sortIndex: "asc" }, { name: "asc" }],
     include: categoryTreeInclude,
   });
 
@@ -73,10 +73,17 @@ export const createCategory = async (
 ): Promise<CategoryRecord> => {
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+  const parentId = data.parentId ?? null;
+  const maxSort = await prisma.category.aggregate({
+    where: { notebookId: resolvedNotebookId, parentId },
+    _max: { sortIndex: true },
+  });
+  const nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
 
   const createData: Prisma.CategoryCreateInput = {
     name: data.name,
     notebook: { connect: { id: resolvedNotebookId } },
+    sortIndex: data.sortIndex ?? nextSortIndex,
   };
   if (data.description !== undefined) createData.description = data.description;
   if (data.color !== undefined) createData.color = data.color;
@@ -91,12 +98,28 @@ export const updateCategory = async (
   data: CategoryUpdateInput
 ): Promise<CategoryRecord | null> => {
   try {
+    let nextSortIndex: number | undefined;
+    if (data.parentId !== undefined && data.sortIndex === undefined) {
+      const current = await prisma.category.findUnique({ where: { id } });
+      const resolvedNotebookId = current?.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+      const parentId = data.parentId ?? null;
+      const maxSort = await prisma.category.aggregate({
+        where: { notebookId: resolvedNotebookId, parentId },
+        _max: { sortIndex: true },
+      });
+      nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
+    }
     const updateData: Prisma.CategoryUpdateInput = {
       ...(data.name !== undefined && { name: data.name }),
       ...(data.description !== undefined && {
         description: data.description,
       }),
       ...(data.color !== undefined && { color: data.color }),
+      ...(data.sortIndex !== undefined
+        ? { sortIndex: data.sortIndex }
+        : nextSortIndex !== undefined
+        ? { sortIndex: nextSortIndex }
+        : {}),
       ...(data.parentId !== undefined &&
         (data.parentId
           ? { parent: { connect: { id: data.parentId } } }

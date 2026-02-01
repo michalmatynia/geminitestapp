@@ -56,6 +56,7 @@ export type CategoryRecord = {
   parentId?: string | null;
   notebookId?: string | null;
   themeId?: string | null;
+  sortIndex?: number | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -164,6 +165,7 @@ export type CategoryCreateInput = {
   parentId?: string | null | undefined;
   notebookId?: string | null | undefined;
   themeId?: string | null | undefined;
+  sortIndex?: number | null | undefined;
 };
 
 export type CategoryUpdateInput = Partial<CategoryCreateInput>;

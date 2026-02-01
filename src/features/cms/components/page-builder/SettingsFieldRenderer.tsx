@@ -85,6 +85,25 @@ const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
 
 const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+const readUploadError = async (res: Response): Promise<string> => {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data?.error) return data.error;
+    } catch {
+      // Fall back to text.
+    }
+  }
+  try {
+    const text = await res.text();
+    if (text.trim().length > 0) return text;
+  } catch {
+    // ignore
+  }
+  return `Upload failed (${res.status})`;
+};
+
 interface SettingsFieldRendererProps {
   field: SettingsField;
   value: unknown;
@@ -136,7 +155,7 @@ export function SettingsFieldRenderer({
       body: formData,
     });
     if (!res.ok) {
-      throw new Error("Failed to upload image");
+      throw new Error(await readUploadError(res));
     }
     return (await res.json()) as ImageFileRecord;
   };

@@ -50,8 +50,8 @@ The platform can run on **Prisma** or **MongoDB**, selected by:
 - `APP_DB_PROVIDER` env var
 - Fallback: prefer Mongo when `MONGODB_URI` is set, else Prisma when `DATABASE_URL` exists
 
-See: `src/features/products/services/product-provider.ts` and repository implementations under
-`src/features/products/services/*-repository/` (e.g. `mongo-*` and `prisma-*`).
+See: `src/shared/lib/db/app-db-provider.ts` plus feature providers in
+`src/features/*/services/*-provider.ts` (products, cms, integrations, notes, internationalization).
 
 ## CMS Domains & Slugs (Mongo)
 
@@ -137,7 +137,6 @@ Auth settings (roles, permissions, policies) are stored in the Mongo `settings` 
 ```
 DATABASE_URL=postgresql://...
 MONGODB_URI=mongodb://...
-PRODUCT_DB_PROVIDER=prisma|mongodb
 NEXTAUTH_SECRET=...
 NEXTAUTH_URL=http://localhost:3000
 OPENAI_API_KEY=...
@@ -189,8 +188,8 @@ npm run debug
 
 ## Update Expectations
 
-If you change architecture, data providers, or AI flows, update this file and
-`GEMINI.md` to keep them accurate.
+If you change architecture, data providers, or AI flows, update this file.
+Only update `GEMINI.md` when a user explicitly requests it (it gets reverted otherwise).
 
 ---
 

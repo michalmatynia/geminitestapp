@@ -27,6 +27,7 @@ export const FolderNode = React.memo(function FolderNode({
   selectedNoteId,
   onDropNote,
   onDropFolder,
+  onReorderFolder,
   onRelateNotes,
   draggedFolderId,
   draggedNoteId,
@@ -45,6 +46,7 @@ export const FolderNode = React.memo(function FolderNode({
 }: FolderNodeProps): React.JSX.Element {
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [reorderHover, setReorderHover] = useState<"above" | "below" | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const renameValueRef = useRef(folder.name);
   const hasChildren = folder.children.length > 0;
@@ -109,6 +111,41 @@ export const FolderNode = React.memo(function FolderNode({
     return !isDescendantOf(draggedFolder, folder.id);
   }, [draggedFolderId, folder.id, allFolders]);
 
+  const showReorderZones = Boolean(onReorderFolder) && Boolean(draggedFolderId) && draggedFolderId !== folder.id;
+  const resolveReorderPosition = (clientY: number, rect: DOMRect): "before" | "after" | null => {
+    const threshold = Math.max(6, rect.height * 0.25);
+    if (clientY - rect.top <= threshold) return "before";
+    if (rect.bottom - clientY <= threshold) return "after";
+    return null;
+  };
+
+  const handleReorderDragOver = (position: "above" | "below") => (e: React.DragEvent<HTMLDivElement>): void => {
+    if (!draggedFolderId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canDropHere) return;
+    setReorderHover(position);
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleReorderDragLeave = (position: "above" | "below") => (): void => {
+    if (reorderHover === position) {
+      setReorderHover(null);
+    }
+  };
+
+  const handleReorderDrop = (position: "before" | "after") => (e: React.DragEvent<HTMLDivElement>): void => {
+    if (!draggedFolderId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setReorderHover(null);
+    if (!canDropHere) {
+      toast("Can't move a folder into itself", { variant: "info" });
+      return;
+    }
+    onReorderFolder?.(draggedFolderId, folder.id, position);
+  };
+
   const sortedNotes = useMemo(() => {
     if (!folder.notes || folder.notes.length === 0) return [];
     return folder.notes.slice().sort((a: NoteRecord, b: NoteRecord) => a.title.localeCompare(b.title));
@@ -137,6 +174,17 @@ export const FolderNode = React.memo(function FolderNode({
         onRelateNotes(draggedNoteId, folder.id);
       }}
     >
+      {showReorderZones && (
+        <div
+          onDragOver={handleReorderDragOver("above")}
+          onDragLeave={handleReorderDragLeave("above")}
+          onDrop={handleReorderDrop("before")}
+          className={`h-1 rounded transition ${
+            reorderHover === "above" ? "bg-blue-500/80" : "bg-transparent"
+          }`}
+          style={{ marginLeft: `${level * 16 + 8}px` }}
+        />
+      )}
       <div
         draggable
         onDragStart={(e: React.DragEvent<HTMLDivElement>): void => {
@@ -150,6 +198,7 @@ export const FolderNode = React.memo(function FolderNode({
         onDragEnd={(e: React.DragEvent<HTMLDivElement>): void => {
           const target = e.currentTarget as HTMLElement;
           target.style.opacity = "1";
+          setReorderHover(null);
           onDragEndProp();
         }}
         className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
@@ -163,25 +212,36 @@ export const FolderNode = React.memo(function FolderNode({
         onDragOver={(e: React.DragEvent<HTMLDivElement>): void => {
           e.preventDefault();
           e.stopPropagation();
-          if (canDropHere) {
-            setIsDragOver(true);
+          if (draggedFolderId) {
+            if (!canDropHere) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const position = resolveReorderPosition(e.clientY, rect);
+            setReorderHover(position === "before" ? "above" : position === "after" ? "below" : null);
+            setIsDragOver(!position);
+            e.dataTransfer.dropEffect = "move";
+            return;
           }
+          if (canDropHere) setIsDragOver(true);
         }}
         onDragLeave={(e: React.DragEvent<HTMLDivElement>): void => {
           e.stopPropagation();
           setIsDragOver(false);
+          if (draggedFolderId) {
+            setReorderHover(null);
+          }
         }}
         onDrop={(e: React.DragEvent<HTMLDivElement>): void => {
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
+          setReorderHover(null);
 
           const noteId =
             e.dataTransfer.getData("noteId") ||
             e.dataTransfer.getData("text/plain") ||
             draggedNoteId ||
             "";
-          const folderId = e.dataTransfer.getData("folderId");
+          const folderId = e.dataTransfer.getData("folderId") || draggedFolderId || "";
 
           if (noteId) {
             if (noteId === folder.id) {
@@ -192,6 +252,12 @@ export const FolderNode = React.memo(function FolderNode({
           } else if (folderId) {
             if (!canDropHere) {
               toast("Can't move a folder into itself", { variant: "info" });
+              return;
+            }
+            const rect = e.currentTarget.getBoundingClientRect();
+            const position = resolveReorderPosition(e.clientY, rect);
+            if (position && onReorderFolder) {
+              onReorderFolder(folderId, folder.id, position);
               return;
             }
             onDropFolder(folderId, folder.id);
@@ -288,6 +354,17 @@ export const FolderNode = React.memo(function FolderNode({
           </div>
         )}
       </div>
+      {showReorderZones && (
+        <div
+          onDragOver={handleReorderDragOver("below")}
+          onDragLeave={handleReorderDragLeave("below")}
+          onDrop={handleReorderDrop("after")}
+          className={`h-1 rounded transition ${
+            reorderHover === "below" ? "bg-blue-500/80" : "bg-transparent"
+          }`}
+          style={{ marginLeft: `${level * 16 + 8}px` }}
+        />
+      )}
 
       {isExpanded && (
         <div>
@@ -309,6 +386,7 @@ export const FolderNode = React.memo(function FolderNode({
               selectedNoteId={selectedNoteId}
               onDropNote={onDropNote}
               onDropFolder={onDropFolder}
+              onReorderFolder={onReorderFolder}
               onRelateNotes={onRelateNotes}
               draggedFolderId={draggedFolderId}
               draggedNoteId={draggedNoteId}

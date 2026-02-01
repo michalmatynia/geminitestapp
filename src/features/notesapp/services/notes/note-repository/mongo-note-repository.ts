@@ -81,6 +81,7 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   parentId: doc.parentId ?? null,
   notebookId: doc.notebookId ?? null,
   themeId: doc.themeId ?? null,
+  sortIndex: doc.sortIndex ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -679,7 +680,7 @@ export const mongoNoteRepository: NoteRepository = {
       notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
     const docs = await collection
       .find({ notebookId: resolvedNotebookId } as Filter<CategoryDocument>)
-      .sort({ name: 1 })
+      .sort({ sortIndex: 1, name: 1 })
       .toArray();
     return docs.map(toCategoryResponse);
   },
@@ -698,7 +699,7 @@ export const mongoNoteRepository: NoteRepository = {
       notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
     const docs = await collection
       .find({ notebookId: resolvedNotebookId } as Filter<CategoryDocument>)
-      .sort({ name: 1 })
+      .sort({ sortIndex: 1, name: 1 })
       .toArray();
     const categories = docs.map(toCategoryResponse);
 
@@ -720,6 +721,13 @@ export const mongoNoteRepository: NoteRepository = {
     const now = new Date();
     const resolvedNotebookId =
       data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const parentId = data.parentId ?? null;
+    const lastSibling = await collection
+      .find({ notebookId: resolvedNotebookId, parentId } as Filter<CategoryDocument>)
+      .sort({ sortIndex: -1 })
+      .limit(1)
+      .toArray();
+    const nextSortIndex = (lastSibling[0]?.sortIndex ?? -1) + 1;
 
     const doc: CategoryDocument = {
       _id: id,
@@ -727,9 +735,10 @@ export const mongoNoteRepository: NoteRepository = {
       name: data.name,
       description: data.description ?? null,
       color: data.color ?? "#10b981",
-      parentId: data.parentId ?? null,
+      parentId,
       themeId: data.themeId ?? null,
       notebookId: resolvedNotebookId,
+      sortIndex: data.sortIndex ?? nextSortIndex,
       createdAt: now,
       updatedAt: now,
     };
@@ -742,6 +751,21 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
 
+    const current = await collection.findOne({ $or: [{ id }, { _id: id }] } as Filter<CategoryDocument>);
+    if (!current) throw notFoundError("Category not found");
+
+    let nextSortIndex: number | undefined;
+    if (data.parentId !== undefined && data.sortIndex === undefined) {
+      const resolvedNotebookId = current.notebookId ?? null;
+      const parentId = data.parentId ?? null;
+      const lastSibling = await collection
+        .find({ notebookId: resolvedNotebookId, parentId } as Filter<CategoryDocument>)
+        .sort({ sortIndex: -1 })
+        .limit(1)
+        .toArray();
+      nextSortIndex = (lastSibling[0]?.sortIndex ?? -1) + 1;
+    }
+
     const updateDoc: UpdateFilter<CategoryDocument> = {
       $set: {
         updatedAt: new Date(),
@@ -750,6 +774,11 @@ export const mongoNoteRepository: NoteRepository = {
         ...(data.color !== undefined && { color: data.color }),
         ...(data.parentId !== undefined && { parentId: data.parentId }),
         ...(data.themeId !== undefined && { themeId: data.themeId }),
+        ...(data.sortIndex !== undefined
+          ? { sortIndex: data.sortIndex }
+          : nextSortIndex !== undefined
+          ? { sortIndex: nextSortIndex }
+          : {}),
       },
     };
 

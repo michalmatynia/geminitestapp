@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { NoteWithRelations } from "@/shared/types/notes";
+import type { NoteWithRelations, CategoryWithChildren } from "@/shared/types/notes";
 import type { UseNoteOperationsProps } from "@/features/notesapp/types/notes-hooks";
 import { findFolderParentId, findFolderById } from "@/features/foldertree";
 import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
@@ -24,6 +24,7 @@ export function useNoteOperations({
   handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
   handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
   handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
+  handleReorderFolder: (folderId: string, targetId: string, position: "before" | "after") => Promise<void>;
   handleRelateNotes: (sourceNoteId: string, targetNoteId: string) => Promise<void>;
 } {
 
@@ -279,6 +280,54 @@ export function useNoteOperations({
     }
   }, [fetchFolderTree, fetchNotes, folderTreeRef, setUndoStack, toast]);
 
+  const handleReorderFolder = useCallback(async (folderId: string, targetId: string, position: "before" | "after"): Promise<void> => {
+    const tree = folderTreeRef.current;
+    const draggedFolder = findFolderById(tree, folderId);
+    if (!draggedFolder) return;
+
+    const targetParentId = findFolderParentId(tree, targetId);
+    const draggedParentId = findFolderParentId(tree, folderId);
+
+    const getSiblings = (parentId: string | null): CategoryWithChildren[] => {
+      if (!parentId) return tree;
+      const parent = findFolderById(tree, parentId);
+      return parent?.children ?? [];
+    };
+
+    const siblings = getSiblings(targetParentId);
+    const filtered = siblings.filter((sibling: CategoryWithChildren) => sibling.id !== folderId);
+    const targetIndex = filtered.findIndex((sibling: CategoryWithChildren) => sibling.id === targetId);
+    if (targetIndex === -1) return;
+
+    const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+    filtered.splice(insertIndex, 0, draggedFolder);
+
+    try {
+      const responses = await Promise.all(
+        filtered.map((sibling: CategoryWithChildren, index: number) => {
+          const update: Record<string, unknown> = { sortIndex: index };
+          if (sibling.id === folderId && draggedParentId !== targetParentId) {
+            update.parentId = targetParentId;
+          }
+          return fetch(`/api/notes/categories/${sibling.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(update),
+          });
+        })
+      );
+      if (responses.some((res) => !res.ok)) {
+        throw new Error("Failed to reorder folders");
+      }
+      await fetchFolderTree();
+      await fetchNotes();
+      toast("Folder reordered successfully");
+    } catch (error: unknown) {
+      console.error("Failed to reorder folder:", error);
+      toast("Failed to reorder folder", { variant: "error" });
+    }
+  }, [fetchFolderTree, fetchNotes, folderTreeRef, toast]);
+
   const handleRelateNotes = useCallback(async (sourceNoteId: string, targetNoteId: string): Promise<void> => {
     if (!sourceNoteId || !targetNoteId) return;
     if (sourceNoteId === targetNoteId) return;
@@ -359,6 +408,7 @@ export function useNoteOperations({
     handleRenameNote,
     handleMoveNoteToFolder,
     handleMoveFolderToFolder,
+    handleReorderFolder,
     handleRelateNotes,
   };
 }

@@ -1,7 +1,17 @@
 import "server-only";
 
 export * from "./services/productAiService";
-export * from "./workers/agentQueue";
-export * from "./workers/aiPathRunQueue";
-export * from "./workers/chatbotJobQueue";
-export * from "./workers/productAiQueue";
+export { startAgentQueue } from "./workers/agentQueue";
+export {
+  startAiPathRunQueue,
+  getAiPathRunQueueStatus,
+  processSingleRun,
+} from "./workers/aiPathRunQueue";
+export { startChatbotJobQueue, stopChatbotJobQueue } from "./workers/chatbotJobQueue";
+export {
+  startProductAiJobQueue,
+  getQueueStatus,
+  processSingleJob,
+  resetProductAiJobQueue,
+  stopProductAiJobQueue,
+} from "./workers/productAiQueue";

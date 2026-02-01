@@ -152,6 +152,21 @@ export function ComponentSettingsPanel(): React.ReactNode {
     if (columnHeightMode !== "inherit") return selectedColumn.settings;
     return { ...selectedColumn.settings, height: 0 };
   }, [selectedColumn, columnHeightMode]);
+  const isGridImageElement =
+    selectedBlock?.type === "ImageElement" &&
+    selectedParentSection?.type === "Grid" &&
+    !selectedParentBlock;
+  const imageBackgroundSrc = (selectedBlock?.settings?.["src"] as string) || "";
+  const selectedGridRow = useMemo<BlockInstance | null>(() => {
+    if (!selectedParentSection || selectedParentSection.type !== "Grid" || !selectedParentColumn) return null;
+    return (
+      selectedParentSection.blocks.find(
+        (block: BlockInstance) =>
+          block.type === "Row" &&
+          (block.blocks ?? []).some((column: BlockInstance) => column.id === selectedParentColumn.id)
+      ) ?? null
+    );
+  }, [selectedParentSection, selectedParentColumn]);
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -255,6 +270,65 @@ export function ComponentSettingsPanel(): React.ReactNode {
       });
     }
   }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]);
+
+  const handleMakeBackground = useCallback(
+    (target: "grid" | "row" | "column"): void => {
+      if (!selectedBlock || selectedBlock.type !== "ImageElement" || !selectedParentSection) return;
+      if (selectedParentSection.type !== "Grid") return;
+      if (!imageBackgroundSrc) return;
+      if (selectedParentBlock) return;
+
+      const backgroundImage = { ...selectedBlock.settings };
+
+      if (target === "grid") {
+        dispatch({
+          type: "UPDATE_SECTION_SETTINGS",
+          sectionId: selectedParentSection.id,
+          settings: { backgroundImage },
+        });
+      } else if (target === "row") {
+        if (!selectedGridRow) return;
+        dispatch({
+          type: "UPDATE_BLOCK_SETTINGS",
+          sectionId: selectedParentSection.id,
+          blockId: selectedGridRow.id,
+          settings: { backgroundImage },
+        });
+      } else {
+        if (!selectedParentColumn) return;
+        dispatch({
+          type: "UPDATE_COLUMN_SETTINGS",
+          sectionId: selectedParentSection.id,
+          columnId: selectedParentColumn.id,
+          settings: { backgroundImage },
+        });
+      }
+
+      if (selectedParentColumn) {
+        dispatch({
+          type: "REMOVE_BLOCK_FROM_COLUMN",
+          sectionId: selectedParentSection.id,
+          columnId: selectedParentColumn.id,
+          blockId: selectedBlock.id,
+        });
+      } else {
+        dispatch({
+          type: "REMOVE_BLOCK",
+          sectionId: selectedParentSection.id,
+          blockId: selectedBlock.id,
+        });
+      }
+    },
+    [
+      dispatch,
+      imageBackgroundSrc,
+      selectedBlock,
+      selectedGridRow,
+      selectedParentBlock,
+      selectedParentColumn,
+      selectedParentSection,
+    ]
+  );
 
   const handleRemoveRow = useCallback((): void => {
     if (!isRowBlock || !selectedParentSection || !selectedBlock) return;
@@ -482,7 +556,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [activeTab, dispatch, state.inspectorEnabled]);
 
   return (
-    <aside className="flex w-80 flex-col border-l border-border bg-gray-900">
+    <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
       {/* Header */}
       <div className="border-b border-border px-4 py-2">
         <div className="flex items-center gap-1">
@@ -639,7 +713,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
           onValueChange={(value: string): void =>
             setActiveTab(value as "settings" | "animation" | "connections")
           }
-          className="flex flex-1 flex-col overflow-hidden"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
@@ -779,6 +853,53 @@ export function ComponentSettingsPanel(): React.ReactNode {
                       : (isRowBlock && rowHeightMode === "inherit" && field.key === "height")
                         ? { ...field, disabled: true }
                         : field,
+                )}
+
+                {isGridImageElement && (
+                  <div className="rounded border border-border/40 bg-gray-900/40 p-3">
+                    <div className="text-xs font-semibold text-gray-200">Make background</div>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      Move this image behind grid content while keeping its effects.
+                    </p>
+                    <div className="mt-3 grid gap-2">
+                      {selectedParentColumn && (
+                        <Button
+                          onClick={(): void => handleMakeBackground("column")}
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          disabled={!imageBackgroundSrc}
+                        >
+                          Make column background
+                        </Button>
+                      )}
+                      {selectedGridRow && (
+                        <Button
+                          onClick={(): void => handleMakeBackground("row")}
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          disabled={!imageBackgroundSrc}
+                        >
+                          Make row background
+                        </Button>
+                      )}
+                      <Button
+                        onClick={(): void => handleMakeBackground("grid")}
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        disabled={!imageBackgroundSrc}
+                      >
+                        Make grid background
+                      </Button>
+                      {!imageBackgroundSrc && (
+                        <div className="text-[11px] text-gray-500">
+                          Pick an image first to enable background placement.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 <div className="border-t border-border/30 pt-4">

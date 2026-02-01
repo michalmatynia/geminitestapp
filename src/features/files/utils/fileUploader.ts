@@ -2,6 +2,7 @@ import "server-only";
 
 import fs from "fs/promises";
 import path from "path";
+import { randomUUID } from "crypto";
 
 import { getImageFileRepository } from "@/features/files/services/image-file-repository";
 import { noteService } from "@/features/notesapp/server";
@@ -56,10 +57,16 @@ function getUploadTarget({
 
 export async function uploadFile(
   file: File,
-  options?: { category?: "products" | "notes" | "cms" | undefined; sku?: string | null | undefined; noteId?: string | null | undefined }
+  options?: {
+    category?: "products" | "notes" | "cms" | undefined;
+    sku?: string | null | undefined;
+    noteId?: string | null | undefined;
+    allowOrphanRecord?: boolean | undefined;
+  }
 ): Promise<ImageFileRecord> {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${path.basename(file.name)}`;
+  const rawName = typeof file.name === "string" && file.name.trim().length > 0 ? file.name : "upload.bin";
+  const filename = `${Date.now()}-${path.basename(rawName)}`;
   const { diskDir, publicDir } = getUploadTarget({
     category: options?.category,
     sku: options?.sku,
@@ -72,12 +79,13 @@ export async function uploadFile(
     await fs.writeFile(filepath, fileBuffer);
 
     const imageFileRepository = await getImageFileRepository();
-    const imageFile = await imageFileRepository.createImageFile({
+    const recordInput = {
       filename,
       filepath: `${publicDir}/${filename}`,
       mimetype: file.type,
       size: file.size,
-    });
+    };
+    const imageFile = await imageFileRepository.createImageFile(recordInput);
 
     return imageFile;
   } catch (error) {
@@ -87,6 +95,21 @@ export async function uploadFile(
       filename,
       diskDir,
     });
+    if (options?.allowOrphanRecord) {
+      const now = new Date();
+      return {
+        id: randomUUID(),
+        filename,
+        filepath: `${publicDir}/${filename}`,
+        mimetype: file.type,
+        size: file.size,
+        width: null,
+        height: null,
+        tags: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
     throw error;
   }
 }

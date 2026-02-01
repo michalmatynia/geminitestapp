@@ -17,6 +17,7 @@ export interface FolderTreeProps {
   selectedNoteId?: string | undefined;
   onDropNote: (noteId: string, folderId: string | null) => void;
   onDropFolder: (folderId: string, targetParentId: string | null) => void;
+  onReorderFolder?: (folderId: string, targetId: string, position: "before" | "after") => void;
   draggedNoteId: string | null;
   setDraggedNoteId: (noteId: string | null) => void;
   onToggleCollapse?: (() => void) | undefined;
@@ -46,6 +47,7 @@ export interface FolderNodeProps {
   selectedNoteId?: string | undefined;
   onDropNote: (noteId: string, folderId: string | null) => void;
   onDropFolder: (folderId: string, targetParentId: string | null) => void;
+  onReorderFolder?: (folderId: string, targetId: string, position: "before" | "after") => void;
   draggedFolderId: string | null;
   draggedNoteId: string | null;
   setDraggedNoteId: (noteId: string | null) => void;

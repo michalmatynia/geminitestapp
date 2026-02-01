@@ -639,6 +639,7 @@ model Category {
   notebookId  String?
   notebook    Notebook?      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   theme       Theme?         @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  sortIndex   Int            @default(0)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   notes       NoteCategory[]

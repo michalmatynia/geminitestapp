@@ -353,6 +353,9 @@ export function AdminNotesPage(): React.JSX.Element {
               selectedNoteId={selectedNote?.id}
               onDropNote={(id: string, folderId: string | null): void => { void operations.handleMoveNoteToFolder(id, folderId); }}
               onDropFolder={(id: string, parentId: string | null): void => { void operations.handleMoveFolderToFolder(id, parentId); }}
+              onReorderFolder={(id: string, targetId: string, position: "before" | "after"): void => {
+                void operations.handleReorderFolder(id, targetId, position);
+              }}
               draggedNoteId={draggedNoteId}
               setDraggedNoteId={setDraggedNoteId}
               onToggleCollapse={(): void => setIsFolderTreeCollapsed(true)}

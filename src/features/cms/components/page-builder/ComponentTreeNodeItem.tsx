@@ -982,6 +982,7 @@ interface SectionBlockNodeItemProps {
 
 function SectionBlockNodeItem({
   block,
+  index,
   sectionId,
   columnId,
   selectedNodeId,
@@ -1051,18 +1052,20 @@ function SectionBlockNodeItem({
           }
         }}
         onDragOver={(e: React.DragEvent) => {
-          if (isTextAtom) return;
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
           const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
           const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
-          if (!isBlockDrop && !isSectionDrop) return;
+          if (isTextAtom) {
+            if (!isBlockDrop) return;
+          } else if (!isBlockDrop && !isSectionDrop) {
+            return;
+          }
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={(e: React.DragEvent) => {
-          if (isTextAtom) return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
@@ -1070,16 +1073,37 @@ function SectionBlockNodeItem({
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
           const fromSection =
             draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
+          const fromColumn =
+            (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+          const fromParent =
+            (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+          if (isTextAtom) {
+            if (!dragId || dragId === block.id) return;
+            onDropBlockToColumn(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              columnId,
+              index,
+              fromParent || undefined
+            );
+            setDraggedBlockId(null);
+            setDraggedFromSectionId(null);
+            setDraggedFromColumnId(null);
+            setDraggedFromParentBlockId(null);
+            return;
+          }
           if (dragId && dragId !== block.id) {
             // Drop element into this section-type block
             onDropBlockToColumn(
               dragId,
               fromSection,
-              draggedFromColumnId ?? undefined,
+              fromColumn || undefined,
               sectionId,
               columnId,
               (block.blocks ?? []).length,
-              draggedFromParentBlockId ?? undefined,
+              fromParent || undefined,
               block.id
             );
             setDraggedBlockId(null);

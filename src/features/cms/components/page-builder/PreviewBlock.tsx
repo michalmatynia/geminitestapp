@@ -502,9 +502,11 @@ export function PreviewSection({
   // Helper to render blocks list
   const renderBlocks = (emptyText: string): React.ReactNode =>
     section.blocks.length === 0 ? (
-      <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
-        {emptyText}
-      </div>
+      showEditorChrome ? (
+        <div className="flex min-h-[60px] items-center justify-center rounded border border-dashed border-border/50 text-sm text-gray-500">
+          {emptyText}
+        </div>
+      ) : null
     ) : (
       <div className="space-y-2">
         {section.blocks.map((block: BlockInstance) => (
@@ -535,6 +537,8 @@ export function PreviewSection({
     const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
     const sectionGap = (section.settings["gap"] as string) || "medium";
     const sectionGapClass = getGapClass(sectionGap);
+    const gridBackgroundSettings = section.settings["backgroundImage"] as Record<string, unknown> | undefined;
+    const hasGridBackground = Boolean((gridBackgroundSettings?.["src"] as string) || "");
     const rowCount = rowBlocks.length > 0 ? rowBlocks.length : directColumns.length > 0 ? 1 : 0;
     const canRemoveRow = rowCount > 1;
     const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
@@ -581,218 +585,240 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          {rowsToRender.length === 0 ? (
-            showEditorChrome ? (
-              <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
-                No rows
-              </div>
-            ) : null
-          ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
-            <div className="h-px w-full bg-border/40" />
-          ) : (
-            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-              <div className={`flex flex-col ${sectionGapClass}`}>
-                {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
-                  const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
-                  const columnCount = Math.max(1, rowColumns.length);
-                  const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
-                  const isRowSelected = showEditorChrome && !virtual && selectedNodeId === row.id;
-                  const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
-                  const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
-                  const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
-                  const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
-                  const rowHeight = (row.settings?.["height"] as number) || 0;
-                  const rowHeightStyle =
-                    rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
-                  const rowContainer = (
-                    <div
-                      role={!virtual ? "button" : undefined}
-                      tabIndex={!virtual ? 0 : undefined}
-                      onClick={(e: React.MouseEvent): void => {
-                        if (virtual) return;
-                        e.stopPropagation();
-                        onSelect(row.id);
-                      }}
-                      onKeyDown={(e: React.KeyboardEvent): void => {
-                        if (virtual) return;
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.stopPropagation();
-                          onSelect(row.id);
-                        }
-                      }}
-                      style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                      className={`relative ${isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""}`}
-                    >
-                    {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
-                      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
-                        <button
-                          type="button"
-                          onClick={(e: React.MouseEvent) => {
+          <div className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
+            {hasGridBackground && renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
+            <div className="relative z-10">
+              {rowsToRender.length === 0 ? (
+                showEditorChrome ? (
+                  <div className="flex min-h-[60px] items-center justify-center text-sm text-gray-500">
+                    No rows
+                  </div>
+                ) : null
+              ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
+                <div className="h-px w-full bg-border/40" />
+              ) : (
+                <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+                  <div className={`flex flex-col ${sectionGapClass}`}>
+                    {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
+                      const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
+                      const columnCount = Math.max(1, rowColumns.length);
+                      const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
+                      const isRowSelected = showEditorChrome && !virtual && selectedNodeId === row.id;
+                      const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+                      const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
+                      const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
+                      const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
+                      const rowHeight = (row.settings?.["height"] as number) || 0;
+                      const rowHeightStyle =
+                        rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
+                      const rowBackgroundSettings = row.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
+                      const hasRowBackground = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+                      const rowContainer = (
+                        <div
+                          role={!virtual ? "button" : undefined}
+                          tabIndex={!virtual ? 0 : undefined}
+                          onClick={(e: React.MouseEvent): void => {
+                            if (virtual) return;
                             e.stopPropagation();
-                            if (!canRemoveRow) return;
-                            onRemoveRow(section.id, row.id);
+                            onSelect(row.id);
                           }}
-                          disabled={!canRemoveRow}
-                          className="rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-                          title={canRemoveRow ? "Remove row" : "At least one row is required"}
+                          onKeyDown={(e: React.KeyboardEvent): void => {
+                            if (virtual) return;
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.stopPropagation();
+                              onSelect(row.id);
+                            }
+                          }}
+                          style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
+                          className={`relative ${hasRowBackground ? "overflow-hidden" : ""} ${
+                            isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
+                          }`}
                         >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                    )}
-                    <div
-                      className={`grid ${rowGapClass} items-stretch`}
-                      style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}
-                    >
-                      {rowColumns.map((column: BlockInstance, colIndex: number) => {
-                        const isColumnSelected = showEditorChrome && selectedNodeId === column.id;
-                        const isColumnHovered = showEditorChrome && isInspecting && hoveredNodeId === column.id;
-                        const columnHoverClass =
-                          isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
-                        const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
-                        const columnHeight = (column.settings?.["height"] as number) || 0;
-                        const columnStyle: React.CSSProperties = {};
-                        if (columnHeightMode === "fixed" && columnHeight > 0) {
-                          columnStyle.height = `${columnHeight}px`;
-                        } else if (rowHeightMode === "fixed" && rowHeight > 0) {
-                          columnStyle.height = "100%";
-                        }
-                        const columnTooltip = (
-                          <InspectorTooltip
-                            title="Column"
-                            sections={[
-                              {
-                                title: "Meta",
-                                entries: inspectorSettings.showIdentifiers
-                                  ? [
-                                      { label: "Type", value: "Column" },
-                                      { label: "ID", value: column.id },
-                                    ]
-                                  : [{ label: "Type", value: "Column" }],
-                              },
-                              ...(inspectorSettings.showStructureInfo
-                                ? [
-                                    {
-                                      title: "Structure",
-                                      entries: [
-                                        { label: "Section", value: section.type },
-                                        { label: "Zone", value: section.zone },
-                                        { label: "Row", value: String(rowIndex + 1) },
-                                        { label: "Column", value: String(colIndex + 1) },
-                                      ],
-                                    },
-                                  ]
-                                : []),
-                              ...(inspectorSettings.showConnectionInfo
-                                ? [
-                                    {
-                                      title: "Connection",
-                                      entries: ((): InspectorEntry[] => {
-                                        const connection = column.settings["connection"] as
-                                          | { enabled?: boolean; source?: string; path?: string; fallback?: string }
-                                          | undefined;
-                                        if (!connection) return [];
-                                        const entries: InspectorEntry[] = [
-                                          { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
-                                        ];
-                                        if (connection.source) entries.push({ label: "Source", value: connection.source });
-                                        if (connection.path) entries.push({ label: "Path", value: connection.path });
-                                        if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
-                                        return entries;
-                                      })(),
-                                    },
-                                  ]
-                                : []),
-                              ...(inspectorSettings.showStyleSettings
-                                ? [
-                                    {
-                                      title: "Styles",
-                                      entries: buildStyleEntries(column.settings ?? {}),
-                                    },
-                                  ]
-                                : []),
-                            ]}
-                          />
-                        );
-                        return (
-                          <InspectorHover
-                            key={column.id}
-                            enabled={inspectorActive}
-                            showTooltip={inspectorSettings.showTooltip}
-                            nodeId={column.id}
-                            onHover={onHoverNode}
-                            fallbackNodeId={section.id}
-                            content={columnTooltip}
-                            className="w-full"
-                          >
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e: React.MouseEvent): void => {
-                                e.stopPropagation();
-                                onSelect(column.id);
-                              }}
-                              onKeyDown={(e: React.KeyboardEvent): void => {
-                                if (e.key === "Enter" || e.key === " ") {
+                          {hasRowBackground && renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
+                          {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
+                            <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
+                              <button
+                                type="button"
+                                onClick={(e: React.MouseEvent) => {
                                   e.stopPropagation();
-                                  onSelect(column.id);
-                                }
-                              }}
-                              style={columnStyle}
-                              className={`h-full text-left transition cursor-pointer ${
-                                isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
-                              } ${columnHoverClass}`}
-                            >
-                              {(column.blocks ?? []).length > 0 && ((): React.ReactNode => {
-                                const columnBlocks = column.blocks ?? [];
-                                const isSingleBlock = columnBlocks.length === 1;
-                                const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
-                                return (
-                                  <div className={`flex flex-col ${shouldStretch ? "h-full" : "gap-4"} ${isInspecting ? "" : "pointer-events-none"}`}>
-                                    {columnBlocks.map((block: BlockInstance) => (
-                                      <div
-                                        key={block.id}
-                                        className={shouldStretch ? "flex-1" : ""}
-                                        style={{
-                                          minHeight: `${getBlockMinHeight(block.type)}px`,
-                                          ...(shouldStretch ? { height: "100%" } : {}),
-                                        }}
-                                      >
-                                        <PreviewBlockItem
-                                          block={block}
-                                          isSelected={selectedNodeId === block.id}
-                                          isInspecting={isInspecting}
-                                          inspectorSettings={inspectorSettings}
-                                          hoveredNodeId={hoveredNodeId}
-                                          onHoverNode={onHoverNode}
-                                          onSelect={onSelect}
-                                          contained
-                                          selectedNodeId={selectedNodeId}
-                                          sectionId={section.id}
-                                          sectionType={section.type}
-                                          sectionZone={section.zone}
-                                          columnId={column.id}
-                                          onOpenMedia={onOpenMedia}
-                                          mediaStyles={mediaStyles}
-                                          stretch={shouldStretch}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              })()}
+                                  if (!canRemoveRow) return;
+                                  onRemoveRow(section.id, row.id);
+                                }}
+                                disabled={!canRemoveRow}
+                                className="rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                title={canRemoveRow ? "Remove row" : "At least one row is required"}
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
                             </div>
-                          </InspectorHover>
-                        );
-                      })}
-                    </div>
-                    </div>
-                  );
-                  return <div key={row.id}>{rowContainer}</div>;
-                })}
-              </div>
+                          )}
+                          <div
+                            className={`relative z-10 grid ${rowGapClass} items-stretch`}
+                            style={{
+                              gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                              ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
+                            }}
+                          >
+                            {rowColumns.map((column: BlockInstance, colIndex: number) => {
+                              const isColumnSelected = showEditorChrome && selectedNodeId === column.id;
+                              const isColumnHovered = showEditorChrome && isInspecting && hoveredNodeId === column.id;
+                              const columnHoverClass =
+                                isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
+                              const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
+                              const columnHeight = (column.settings?.["height"] as number) || 0;
+                              const columnStyle: React.CSSProperties = {};
+                              if (columnHeightMode === "fixed" && columnHeight > 0) {
+                                columnStyle.height = `${columnHeight}px`;
+                              } else if (rowHeightMode === "fixed" && rowHeight > 0) {
+                                columnStyle.height = "100%";
+                              }
+                              const columnBackgroundSettings = column.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
+                              const hasColumnBackground = Boolean((columnBackgroundSettings?.["src"] as string) || "");
+                              const columnTooltip = (
+                                <InspectorTooltip
+                                  title="Column"
+                                  sections={[
+                                    {
+                                      title: "Meta",
+                                      entries: inspectorSettings.showIdentifiers
+                                        ? [
+                                            { label: "Type", value: "Column" },
+                                            { label: "ID", value: column.id },
+                                          ]
+                                        : [{ label: "Type", value: "Column" }],
+                                    },
+                                    ...(inspectorSettings.showStructureInfo
+                                      ? [
+                                          {
+                                            title: "Structure",
+                                            entries: [
+                                              { label: "Section", value: section.type },
+                                              { label: "Zone", value: section.zone },
+                                              { label: "Row", value: String(rowIndex + 1) },
+                                              { label: "Column", value: String(colIndex + 1) },
+                                            ],
+                                          },
+                                        ]
+                                      : []),
+                                    ...(inspectorSettings.showConnectionInfo
+                                      ? [
+                                          {
+                                            title: "Connection",
+                                            entries: ((): InspectorEntry[] => {
+                                              const connection = column.settings["connection"] as
+                                                | { enabled?: boolean; source?: string; path?: string; fallback?: string }
+                                                | undefined;
+                                              if (!connection) return [];
+                                              const entries: InspectorEntry[] = [
+                                                { label: "Enabled", value: connection.enabled ? "Yes" : "No" },
+                                              ];
+                                              if (connection.source) entries.push({ label: "Source", value: connection.source });
+                                              if (connection.path) entries.push({ label: "Path", value: connection.path });
+                                              if (connection.fallback) entries.push({ label: "Fallback", value: connection.fallback });
+                                              return entries;
+                                            })(),
+                                          },
+                                        ]
+                                      : []),
+                                    ...(inspectorSettings.showStyleSettings
+                                      ? [
+                                          {
+                                            title: "Styles",
+                                            entries: buildStyleEntries(column.settings ?? {}),
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
+                                />
+                              );
+                              return (
+                                <InspectorHover
+                                  key={column.id}
+                                  enabled={inspectorActive}
+                                  showTooltip={inspectorSettings.showTooltip}
+                                  nodeId={column.id}
+                                  onHover={onHoverNode}
+                                  fallbackNodeId={section.id}
+                                  content={columnTooltip}
+                                  className="w-full"
+                                >
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(e: React.MouseEvent): void => {
+                                      e.stopPropagation();
+                                      onSelect(column.id);
+                                    }}
+                                    onKeyDown={(e: React.KeyboardEvent): void => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.stopPropagation();
+                                        onSelect(column.id);
+                                      }
+                                    }}
+                                    style={columnStyle}
+                                    className={`relative h-full text-left transition cursor-pointer ${
+                                      isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
+                                    } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""}`}
+                                  >
+                                    {hasColumnBackground && renderBackgroundImageLayer(columnBackgroundSettings, mediaStyles)}
+                                    {(column.blocks ?? []).length > 0 && ((): React.ReactNode => {
+                                      const columnBlocks = column.blocks ?? [];
+                                      const isSingleBlock = columnBlocks.length === 1;
+                                      const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
+                                      return (
+                                        <div
+                                          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : "gap-4"} ${
+                                            isInspecting ? "" : "pointer-events-none"
+                                          }`}
+                                        >
+                                          {columnBlocks.map((block: BlockInstance, blockIndex: number) => (
+                                            <div
+                                              key={block.id}
+                                              className={shouldStretch ? "flex-1" : ""}
+                                              style={{
+                                                minHeight: `${getBlockMinHeight(block.type)}px`,
+                                                ...(shouldStretch ? { height: "100%" } : {}),
+                                                position: "relative",
+                                                zIndex: columnBlocks.length - blockIndex,
+                                              }}
+                                            >
+                                              <PreviewBlockItem
+                                                block={block}
+                                                isSelected={selectedNodeId === block.id}
+                                                isInspecting={isInspecting}
+                                                inspectorSettings={inspectorSettings}
+                                                hoveredNodeId={hoveredNodeId}
+                                                onHoverNode={onHoverNode}
+                                                onSelect={onSelect}
+                                                contained
+                                                selectedNodeId={selectedNodeId}
+                                                sectionId={section.id}
+                                                sectionType={section.type}
+                                                sectionZone={section.zone}
+                                                columnId={column.id}
+                                                onOpenMedia={onOpenMedia}
+                                                mediaStyles={mediaStyles}
+                                                stretch={shouldStretch}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                </InspectorHover>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                      return <div key={row.id}>{rowContainer}</div>;
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )
     );
@@ -848,11 +874,11 @@ export function PreviewSection({
                     sizes="(max-width: 768px) 100vw, 50vw"
                     unoptimized
                   />
-                ) : (
+                ) : showEditorChrome ? (
                   <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}>
                     <ImageIcon className="size-16 text-gray-600" />
                   </div>
-                )}
+                ) : null}
               </div>
               <div className="flex w-full flex-col justify-center gap-4 md:w-1/2">
                 {section.blocks.length > 0 ? (
@@ -875,9 +901,9 @@ export function PreviewSection({
                       mediaStyles={mediaStyles}
                     />
                   ))
-                ) : (
+                ) : showEditorChrome ? (
                   <p className="text-gray-500">Add content blocks</p>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -1009,7 +1035,7 @@ export function PreviewSection({
                   mediaStyles={mediaStyles}
                 />
               ))}
-              {section.blocks.length === 0 && (
+              {showEditorChrome && section.blocks.length === 0 && (
                 <p className="text-gray-500">Rich text section</p>
               )}
             </div>
@@ -1063,6 +1089,10 @@ export function PreviewSection({
     const src = (section.settings["src"] as string) || "";
     const alt = (section.settings["alt"] as string) || "Image";
     const presentation = buildImageElementPresentation(section.settings, mediaStyles);
+    const hasSrc = Boolean(src);
+    if (!hasSrc && !showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapInspector(
@@ -1078,7 +1108,7 @@ export function PreviewSection({
         >
           {renderSectionActions()}
           {divider}
-          {src ? (
+          {hasSrc ? (
             <div className="relative" style={presentation.wrapperStyles}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -1094,14 +1124,14 @@ export function PreviewSection({
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
             </div>
-          ) : (
+          ) : showEditorChrome ? (
             <div
               className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
               style={presentation.wrapperStyles}
             >
               No image selected
             </div>
-          )}
+          ) : null}
         </div>
       )
     );
@@ -1305,9 +1335,11 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           {items.length === 0 ? (
-            <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-              <p className="text-gray-500 text-center py-8">Add Heading and Text blocks to create accordion items</p>
-            </div>
+            showEditorChrome ? (
+              <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+                <p className="text-gray-500 text-center py-8">Add Heading and Text blocks to create accordion items</p>
+              </div>
+            ) : null
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-3xl" })}>
               <div className="divide-y divide-gray-700/50">
@@ -1381,9 +1413,11 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           {section.blocks.length === 0 ? (
-            <div className="container mx-auto px-4 md:px-6">
-              <p className="text-gray-500 text-center py-8">Add blocks to create testimonial cards</p>
-            </div>
+            showEditorChrome ? (
+              <div className="container mx-auto px-4 md:px-6">
+                <p className="text-gray-500 text-center py-8">Add blocks to create testimonial cards</p>
+              </div>
+            ) : null
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
               <div
@@ -1482,7 +1516,7 @@ export function PreviewSection({
                   allowFullScreen
                 />
               </div>
-            ) : (
+            ) : showEditorChrome ? (
               <div
                 className="cms-media flex items-center justify-center bg-gray-800/50"
                 style={{ paddingBottom: getAspectPadding(ratio), position: "relative", ...(mediaStyles ?? {}) }}
@@ -1491,7 +1525,7 @@ export function PreviewSection({
                   Enter a video URL in section settings
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       )
@@ -1520,9 +1554,11 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           {slideCount === 0 ? (
-            <div className="container mx-auto px-4 md:px-6">
-              <p className="text-gray-500 text-center py-12">Add blocks to create slideshow slides</p>
-            </div>
+            showEditorChrome ? (
+              <div className="container mx-auto px-4 md:px-6">
+                <p className="text-gray-500 text-center py-12">Add blocks to create slideshow slides</p>
+              </div>
+            ) : null
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
               <div className="relative overflow-hidden rounded-lg min-h-[300px]">
@@ -2208,6 +2244,9 @@ function PreviewBlockItem({
     const alt = (block.settings["alt"] as string) || "Image";
     const presentation = buildImageElementPresentation(block.settings, mediaStyles);
     const hasSrc = Boolean(src);
+    if (!hasSrc && !showEditorChrome) {
+      return null;
+    }
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
     const wrapperStyles = stretch
       ? { ...presentation.wrapperStyles, height: "100%" }
@@ -2247,14 +2286,14 @@ function PreviewBlockItem({
                 <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
               )}
             </div>
-          ) : (
+          ) : showEditorChrome ? (
             <div
               className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
               style={presentation.wrapperStyles}
             >
               No image selected
             </div>
-          )}
+          ) : null}
         </div>
       )
     );
@@ -2330,6 +2369,9 @@ function PreviewBlockItem({
   // RichText block
   if (block.type === "RichText") {
     const colorScheme = block.settings["colorScheme"] as string | undefined;
+    if (!showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapBlock(
@@ -2361,6 +2403,9 @@ function PreviewBlockItem({
     const alt = (block.settings["alt"] as string) || "Image";
     const width = (block.settings["width"] as number) || 100;
     const borderRadius = (block.settings["borderRadius"] as number) || 0;
+    if (!src && !showEditorChrome) {
+      return null;
+    }
     const baseClasses = `w-full text-left transition ${contained ? "max-w-full" : ""}`;
     const resolvedStyles: React.CSSProperties = {
       ...(mediaStyles ?? {}),
@@ -2395,7 +2440,7 @@ function PreviewBlockItem({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt={alt} className={imageClassName} />
               </div>
-            ) : (
+            ) : showEditorChrome ? (
               <div
                 className="cms-media flex items-center justify-center bg-gray-700/30 min-h-[60px]"
                 style={wrapperStyles}
@@ -2405,7 +2450,7 @@ function PreviewBlockItem({
                   <span className="text-xs text-gray-500 truncate max-w-[120px]">{alt}</span>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
           {showEditorChrome && onOpenMedia && (
             <button
@@ -2448,6 +2493,10 @@ function PreviewBlockItem({
       }
     }
 
+    if (!embedUrl && !showEditorChrome) {
+      return null;
+    }
+
     const paddingBottom = ratio === "4:3" ? "75%" : ratio === "1:1" ? "100%" : "56.25%";
     const resolvedStyles: React.CSSProperties = {
       ...(mediaStyles ?? {}),
@@ -2480,14 +2529,14 @@ function PreviewBlockItem({
                 allowFullScreen
               />
             </div>
-          ) : (
+          ) : showEditorChrome ? (
             <div
               className="cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm"
               style={resolvedStyles}
             >
               Enter a video URL
             </div>
-          )}
+          ) : null}
         </div>
       )
     );
@@ -2500,6 +2549,9 @@ function PreviewBlockItem({
     const embedUrl = (block.settings["embedUrl"] as string) || "";
     const height = (block.settings["height"] as number) || 420;
     const appLabel = APP_EMBED_OPTIONS.find((option: AppEmbedOption) => option.id === appId)?.label ?? "App";
+    if (!embedUrl && !showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapBlock(
@@ -2529,14 +2581,14 @@ function PreviewBlockItem({
                 className="w-full rounded-md border border-border/40 bg-black"
                 style={{ height }}
               />
-            ) : (
+            ) : showEditorChrome ? (
               <div
                 className="flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400"
                 style={{ height }}
               >
                 Provide an embed URL to render the {appLabel} app here.
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       )
@@ -2578,6 +2630,9 @@ function PreviewBlockItem({
   if (block.type === "SocialLinks") {
     const platforms = (block.settings["platforms"] as string) || "";
     const links = platforms.split(",").map((l: string) => l.trim()).filter(Boolean);
+    if (links.length === 0 && !showEditorChrome) {
+      return null;
+    }
 
     return (
       wrapBlock(
@@ -2596,7 +2651,9 @@ function PreviewBlockItem({
           )}
         >
           {links.length === 0 ? (
-            <p className="text-sm text-gray-500">Add social media URLs in settings</p>
+            showEditorChrome ? (
+              <p className="text-sm text-gray-500">Add social media URLs in settings</p>
+            ) : null
           ) : (
             <div className="flex items-center gap-4">
               {links.map((link: string, idx: number) => {
@@ -2725,6 +2782,7 @@ function PreviewImageWithTextBlock({
   const imageFirst = placement !== "image-second";
   const children = block.blocks ?? [];
   const blockImage = block.settings["image"] as string | undefined;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
 
   const stretchClass = stretch ? "h-full" : "";
   const stretchStyle = stretch ? { height: "100%" } : undefined;
@@ -2744,11 +2802,11 @@ function PreviewImageWithTextBlock({
             sizes="(max-width: 768px) 100vw, 40vw"
             unoptimized
           />
-        ) : (
+        ) : showEditorChrome ? (
           <div className="flex min-h-[120px] w-full items-center justify-center bg-gray-800">
             <ImageIcon className="size-10 text-gray-600" />
           </div>
-        )}
+        ) : null}
       </div>
       <div className="flex w-full flex-col justify-center gap-3 md:w-3/5">
         {children.length > 0 ? (
@@ -2773,9 +2831,9 @@ function PreviewImageWithTextBlock({
               mediaStyles={mediaStyles}
             />
           ))
-        ) : (
+        ) : showEditorChrome ? (
           <p className="text-gray-500">Add content blocks</p>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -2875,6 +2933,11 @@ function PreviewRichTextBlock({
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
   const stretchStyle = stretch ? { height: "100%" } : undefined;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+
+  if (children.length === 0 && !showEditorChrome) {
+    return null;
+  }
 
   return (
     <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={`space-y-4 ${stretch ? "h-full" : ""}`}>
@@ -2900,9 +2963,9 @@ function PreviewRichTextBlock({
             mediaStyles={mediaStyles}
           />
         ))
-      ) : (
+      ) : showEditorChrome ? (
         <p className="text-gray-500">Rich text section</p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -3171,6 +3234,41 @@ function buildImageElementPresentation(
     hasOverlay: overlayType !== "none",
     useFill: height > 0 || aspectRatio !== "auto",
   };
+}
+
+function renderBackgroundImageLayer(
+  settings?: Record<string, unknown>,
+  mediaStyles?: React.CSSProperties | null
+): React.ReactNode {
+  if (!settings) return null;
+  const src = (settings["src"] as string) || "";
+  if (!src) return null;
+  const alt = (settings["alt"] as string) || "";
+  const presentation = buildImageElementPresentation(settings, mediaStyles);
+  const wrapperStyles: React.CSSProperties = {
+    ...presentation.wrapperStyles,
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+  };
+  delete (wrapperStyles as { aspectRatio?: string }).aspectRatio;
+  const imageStyles: React.CSSProperties = {
+    ...presentation.imageStyles,
+    display: "block",
+    height: "100%",
+  };
+
+  return (
+    <div className="absolute inset-0 z-0" style={wrapperStyles}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} style={imageStyles} />
+      {presentation.hasOverlay && (
+        <div className="pointer-events-none absolute inset-0" style={presentation.overlayStyles} />
+      )}
+    </div>
+  );
 }
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number): number {

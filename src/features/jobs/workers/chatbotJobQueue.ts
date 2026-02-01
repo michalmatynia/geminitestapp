@@ -79,7 +79,7 @@ const processJob = async (jobId: string): Promise<void> => {
   });
 };
 
-export const pollQueue = async (): Promise<void> => {
+const pollQueue = async (): Promise<void> => {
   if (isProcessing) return;
   isProcessing = true;
   try {

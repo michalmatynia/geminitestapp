@@ -27,6 +27,7 @@ function FolderTreeBase({
   selectedNoteId,
   onDropNote,
   onDropFolder,
+  onReorderFolder,
   draggedNoteId,
   setDraggedNoteId,
   onToggleCollapse,
@@ -231,6 +232,7 @@ function FolderTreeBase({
           selectedNoteId={selectedNoteId}
           onDropNote={onDropNote}
           onDropFolder={onDropFolder}
+          onReorderFolder={onReorderFolder}
           onRelateNotes={onRelateNotes}
           draggedFolderId={draggedFolderId}
           draggedNoteId={draggedNoteId}

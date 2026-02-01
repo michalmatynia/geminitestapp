@@ -42,6 +42,7 @@ export const categoryCreateSchema = z
     parentId: z.string().nullable().optional(),
     notebookId: z.string().nullable().optional(),
     themeId: z.string().nullable().optional(),
+    sortIndex: z.number().int().optional(),
   })
   .strict();
 

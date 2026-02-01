@@ -7,9 +7,9 @@ Keep this file accurate and lean. Other agent docs should defer to it.
 
 - **Product**: AI-forward, multi-app platform with admin + public frontends.
 - **Framework**: Next.js 16.1.1 (App Router) + React 19.2.3
-- **Language**: TypeScript 5.9 (strict true)
-- **DB**: Prisma 7.2.0 (Postgres) with optional MongoDB provider
-- **Auth**: NextAuth/Auth.js 5.0.0-beta.30
+- **Language**: TypeScript 5.9.3 (strict true)
+- **DB**: Prisma 7.3.0 with optional MongoDB provider
+- **Auth**: NextAuth/Auth.js 5.0.0-beta.30 (MongoDB adapter)
 - **UI**: Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
 - **Data**: TanStack Query + TanStack Table
 - **AI**: OpenAI SDK (chat completions) with optional Ollama local models
@@ -45,10 +45,10 @@ public/uploads/         # File storage (images, notes)
 
 ## Data Layer Reality
 
-The platform can run on **Prisma (Postgres)** or **MongoDB**, selected by:
-- `product_db_provider` setting (db)
-- `PRODUCT_DB_PROVIDER` env var
-- Fallback to Prisma when `DATABASE_URL` exists, else Mongo if `MONGODB_URI` exists
+The platform can run on **Prisma** or **MongoDB**, selected by:
+- `app_db_provider` setting (db)
+- `APP_DB_PROVIDER` env var
+- Fallback: prefer Mongo when `MONGODB_URI` is set, else Prisma when `DATABASE_URL` exists
 
 See: `src/features/products/services/product-provider.ts` and repository implementations under
 `src/features/products/services/*-repository/` (e.g. `mongo-*` and `prisma-*`).
@@ -59,8 +59,9 @@ See: `src/features/products/services/product-provider.ts` and repository impleme
 - Slugs can be shared across domains; default slug is **domain-specific**.
 - Slug APIs and pickers resolve the active domain from the request host.
 
-**AI Paths storage is MongoDB-only** (collections: `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`).
-Ensure `MONGODB_URI` is set for AI Paths to run.
+**AI Paths storage** uses Prisma when `DATABASE_URL` is set, otherwise MongoDB
+(collections: `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`).
+Ensure `MONGODB_URI` is set if Prisma is not configured.
 
 **Auth + user storage is MongoDB-only** (`users`, `sessions`, `accounts`, `auth_security_profiles`).
 Auth settings (roles, permissions, policies) are stored in the Mongo `settings` collection.
@@ -142,7 +143,12 @@ NEXTAUTH_URL=http://localhost:3000
 OPENAI_API_KEY=...
 OLLAMA_BASE_URL=http://localhost:11434
 BASE_API_URL=https://api.baselinker.com/connector.php
+INTEGRATION_ENCRYPTION_KEY=...
+ALLEGRO_AUTH_URL=https://allegro.pl/auth/oauth/authorize
+ALLEGRO_TOKEN_URL=https://allegro.pl/auth/oauth/token
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+IMAGEKIT_ID=...
+APP_DB_PROVIDER=prisma|mongodb
 AI_PATHS_RUN_CONCURRENCY=1
 AI_PATHS_RUN_MAX_ATTEMPTS=3
 AI_PATHS_RUN_BACKOFF_MS=5000
@@ -162,9 +168,16 @@ npm run build
 npm run start
 npm run lint
 npm run test
+npm run test:ui
+npm run test:coverage
 npm run test:e2e
 npm run seed
 npm run seed:admin
+npm run cleanup:db-providers
+npm run cleanup:cms-blocks
+npm run check:api-error-sources
+npm run auth:indexes
+npm run debug
 ```
 
 ## Agent Hygiene & Restrictions
@@ -181,4 +194,4 @@ If you change architecture, data providers, or AI flows, update this file and
 
 ---
 
-**Last Updated**: January 30, 2026
+**Last Updated**: February 1, 2026

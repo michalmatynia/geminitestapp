@@ -154,9 +154,8 @@ const prismaRepository: ProductListingRepository = {
     });
   },
 
-  deleteListing: async (id: string): Promise<boolean> => {
+  deleteListing: async (id: string): Promise<void> => {
     await prisma.productListing.delete({ where: { id } });
-    return true;
   },
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
@@ -322,10 +321,9 @@ const mongoRepository: ProductListingRepository = {
       );
   },
 
-  deleteListing: async (id: string): Promise<boolean> => {
+  deleteListing: async (id: string): Promise<void> => {
     const db = await getMongoDb();
     await db.collection<ProductListingDocument>(LISTINGS_COLLECTION).deleteOne({ _id: id });
-    return true;
   },
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {

@@ -30,6 +30,11 @@ type MongoCollectionIndexStatus = {
   error?: string;
 };
 
+interface MongoDiagnosticsData {
+  collections?: MongoCollectionIndexStatus[];
+  generatedAt?: string;
+}
+
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -118,8 +123,8 @@ export default function SystemLogsPage(): React.JSX.Element {
   const logs = logsQuery.data?.logs ?? [];
   const total = logsQuery.data?.total ?? 0;
   const metrics = metricsQuery.data?.metrics ?? null;
-  const diagnostics = mongoDiagnosticsQuery.data?.collections ?? [];
-  const diagnosticsUpdatedAt = mongoDiagnosticsQuery.data?.generatedAt ?? null;
+  const diagnostics = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.collections ?? [];
+  const diagnosticsUpdatedAt = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
 
   const totalPages: number = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));
@@ -140,7 +145,7 @@ export default function SystemLogsPage(): React.JSX.Element {
   const rebuildMongoIndexes = async (): Promise<void> => {
     if (!window.confirm("Rebuild missing Mongo indexes for AI Paths runtime?")) return;
     try {
-      const result = await rebuildIndexesMutation.mutateAsync();
+      const result = (await rebuildIndexesMutation.mutateAsync()) as { created?: unknown[] };
       const createdCount = result?.created?.length ?? 0;
       toast(
         createdCount > 0

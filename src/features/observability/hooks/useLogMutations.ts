@@ -17,15 +17,15 @@ export function useClearLogsMutation(): UseMutationResult<boolean, Error, void> 
   });
 }
 
-export function useRebuildIndexesMutation(): UseMutationResult<any, Error, void> {
+export function useRebuildIndexesMutation(): UseMutationResult<unknown, Error, void> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<unknown> => {
       const res = await fetch("/api/system/diagnostics/mongo-indexes", {
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to rebuild Mongo indexes.");
-      return res.json();
+      return res.json() as Promise<unknown>;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: logKeys.diagnostics });

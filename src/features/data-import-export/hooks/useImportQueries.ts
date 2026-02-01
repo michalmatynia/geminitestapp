@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations";
-import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset } from "@/features/data-import-export/types/imports";
+import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from "@/features/data-import-export/types/imports";
 
 export type { CatalogRecord };
 
@@ -87,7 +87,7 @@ export function useSavePreferenceMutation(): UseMutationResult<any, Error, { end
       if (!res.ok) throw new Error("Failed to save preference");
       return (await res.json()) as any;
     },
-    onSuccess: (_data: any, { endpoint }: { endpoint: string }) => {
+    onSuccess: (_data: any, { endpoint }: { endpoint: string; data: any }) => {
       // Extract key from endpoint to invalidate specific pref
       const key = endpoint.split("/").pop();
       if (key) {

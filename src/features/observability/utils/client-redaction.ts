@@ -22,7 +22,7 @@ const SENSITIVE_KEYS = [
 
 export const isSensitiveKey = (key: string): boolean => {
   const lowerKey = key.toLowerCase();
-  return SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
+  return SENSITIVE_KEYS.some((sensitive: string) => lowerKey.includes(sensitive));
 };
 
 export const truncateString = (str: string, maxLength: number): string => {

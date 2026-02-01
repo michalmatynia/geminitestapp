@@ -402,3 +402,5 @@ export function ListProductModal({
     </ModalShell>
   );
 }
+
+export default ListProductModal;

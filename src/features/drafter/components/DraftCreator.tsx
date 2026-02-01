@@ -3,7 +3,6 @@ import { Button, Input, Label, Textarea, Switch, Tabs, TabsContent, TabsList, Ta
 import React, { useEffect, useMemo, useState } from "react";
 
 import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
-import { ProductDraft } from "@/features/products/types/drafts";
 import type { CatalogRecord } from "@/features/products";
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
 import {

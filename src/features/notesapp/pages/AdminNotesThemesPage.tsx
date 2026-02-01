@@ -377,10 +377,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="text"
                           value={values.name}
                           disabled={!isEditing}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, name: event.target.value }))
-                          }
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, name: event.target.value }));
+                          }}
                           className="w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60"
                         />
                       </div>
@@ -390,10 +389,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.textColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, textColor: event.target.value }))
-                          }
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({ ...prev, textColor: event.target.value }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -403,13 +401,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.backgroundColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               backgroundColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -419,13 +416,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownHeadingColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownHeadingColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -435,13 +431,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownLinkColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownLinkColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -451,13 +446,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeBackground}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownCodeBackground: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -467,13 +461,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeText}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               markdownCodeText: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -487,13 +480,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           max={8}
                           disabled={!isEditing}
                           value={values.relatedNoteBorderWidth}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBorderWidth: Number(event.target.value),
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 px-3 text-sm text-white disabled:opacity-60"
                         />
                       </div>
@@ -505,13 +497,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBorderColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBorderColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -523,13 +514,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBackgroundColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteBackgroundColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
@@ -541,13 +531,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteTextColor}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            isEditing &&
-                            setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            if (isEditing) setEditingForm((prev: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt">): Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> => ({
                               ...prev,
                               relatedNoteTextColor: event.target.value,
-                            }))
-                          }
+                            }));
+                          }}
                           className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>

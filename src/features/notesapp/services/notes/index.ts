@@ -61,6 +61,7 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 function populateRelations(data: NoteWithRelations[]): NoteWithRelations[];
 function populateRelations(data: NoteWithRelations): NoteWithRelations;
 function populateRelations(data: null): null;
+function populateRelations(data: NoteWithRelations | null): NoteWithRelations | null;
 function populateRelations(data: NoteWithRelations | NoteWithRelations[] | null): NoteWithRelations | NoteWithRelations[] | null {
     if (!data) return data;
     if (Array.isArray(data)) {

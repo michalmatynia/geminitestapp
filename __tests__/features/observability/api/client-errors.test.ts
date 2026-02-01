@@ -1,0 +1,54 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import { POST } from '@/app/api/client-errors/route';
+import { ErrorSystem } from '@/features/observability/server';
+
+vi.mock('@/features/observability/server', () => ({
+  ErrorSystem: {
+    captureException: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+describe('Client Errors API', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('POST /api/client-errors should capture client exception', async () => {
+    const payload = {
+      message: 'React Error',
+      name: 'Error',
+      url: 'http://localhost/test',
+      context: { userId: '123' }
+    };
+
+    const req = new NextRequest('http://localhost/api/client-errors', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.ok).toBe(true);
+    expect(ErrorSystem.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        service: 'client-error-reporter',
+        url: 'http://localhost/test',
+        extra: { userId: '123' }
+      })
+    );
+  });
+
+  it('should handle invalid payload', async () => {
+    const req = new NextRequest('http://localhost/api/client-errors', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Only name' }), // message missing
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+});

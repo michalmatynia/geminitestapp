@@ -114,7 +114,7 @@ export const updateCategory = async (
         description: data.description,
       }),
       ...(data.color !== undefined && { color: data.color }),
-      ...(data.sortIndex !== undefined
+      ...(data.sortIndex !== undefined && data.sortIndex !== null
         ? { sortIndex: data.sortIndex }
         : nextSortIndex !== undefined
         ? { sortIndex: nextSortIndex }

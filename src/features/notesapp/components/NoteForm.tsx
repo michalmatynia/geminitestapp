@@ -589,13 +589,13 @@ export function NoteForm({
     setNoteFiles(note?.files || []);
   }, [note?.files, setNoteFiles]);
 
-  useEffect((): void | (() => void) => {
+  useEffect((): (() => void) => {
     if (!note) {
       setSelectedRelatedNotes([]);
       setRelatedNoteQuery("");
       setIsRelatedDropdownOpen(false);
       setRelatedNoteResults([]);
-      return;
+      return (): void => {};
     }
     const combinedRelations: Array<{ id: string; title: string; color: string | null; content: string }> =
       note.relations?.map((rel: RelatedNote): { id: string; title: string; color: string | null; content: string } => ({
@@ -661,9 +661,11 @@ export function NoteForm({
     };
 
     void hydrateRelatedNotes();
+    
+    return (): void => {};
   }, [note]);
 
-  useEffect((): void | (() => void) => {
+  useEffect((): (() => void) => {
     if (!relatedNoteQuery) {
       setRelatedNoteResults([]);
       setIsRelatedLoading(false);
@@ -671,15 +673,16 @@ export function NoteForm({
         clearTimeout(relatedSearchTimerRef.current);
         relatedSearchTimerRef.current = null;
       }
-      return;
+      return (): void => {};
     }
 
     if (relatedSearchTimerRef.current) {
       clearTimeout(relatedSearchTimerRef.current);
     }
 
+    let isActive: boolean = true;
+    
     const timer: ReturnType<typeof setTimeout> = setTimeout((): void => {
-      let isActive: boolean = true;
       const fetchResults = async (): Promise<void> => {
         setIsRelatedLoading(true);
         try {
@@ -714,6 +717,7 @@ export function NoteForm({
     relatedSearchTimerRef.current = timer;
 
     return (): void => {
+      isActive = false;
       clearTimeout(timer);
     };
   }, [relatedNoteQuery, notebookId, note?.notebookId]);
@@ -821,7 +825,7 @@ export function NoteForm({
             contentBackground={contentBackground}
             contentTextColor={contentTextColor}
             previewTypographyStyle={previewTypographyStyle}
-            onPaste={(e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => { void handlePaste(e); }}
+            onPaste={handlePaste}
             setLightboxImage={setLightboxImage}
             isCodeMode={editorMode === "code"}
           />
@@ -841,9 +845,9 @@ export function NoteForm({
         maxSlots={MAX_SLOTS}
         uploadingSlots={uploadingSlots}
         getNextAvailableSlot={getNextAvailableSlot}
-        onFileUpload={(slotIndex: number, file: File): Promise<void> => { void handleFileUpload(slotIndex, file); }}
-        onMultiFileUpload={(files: FileList | File[]): Promise<void> => { void handleMultiFileUpload(files); }}
-        onFileDelete={(slotIndex: number): Promise<void> => { void handleFileDelete(slotIndex); }}
+        onFileUpload={handleFileUpload}
+        onMultiFileUpload={handleMultiFileUpload}
+        onFileDelete={handleFileDelete}
         onInsertFileReference={insertFileReference}
         formatFileSize={formatFileSize}
         isImageFile={isImageFile}

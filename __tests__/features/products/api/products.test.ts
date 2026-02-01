@@ -1,5 +1,5 @@
-import { vi, beforeEach, afterAll } from "vitest";
-import { describe, it, expect } from "vitest";
+import { vi } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 
 // Mock the api-handler module
 vi.mock("@/shared/lib/api/api-handler", () => ({
@@ -13,34 +13,63 @@ vi.mock("@/shared/lib/api/api-handler", () => ({
   },
 }));
 
-// Mock the product-repository to avoid Prisma complexity
-vi.mock("@/features/products/services/product-repository", () => ({
-  getProductRepository: vi.fn().mockResolvedValue({
-    getProducts: vi.fn(),
-    getProductById: vi.fn(),
-    createProduct: vi.fn(),
-    updateProduct: vi.fn(),
-    deleteProduct: vi.fn(),
-    duplicateProduct: vi.fn(),
-  }),
+// Mock Prisma client
+vi.mock("@/shared/lib/db/prisma", () => ({
+  default: {
+    product: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    productImage: {
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+    },
+    imageFile: {
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
+    $disconnect: vi.fn(),
+  },
 }));
 
-// Mock the system-logger to avoid logging issues
-vi.mock("@/shared/lib/observability/system-logger", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-    logSystemEvent: vi.fn().mockResolvedValue(undefined),
-    getErrorFingerprint: vi.fn().mockReturnValue("mock-fingerprint"),
-  };
-});
+// Mock the api-handler for [id] routes
+vi.mock("@/app/api/products/[id]/route", () => ({
+  PUT: vi.fn(),
+  DELETE: vi.fn(),
+}));
+
+// Mock the api-handler for image routes
+vi.mock("@/app/api/products/[id]/images/[imageFileId]/route", () => ({
+  DELETE: vi.fn(),
+}));
+
+// Mock the api-handler for duplicate route
+vi.mock("@/app/api/products/[id]/duplicate/route", () => ({
+  POST: vi.fn(),
+}));
+
+// Mock the public products route
+vi.mock("@/app/api/public/products/[id]/route", () => ({
+  GET: vi.fn(),
+}));
 
 import { GET as GET_LIST, POST } from "@/app/api/products/route";
 import { PUT, DELETE } from "@/app/api/products/[id]/route";
+import { DELETE as DELETE_IMAGE } from "@/app/api/products/[id]/images/[imageFileId]/route";
 import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route";
 import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
 import { NextRequest } from "next/server";
-import { getProductRepository } from "@/features/products/services/product-repository";
+import prisma from "@/shared/lib/db/prisma";
+import { Product } from "@prisma/client";
 
 // Helper to create mock product data
 const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
@@ -52,39 +81,69 @@ const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
   description_en: overrides.description_en || "Description (EN)",
   description_pl: overrides.description_pl || "Description (PL)",
   description_de: overrides.description_de || "Description (DE)",
-  price:
-    typeof overrides.price === "number"
-      ? overrides.price
-      : overrides.price
-        ? parseInt(overrides.price as string, 10)
-        : 100,
+  price: overrides.price || 100,
   stock: overrides.stock || 10,
   weight: overrides.weight || 100,
   length: overrides.length || 20,
   createdAt: new Date(),
   updatedAt: new Date(),
-  images: [],
-  catalogs: [],
   ...overrides,
 });
 
-describe("Products API", () => {
-  let mockRepository: Record<string, vi.Mock>;
+// Helper to create mock image file
+const createMockImageFile = (id: string = `image-${Date.now()}`) => ({
+  id,
+  filename: "test.jpg",
+  filepath: "/uploads/test.jpg",
+  mimetype: "image/jpeg",
+  size: 1234,
+  width: 100,
+  height: 100,
+  tags: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
 
+describe("Products API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Create mock repository
-    mockRepository = {
-      getProducts: vi.fn(),
-      getProductById: vi.fn(),
-      createProduct: vi.fn(),
-      updateProduct: vi.fn(),
-      deleteProduct: vi.fn(),
-      duplicateProduct: vi.fn(),
-    };
-
-    vi.mocked(getProductRepository).mockResolvedValue(mockRepository);
+    // Default mock implementations
+    vi.mocked(prisma.product.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.product.create).mockImplementation(async (args: any) => {
+      const data = args.data;
+      return {
+        id: `created-${Date.now()}`,
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    });
+    vi.mocked(prisma.product.update).mockImplementation(async (args: any) => {
+      return {
+        ...args.data,
+        id: args.where.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    });
+    vi.mocked(prisma.product.delete).mockResolvedValue({} as any);
+    vi.mocked(prisma.product.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.product.updateMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.product.count).mockResolvedValue(0);
+    vi.mocked(prisma.productImage.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.productImage.create).mockResolvedValue({} as any);
+    vi.mocked(prisma.productImage.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.productImage.createMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.imageFile.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.imageFile.create).mockImplementation((args: any) => ({
+      id: `image-${Date.now()}`,
+      ...args.data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    vi.mocked(prisma.imageFile.findMany).mockResolvedValue([]);
   });
 
   afterAll(() => {
@@ -93,251 +152,228 @@ describe("Products API", () => {
 
   describe("GET /api/products", () => {
     it("should return all products when no filters are applied", async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: "Product 1" }),
-        createMockProductData({ name_en: "Product 2" }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "Product 1" });
+      await createMockProduct({ name_en: "Product 2" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
     });
 
     it("should return an empty array if no products exist", async () => {
-      mockRepository.getProducts.mockResolvedValue([]);
-
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products).toEqual([]);
     });
 
     it("should filter products by name_en using the search parameter", async () => {
-      const mockProducts = [createMockProductData({ name_en: "Laptop" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "Laptop" });
+      await createMockProduct({ name_en: "Mouse" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=lap"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_en).toEqual("Laptop");
+      expect(products[0]!.name_en).toEqual("Laptop");
     });
 
     it("should filter products by name_pl using the search parameter", async () => {
-      const mockProducts = [createMockProductData({ name_pl: "Mysz (PL)" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_pl: "Laptop (PL)" });
+      await createMockProduct({ name_pl: "Mysz (PL)" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=mysz"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_pl).toEqual("Mysz (PL)");
+      expect(products[0]!.name_pl).toEqual("Mysz (PL)");
     });
 
     it("should filter products by name_de using the search parameter", async () => {
-      const mockProducts = [createMockProductData({ name_de: "Maus (DE)" })];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_de: "Laptop (DE)" });
+      await createMockProduct({ name_de: "Maus (DE)" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=maus"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_de).toEqual("Maus (DE)");
+      expect(products[0]!.name_de).toEqual("Maus (DE)");
     });
 
     it("should filter products by description_en using the search parameter", async () => {
-      const mockProducts = [
-        createMockProductData({ description_en: "Fast laptop for gaming" }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ description_en: "Fast laptop for gaming" });
+      await createMockProduct({ description_en: "Ergonomic mouse" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=gaming"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_en).toEqual("Fast laptop for gaming");
+      expect(products[0]!.description_en).toEqual("Fast laptop for gaming");
     });
 
     it("should filter products by description_pl using the search parameter", async () => {
-      const mockProducts = [
-        createMockProductData({ description_pl: "Szybki laptop do gier" }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ description_pl: "Szybki laptop do gier" });
+      await createMockProduct({ description_pl: "Ergonomiczna mysz" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=gier"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_pl).toEqual("Szybki laptop do gier");
+      expect(products[0]!.description_pl).toEqual("Szybki laptop do gier");
     });
 
     it("should filter products by description_de using the search parameter", async () => {
-      const mockProducts = [
-        createMockProductData({
-          description_de: "Schneller Laptop für Spiele",
-        }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({
+        description_de: "Schneller Laptop für Spiele",
+      });
+      await createMockProduct({ description_de: "Ergonomische Maus" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?search=spiele"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_de).toEqual("Schneller Laptop für Spiele");
+      expect(products[0]!.description_de).toEqual(
+        "Schneller Laptop für Spiele",
+      );
     });
 
     it("should filter products by minPrice", async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: "Product Min Price 2", price: 500 }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "Product Min Price 1", price: "100" });
+      await createMockProduct({ name_en: "Product Min Price 2", price: "500" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?minPrice=200"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
 
     it("should filter products by maxPrice", async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: "Product Max Price 1", price: 100 }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "Product Max Price 1", price: "100" });
+      await createMockProduct({ name_en: "Product Max Price 2", price: "500" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?maxPrice=200"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
 
     it("should filter products by startDate", async () => {
-      const mockProducts = [
-        createMockProductData({
-          name_en: "product",
-          sku: "2",
-          price: 1,
-          stock: 1,
-        }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({
+        name_en: "product",
+        sku: "1",
+        price: "1",
+        stock: 1,
+      });
+      await createMockProduct({
+        name_en: "product",
+        sku: "2",
+        price: "1",
+        stock: 1,
+      });
+      await prisma.product.updateMany({
+        where: { sku: "1" },
+        data: { createdAt: new Date("2023-01-01") },
+      });
+      await prisma.product.updateMany({
+        where: { sku: "2" },
+        data: { createdAt: new Date("2023-04-01") },
+      });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?startDate=2023-03-01"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
 
     it("should filter products by endDate", async () => {
-      const mockProducts = [
-        createMockProductData({
-          name_en: "product",
-          sku: "1",
-          price: 1,
-          stock: 1,
-        }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({
+        name_en: "product",
+        sku: "1",
+        price: "1",
+        stock: 1,
+      });
+      await createMockProduct({
+        name_en: "product",
+        sku: "2",
+        price: "1",
+        stock: 1,
+      });
+      await prisma.product.updateMany({
+        where: { sku: "1" },
+        data: { createdAt: new Date("2023-01-01") },
+      });
+      await prisma.product.updateMany({
+        where: { sku: "2" },
+        data: { createdAt: new Date("2023-04-01") },
+      });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?endDate=2023-03-01"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
 
     it("should filter products by a combination of search, minPrice, and maxPrice", async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: "Laptop", price: 1200 }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "Laptop", price: "1200" });
+      await createMockProduct({ name_en: "Mouse", price: "50" });
       const res = await GET_LIST(
         new NextRequest(
           "http://localhost/api/products?search=lap&minPrice=1000&maxPrice=1500",
         ),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
 
     it("should filter products by SKU", async () => {
-      const mockProducts = [
-        createMockProductData({ name_en: "SKU 1", sku: "ABC123" }),
-      ];
-      mockRepository.getProducts.mockResolvedValue(mockProducts);
-
+      await createMockProduct({ name_en: "SKU 1", sku: "ABC123" });
+      await createMockProduct({ name_en: "SKU 2", sku: "XYZ999" });
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products?sku=ABC"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].sku).toEqual("ABC123");
+      expect(products[0]!.sku).toEqual("ABC123");
     });
 
     it("should return the correct response structure", async () => {
-      const mockProduct = createMockProductData({
+      await createMockProduct({
         name_en: "Product 1 (EN)",
         name_pl: "Product 1 (PL)",
         name_de: "Product 1 (DE)",
         description_en: "Description 1 (EN)",
         description_pl: "Description 1 (PL)",
         description_de: "Description 1 (DE)",
-        price: 100,
+        price: "100",
         sku: "SKU-001",
         weight: 500,
         length: 20,
       });
-      mockRepository.getProducts.mockResolvedValue([mockProduct]);
-
       const res = await GET_LIST(
         new NextRequest("http://localhost/api/products"),
       );
-      const products = await res.json();
-
+      const products = (await res.json()) as (Product & {
+        images: unknown[];
+      })[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      const product = products[0];
+      const product = products[0]!;
       expect(product).toHaveProperty("id");
       expect(product).toHaveProperty("name_en");
       expect(product.name_en).toEqual("Product 1 (EN)");
@@ -379,21 +415,6 @@ describe("Products API", () => {
     });
 
     it("should successfully create a product with localized name and description fields", async () => {
-      const mockCreatedProduct = createMockProductData({
-        name_en: "New Product (EN)",
-        name_pl: "Nowy Produkt (PL)",
-        name_de: "Neues Produkt (DE)",
-        description_en: "Description in English",
-        description_pl: "Opis po polsku",
-        description_de: "Beschreibung auf Deutsch",
-        price: 200,
-        sku: "NEW-SKU-001",
-        stock: 50,
-        weight: 1000,
-        length: 30,
-      });
-      mockRepository.createProduct.mockResolvedValue(mockCreatedProduct);
-
       const formData = new FormData();
       formData.append("name_en", "New Product (EN)");
       formData.append("name_pl", "Nowy Produkt (PL)");
@@ -415,7 +436,7 @@ describe("Products API", () => {
       } as unknown as NextRequest;
 
       const res = await POST(req);
-      const product = await res.json();
+      const product = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(product.name_en).toEqual("New Product (EN)");
@@ -429,13 +450,19 @@ describe("Products API", () => {
       expect(product.stock).toEqual(50);
       expect(product.weight).toEqual(1000);
       expect(product.length).toEqual(30);
+
+      const fetchedProduct = await prisma.product.findUnique({
+        where: { id: product.id },
+      });
+      expect(fetchedProduct).toBeDefined();
+      expect(fetchedProduct?.name_en).toEqual("New Product (EN)");
+      expect(fetchedProduct?.weight).toEqual(1000);
+      expect(fetchedProduct?.length).toEqual(30);
     });
   });
 
   describe("PUT /api/products/[id]", () => {
     it("should return 404 when updating a non-existent product", async () => {
-      mockRepository.updateProduct.mockResolvedValue(null);
-
       const formData = new FormData();
       formData.append("name_en", "Updated Product");
       formData.append("price", "150");
@@ -454,23 +481,47 @@ describe("Products API", () => {
       expect(res.status).toEqual(404);
     });
 
-    it("should successfully update localized name and description fields", async () => {
-      const productId = "test-product-789";
-      const mockUpdatedProduct = createMockProductData({
-        id: productId,
-        name_en: "Updated Name (EN)",
-        name_pl: "Zaktualizowana Nazwa (PL)",
-        name_de: "Aktualisierter Name (DE)",
-        description_en: "Updated description (EN)",
-        description_pl: "Zaktualizowany opis (PL)",
-        description_de: "Aktualisierte Beschreibung (DE)",
-        price: 999,
-        sku: "UPDATED-SKU",
-        weight: 1500,
-        length: 40,
+    it("should link an existing image to a product", async () => {
+      const product = await createMockProduct({ name_en: "Product 1" });
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
       });
 
-      mockRepository.updateProduct.mockResolvedValue(mockUpdatedProduct);
+      const formData = new FormData();
+      formData.append("name_en", "Updated Product (EN)");
+      formData.append("price", "150");
+      formData.append("sku", "SKU456");
+      formData.append("imageFileIds", imageFile.id);
+
+      const req = {
+        headers: new Headers(),
+        formData: () => Promise.resolve(formData),
+        url: `http://localhost/api/products/${product.id}`,
+        method: "PUT",
+      } as unknown as NextRequest;
+
+      const res = await PUT(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
+      expect(res.status).toEqual(200);
+
+      const productImages = await prisma.productImage.findMany({
+        where: { productId: product.id },
+      });
+      expect(productImages.length).toEqual(1);
+      expect(productImages[0]!.imageFileId).toEqual(imageFile.id);
+    });
+
+    it("should successfully update localized name and description fields", async () => {
+      const product = await createMockProduct({
+        name_en: "Original Product (EN)",
+        description_en: "Original description (EN)",
+      });
 
       const formData = new FormData();
       formData.append("name_en", "Updated Name (EN)");
@@ -487,17 +538,17 @@ describe("Products API", () => {
       const req = {
         headers: new Headers(),
         formData: () => Promise.resolve(formData),
-        url: `http://localhost/api/products/${productId}`,
+        url: `http://localhost/api/products/${product.id}`,
         method: "PUT",
       } as unknown as NextRequest;
 
       const res = await PUT(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
-      const updatedProduct = await res.json();
+      const updatedProduct = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
-      expect(updatedProduct.id).toEqual(productId);
+      expect(updatedProduct.id).toEqual(product.id);
       expect(updatedProduct.name_en).toEqual("Updated Name (EN)");
       expect(updatedProduct.name_pl).toEqual("Zaktualizowana Nazwa (PL)");
       expect(updatedProduct.name_de).toEqual("Aktualisierter Name (DE)");
@@ -515,8 +566,6 @@ describe("Products API", () => {
 
   describe("DELETE /api/products/[id]", () => {
     it("should return 404 when deleting a non-existent product", async () => {
-      mockRepository.deleteProduct.mockResolvedValue(null);
-
       const req = new NextRequest(
         "http://localhost/api/products/non-existent-id",
         {
@@ -530,37 +579,70 @@ describe("Products API", () => {
     });
   });
 
+  describe("DELETE /api/products/[id]/images/[imageFileId]", () => {
+    it("should unlink an image from a product", async () => {
+      const product = await createMockProduct({
+        name_en: "Product with image",
+      });
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
+      });
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: imageFile.id,
+        },
+      });
+
+      const req = new NextRequest(
+        `http://localhost/api/products/${product.id}/images/${imageFile.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const res = await DELETE_IMAGE(req, {
+        params: Promise.resolve({ id: product.id, imageFileId: imageFile.id }),
+      });
+
+      expect(res.status).toEqual(204);
+
+      const productImages = await prisma.productImage.findMany({
+        where: {
+          productId: product.id,
+        },
+      });
+      expect(productImages.length).toEqual(0);
+    });
+  });
+
   describe("GET /api/public/products/[id]", () => {
     it("should return a single product", async () => {
-      const productId = "public-product-123";
-      const mockProduct = createMockProductData({
-        id: productId,
-        name_en: "Product 1 (EN)",
-      });
-      mockRepository.getProductById.mockResolvedValue(mockProduct);
-
-      const req = new NextRequest(`http://localhost/api/products/${productId}`);
+      const product = await createMockProduct({ name_en: "Product 1 (EN)" });
+      const req = new NextRequest(
+        `http://localhost/api/products/${product.id}`,
+      );
       const res = await GET_PUBLIC(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
 
     it("should return a single product when params is a Promise", async () => {
-      const productId = "public-product-456";
-      const mockProduct = createMockProductData({
-        id: productId,
-        name_en: "Product 1 (EN)",
-      });
-      mockRepository.getProductById.mockResolvedValue(mockProduct);
-
-      const req = new NextRequest(`http://localhost/api/products/${productId}`);
+      const product = await createMockProduct({ name_en: "Product 1 (EN)" });
+      const req = new NextRequest(
+        `http://localhost/api/products/${product.id}`,
+      );
       const res = await GET_PUBLIC(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
@@ -568,10 +650,6 @@ describe("Products API", () => {
 
   describe("POST /api/products/[id]/duplicate", () => {
     it("should return 404 when product does not exist", async () => {
-      mockRepository.duplicateProduct.mockRejectedValue(
-        new Error("Product not found"),
-      );
-
       const req = new NextRequest(
         "http://localhost/api/products/non-existent-id/duplicate",
         {
@@ -586,68 +664,77 @@ describe("Products API", () => {
     });
 
     it("should reject invalid SKU format", async () => {
-      const productId = "product-sku-test";
-      mockRepository.duplicateProduct.mockRejectedValue(
-        new Error("Invalid SKU format"),
-      );
-
+      const product = await createMockProduct({ name_en: "Product 1 (EN)" });
       const req = new NextRequest(
-        `http://localhost/api/products/${productId}/duplicate`,
+        `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
           body: JSON.stringify({ sku: "bad-sku" }),
         },
       );
       const res = await POST_DUPLICATE(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
       expect(res.status).toEqual(400);
     });
 
     it("should reject duplicate SKU", async () => {
-      const productId = "product-dup-test";
-      mockRepository.duplicateProduct.mockRejectedValue(
-        new Error("A product with this SKU already exists."),
-      );
-
+      await createMockProduct({ name_en: "Product 1 (EN)", sku: "DUP123" });
+      const product = await createMockProduct({ name_en: "Product 2 (EN)" });
       const req = new NextRequest(
-        `http://localhost/api/products/${productId}/duplicate`,
+        `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
           body: JSON.stringify({ sku: "DUP123" }),
         },
       );
       const res = await POST_DUPLICATE(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
       expect(res.status).toEqual(409);
     });
 
-    it("should duplicate a product with a new SKU", async () => {
-      const productId = "product-dup-new";
-      const mockDuplicatedProduct = createMockProductData({
-        id: `duplicated-${Date.now()}`,
+    it("should duplicate a product without images and with a new SKU", async () => {
+      const product = await createMockProduct({
         name_en: "Product 1 (EN)",
-        sku: "NEW123",
-        price: 200,
+        sku: "ORIGINAL1",
+        price: "200",
       });
-      mockRepository.duplicateProduct.mockResolvedValue(mockDuplicatedProduct);
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/uploads/products/temp/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
+      });
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: imageFile.id,
+        },
+      });
 
       const req = new NextRequest(
-        `http://localhost/api/products/${productId}/duplicate`,
+        `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
           body: JSON.stringify({ sku: "NEW123" }),
         },
       );
       const res = await POST_DUPLICATE(req, {
-        params: Promise.resolve({ id: productId }),
+        params: Promise.resolve({ id: product.id }),
       });
-      const duplicated = await res.json();
+      const duplicated = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(duplicated.sku).toEqual("NEW123");
       expect(duplicated.name_en).toEqual("Product 1 (EN)");
+
+      const duplicatedImages = await prisma.productImage.findMany({
+        where: { productId: duplicated.id },
+      });
+      expect(duplicatedImages.length).toEqual(0);
     });
   });
 });

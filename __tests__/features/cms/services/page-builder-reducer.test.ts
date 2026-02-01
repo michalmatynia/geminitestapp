@@ -108,4 +108,73 @@ describe("Page Builder Reducer", () => {
 
     expect(state.sections[0]!.settings.imageHeight).toBe("small");
   });
+
+  describe("Grid Operations", () => {
+    it("should handle SET_GRID_COLUMNS", () => {
+      const sectionAction = { type: "ADD_SECTION" as const, sectionType: "Grid", zone: "template" as const };
+      let state = pageBuilderReducer(initialState, sectionAction);
+      const sectionId = state.sections[0]!.id;
+
+      // Initial grid should have 2 columns (default)
+      expect(state.sections[0]!.settings.columns).toBe(2);
+      
+      state = pageBuilderReducer(state, { type: "SET_GRID_COLUMNS", sectionId, columnCount: 4 });
+      expect(state.sections[0]!.settings.columns).toBe(4);
+      // It should have 1 row with 4 columns
+      expect(state.sections[0]!.blocks).toHaveLength(1);
+      expect(state.sections[0]!.blocks[0].blocks).toHaveLength(4);
+    });
+
+    it("should handle ADD_GRID_ROW", () => {
+      const sectionAction = { type: "ADD_SECTION" as const, sectionType: "Grid", zone: "template" as const };
+      let state = pageBuilderReducer(initialState, sectionAction);
+      const sectionId = state.sections[0]!.id;
+
+      state = pageBuilderReducer(state, { type: "ADD_GRID_ROW", sectionId });
+      expect(state.sections[0]!.settings.rows).toBe(2);
+      expect(state.sections[0]!.blocks).toHaveLength(2);
+    });
+  });
+
+  describe("Copy/Paste", () => {
+    it("should handle COPY_SECTION and PASTE_SECTION", () => {
+      const sectionAction = { type: "ADD_SECTION" as const, sectionType: "Hero", zone: "template" as const };
+      let state = pageBuilderReducer(initialState, sectionAction);
+      const sectionId = state.sections[0]!.id;
+
+      state = pageBuilderReducer(state, { type: "COPY_SECTION", sectionId });
+      expect(state.clipboard?.type).toBe("section");
+      expect(state.clipboard?.data.id).toBe(sectionId);
+
+      state = pageBuilderReducer(state, { type: "PASTE_SECTION", zone: "footer" });
+      expect(state.sections).toHaveLength(2);
+      expect(state.sections[1].type).toBe("Hero");
+      expect(state.sections[1].zone).toBe("footer");
+      expect(state.sections[1].id).not.toBe(sectionId); // Should be a new ID
+    });
+  });
+
+  describe("Conversion", () => {
+    it("should handle CONVERT_SECTION_TO_BLOCK", () => {
+      // Create source section
+      let state = pageBuilderReducer(initialState, { type: "ADD_SECTION", sectionType: "TextElement", zone: "template" });
+      const sourceId = state.sections[0].id;
+
+      // Create target section
+      state = pageBuilderReducer(state, { type: "ADD_SECTION", sectionType: "RichText", zone: "template" });
+      const targetId = state.sections[1].id;
+
+      state = pageBuilderReducer(state, { 
+        type: "CONVERT_SECTION_TO_BLOCK", 
+        sectionId: sourceId, 
+        toSectionId: targetId, 
+        toIndex: 0 
+      });
+
+      expect(state.sections).toHaveLength(1); // Source section removed
+      expect(state.sections[0].id).toBe(targetId);
+      expect(state.sections[0].blocks).toHaveLength(1);
+      expect(state.sections[0].blocks[0].type).toBe("TextElement");
+    });
+  });
 });

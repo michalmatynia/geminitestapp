@@ -337,7 +337,7 @@ export function AdminNotesPage(): React.JSX.Element {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onCreateFolder={(parentId: string | null): void => { void operations.handleCreateFolder(parentId); }}
+              onCreateFolder={(parentId?: string | null): void => { void operations.handleCreateFolder(parentId ?? null); }}
               onCreateNote={(folderId: string | null): void => {
                 setSelectedFolderId(folderId);
                 setIsCreating(true);
@@ -365,7 +365,7 @@ export function AdminNotesPage(): React.JSX.Element {
               onUndo={(): void => { void handleUndoFolderTree(1); }}
               undoHistory={undoHistory}
               onUndoAtIndex={handleUndoAtIndex}
-              onRefreshFolders={(): void => { void fetchFolderTree(); }}
+              onRefreshFolders={async (): Promise<void> => { await fetchFolderTree(); }}
             />
           </SectionPanel>
         )}
@@ -392,7 +392,7 @@ export function AdminNotesPage(): React.JSX.Element {
               selectedNoteTheme={themeLogic.selectedNoteTheme}
               onSelectRelatedNote={(id: string): void => { void handleSelectNoteFromTree(id); }}
               onFilterByTag={(tagId: string): void => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
-              onUnlinkRelatedNote={(id: string): void => { void handleUnlinkRelatedNote(id); }}
+              onUnlinkRelatedNote={async (id: string): Promise<void> => { await handleUnlinkRelatedNote(id); }}
             />
           ) : (
             <NoteListView

@@ -8,7 +8,15 @@ vi.mock("crypto", async (importOriginal) => {
   };
 });
 
-import { resolveCmsDomainByHost, resolveCmsDomainScopeById } from "@/features/cms/services/cms-domain";
+import {
+  resolveCmsDomainByHost,
+  resolveCmsDomainScopeById,
+  createCmsDomain,
+  deleteCmsDomain,
+  setCmsDomainAlias,
+  ensureDomainSlug,
+  setDomainDefaultSlug,
+} from "@/features/cms/services/cms-domain";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 
 vi.mock("@/shared/lib/db/mongo-client", () => ({
@@ -85,6 +93,62 @@ describe("CMS Domain Service", () => {
 
       const domain = await resolveCmsDomainScopeById("d1");
       expect(domain?.id).toBe("d2"); // Stops when it sees d1 again
+    });
+  });
+
+  describe("Management", () => {
+    it("should create a new domain", async () => {
+      mockCollection.findOne.mockResolvedValue(null);
+      const result = await createCmsDomain("new-domain.com");
+      expect(result.domain).toBe("new-domain.com");
+      expect(mockCollection.insertOne).toHaveBeenCalled();
+    });
+
+    it("should delete a domain and its links", async () => {
+      await deleteCmsDomain("d1");
+      expect(mockCollection.deleteOne).toHaveBeenCalledWith({ id: "d1" });
+      expect(mockCollection.deleteMany).toHaveBeenCalledWith({ domainId: "d1" });
+      expect(mockCollection.updateMany).toHaveBeenCalledWith(
+        { aliasOf: "d1" },
+        expect.any(Object)
+      );
+    });
+
+    it("should set domain alias", async () => {
+      const domain = { id: "d2", domain: "d2.com", aliasOf: null };
+      mockCollection.findOne.mockResolvedValueOnce(domain); // getDomainRecordById
+      
+      await setCmsDomainAlias("d2", "d1");
+      expect(mockCollection.updateOne).toHaveBeenCalledWith(
+        { id: "d2" },
+        expect.objectContaining({
+          $set: expect.objectContaining({ aliasOf: "d1" }),
+        })
+      );
+    });
+  });
+
+  describe("Slug Linking", () => {
+    it("should ensure domain slug", async () => {
+      await ensureDomainSlug("d1", "s1");
+      expect(mockCollection.updateOne).toHaveBeenCalledWith(
+        { domainId: "d1", slugId: "s1" },
+        expect.any(Object),
+        { upsert: true }
+      );
+    });
+
+    it("should set domain default slug", async () => {
+      await setDomainDefaultSlug("d1", "s1");
+      expect(mockCollection.updateMany).toHaveBeenCalledWith(
+        { domainId: "d1" },
+        expect.objectContaining({ $set: expect.objectContaining({ isDefault: false }) })
+      );
+      expect(mockCollection.updateOne).toHaveBeenCalledWith(
+        { domainId: "d1", slugId: "s1" },
+        expect.objectContaining({ $set: expect.objectContaining({ isDefault: true }) }),
+        { upsert: true }
+      );
     });
   });
 });

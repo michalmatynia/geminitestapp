@@ -96,4 +96,69 @@ describe("PageBuilderLayout Component", () => {
     fireEvent.click(showBtn);
     expect(rightPanel).toHaveClass("w-80");
   });
+
+  it("should switch left panel modes", () => {
+    render(<PageBuilderLayout />, { wrapper });
+    
+    // Default is sections
+    expect(screen.getByText("Sections")).toBeInTheDocument();
+    expect(screen.getByTestId("component-tree-panel")).toBeInTheDocument();
+    
+    // Switch to theme
+    fireEvent.click(screen.getByLabelText("Theme settings"));
+    expect(screen.getByText("Theme settings")).toBeInTheDocument();
+    expect(screen.getByTestId("theme-settings-panel")).toBeInTheDocument();
+    
+    // Switch to menu
+    fireEvent.click(screen.getByLabelText("Menu settings"));
+    expect(screen.getByText("Menu settings")).toBeInTheDocument();
+    expect(screen.getByTestId("menu-settings-panel")).toBeInTheDocument();
+
+    // Switch to app embeds
+    fireEvent.click(screen.getByLabelText("App embeds"));
+    expect(screen.getByText("App embeds")).toBeInTheDocument();
+    expect(screen.getByTestId("app-embeds-panel")).toBeInTheDocument();
+    
+    // Switch back to sections
+    fireEvent.click(screen.getByLabelText("Back to sections"));
+    expect(screen.getByText("Sections")).toBeInTheDocument();
+    expect(screen.getByTestId("component-tree-panel")).toBeInTheDocument();
+  });
+
+  it("should handle responsive auto-collapse of right panel", () => {
+    // Mock matchMedia
+    let matches = false;
+    let changeHandler: ((e: any) => void) | null = null;
+    
+    window.matchMedia = vi.fn().mockImplementation(query => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn().mockImplementation((event, handler) => {
+        if (event === "change") changeHandler = handler;
+      }),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    const { rerender } = render(<PageBuilderLayout />, { wrapper });
+    
+    const rightPanel = screen.getByTestId("component-settings-panel").parentElement!.parentElement!;
+    expect(rightPanel).toHaveClass("w-80"); // Initially open
+    
+    // Simulate narrow screen
+    matches = true;
+    if (changeHandler) changeHandler({ matches: true });
+    
+    // Re-render to pick up state change if needed (though useEffect handles it)
+    // In this case, the event listener should have triggered the dispatch
+    
+    // We might need to wait for the transition or state update
+    expect(rightPanel).toHaveClass("w-0");
+    
+    // Simulate wide screen again
+    matches = false;
+    if (changeHandler) changeHandler({ matches: false });
+    expect(rightPanel).toHaveClass("w-80");
+  });
 });

@@ -94,8 +94,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
     setGenerationError(null);
     const productData = getValues();
     const imageUrls = imageSlots
-      .filter((slot: { previewUrl: string } | null): slot is { previewUrl: string } => slot !== null)
-      .map((slot: { previewUrl: string }) => slot.previewUrl);
+      .filter((slot): slot is NonNullable<typeof slot> => slot !== null && 'previewUrl' in slot)
+      .map((slot) => slot.previewUrl);
 
     try {
       if (product?.id) {

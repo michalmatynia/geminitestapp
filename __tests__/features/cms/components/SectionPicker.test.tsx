@@ -54,7 +54,7 @@ describe("SectionPicker Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePageBuilder as any).mockReturnValue({ dispatch: mockDispatch });
+    (usePageBuilder as any).mockImplementation(() => ({ dispatch: mockDispatch }));
   });
 
   it("should render the add section button", () => {
@@ -66,6 +66,9 @@ describe("SectionPicker Component", () => {
     const onSelect = vi.fn();
     render(<SectionPicker zone="template" onSelect={onSelect} />, { wrapper });
 
+    // Open the dialog by clicking the trigger
+    fireEvent.click(screen.getByRole("button", { name: /Add section/i }));
+    
     const richTextOption = screen.getByText("Rich text");
     fireEvent.click(richTextOption);
 

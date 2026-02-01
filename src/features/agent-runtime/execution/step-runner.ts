@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
-import unknownToErrorMessage from "@/shared/utils/helperNotification";
+import unknownToErrorMessage from "@/shared/utils/error-formatting";
 import { logAgentAudit } from "@/features/agent-runtime/audit";
 import { addAgentMemory } from "@/features/agent-runtime/memory";
 import { runAgentBrowserControl, runAgentTool } from "@/features/agent-runtime/tools";

@@ -41,7 +41,7 @@ describe("Mongo CMS Repository", () => {
       const pages = await mongoCmsRepository.getPages();
 
       expect(pages).toHaveLength(1);
-      expect(pages[0].name).toBe("Home");
+      expect(pages[0]!.name).toBe("Home");
     });
 
     it("should create a page", async () => {
@@ -83,7 +83,7 @@ describe("Mongo CMS Repository", () => {
       const themes = await mongoCmsRepository.getThemes();
 
       expect(themes).toHaveLength(1);
-      expect(themes[0].name).toBe("Theme 1");
+      expect(themes[0]!.name).toBe("Theme 1");
     });
   });
 });

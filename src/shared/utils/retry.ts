@@ -89,12 +89,7 @@ function withTimeout<T>(
   });
 }
 
-/**
- * Delays execution for a specified time.
- */
-function delay(ms: number): Promise<void> {
-  return new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
-}
+import { delay } from "./time-utils";
 
 /**
  * Executes an async operation with automatic retries on failure.

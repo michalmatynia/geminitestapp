@@ -40,7 +40,7 @@ describe("useCmsDomainSelection Hook", () => {
     // Default mock implementations
     (useCmsDomains as any).mockReturnValue({ data: mockDomains, isLoading: false });
     (useSettingsMap as any).mockReturnValue({
-      data: new Map([["cms_domain_settings", JSON.stringify({ zoningEnabled: true })]]),
+      data: new Map([["cms_domain_settings.v1", JSON.stringify({ zoningEnabled: true })]]),
       isLoading: false,
     });
     
@@ -65,7 +65,7 @@ describe("useCmsDomainSelection Hook", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     
     expect(result.current.activeDomainId).toBe("d1");
-    expect(result.current.activeDomain?.domain).toBe("example.com");
+    expect(result.current.activeDomain!.domain).toBe("example.com");
     expect(result.current.zoningEnabled).toBe(true);
   });
 
@@ -89,7 +89,7 @@ describe("useCmsDomainSelection Hook", () => {
 
     await waitFor(() => expect(result.current.activeDomainId).toBe("d2"), { timeout: 2000 });
     
-    expect(result.current.canonicalDomain?.id).toBe("d1");
+    expect(result.current.canonicalDomain!.id).toBe("d1");
   });
 
   it("should handle setting active domain", async () => {
@@ -112,7 +112,7 @@ describe("useCmsDomainSelection Hook", () => {
 
   it("should disable zoning if setting is false", async () => {
     (useSettingsMap as any).mockReturnValue({
-      data: new Map([["cms_domain_settings", JSON.stringify({ zoningEnabled: false })]]),
+      data: new Map([["cms_domain_settings.v1", JSON.stringify({ zoningEnabled: false })]]),
       isLoading: false,
     });
 
@@ -127,9 +127,11 @@ describe("useCmsDomainSelection Hook", () => {
   it("should detect host domain", async () => {
     // Mock window.location.hostname
     const originalLocation = window.location;
-    // @ts-ignore
-    delete window.location;
-    window.location = { ...originalLocation, hostname: "test.com" };
+    delete (window as any).location;
+    Object.defineProperty(window, "location", {
+      value: { ...originalLocation, hostname: "test.com" } as Location,
+      configurable: true,
+    });
 
     server.use(
       http.get("/api/user/preferences", () => {
@@ -145,6 +147,10 @@ describe("useCmsDomainSelection Hook", () => {
     expect(result.current.activeDomainId).toBe("d2");
 
     // Restore window.location
-    window.location = originalLocation;
+    delete (window as any).location;
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      configurable: true,
+    });
   });
 });

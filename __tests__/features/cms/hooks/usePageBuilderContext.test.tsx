@@ -143,14 +143,17 @@ describe("usePageBuilder Hook", () => {
       result.current.dispatch({ type: "ADD_SECTION", sectionType: "Grid", zone: "template" });
     });
 
-    expect(result.current.state.sections[0]!.blocks.length).toBe(2); // Mock default is 2
-    expect(result.current.state.sections[0]!.blocks[0]!.type).toBe("Column");
+    // Grid section has 1 row by default
+    expect(result.current.state.sections[0]!.blocks.length).toBe(1); 
+    expect(result.current.state.sections[0]!.blocks[0]!.type).toBe("Row");
+    // And that row has 2 columns by default (from our mock)
+    expect(result.current.state.sections[0]!.blocks[0]!.blocks?.length).toBe(2);
 
     act(() => {
       result.current.dispatch({ type: "SET_GRID_COLUMNS", sectionId: result.current.state.sections[0]!.id, columnCount: 3 });
     });
 
-    expect(result.current.state.sections[0]!.blocks.length).toBe(3);
+    expect(result.current.state.sections[0]!.blocks[0]!.blocks?.length).toBe(3);
     expect(result.current.state.sections[0]!.settings.columns).toBe(3);
   });
 
@@ -190,7 +193,8 @@ describe("usePageBuilder Hook", () => {
     expect(result.current.state.sections[1]!.type).toBe("Grid");
 
     act(() => {
-      result.current.dispatch({ type: "REORDER_SECTIONS", zone: "template", fromIndex: 0, toIndex: 1 });
+      // To move index 0 to 1, we drop BEFORE index 2 (which is the end of the zone)
+      result.current.dispatch({ type: "REORDER_SECTIONS", zone: "template", fromIndex: 0, toIndex: 2 });
     });
 
     expect(result.current.state.sections[0]!.type).toBe("Grid");

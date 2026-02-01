@@ -244,7 +244,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: typeof data.sizeWidth === "number" ? data.sizeWidth : null,
       weight: typeof data.weight === "number" ? data.weight : null,
       length: typeof data.length === "number" ? data.length : null,
-      parameters: Array.isArray(data.parameters) ? data.parameters.map((p: { parameterId: string; value?: string }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+      parameters: Array.isArray(data.parameters) ? data.parameters.map((p) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       createdAt: now,
       updatedAt: now,
@@ -304,7 +304,7 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-            parameters: Array.isArray(data.parameters) ? data.parameters.map((p: { parameterId: string; value?: string }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
+            parameters: Array.isArray(data.parameters) ? data.parameters.map((p) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
           }
         : null),
       ...(data.imageLinks !== undefined

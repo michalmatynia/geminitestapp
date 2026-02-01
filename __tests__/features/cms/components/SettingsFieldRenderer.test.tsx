@@ -4,6 +4,7 @@ import { SettingsFieldRenderer } from "@/features/cms/components/page-builder/Se
 import { ThemeSettingsProvider } from "@/features/cms/components/page-builder/ThemeSettingsContext";
 import { vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastProvider } from "@/shared/ui";
 
 // Mock MediaLibraryPanel
 vi.mock("@/features/cms/components/page-builder/MediaLibraryPanel", () => ({
@@ -13,7 +14,9 @@ vi.mock("@/features/cms/components/page-builder/MediaLibraryPanel", () => ({
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>
-    <ThemeSettingsProvider>{children}</ThemeSettingsProvider>
+    <ToastProvider>
+      <ThemeSettingsProvider>{children}</ThemeSettingsProvider>
+    </ToastProvider>
   </QueryClientProvider>
 );
 

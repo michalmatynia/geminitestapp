@@ -122,7 +122,7 @@ describe("Page Builder Reducer", () => {
       expect(state.sections[0]!.settings.columns).toBe(4);
       // It should have 1 row with 4 columns
       expect(state.sections[0]!.blocks).toHaveLength(1);
-      expect(state.sections[0]!.blocks[0].blocks).toHaveLength(4);
+      expect(state.sections[0]!.blocks[0]!.blocks).toHaveLength(4);
     });
 
     it("should handle ADD_GRID_ROW", () => {
@@ -148,9 +148,9 @@ describe("Page Builder Reducer", () => {
 
       state = pageBuilderReducer(state, { type: "PASTE_SECTION", zone: "footer" });
       expect(state.sections).toHaveLength(2);
-      expect(state.sections[1].type).toBe("Hero");
-      expect(state.sections[1].zone).toBe("footer");
-      expect(state.sections[1].id).not.toBe(sectionId); // Should be a new ID
+      expect(state.sections[1]!.type).toBe("Hero");
+      expect(state.sections[1]!.zone).toBe("footer");
+      expect(state.sections[1]!.id).not.toBe(sectionId); // Should be a new ID
     });
   });
 
@@ -158,11 +158,11 @@ describe("Page Builder Reducer", () => {
     it("should handle CONVERT_SECTION_TO_BLOCK", () => {
       // Create source section
       let state = pageBuilderReducer(initialState, { type: "ADD_SECTION", sectionType: "TextElement", zone: "template" });
-      const sourceId = state.sections[0].id;
+      const sourceId = state.sections[0]!.id;
 
       // Create target section
       state = pageBuilderReducer(state, { type: "ADD_SECTION", sectionType: "RichText", zone: "template" });
-      const targetId = state.sections[1].id;
+      const targetId = state.sections[1]!.id;
 
       state = pageBuilderReducer(state, { 
         type: "CONVERT_SECTION_TO_BLOCK", 
@@ -172,9 +172,9 @@ describe("Page Builder Reducer", () => {
       });
 
       expect(state.sections).toHaveLength(1); // Source section removed
-      expect(state.sections[0].id).toBe(targetId);
-      expect(state.sections[0].blocks).toHaveLength(1);
-      expect(state.sections[0].blocks[0].type).toBe("TextElement");
+      expect(state.sections[0]!.id).toBe(targetId);
+      expect(state.sections[0]!.blocks).toHaveLength(1);
+      expect(state.sections[0]!.blocks[0]!.type).toBe("TextElement");
     });
   });
 });

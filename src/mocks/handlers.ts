@@ -1,9 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { NoteCreateData } from "@/features/notesapp";
+import type { PathParams } from 'msw';
 
-type ParamsContext = { params: Record<string, string> };
+type ParamsContext = { params: PathParams };
 type RequestContext = { request: Request };
-type RequestParamsContext = { params: Record<string, string>; request: Request };
+type RequestParamsContext = { params: PathParams; request: Request };
 
 // Mock data
 const mockProducts = [

@@ -47,7 +47,7 @@ describe("systemLogRepository", () => {
 
     const result = await listSystemLogs({ source: "test-source" });
     expect(result.total).toBe(1);
-    expect(result.logs[0].message).toBe("Test log message");
+    expect(result.logs[0]!.message).toBe("Test log message");
   });
 
   it("should filter logs by level", async () => {
@@ -56,11 +56,11 @@ describe("systemLogRepository", () => {
 
     const infoLogs = await listSystemLogs({ level: "info" });
     expect(infoLogs.total).toBe(1);
-    expect(infoLogs.logs[0].level).toBe("info");
+    expect(infoLogs.logs[0]!.level).toBe("info");
 
     const errorLogs = await listSystemLogs({ level: "error" });
     expect(errorLogs.total).toBe(1);
-    expect(errorLogs.logs[0].level).toBe("error");
+    expect(errorLogs.logs[0]!.level).toBe("error");
   });
 
   it("should search logs by query", async () => {
@@ -69,7 +69,7 @@ describe("systemLogRepository", () => {
 
     const searchResult = await listSystemLogs({ query: "Alpha" });
     expect(searchResult.total).toBe(1);
-    expect(searchResult.logs[0].message).toBe("Alpha log");
+    expect(searchResult.logs[0]!.message).toBe("Alpha log");
   });
 
   it("should get metrics", async () => {
@@ -113,6 +113,6 @@ describe("systemLogRepository", () => {
 
     const remaining = await listSystemLogs({});
     expect(remaining.total).toBe(1);
-    expect(remaining.logs[0].message).toBe("New Log");
+    expect(remaining.logs[0]!.message).toBe("New Log");
   });
 });

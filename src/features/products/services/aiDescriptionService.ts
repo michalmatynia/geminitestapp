@@ -211,7 +211,7 @@ export async function generateProductDescription(params: {
           const record = imageFileMap.get(item);
           if (record) mimetype = record.mimetype;
         }
-        return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } };
+        return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } } as ChatCompletionContentPart;
       } catch { return null; }
     });
     processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);

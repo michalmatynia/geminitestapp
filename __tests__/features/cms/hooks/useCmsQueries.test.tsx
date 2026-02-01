@@ -10,20 +10,9 @@ import {
   useUpdatePage,
   useDeletePage,
   useCmsSlugs,
-  useCmsAllSlugs,
-  useCmsSlug,
   useCreateSlug,
-  useUpdateSlug,
-  useDeleteSlug,
   useCmsDomains,
-  useCreateCmsDomain,
-  useDeleteCmsDomain,
-  useUpdateCmsDomain,
   useCmsThemes,
-  useCmsTheme,
-  useCreateTheme,
-  useUpdateTheme,
-  useDeleteTheme,
 } from "@/features/cms/hooks/useCmsQueries";
 import * as pagesApi from "@/features/cms/api/pages";
 import * as slugsApi from "@/features/cms/api/slugs";

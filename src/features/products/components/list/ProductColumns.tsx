@@ -325,7 +325,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | undefined;
 
       const nameKey: ProductNameKey = meta?.productNameKey ?? "name_en";
-      const nameValue: string | undefined =
+      const nameValue: string | null | undefined =
         product[nameKey] ??
         product.name_en ??
         product.name_pl ??
@@ -416,11 +416,11 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       );
 
       // Show currency indicator if different from selected
-      const showCurrencyIndicator: string | boolean = actualCurrency && actualCurrency !== currencyCode;
-      const hasConvertedPrice: boolean | null =
+      const showCurrencyIndicator: boolean = !!(actualCurrency && actualCurrency !== currencyCode);
+      const hasConvertedPrice: boolean =
         displayPrice !== null &&
         product.price !== null &&
-        baseCurrencyCode &&
+        !!baseCurrencyCode &&
         normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
         displayPrice !== product.price;
 
@@ -439,7 +439,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         return (
           <div className="flex flex-col items-start">
             <span className="text-foreground">
-              {displayPrice.toFixed(2)}
+              {displayPrice !== null && displayPrice.toFixed(2)}
             </span>
             <span className="text-xs text-muted-foreground">
               Base: {product.price?.toFixed(2)} {baseCurrencyCode}

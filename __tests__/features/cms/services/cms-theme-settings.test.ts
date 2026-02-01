@@ -39,6 +39,7 @@ describe("getCmsThemeSettings Service", () => {
   });
 
   it("should fetch theme settings from MongoDB when provider is mongodb", async () => {
+    process.env.MONGODB_URI = "mongodb://localhost";
     (getAppDbProvider as any).mockResolvedValue("mongodb");
     const mockCollection = {
       findOne: vi.fn().mockResolvedValue({ value: JSON.stringify({ primaryColor: "#00ff00" }) }),

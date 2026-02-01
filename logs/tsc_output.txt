@@ -1,99 +1,92 @@
-src/features/cms/components/page-builder/AnimationConfigPanel.tsx(239,9): error TS2322: Type 'string' is not assignable to type '"custom" | "children" | "self" | "descendants"'.
-src/features/notesapp/components/NoteCard.tsx(262,19): error TS2345: Argument of type '(crumb: { id: string; name: string; }, index: number, array: Array<{ id: string; name: string; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
-  Types of parameters 'crumb' and 'value' are incompatible.
-    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; }'.
-      Types of property 'id' are incompatible.
-        Type 'string | null' is not assignable to type 'string'.
-          Type 'null' is not assignable to type 'string'.
-src/features/notesapp/components/NoteDetailView.tsx(245,15): error TS2345: Argument of type '(crumb: { id: string; name: string; isNote?: boolean; }, index: number, array: Array<{ id: string; name: string; isNote?: boolean; }>) => JSX.Element' is not assignable to parameter of type '(value: { id: string | null; name: string; isNote?: boolean | undefined; }, index: number, array: { id: string | null; name: string; isNote?: boolean | undefined; }[]) => Element'.
-  Types of parameters 'crumb' and 'value' are incompatible.
-    Type '{ id: string | null; name: string; isNote?: boolean | undefined; }' is not assignable to type '{ id: string; name: string; isNote?: boolean | undefined; }'.
-      Types of property 'id' are incompatible.
-        Type 'string | null' is not assignable to type 'string'.
-          Type 'null' is not assignable to type 'string'.
-src/features/notesapp/components/NoteForm.tsx(384,22): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
-src/features/notesapp/components/NoteForm.tsx(511,24): error TS2345: Argument of type '(prev: NoteFileRecord[]) => NoteFileRecord[]' is not assignable to parameter of type 'NoteFileRecord[]'.
-src/features/notesapp/components/NoteForm.tsx(712,14): error TS2322: Type '() => void' is not assignable to type 'void'.
-src/features/notesapp/components/NoteForm.tsx(827,13): error TS2322: Type '(e: React.ClipboardEvent<HTMLTextAreaElement>) => void' is not assignable to type '(e: ClipboardEvent<HTMLTextAreaElement>) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/components/NoteForm.tsx(847,9): error TS2322: Type '(slotIndex: number, file: File) => void' is not assignable to type '(slotIndex: number, file: File) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/components/NoteForm.tsx(848,9): error TS2322: Type '(files: FileList | File[]) => void' is not assignable to type '(files: FileList | File[]) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/components/NoteForm.tsx(849,9): error TS2322: Type '(slotIndex: number) => void' is not assignable to type '(slotIndex: number) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesPage.tsx(340,15): error TS2322: Type '(parentId: string | null) => void' is not assignable to type '(parentId?: string | null | undefined) => void'.
-  Types of parameters 'parentId' and 'parentId' are incompatible.
-    Type 'string | null | undefined' is not assignable to type 'string | null'.
-      Type 'undefined' is not assignable to type 'string | null'.
-src/features/notesapp/pages/AdminNotesPage.tsx(368,15): error TS2322: Type '() => void' is not assignable to type '() => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesPage.tsx(395,15): error TS2322: Type '(id: string) => void' is not assignable to type '(relatedId: string) => Promise<void>'.
-  Type 'void' is not assignable to type 'Promise<void>'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(381,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(394,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(407,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(423,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(439,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(455,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(471,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(491,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(509,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(527,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/pages/AdminNotesThemesPage.tsx(545,29): error TS2322: Type 'false | void' is not assignable to type 'void'.
-  Type 'boolean' is not assignable to type 'void'.
-src/features/notesapp/services/notes/index.ts(88,30): error TS2769: No overload matches this call.
-  Overload 1 of 3, '(data: null): null', gave the following error.
-    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'null'.
-      Type 'NoteWithRelations' is not assignable to type 'null'.
-  Overload 2 of 3, '(data: NoteWithRelations[]): NoteWithRelations[]', gave the following error.
-    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'NoteWithRelations[]'.
-      Type 'null' is not assignable to type 'NoteWithRelations[]'.
-  Overload 3 of 3, '(data: NoteWithRelations): NoteWithRelations', gave the following error.
-    Argument of type 'NoteWithRelations | null' is not assignable to parameter of type 'NoteWithRelations'.
-      Type 'null' is not assignable to type 'NoteWithRelations'.
-        Type 'null' is not assignable to type 'NoteRecord'.
-src/features/notesapp/services/notes/note-repository/prisma/category-impl.ts(111,11): error TS2322: Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; } | { parent: { connect: { id: string; }; }; sortIndex?: number | ... 1 more ... | undefined; color?: string | ... 1 more ... | undefined; description?: string | ... 1 more ...' is not assignable to type 'CategoryUpdateInput'.
-  Type '{ sortIndex?: number | null | undefined; color?: string | null | undefined; description?: string | null | undefined; name?: string | undefined; }' is not assignable to type 'CategoryUpdateInput'.
-    Types of property 'sortIndex' are incompatible.
-      Type 'number | null | undefined' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
-        Type 'null' is not assignable to type 'number | IntFieldUpdateOperationsInput | undefined'.
-src/features/products/components/form/ProductFormGeneral.tsx(98,12): error TS2345: Argument of type '(slot: { previewUrl: string; }) => string' is not assignable to parameter of type '(value: ProductImageSlot, index: number, array: ProductImageSlot[]) => string'.
-  Types of parameters 'slot' and 'value' are incompatible.
-    Type 'ProductImageSlot' is not assignable to type '{ previewUrl: string; }'.
-      Type 'null' is not assignable to type '{ previewUrl: string; }'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(24,17): error TS2741: Property 'valueType' is missing in type '{ value: string; }' but required in type 'ConstantConfig'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(33,17): error TS2741: Property 'valueType' is missing in type '{ value: string; }' but required in type 'ConstantConfig'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(70,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(71,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(72,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(79,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(83,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(90,42): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(103,46): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(109,44): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'AiPathRunCreateInput'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(124,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(162,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(163,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/ai-paths/services/path-run-repository.test.ts(164,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/components/PageBuilderLayout.test.tsx(88,23): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/components/PageBuilderLayout.test.tsx(93,23): error TS2345: Argument of type 'HTMLElement | undefined' is not assignable to parameter of type 'Element | Node | Window | Document'.
+  Type 'undefined' is not assignable to type 'Element | Node | Window | Document'.
+__tests__/features/cms/components/SectionPicker.test.tsx(34,32): error TS6133: 'onOpenChange' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsDomainSelection.test.tsx(78,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/hooks/useCmsDomainSelection.test.tsx(132,5): error TS2322: Type '{ hostname: string; ancestorOrigins: DOMStringList; hash: string; host: string; href: string; toString(): string; origin: string; pathname: string; port: string; protocol: string; search: string; assign(url: string | URL): void; reload(): void; replace(url: string | URL): void; }' is not assignable to type 'string & Location'.
+  Type '{ hostname: string; ancestorOrigins: DOMStringList; hash: string; host: string; href: string; toString(): string; origin: string; pathname: string; port: string; protocol: string; search: string; assign(url: string | URL): void; reload(): void; replace(url: string | URL): void; }' is not assignable to type 'string'.
+__tests__/features/cms/hooks/useCmsDomainSelection.test.tsx(148,5): error TS2322: Type 'Location' is not assignable to type 'string & Location'.
+  Type 'Location' is not assignable to type 'string'.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(13,3): error TS6133: 'useCmsAllSlugs' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(14,3): error TS6133: 'useCmsSlug' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(16,3): error TS6133: 'useUpdateSlug' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(17,3): error TS6133: 'useDeleteSlug' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(19,3): error TS6133: 'useCreateCmsDomain' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(20,3): error TS6133: 'useDeleteCmsDomain' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(21,3): error TS6133: 'useUpdateCmsDomain' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(23,3): error TS6133: 'useCmsTheme' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(24,3): error TS6133: 'useCreateTheme' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(25,3): error TS6133: 'useUpdateTheme' is declared but its value is never read.
+__tests__/features/cms/hooks/useCmsQueries.test.tsx(26,3): error TS6133: 'useDeleteTheme' is declared but its value is never read.
+__tests__/features/cms/services/mongo-cms-repository.test.ts(44,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/mongo-cms-repository.test.ts(86,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(125,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(151,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(152,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(153,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(161,24): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(165,24): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(175,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(176,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(177,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/cms/services/page-builder-reducer.test.ts(177,14): error TS2532: Object is possibly 'undefined'.
+__tests__/features/observability/services/system-log-repository.test.ts(50,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/observability/services/system-log-repository.test.ts(59,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/observability/services/system-log-repository.test.ts(63,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/observability/services/system-log-repository.test.ts(72,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/observability/services/system-log-repository.test.ts(116,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/products/api/products.test.ts(123,59): error TS2345: Argument of type '(args: any) => Promise<any[]>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductFindManyArgs>(args?: SelectSubset<T, ProductFindManyArgs<DefaultArgs>> | undefined) => PrismaPromise<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>[]>)>'.
+  Call signature return types 'Promise<any[]>' and 'PrismaPromise<{ sku: string | null; name_en: string | null; name_pl: string | null; name_de: string | null; description_en: string | null; description_pl: string | null; description_de: string | null; ... 18 more ...; updatedAt: Date; }[]>' are incompatible.
+    The types of '[Symbol.toStringTag]' are incompatible between these types.
+      Type 'string' is not assignable to type '"PrismaPromise"'.
+__tests__/features/products/api/products.test.ts(194,61): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductFindUniqueArgs>(args: SelectSubset<T, ProductFindUniqueArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }> | null, null, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ sku: string | null; name_en: string | null; name_pl: string | null; name_de: string | null; description_en: string | null; description_pl: string | null; description_de: string | null; ... 18 more ...; updatedAt: Date; } | null, null, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/features/products/api/products.test.ts(197,57): error TS2345: Argument of type '(args: any) => Promise<{ id: string; sku: {}; name_en: {}; name_pl: {}; name_de: {}; description_en: {}; description_pl: {}; description_de: {}; price: number; stock: {}; weight: {}; length: {}; createdAt: Date; updatedAt: Date; images: never[]; catalogs: never[]; }>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductCreateArgs>(args: SelectSubset<T, ProductCreateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<{ id: string; sku: {}; name_en: {}; name_pl: {}; name_de: {}; description_en: {}; description_pl: {}; description_de: {}; price: number; stock: {}; weight: {}; length: {}; createdAt: Date; updatedAt: Date; images: never[]; catalogs: never[]; }>' is missing the following properties from type 'Prisma__ProductClient<{ sku: string | null; name_en: string | null; name_pl: string | null; name_de: string | null; description_en: string | null; description_pl: string | null; description_de: string | null; ... 18 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/features/products/api/products.test.ts(202,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductUpdateArgs>(args: SelectSubset<T, ProductUpdateArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ sku: string | null; name_en: string | null; name_pl: string | null; name_de: string | null; description_en: string | null; description_pl: string | null; description_de: string | null; ... 18 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/features/products/api/products.test.ts(208,57): error TS2345: Argument of type '(args: any) => Promise<any>' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ProductDeleteArgs>(args: SelectSubset<T, ProductDeleteArgs<DefaultArgs>>) => Prisma__ProductClient<GetFindResult<$ProductPayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__ProductClient<{ sku: string | null; name_en: string | null; name_pl: string | null; name_de: string | null; description_en: string | null; description_pl: string | null; description_de: string | null; ... 18 more ...; updatedAt: Date; }, never, DefaultArgs, { ...; }>': images, catalogs, categories, tags, and 2 more.
+__tests__/features/products/api/products.test.ts(231,59): error TS2345: Argument of type '(args: any) => { id: string; filename: string; filepath: string; mimetype: string; size: number; width: number; height: number; tags: never[]; createdAt: Date; updatedAt: Date; }' is not assignable to parameter of type 'NormalizedPrecedure<(<T extends ImageFileCreateArgs>(args: SelectSubset<T, ImageFileCreateArgs<DefaultArgs>>) => Prisma__ImageFileClient<GetFindResult<$ImageFilePayload<DefaultArgs>, T, { ...; }>, never, DefaultArgs, { ...; }>)>'.
+  Type '{ id: string; filename: string; filepath: string; mimetype: string; size: number; width: number; height: number; tags: never[]; createdAt: Date; updatedAt: Date; }' is missing the following properties from type 'Prisma__ImageFileClient<{ id: string; createdAt: Date; updatedAt: Date; filename: string; filepath: string; mimetype: string; size: number; width: number | null; height: number | null; tags: string[]; }, never, DefaultArgs, { ...; }>': products, then, catch, finally, [Symbol.toStringTag]
+__tests__/features/products/api/products.test.ts(231,60): error TS6133: 'args' is declared but its value is never read.
 src/features/products/components/list/ProductColumns.tsx(328,13): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
   Type 'null' is not assignable to type 'string | undefined'.
 src/features/products/components/list/ProductColumns.tsx(420,13): error TS2322: Type 'boolean | ""' is not assignable to type 'boolean | null'.
   Type '""' is not assignable to type 'boolean | null'.
 src/features/products/components/list/ProductColumns.tsx(442,16): error TS18047: 'displayPrice' is possibly 'null'.
-src/features/products/components/ProductListPanel.tsx(17,7): error TS2345: Argument of type '(mod: { ProductListHeader: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
-  Types of parameters 'mod' and 'value' are incompatible.
-    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductListHeader")' is not assignable to type '{ ProductListHeader: ComponentType<Record<string, unknown>>; }'.
-      Types of property 'ProductListHeader' are incompatible.
-        Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
-          Type 'NamedExoticComponent<ProductListHeaderProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
-            Types of parameters 'props' and 'props' are incompatible.
-              Type 'Record<string, unknown>' is missing the following properties from type 'ProductListHeaderProps': onCreateProduct, page, totalPages, setPage, and 11 more.
-src/features/products/components/ProductListPanel.tsx(25,7): error TS2345: Argument of type '(mod: { ProductFilters: React.ComponentType<Record<string, unknown>>; }) => ComponentType<Record<string, unknown>>' is not assignable to parameter of type '(value: typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")) => ComponentClass<Record<string, unknown>, any> | FunctionComponent<...> | PromiseLike<...>'.
-  Types of parameters 'mod' and 'value' are incompatible.
-    Type 'typeof import("/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/list/ProductFilters")' is not assignable to type '{ ProductFilters: ComponentType<Record<string, unknown>>; }'.
-      Types of property 'ProductFilters' are incompatible.
-        Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'ComponentType<Record<string, unknown>>'.
-          Type 'NamedExoticComponent<ProductFiltersProps>' is not assignable to type 'FunctionComponent<Record<string, unknown>>'.
-            Types of parameters 'props' and 'props' are incompatible.
-              Type 'Record<string, unknown>' is missing the following properties from type 'ProductFiltersProps': search, setSearch, sku, setSku, and 8 more.
-src/features/products/utils/productUtils.ts(4,15): error TS2305: Module '"@/features/products/types"' has no exported member 'Product'.
+src/features/products/services/aiDescriptionService.ts(217,5): error TS2322: Type '({ type: "image_url"; image_url: { url: string; }; } | null)[]' is not assignable to type 'ChatCompletionContentPart[]'.
+  Type '{ type: "image_url"; image_url: { url: string; }; } | null' is not assignable to type 'ChatCompletionContentPart'.
+    Type 'null' is not assignable to type 'ChatCompletionContentPart'.
+src/features/products/services/aiDescriptionService.ts(217,79): error TS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'ChatCompletionContentPart' is not assignable to type '{ type: "image_url"; image_url: { url: string; }; } | null'.
+    Property 'image_url' is missing in type 'ChatCompletionContentPartText' but required in type '{ type: "image_url"; image_url: { url: string; }; }'.
+src/features/products/services/product-repository/mongo-product-repository.ts(247,72): error TS2345: Argument of type '(p: { parameterId: string; value?: string; }) => { parameterId: string; value: string; }' is not assignable to parameter of type '(value: { parameterId: string; value?: string | null | undefined; }, index: number, array: { parameterId: string; value?: string | null | undefined; }[]) => { parameterId: string; value: string; }'.
+  Types of parameters 'p' and 'value' are incompatible.
+    Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type '{ parameterId: string; value?: string | undefined; }'.
+      Types of property 'value' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+src/features/products/services/product-repository/mongo-product-repository.ts(307,78): error TS2345: Argument of type '(p: { parameterId: string; value?: string; }) => { parameterId: string; value: string; }' is not assignable to parameter of type '(value: { parameterId: string; value?: string | null | undefined; }, index: number, array: { parameterId: string; value?: string | null | undefined; }[]) => { parameterId: string; value: string; }'.
+  Types of parameters 'p' and 'value' are incompatible.
+    Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type '{ parameterId: string; value?: string | undefined; }'.
+      Types of property 'value' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
 src/mocks/handlers.ts(167,33): error TS2345: Argument of type '({ params, request }: RequestParamsContext) => Promise<HttpResponse<JsonBodyType>>' is not assignable to parameter of type 'HttpResponseResolver<PathParams, DefaultBodyType, JsonBodyType>'.
   Types of parameters '__0' and 'info' are incompatible.
     Type 'ResponseResolverInfo<HttpRequestResolverExtras<PathParams>, DefaultBodyType>' is not assignable to type 'RequestParamsContext'.

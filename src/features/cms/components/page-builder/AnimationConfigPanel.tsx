@@ -223,6 +223,27 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
+  const handleNodeTargetChange = useCallback(
+    (mode: "self" | "children" | "descendants"): void => {
+      if (mode === "self") {
+        onChange({ ...config, selector: ":scope" });
+      } else if (mode === "children") {
+        onChange({ ...config, selector: ":scope > *", preset: "stagger" });
+      } else {
+        onChange({ ...config, selector: ":scope *", preset: "stagger" });
+      }
+    },
+    [config, onChange]
+  );
+
+  const resolvedNodeTarget: "self" | "children" | "descendants" | "custom" = (() => {
+    const normalized = selectorValue.trim();
+    if (!normalized || normalized === ":scope") return "self";
+    if (normalized === ":scope > *") return "children";
+    if (normalized === ":scope *") return "descendants";
+    return "custom";
+  })();
+
   const handleQuickSelector = useCallback(
     (selector: string) => {
       onChange({ ...config, selector });
@@ -945,6 +966,50 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
 
       {config.preset !== "none" && (
         <>
+          {/* Node target */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              Node animation
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={resolvedNodeTarget === "self" ? "secondary" : "outline"}
+                onClick={(): void => handleNodeTargetChange("self")}
+                className="h-8 text-[11px]"
+              >
+                Animate me
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={resolvedNodeTarget === "children" ? "secondary" : "outline"}
+                onClick={(): void => handleNodeTargetChange("children")}
+                className="h-8 text-[11px]"
+              >
+                Animate children (stagger)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={resolvedNodeTarget === "descendants" ? "secondary" : "outline"}
+                onClick={(): void => handleNodeTargetChange("descendants")}
+                className="h-8 text-[11px]"
+              >
+                Animate all descendants
+              </Button>
+            </div>
+            <p className="text-[10px] text-gray-500">
+              Use "Animate me" for element nodes. Use "Animate children" for folder nodes to stagger direct children.
+            </p>
+            {resolvedNodeTarget === "custom" && (
+              <p className="text-[10px] text-gray-400">
+                Custom selector active. Use the selector below and choose a stagger preset if needed.
+              </p>
+            )}
+          </div>
+
           {/* Target selector */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">

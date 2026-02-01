@@ -113,7 +113,7 @@ export const FolderNode = React.memo(function FolderNode({
 
   const showReorderZones = Boolean(onReorderFolder) && Boolean(draggedFolderId) && draggedFolderId !== folder.id;
   const resolveReorderPosition = (clientY: number, rect: DOMRect): "before" | "after" | null => {
-    const threshold = Math.max(6, rect.height * 0.25);
+    const threshold = Math.max(10, rect.height * 0.4);
     if (clientY - rect.top <= threshold) return "before";
     if (rect.bottom - clientY <= threshold) return "after";
     return null;
@@ -201,7 +201,7 @@ export const FolderNode = React.memo(function FolderNode({
           setReorderHover(null);
           onDragEndProp();
         }}
-        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
+        className={`group relative flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
           isSelected
             ? "bg-blue-600 text-white"
             : isDragOver && canDropHere
@@ -266,6 +266,12 @@ export const FolderNode = React.memo(function FolderNode({
           }
         }}
       >
+        {reorderHover === "above" && (
+          <div className="absolute left-2 right-2 top-0 h-0.5 rounded bg-blue-400/90" />
+        )}
+        {reorderHover === "below" && (
+          <div className="absolute left-2 right-2 bottom-0 h-0.5 rounded bg-blue-400/90" />
+        )}
         {hasChildren || hasNotes ? (
           <Button
             onClick={(): void => onToggleExpand(folder.id)}

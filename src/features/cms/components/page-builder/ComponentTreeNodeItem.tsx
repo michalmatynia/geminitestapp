@@ -193,10 +193,17 @@ export function SectionNodeItem({
   const Icon: LucideIcon = SECTION_ICONS[section.type] ?? Box;
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSectionDragOver, setIsSectionDragOver] = useState(false);
+  const [sectionDropPosition, setSectionDropPosition] = useState<"above" | "below" | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
   const isHidden = Boolean(section.settings["isHidden"]);
   const gridRows = section.blocks.filter((b: BlockInstance) => b.type === "Row");
   const gridColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
+  const resolveSectionDropPosition = (clientY: number, rect: DOMRect): "above" | "below" | null => {
+    const threshold = Math.max(8, rect.height * 0.3);
+    if (clientY - rect.top <= threshold) return "above";
+    if (rect.bottom - clientY <= threshold) return "below";
+    return null;
+  };
 
   return (
     <div
@@ -218,6 +225,9 @@ export function SectionNodeItem({
       }}
       className="group/section"
     >
+      {sectionDropPosition === "above" && (
+        <div className="mx-2 my-1 h-2 rounded border border-dashed border-purple-500/60 bg-purple-600/10" />
+      )}
       <div
         role="button"
         tabIndex={0}
@@ -232,20 +242,27 @@ export function SectionNodeItem({
           e.preventDefault();
           e.stopPropagation();
           if (draggedSectionId && draggedSectionId !== section.id) {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setSectionDropPosition(resolveSectionDropPosition(e.clientY, rect));
             setIsSectionDragOver(true);
+            setIsDragOver(false);
           } else if (draggedBlockId && !isFileSection) {
             setIsDragOver(true);
+            setSectionDropPosition(null);
           }
         }}
         onDragLeave={() => {
           setIsDragOver(false);
           setIsSectionDragOver(false);
+          setSectionDropPosition(null);
         }}
         onDrop={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(false);
           setIsSectionDragOver(false);
+          const dropPosition = sectionDropPosition;
+          setSectionDropPosition(null);
           if (draggedSectionId && draggedSectionId !== section.id) {
             if (draggedSectionType === "TextElement" && targetAllowsTextElement) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
@@ -256,18 +273,22 @@ export function SectionNodeItem({
             } else if (draggedSectionType === "ButtonElement" && targetAllowsButton) {
               onConvertSectionToBlock(draggedSectionId, section.id, section.blocks.length);
             } else if (section.type === "Grid") {
-              // Section dropped on a Grid — route to first column
-              if (CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "")) {
+              if (CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "") && !dropPosition) {
+                // Section dropped on a Grid — route to first column
                 const firstColumn =
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
                   gridColumns.find((b: BlockInstance) => b.type === "Column");
                 if (firstColumn) {
                   onDropSectionToColumn(draggedSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
                 }
+              } else {
+                const targetIndex = dropPosition === "below" ? sectionIndex + 1 : sectionIndex;
+                onDropSection(draggedSectionId, targetIndex);
               }
             } else {
               // Section drop — insert at this section's position
-              onDropSection(draggedSectionId, sectionIndex);
+              const targetIndex = dropPosition === "below" ? sectionIndex + 1 : sectionIndex;
+              onDropSection(draggedSectionId, targetIndex);
             }
             setDraggedSectionId(null);
             setDraggedSectionType(null);
@@ -362,6 +383,9 @@ export function SectionNodeItem({
           </button>
         </div>
       </div>
+      {sectionDropPosition === "below" && (
+        <div className="mx-2 my-1 h-2 rounded border border-dashed border-purple-500/60 bg-purple-600/10" />
+      )}
 
       {isExpanded && section.type === "Grid" && (
         <div className="ml-4 border-l border-border/30 pl-1">

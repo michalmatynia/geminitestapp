@@ -11,6 +11,7 @@ import {
   useToast,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
+import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
 
 interface CurrencyModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export function CurrencyModal({
   currency,
 }: CurrencyModalProps) {
   const { toast } = useToast();
-  const [saving, setSaving] = React.useState(false);
+  const saveMutation = useSaveCurrencyMutation();
   const [form, setForm] = React.useState({
     code: "PLN",
     name: "",
@@ -51,30 +52,21 @@ export function CurrencyModal({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = currency
-        ? `/api/currencies/${currency.id}`
-        : "/api/currencies";
-      const res = await fetch(endpoint, {
-        method: currency ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await saveMutation.mutateAsync({
+        id: currency?.id,
+        data: {
           code: form.code.trim().toUpperCase(),
           name: form.name.trim(),
           symbol: form.symbol.trim() || undefined,
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to save currency");
 
       toast("Currency saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
       console.error(err);
       toast("Failed to save currency.", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -85,10 +77,10 @@ export function CurrencyModal({
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={saving}
+          disabled={saveMutation.isPending}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {saving ? "Saving..." : currency ? "Update" : "Add"}
+          {saveMutation.isPending ? "Saving..." : currency ? "Update" : "Add"}
         </Button>
         <h2 className="text-2xl font-bold text-white">
           {currency ? "Edit Currency" : "Add Currency"}

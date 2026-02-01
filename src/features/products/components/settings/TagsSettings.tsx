@@ -4,11 +4,8 @@ import { useToast, Button, AppModal, Select, SelectContent, SelectItem, SelectTr
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-
-
-
 import type { Catalog, ProductTag } from "@/features/products/types";
-
+import { useSaveTagMutation, useDeleteTagMutation } from "@/features/products/hooks/useProductSettingsQueries";
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -29,13 +26,15 @@ export function TagsSettings({
 }: TagsSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [editingTag, setEditingTag] = useState<ProductTag | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     color: "#38bdf8",
     catalogId: "",
   });
+
+  const saveTagMutation = useSaveTagMutation();
+  const deleteTagMutation = useDeleteTagMutation();
 
   const openCreateModal = (): void => {
     if (!selectedCatalogId) {
@@ -71,24 +70,18 @@ export function TagsSettings({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = editingTag
-        ? `/api/products/tags/${editingTag.id}`
-        : "/api/products/tags";
-      const res = await fetch(endpoint, {
-        method: editingTag ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          color: formData.color.trim() || null,
-          catalogId: formData.catalogId,
-        }),
+      const payload = {
+        name: formData.name.trim(),
+        color: formData.color.trim() || null,
+        catalogId: formData.catalogId,
+      };
+
+      await saveTagMutation.mutateAsync({
+        id: editingTag?.id,
+        data: payload,
       });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to save tag.");
-      }
+
       toast(editingTag ? "Tag updated." : "Tag created.", {
         variant: "success",
       });
@@ -98,8 +91,6 @@ export function TagsSettings({
       const message =
         error instanceof Error ? error.message : "Failed to save tag.";
       toast(message, { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -107,13 +98,7 @@ export function TagsSettings({
     const confirmed = window.confirm(`Delete tag "${tag.name}"?`);
     if (!confirmed) return;
     try {
-      const res = await fetch(`/api/products/tags/${tag.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to delete tag.");
-      }
+      await deleteTagMutation.mutateAsync({ id: tag.id, catalogId: selectedCatalogId });
       toast("Tag deleted.", { variant: "success" });
       onRefresh();
     } catch (error) {
@@ -137,7 +122,7 @@ export function TagsSettings({
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
           >
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>
@@ -251,7 +236,7 @@ export function TagsSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, name: e.target.value }))
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Tag name"
                 />
@@ -263,7 +248,7 @@ export function TagsSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev: { name: string; color: string; catalogId: string }) => ({
+                    setFormData((prev) => ({
                       ...prev,
                       catalogId: e.target.value,
                     }))
@@ -286,7 +271,7 @@ export function TagsSettings({
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
@@ -294,7 +279,7 @@ export function TagsSettings({
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: { name: string; color: string; catalogId: string }) => ({ ...prev, color: e.target.value }))
+                      setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#38bdf8"
                   />
@@ -313,9 +298,9 @@ export function TagsSettings({
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={(): void => { void handleSave(); }}
-                  disabled={saving}
+                  disabled={saveTagMutation.isPending}
                 >
-                  {saving ? "Saving..." : "Save"}
+                  {saveTagMutation.isPending ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { logger } from "@/shared/utils/logger";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products";
 
 import { Dispatch, SetStateAction } from "react";
@@ -19,42 +19,36 @@ export function useIntegrationOperations(): {
   refreshListingBadges: () => Promise<void>;
   handleListProductSuccess: () => void;
 } {
+  const queryClient = useQueryClient();
+  
   // Integrations state
   const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
   const [showListProductModal, setShowListProductModal] = useState(false);
   const [listProductPreset, setListProductPreset] = useState<{ integrationId: string; connectionId: string } | null>(null);
-  const [integrationBadgeIds, setIntegrationBadgeIds] = useState<Set<string>>(() => new Set());
-  const [integrationBadgeStatuses, setIntegrationBadgeStatuses] = useState<Map<string, string>>(() => new Map());
 
   // Export settings state - opens ListProductModal directly for products with existing listings
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(null);
 
-  // Load listing badges
-  const refreshListingBadges = useCallback(async (): Promise<void> => {
-    try {
+  // Load listing badges using useQuery
+  const listingsBadgeQuery = useQuery({
+    queryKey: ["integrations", "product-listings-badges"],
+    queryFn: async (): Promise<Record<string, string>> => {
       const res = await fetch("/api/integrations/product-listings");
-      if (!res.ok) return;
-      const payload = (await res.json()) as Record<string, string>;
-      const entries = Object.entries(payload || {});
-      setIntegrationBadgeStatuses(new Map(entries));
-      setIntegrationBadgeIds(new Set(entries.map(([productId]: [string, string]): string => productId)));
-    } catch (error: unknown) {
-      logger.warn("Failed to load listing badges", error);
-    }
-  }, []);
+      if (!res.ok) return {};
+      return (await res.json()) as Record<string, string>;
+    },
+  });
 
-  useEffect(() => {
-    const loadListingBadges = async (): Promise<void> => {
-      await refreshListingBadges();
-    };
-    void loadListingBadges();
-  }, [refreshListingBadges]);
+  const payload = listingsBadgeQuery.data || {};
+  const entries = Object.entries(payload);
+  const integrationBadgeStatuses = new Map(entries);
+  const integrationBadgeIds = new Set(entries.map(([productId]) => productId));
+
+  const refreshListingBadges = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings-badges"] });
+  }, [queryClient]);
 
   const handleListProductSuccess = (): void => {
-    if (integrationsProduct?.id) {
-      setIntegrationBadgeIds((prev: Set<string>) => new Set(prev).add(integrationsProduct.id));
-      setIntegrationBadgeStatuses((prev: Map<string, string>) => new Map(prev).set(integrationsProduct.id, "pending"));
-    }
     setShowListProductModal(false);
     setIntegrationsProduct(null);
     void refreshListingBadges();

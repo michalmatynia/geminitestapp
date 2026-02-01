@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { ImageRetryPreset } from "@/features/data-import-export";
 import {
   getDefaultImageRetryPresets,
@@ -7,29 +7,16 @@ import {
 } from "@/features/data-import-export";
 
 export const useImageRetryPresets = (): ImageRetryPreset[] => {
-  const [presets, setPresets] = useState<ImageRetryPreset[]>(
-    getDefaultImageRetryPresets()
-  );
-
-  useEffect(() => {
-    let active = true;
-    const loadPresets = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/exports/base/image-retry-presets");
-        const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
-        if (!res.ok) return;
-        if (payload.presets && active) {
-          setPresets(normalizeImageRetryPresets(payload.presets));
-        }
-      } catch (_error: unknown) {
-        // Keep defaults on failure.
-      }
-    };
-    void loadPresets();
-    return (): void => {
-      active = false;
-    };
-  }, []);
+  const { data: presets = getDefaultImageRetryPresets() } = useQuery({
+    queryKey: ["image-retry-presets"],
+    queryFn: async (): Promise<ImageRetryPreset[]> => {
+      const res = await fetch("/api/integrations/exports/base/image-retry-presets");
+      if (!res.ok) return getDefaultImageRetryPresets();
+      const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
+      return payload.presets ? normalizeImageRetryPresets(payload.presets) : getDefaultImageRetryPresets();
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
   return presets;
 };

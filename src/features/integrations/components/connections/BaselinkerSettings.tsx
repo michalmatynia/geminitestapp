@@ -3,7 +3,7 @@
 import { Button, Input } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-
+import { useSettings, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 type BaselinkerSettingsProps = {
   activeConnection: IntegrationConnection | null;
@@ -20,30 +20,21 @@ export function BaselinkerSettings({
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
     : "—";
+  
+  const settingsQuery = useSettings();
+  const updateSettingMutation = useUpdateSetting();
+  
   const [syncIntervalMinutes, setSyncIntervalMinutes] = useState("10");
-  const [loadingSyncInterval, setLoadingSyncInterval] = useState(true);
-  const [savingSyncInterval, setSavingSyncInterval] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadSyncInterval = async (): Promise<void> => {
-      try {
-        setLoadingSyncInterval(true);
-        const res = await fetch("/api/settings");
-        if (!res.ok) return;
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const found = settings.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
-        if (found?.value) {
-          setSyncIntervalMinutes(found.value);
-        }
-      } catch {
-        // Ignore load errors
-      } finally {
-        setLoadingSyncInterval(false);
+    if (settingsQuery.data) {
+      const found = settingsQuery.data.find((setting) => setting.key === "base_sync_poll_interval_minutes");
+      if (found?.value) {
+        setSyncIntervalMinutes(found.value);
       }
-    };
-    void loadSyncInterval();
-  }, []);
+    }
+  }, [settingsQuery.data]);
 
   const handleSaveSyncInterval = async (): Promise<void> => {
     const parsed = Number(syncIntervalMinutes);
@@ -51,26 +42,15 @@ export function BaselinkerSettings({
       setSyncMessage("Enter a valid number of minutes.");
       return;
     }
-    setSavingSyncInterval(true);
     setSyncMessage(null);
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: "base_sync_poll_interval_minutes",
-          value: String(parsed),
-        }),
+      await updateSettingMutation.mutateAsync({
+        key: "base_sync_poll_interval_minutes",
+        value: String(parsed),
       });
-      if (!res.ok) {
-        setSyncMessage("Failed to save sync interval.");
-        return;
-      }
       setSyncMessage("Sync interval saved.");
     } catch {
       setSyncMessage("Failed to save sync interval.");
-    } finally {
-      setSavingSyncInterval(false);
     }
   };
 
@@ -116,7 +96,7 @@ export function BaselinkerSettings({
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Listing sync interval</span>
-              {loadingSyncInterval ? (
+              {settingsQuery.isLoading ? (
                 <span className="text-[10px] text-gray-500">Loading...</span>
               ) : (
                 <span className="text-[10px] text-gray-500">Minutes</span>
@@ -133,10 +113,10 @@ export function BaselinkerSettings({
               <Button
                 type="button"
                 onClick={(): void => { void handleSaveSyncInterval(); }}
-                disabled={savingSyncInterval}
+                disabled={updateSettingMutation.isPending}
                 className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
               >
-                {savingSyncInterval ? "Saving..." : "Save"}
+                {updateSettingMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
             <p className="mt-2 text-[10px] text-gray-400">

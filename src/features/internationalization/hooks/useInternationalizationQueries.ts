@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "../api";
+import type { CurrencyOption, CountryOption, Language } from "../../../shared/types/internationalization";
 
 export const internationalizationKeys = {
   all: ["internationalization"] as const,
@@ -34,7 +35,7 @@ export function useDeleteCurrencyMutation() {
   return useMutation({
     mutationFn: (id: string) => api.deleteCurrency(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: internationalizationKeys.currencies() });
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.currencies() });
     },
   });
 }
@@ -44,7 +45,7 @@ export function useDeleteCountryMutation() {
   return useMutation({
     mutationFn: (id: string) => api.deleteCountry(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: internationalizationKeys.countries() });
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.countries() });
     },
   });
 }
@@ -54,7 +55,37 @@ export function useDeleteLanguageMutation() {
   return useMutation({
     mutationFn: (id: string) => api.deleteLanguage(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: internationalizationKeys.languages() });
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.languages() });
+    },
+  });
+}
+
+export function useSaveCurrencyMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id?: string; data: Partial<CurrencyOption> }) => api.saveCurrency(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.currencies() });
+    },
+  });
+}
+
+export function useSaveCountryMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id?: string; data: Partial<CountryOption> & { currencyIds?: string[] } }) => api.saveCountry(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.countries() });
+    },
+  });
+}
+
+export function useSaveLanguageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id?: string; data: Partial<Language> & { countryIds?: string[] } }) => api.saveLanguage(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: internationalizationKeys.languages() });
     },
   });
 }

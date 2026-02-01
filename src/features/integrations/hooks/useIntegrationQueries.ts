@@ -7,6 +7,7 @@ import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants
 import { normalizePlaywrightPersonas } from "@/features/playwright/utils/personas";
 import type { PlaywrightPersona } from "@/features/playwright/types";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
+import type { Template, BaseInventory } from "@/features/data-import-export";
 
 export function useIntegrations(): UseQueryResult<Integration[]> {
   return useQuery({
@@ -88,5 +89,64 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
       );
       return normalizePlaywrightPersonas(stored);
     },
+  });
+}
+
+export function useExportTemplates(): UseQueryResult<Template[]> {
+  return useQuery({
+    queryKey: ["export-templates"],
+    queryFn: async (): Promise<Template[]> => {
+      const res = await fetch("/api/integrations/export-templates");
+      if (!res.ok) throw new Error("Failed to load templates");
+      return (await res.json()) as Template[];
+    },
+  });
+}
+
+export function useActiveExportTemplate(): UseQueryResult<{ templateId?: string | null }> {
+  return useQuery({
+    queryKey: ["active-export-template"],
+    queryFn: async (): Promise<{ templateId?: string | null }> => {
+      const res = await fetch("/api/integrations/exports/base/active-template");
+      if (!res.ok) return { templateId: null };
+      return (await res.json()) as { templateId?: string | null };
+    },
+  });
+}
+
+export function useDefaultExportInventory(): UseQueryResult<{ inventoryId?: string | null }> {
+  return useQuery({
+    queryKey: ["default-export-inventory"],
+    queryFn: async (): Promise<{ inventoryId?: string | null }> => {
+      const res = await fetch("/api/integrations/exports/base/default-inventory");
+      if (!res.ok) return { inventoryId: null };
+      return (await res.json()) as { inventoryId?: string | null };
+    },
+  });
+}
+
+export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
+  return useQuery({
+    queryKey: ["base-inventories", connectionId],
+    queryFn: async (): Promise<BaseInventory[]> => {
+      const res = await fetch("/api/integrations/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "inventories",
+          connectionId: connectionId,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load inventories");
+      }
+      const data = (await res.json()) as {
+        inventories?: BaseInventory[];
+        error?: string;
+      };
+      if (data.error) throw new Error(data.error);
+      return Array.isArray(data.inventories) ? data.inventories : [];
+    },
+    enabled: enabled && !!connectionId,
   });
 }

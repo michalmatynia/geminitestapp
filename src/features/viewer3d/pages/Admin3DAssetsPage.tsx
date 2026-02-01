@@ -31,8 +31,13 @@ import { Asset3DUploader } from "../components/Asset3DUploader";
 import { Asset3DPreviewModal } from "../components/Asset3DPreviewModal";
 import { Asset3DCard } from "../components/Asset3DCard";
 import { Asset3DEditModal } from "../components/Asset3DEditModal";
-import { deleteAsset3DById } from "../api";
-import { useAssets3D, useAsset3DCategories, useAsset3DTags } from "../hooks/useAsset3dQueries";
+import { 
+  useAssets3D, 
+  useAsset3DCategories, 
+  useAsset3DTags,
+  useDeleteAsset3DMutation,
+  asset3dKeys
+} from "../hooks/useAsset3dQueries";
 import type { Asset3DRecord } from "../types";
 
 type ViewMode = "grid" | "list";
@@ -42,7 +47,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // Filters
@@ -63,6 +67,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   const assetsQuery = useAssets3D(filters);
   const categoriesQuery = useAsset3DCategories();
   const tagsQuery = useAsset3DTags();
+  const deleteMutation = useDeleteAsset3DMutation();
 
   const assets = assetsQuery.data ?? [];
   const loading = assetsQuery.isPending;
@@ -72,11 +77,11 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
   const handleUpload = (_asset: Asset3DRecord): void => {
     setShowUploader(false);
-    void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
+    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
   };
 
   const handleEdit = (_updated: Asset3DRecord): void => {
-    void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
+    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
   };
 
   const handleDelete = async (asset: Asset3DRecord): Promise<void> => {
@@ -84,14 +89,10 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       return;
     }
 
-    setDeletingId(asset.id);
     try {
-      await deleteAsset3DById(asset.id);
-      void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
+      await deleteMutation.mutateAsync(asset.id);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to delete asset");
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -140,7 +141,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 disabled={loading}
                 className="gap-2"
               >
-                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                <RefreshCw className={cn("h-4 w-4", assetsQuery.isFetching && "animate-spin")} />
                 Refresh
               </Button>
               <Button size="sm" onClick={() => setShowUploader(true)}>
@@ -316,7 +317,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
               onPreview={setPreviewAsset}
               onEdit={setEditAsset}
               onDelete={(a: Asset3DRecord) => void handleDelete(a)}
-              isDeleting={deletingId === asset.id}
+              isDeleting={deleteMutation.isPending && deleteMutation.variables === asset.id}
             />
           ))}
         </div>
@@ -398,9 +399,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                       size="sm"
                       className="text-red-400 hover:text-red-300"
                       onClick={() => void handleDelete(asset)}
-                      disabled={deletingId === asset.id}
+                      disabled={deleteMutation.isPending && deleteMutation.variables === asset.id}
                     >
-                      {deletingId === asset.id ? (
+                      {deleteMutation.isPending && deleteMutation.variables === asset.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         "Delete"

@@ -7,7 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useToast } from "@/shared/ui";
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
-import { useProductData } from "@/features/products/hooks/useProductData";
+import {
+  useProductData,
+  useBulkDeleteProductsMutation,
+} from "@/features/products/hooks/useProductData";
 import { useProductOperations } from "@/features/products/hooks/useProductOperations";
 import { useIntegrationOperations } from "@/features/integrations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
@@ -21,6 +24,7 @@ import type { ProductDraft } from "@/features/products/types/drafts";
 import type { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
+import { getProducts } from "@/features/products/api";
 
 const SelectIntegrationModal = dynamic(
   () => import("@/features/integrations").then((mod: typeof import("@/features/integrations")) => mod.SelectIntegrationModal),
@@ -276,23 +280,26 @@ export function AdminProductsPage(): React.JSX.Element {
 
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 
+  const bulkDeleteMutation = useBulkDeleteProductsMutation();
+
   const handleSelectAllGlobal = useCallback(async () => {
     setLoadingGlobalSelection(true);
     try {
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (sku) params.append("sku", sku);
-      if (minPrice !== undefined) params.append("minPrice", String(minPrice));
-      if (maxPrice !== undefined) params.append("maxPrice", String(maxPrice));
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (catalogFilter && catalogFilter !== "all") params.append("catalogId", catalogFilter);
-      if (preferences.nameLocale) params.append("searchLanguage", preferences.nameLocale);
+      const filters = {
+        search,
+        sku,
+        minPrice,
+        maxPrice,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+        searchLanguage: preferences.nameLocale,
+      };
 
-      const res = await fetch(`/api/products?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch all products");
-
-      const allProducts = (await res.json()) as ProductWithImages[];
+      const allProducts = await queryClient.fetchQuery({
+        queryKey: ["products-all", filters],
+        queryFn: () => getProducts(filters)
+      });
 
       const newSelection: RowSelectionState = {};
       allProducts.forEach((p: ProductWithImages) => {
@@ -306,7 +313,7 @@ export function AdminProductsPage(): React.JSX.Element {
     } finally {
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast]);
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, queryClient]);
 
   const handleMassDelete = useCallback(async () => {
     logger.log("Mass delete initiated.");
@@ -322,30 +329,16 @@ export function AdminProductsPage(): React.JSX.Element {
       )
     ) {
       try {
-        const deletePromises = selectedProductIds.map((id: string) =>
-          fetch(`/api/products/${id}`, { method: "DELETE" })
-        );
-        const results = await Promise.all(deletePromises);
-        const failedDeletions = results.filter((res: Response) => !res.ok);
-
-        if (failedDeletions.length > 0) {
-          setActionError("Some products could not be deleted.");
-        } else {
-          toast("Selected products deleted successfully.", { variant: "success" });
-        }
-        
-        // Invalidate both products list and count queries
-        void queryClient.invalidateQueries({ queryKey: ["products"] });
-        void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-        
+        await bulkDeleteMutation.mutateAsync(selectedProductIds);
+        toast("Selected products deleted successfully.", { variant: "success" });
         setRowSelection({});
         setRefreshTrigger((prev: number) => prev + 1);
       } catch (error) {
         logger.error("Error during mass deletion:", error);
-        setActionError("An error occurred during deletion.");
+        setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
       }
     }
-  }, [rowSelection, setActionError, toast, queryClient]);
+  }, [rowSelection, setActionError, toast, bulkDeleteMutation]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
@@ -399,7 +392,7 @@ export function AdminProductsPage(): React.JSX.Element {
         catalogFilter={catalogFilter}
         setCatalogFilter={handleSetCatalogFilter}
         catalogs={catalogs}
-        loadError={loadError}
+        loadError={loadError?.message || null}
         actionError={actionError}
         onDismissActionError={handleDismissActionError}
         search={search}
@@ -410,9 +403,9 @@ export function AdminProductsPage(): React.JSX.Element {
         setMinPrice={setMinPrice}
         maxPrice={maxPrice}
         setMaxPrice={setMaxPrice}
-        startDate={startDate}
+        startDate={startDate || ""}
         setStartDate={setStartDate}
-        endDate={endDate}
+        endDate={endDate || ""}
         setEndDate={setEndDate}
         data={data}
         rowSelection={rowSelection}

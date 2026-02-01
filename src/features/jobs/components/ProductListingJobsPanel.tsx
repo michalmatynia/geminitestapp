@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   RefreshCw,
@@ -14,13 +14,9 @@ import {
   Eye,
 } from "lucide-react";
 
-
-
-
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
-
-
-
+import { useIntegrationJobs } from "@/features/jobs/hooks/useJobQueries";
+import { useCancelListingMutation } from "@/features/jobs/hooks/useJobMutations";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -80,11 +76,13 @@ const getStatusColor = (status: string): string => {
 export default function ProductListingJobsPanel({
   showBackToProducts = true,
 }: ProductListingJobsPanelProps): React.JSX.Element {
-  const [jobs, setJobs] = useState<ProductJob[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  // Queries
+  const jobsQuery = useIntegrationJobs();
+  const jobs = jobsQuery.data || [];
+
+  // Mutations
+  const cancelMutation = useCancelListingMutation();
+
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -97,94 +95,17 @@ export default function ProductListingJobsPanel({
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [historySort, setHistorySort] = useState<"desc" | "asc">("desc");
 
-  const fetchJobs = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("/api/integrations/jobs");
-      if (!res.ok) {
-        throw new Error("Failed to fetch listing jobs");
-      }
-      const data = (await res.json()) as ProductJob[];
-      setJobs(data);
-    } catch (err: unknown) {
-      console.error("Failed to fetch jobs:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch jobs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async (): Promise<void> => {
-    setRefreshing(true);
-    await fetchJobs();
-    setRefreshing(false);
-  };
-
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
     if (!window.confirm("Cancel this listing job? This will remove it from the queue.")) {
       return;
     }
 
     try {
-      setDeleting(listingId);
-      const res = await fetch(`/api/integrations/products/${productId}/listings/${listingId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to cancel listing");
-      }
-
-      setJobs((prev: ProductJob[]) =>
-        prev
-          .map((job: ProductJob) => ({
-            ...job,
-            listings: job.listings.filter((l: ListingJob) => l.id !== listingId),
-          }))
-          .filter((job: ProductJob) => job.listings.length > 0)
-      );
+      await cancelMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
       console.error("Failed to cancel listing:", err);
-      setError(err instanceof Error ? err.message : "Failed to cancel listing");
-    } finally {
-      setDeleting(null);
     }
   };
-
-  useEffect(() => {
-    void fetchJobs();
-  }, []);
-
-  useEffect(() => {
-    setHistoryExpanded(false);
-    setHistorySort("desc");
-  }, [selectedListing?.listing.id]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [query, jobs]);
-
-  useEffect(() => {
-    const hasPending = jobs.some((job: ProductJob) =>
-      job.listings.some(
-        (listing: ListingJob) =>
-          listing.status === "pending" ||
-          listing.status === "processing" ||
-          listing.status === "in_progress"
-      )
-    );
-
-    if (!hasPending) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      void fetchJobs();
-    }, 10000);
-
-    return (): void => clearInterval(interval);
-  }, [jobs]);
 
   const formatDateTime = (value: Date | string | null): string => {
     if (!value) return "—";
@@ -203,22 +124,24 @@ export default function ProductListingJobsPanel({
     return sorted;
   };
 
-  const listingRows: ListingRow[] = jobs.flatMap((job: ProductJob) =>
-    job.listings.flatMap((listing: ListingJob): ListingRow[] => {
-      const history = listing.exportHistory ?? [];
-      if (history.length === 0) {
-        return [{ job, listing, attempt: null, attemptIndex: null }];
-      }
-      return history.map((attempt: ListingAttempt, index: number) => ({
-        job,
-        listing,
-        attempt,
-        attemptIndex: index,
-      }));
-    })
+  const listingRows: ListingRow[] = useMemo(() => 
+    jobs.flatMap((job: ProductJob) =>
+      job.listings.flatMap((listing: ListingJob): ListingRow[] => {
+        const history = listing.exportHistory ?? [];
+        if (history.length === 0) {
+          return [{ job, listing, attempt: null, attemptIndex: null }];
+        }
+        return history.map((attempt: ListingAttempt, index: number) => ({
+          job,
+          listing,
+          attempt,
+          attemptIndex: index,
+        }));
+      })
+    ), [jobs]
   );
 
-  const filteredRows = listingRows.filter(({ job, listing, attempt }: ListingRow) => {
+  const filteredRows = useMemo(() => listingRows.filter(({ job, listing, attempt }: ListingRow) => {
     if (!query.trim()) return true;
     const target = [
       job.productName,
@@ -238,13 +161,14 @@ export default function ProductListingJobsPanel({
       .join(" ")
       .toLowerCase();
     return target.includes(query.trim().toLowerCase());
-  });
+  }), [listingRows, query]);
 
-  const sortedRows = [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
+  const sortedRows = useMemo(() => [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
     const aTime: number = new Date(a.attempt?.exportedAt ?? a.listing.updatedAt ?? a.listing.createdAt).getTime();
     const bTime: number = new Date(b.attempt?.exportedAt ?? b.listing.updatedAt ?? b.listing.createdAt).getTime();
     return bTime - aTime;
-  });
+  }), [filteredRows]);
+
   const totalRows = sortedRows.length;
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const clampedPage = Math.min(page, totalPages);
@@ -263,13 +187,13 @@ export default function ProductListingJobsPanel({
       actions={
         <>
           <Button
-            onClick={() => void handleRefresh()}
-            disabled={refreshing}
+            onClick={() => void jobsQuery.refetch()}
+            disabled={jobsQuery.isFetching}
             variant="outline"
             size="sm"
           >
             <RefreshCw
-              className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
+              className={`mr-2 size-4 ${jobsQuery.isFetching ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
@@ -283,7 +207,7 @@ export default function ProductListingJobsPanel({
     />
   );
 
-  const filters = !loading && !error ? (
+  const filters = !jobsQuery.isLoading && !jobsQuery.error ? (
     <SectionPanel>
       <div className="flex flex-wrap items-center justify-between gap-3">
           <Input
@@ -296,7 +220,7 @@ export default function ProductListingJobsPanel({
     </SectionPanel>
   ) : null;
 
-  const footer = !loading && !error ? (
+  const footer = !jobsQuery.isLoading && !jobsQuery.error ? (
     <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
       <div>
         Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
@@ -348,20 +272,20 @@ export default function ProductListingJobsPanel({
       <ListPanel
         header={header}
         alerts={
-          error ? (
+          jobsQuery.error ? (
             <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-              {error}
+              {(jobsQuery.error as Error).message}
             </div>
           ) : null
         }
         filters={filters}
         footer={footer}
       >
-        {loading ? (
+        {jobsQuery.isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="size-8 animate-spin text-gray-500" />
           </div>
-        ) : !error ? (
+        ) : !jobsQuery.error ? (
           <div className="rounded-lg border border-border bg-card overflow-hidden">
             <table className="w-full text-left text-sm text-gray-300">
               <thead className="bg-gray-900 text-xs uppercase text-gray-500">
@@ -377,7 +301,7 @@ export default function ProductListingJobsPanel({
                 {pagedRows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                      {loading ? "Loading export jobs..." : "No export jobs found."}
+                      {jobsQuery.isLoading ? "Loading export jobs..." : "No export jobs found."}
                     </td>
                   </tr>
                 ) : (
@@ -469,10 +393,10 @@ export default function ProductListingJobsPanel({
                                   size="icon"
                                   className="h-8 w-8 text-red-500 hover:text-red-400"
                                   onClick={(): void => { void handleCancelListing(job.productId, listing.id); }}
-                                  disabled={deleting === listing.id}
+                                  disabled={cancelMutation.isPending && cancelMutation.variables?.listingId === listing.id}
                                   aria-label="Cancel export job"
                                 >
-                                  {deleting === listing.id ? (
+                                  {cancelMutation.isPending && cancelMutation.variables?.listingId === listing.id ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
                                     <Trash2 className="h-4 w-4" />

@@ -16,6 +16,7 @@ import { useImageRetryPresets } from "./useImageRetryPresets";
 
 import { isImageExportError } from "./utils";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import { useProductListings } from "@/features/integrations/hooks/useListingQueries";
 import {
   useDeleteFromBaseMutation,
   usePurgeListingMutation,
@@ -77,17 +78,7 @@ export default function ProductListingsModal({
   const productName: string =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  const listingsQuery: ReturnType<typeof useQuery<ProductListingWithDetails[]>> = useQuery({
-    queryKey: ["integrations", "product-listings", product.id],
-    queryFn: async (): Promise<ProductListingWithDetails[]> => {
-      const res: Response = await fetch(`/api/integrations/products/${product.id}/listings`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch listings");
-      }
-      return (await res.json()) as ProductListingWithDetails[];
-    },
-    enabled: Boolean(product.id),
-  });
+  const listingsQuery = useProductListings(product.id);
 
   const listings: ProductListingWithDetails[] = listingsQuery.data ?? [];
   const loadingListings: boolean = listingsQuery.isPending;

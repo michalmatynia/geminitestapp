@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient, useMutation, type UseQueryResult } from "@tanstack/react-query";
-import { useRef, useEffect, useState, useMemo, useCallback } from "react";
+import { useRef, useEffect, useMemo, useCallback } from "react";
 import type {
   NoteRecord,
   NoteWithRelations,
@@ -23,8 +23,8 @@ import type {
   NoteFileCreateInput,
   NoteFileRecord,
   CategoryWithChildren,
-  DeleteResponse,
 } from "@/shared/types/notes";
+import type { DeleteResponse } from "@/shared/types/api";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 import type { UseNoteDataProps } from "@/features/notesapp/types/notes-hooks";
 
@@ -423,30 +423,40 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
   });
 };
 
-export const useCreateNoteFileMutation = (noteId: string) => {
+export const useCreateNoteFileMutation = (noteId?: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: NoteFileCreateInput): Promise<NoteFileRecord> => {
+    mutationFn: async ({ slotIndex, file }: { slotIndex: number; file: File }): Promise<NoteFileRecord> => {
+      if (!noteId) throw new Error("Note ID is required for file upload");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("slotIndex", slotIndex.toString());
+
       const response = await fetch(`/api/notes/${noteId}/files`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
       });
-      if (!response.ok) throw new Error("Failed to create note file");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload note file");
+      }
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes", noteId] });
+      if (noteId) {
+        queryClient.invalidateQueries({ queryKey: ["notes", noteId] });
+      }
     },
   });
 };
 
-export const useDeleteNoteFileMutation = (noteId: string) => {
+export const useDeleteNoteFileMutation = (noteId?: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (slotIndex: number): Promise<DeleteResponse> => {
+      if (!noteId) throw new Error("Note ID is required for file deletion");
       const response = await fetch(`/api/notes/${noteId}/files/${slotIndex}`, {
         method: "DELETE",
       });
@@ -454,7 +464,9 @@ export const useDeleteNoteFileMutation = (noteId: string) => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes", noteId] });
+      if (noteId) {
+        queryClient.invalidateQueries({ queryKey: ["notes", noteId] });
+      }
     },
   });
 };
@@ -559,7 +571,7 @@ export function useNoteData({
   }, [categories, selectedNotebookId]);
 
   // Setters (wrappers for query updates or optimistic UI - simplified for now)
-  const setNotes = useCallback((updater: NoteWithRelations[] | ((prev: NoteWithRelations[]) => NoteWithRelations[])) => {
+  const setNotes = useCallback((updater: NoteWithRelations[] | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[])) => {
     queryClient.setQueryData(["notes", {
         search: searchQuery,
         searchScope,

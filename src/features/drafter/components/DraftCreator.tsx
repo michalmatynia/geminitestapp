@@ -2,14 +2,8 @@
 import { Button, Input, Label, Textarea, Switch, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
 import React, { useEffect, useMemo, useState } from "react";
 
-
-
-
-
-
-
-
-import { ProductDraft, CreateProductDraftInput } from "@/features/products";
+import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
+import { ProductDraft } from "@/features/products/types/drafts";
 import type { CatalogRecord } from "@/features/products";
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
 import {
@@ -27,6 +21,9 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { useDraft, useCreateDraft, useUpdateDraft } from "@/features/drafter/hooks/useDrafts";
+import { useCatalogs } from "@/features/products/hooks/useProductMetadata";
+import { useQueries } from "@tanstack/react-query";
 
 interface DraftCreatorProps {
   draftId: string | null;
@@ -36,8 +33,13 @@ interface DraftCreatorProps {
 }
 
 export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, formRef }: DraftCreatorProps): React.JSX.Element {
-  const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
+
+  // Queries
+  const { data: catalogs = [] } = useCatalogs();
+  const draftQuery = useDraft(draftId);
+  const createDraftMutation = useCreateDraft();
+  const updateDraftMutation = useUpdateDraft();
 
   // Form fields
   const [name, setName] = useState<string>("");
@@ -67,123 +69,86 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   const [icon, setIcon] = useState<string | null>(null);
   const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill("") as string[]);
 
-  // Metadata
-  const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [tags, setTags] = useState<ProductTag[]>([]);
-  const [parameters, setParameters] = useState<ProductParameter[]>([]);
-  const [parametersLoading, setParametersLoading] = useState<boolean>(false);
-
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
-  // Load metadata
-  useEffect((): void => {
-    const loadMetadata = async (): Promise<void> => {
-      try {
-        const catalogsRes: Response = await fetch("/api/catalogs");
-
-        if (catalogsRes.ok) {
-          const catalogsData: CatalogRecord[] = (await catalogsRes.json()) as CatalogRecord[];
-          setCatalogs(catalogsData);
-        }
-      } catch (error) {
-        console.error("Failed to load metadata:", error);
+  // Metadata queries based on selected catalogs
+  const categoryQueries = useQueries({
+    queries: selectedCatalogIds.map(id => ({
+      queryKey: ["categories", id],
+      queryFn: async () => {
+        const res = await fetch(`/api/products/categories?catalogId=${id}`);
+        return (await res.json()) as ProductCategory[];
       }
-    };
+    }))
+  });
 
-    void loadMetadata();
-  }, []);
-
-  // Load categories when catalogs are selected
-  useEffect((): void => {
-    if (selectedCatalogIds.length === 0) {
-      setCategories([]);
-      return;
-    }
-
-    const loadCategories = async (): Promise<void> => {
-      try {
-        const categoryPromises: Promise<ProductCategory[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductCategory[]> =>
-          fetch(`/api/products/categories?catalogId=${catalogId}`).then((res: Response): Promise<ProductCategory[]> => res.json() as Promise<ProductCategory[]>)
-        );
-        const categoryArrays: ProductCategory[][] = await Promise.all(categoryPromises);
-        const allCategories: ProductCategory[] = categoryArrays.flat();
-        setCategories(allCategories);
-      } catch (error) {
-        console.error("Failed to load categories:", error);
+  const tagQueries = useQueries({
+    queries: selectedCatalogIds.map(id => ({
+      queryKey: ["tags", id],
+      queryFn: async () => {
+        const res = await fetch(`/api/products/tags?catalogId=${id}`);
+        return (await res.json()) as ProductTag[];
       }
-    };
+    }))
+  });
 
-    void loadCategories();
-  }, [selectedCatalogIds]);
-
-  // Load tags when catalogs are selected
-  useEffect((): void => {
-    if (selectedCatalogIds.length === 0) {
-      setTags([]);
-      return;
-    }
-
-    const loadTags = async (): Promise<void> => {
-      try {
-        const tagPromises: Promise<ProductTag[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductTag[]> =>
-          fetch(`/api/products/tags?catalogId=${catalogId}`).then((res: Response): Promise<ProductTag[]> => res.json() as Promise<ProductTag[]>)
-        );
-        const tagArrays: ProductTag[][] = await Promise.all(tagPromises);
-        const allTags: ProductTag[] = tagArrays.flat();
-        setTags(allTags);
-      } catch (error) {
-        console.error("Failed to load tags:", error);
+  const parameterQueries = useQueries({
+    queries: selectedCatalogIds.map(id => ({
+      queryKey: ["parameters", id],
+      queryFn: async () => {
+        const res = await fetch(`/api/products/parameters?catalogId=${id}`);
+        return (await res.json()) as ProductParameter[];
       }
-    };
+    }))
+  });
 
-    void loadTags();
-  }, [selectedCatalogIds]);
+  const categories = useMemo(() => categoryQueries.flatMap(q => q.data || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap(q => q.data || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap(q => q.data || []), [parameterQueries]);
+  const parametersLoading = useMemo(() => parameterQueries.some(q => q.isLoading), [parameterQueries]);
 
-  // Load parameters when catalogs are selected
-  useEffect((): void | (() => void) => {
-    if (selectedCatalogIds.length === 0) {
-      setParameters([]);
-      return;
-    }
-
-    let cancelled: boolean = false;
-    const loadParameters = async (): Promise<void> => {
-      setParametersLoading(true);
-      try {
-        const parameterPromises: Promise<ProductParameter[]>[] = selectedCatalogIds.map((catalogId: string): Promise<ProductParameter[]> =>
-          fetch(`/api/products/parameters?catalogId=${catalogId}`).then((res: Response): Promise<ProductParameter[]> => res.json() as Promise<ProductParameter[]>)
-        );
-        const parameterArrays: ProductParameter[][] = await Promise.all(parameterPromises);
-        const allParameters: ProductParameter[] = parameterArrays.flat();
-        if (!cancelled) {
-          setParameters(allParameters);
-        }
-      } catch (error) {
-        console.error("Failed to load parameters:", error);
-        if (!cancelled) {
-          setParameters([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setParametersLoading(false);
-        }
-      }
-    };
-
-    void loadParameters();
-    return (): void => {
-      cancelled = true;
-    };
-  }, [selectedCatalogIds]);
-
-  // Load existing draft
-  useEffect((): void => {
-    if (!draftId) {
-      // Reset form for new draft
+  // Sync form with draft data
+  useEffect(() => {
+    if (draftQuery.data) {
+      const draft = draftQuery.data as ProductDraft;
+      setName(draft.name);
+      setDescription(draft.description || "");
+      setSku(draft.sku || "");
+      setEan(draft.ean || "");
+      setGtin(draft.gtin || "");
+      setAsin(draft.asin || "");
+      if (draft.asin) setIdentifierType("asin");
+      else if (draft.gtin) setIdentifierType("gtin");
+      else setIdentifierType("ean");
+      setNameEn(draft.name_en || "");
+      setNamePl(draft.name_pl || "");
+      setNameDe(draft.name_de || "");
+      setDescEn(draft.description_en || "");
+      setDescPl(draft.description_pl || "");
+      setDescDe(draft.description_de || "");
+      setWeight(draft.weight?.toString() || "");
+      setSizeLength(draft.sizeLength?.toString() || "");
+      setSizeWidth(draft.sizeWidth?.toString() || "");
+      setLength(draft.length?.toString() || "");
+      setPrice(draft.price?.toString() || "");
+      setSupplierName(draft.supplierName || "");
+      setSupplierLink(draft.supplierLink || "");
+      setPriceComment(draft.priceComment || "");
+      setStock(draft.stock?.toString() || "");
+      setBaseProductId(draft.baseProductId || "");
+      setActive(draft.active ?? true);
+      setIcon(draft.icon || null);
+      const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
+      setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
+      setSelectedCatalogIds(draft.catalogIds || []);
+      setSelectedCategoryIds(draft.categoryIds || []);
+      setSelectedTagIds(draft.tagIds || []);
+      setParameterValues(draft.parameters || []);
+    } else if (!draftId) {
+      // Reset form
       setName("");
       setDescription("");
       setSku("");
@@ -213,60 +178,8 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
       setSelectedCategoryIds([]);
       setSelectedTagIds([]);
       setParameterValues([]);
-      return;
     }
-
-    const loadDraft = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        const res: Response = await fetch(`/api/drafts/${draftId}`);
-        if (!res.ok) throw new Error("Failed to load draft");
-
-        const draft: ProductDraft = (await res.json()) as ProductDraft;
-        setName(draft.name);
-        setDescription(draft.description || "");
-        setSku(draft.sku || "");
-        setEan(draft.ean || "");
-        setGtin(draft.gtin || "");
-        setAsin(draft.asin || "");
-        // Set identifier type based on what's filled
-        if (draft.asin) setIdentifierType("asin");
-        else if (draft.gtin) setIdentifierType("gtin");
-        else setIdentifierType("ean");
-        setNameEn(draft.name_en || "");
-        setNamePl(draft.name_pl || "");
-        setNameDe(draft.name_de || "");
-        setDescEn(draft.description_en || "");
-        setDescPl(draft.description_pl || "");
-        setDescDe(draft.description_de || "");
-        setWeight(draft.weight?.toString() || "");
-        setSizeLength(draft.sizeLength?.toString() || "");
-        setSizeWidth(draft.sizeWidth?.toString() || "");
-        setLength(draft.length?.toString() || "");
-        setPrice(draft.price?.toString() || "");
-        setSupplierName(draft.supplierName || "");
-        setSupplierLink(draft.supplierLink || "");
-        setPriceComment(draft.priceComment || "");
-        setStock(draft.stock?.toString() || "");
-        setBaseProductId(draft.baseProductId || "");
-        setActive(draft.active ?? true);
-        setIcon(draft.icon || null);
-        const links: string[] = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
-        setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
-        setSelectedCatalogIds(draft.catalogIds || []);
-        setSelectedCategoryIds(draft.categoryIds || []);
-        setSelectedTagIds(draft.tagIds || []);
-        setParameterValues(draft.parameters || []);
-      } catch (error) {
-        console.error("Failed to load draft:", error);
-        toast("Failed to load draft", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadDraft();
-  }, [draftId, toast]);
+  }, [draftQuery.data, draftId]);
 
   const handleSave = async (): Promise<void> => {
     if (!name.trim()) {
@@ -275,7 +188,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     }
 
     try {
-      const data: CreateProductDraftInput = {
+      const input: UpdateProductDraftInput = {
         name: name.trim(),
         description: description.trim() || null,
         sku: sku.trim() || null,
@@ -312,16 +225,11 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         baseProductId: baseProductId.trim() || null,
       };
 
-      const url: string = draftId ? `/api/drafts/${draftId}` : "/api/drafts";
-      const method: string = draftId ? "PUT" : "POST";
-
-      const res: Response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) throw new Error("Failed to save draft");
+      if (draftId) {
+        await updateDraftMutation.mutateAsync({ id: draftId, input });
+      } else {
+        await createDraftMutation.mutateAsync(input as CreateProductDraftInput);
+      }
 
       toast(draftId ? "Draft updated successfully" : "Draft created successfully", {
         variant: "success",
@@ -401,7 +309,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     { id: "sparkles", icon: Sparkles, label: "Sparkles" },
   ];
 
-  if (loading) {
+  if (draftQuery.isLoading) {
     return (
       <div className="rounded-lg bg-card p-6">
         <p className="text-sm text-gray-400">Loading draft...</p>
@@ -779,13 +687,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                     selectedTagIds.includes(tag.id)
                       ? "bg-purple-600 text-white"
                       : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  }`}
-                >
-                  {tag.name}
-                </Button>
-              ))}
-            </div>
+                }`}
+              >
+                {tag.name}
+              </Button>
+            ))}
           </div>
+        </div>
         )}
 
         {/* Price Group Info */}

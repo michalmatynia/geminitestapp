@@ -2,123 +2,58 @@
 
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState } from "react";
-
-
-
-
-
 import { useRouter } from "next/navigation";
-import { UserPreferences } from "@/features/products/types";
+import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/products/hooks/useUserPreferences";
+import { useCatalogs } from "@/features/products/hooks/useProductSettingsQueries";
+import type { Catalog } from "@/features/products/types";
+import type { ProductListPreferences } from "@/features/products/types/products-ui";
 
-
-type Catalog = {
-  id: string;
-  name: string;
-  currencyCode?: string;
-};
-
-const DEFAULT_PREFERENCES: UserPreferences = {
-  productListNameLocale: "name_en",
-  productListCatalogFilter: "all",
-  productListCurrencyCode: null,
-  productListPageSize: 50,
-  aiPathsActivePathId: null,
-  aiPathsExpandedGroups: ["Triggers"],
+const DEFAULT_PREFERENCES: ProductListPreferences = {
+  nameLocale: "name_en",
+  catalogFilter: "all",
+  currencyCode: "PLN",
+  pageSize: 50,
 };
 
 export function ProductPreferencesPage(): React.JSX.Element {
-  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
-  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { preferences: savedPreferences, loading: prefsLoading } = useUserPreferences();
+  const catalogsQuery = useCatalogs();
+  const catalogs = (catalogsQuery.data || []) as Catalog[];
+  
+  const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
+  const updateMutation = useUpdateUserPreferencesMutation();
 
   useEffect(() => {
-    const loadData = async (): Promise<void> => {
-      try {
-        setLoading(true);
-
-        // Load preferences
-        const prefsRes = await fetch("/api/user/preferences");
-        if (prefsRes.ok) {
-          const prefsData = (await prefsRes.json()) as Partial<UserPreferences>;
-          setPreferences({
-            productListNameLocale: prefsData.productListNameLocale || "name_en",
-            productListCatalogFilter: prefsData.productListCatalogFilter || "all",
-            productListCurrencyCode: prefsData.productListCurrencyCode || null,
-            productListPageSize: prefsData.productListPageSize || 50,
-            aiPathsActivePathId: prefsData.aiPathsActivePathId ?? null,
-            aiPathsExpandedGroups: prefsData.aiPathsExpandedGroups ?? ["Triggers"],
-          });
-        }
-
-        // Load catalogs
-        const catalogsRes = await fetch("/api/catalogs");
-        if (catalogsRes.ok) {
-          const catalogsData = (await catalogsRes.json()) as Catalog[];
-          setCatalogs(catalogsData);
-        }
-      } catch (error) {
-        console.error("Failed to load preferences:", error);
-        toast("Failed to load preferences", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadData();
-  }, [toast]);
+    if (savedPreferences) {
+      setPreferences(savedPreferences);
+    }
+  }, [savedPreferences]);
 
   const handleSave = async (): Promise<void> => {
     try {
-      setSaving(true);
-
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to save preferences");
-      }
-
+      await updateMutation.mutateAsync(preferences);
       toast("Preferences saved successfully", { variant: "success" });
       router.push("/admin/products");
     } catch (error) {
       console.error("Failed to save preferences:", error);
       toast("Failed to save preferences", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleResetToDefault = async (): Promise<void> => {
     try {
-      setSaving(true);
-
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(DEFAULT_PREFERENCES),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to reset preferences");
-      }
-
+      await updateMutation.mutateAsync(DEFAULT_PREFERENCES);
       setPreferences(DEFAULT_PREFERENCES);
       toast("Preferences reset to default", { variant: "success" });
     } catch (error) {
       console.error("Failed to reset preferences:", error);
       toast("Failed to reset preferences", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
-  if (loading) {
+  if (prefsLoading || catalogsQuery.isLoading) {
     return (
       <div className="container mx-auto py-10">
         <div className="rounded-lg bg-card p-6 shadow-lg">
@@ -156,11 +91,11 @@ export function ProductPreferencesPage(): React.JSX.Element {
               <div className="space-y-2">
                 <Label htmlFor="nameLocale">Product Name Language</Label>
                 <Select
-                  value={preferences.productListNameLocale || "name_en"}
-                  onValueChange={(value: string) =>
-                    setPreferences((prev: UserPreferences) => ({
+                  value={preferences.nameLocale || "name_en"}
+                  onValueChange={(value: "name_en" | "name_pl" | "name_de") =>
+                    setPreferences((prev) => ({
                       ...prev,
-                      productListNameLocale: value,
+                      nameLocale: value,
                     }))
                   }
                 >
@@ -182,11 +117,11 @@ export function ProductPreferencesPage(): React.JSX.Element {
               <div className="space-y-2">
                 <Label htmlFor="catalogFilter">Default Catalog Filter</Label>
                 <Select
-                  value={preferences.productListCatalogFilter || "all"}
+                  value={preferences.catalogFilter || "all"}
                   onValueChange={(value: string) =>
-                    setPreferences((prev: UserPreferences) => ({
+                    setPreferences((prev) => ({
                       ...prev,
-                      productListCatalogFilter: value,
+                      catalogFilter: value,
                     }))
                   }
                 >
@@ -212,11 +147,11 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 <Label htmlFor="currencyCode">Preferred Currency</Label>
                 <Input
                   id="currencyCode"
-                  value={preferences.productListCurrencyCode || ""}
+                  value={preferences.currencyCode || ""}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setPreferences((prev: UserPreferences) => ({
+                    setPreferences((prev) => ({
                       ...prev,
-                      productListCurrencyCode: e.target.value || null,
+                      currencyCode: e.target.value || "PLN",
                     }))
                   }
                   placeholder="EUR, USD, PLN, etc."
@@ -230,11 +165,11 @@ export function ProductPreferencesPage(): React.JSX.Element {
               <div className="space-y-2">
                 <Label htmlFor="pageSize">Products Per Page</Label>
                 <Select
-                  value={String(preferences.productListPageSize || 50)}
+                  value={String(preferences.pageSize || 50)}
                   onValueChange={(value: string) =>
-                    setPreferences((prev: UserPreferences) => ({
+                    setPreferences((prev) => ({
                       ...prev,
-                      productListPageSize: parseInt(value, 10),
+                      pageSize: parseInt(value, 10),
                     }))
                   }
                 >
@@ -261,7 +196,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
             <Button
               variant="outline"
               onClick={() => void handleResetToDefault()}
-              disabled={saving}
+              disabled={updateMutation.isPending}
               className="border-yellow-600 text-yellow-600 hover:bg-yellow-600/10"
             >
               Reset to Default
@@ -270,12 +205,12 @@ export function ProductPreferencesPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 onClick={() => router.push("/admin/products")}
-                disabled={saving}
+                disabled={updateMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button onClick={() => void handleSave()} disabled={saving}>
-                {saving ? "Saving..." : "Save Preferences"}
+              <Button onClick={() => void handleSave()} disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Saving..." : "Save Preferences"}
               </Button>
             </div>
           </div>

@@ -16,6 +16,7 @@ import type {
   CurrencyOption,
 } from "@/shared/types/internationalization";
 import { countryCodeOptions } from "@/shared/constants/internationalization";
+import { useSaveCountryMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
 
 interface CountryModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export function CountryModal({
   loadingCurrencies,
 }: CountryModalProps) {
   const { toast } = useToast();
-  const [saving, setSaving] = React.useState(false);
+  const saveMutation = useSaveCountryMutation();
   const [form, setForm] = React.useState({
     code: "",
     name: "",
@@ -63,30 +64,21 @@ export function CountryModal({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = country
-        ? `/api/countries/${country.id}`
-        : "/api/countries";
-      const res = await fetch(endpoint, {
-        method: country ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await saveMutation.mutateAsync({
+        id: country?.id,
+        data: {
           code: form.code.trim().toUpperCase(),
           name: form.name.trim(),
           currencyIds: selectedCurrencyIds,
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to save country");
 
       toast("Country saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
       console.error(err);
       toast("Failed to save country.", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -103,10 +95,10 @@ export function CountryModal({
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={saving}
+          disabled={saveMutation.isPending}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {saving ? "Saving..." : country ? "Update" : "Add"}
+          {saveMutation.isPending ? "Saving..." : country ? "Update" : "Add"}
         </Button>
         <h2 className="text-2xl font-bold text-white">
           {country ? "Edit Country" : "Add Country"}

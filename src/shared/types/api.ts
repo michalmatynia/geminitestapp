@@ -25,32 +25,42 @@ export interface DeleteResponse {
 }
 
 export interface ApiHandlerContext {
+  requestId: string;
+  startTime: number;
+  getElapsedMs: () => number;
   params?: Record<string, string | string[]>;
 }
 
 export interface ApiHandlerOptions {
   requireAuth?: boolean;
   allowedMethods?: string[];
+  source: string;
+  logSuccess?: boolean;
+  successLogLevel?: "info" | "warn" | "error";
+  fallbackMessage?: string;
+  includeDetails?: boolean;
 }
 
 export type ApiRouteHandler = (
   req: NextRequest,
-  context?: ApiHandlerContext
+  context: ApiHandlerContext
 ) => Promise<Response>;
 
-export type ApiRouteHandlerWithParams = (
+export type ApiRouteHandlerWithParams<P extends Record<string, string | string[]>> = (
   req: NextRequest,
   context: ApiHandlerContext,
-  params: Record<string, string>
+  params: P
 ) => Promise<Response>;
+
 
 export interface JsonParseResult<T = any> {
   ok: boolean;
   data?: T;
-  response?: Response;
+  response: Response;
 }
 
 export interface ParseJsonOptions {
   maxSize?: number;
   allowEmpty?: boolean;
+  logPrefix?: string;
 }

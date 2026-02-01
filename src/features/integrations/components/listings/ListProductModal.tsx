@@ -14,6 +14,13 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 
 import { isImageExportError } from "./utils";
+import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
+
+import {
+  useExportToBaseMutation,
+  useCreateListingMutation,
+} from "@/features/integrations/hooks/useProductListingMutations";
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -22,9 +29,6 @@ type ListProductModalProps = {
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
 };
-
-import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 
 export default function ListProductModal({
   product,
@@ -58,9 +62,12 @@ export default function ListProductModal({
     setAllowDuplicateSku,
   } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
 
+  // Mutations
+  const exportToBaseMutation = useExportToBaseMutation(product.id);
+  const createListingMutation = useCreateListingMutation(product.id);
+
   // Export logging
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState<boolean>(false);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const imageRetryPresets = useImageRetryPresets();
@@ -73,46 +80,23 @@ export default function ListProductModal({
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
+  const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
+
   const exportToBase = async (options?: {
     imageBase64Mode?: "base-only" | "full-data-uri";
     imageTransform?: ImageTransformOptions | null;
   }): Promise<void> => {
-    const payload: Record<string, unknown> = {
+    const payloadRes = await exportToBaseMutation.mutateAsync({
       connectionId: selectedConnectionId,
       inventoryId: selectedInventoryId,
       templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-      allowDuplicateSku,
-    };
-
-    if (options?.imageBase64Mode) {
-      payload.imageBase64Mode = options.imageBase64Mode;
-      payload.exportImagesAsBase64 = true;
-    }
-    if (options?.imageTransform) {
-      payload.imageTransform = options.imageTransform;
-      payload.exportImagesAsBase64 = true;
-    }
-
-    const res = await fetch(`/api/integrations/products/${product.id}/export-to-base`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      imageBase64Mode: options?.imageBase64Mode,
+      imageTransform: options?.imageTransform,
+      exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
     });
 
-    const data = (await res.json().catch(() => ({}))) as { 
-      logs?: CapturedLog[]; 
-      skuExists?: boolean; 
-      error?: string 
-    };
-    if (data.logs) {
-      setExportLogs(data.logs);
-    }
-
-    if (!res.ok) {
-      if (data.skuExists) {
-        throw new Error(data.error || "SKU already exists in Base.com");
-      }
-      throw new Error(data.error || "Failed to export product to Base.com");
+    if (payloadRes.logs) {
+      setExportLogs(payloadRes.logs);
     }
   };
 
@@ -128,7 +112,6 @@ export default function ListProductModal({
     }
 
     try {
-      setSubmitting(true);
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
@@ -139,26 +122,15 @@ export default function ListProductModal({
         onSuccess();
       } else {
         // For other integrations, use regular listing endpoint
-        const res = await fetch(`/api/integrations/products/${product.id}/listings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            integrationId: selectedIntegrationId,
-            connectionId: selectedConnectionId,
-          }),
+        await createListingMutation.mutateAsync({
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
         });
-
-        if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
-          throw new Error(data.error || "Failed to create listing");
-        }
 
         onSuccess();
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -167,7 +139,6 @@ export default function ListProductModal({
       return;
     }
     try {
-      setSubmitting(true);
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
@@ -178,8 +149,6 @@ export default function ListProductModal({
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");
-    } finally {
-      setSubmitting(false);
     }
   };
 

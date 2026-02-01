@@ -1,13 +1,19 @@
 "use client";
 
 import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, AppModal, ModalShell, SectionHeader, SectionPanel } from "@/shared/ui";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";
+import { useProductAiJobs } from "@/features/jobs/hooks/useJobQueries";
+import { 
+  useProductAiJobMutation, 
+  useDeleteProductAiJobMutation, 
+  useClearProductAiJobsMutation 
+} from "@/features/jobs/hooks/useJobMutations";
 
 type JobMeta = {
   payload: Record<string, unknown> | null;
@@ -30,13 +36,17 @@ export default function ProductAiJobsPanel({
 }: ProductAiJobsPanelProps): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const [jobs, setJobs] = useState<ProductAiJob[]>([]);
-  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [actionId, setActionId] = useState<string | null>(null);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [bulkDeletingAll, setBulkDeletingAll] = useState(false);
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
+
+  // Queries
+  const jobsQuery = useProductAiJobs("all");
+  const jobs = useMemo(() => jobsQuery.data?.jobs || [], [jobsQuery.data]);
+
+  // Mutations
+  const actionMutation = useProductAiJobMutation();
+  const deleteMutation = useDeleteProductAiJobMutation();
+  const clearMutation = useClearProductAiJobsMutation();
 
   const getPayload = (job: ProductAiJob): Record<string, unknown> | null => {
     return job.payload && typeof job.payload === "object"
@@ -98,104 +108,47 @@ export default function ProductAiJobsPanel({
     return ["ai", "import", "export"].includes(tab) ? tab : "ai";
   }, [searchParams, showTabs]);
 
-  const loadJobs = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/products/ai-jobs");
-      if (!res.ok) throw new Error("Failed to load jobs.");
-      const data = (await res.json()) as { jobs?: ProductAiJob[] };
-      setJobs(data.jobs ?? []);
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Failed to load jobs.", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
-
-  useEffect(() => {
-    const hasPendingJobs = jobs.some((job: ProductAiJob) => job.status === "pending" || job.status === "running");
-    if (!hasPendingJobs) {
-      return;
-    }
-
-    const interval = setInterval(() => void loadJobs(), 5000);
-    return (): void => clearInterval(interval);
-  }, [jobs, loadJobs]);
-
   const cancelJob = async (jobId: string): Promise<void> => {
-    setActionId(jobId);
     try {
-      const res = await fetch(`/api/products/ai-jobs/${jobId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel" }),
-      });
-      if (!res.ok) throw new Error("Failed to cancel job.");
-      await loadJobs();
+      await actionMutation.mutateAsync({ jobId, action: "cancel" });
       toast("Job canceled", { variant: "success" });
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to cancel job.", { variant: "error" });
-    } finally {
-      setActionId(null);
     }
   };
 
   const deleteJob = async (jobId: string): Promise<void> => {
-    setActionId(jobId);
     try {
-      const res = await fetch(`/api/products/ai-jobs/${jobId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete job.");
-      await loadJobs();
+      await deleteMutation.mutateAsync(jobId);
       toast("Job deleted", { variant: "success" });
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete job.", { variant: "error" });
-    } finally {
-      setActionId(null);
     }
   };
 
   const clearCompleted = async (): Promise<void> => {
     if (!window.confirm("Delete all completed jobs? This cannot be undone.")) return;
-    setBulkDeleting(true);
     try {
-      const res = await fetch("/api/products/ai-jobs?scope=terminal", {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete completed jobs.");
-      await loadJobs();
+      await clearMutation.mutateAsync({ scope: "terminal" });
       toast("Jobs cleared", { variant: "success" });
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete completed jobs.", { variant: "error" });
-    } finally {
-      setBulkDeleting(false);
     }
   };
 
   const clearAllJobs = async (): Promise<void> => {
     if (!window.confirm("Delete ALL AI jobs (including running/pending)?")) return;
-    setBulkDeletingAll(true);
     try {
-      const res = await fetch("/api/products/ai-jobs?scope=all", {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete all jobs.");
-      await loadJobs();
+      await clearMutation.mutateAsync({ scope: "all" });
       toast("All jobs deleted", { variant: "success" });
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : "Failed to delete all jobs.", { variant: "error" });
-    } finally {
-      setBulkDeletingAll(false);
     }
   };
 
   const filteredJobs = jobs.filter((job: ProductAiJob) => {
     const meta = getJobMeta(job);
+    const searchStr = query.toLowerCase();
     return [
       job.id,
       job.status,
@@ -208,7 +161,7 @@ export default function ProductAiJobsPanel({
       meta.source,
       job.product?.name_en,
       job.product?.sku,
-    ].some((val: string | number | boolean | undefined | null) => (typeof val === "string" ? val.toLowerCase().includes(query.toLowerCase()) : false));
+    ].some((val) => val && String(val).toLowerCase().includes(searchStr));
   });
 
   const aiContent = (
@@ -221,15 +174,15 @@ export default function ProductAiJobsPanel({
           className="max-w-md bg-gray-900 border-border text-white"
         />
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={(): void => { void loadJobs(); }} disabled={loading}>
-            <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          <Button variant="outline" size="sm" onClick={(): void => { void jobsQuery.refetch(); }} disabled={jobsQuery.isFetching}>
+            <RefreshCcw className={`mr-2 h-4 w-4 ${jobsQuery.isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button variant="destructive" size="sm" onClick={(): void => { void clearCompleted(); }} disabled={bulkDeleting}>
+          <Button variant="destructive" size="sm" onClick={(): void => { void clearCompleted(); }} disabled={clearMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear Finished
           </Button>
-          <Button variant="destructive" size="sm" onClick={(): void => { void clearAllJobs(); }} disabled={bulkDeletingAll}>
+          <Button variant="destructive" size="sm" onClick={(): void => { void clearAllJobs(); }} disabled={clearMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear All
           </Button>
@@ -251,7 +204,7 @@ export default function ProductAiJobsPanel({
             {filteredJobs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                  {loading ? "Loading jobs..." : "No jobs found."}
+                  {jobsQuery.isLoading ? "Loading jobs..." : "No jobs found."}
                 </td>
               </tr>
             ) : (
@@ -306,9 +259,9 @@ export default function ProductAiJobsPanel({
                           size="icon"
                           className="h-8 w-8 text-yellow-500 hover:text-yellow-400"
                           onClick={(): void => { void cancelJob(job.id); }}
-                          disabled={actionId === job.id}
+                          disabled={actionMutation.isPending && actionMutation.variables?.jobId === job.id}
                         >
-                          {actionId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                          {actionMutation.isPending && actionMutation.variables?.jobId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                         </Button>
                       )}
                       <Button
@@ -316,7 +269,7 @@ export default function ProductAiJobsPanel({
                         size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-400"
                         onClick={(): void => { void deleteJob(job.id); }}
-                        disabled={actionId === job.id}
+                        disabled={deleteMutation.isPending && deleteMutation.variables === job.id}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -411,12 +364,12 @@ export default function ProductAiJobsPanel({
                   </div>
                   {((): React.ReactNode => {
                     const meta = getJobMeta(selectedJob);
-                    const payload = meta.payload ?? {};
-                    const modelId = (payload as { modelId?: string }).modelId;
-                    const temperature = (payload as { temperature?: number }).temperature;
-                    const maxTokens = (payload as { maxTokens?: number }).maxTokens;
-                    const vision = (payload as { vision?: boolean }).vision;
-                    const imageUrls = (payload as { imageUrls?: string[] }).imageUrls;
+                    const payload = (meta.payload ?? {}) as any;
+                    const modelId = payload.modelId;
+                    const temperature = payload.temperature;
+                    const maxTokens = payload.maxTokens;
+                    const vision = payload.vision;
+                    const imageUrls = payload.imageUrls;
                     return (
                       <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
                         <div>
@@ -581,15 +534,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                          {selectedJob.result.analysisInitial || selectedJob.result.analysis || 'N/A'}
+                          {(selectedJob.result as any).analysisInitial || (selectedJob.result as any).analysis || 'N/A'}
                         </div>
                       </div>
 
-                      {selectedJob.result.analysisFinal && (
+                      {(selectedJob.result as any).analysisFinal && (
                         <div className="space-y-2">
                           <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {selectedJob.result.analysisFinal}
+                            {(selectedJob.result as any).analysisFinal}
                           </div>
                         </div>
                       )}
@@ -599,15 +552,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                          {selectedJob.result.descriptionInitial || selectedJob.result.description || 'N/A'}
+                          {(selectedJob.result as any).descriptionInitial || (selectedJob.result as any).description || 'N/A'}
                         </div>
                       </div>
 
-                      {selectedJob.result.descriptionFinal && (
+                      {(selectedJob.result as any).descriptionFinal && (
                         <div className="space-y-2">
                           <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                            {selectedJob.result.descriptionFinal}
+                            {(selectedJob.result as any).descriptionFinal}
                           </div>
                         </div>
                       )}
@@ -617,23 +570,23 @@ export default function ProductAiJobsPanel({
                   <div className="space-y-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
 
-                    {selectedJob.result.translationModel && (
+                    {(selectedJob.result as any).translationModel && (
                       <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
-                            <div className="text-white font-mono text-sm">{selectedJob.result.translationModel}</div>
+                            <div className="text-white font-mono text-sm">{(selectedJob.result as any).translationModel}</div>
                           </div>
-                          {selectedJob.result.sourceLanguage && (
+                          {(selectedJob.result as any).sourceLanguage && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
-                              <div className="text-white text-sm">{selectedJob.result.sourceLanguage}</div>
+                              <div className="text-white text-sm">{(selectedJob.result as any).sourceLanguage}</div>
                             </div>
                           )}
-                          {selectedJob.result.targetLanguages && (
+                          {(selectedJob.result as any).targetLanguages && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
-                              <div className="text-white text-sm">{selectedJob.result.targetLanguages.join(', ')}</div>
+                              <div className="text-white text-sm">{(selectedJob.result as any).targetLanguages.join(', ')}</div>
                             </div>
                           )}
                         </div>
@@ -641,7 +594,7 @@ export default function ProductAiJobsPanel({
                     )}
 
                     <div className="space-y-4">
-                      {selectedJob.result.translations && Object.entries(selectedJob.result.translations).map(([lang, trans]: [string, { name?: string; description?: string }]) => (
+                      {(selectedJob.result as any).translations && Object.entries((selectedJob.result as any).translations).map(([lang, trans]: [string, any]) => (
                         <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
                           <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

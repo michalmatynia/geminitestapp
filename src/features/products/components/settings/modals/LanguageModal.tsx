@@ -15,6 +15,7 @@ import type {
   Language,
   CountryOption,
 } from "@/shared/types/internationalization";
+import { useSaveLanguageMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
 
 interface LanguageModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export function LanguageModal({
   countries,
 }: LanguageModalProps) {
   const { toast } = useToast();
-  const [saving, setSaving] = React.useState(false);
+  const saveMutation = useSaveLanguageMutation();
   const [form, setForm] = React.useState({
     code: "",
     name: "",
@@ -62,33 +63,22 @@ export function LanguageModal({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = language
-        ? `/api/languages/${language.id}`
-        : "/api/languages";
-      const res = await fetch(endpoint, {
-        method: language ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await saveMutation.mutateAsync({
+        id: language?.id,
+        data: {
           code: form.code.trim(),
           name: form.name.trim(),
           nativeName: form.nativeName.trim() || undefined,
           countryIds: selectedCountryIds,
-        }),
+        },
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to save language");
-      }
 
       toast("Language saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
       console.error(err);
       toast("Failed to save language.", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -105,10 +95,10 @@ export function LanguageModal({
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={saving}
+          disabled={saveMutation.isPending}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {saving ? "Saving..." : language ? "Update" : "Add"}
+          {saveMutation.isPending ? "Saving..." : language ? "Update" : "Add"}
         </Button>
         <h2 className="text-2xl font-bold text-white">
           {language ? "Edit Language" : "Add Language"}

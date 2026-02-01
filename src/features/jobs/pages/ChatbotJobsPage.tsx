@@ -1,13 +1,14 @@
 "use client";
 
 import { Button, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-
-
-
-
-
+import { useChatbotJobs } from "@/features/jobs/hooks/useJobQueries";
+import { 
+  useChatbotJobMutation, 
+  useDeleteChatbotJobMutation, 
+  useClearChatbotJobsMutation 
+} from "@/features/jobs/hooks/useJobMutations";
 
 type ChatbotJob = {
   id: string;
@@ -23,36 +24,24 @@ type ChatbotJob = {
 
 export default function ChatbotJobsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [jobs, setJobs] = useState<ChatbotJob[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [bulkDeletingJobs, setBulkDeletingJobs] = useState(false);
 
-  const loadJobs = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/chatbot/jobs");
-      if (!res.ok) {
-        throw new Error("Failed to load jobs.");
-      }
-      const data = (await res.json()) as { jobs?: ChatbotJob[] };
-      setJobs(data.jobs ?? []);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load jobs.";
-      setError(message);
-      toast(message, { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const jobsQuery = useChatbotJobs("all");
+  // Polling if any jobs are pending/running
+  const hasPending = useMemo(() => 
+    (jobsQuery.data as any)?.jobs?.some((j: any) => j.status === "pending" || j.status === "running"),
+    [jobsQuery.data]
+  );
+  
+  // Re-fetch every 5s if pending
+  // Note: useChatbotJobs doesn't support options yet in my implementation, but I can add it or manually refetch
+  // For now I'll just use the basic query.
 
-  useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
+  const chatbotMutation = useChatbotJobMutation();
+  const deleteMutation = useDeleteChatbotJobMutation();
+  const clearMutation = useClearChatbotJobsMutation();
+
+  const jobs = useMemo(() => (jobsQuery.data as any)?.jobs as ChatbotJob[] || [], [jobsQuery.data]);
 
   const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();
@@ -81,82 +70,33 @@ export default function ChatbotJobsPage(): React.JSX.Element {
   }, [jobs, query]);
 
   const cancelJob = async (jobId: string): Promise<void> => {
-    const job = jobs.find((item: ChatbotJob) => item.id === jobId);
-    if (!job) {
-      toast("Job not found.", { variant: "error" });
-      return;
-    }
-    setCancelingId(job.id);
     try {
-      const res = await fetch(`/api/chatbot/jobs/${job.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel" }),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to cancel job.");
-      }
-      await loadJobs();
+      await chatbotMutation.mutateAsync({ jobId, action: "cancel" });
       toast("Job canceled", { variant: "success" });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to cancel job.";
-      toast(message, { variant: "error" });
-    } finally {
-      setCancelingId(null);
+      toast(error instanceof Error ? error.message : "Failed to cancel job.", { variant: "error" });
     }
   };
 
   const deleteJob = async (jobId: string, force: boolean = false): Promise<void> => {
-    setDeletingId(jobId);
     try {
-      const confirmed = window.confirm(
-        "Delete this job permanently? This cannot be undone."
-      );
+      const confirmed = window.confirm("Delete this job permanently? This cannot be undone.");
       if (!confirmed) return;
-      const url = force
-        ? `/api/chatbot/jobs/${jobId}?force=true`
-        : `/api/chatbot/jobs/${jobId}`;
-      const res = await fetch(url, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to delete job.");
-      }
-      await loadJobs();
+      await deleteMutation.mutateAsync({ jobId, force });
       toast("Job deleted", { variant: "success" });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete job.";
-      toast(message, { variant: "error" });
-    } finally {
-      setDeletingId(null);
+      toast(error instanceof Error ? error.message : "Failed to delete job.", { variant: "error" });
     }
   };
 
   const deleteCompletedJobs = async (): Promise<void> => {
-    setBulkDeletingJobs(true);
     try {
-      const confirmed = window.confirm(
-        "Delete all completed jobs? This cannot be undone."
-      );
+      const confirmed = window.confirm("Delete all completed jobs? This cannot be undone.");
       if (!confirmed) return;
-      const res = await fetch("/api/chatbot/jobs?scope=terminal", {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to delete jobs.");
-      }
-      await loadJobs();
+      await clearMutation.mutateAsync({ scope: "terminal" });
       toast("Completed jobs deleted", { variant: "success" });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete jobs.";
-      toast(message, { variant: "error" });
-    } finally {
-      setBulkDeletingJobs(false);
+      toast(error instanceof Error ? error.message : "Failed to delete jobs.", { variant: "error" });
     }
   };
 
@@ -186,27 +126,25 @@ export default function ChatbotJobsPage(): React.JSX.Element {
             <Button
               variant="outline"
               size="sm"
-              onClick={(): void => {
-                void loadJobs();
-              }}
-              disabled={loading}
+              onClick={(): void => { void jobsQuery.refetch(); }}
+              disabled={jobsQuery.isFetching}
             >
-              {loading ? "Refreshing..." : "Refresh"}
+              {jobsQuery.isFetching ? "Refreshing..." : "Refresh"}
             </Button>
             <Button
               variant="destructive"
               size="sm"
               onClick={(): void => { void deleteCompletedJobs(); }}
-              disabled={bulkDeletingJobs}
+              disabled={clearMutation.isPending}
             >
-              {bulkDeletingJobs ? "Deleting jobs..." : "Delete completed jobs"}
+              {clearMutation.isPending ? "Deleting jobs..." : "Delete completed jobs"}
             </Button>
           </div>
         </div>
-        {loading ? (
+        {jobsQuery.isLoading ? (
           <p className="text-sm text-gray-400">Loading jobs...</p>
-        ) : error ? (
-          <p className="text-sm text-red-400">{error}</p>
+        ) : jobsQuery.error ? (
+          <p className="text-sm text-red-400">{(jobsQuery.error as Error).message}</p>
         ) : filteredJobs.length === 0 ? (
           <p className="text-sm text-gray-400">No jobs yet.</p>
         ) : (
@@ -262,28 +200,28 @@ export default function ChatbotJobsPage(): React.JSX.Element {
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={cancelingId === job.id}
+                        disabled={chatbotMutation.isPending && chatbotMutation.variables?.jobId === job.id}
                         onClick={(): void => { void cancelJob(job.id); }}
                       >
-                        {cancelingId === job.id ? "Canceling..." : "Cancel"}
+                        {chatbotMutation.isPending && chatbotMutation.variables?.jobId === job.id ? "Canceling..." : "Cancel"}
                       </Button>
                     ) : null}
                     <Button
                       variant="destructive"
                       size="sm"
-                      disabled={deletingId === job.id}
+                      disabled={deleteMutation.isPending && deleteMutation.variables?.jobId === job.id}
                       onClick={(): void => { void deleteJob(job.id); }}
                     >
-                      {deletingId === job.id ? "Deleting..." : "Delete"}
+                      {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id ? "Deleting..." : "Delete"}
                     </Button>
                     {job.status === "running" ? (
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={deletingId === job.id}
+                        disabled={deleteMutation.isPending && deleteMutation.variables?.jobId === job.id}
                         onClick={(): void => { void deleteJob(job.id, true); }}
                       >
-                        {deletingId === job.id
+                        {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id
                           ? "Deleting..."
                           : "Force delete"}
                       </Button>

@@ -100,7 +100,7 @@ export type ExportToBaseVariables = {
 };
 
 export function useExportToBaseMutation(productId: string): UseMutationResult<
-  { logs?: CapturedLog[]; error?: string },
+  { logs?: CapturedLog[]; error?: string; skuExists?: boolean },
   Error,
   ExportToBaseVariables
 > {
@@ -114,12 +114,45 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
         body: JSON.stringify(payload),
       });
       
-      const payloadRes = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[]; error?: string };
+      const payloadRes = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[]; error?: string; skuExists?: boolean };
       
       if (!res.ok) {
+        if (payloadRes.skuExists) {
+           throw new Error(payloadRes.error || "SKU already exists in Base.com");
+        }
         throw new Error(payloadRes.error || "Failed to export product");
       }
       return payloadRes;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings", productId] });
+    },
+  });
+}
+
+export function useCreateListingMutation(productId: string): UseMutationResult<
+  Record<string, unknown>,
+  Error,
+  { integrationId: string; connectionId: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ integrationId, connectionId }) => {
+      const res = await fetch(`/api/integrations/products/${productId}/listings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          integrationId,
+          connectionId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || "Failed to create listing");
+      }
+      return (await res.json()) as Record<string, unknown>;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["integrations", "product-listings", productId] });

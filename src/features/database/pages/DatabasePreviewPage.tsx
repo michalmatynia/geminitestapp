@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BoxesIcon,
@@ -19,17 +19,13 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-
-
-
-
 import type {
   DatabasePreviewGroup,
   DatabasePreviewMode,
   DatabasePreviewRow,
   DatabasePreviewTable,
 } from "../types";
-import { fetchDatabasePreview } from "../api";
+import { useDatabasePreview } from "../hooks/useDatabaseQueries";
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   TABLE: TableIcon,
@@ -53,70 +49,27 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const mode = searchParams.get("mode") ?? "backup";
   const previewMode: DatabasePreviewMode =
     mode === "current" ? "current" : "backup";
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [errorMeta, setErrorMeta] = useState<{
-    errorId?: string;
-    stage?: string;
-    backupName?: string;
-    mode?: string;
-  } | null>(null);
-  const [content, setContent] = useState("");
-  const [groups, setGroups] = useState<DatabasePreviewGroup[]>([]);
-  const [tables, setTables] = useState<DatabasePreviewTable[]>([]);
-  const [tableRows, setTableRows] = useState<DatabasePreviewRow[]>([]);
+  
   const [groupQuery, setGroupQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    if (!backupName && previewMode !== "current") return;
-    const fetchPreview = async (): Promise<void> => {
-      setLoading(true);
-      setError(null);
-      setErrorMeta(null);
-      setContent("");
-      setGroups([]);
-      setTables([]);
-      setTableRows([]);
-      try {
-        const { ok, payload } = await fetchDatabasePreview({
-          backupName: backupName || undefined,
-          mode: previewMode,
-          page,
-          pageSize,
-        });
-        if (!ok) {
-          setError(payload.error ?? "Failed to preview backup.");
-          setErrorMeta({
-            ...(payload.errorId ? { errorId: payload.errorId } : {}),
-            ...(payload.stage ? { stage: payload.stage } : {}),
-            ...(payload.backupName || backupName
-              ? { backupName: payload.backupName ?? backupName }
-              : {}),
-            ...(payload.mode || mode ? { mode: payload.mode ?? mode } : {}),
-          });
-          return;
-        }
-        setContent(payload.content ?? "No preview output.");
-        setGroups(payload.groups ?? []);
-        setTables(payload.tables ?? []);
-        setTableRows(payload.tableRows ?? []);
-        if (payload.page) setPage(payload.page);
-        if (payload.pageSize) setPageSize(payload.pageSize);
-      } catch (err) {
-        console.error("Error loading preview:", err);
-        setError("An error occurred during preview.");
-        setErrorMeta(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: payload, isLoading: loading, error: queryError } = useDatabasePreview({
+    backupName: backupName || undefined,
+    mode: previewMode,
+    page,
+    pageSize,
+  });
 
-    void fetchPreview();
-  }, [backupName, previewMode, page, pageSize, mode]);
+  const error = queryError?.message || null;
+  const errorMeta = (queryError as any)?.payload || null;
+
+  const content = payload?.content ?? "";
+  const groups = payload?.groups ?? [];
+  const tables = payload?.tables ?? [];
+  const tableRows = payload?.tableRows ?? [];
 
   const copyRaw = async (): Promise<void> => {
     if (!content) return;

@@ -4,9 +4,9 @@ import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, RelatedNote, TagRecord, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
-
+import { useQuery, useQueries } from "@tanstack/react-query";
 
 import { autoformatMarkdown } from "../utils";
 import { useUndo } from "@/shared/hooks/use-undo";
@@ -20,7 +20,12 @@ import { FileAttachments } from "./editor/FileAttachments";
 import { NoteMetadata } from "./editor/NoteMetadata";
 import { MarkdownEditor } from "./editor/MarkdownEditor";
 import { WysiwygEditor } from "./editor/WysiwygEditor";
-
+import {
+  useCreateNoteMutation,
+  useUpdateNoteMutation,
+  useCreateNoteFileMutation,
+  useDeleteNoteFileMutation,
+} from "../hooks/useNoteData";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {
@@ -53,6 +58,8 @@ export function NoteForm({
   folderTheme,
   formRef,
 }: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }): React.JSX.Element {
+  const { toast } = useToast();
+  
   // Content & undo/redo
   const {
     state: content,
@@ -113,6 +120,12 @@ export function NoteForm({
     }
   };
 
+  // Mutations
+  const createNoteMutation = useCreateNoteMutation();
+  const updateNoteMutation = useUpdateNoteMutation();
+  const createFileMutation = useCreateNoteFileMutation(note?.id);
+  const deleteFileMutation = useDeleteNoteFileMutation(note?.id);
+
   // Tags
   const {
     selectedTagIds,
@@ -136,28 +149,70 @@ export function NoteForm({
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
     note?.categories[0]?.categoryId || defaultFolderId || ""
   );
-  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState< 
-    Array<{ id: string; title: string; color: string | null; content: string }>
-  >(
-    note?.relations?.map((rel: RelatedNote): { id: string; title: string; color: string | null; content: string } => ({
-      id: rel.id,
-      title: rel.title,
-      color: rel.color ?? null,
-      content: "",
-    })) ||
-      note?.relationsFrom?.map((rel: NoteRelationWithTarget): { id: string; title: string; color: string | null; content: string } => ({
-        id: rel.targetNote.id,
-        title: rel.targetNote.title,
-        color: rel.targetNote.color ?? null,
-        content: "",
-      })) ||
-      []
-  );
+  
+  // Hydrate related notes
+  const initialCombinedRelations = useMemo(() => {
+    if (!note) return [];
+    return [
+      ...(note.relations ?? []).map(rel => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: "" })),
+      ...(note.relationsFrom ?? []).map(rel => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: "" })),
+      ...(note.relationsTo ?? []).map(rel => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: "" })),
+    ].filter((item, index, array) => array.findIndex(entry => entry.id === item.id) === index);
+  }, [note]);
+
+  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState(initialCombinedRelations);
+
+  const relatedNotesQueries = useQueries({
+    queries: selectedRelatedNotes.map(rel => ({
+      queryKey: ["notes", rel.id],
+      queryFn: async (): Promise<NoteWithRelations> => {
+        const res = await fetch(`/api/notes/${rel.id}`);
+        if (!res.ok) throw new Error("Failed to fetch related note");
+        return res.json();
+      },
+      staleTime: 1000 * 60 * 5,
+    }))
+  });
+
+  useEffect(() => {
+    const updated = selectedRelatedNotes.map((item, index) => {
+      const q = relatedNotesQueries[index];
+      if (q?.data) {
+        return {
+          ...item,
+          content: q.data.content ?? "",
+          title: q.data.title ?? item.title,
+          color: q.data.color ?? item.color ?? null,
+        };
+      }
+      return item;
+    });
+    // Only update if something actually changed to avoid infinite loop
+    if (JSON.stringify(updated) !== JSON.stringify(selectedRelatedNotes)) {
+      setSelectedRelatedNotes(updated);
+    }
+  }, [relatedNotesQueries, selectedRelatedNotes]);
+
   const [relatedNoteQuery, setRelatedNoteQuery] = useState("");
   const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
-  const [relatedNoteResults, setRelatedNoteResults] = useState<NoteWithRelations[]>([]);
-  const [isRelatedLoading, setIsRelatedLoading] = useState(false);
-  const relatedSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = useQuery({
+    queryKey: ["notes-search", { query: relatedNoteQuery, notebookId }],
+    queryFn: async (): Promise<NoteWithRelations[]> => {
+      if (!relatedNoteQuery) return [];
+      const params = new URLSearchParams({
+        search: relatedNoteQuery,
+        searchScope: "title",
+      });
+      const resolvedNotebookId = notebookId ?? note?.notebookId ?? null;
+      if (resolvedNotebookId) params.append("notebookId", resolvedNotebookId);
+      const res = await fetch(`/api/notes?${params.toString()}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!relatedNoteQuery,
+  });
+
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [textColor, _setTextColor] = useState("#ffffff");
   const [fontFamily, _setFontFamily] = useState("inherit");
@@ -165,7 +220,6 @@ export function NoteForm({
   const [editorWidth, setEditorWidth] = useState<number | null>(null);
   const [isDraggingSplitter, setIsDraggingSplitter] = useState(false);
   const editorSplitRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   const { settings } = useNoteSettings();
 
   // Sync undo history when note changes
@@ -289,7 +343,8 @@ export function NoteForm({
     const openingTag: string = `<span${styleAttribute}>`;
     const closingTag: string = "</span>";
     const wrapped: string = `${openingTag}${selected}${closingTag}`;
-    const nextValue: string =
+    const nextValue:
+      string =
       content.slice(0, start) + wrapped + content.slice(end);
     setContent(nextValue);
     requestAnimationFrame((): void => {
@@ -370,26 +425,12 @@ export function NoteForm({
     addUploadingSlot(slotIndex);
 
     try {
-      const formData: FormData = new FormData();
-      formData.append("file", file);
-      formData.append("slotIndex", slotIndex.toString());
-
-      const response: Response = await fetch(`/api/notes/${note.id}/files`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const newFile: NoteFileRecord = (await response.json()) as NoteFileRecord;
-        setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
-        toast("File uploaded successfully");
-      } else {
-        const error: { error?: string } = (await response.json()) as { error?: string };
-        toast(error.error || "Failed to upload file");
-      }
-    } catch (error) {
+      const newFile = await createFileMutation.mutateAsync({ slotIndex, file });
+      setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
+      toast("File uploaded successfully");
+    } catch (error: any) {
       console.error("Failed to upload file:", error);
-      toast("Failed to upload file");
+      toast(error.message || "Failed to upload file");
     } finally {
       removeUploadingSlot(slotIndex);
     }
@@ -399,16 +440,9 @@ export function NoteForm({
     if (!note?.id) return;
 
     try {
-      const response: Response = await fetch(`/api/notes/${note.id}/files/${slotIndex}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        removeFile(noteFiles.find((f: NoteFileRecord): boolean => f.slotIndex === slotIndex)?.id || "");
-        toast("File deleted successfully");
-      } else {
-        toast("Failed to delete file");
-      }
+      await deleteFileMutation.mutateAsync(slotIndex);
+      removeFile(noteFiles.find((f: NoteFileRecord): boolean => f.slotIndex === slotIndex)?.id || "");
+      toast("File deleted successfully");
     } catch (_error) {
       console.error("Failed to delete file:", _error);
       toast("Failed to delete file");
@@ -492,39 +526,28 @@ export function NoteForm({
       const cursorPosition: number = textarea?.selectionStart ?? content.length;
 
       try {
-        const formData: FormData = new FormData();
         const timestamp: number = Date.now();
         const extension: string = file.type.split("/")[1] || "png";
         const renamedFile: File = new File([file], `pasted-image-${timestamp}.${extension}`, {
           type: file.type,
         });
-        formData.append("file", renamedFile);
-        formData.append("slotIndex", nextSlot.toString());
+        
+        const newFile = await createFileMutation.mutateAsync({ slotIndex: nextSlot, file: renamedFile });
+        
+        setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] =>
+          [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== nextSlot), newFile].sort(
+            (a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex
+          )
+        );
 
-        const response: Response = await fetch(`/api/notes/${note.id}/files`, {
-          method: "POST",
-          body: formData,
-        });
+        const altText: string = renamedFile.name;
+        const reference: string = `![${altText}](${newFile.filepath})`;
+        const nextValue:
+          string =
+          content.slice(0, cursorPosition) + reference + content.slice(cursorPosition);
+        setContent(nextValue);
 
-        if (response.ok) {
-          const newFile: NoteFileRecord = (await response.json()) as NoteFileRecord;
-          setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] =>
-            [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== nextSlot), newFile].sort(
-              (a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex
-            )
-          );
-
-          const altText: string = renamedFile.name;
-          const reference: string = `![${altText}](${newFile.filepath})`;
-          const nextValue: string =
-            content.slice(0, cursorPosition) + reference + content.slice(cursorPosition);
-          setContent(nextValue);
-
-          toast("Image pasted and uploaded");
-        } else {
-          const error: { error?: string } = (await response.json()) as { error?: string };
-          toast(error.error || "Failed to upload pasted image");
-        }
+        toast("Image pasted and uploaded");
       } catch (error) {
         console.error("Failed to upload pasted image:", error);
         toast("Failed to upload pasted image");
@@ -542,7 +565,8 @@ export function NoteForm({
         const textarea: HTMLTextAreaElement | null = contentRef.current;
         const selectionStart: number = textarea?.selectionStart ?? content.length;
         const selectionEnd: number = textarea?.selectionEnd ?? content.length;
-        const newContent: string =
+        const newContent:
+          string =
           content.slice(0, selectionStart) +
           formattedText +
           content.slice(selectionEnd);
@@ -589,172 +613,36 @@ export function NoteForm({
     setNoteFiles(note?.files || []);
   }, [note?.files, setNoteFiles]);
 
-  useEffect((): (() => void) => {
-    if (!note) {
-      setSelectedRelatedNotes([]);
-      setRelatedNoteQuery("");
-      setIsRelatedDropdownOpen(false);
-      setRelatedNoteResults([]);
-      return (): void => {};
-    }
-    const combinedRelations: Array<{ id: string; title: string; color: string | null; content: string }> =
-      note.relations?.map((rel: RelatedNote): { id: string; title: string; color: string | null; content: string } => ({
-        id: rel.id,
-        title: rel.title,
-        color: rel.color ?? null,
-        content: "",
-      })) ||
-      [
-        ...(note.relationsFrom ?? []).map((rel: NoteRelationWithTarget): { id: string; title: string; color: string | null; content: string } => ({
-          id: rel.targetNote.id,
-          title: rel.targetNote.title,
-          color: rel.targetNote.color ?? null,
-          content: "",
-        })),
-        ...(note.relationsTo ?? []).map((rel: NoteRelationWithSource): { id: string; title: string; color: string | null; content: string } => ({
-          id: rel.sourceNote.id,
-          title: rel.sourceNote.title,
-          color: rel.sourceNote.color ?? null,
-          content: "",
-        })),
-      ].filter(
-        (item: { id: string; title: string; color: string | null; content: string }, index: number, array: Array<{ id: string; title: string; color: string | null; content: string }>): boolean =>
-          array.findIndex((entry: { id: string }): boolean => entry.id === item.id) === index
-      );
-    setSelectedRelatedNotes(combinedRelations);
-    setRelatedNoteQuery("");
-    setIsRelatedDropdownOpen(false);
-    setRelatedNoteResults([]);
-
-    const hydrateRelatedNotes = async (): Promise<void> => {
-      const relatedIds: string[] = combinedRelations.map((rel: { id: string }): string => rel.id);
-      if (relatedIds.length === 0) return;
-      try {
-        const details: (NoteWithRelations | null)[] = await Promise.all(
-          relatedIds.map(async (relId: string): Promise<NoteWithRelations | null> => {
-            try {
-              const response: Response = await fetch(`/api/notes/${relId}`, {
-                cache: "no-store",
-              });
-              if (!response.ok) return null;
-              return (await response.json()) as NoteWithRelations;
-            } catch {
-              return null;
-            }
-          })
-        );
-        setSelectedRelatedNotes((prev: Array<{ id: string; title: string; color: string | null; content: string }>): Array<{ id: string; title: string; color: string | null; content: string }> =>
-          prev.map((item: { id: string; title: string; color: string | null; content: string }): { id: string; title: string; color: string | null; content: string } => {
-            const found: NoteWithRelations | null | undefined = details.find((detail: NoteWithRelations | null): boolean => detail?.id === item.id);
-            if (!found) return item;
-            return {
-              ...item,
-              content: found.content ?? "",
-              title: found.title ?? item.title,
-              color: found.color ?? item.color ?? null,
-            };
-          })
-        );
-      } catch (error) {
-        console.error("Failed to load related note details:", error);
-      }
-    };
-
-    void hydrateRelatedNotes();
-    
-    return (): void => {};
-  }, [note]);
-
-  useEffect((): (() => void) => {
-    if (!relatedNoteQuery) {
-      setRelatedNoteResults([]);
-      setIsRelatedLoading(false);
-      if (relatedSearchTimerRef.current) {
-        clearTimeout(relatedSearchTimerRef.current);
-        relatedSearchTimerRef.current = null;
-      }
-      return (): void => {};
-    }
-
-    if (relatedSearchTimerRef.current) {
-      clearTimeout(relatedSearchTimerRef.current);
-    }
-
-    let isActive: boolean = true;
-    
-    const timer: ReturnType<typeof setTimeout> = setTimeout((): void => {
-      const fetchResults = async (): Promise<void> => {
-        setIsRelatedLoading(true);
-        try {
-          const params: URLSearchParams = new URLSearchParams({
-            search: relatedNoteQuery,
-            searchScope: "title",
-          });
-          const resolvedNotebookId: string | null = notebookId ?? note?.notebookId ?? null;
-          if (resolvedNotebookId) {
-            params.append("notebookId", resolvedNotebookId);
-          }
-          const response: Response = await fetch(`/api/notes?${params.toString()}`, {
-            cache: "no-store",
-          });
-          if (!response.ok) return;
-          const data: NoteWithRelations[] = (await response.json()) as NoteWithRelations[];
-          if (isActive) {
-            setRelatedNoteResults(data);
-          }
-        } catch (error) {
-          console.error("Failed to search related notes:", error);
-        } finally {
-          if (isActive) {
-            setIsRelatedLoading(false);
-          }
-        }
-      };
-
-      void fetchResults();
-    }, 250);
-
-    relatedSearchTimerRef.current = timer;
-
-    return (): void => {
-      isActive = false;
-      clearTimeout(timer);
-    };
-  }, [relatedNoteQuery, notebookId, note?.notebookId]);
-
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!title || !content) return;
 
     try {
-      const url: string = note ? `/api/notes/${note.id}` : "/api/notes";
-      const method: string = note ? "PATCH" : "POST";
+      const data = {
+        title,
+        content,
+        ...(note ? {} : { editorType: editorMode }),
+        color: color.toLowerCase().trim(),
+        isPinned,
+        isArchived,
+        isFavorite,
+        tagIds: selectedTagIds,
+        relatedNoteIds: selectedRelatedNotes.map((rel: { id: string }): string => rel.id),
+        categoryIds: selectedFolderId ? [selectedFolderId] : [],
+        notebookId: notebookId ?? note?.notebookId ?? null,
+      };
 
-      const response: Response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content,
-          // For new notes, include the selected editor type
-          ...(note ? {} : { editorType: editorMode }),
-          color: color.toLowerCase().trim(),
-          isPinned,
-          isArchived,
-          isFavorite,
-          tagIds: selectedTagIds,
-          relatedNoteIds: selectedRelatedNotes.map((rel: { id: string }): string => rel.id),
-          categoryIds: selectedFolderId ? [selectedFolderId] : [],
-          notebookId: notebookId ?? note?.notebookId ?? null,
-        }),
-      });
-
-      if (response.ok) {
-        toast(note ? "Note updated successfully" : "Note created successfully");
-        onSuccess();
+      if (note) {
+        await updateNoteMutation.mutateAsync({ id: note.id, ...data });
+      } else {
+        await createNoteMutation.mutateAsync(data);
       }
-    } catch (error) {
+
+      toast(note ? "Note updated successfully" : "Note created successfully");
+      onSuccess();
+    } catch (error: any) {
       console.error("Failed to save note:", error);
+      toast(error.message || "Failed to save note", { variant: "error" });
     }
   };
 

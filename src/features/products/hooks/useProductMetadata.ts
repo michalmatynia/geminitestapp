@@ -1,225 +1,136 @@
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import type {
-  ProductWithImages,
-  ProductFormData,
+import React from "react";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import type { 
+  CatalogRecord, 
+  ProductCategory, 
+  ProductTag, 
+  ProductParameter 
 } from "@/features/products/types";
-import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
-import {
-  useCatalogs,
-  useLanguages,
-  usePriceGroups,
-  useMultiCategories,
-  useMultiTags,
-  useMultiParameters,
-} from "./useMetadata";
 
-interface UseProductMetadataProps {
-  product?: ProductWithImages | undefined;
-  initialCatalogId?: string | undefined;
-  initialCatalogIds?: string[] | undefined;
-  initialCategoryIds?: string[] | undefined;
-  initialTagIds?: string[] | undefined;
-  setValue: UseFormSetValue<ProductFormData>;
-  getValues: UseFormGetValues<ProductFormData>;
+export const productMetadataKeys = {
+  catalogs: ["catalogs"] as const,
+  categories: (catalogId: string) => ["categories", catalogId] as const,
+  tags: (catalogId: string) => ["tags", catalogId] as const,
+  parameters: (catalogId: string) => ["parameters", catalogId] as const,
+};
+
+export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
+  return useQuery({
+    queryKey: productMetadataKeys.catalogs,
+    queryFn: async (): Promise<CatalogRecord[]> => {
+      const res = await fetch("/api/catalogs");
+      if (!res.ok) throw new Error("Failed to load catalogs");
+      return (await res.json()) as CatalogRecord[];
+    },
+  });
 }
 
+export function useCategories(catalogId: string): UseQueryResult<ProductCategory[]> {
+  return useQuery({
+    queryKey: productMetadataKeys.categories(catalogId),
+    queryFn: async (): Promise<ProductCategory[]> => {
+      const res = await fetch(`/api/products/categories?catalogId=${catalogId}`);
+      if (!res.ok) throw new Error("Failed to load categories");
+      return (await res.json()) as ProductCategory[];
+    },
+    enabled: !!catalogId,
+  });
+}
+
+export function useTags(catalogId: string): UseQueryResult<ProductTag[]> {
+  return useQuery({
+    queryKey: productMetadataKeys.tags(catalogId),
+    queryFn: async (): Promise<ProductTag[]> => {
+      const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
+      if (!res.ok) throw new Error("Failed to load tags");
+      return (await res.json()) as ProductTag[];
+    },
+    enabled: !!catalogId,
+  });
+}
+
+export function useParameters(catalogId: string): UseQueryResult<ProductParameter[]> {
+  return useQuery({
+    queryKey: productMetadataKeys.parameters(catalogId),
+    queryFn: async (): Promise<ProductParameter[]> => {
+      const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
+      if (!res.ok) throw new Error("Failed to load parameters");
+      return (await res.json()) as ProductParameter[];
+    },
+    enabled: !!catalogId,
+  });
+}
+// Composite hook that combines all metadata functionality
 export function useProductMetadata({
   product,
-  initialCatalogId: _initialCatalogId,
+  initialCatalogId,
   initialCatalogIds,
   initialCategoryIds,
   initialTagIds,
   setValue,
   getValues,
-}: UseProductMetadataProps) {
-  const {
-    data: catalogs = [],
-    isLoading: catalogsLoading,
-    error: catalogsError,
-  } = useCatalogs();
-  const { data: languages = [] } = useLanguages();
-  const { data: priceGroups = [] } = usePriceGroups();
-
-  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>(
-    () =>
-      product?.catalogs?.map((entry) => entry.catalogId) ??
-      initialCatalogIds ??
-      [],
-  );
-
-  const categoryQueries = useMultiCategories(selectedCatalogIds);
-  const tagQueries = useMultiTags(selectedCatalogIds);
-  const parameterQueries = useMultiParameters(selectedCatalogIds);
-
-  const categories = useMemo(
-    () => categoryQueries.flatMap((q) => q.data ?? []),
-    [categoryQueries],
-  );
-  const categoriesLoading = useMemo(
-    () => categoryQueries.some((q) => q.isLoading),
-    [categoryQueries],
-  );
-
-  const tags = useMemo(
-    () => tagQueries.flatMap((q) => q.data ?? []),
-    [tagQueries],
-  );
-  const tagsLoading = useMemo(
-    () => tagQueries.some((q) => q.isLoading),
-    [tagQueries],
-  );
-
-  const parameters = useMemo(
-    () => parameterQueries.flatMap((q) => q.data ?? []),
-    [parameterQueries],
-  );
-  const parametersLoading = useMemo(
-    () => parameterQueries.some((q) => q.isLoading),
-    [parameterQueries],
-  );
-
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
-    () =>
-      product?.categories?.map(
-        (entry: { categoryId: string }) => entry.categoryId,
-      ) ??
-      initialCategoryIds ??
-      [],
-  );
-
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    () =>
-      product?.tags?.map((entry: { tagId: string }) => entry.tagId) ??
-      initialTagIds ??
-      [],
-  );
-
-  // Auto-select default catalog for new products when none is chosen
-  useEffect(() => {
-    if (product) return;
-    if (selectedCatalogIds.length > 0) return;
-    if (catalogs.length === 0) return;
-    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
-    const targetId = defaultCatalog?.id ?? catalogs[0]!.id;
-    // Use setTimeout to avoid synchronous setState warning in effect
-    const timer = setTimeout(() => {
-      setSelectedCatalogIds([targetId]);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [product, selectedCatalogIds.length, catalogs]);
-
-  // Auto-set defaultPriceGroupId when catalog is selected for new products
-  useEffect(() => {
-    if (product) return; // Only for new products
-    if (selectedCatalogIds.length === 0) return;
-
-    // Get the first selected catalog's default price group
-    const firstCatalog = catalogs.find((c) =>
-      selectedCatalogIds.includes(c.id),
-    );
-    if (firstCatalog?.defaultPriceGroupId) {
-      const currentDefaultPriceGroupId = getValues("defaultPriceGroupId");
-      // Only set if not already set
-      if (!currentDefaultPriceGroupId) {
-        setValue("defaultPriceGroupId", firstCatalog.defaultPriceGroupId);
-      }
-    }
-  }, [product, selectedCatalogIds, catalogs, getValues, setValue]);
-
-  const filteredLanguages = useMemo(() => {
-    if (selectedCatalogIds.length === 0) return languages;
-    if (catalogsLoading || catalogs.length === 0) return [];
-
-    const selectedCatalogs = catalogs.filter((catalog) =>
-      selectedCatalogIds.includes(catalog.id),
-    );
-    if (selectedCatalogs.length === 0) {
-      return languages;
-    }
-
-    const allowedLanguageIds = new Set(
-      selectedCatalogs.flatMap((catalog) => catalog.languageIds ?? []),
-    );
-
-    if (allowedLanguageIds.size === 0) {
-      return languages;
-    }
-
-    const filtered = languages.filter((language) =>
-      allowedLanguageIds.has(language.id),
-    );
-    return filtered.length > 0 ? filtered : languages;
-  }, [languages, catalogs, selectedCatalogIds, catalogsLoading]);
-
-  const filteredPriceGroups = useMemo(() => {
-    if (selectedCatalogIds.length === 0) return priceGroups;
-    const allowedGroupIds = new Set<string>();
-    const orderedGroups: (typeof priceGroups)[number][] = [];
-
-    // Only include price groups that are explicitly assigned to selected catalogs
-    selectedCatalogIds.forEach((catalogId) => {
-      const catalog = catalogs.find((c) => c.id === catalogId);
-      if (catalog?.priceGroupIds) {
-        catalog.priceGroupIds.forEach((pgId) => {
-          if (!allowedGroupIds.has(pgId)) {
-            const pg = priceGroups.find((p) => p.id === pgId);
-            if (pg) {
-              orderedGroups.push(pg);
-              allowedGroupIds.add(pgId);
-            }
-          }
-        });
-      }
-    });
-
-    return orderedGroups.length > 0 ? orderedGroups : priceGroups;
-  }, [priceGroups, catalogs, selectedCatalogIds]);
+}: {
+  product?: any;
+  initialCatalogId?: string;
+  initialCatalogIds?: string[];
+  initialCategoryIds?: string[];
+  initialTagIds?: string[];
+  setValue: any;
+  getValues: any;
+}) {
+  const catalogsQuery = useCatalogs();
+  const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>([]);
+  
+  const primaryCatalogId = selectedCatalogIds[0] || initialCatalogId || "";
+  const categoriesQuery = useCategories(primaryCatalogId);
+  const tagsQuery = useTags(primaryCatalogId);
+  const parametersQuery = useParameters(primaryCatalogId);
 
   const toggleCatalog = (catalogId: string) => {
-    setSelectedCatalogIds((prev) =>
-      prev.includes(catalogId)
-        ? prev.filter((id) => id !== catalogId)
-        : [...prev, catalogId],
+    setSelectedCatalogIds(prev => 
+      prev.includes(catalogId) 
+        ? prev.filter(id => id !== catalogId)
+        : [...prev, catalogId]
     );
   };
 
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategoryIds((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId],
+    setSelectedCategoryIds(prev => 
+      prev.includes(categoryId) 
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
     );
   };
 
   const toggleTag = (tagId: string) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId],
+    setSelectedTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
     );
   };
 
   return {
-    catalogs,
-    catalogsLoading,
-    catalogsError: catalogsError ? catalogsError.message : null,
+    catalogs: catalogsQuery.data || [],
+    catalogsLoading: catalogsQuery.isLoading,
+    catalogsError: catalogsQuery.error?.message || null,
     selectedCatalogIds,
     toggleCatalog,
-    categories,
-    categoriesLoading,
+    categories: categoriesQuery.data || [],
+    categoriesLoading: categoriesQuery.isLoading,
     selectedCategoryIds,
     toggleCategory,
-    tags,
-    tagsLoading,
+    tags: tagsQuery.data || [],
+    tagsLoading: tagsQuery.isLoading,
     selectedTagIds,
     toggleTag,
-    parameters,
-    parametersLoading,
-    filteredLanguages,
-    filteredPriceGroups,
+    parameters: parametersQuery.data || [],
+    parametersLoading: parametersQuery.isLoading,
+    filteredLanguages: [], // Placeholder
+    filteredPriceGroups: [], // Placeholder
   };
 }

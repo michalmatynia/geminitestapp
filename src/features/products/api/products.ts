@@ -71,3 +71,39 @@ export async function countProducts(filters: {
   const data = (await res.json()) as { count: number };
   return data.count;
 }
+
+export async function createProduct(formData: FormData): Promise<ProductWithImages> {
+  const res = await fetch("/api/products", {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to create product");
+  }
+  return res.json();
+}
+
+export async function updateProduct(id: string, data: Partial<ProductWithImages>): Promise<ProductWithImages> {
+  const res = await fetch(`/api/products/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to update product");
+  }
+  return res.json();
+}
+
+export async function deleteProduct(id: string): Promise<{ success: boolean }> {
+  const res = await fetch(`/api/products/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to delete product");
+  }
+  return res.json();
+}

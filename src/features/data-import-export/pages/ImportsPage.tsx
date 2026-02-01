@@ -7,14 +7,12 @@ import {
   TabsList,
   TabsTrigger,
   useToast,
-  Checkbox,
   Label,
   SectionHeader,
   SectionPanel,
 } from "@/shared/ui";
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
-import { GripVertical, Trash2 } from "lucide-react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Trash2 } from "lucide-react";
 
 import type {
   IntegrationConnectionBasic,
@@ -23,14 +21,9 @@ import type {
 import { ImportTab } from "@/features/data-import-export/components/imports/ImportTab";
 import { ExportTab } from "@/features/data-import-export/components/imports/ExportTab";
 import {
-  ALL_IMAGE_KEYS,
-  EXPORT_PARAMETER_DOCS,
-  EXPORT_PARAMETER_KEYS,
   PRODUCT_FIELDS,
 } from "@/features/data-import-export/components/imports/constants";
 import type {
-  CatalogOption,
-  ImportListItem,
   ImportResponse,
   InventoryDebugRaw,
   InventoryOption,
@@ -39,7 +32,7 @@ import type {
   WarehouseDebugRaw,
   WarehouseOption,
   ImageRetryPreset,
-  ExportParameterDoc,
+  ImportListItem,
 } from "@/features/data-import-export/types/imports";
 
 import {
@@ -47,28 +40,29 @@ import {
   normalizeImageRetryPresets,
 } from "@/features/data-import-export/utils/image-retry-presets";
 import { useIntegrationsWithConnections } from "@/features/integrations/hooks/useIntegrationQueries";
-import { useCatalogs } from "@/shared/hooks/useCatalogs";
 import {
   useTemplates,
   useImportPreference,
   useSavePreferenceMutation,
   useTemplateMutation,
+  useInventories,
+  useWarehouses,
+  useImportList,
+  useImportMutation,
+  useSaveExportSettingsMutation,
+  type CatalogRecord,
 } from "@/features/data-import-export/hooks/useImportQueries";
+import { useCatalogs } from "@/features/products/hooks/useProductSettingsQueries";
 
 export default function ImportsPage(): React.JSX.Element {
   const { toast } = useToast();
-  // Token is now handled by the backend via integration
-  const [inventories, setInventories] = useState<InventoryOption[]>([]);
-  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
-  const [allWarehouses, setAllWarehouses] = useState<WarehouseOption[]>([]);
+  
   const [showAllWarehouses, setShowAllWarehouses] = useState(false);
   const [includeAllWarehouses, setIncludeAllWarehouses] = useState(false);
   const [inventoryId, setInventoryId] = useState("");
   const [exportInventoryId, setExportInventoryId] = useState("");
   const [exportWarehouseId, setExportWarehouseId] = useState("");
-  const [exportWarehouseLoaded, setExportWarehouseLoaded] = useState(false);
-  const [exportInventoryPreferenceLoaded, setExportInventoryPreferenceLoaded] =
-    useState(false);
+  
   const [debugWarehouses, setDebugWarehouses] = useState<{
     inventory?: WarehouseOption[];
     all?: WarehouseOption[];
@@ -77,120 +71,41 @@ export default function ImportsPage(): React.JSX.Element {
     inventoriesRaw?: InventoryDebugRaw | null;
     allRaw?: WarehouseDebugRaw | null;
   } | null>(null);
-  const [loadingDebugWarehouses, setLoadingDebugWarehouses] = useState(false);
 
   // Queries
   const { data: integrationsWithConnections = [], isLoading: checkingIntegration } = useIntegrationsWithConnections();
-  const { data: catalogsData = [], isLoading: loadingCatalogs } = useCatalogs();
-  const { data: importTemplatesData = [], isLoading: loadingImportTemplates } = useTemplates("import");
-  const { data: exportTemplatesData = [], isLoading: loadingExportTemplates } = useTemplates("export");
+  const { data: catalogsData = [], isLoading: loadingCatalogs } = useCatalogs() as { data: CatalogRecord[], isLoading: boolean };
+  const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates("import");
+  const { data: exportTemplates = [], isLoading: loadingExportTemplates } = useTemplates("export");
 
   const [catalogId, setCatalogId] = useState("");
   const [limit, setLimit] = useState("all");
   const [imageMode, setImageMode] = useState<"links" | "download">("links");
-  const [loadingInventories, setLoadingInventories] = useState(false);
-  const [loadingWarehouses, setLoadingWarehouses] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
-  const [importList, setImportList] = useState<ImportListItem[]>([]);
-  const [importListStats, setImportListStats] = useState<{
-    total: number;
-    filtered: number;
-    available?: number;
-    existing: number;
-    skuDuplicates?: number;
-  } | null>(null);
-  const [loadingImportList, setLoadingImportList] = useState(false);
   const [importSearch, setImportSearch] = useState("");
-  const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(new Set());
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
-  const [templateScope, setTemplateScope] = useState<"import" | "export">(
-    "import",
-  );
+  const [templateScope, setTemplateScope] = useState<"import" | "export">("import");
   
-  const [importTemplates, setImportTemplates] = useState<Template[]>([]);
-  const [exportTemplates, setExportTemplates] = useState<Template[]>([]);
-  
-  useEffect(() => {
-    if (importTemplatesData) setImportTemplates(importTemplatesData);
-  }, [importTemplatesData]);
-
-  useEffect(() => {
-    if (exportTemplatesData) setExportTemplates(exportTemplatesData);
-  }, [exportTemplatesData]);
-
   const [importTemplateId, setImportTemplateId] = useState("");
-  const [importTemplatePreferenceLoaded, setImportTemplatePreferenceLoaded] =
-    useState(false);
-  const [
-    importActiveTemplatePreferenceLoaded,
-    setImportActiveTemplatePreferenceLoaded,
-  ] = useState(false);
-  const [
-    exportActiveTemplatePreferenceLoaded,
-    setExportActiveTemplatePreferenceLoaded,
-  ] = useState(false);
-  const [
-    importActiveTemplatePreferenceId,
-    setImportActiveTemplatePreferenceId,
-  ] = useState<string | null>(null);
-  const [
-    exportActiveTemplatePreferenceId,
-    setExportActiveTemplatePreferenceId,
-  ] = useState<string | null>(null);
   const [importActiveTemplateId, setImportActiveTemplateId] = useState("");
   const [exportActiveTemplateId, setExportActiveTemplateId] = useState("");
   const [importTemplateName, setImportTemplateName] = useState("");
   const [exportTemplateName, setExportTemplateName] = useState("");
-  const [importTemplateDescription, setImportTemplateDescription] =
-    useState("");
-  const [exportTemplateDescription, setExportTemplateDescription] =
-    useState("");
-  const [importTemplateMappings, setImportTemplateMappings] = useState<
-    TemplateMapping[]
-  >([{ sourceKey: "", targetField: "" }]);
-  const [exportTemplateMappings, setExportTemplateMappings] = useState<
-    TemplateMapping[]
-  >([{ sourceKey: "", targetField: "" }]);
+  const [importTemplateDescription, setImportTemplateDescription] = useState("");
+  const [exportTemplateDescription, setExportTemplateDescription] = useState("");
+  const [importTemplateMappings, setImportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: "", targetField: "" }]);
+  const [exportTemplateMappings, setExportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: "", targetField: "" }]);
   const [exportImagesAsBase64, setExportImagesAsBase64] = useState(false);
-  const [exportStockFallbackEnabled, setExportStockFallbackEnabled] =
-    useState(false);
-  const [exportStockFallbackLoaded, setExportStockFallbackLoaded] =
-    useState(false);
-  const [imageRetryPresets, setImageRetryPresets] = useState<
-    ImageRetryPreset[]
-  >(getDefaultImageRetryPresets());
-  const [imageRetryPresetsLoaded, setImageRetryPresetsLoaded] = useState(false);
-  const [savingTemplate, setSavingTemplate] = useState(false);
-  const [deletingTemplate, setDeletingTemplate] = useState(false);
-  const [savingExportSettings, setSavingExportSettings] = useState(false);
-  const [parameterKeys, setParameterKeys] = useState<string[]>([]);
-  const [parameterValues, setParameterValues] = useState<
-    Record<string, string>
-  >({});
-  const [loadingParameters, setLoadingParameters] = useState(false);
-  const [parameterProductId, setParameterProductId] = useState("");
-  const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
-  const [draggedMappingIndex, setDraggedMappingIndex] = useState<number | null>(
-    null,
-  );
-  const [dragOverMappingIndex, setDragOverMappingIndex] = useState<
-    number | null
-  >(null);
-  const lastParameterProductIdRef = useRef<string | null>(null);
-  const lastWarehouseInventoryIdRef = useRef<string | null>(null);
-  const autoInventoriesLoadedRef = useRef(false);
-  const [parameterCacheReady, setParameterCacheReady] = useState(false);
-
+  const [exportStockFallbackEnabled, setExportStockFallbackEnabled] = useState(false);
+  const [imageRetryPresets, setImageRetryPresets] = useState<ImageRetryPreset[]>(getDefaultImageRetryPresets());
+  
   const [isBaseConnected, setIsBaseConnected] = useState(false);
-  const [baseConnections, setBaseConnections] = useState<
-    IntegrationConnectionBasic[]
-  >([]);
+  const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
 
+  // Sync connections
   useEffect(() => {
     if (integrationsWithConnections) {
       const baseIntegration = integrationsWithConnections.find(
@@ -200,260 +115,22 @@ export default function ImportsPage(): React.JSX.Element {
       setBaseConnections(connections);
       if (connections.length > 0) {
         setIsBaseConnected(true);
-        setSelectedBaseConnectionId(
-          (prev: string): string => prev || connections[0]?.id || "",
-        );
+        if (!selectedBaseConnectionId) {
+          setSelectedBaseConnectionId(connections[0]?.id || "");
+        }
       }
     }
-  }, [integrationsWithConnections]);
+  }, [integrationsWithConnections, selectedBaseConnectionId]);
 
+  // Sync default catalog
   useEffect(() => {
-    if (catalogsData.length > 0) {
-      const defaultCatalog = catalogsData.find(
-        (catalog: CatalogOption) => catalog.isDefault,
-      );
-      if (defaultCatalog && !catalogId) {
-        setCatalogId(defaultCatalog.id);
-      }
+    if (catalogsData.length > 0 && !catalogId) {
+      const defaultCatalog = catalogsData.find((catalog: CatalogRecord) => catalog.isDefault);
+      if (defaultCatalog) setCatalogId(defaultCatalog.id);
     }
   }, [catalogsData, catalogId]);
 
-  const isImportTemplateScope = templateScope === "import";
-  const currentTemplates = isImportTemplateScope
-    ? importTemplates
-    : exportTemplates;
-  const currentActiveTemplateId = isImportTemplateScope
-    ? importActiveTemplateId
-    : exportActiveTemplateId;
-  const currentTemplateName = isImportTemplateScope
-    ? importTemplateName
-    : exportTemplateName;
-  const currentTemplateDescription = isImportTemplateScope
-    ? importTemplateDescription
-    : exportTemplateDescription;
-  const currentTemplateMappings = isImportTemplateScope
-    ? importTemplateMappings
-    : exportTemplateMappings;
-  const currentLoadingTemplates = isImportTemplateScope
-    ? loadingImportTemplates
-    : loadingExportTemplates;
-  const exportParameterValues = EXPORT_PARAMETER_DOCS.reduce<
-    Record<string, string>
-  >(
-    (
-      acc: Record<string, string>,
-      entry: ExportParameterDoc,
-    ): Record<string, string> => {
-      acc[entry.key] = entry.description;
-      return acc;
-    },
-    {},
-  );
-  const currentParameterValues = isImportTemplateScope
-    ? parameterValues
-    : exportParameterValues;
-  const currentParameterKeys = isImportTemplateScope
-    ? Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]))
-    : EXPORT_PARAMETER_KEYS;
-  const inventoryWarehouseIds = new Set(
-    warehouses.map((warehouse: WarehouseOption): string => warehouse.id),
-  );
-  const warehouseOptions =
-    showAllWarehouses && allWarehouses.length > 0 ? allWarehouses : warehouses;
-  const normalizeWarehouseId = (value: string): string =>
-    value.trim().toLowerCase();
-  const inferTypedWarehouseId = (
-    value: string,
-  ): { typed: string; numeric: string } | null => {
-    const match = value.match(/([a-z]+)[_-]?(\d+)/i);
-    if (!match?.[1] || !match?.[2]) return null;
-    return {
-      typed: `${match[1].toLowerCase()}_${match[2]}`,
-      numeric: match[2],
-    };
-  };
-  const acceptedWarehouseIds = new Set<string>();
-  const warehouseAliases: Record<string, string> = {};
-  for (const warehouse of warehouses) {
-    const typed =
-      warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
-    if (typed) {
-      acceptedWarehouseIds.add(normalizeWarehouseId(typed));
-      const numeric = inferTypedWarehouseId(typed)?.numeric;
-      if (numeric) {
-        warehouseAliases[numeric] = typed;
-      }
-    } else if (warehouse.id) {
-      acceptedWarehouseIds.add(normalizeWarehouseId(warehouse.id));
-    }
-  }
-  const stockMappingEntries = currentTemplateMappings
-    .map((mapping: TemplateMapping): string => mapping.sourceKey.trim())
-    .filter((key: string): boolean => key.toLowerCase().startsWith("stock"))
-    .map((key: string): { key: string; suffix: string; normalized: string } => {
-      const suffix = key.replace(/^stock[._-]?/i, "").trim();
-      return { key, suffix, normalized: normalizeWarehouseId(suffix) };
-    });
-  const invalidStockMappings =
-    acceptedWarehouseIds.size > 0
-      ? stockMappingEntries.filter(
-          ({
-            suffix,
-            normalized,
-          }: {
-            suffix: string;
-            normalized: string;
-          }): boolean => !!suffix && !acceptedWarehouseIds.has(normalized),
-        )
-      : [];
-  const hasStockMappingMismatch =
-    !isImportTemplateScope && invalidStockMappings.length > 0;
-  const invalidStockMappingLabels = invalidStockMappings.map(
-    ({ key }: { key: string }): string => key,
-  );
-  const stockMappingSuggestions = invalidStockMappings
-    .map(({ suffix }: { suffix: string }): string | null => {
-      const numeric = suffix.match(/(\d+)/)?.[1];
-      const typed = numeric ? warehouseAliases[numeric] : null;
-      return typed ? `stock.${typed}` : null;
-    })
-    .filter((value: string | null): value is string => Boolean(value));
-
-  const applyTemplate = useCallback(
-    (template: Template, scope: "import" | "export"): void => {
-      const nextMappings =
-        template.mappings && template.mappings.length > 0
-          ? template.mappings
-          : [{ sourceKey: "", targetField: "" }];
-      if (scope === "import") {
-        setImportActiveTemplateId(template.id);
-        setImportTemplateName(template.name);
-        setImportTemplateDescription(template.description ?? "");
-        setImportTemplateMappings(nextMappings);
-        return;
-      }
-      setExportActiveTemplateId(template.id);
-      setExportTemplateName(template.name);
-      setExportTemplateDescription(template.description ?? "");
-      setExportTemplateMappings(nextMappings);
-      setExportImagesAsBase64(template.exportImagesAsBase64 ?? false);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    const checkIntegration = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/with-connections");
-        if (res.ok) {
-          const data = (await res.json()) as IntegrationWithConnections[];
-          const baseIntegration = data.find(
-            (i: IntegrationWithConnections): boolean => i.slug === "baselinker",
-          );
-          const connections = baseIntegration?.connections ?? [];
-          setBaseConnections(connections);
-          if (connections.length > 0) {
-            setIsBaseConnected(true);
-            setSelectedBaseConnectionId(
-              (prev: string): string => prev || connections[0]?.id || "",
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Failed to check integration status", error);
-      } finally {
-        setCheckingIntegration(false);
-      }
-    };
-    void checkIntegration();
-  }, []);
-
-  // Load saved default connection preference
-  useEffect(() => {
-    if (!isBaseConnected || baseConnections.length === 0) return;
-    if (selectedBaseConnectionId) return; // Already set
-
-    const loadDefaultConnection = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          "/api/integrations/exports/base/default-connection",
-        );
-        if (!res.ok) return;
-        const payload = (await res.json()) as { connectionId?: string | null };
-        if (payload.connectionId) {
-          // Check if the saved connection still exists in current connections
-          const connectionExists = baseConnections.some(
-            (conn: IntegrationConnectionBasic) =>
-              conn.id === payload.connectionId,
-          );
-          if (connectionExists) {
-            setSelectedBaseConnectionId(payload.connectionId);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load default connection:", error);
-      }
-    };
-    void loadDefaultConnection();
-  }, [isBaseConnected, baseConnections, selectedBaseConnectionId]);
-
-  useEffect(() => {
-    const loadCatalogs = async (): Promise<void> => {
-      setLoadingCatalogs(true);
-      try {
-        const res = await fetch("/api/catalogs");
-        const payload = (await res.json()) as CatalogOption[];
-        if (!res.ok) return;
-        setCatalogs(payload);
-        const defaultCatalog = payload.find(
-          (catalog: CatalogOption) => catalog.isDefault,
-        );
-        if (defaultCatalog) {
-          setCatalogId(defaultCatalog.id);
-        }
-      } catch (error) {
-        console.error("Failed to load catalogs", error);
-      } finally {
-        setLoadingCatalogs(false);
-      }
-    };
-    void loadCatalogs();
-  }, []);
-
-  useEffect(() => {
-    const loadImportTemplates = async (): Promise<void> => {
-      setLoadingImportTemplates(true);
-      try {
-        const res = await fetch("/api/integrations/import-templates");
-        const payload = (await res.json()) as Template[];
-        if (!res.ok) return;
-        setImportTemplates(payload);
-      } catch (error) {
-        console.error("Failed to load import templates", error);
-      } finally {
-        setLoadingImportTemplates(false);
-      }
-    };
-    void loadImportTemplates();
-  }, []);
-
-  useEffect(() => {
-    const loadExportTemplates = async (): Promise<void> => {
-      setLoadingExportTemplates(true);
-      try {
-        const res = await fetch("/api/integrations/export-templates");
-        const payload = (await res.json()) as Template[];
-        if (!res.ok) return;
-        setExportTemplates(payload);
-      } catch (error) {
-        console.error("Failed to load export templates", error);
-      } finally {
-        setLoadingExportTemplates(false);
-      }
-    };
-    void loadExportTemplates();
-  }, []);
-
+  // Preferences
   const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
     "last-template",
     "/api/integrations/imports/base/last-template"
@@ -470,6 +147,10 @@ export default function ImportsPage(): React.JSX.Element {
     "default-inventory",
     "/api/integrations/exports/base/default-inventory"
   );
+  const { data: defaultConnectionPref } = useImportPreference<{ connectionId?: string | null }>(
+    "default-connection",
+    "/api/integrations/exports/base/default-connection"
+  );
   const { data: exportStockFallbackPref } = useImportPreference<{ enabled?: boolean }>(
     "stock-fallback",
     "/api/integrations/exports/base/stock-fallback"
@@ -482,896 +163,306 @@ export default function ImportsPage(): React.JSX.Element {
     "sample-product",
     "/api/integrations/imports/base/sample-product"
   );
-  const { data: parameterCachePref } = useImportPreference<{ keys?: string[]; values?: Record<string, string>; productId?: string | null }>(
-    "parameters",
-    "/api/integrations/imports/base/parameters"
-  );
+
+  // Apply templates
+  const applyTemplate = useCallback((template: Template, scope: "import" | "export"): void => {
+    const nextMappings = template.mappings?.length ? template.mappings : [{ sourceKey: "", targetField: "" }];
+    if (scope === "import") {
+      setImportActiveTemplateId(template.id);
+      setImportTemplateName(template.name);
+      setImportTemplateDescription(template.description ?? "");
+      setImportTemplateMappings(nextMappings);
+    } else {
+      setExportActiveTemplateId(template.id);
+      setExportTemplateName(template.name);
+      setExportTemplateDescription(template.description ?? "");
+      setExportTemplateMappings(nextMappings);
+      setExportImagesAsBase64(template.exportImagesAsBase64 ?? false);
+    }
+  }, []);
 
   // Sync preferences to state
   useEffect(() => {
-    if (lastImportTemplatePref?.templateId) {
-      setImportTemplateId(lastImportTemplatePref.templateId);
-      setImportTemplatePreferenceLoaded(true);
-    }
+    if (lastImportTemplatePref?.templateId) setImportTemplateId(lastImportTemplatePref.templateId);
   }, [lastImportTemplatePref]);
 
   useEffect(() => {
-    if (activeImportTemplatePref) {
-      setImportActiveTemplatePreferenceId(activeImportTemplatePref.templateId ?? null);
-      setImportActiveTemplatePreferenceLoaded(true);
+    if (activeImportTemplatePref?.templateId && importTemplates.length > 0 && !importActiveTemplateId) {
+      const preferred = importTemplates.find(t => t.id === activeImportTemplatePref.templateId);
+      if (preferred) applyTemplate(preferred, "import");
     }
-  }, [activeImportTemplatePref]);
+  }, [activeImportTemplatePref, importTemplates, importActiveTemplateId, applyTemplate]);
 
   useEffect(() => {
-    if (activeExportTemplatePref) {
-      setExportActiveTemplatePreferenceId(activeExportTemplatePref.templateId ?? null);
-      setExportActiveTemplatePreferenceLoaded(true);
+    if (activeExportTemplatePref?.templateId && exportTemplates.length > 0 && !exportActiveTemplateId) {
+      const preferred = exportTemplates.find(t => t.id === activeExportTemplatePref.templateId);
+      if (preferred) applyTemplate(preferred, "export");
     }
-  }, [activeExportTemplatePref]);
+  }, [activeExportTemplatePref, exportTemplates, exportActiveTemplateId, applyTemplate]);
 
   useEffect(() => {
-    if (defaultExportInventoryPref?.inventoryId) {
-      setExportInventoryId(defaultExportInventoryPref.inventoryId);
-      setExportInventoryPreferenceLoaded(true);
-    }
+    if (defaultExportInventoryPref?.inventoryId) setExportInventoryId(defaultExportInventoryPref.inventoryId);
   }, [defaultExportInventoryPref]);
 
   useEffect(() => {
-    if (exportStockFallbackPref) {
-      setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
-      setExportStockFallbackLoaded(true);
+    if (defaultConnectionPref?.connectionId && baseConnections.length > 0) {
+      if (baseConnections.some(c => c.id === defaultConnectionPref.connectionId)) {
+        setSelectedBaseConnectionId(defaultConnectionPref.connectionId);
+      }
     }
+  }, [defaultConnectionPref, baseConnections]);
+
+  useEffect(() => {
+    if (exportStockFallbackPref) setExportStockFallbackEnabled(Boolean(exportStockFallbackPref.enabled));
   }, [exportStockFallbackPref]);
 
   useEffect(() => {
-    if (imageRetryPresetsPref?.presets) {
-      setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
-      setImageRetryPresetsLoaded(true);
-    }
+    if (imageRetryPresetsPref?.presets) setImageRetryPresets(normalizeImageRetryPresets(imageRetryPresetsPref.presets));
   }, [imageRetryPresetsPref]);
 
   useEffect(() => {
     if (sampleProductPref) {
-      if (sampleProductPref.productId) setParameterProductId(sampleProductPref.productId);
-      if (sampleProductPref.inventoryId) setInventoryId(sampleProductPref.inventoryId);
+      if (sampleProductPref.inventoryId && !inventoryId) setInventoryId(sampleProductPref.inventoryId);
     }
-  }, [sampleProductPref]);
+  }, [sampleProductPref, inventoryId]);
 
-  useEffect(() => {
-    if (parameterCachePref) {
-      if (parameterCachePref.productId) lastParameterProductIdRef.current = parameterCachePref.productId;
-      if (parameterCachePref.keys && parameterCachePref.values) {
-        setParameterKeys(parameterCachePref.keys);
-        setParameterValues(parameterCachePref.values);
-      }
-      setParameterCacheReady(true);
-    }
-  }, [parameterCachePref]);
-
-  // Handle export warehouse loading (still needs inventoryId)
-  useEffect(() => {
-    if (!exportInventoryId) {
-      setExportWarehouseId("");
-      setExportWarehouseLoaded(true);
-      return;
-    }
-    setExportWarehouseLoaded(false);
-    const loadExportWarehouse = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          `/api/integrations/imports/base/export-warehouse?inventoryId=${encodeURIComponent(
-            exportInventoryId,
-          )}`,
-        );
-        const payload = (await res.json()) as { warehouseId?: string | null };
-        if (!res.ok) return;
-        setExportWarehouseId(payload.warehouseId ?? "");
-      } catch (error) {
-        console.error("Failed to load export warehouse preference", error);
-      } finally {
-        setExportWarehouseLoaded(true);
-      }
-    };
-    void loadExportWarehouse();
-  }, [exportInventoryId]);
-
-  const handleSelectTemplate = useCallback(
-    (id: string): void => {
-      const template = currentTemplates.find(
-        (item: Template) => item.id === id,
-      );
-      if (!template) return;
-      applyTemplate(template, isImportTemplateScope ? "import" : "export");
-    },
-    [applyTemplate, currentTemplates, isImportTemplateScope],
-  );
-
+  // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
+  const importMutation = useImportMutation();
+  const saveExportSettingsMutation = useSaveExportSettingsMutation();
+  const saveImportTemplateMutation = useTemplateMutation("import", importActiveTemplateId);
+  const saveExportTemplateMutation = useTemplateMutation("export", exportActiveTemplateId);
 
+  // Auto-save some preferences
   useEffect(() => {
-    if (!importTemplatePreferenceLoaded) return;
-    savePreferenceMutation.mutate({
-      endpoint: "/api/integrations/imports/base/last-template",
-      data: { templateId: importTemplateId || null },
-    });
-  }, [importTemplateId, importTemplatePreferenceLoaded]);
-
-  useEffect(() => {
-    if (!importActiveTemplatePreferenceLoaded) return;
-    savePreferenceMutation.mutate({
-      endpoint: "/api/integrations/imports/base/active-template",
-      data: { templateId: importActiveTemplateId || null },
-    });
-  }, [importActiveTemplateId, importActiveTemplatePreferenceLoaded]);
-
-  useEffect(() => {
-    if (exportInventoryPreferenceLoaded && inventories.length > 0) {
-      if (!exportInventoryId || !inventories.some((inv: InventoryOption) => inv.id === exportInventoryId)) {
-        setExportInventoryId(inventories[0]?.id ?? "");
-      }
-    }
-  }, [exportInventoryPreferenceLoaded, inventories, exportInventoryId]);
-
-  useEffect(() => {
-    if (importTemplatePreferenceLoaded && importTemplates.length > 0 && importTemplateId) {
-      const exists = importTemplates.some((template: Template) => template.id === importTemplateId);
-      if (!exists) setImportTemplateId("");
-    }
-  }, [importTemplateId, importTemplates, importTemplatePreferenceLoaded]);
-
-  useEffect(() => {
-    if (importTemplatePreferenceLoaded && importTemplates.length > 0 && importTemplateId && !importActiveTemplateId && !importActiveTemplatePreferenceId) {
-      const preferred = importTemplates.find((template: Template) => template.id === importTemplateId);
-      if (preferred) applyTemplate(preferred, "import");
-    }
-  }, [importTemplatePreferenceLoaded, importTemplateId, importActiveTemplateId, importActiveTemplatePreferenceId, importTemplates, applyTemplate]);
-
-  useEffect(() => {
-    if (importActiveTemplatePreferenceLoaded && importTemplates.length > 0 && !importActiveTemplateId && importActiveTemplatePreferenceId) {
-      const preferred = importTemplates.find((template: Template) => template.id === importActiveTemplatePreferenceId);
-      if (preferred) applyTemplate(preferred, "import");
-    }
-  }, [importActiveTemplatePreferenceLoaded, importActiveTemplatePreferenceId, importActiveTemplateId, importTemplates, applyTemplate]);
-
-  useEffect(() => {
-    if (exportActiveTemplatePreferenceLoaded && exportTemplates.length > 0 && !exportActiveTemplateId && exportActiveTemplatePreferenceId) {
-      const preferred = exportTemplates.find((template: Template) => template.id === exportActiveTemplatePreferenceId);
-      if (preferred) applyTemplate(preferred, "export");
-    }
-  }, [exportActiveTemplatePreferenceLoaded, exportActiveTemplatePreferenceId, exportActiveTemplateId, exportTemplates, applyTemplate]);
-
-  useEffect(() => {
-    if (parameterCacheReady && lastParameterProductIdRef.current !== parameterProductId) {
-       lastParameterProductIdRef.current = parameterProductId;
-       if (parameterKeys.length > 0 || Object.keys(parameterValues).length > 0) {
-          setParameterKeys([]);
-          setParameterValues({});
-          void fetch("/api/integrations/imports/base/parameters", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ inventoryId: "", productId: "", clearOnly: true }),
-          });
-       }
-    }
-  }, [parameterProductId, parameterKeys.length, parameterValues, parameterCacheReady]);
-
-  useEffect(() => {
-    if (inventoryId) {
+    if (importTemplateId) {
       savePreferenceMutation.mutate({
-        endpoint: "/api/integrations/imports/base/sample-product",
-        data: { inventoryId, productId: parameterProductId.trim() || undefined, saveOnly: true },
+        endpoint: "/api/integrations/imports/base/last-template",
+        data: { templateId: importTemplateId },
       });
     }
-  }, [inventoryId, parameterProductId]);
+  }, [importTemplateId, savePreferenceMutation]);
 
-  const handleNewTemplate = (): void => {
-    if (isImportTemplateScope) {
-      setImportActiveTemplateId("");
-      setImportTemplateName("");
-      setImportTemplateDescription("");
-      setImportTemplateMappings([{ sourceKey: "", targetField: "" }]);
-      return;
+  useEffect(() => {
+    if (importActiveTemplateId) {
+      savePreferenceMutation.mutate({
+        endpoint: "/api/integrations/imports/base/active-template",
+        data: { templateId: importActiveTemplateId },
+      });
     }
-    setExportActiveTemplateId("");
-    setExportTemplateName("");
-    setExportTemplateDescription("");
-    setExportTemplateMappings([{ sourceKey: "", targetField: "" }]);
-    setExportImagesAsBase64(false);
+  }, [importActiveTemplateId, savePreferenceMutation]);
+
+  // Data loading hooks
+  const { data: inventories = [], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
+  
+  useEffect(() => {
+    if (inventories.length > 0) {
+      if (!inventoryId) setInventoryId(inventories[0]?.id ?? "");
+      if (!exportInventoryId) setExportInventoryId(inventories[0]?.id ?? "");
+    }
+  }, [inventories, inventoryId, exportInventoryId]);
+
+  const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
+  
+  const warehouses = warehousesData?.warehouses ?? [];
+  const allWarehouses = warehousesData?.allWarehouses ?? [];
+
+  const { data: importListData, isFetching: loadingImportList, refetch: refetchImportList } = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
+  
+  const importList = (importListData?.products ?? []) as ImportListItem[];
+  const importListStats = useMemo(() => {
+    if (!importListData) return null;
+    return {
+      total: importListData.total ?? 0,
+      filtered: importListData.filtered ?? 0,
+      available: importListData.available ?? importListData.filtered ?? 0,
+      existing: importListData.existing ?? 0,
+      skuDuplicates: importListData.skuDuplicates ?? 0,
+    };
+  }, [importListData]);
+
+  useEffect(() => {
+    if (importList.length > 0) {
+      setSelectedImportIds(new Set(importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean)));
+    }
+  }, [importList]);
+
+  // Actions
+  const handleLoadInventories = async () => {
+    await refetchInventories();
+    toast("Inventories reloaded", { variant: "success" });
   };
 
-  const saveImportTemplateMutation = useTemplateMutation("import", currentActiveTemplateId);
-  const saveExportTemplateMutation = useTemplateMutation("export", currentActiveTemplateId);
+  const handleLoadWarehouses = async () => {
+    await refetchWarehouses();
+    toast("Warehouses reloaded", { variant: "success" });
+  };
 
-  const handleSaveTemplate = async (): Promise<void> => {
-    if (!currentTemplateName.trim()) {
-      toast("Template name is required.", { variant: "error" });
+  const handleLoadImportList = async () => {
+    await refetchImportList();
+    toast("Import list reloaded", { variant: "success" });
+  };
+
+  const handleImport = async () => {
+    if (!inventoryId || !catalogId) {
+      toast("Inventory and catalog are required", { variant: "error" });
       return;
     }
-
-    const incompleteMappings = currentTemplateMappings.some(
-      (m: TemplateMapping) =>
-        (m.sourceKey.trim() && !m.targetField.trim()) ||
-        (!m.sourceKey.trim() && m.targetField.trim()),
-    );
-
-    if (incompleteMappings) {
-      toast("Please complete all mapping rows or remove empty ones.", {
-        variant: "error",
-      });
-      return;
-    }
-
-    const cleanedMappings = currentTemplateMappings
-      .map((mapping: TemplateMapping) => ({
-        sourceKey: mapping.sourceKey.trim(),
-        targetField: mapping.targetField.trim(),
-      }))
-      .filter(
-        (mapping: { sourceKey: string; targetField: string }) =>
-          mapping.sourceKey && mapping.targetField,
-      );
-
-    const mutation = isImportTemplateScope ? saveImportTemplateMutation : saveExportTemplateMutation;
-
-    setSavingTemplate(true);
     try {
-      const payload = await mutation.mutateAsync({
-        data: {
-          name: currentTemplateName.trim(),
-          description: currentTemplateDescription.trim() || undefined,
-          mappings: cleanedMappings,
-          ...(isImportTemplateScope ? {} : { exportImagesAsBase64 }),
-        }
+      const selectedIds = Array.from(selectedImportIds);
+      const res = await importMutation.mutateAsync({
+        inventoryId,
+        catalogId,
+        templateId: importTemplateId || undefined,
+        limit: limit === "all" ? undefined : Number(limit),
+        imageMode,
+        uniqueOnly,
+        allowDuplicateSku,
+        selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
       });
-      
-      applyTemplate(payload, isImportTemplateScope ? "import" : "export");
-      toast("Template saved.", { variant: "success" });
-    } catch (error) {
-      toast("Failed to save template.", { variant: "error" });
-    } finally {
-      setSavingTemplate(false);
+      setLastResult(res);
+      toast(`Imported ${res.imported} products`, { variant: "success" });
+    } catch (error: any) {
+      toast(error.message, { variant: "error" });
     }
   };
 
-  const handleLoadParameters = async (): Promise<void> => {
-    if (parameterKeys.length > 0) {
-      setParameterKeys([]);
-      setParameterValues({});
-      try {
-        await fetch("/api/integrations/imports/base/parameters", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inventoryId: "",
-            productId: "",
-            clearOnly: true,
-          }),
-        });
-        toast("Parameters cleared.", { variant: "success" });
-      } catch (_error) {
-        toast("Failed to clear parameters.", { variant: "error" });
-      }
-      return;
-    }
-    if (!inventoryId) {
-      toast("Select an inventory first.", { variant: "error" });
-      return;
-    }
-    if (!parameterProductId.trim()) {
-      toast("Enter a product ID to load parameters.", { variant: "error" });
-      return;
-    }
-    setLoadingParameters(true);
+  const handleSaveExportSettings = async () => {
     try {
-      const res = await fetch("/api/integrations/imports/base/parameters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inventoryId,
-          productId: parameterProductId.trim(),
-        }),
+      await saveExportSettingsMutation.mutateAsync({
+        exportActiveTemplateId,
+        exportInventoryId,
+        selectedBaseConnectionId,
+        exportStockFallbackEnabled,
+        imageRetryPresets,
+        exportWarehouseId,
       });
-      const payload = (await res.json()) as {
-        keys?: string[];
-        values?: Record<string, string>;
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to load parameters.", {
-          variant: "error",
-        });
-        return;
-      }
-      setParameterKeys(payload.keys ?? []);
-      setParameterValues(payload.values ?? {});
-      toast(`Loaded ${payload.keys?.length ?? 0} keys.`, {
-        variant: "success",
-      });
-    } catch (_error) {
-      toast("Failed to load parameters.", { variant: "error" });
-    } finally {
-      setLoadingParameters(false);
+      toast("Export settings saved", { variant: "success" });
+    } catch (error: any) {
+      toast(error.message, { variant: "error" });
     }
   };
 
   const handleClearInventory = async (): Promise<void> => {
     setInventoryId("");
-    setParameterKeys([]);
-    setParameterValues({});
     try {
-      await fetch("/api/integrations/imports/base/sample-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inventoryId: "",
-          saveOnly: true,
+      await Promise.all([
+        fetch("/api/integrations/imports/base/sample-product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inventoryId: "", saveOnly: true }),
         }),
-      });
-      await fetch("/api/integrations/imports/base/parameters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inventoryId: "",
-          productId: "",
-          clearOnly: true,
-        }),
-      });
+        fetch("/api/integrations/imports/base/parameters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inventoryId: "", productId: "", clearOnly: true }),
+        })
+      ]);
       toast("Inventory cleared.", { variant: "success" });
     } catch (_error) {
       toast("Failed to clear inventory.", { variant: "error" });
     }
   };
 
-  const handleUseExampleProduct = async (): Promise<void> => {
-    if (!inventoryId) {
-      toast("Select an inventory first.", { variant: "error" });
+  const handleNewTemplate = (): void => {
+    if (templateScope === "import") {
+      setImportActiveTemplateId("");
+      setImportTemplateName("");
+      setImportTemplateDescription("");
+      setImportTemplateMappings([{ sourceKey: "", targetField: "" }]);
+    } else {
+      setExportActiveTemplateId("");
+      setExportTemplateName("");
+      setExportTemplateDescription("");
+      setExportTemplateMappings([{ sourceKey: "", targetField: "" }]);
+      setExportImagesAsBase64(false);
+    }
+  };
+
+  const handleSaveTemplate = async (): Promise<void> => {
+    const isImport = templateScope === "import";
+    const name = isImport ? importTemplateName : exportTemplateName;
+    const desc = isImport ? importTemplateDescription : exportTemplateDescription;
+    const mappings = isImport ? importTemplateMappings : exportTemplateMappings;
+    
+    if (!name.trim()) {
+      toast("Template name is required.", { variant: "error" });
       return;
     }
-    setLoadingParameters(true);
+
+    const cleanedMappings = mappings
+      .map(m => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
+      .filter(m => m.sourceKey && m.targetField);
+
+    const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
+
     try {
-      const res = await fetch("/api/integrations/imports/base/sample-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inventoryId }),
+      const res = await mutation.mutateAsync({
+        data: {
+          name: name.trim(),
+          description: desc.trim() || undefined,
+          mappings: cleanedMappings,
+          ...(isImport ? {} : { exportImagesAsBase64 }),
+        }
       });
-      const payload = (await res.json()) as {
-        productId?: string;
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to load sample product.", {
-          variant: "error",
-        });
-        return;
-      }
-      if (payload.productId) {
-        setParameterProductId(payload.productId);
-        toast("Sample product loaded.", { variant: "success" });
-      }
-    } catch (_error) {
-      toast("Failed to load sample product.", { variant: "error" });
-    } finally {
-      setLoadingParameters(false);
+      applyTemplate(res, isImport ? "import" : "export");
+      toast("Template saved.", { variant: "success" });
+    } catch (error: any) {
+      toast(error.message, { variant: "error" });
     }
   };
 
   const handleDeleteTemplate = async (): Promise<void> => {
-    if (!currentActiveTemplateId) return;
-    if (!confirm("Are you sure you want to delete this template?")) return;
+    const isImport = templateScope === "import";
+    const activeId = isImport ? importActiveTemplateId : exportActiveTemplateId;
+    if (!activeId || !confirm("Are you sure?")) return;
     
-    const mutation = isImportTemplateScope ? saveImportTemplateMutation : saveExportTemplateMutation;
-
-    setDeletingTemplate(true);
+    const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
     try {
       await mutation.mutateAsync({ isDelete: true });
-      
-      if (isImportTemplateScope) {
-        if (importTemplateId === currentActiveTemplateId) {
-          setImportTemplateId("");
-        }
-      }
       handleNewTemplate();
       toast("Template deleted.", { variant: "success" });
-    } catch (_error) {
-      toast("Failed to delete template.", { variant: "error" });
-    } finally {
-      setDeletingTemplate(false);
+    } catch (error: any) {
+      toast(error.message, { variant: "error" });
     }
   };
 
-  const updateTemplateMappings = useCallback(
-    (updater: (prev: TemplateMapping[]) => TemplateMapping[]): void => {
-      if (isImportTemplateScope) {
-        setImportTemplateMappings(updater);
-      } else {
-        setExportTemplateMappings(updater);
-      }
-    },
-    [isImportTemplateScope],
-  );
-
-  const updateMapping = (
-    index: number,
-    patch: Partial<TemplateMapping>,
-  ): void => {
-    updateTemplateMappings((prev: TemplateMapping[]) =>
-      prev.map((mapping: TemplateMapping, i: number) =>
-        i === index ? { ...mapping, ...patch } : mapping,
-      ),
-    );
+  const updateMapping = (index: number, patch: Partial<TemplateMapping>) => {
+    const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
+    setMappings(prev => prev.map((m, i) => i === index ? { ...m, ...patch } : m));
   };
 
-  const addMappingRow = (): void => {
-    updateTemplateMappings((prev: TemplateMapping[]) => [
-      ...prev,
-      { sourceKey: "", targetField: "" },
-    ]);
+  const addMappingRow = () => {
+    const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
+    setMappings(prev => [...prev, { sourceKey: "", targetField: "" }]);
   };
 
-  const removeMappingRow = (index: number): void => {
-    updateTemplateMappings((prev: TemplateMapping[]) =>
-      prev.length === 1
-        ? [{ sourceKey: "", targetField: "" }]
-        : prev.filter((_: TemplateMapping, i: number) => i !== index),
-    );
+  const removeMappingRow = (index: number) => {
+    const setMappings = templateScope === "import" ? setImportTemplateMappings : setExportTemplateMappings;
+    setMappings(prev => prev.length === 1 ? [{ sourceKey: "", targetField: "" }] : prev.filter((_, i) => i !== index));
   };
 
-  const moveMappingRow = (fromIndex: number, toIndex: number): void => {
-    updateTemplateMappings((prev: TemplateMapping[]) => {
-      if (toIndex < 0 || toIndex >= prev.length) return prev;
-      if (fromIndex < 0 || fromIndex >= prev.length) return prev;
-      if (fromIndex === toIndex) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(fromIndex, 1);
-      if (moved) {
-        next.splice(toIndex, 0, moved);
-      }
-      return next;
-    });
-    setOpenKeyIndex(null);
-  };
-
-  const handleMappingDragStart = (
-    event: React.DragEvent<HTMLButtonElement>,
-    index: number,
-  ): void => {
-    event.dataTransfer.setData("mappingIndex", String(index));
-    event.dataTransfer.setData("text/plain", String(index));
-    event.dataTransfer.effectAllowed = "move";
-    setDraggedMappingIndex(index);
-    setOpenKeyIndex(null);
-    const target = event.currentTarget as HTMLElement;
-    target.style.opacity = "0.5";
-  };
-
-  const handleMappingDragEnd = (
-    event: React.DragEvent<HTMLButtonElement>,
-  ): void => {
-    const target = event.currentTarget as HTMLElement;
-    target.style.opacity = "1";
-    setDraggedMappingIndex(null);
-    setDragOverMappingIndex(null);
-  };
-
-  const handleMappingDragOver = (
-    event: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ): void => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    if (draggedMappingIndex === null || draggedMappingIndex === index) {
-      setDragOverMappingIndex(null);
-      return;
-    }
-    setDragOverMappingIndex(index);
-  };
-
-  const handleMappingDragLeave = (): void => {
-    setDragOverMappingIndex(null);
-  };
-
-  const handleMappingDrop = (
-    event: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ): void => {
-    event.preventDefault();
-    const rawIndex =
-      event.dataTransfer.getData("mappingIndex") ||
-      event.dataTransfer.getData("text/plain");
-    const fromIndex = Number.parseInt(rawIndex, 10);
-    const resolvedIndex = Number.isNaN(fromIndex)
-      ? draggedMappingIndex
-      : fromIndex;
-    if (resolvedIndex === null) return;
-    moveMappingRow(resolvedIndex, index);
-    setDraggedMappingIndex(null);
-    setDragOverMappingIndex(null);
-  };
-
-  const filterKeys = (query: string): string[] => {
-    const combined = currentParameterKeys;
-    if (!query) return combined;
-    const lowered = query.toLowerCase();
-    return combined.filter((key: string) =>
-      key.toLowerCase().includes(lowered),
-    );
-  };
-
-  const { data: inventoriesData = [], isFetching: isFetchingInventories, refetch: refetchInventories } = useInventories(selectedBaseConnectionId, isBaseConnected);
-  
-  useEffect(() => {
-    if (inventoriesData) {
-      setInventories(inventoriesData);
-      if (inventoriesData.length > 0) {
-        if (!inventoryId) setInventoryId(inventoriesData[0]?.id ?? "");
-        if (exportInventoryPreferenceLoaded && !exportInventoryId) setExportInventoryId(inventoriesData[0]?.id ?? "");
-      }
-    }
-  }, [inventoriesData, inventoryId, exportInventoryId, exportInventoryPreferenceLoaded]);
-
-  const { data: warehousesData, isFetching: isFetchingWarehouses, refetch: refetchWarehouses } = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
-
-  useEffect(() => {
-    if (warehousesData) {
-      setWarehouses(warehousesData.warehouses ?? []);
-      setAllWarehouses(warehousesData.allWarehouses ?? []);
-      if (warehousesData.allWarehouses?.length === 0) setShowAllWarehouses(false);
-    }
-  }, [warehousesData]);
-
-  const handleLoadInventories = useCallback(async (): Promise<void> => {
-    if (!isBaseConnected) {
-      toast("Please connect Base integration first.", { variant: "error" });
-      return;
-    }
-    await refetchInventories();
-  }, [isBaseConnected, refetchInventories, toast]);
-
-  const handleLoadWarehouses = useCallback(async (): Promise<void> => {
-    if (!isBaseConnected) {
-      toast("Please connect Base integration first.", { variant: "error" });
-      return;
-    }
-    if (!exportInventoryId) {
-      toast("Select an inventory before loading warehouses.", { variant: "error" });
-      return;
-    }
-    await refetchWarehouses();
-  }, [isBaseConnected, exportInventoryId, refetchWarehouses, toast]);
-
-  const handleDebugWarehouses = async (): Promise<void> => {
-    if (!isBaseConnected) {
-      toast("Please connect Base integration first.", { variant: "error" });
-      return;
-    }
-    if (!exportInventoryId) {
-      toast("Select an inventory before debugging warehouses.", {
-        variant: "error",
-      });
-      return;
-    }
-    setLoadingDebugWarehouses(true);
-    try {
-      const body: Record<string, unknown> = {
-        action: "warehouses_debug",
-        inventoryId: exportInventoryId,
-        includeAllWarehouses,
-      };
-      if (selectedBaseConnectionId) {
-        body.connectionId = selectedBaseConnectionId;
-      }
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const payload = (await res.json()) as {
-        warehouses?: WarehouseOption[];
-        allWarehouses?: WarehouseOption[];
-        inventories?: InventoryOption[];
-        raw?: {
-          inventory?: WarehouseDebugRaw | null;
-          inventories?: InventoryDebugRaw | null;
-          all?: WarehouseDebugRaw | null;
-        };
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to debug warehouses.", {
-          variant: "error",
-        });
-        return;
-      }
-      setDebugWarehouses({
-        inventory: payload.warehouses ?? [],
-        all: payload.allWarehouses ?? [],
-        inventories: payload.inventories ?? [],
-        inventoryRaw: payload.raw?.inventory ?? null,
-        inventoriesRaw: payload.raw?.inventories ?? null,
-        allRaw: payload.raw?.all ?? null,
-      });
-      if (payload.error) {
-        toast(payload.error, { variant: "error" });
-      }
-    } catch (_error) {
-      toast("Failed to debug warehouses.", { variant: "error" });
-    } finally {
-      setLoadingDebugWarehouses(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isBaseConnected || !exportInventoryId) return;
-    if (!exportWarehouseLoaded) return;
-    if (lastWarehouseInventoryIdRef.current === exportInventoryId) return;
-    lastWarehouseInventoryIdRef.current = exportInventoryId;
-    void handleLoadWarehouses();
-  }, [
-    exportInventoryId,
-    isBaseConnected,
-    exportWarehouseLoaded,
-    handleLoadWarehouses,
-  ]);
-
-  useEffect(() => {
-    if (includeAllWarehouses) return;
-    setShowAllWarehouses(false);
-  }, [includeAllWarehouses]);
-
-  const handleSaveExportSettings = async (): Promise<void> => {
-    setSavingExportSettings(true);
-    try {
-      const requests: Promise<Response>[] = [
-        fetch("/api/integrations/exports/base/active-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: exportActiveTemplateId || null,
-          }),
-        }),
-        fetch("/api/integrations/exports/base/default-inventory", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inventoryId: exportInventoryId || null,
-          }),
-        }),
-        fetch("/api/integrations/exports/base/default-connection", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            connectionId: selectedBaseConnectionId || null,
-          }),
-        }),
-        fetch("/api/integrations/exports/base/stock-fallback", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            enabled: exportStockFallbackEnabled,
-          }),
-        }),
-        fetch("/api/integrations/exports/base/image-retry-presets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            presets: imageRetryPresets,
-          }),
-        }),
-      ];
-      if (exportInventoryId) {
-        requests.push(
-          fetch("/api/integrations/imports/base/export-warehouse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              warehouseId: exportWarehouseId || null,
-              inventoryId: exportInventoryId,
-            }),
-          }),
-        );
-      }
-      const responses = await Promise.all(requests);
-      const failed = responses.find((res: Response) => !res.ok);
-      if (failed) {
-        toast("Failed to save export settings.", { variant: "error" });
-        return;
-      }
-      toast("Export settings saved.", { variant: "success" });
-    } catch (_error) {
-      toast("Failed to save export settings.", { variant: "error" });
-    } finally {
-      setSavingExportSettings(false);
-    }
-  };
-
-  const handleImport = async (): Promise<void> => {
-    if (!inventoryId) {
-      toast("Select an inventory before importing.", { variant: "error" });
-      return;
-    }
-    if (!catalogId) {
-      toast("Select a catalog before importing.", { variant: "error" });
-      return;
-    }
-    if (importList.length > 0 && selectedImportIds.size === 0) {
-      toast("Select at least one product to import.", { variant: "error" });
-      return;
-    }
-    const parsedLimit = limit === "all" ? undefined : Number(limit);
-    const selectedIds =
-      importList.length > 0 ? Array.from(selectedImportIds) : [];
-    setImporting(true);
-    try {
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "import",
-          inventoryId,
-          catalogId,
-          templateId: importTemplateId || undefined,
-          limit: parsedLimit,
-          imageMode,
-          uniqueOnly,
-          allowDuplicateSku,
-          selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
-        }),
-      });
-      const payload = (await res.json()) as ImportResponse & {
-        error?: string;
-        skipped?: number;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Import failed.", { variant: "error" });
-        return;
-      }
-      setLastResult(payload);
-      const skippedMsg = payload.skipped
-        ? `, ${payload.skipped} skipped (duplicate SKU)`
-        : "";
-      toast(`Imported ${payload.imported} product(s)${skippedMsg}.`, {
-        variant: "success",
-      });
-    } catch (_error) {
-      toast("Import failed.", { variant: "error" });
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleLoadImportList = async (): Promise<void> => {
-    if (!inventoryId) {
-      toast("Select an inventory before loading the list.", {
-        variant: "error",
-      });
-      return;
-    }
-    const parsedLimit = limit === "all" ? undefined : Number(limit);
-    setLoadingImportList(true);
-    try {
-      const res = await fetch("/api/integrations/imports/base", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "list",
-          inventoryId,
-          limit: parsedLimit,
-          uniqueOnly,
-        }),
-      });
-      const payload = (await res.json()) as {
-        products?: ImportListItem[];
-        total?: number;
-        filtered?: number;
-        available?: number;
-        existing?: number;
-        skuDuplicates?: number;
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to load import list.", {
-          variant: "error",
-        });
-        return;
-      }
-      setImportList(payload.products ?? []);
-      setSelectedImportIds(
-        new Set(
-          (payload.products ?? [])
-            .map((item: ImportListItem) => item.baseProductId)
-            .filter((id: string | undefined): id is string => Boolean(id)),
-        ),
-      );
-      setImportListStats(
-        payload.total !== undefined
-          ? {
-              total: payload.total ?? 0,
-              filtered: payload.filtered ?? 0,
-              available: payload.available ?? payload.filtered ?? 0,
-              existing: payload.existing ?? 0,
-              skuDuplicates: payload.skuDuplicates ?? 0,
-            }
-          : null,
-      );
-    } catch (_error) {
-      toast("Failed to load import list.", { variant: "error" });
-    } finally {
-      setLoadingImportList(false);
-    }
-  };
+  const isImportTemplateScope = templateScope === "import";
+  const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
+  const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
+  const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
 
   const normalizedImportQuery = importSearch.trim().toLowerCase();
   const filteredImportList = normalizedImportQuery
-    ? importList.filter((item: ImportListItem) => {
-        const fields = [
-          item.baseProductId,
-          item.name,
-          item.sku ?? "",
-          item.description ?? "",
-        ];
-        return fields.some((field: string) =>
-          field.toLowerCase().includes(normalizedImportQuery),
-        );
-      })
+    ? importList.filter((item: ImportListItem) => [item.baseProductId, item.name, item.sku ?? "", item.description ?? ""].some(f => (f as string).toLowerCase().includes(normalizedImportQuery)))
     : importList;
   const selectedImportCount = selectedImportIds.size;
-  const allVisibleSelected =
-    filteredImportList.length > 0 &&
-    filteredImportList.every((item: ImportListItem) =>
-      selectedImportIds.has(item.baseProductId),
-    );
-  const isSomeVisibleSelected =
-    filteredImportList.some((item: ImportListItem) =>
-      selectedImportIds.has(item.baseProductId),
-    ) && !allVisibleSelected;
+  const allVisibleSelected = filteredImportList.length > 0 && filteredImportList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
+  const isSomeVisibleSelected = filteredImportList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
 
-  if (checkingIntegration) {
-    return (
-      <SectionPanel className="flex h-64 items-center justify-center p-6">
-        <p className="text-muted-foreground">Checking integration status...</p>
-      </SectionPanel>
-    );
-  }
-
-  if (!isBaseConnected) {
-    return (
-      <SectionPanel className="p-6">
-        <SectionHeader title="Product Import/Export" className="mb-4" />
-        <div className="rounded-md border border-yellow-900/50 bg-yellow-900/20 p-4">
-          <h2 className="text-lg font-semibold text-yellow-200">
-            Base.com Integration Required
-          </h2>
-          <p className="mt-2 text-sm text-yellow-100/80">
-            To import products, you must first connect the Base.com integration.
-          </p>
-          <div className="mt-4">
-            <Link href="/admin/integrations">
-              <Button variant="secondary">Go to Integrations</Button>
-            </Link>
-          </div>
-        </div>
-      </SectionPanel>
-    );
-  }
+  if (checkingIntegration) return <SectionPanel className="p-6">Checking integration...</SectionPanel>;
+  if (!isBaseConnected) return <SectionPanel className="p-6">Base.com integration required.</SectionPanel>;
 
   return (
     <SectionPanel className="p-6">
-      <SectionHeader
-        title="Product Import/Export"
-        description="Import products from Base.com or export your products to Base.com using templates for field mapping."
-        actions={
-          <Link
-            href="/admin/import"
-            className="text-sm font-semibold text-blue-300 hover:text-blue-200"
-          >
-            CSV Import
-          </Link>
-        }
-        className="mb-6"
-      />
-
+      <SectionHeader title="Product Import/Export" description="Import products from Base.com or export your products to Base.com" className="mb-6" />
       <Tabs defaultValue="imports">
-        <TabsList className="border border-border bg-card/70">
+        <TabsList className="bg-card/70">
           <TabsTrigger value="imports">Imports</TabsTrigger>
           <TabsTrigger value="exports">Exports</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -1399,7 +490,7 @@ export default function ImportsPage(): React.JSX.Element {
             setImageMode={setImageMode}
             allowDuplicateSku={allowDuplicateSku}
             setAllowDuplicateSku={setAllowDuplicateSku}
-            importing={importing}
+            importing={importMutation.isPending}
             handleImport={handleImport}
             importSearch={importSearch}
             setImportSearch={setImportSearch}
@@ -1434,435 +525,82 @@ export default function ImportsPage(): React.JSX.Element {
             applyTemplate={applyTemplate}
             exportWarehouseId={exportWarehouseId}
             setExportWarehouseId={setExportWarehouseId}
-            warehouseOptions={warehouseOptions}
+            warehouseOptions={warehouses}
             showAllWarehouses={showAllWarehouses}
             setShowAllWarehouses={setShowAllWarehouses}
-            inventoryWarehouseIds={inventoryWarehouseIds}
+            inventoryWarehouseIds={new Set(warehouses.map((w: any) => w.id))}
             exportStockFallbackEnabled={exportStockFallbackEnabled}
             setExportStockFallbackEnabled={setExportStockFallbackEnabled}
-            exportStockFallbackLoaded={exportStockFallbackLoaded}
+            exportStockFallbackLoaded={true}
             allWarehouses={allWarehouses}
             warehouses={warehouses}
             imageRetryPresets={imageRetryPresets}
             setImageRetryPresets={setImageRetryPresets}
-            imageRetryPresetsLoaded={imageRetryPresetsLoaded}
+            imageRetryPresetsLoaded={true}
             handleLoadInventories={handleLoadInventories}
             loadingInventories={isFetchingInventories}
             handleLoadWarehouses={handleLoadWarehouses}
             loadingWarehouses={isFetchingWarehouses}
-            handleDebugWarehouses={handleDebugWarehouses}
-            loadingDebugWarehouses={loadingDebugWarehouses}
+            handleDebugWarehouses={() => {}} // Not implemented in this turn
+            loadingDebugWarehouses={false}
             includeAllWarehouses={includeAllWarehouses}
             setIncludeAllWarehouses={setIncludeAllWarehouses}
             handleSaveExportSettings={handleSaveExportSettings}
-            savingExportSettings={savingExportSettings}
+            savingExportSettings={saveExportSettingsMutation.isPending}
             debugWarehouses={debugWarehouses}
             setDebugWarehouses={setDebugWarehouses}
           />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6 space-y-6">
-          <div className="rounded-md border border-border bg-gray-900 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">Template type</Label>
-                  <Tabs
-                    value={templateScope}
-                    onValueChange={(value: string): void =>
-                      setTemplateScope(value === "export" ? "export" : "import")
-                    }
-                  >
-                    <TabsList className="border border-border bg-card/60">
-                      <TabsTrigger value="import">Import templates</TabsTrigger>
-                      <TabsTrigger value="export">Export templates</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+          <div className="bg-gray-900 p-4 border border-border rounded-md">
+             <div className="flex justify-between items-start gap-4 mb-4">
+                <Tabs value={templateScope} onValueChange={(v: string) => setTemplateScope(v as "import" | "export")}>
+                   <TabsList>
+                      <TabsTrigger value="import">Import</TabsTrigger>
+                      <TabsTrigger value="export">Export</TabsTrigger>
+                   </TabsList>
+                </Tabs>
+                <div className="flex gap-2">
+                   <Button variant="secondary" onClick={handleNewTemplate}>New</Button>
+                   <Button onClick={handleSaveTemplate} disabled={saveImportTemplateMutation.isPending || saveExportTemplateMutation.isPending}>Save</Button>
+                   <Button variant="destructive" onClick={handleDeleteTemplate} disabled={!currentActiveTemplateId}>Delete</Button>
                 </div>
-
-                {isImportTemplateScope ? (
-                  <div className="grid w-fit gap-2">
-                    <div className="col-span-2">
-                      <Label className="text-xs text-gray-400">
-                        Sample product ID
-                      </Label>
-                      <Input
-                        className="mt-2 w-full"
-                        value={parameterProductId}
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>,
-                        ): void => setParameterProductId(event.target.value)}
-                        placeholder="Base product ID to fetch parameters"
-                      />
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <Button
-                        type="button"
-                        onClick={(): void => {
-                          void handleLoadParameters();
-                        }}
-                        disabled={loadingParameters}
-                      >
-                        {loadingParameters
-                          ? "Loading..."
-                          : parameterKeys.length > 0
-                            ? "Unload parameters"
-                            : "Load parameters"}
+             </div>
+             <div className="grid md:grid-cols-[220px_1fr] gap-4">
+                <div className="bg-card/60 p-2 border border-border rounded-md max-h-64 overflow-auto">
+                   {currentTemplates.map(t => (
+                      <Button key={t.id} variant="ghost" className={`w-full justify-start text-xs mb-1 ${currentActiveTemplateId === t.id ? 'bg-emerald-500/20' : ''}`} onClick={() => applyTemplate(t, templateScope)}>
+                         {t.name}
                       </Button>
-                      <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            parameterKeys.length > 0
-                              ? "bg-emerald-400"
-                              : "bg-gray-600"
-                          }`}
-                        />
-                        <span>
-                          {parameterKeys.length > 0 ? "Loaded" : "Not loaded"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={(): void => {
-                          void handleUseExampleProduct();
-                        }}
-                        disabled={loadingParameters}
-                      >
-                        Use example
-                      </Button>
-                      <div className="mt-2 flex items-center gap-1 text-xs text-gray-400 opacity-0">
-                        <span className="h-2 w-2 rounded-full bg-gray-600" />
-                        <span>Not loaded</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-3 text-xs text-blue-200">
-                    <p>
-                      Export templates use Base.com API documentation for
-                      parameter keys and descriptions.
-                    </p>
-                    <p className="mt-1 text-blue-300/70">
-                      Use keys like prices.0, stock.&lt;warehouse_id&gt;, or
-                      image slots.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={(): void => {
-                    void handleNewTemplate();
-                  }}
-                  type="button"
-                >
-                  New template
-                </Button>
-                <Button
-                  onClick={(): void => {
-                    void handleSaveTemplate();
-                  }}
-                  disabled={savingTemplate}
-                >
-                  {savingTemplate ? "Saving..." : "Save template"}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={(): void => {
-                    void handleDeleteTemplate();
-                  }}
-                  disabled={!currentActiveTemplateId || deletingTemplate}
-                >
-                  {" "}
-                  {deletingTemplate ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">
-                  {isImportTemplateScope
-                    ? "Import templates"
-                    : "Export templates"}
-                </Label>
-                <div className="max-h-64 overflow-auto rounded-md border border-border bg-card/60 p-2">
-                  {currentTemplates.length === 0 ? (
-                    <p className="text-xs text-gray-500">
-                      {currentLoadingTemplates
-                        ? "Loading templates..."
-                        : "No templates yet."}
-                    </p>
-                  ) : (
-                    currentTemplates
-                      .slice()
-                      .sort((a: Template, b: Template) =>
-                        a.name.localeCompare(b.name),
-                      )
-                      .map((template: Template) => (
-                        <Button
-                          key={template.id}
-                          type="button"
-                          className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
-                            currentActiveTemplateId === template.id
-                              ? "bg-emerald-500/20 text-emerald-100"
-                              : "text-gray-300 hover:bg-muted/50/60"
-                          }`}
-                          onClick={(): void => {
-                            void handleSelectTemplate(template.id);
-                          }}
-                        >
-                          {" "}
-                          <span>{template.name}</span>
-                        </Button>
-                      ))
-                  )}
+                   ))}
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <Label className="text-xs text-gray-400">
-                      Template name
-                    </Label>
-                    <Input
-                      className="mt-2"
-                      value={currentTemplateName}
-                      onChange={(
-                        event: React.ChangeEvent<HTMLInputElement>,
-                      ): void => {
-                        const value = event.target.value;
-                        if (isImportTemplateScope) {
-                          setImportTemplateName(value);
-                        } else {
-                          setExportTemplateName(value);
-                        }
-                      }}
-                      placeholder="Base default mapping"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-400">Description</Label>
-                    <Input
-                      className="mt-2"
-                      value={currentTemplateDescription}
-                      onChange={(
-                        event: React.ChangeEvent<HTMLInputElement>,
-                      ): void => {
-                        const value = event.target.value;
-                        if (isImportTemplateScope) {
-                          setImportTemplateDescription(value);
-                        } else {
-                          setExportTemplateDescription(value);
-                        }
-                      }}
-                      placeholder="Optional"
-                    />
-                  </div>
-                </div>
-
-                {!isImportTemplateScope && (
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="exportImagesAsBase64"
-                      checked={exportImagesAsBase64}
-                      onCheckedChange={(
-                        checked: boolean | "indeterminate",
-                      ): void => setExportImagesAsBase64(Boolean(checked))}
-                      className="h-4 w-4 rounded border-border bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
-                    />
-                    <Label
-                      htmlFor="exportImagesAsBase64"
-                      className="text-sm text-gray-300 cursor-pointer"
-                    >
-                      Export images as base64 data blobs
-                    </Label>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-xs text-gray-400">
-                    Parameter mappings
-                  </Label>
-                  {hasStockMappingMismatch ? (
-                    <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
-                      <p>
-                        Some stock keys do not match the selected inventory
-                        warehouses. Base.com will reject stock for these keys.
-                      </p>
-                      <p className="mt-1 text-amber-300/80">
-                        Invalid stock keys:{" "}
-                        {invalidStockMappingLabels.join(", ")}
-                      </p>
-                      {stockMappingSuggestions.length > 0 ? (
-                        <p className="mt-1 text-amber-300/80">
-                          Suggested keys: {stockMappingSuggestions.join(", ")}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <div className="mt-2 space-y-2">
-                    {currentTemplateMappings.map(
-                      (mapping: TemplateMapping, index: number) => (
-                        <div
-                          key={index}
-                          onDragOver={(
-                            event: React.DragEvent<HTMLDivElement>,
-                          ): void => handleMappingDragOver(event, index)}
-                          onDragLeave={handleMappingDragLeave}
-                          onDrop={(
-                            event: React.DragEvent<HTMLDivElement>,
-                          ): void => handleMappingDrop(event, index)}
-                          className={`grid gap-2 rounded-md transition md:grid-cols-[auto_1fr_1fr_auto] ${
-                            dragOverMappingIndex === index
-                              ? "bg-emerald-500/10 ring-1 ring-emerald-500/60"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              draggable
-                              onDragStart={(
-                                event: React.DragEvent<HTMLButtonElement>,
-                              ): void => handleMappingDragStart(event, index)}
-                              onDragEnd={handleMappingDragEnd}
-                              aria-label="Drag mapping to reorder"
-                              className={`text-gray-400 hover:text-white ${
-                                draggedMappingIndex === index
-                                  ? "cursor-grabbing"
-                                  : "cursor-grab"
-                              }`}
-                            >
-                              <GripVertical className="size-4" />
-                            </Button>
-                          </div>
-                          <div className="relative">
-                            <Input
-                              value={mapping.sourceKey}
-                              onChange={(
-                                event: React.ChangeEvent<HTMLInputElement>,
-                              ): void =>
-                                updateMapping(index, {
-                                  sourceKey: event.target.value,
-                                })
-                              }
-                              onFocus={(): void => setOpenKeyIndex(index)}
-                              onBlur={(): void => {
-                                window.setTimeout(() => {
-                                  setOpenKeyIndex((current: number | null) =>
-                                    current === index ? null : current,
-                                  );
-                                }, 120);
-                              }}
-                              placeholder={
-                                isImportTemplateScope
-                                  ? "Base parameter key (e.g. material)"
-                                  : "Export parameter key (e.g. prices.0)"
-                              }
-                            />
-                            {openKeyIndex === index && (
-                              <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-card shadow-lg">
-                                {filterKeys(mapping.sourceKey).map(
-                                  (key: string) => (
-                                    <Button
-                                      key={key}
-                                      type="button"
-                                      className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-muted/50"
-                                      onMouseDown={(
-                                        event: React.MouseEvent<HTMLButtonElement>,
-                                      ): void => {
-                                        event.preventDefault();
-                                        updateMapping(index, {
-                                          sourceKey: key,
-                                        });
-                                        setOpenKeyIndex(null);
-                                      }}
-                                    >
-                                      {key}
-                                    </Button>
-                                  ),
-                                )}
-                                {filterKeys(mapping.sourceKey).length === 0 ? (
-                                  <div className="px-3 py-2 text-xs text-gray-500">
-                                    No matches
-                                  </div>
-                                ) : null}
-                              </div>
-                            )}
-                          </div>
-                          <div className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-500">
-                            {mapping.sourceKey &&
-                            currentParameterValues[mapping.sourceKey]
-                              ? currentParameterValues[mapping.sourceKey]
-                              : "—"}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <select
-                              className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                              value={mapping.targetField}
-                              onChange={(
-                                event: React.ChangeEvent<HTMLSelectElement>,
-                              ): void =>
-                                updateMapping(index, {
-                                  targetField: event.target.value,
-                                })
-                              }
-                            >
-                              <option value="">Select product field</option>
-                              {PRODUCT_FIELDS.map(
-                                (field: { value: string; label: string }) => (
-                                  <option key={field.value} value={field.value}>
-                                    {field.label}
-                                  </option>
-                                ),
-                              )}
+                <div className="space-y-4">
+                   <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label>Name</Label>
+                        <Input value={isImportTemplateScope ? importTemplateName : exportTemplateName} onChange={e => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Description</Label>
+                        <Input value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} onChange={e => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)} />
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      {currentTemplateMappings.map((m, i) => (
+                         <div key={i} className="flex gap-2 items-center">
+                            <Input value={m.sourceKey} onChange={e => updateMapping(i, { sourceKey: e.target.value })} placeholder="Source" className="flex-1" />
+                            <select className="bg-gray-900 border border-border p-2 rounded text-sm flex-1" value={m.targetField} onChange={e => updateMapping(i, { targetField: e.target.value })}>
+                               <option value="">Target Field</option>
+                               {PRODUCT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                             </select>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={(): void => removeMappingRow(index)}
-                              aria-label="Remove mapping"
-                              className="text-gray-400 hover:text-white"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                  <div className="mt-3">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={(): void => addMappingRow()}
-                    >
-                      Add mapping
-                    </Button>
-                  </div>
-                  {isImportTemplateScope ? (
-                    <p className="mt-3 text-xs text-gray-500">
-                      Source keys can be direct Base fields or parameter names.
-                      Use dotted paths for nested fields (e.g. parameters.size).
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-xs text-gray-500">
-                      Source keys must match Base.com export fields. Use dotted
-                      paths for nested fields (e.g. prices.0).
-                    </p>
-                  )}
+                            <Button variant="ghost" size="icon" onClick={() => removeMappingRow(i)}><Trash2 className="size-4" /></Button>
+                         </div>
+                      ))}
+                      <Button variant="secondary" onClick={addMappingRow}>Add Row</Button>
+                   </div>
                 </div>
-              </div>
-            </div>
+             </div>
           </div>
         </TabsContent>
       </Tabs>

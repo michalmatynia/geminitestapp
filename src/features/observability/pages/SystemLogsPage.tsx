@@ -1,18 +1,13 @@
 "use client";
 
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-
-
+import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
+import { useClearLogsMutation, useRebuildIndexesMutation } from "@/features/observability/hooks/useLogMutations";
 
 import { RefreshCcw, Trash2, Download } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
-
-
-
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -35,11 +30,6 @@ type MongoCollectionIndexStatus = {
   error?: string;
 };
 
-type MongoIndexDiagnostics = {
-  generatedAt: string;
-  collections: MongoCollectionIndexStatus[];
-};
-
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -57,7 +47,6 @@ const formatDateParam = (value: string, endOfDay: boolean = false): string | nul
 export default function SystemLogsPage(): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
 
   const [level, setLevel] = useState<SystemLogLevel | "all">(() => {
     const p = searchParams?.get("level");
@@ -87,121 +76,43 @@ export default function SystemLogsPage(): React.JSX.Element {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  const buildLogParams = useCallback((): URLSearchParams => {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("pageSize", String(pageSize));
-    if (level !== "all") params.set("level", level);
-    if (query.trim()) params.set("query", query.trim());
-    if (source.trim()) params.set("source", source.trim());
-    const from = formatDateParam(fromDate);
-    const to = formatDateParam(toDate, true);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    return params;
-  }, [level, page, pageSize, query, source, fromDate, toDate]);
+  const filters = useMemo(() => ({
+    page,
+    pageSize,
+    level,
+    query,
+    source,
+    from: formatDateParam(fromDate),
+    to: formatDateParam(toDate, true),
+  }), [page, pageSize, level, query, source, fromDate, toDate]);
 
-  const buildMetricsParams = useCallback((): URLSearchParams => {
-    const params = new URLSearchParams();
-    if (level !== "all") params.set("level", level);
-    if (query.trim()) params.set("query", query.trim());
-    if (source.trim()) params.set("source", source.trim());
-    const from = formatDateParam(fromDate);
-    const to = formatDateParam(toDate, true);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    return params;
-  }, [level, query, source, fromDate, toDate]);
+  const metricsFilters = useMemo(() => ({
+    level,
+    query,
+    source,
+    from: formatDateParam(fromDate),
+    to: formatDateParam(toDate, true),
+  }), [level, query, source, fromDate, toDate]);
 
-  const logsQuery = useQuery<{
-    logs?: SystemLogRecord[];
-    total?: number;
-    page?: number;
-    pageSize?: number;
-  }>({
-    queryKey: ["system-logs", page, pageSize, level, query, source, fromDate, toDate],
-    queryFn: async (): Promise<{
-      logs?: SystemLogRecord[];
-      total?: number;
-      page?: number;
-      pageSize?: number;
-    }> => {
-      const params = buildLogParams();
-      const res = await fetch(`/api/system/logs?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to load system logs.");
-      return (await res.json()) as {
-        logs?: SystemLogRecord[];
-        total?: number;
-        page?: number;
-        pageSize?: number;
-      };
-    },
-  });
+  // Queries
+  const logsQuery = useSystemLogs(filters);
+  const metricsQuery = useSystemLogMetrics(metricsFilters);
+  const mongoDiagnosticsQuery = useMongoDiagnostics();
 
-  const metricsQuery = useQuery<{ metrics?: SystemLogMetrics }>({
-    queryKey: ["system-log-metrics", level, query, source, fromDate, toDate],
-    queryFn: async (): Promise<{ metrics?: SystemLogMetrics }> => {
-      const params = buildMetricsParams();
-      const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to load system log metrics.");
-      return (await res.json()) as { metrics?: SystemLogMetrics };
-    },
-  });
+  // Mutations
+  const clearLogsMutation = useClearLogsMutation();
+  const rebuildIndexesMutation = useRebuildIndexesMutation();
 
-  const mongoDiagnosticsQuery = useQuery<MongoIndexDiagnostics>({
-    queryKey: ["mongo-index-diagnostics"],
-    queryFn: async (): Promise<MongoIndexDiagnostics> => {
-      const res = await fetch("/api/system/diagnostics/mongo-indexes");
-      if (!res.ok) throw new Error("Failed to load Mongo index diagnostics.");
-      return (await res.json()) as MongoIndexDiagnostics;
-    },
-  });
-
-  const rebuildIndexesMutation = useMutation({
-    mutationFn: async (): Promise<MongoIndexDiagnostics & {
-      created?: Array<{ collection: string; key: Record<string, unknown> }>;
-    }> => {
-      const res = await fetch("/api/system/diagnostics/mongo-indexes", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to rebuild Mongo indexes.");
-      return (await res.json()) as MongoIndexDiagnostics & {
-        created?: Array<{ collection: string; key: Record<string, unknown> }>;
-      };
-    },
-    onSuccess: (): void => {
-      void mongoDiagnosticsQuery.refetch();
-    },
-  });
-
-  useEffect((): void => {
-    if (!logsQuery.error) return;
-    toast(
-      logsQuery.error instanceof Error
-        ? logsQuery.error.message
-        : "Failed to load system logs.",
-      { variant: "error" }
-    );
+  useEffect(() => {
+    if (logsQuery.error) toast((logsQuery.error as Error).message, { variant: "error" });
   }, [logsQuery.error, toast]);
 
-  useEffect((): void => {
-    if (!metricsQuery.error) return;
-    toast(
-      metricsQuery.error instanceof Error
-        ? metricsQuery.error.message
-        : "Failed to load system log metrics.",
-      { variant: "error" }
-    );
+  useEffect(() => {
+    if (metricsQuery.error) toast((metricsQuery.error as Error).message, { variant: "error" });
   }, [metricsQuery.error, toast]);
 
-  useEffect((): void => {
-    if (!mongoDiagnosticsQuery.error) return;
-    toast(
-      mongoDiagnosticsQuery.error instanceof Error
-        ? mongoDiagnosticsQuery.error.message
-        : "Failed to load Mongo diagnostics.",
-      { variant: "error" }
-    );
+  useEffect(() => {
+    if (mongoDiagnosticsQuery.error) toast((mongoDiagnosticsQuery.error as Error).message, { variant: "error" });
   }, [mongoDiagnosticsQuery.error, toast]);
 
   const logs = logsQuery.data?.logs ?? [];
@@ -209,26 +120,10 @@ export default function SystemLogsPage(): React.JSX.Element {
   const metrics = metricsQuery.data?.metrics ?? null;
   const diagnostics = mongoDiagnosticsQuery.data?.collections ?? [];
   const diagnosticsUpdatedAt = mongoDiagnosticsQuery.data?.generatedAt ?? null;
-  const loading = logsQuery.isPending;
-  const metricsLoading = metricsQuery.isPending;
-  const diagnosticsLoading = mongoDiagnosticsQuery.isPending;
 
   const totalPages: number = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [total, pageSize]);
-
-  const clearLogsMutation = useMutation({
-    mutationFn: async (): Promise<boolean> => {
-      const res = await fetch("/api/system/logs", { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to clear logs.");
-      return true;
-    },
-    onSuccess: (): void => {
-      void queryClient.invalidateQueries({ queryKey: ["system-logs"] });
-      void queryClient.invalidateQueries({ queryKey: ["system-log-metrics"] });
-    },
-  });
-
 
   const clearLogs = async (): Promise<void> => {
     if (!window.confirm("Clear all system logs?")) return;
@@ -309,9 +204,9 @@ export default function SystemLogsPage(): React.JSX.Element {
                     void logsQuery.refetch();
                     void metricsQuery.refetch();
                   }}
-                  disabled={loading || metricsLoading}
+                  disabled={logsQuery.isFetching || metricsQuery.isFetching}
                 >
-                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
                   Refresh
                 </Button>
                 <Button
@@ -356,7 +251,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                   variant="outline"
                   size="sm"
                   onClick={() => void mongoDiagnosticsQuery.refetch()}
-                  disabled={diagnosticsLoading}
+                  disabled={mongoDiagnosticsQuery.isFetching}
                 >
                   Refresh
                 </Button>
@@ -371,7 +266,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 </Button>
               </div>
             </div>
-            {diagnosticsLoading ? (
+            {mongoDiagnosticsQuery.isLoading ? (
               <div className="text-sm text-gray-400">Loading diagnostics...</div>
             ) : diagnostics.length === 0 ? (
               <div className="text-sm text-gray-400">No diagnostics available.</div>
@@ -546,7 +441,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                 {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : "—"}
               </div>
             </div>
-            {metricsLoading ? (
+            {metricsQuery.isLoading ? (
               <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
             ) : !metrics ? (
               <div className="mt-4 text-sm text-gray-400">
@@ -609,7 +504,7 @@ export default function SystemLogsPage(): React.JSX.Element {
               </span>
               <span>Page {page} of {totalPages}</span>
             </div>
-            {loading ? (
+            {logsQuery.isLoading ? (
               <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
             ) : logs.length === 0 ? (
               <div className="px-4 py-8 text-sm text-gray-400">

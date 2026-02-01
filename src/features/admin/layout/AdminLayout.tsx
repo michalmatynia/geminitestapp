@@ -9,6 +9,7 @@ import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/Ad
 import { NoteSettingsProvider } from "@/features/notesapp";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
+import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features/auth/hooks/useUserPreferences";
 
 import Menu from "@/features/admin/components/Menu";
 
@@ -27,6 +28,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const hydratedUserRef = useRef<string | null>(null);
   const menuCookieKey = "adminMenuCollapsed";
 
+  const { data: preferences } = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferencesMutation();
+
   const setMenuCookie = useCallback((collapsed: boolean): void => {
     if (typeof document === "undefined") return;
     const maxAge = 60 * 60 * 24 * 365;
@@ -35,59 +39,28 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
 
   const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
     try {
-      await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ adminMenuCollapsed: collapsed }),
-      });
+      await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
     } catch (error) {
       console.warn("Failed to persist menu collapse preference.", error);
     }
-  }, []);
+  }, [updatePreferencesMutation]);
 
   useEffect(() => {
     programmaticCollapsedRef.current = isProgrammaticallyCollapsed;
   }, [isProgrammaticallyCollapsed]);
 
   useEffect(() => {
-    let active = true;
     const userId = session?.user?.id ?? null;
-    if (status === "loading") return (): void => {
-      active = false;
-    };
-    if (!userId) return (): void => {
-      active = false;
-    };
-    if (userId && hydratedUserRef.current === userId) return (): void => {
-      active = false;
-    };
-    const hydrate = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/user/preferences", {
-          cache: "no-store",
-          credentials: "include",
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as { adminMenuCollapsed?: boolean | null };
-        if (!active || didUserToggleRef.current || programmaticCollapsedRef.current) return;
-        if (typeof data.adminMenuCollapsed === "boolean") {
-          preferredMenuCollapsedRef.current = data.adminMenuCollapsed;
-          setIsMenuCollapsed(data.adminMenuCollapsed);
-          setMenuCookie(data.adminMenuCollapsed);
-        }
-        if (userId) {
-          hydratedUserRef.current = userId;
-        }
-      } catch (error) {
-        console.warn("Failed to load menu collapse preference.", error);
-      }
-    };
-    void hydrate();
-    return (): void => {
-      active = false;
-    };
-  }, [session?.user?.id, setIsMenuCollapsed, setMenuCookie, status]);
+    if (status !== "authenticated" || !userId || hydratedUserRef.current === userId) return;
+
+    if (preferences && typeof preferences.adminMenuCollapsed === "boolean") {
+      if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
+      preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
+      setIsMenuCollapsed(preferences.adminMenuCollapsed);
+      setMenuCookie(preferences.adminMenuCollapsed);
+      hydratedUserRef.current = userId;
+    }
+  }, [session, status, preferences, setIsMenuCollapsed, setMenuCookie]);
 
   useEffect(() => {
     if (isProgrammaticallyCollapsed && pathname !== "/admin/cms/pages/create") {

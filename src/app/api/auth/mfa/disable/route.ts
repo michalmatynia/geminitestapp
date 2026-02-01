@@ -35,8 +35,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       return NextResponse.json({ ok: true, message: "MFA already disabled." });
     }
 
-    const token = parsed.data.token?.trim() ?? "";
-    const recovery = parsed.data.recoveryCode?.trim() ?? "";
+    const token = parsed.data?.token?.trim() ?? "";
+    const recovery = parsed.data?.recoveryCode?.trim() ?? "";
     if (!token && !recovery) {
       throw validationError("Provide a token or recovery code.");
     }

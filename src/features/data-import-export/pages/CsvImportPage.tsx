@@ -1,10 +1,13 @@
 "use client";
 
-import { Button, Input } from "@/shared/ui";
+import { Button, Input, useToast } from "@/shared/ui";
 import React, { useState } from "react";
+import { useCsvImportMutation } from "@/features/data-import-export/hooks/useImportMutations";
 
 const CSVImportPage = (): React.JSX.Element => {
+  const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
+  const importMutation = useCsvImportMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files) {
@@ -14,16 +17,17 @@ const CSVImportPage = (): React.JSX.Element => {
 
   const handleSubmit = async (): Promise<void> => {
     if (!file) {
+      toast("Please select a file", { variant: "error" });
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    await fetch("/api/import", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      await importMutation.mutateAsync(file);
+      toast("Import successful", { variant: "success" });
+      setFile(null);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Import failed", { variant: "error" });
+    }
   };
 
   return (
@@ -35,8 +39,9 @@ const CSVImportPage = (): React.JSX.Element => {
           onClick={() => {
             void handleSubmit();
           }}
+          disabled={importMutation.isPending}
         >
-          Import
+          {importMutation.isPending ? "Importing..." : "Import"}
         </Button>
       </div>
     </div>

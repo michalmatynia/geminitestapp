@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductWithImages } from "@/features/products/types";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ProductImageSlot } from "@/features/products/types/products-ui";
@@ -57,6 +56,19 @@ export function useProductImages(
   const objectUrlsRef = useRef<string[]>([]);
   const isReorderingRef = useRef(false);
   const pendingRefreshRef = useRef<ProductWithImages | null>(null);
+  
+  const queryClient = useQueryClient();
+  const disconnectImageMutation = useMutation({
+    mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }) => {
+      const res = await fetch(`/api/products/${productId}/images/${imageFileId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to disconnect image");
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+    }
+  });
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -154,25 +166,10 @@ export function useProductImages(
 
       if (slotToClear.type === "existing" && product?.id) {
         try {
-          const res = await fetch(
-            `/api/products/${product.id}/images/${slotToClear.data.id}`,
-            {
-              method: "DELETE",
-            },
-          );
-
-          if (!res.ok) {
-            const payload = (await res.json()) as {
-              error?: string;
-              errorId?: string;
-            };
-            console.error("Failed to disconnect image from product:", {
-              error: payload?.error,
-              errorId: payload?.errorId,
-              productId: product.id,
-              imageFileId: slotToClear.data.id,
-            });
-          }
+          await disconnectImageMutation.mutateAsync({
+            productId: product.id,
+            imageFileId: slotToClear.data.id,
+          });
         } catch (error) {
           console.error("Failed to disconnect image from product:", error);
         }
@@ -180,7 +177,7 @@ export function useProductImages(
         URL.revokeObjectURL(slotToClear.previewUrl);
       }
     },
-    [imageSlots, product],
+    [imageSlots, product, disconnectImageMutation],
   );
 
   const setImageLinkAt = useCallback((index: number, value: string) => {

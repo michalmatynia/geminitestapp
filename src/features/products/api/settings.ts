@@ -1,70 +1,59 @@
-import { PriceGroup, Catalog, ProductCategoryWithChildren, ProductTag, PriceGroupType } from "@/features/products/types";
-
-interface ApiPriceGroup extends Omit<PriceGroup, "currencyCode" | "groupType"> {
-  currency: { code: string };
-  type: PriceGroupType;
-}
-
-interface ApiCatalog extends Omit<Catalog, "description" | "priceGroupIds" | "defaultPriceGroupId"> {
-  description: string | null;
-  priceGroupIds: string[] | null;
-  defaultPriceGroupId: string | null;
-}
+import { 
+  Catalog, 
+  CatalogRecord,
+  PriceGroup, 
+  ProductCategory, 
+  ProductCategoryWithChildren,
+  ProductTag, 
+  ProductParameter 
+} from "../types";
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   const res = await fetch("/api/price-groups");
-  if (!res.ok) throw new Error("Failed to fetch price groups.");
-  const data = (await res.json()) as ApiPriceGroup[];
-  return data.map((group) => ({
-    ...group,
-    currencyCode: group.currency.code,
-    groupType: group.type,
-  }));
+  if (!res.ok) throw new Error("Failed to load price groups");
+  return (await res.json()) as PriceGroup[];
 }
 
-export async function getCatalogs(): Promise<Catalog[]> {
-  const res = await fetch("/api/catalogs");
-  if (!res.ok) throw new Error("Failed to fetch catalogs.");
-  const data = (await res.json()) as ApiCatalog[];
-  return data.map((catalog) => ({
-    ...catalog,
-    description: catalog.description ?? "",
-    priceGroupIds: catalog.priceGroupIds ?? [],
-    defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-  }));
-}
-
-export async function getCategories(catalogId: string | null): Promise<ProductCategoryWithChildren[]> {
-  if (!catalogId) return [];
-  const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);
-  if (!res.ok) throw new Error("Failed to fetch product categories.");
-  return (await res.json()) as ProductCategoryWithChildren[];
-}
-
-export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
-  if (!catalogId) return [];
-  const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
-  if (!res.ok) throw new Error("Failed to fetch product tags.");
-  return (await res.json()) as ProductTag[];
-}
-
-export async function updatePriceGroup(group: PriceGroup): Promise<void> {
-  const res = await fetch(`/api/price-groups/${group.id}`, {
+export async function updatePriceGroup(group: PriceGroup): Promise<PriceGroup> {
+  const res = await fetch(`/api/price-groups/${group.groupId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...group, type: group.groupType }),
+    body: JSON.stringify(group),
   });
-  if (!res.ok) throw new Error("Failed to update price group.");
+  if (!res.ok) throw new Error("Failed to update price group");
+  return (await res.json()) as PriceGroup;
 }
 
 export async function deletePriceGroup(id: string): Promise<void> {
-  const res = await fetch(`/api/price-groups/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete price group.");
+  const res = await fetch(`/api/price-groups/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete price group");
+}
+
+export async function savePriceGroup(id: string | undefined, data: any): Promise<PriceGroup> {
+  const url = id ? `/api/price-groups/${id}` : "/api/price-groups";
+  const method = id ? "PUT" : "POST";
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to save price group");
+  return (await res.json()) as PriceGroup;
+}
+
+export async function getCatalogs(): Promise<CatalogRecord[]> {
+  const res = await fetch("/api/catalogs");
+  if (!res.ok) throw new Error("Failed to load catalogs");
+  return (await res.json()) as CatalogRecord[];
 }
 
 export async function deleteCatalog(id: string): Promise<void> {
-  const res = await fetch(`/api/catalogs/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete catalog.");
+  const res = await fetch(`/api/catalogs/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete catalog");
 }
 
 export async function createCatalog(data: Partial<Catalog>): Promise<Catalog> {
@@ -73,11 +62,8 @@ export async function createCatalog(data: Partial<Catalog>): Promise<Catalog> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || "Failed to create catalog.");
-  }
-  return res.json();
+  if (!res.ok) throw new Error("Failed to create catalog");
+  return (await res.json()) as Catalog;
 }
 
 export async function updateCatalog(id: string, data: Partial<Catalog>): Promise<Catalog> {
@@ -86,9 +72,108 @@ export async function updateCatalog(id: string, data: Partial<Catalog>): Promise
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || "Failed to update catalog.");
-  }
-  return res.json();
+  if (!res.ok) throw new Error("Failed to update catalog");
+  return (await res.json()) as Catalog;
+}
+
+export async function getCategories(catalogId: string | null): Promise<ProductCategoryWithChildren[]> {
+  const url = catalogId ? `/api/products/categories/tree?catalogId=${catalogId}` : "/api/products/categories/tree";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to load categories");
+  return (await res.json()) as ProductCategoryWithChildren[];
+}
+
+export async function createCategory(data: Partial<ProductCategory>): Promise<ProductCategory> {
+  const res = await fetch("/api/products/categories", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create category");
+  return (await res.json()) as ProductCategory;
+}
+
+export async function updateCategory(id: string, data: Partial<ProductCategory>): Promise<ProductCategory> {
+  const res = await fetch(`/api/products/categories/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update category");
+  return (await res.json()) as ProductCategory;
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  const res = await fetch(`/api/products/categories/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete category");
+}
+
+export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
+  const url = catalogId ? `/api/products/tags?catalogId=${catalogId}` : "/api/products/tags";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to load tags");
+  return (await res.json()) as ProductTag[];
+}
+
+export async function createTag(data: Partial<ProductTag>): Promise<ProductTag> {
+  const res = await fetch("/api/products/tags", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create tag");
+  return (await res.json()) as ProductTag;
+}
+
+export async function updateTag(id: string, data: Partial<ProductTag>): Promise<ProductTag> {
+  const res = await fetch(`/api/products/tags/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update tag");
+  return (await res.json()) as ProductTag;
+}
+
+export async function deleteTag(id: string): Promise<void> {
+  const res = await fetch(`/api/products/tags/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete tag");
+}
+
+export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
+  const url = catalogId ? `/api/products/parameters?catalogId=${catalogId}` : "/api/products/parameters";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to load parameters");
+  return (await res.json()) as ProductParameter[];
+}
+
+export async function createParameter(data: Partial<ProductParameter>): Promise<ProductParameter> {
+  const res = await fetch("/api/products/parameters", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create parameter");
+  return (await res.json()) as ProductParameter;
+}
+
+export async function updateParameter(id: string, data: Partial<ProductParameter>): Promise<ProductParameter> {
+  const res = await fetch(`/api/products/parameters/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update parameter");
+  return (await res.json()) as ProductParameter;
+}
+
+export async function deleteParameter(id: string): Promise<void> {
+  const res = await fetch(`/api/products/parameters/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete parameter");
 }

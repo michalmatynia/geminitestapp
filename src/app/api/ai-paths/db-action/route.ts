@@ -135,6 +135,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
     }
 
+    const data = parsed.data as z.infer<typeof actionSchema>;
     const {
       collection,
       action,
@@ -150,7 +151,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       distinctField,
       upsert,
       returnDocument = "after",
-    } = parsed.data;
+    } = data;
 
     if (!ALLOWED_COLLECTIONS.has(collection)) {
       return createErrorResponse(internalError("Collection not allowlisted"), {

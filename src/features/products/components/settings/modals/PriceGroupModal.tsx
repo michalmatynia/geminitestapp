@@ -16,6 +16,7 @@ import {
 } from "@/shared/ui";
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
+import { useSavePriceGroupMutation } from "@/features/products/hooks/useProductSettingsQueries";
 
 interface PriceGroupModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ export function PriceGroupModal({
   priceGroups,
 }: PriceGroupModalProps) {
   const { toast } = useToast();
-  const [saving, setSaving] = React.useState(false);
+  const saveMutation = useSavePriceGroupMutation();
   const [form, setForm] = React.useState({
     isDefault: false,
     groupId: "",
@@ -94,33 +95,24 @@ export function PriceGroupModal({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = priceGroup
-        ? `/api/price-groups/${priceGroup.id}`
-        : "/api/price-groups";
-      const res = await fetch(endpoint, {
-        method: priceGroup ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await saveMutation.mutateAsync({
+        id: priceGroup?.id,
+        data: {
           ...form,
           groupId: form.groupId.trim(),
           name: form.name.trim(),
           description: form.description.trim() || undefined,
           sourceGroupId: form.sourceGroupId || undefined,
           type: form.groupType,
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to save price group");
 
       toast("Price group saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
       console.error(err);
       toast("Failed to save price group.", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -131,10 +123,10 @@ export function PriceGroupModal({
           onClick={() => {
             void handleSubmit();
           }}
-          disabled={saving}
+          disabled={saveMutation.isPending}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {saving ? "Saving..." : priceGroup ? "Update" : "Create"}
+          {saveMutation.isPending ? "Saving..." : priceGroup ? "Update" : "Create"}
         </Button>
         <h2 className="text-2xl font-bold text-white">
           {priceGroup ? "Edit Price Group" : "Create Price Group"}

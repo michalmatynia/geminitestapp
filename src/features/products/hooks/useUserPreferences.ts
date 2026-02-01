@@ -89,6 +89,34 @@ function updateLocalStorage(
   window.localStorage.setItem(storageKey, String(value));
 }
 
+async function updateUserPreferences(
+  data: Partial<ProductListPreferences>,
+): Promise<void> {
+  const payload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+    payload[apiKey] = value;
+  }
+  const res = await fetch("/api/user/preferences", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to update preferences");
+  }
+}
+
+export function useUpdateUserPreferencesMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<ProductListPreferences>) => updateUserPreferences(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
+    },
+  });
+}
+
 export function useUserPreferences() {
   const queryClient = useQueryClient();
 

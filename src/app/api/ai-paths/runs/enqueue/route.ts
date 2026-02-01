@@ -36,7 +36,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
     if (!parsed.ok) return parsed.response;
 
-    const { nodes, edges, ...rest } = parsed.data;
+    const data = parsed.data as z.infer<typeof enqueueSchema>;
+    const { nodes, edges, ...rest } = data;
     if (!Array.isArray(nodes) || !Array.isArray(edges)) {
       throw badRequestError("Nodes and edges are required to enqueue a run.");
     }

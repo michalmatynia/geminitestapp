@@ -1,74 +1,39 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger, useToast } from "@/shared/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-
-import type { CatalogRecord } from "@/features/products/types";
-import type { ProductParameter } from "@/features/products/types";
 import { ParametersSettings } from "@/features/products/components/constructor/ParametersSettings";
+import { useCatalogs, useParameters } from "@/features/products/hooks/useProductSettingsQueries";
 
 export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
+  const catalogsQuery = useCatalogs();
+  const catalogs = catalogsQuery.data || [];
+  
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
-  const [parameters, setParameters] = useState<ProductParameter[]>([]);
-  const [loadingParameters, setLoadingParameters] = useState(false);
 
   useEffect(() => {
-    const loadCatalogs = async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/catalogs");
-        if (!res.ok) {
-          throw new Error("Failed to load catalogs");
-        }
-        const data = (await res.json()) as CatalogRecord[];
-        setCatalogs(data);
-        if (!selectedCatalogId && data.length > 0) {
-          const defaultCatalog = data.find((catalog: CatalogRecord) => catalog.isDefault);
-          setSelectedCatalogId(defaultCatalog?.id ?? data[0]!.id);
-        }
-      } catch (error) {
-        toast(
-          error instanceof Error ? error.message : "Failed to load catalogs",
-          { variant: "error" }
-        );
-      }
-    };
+    if (catalogs.length > 0 && !selectedCatalogId) {
+      const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+      setSelectedCatalogId(defaultCatalog?.id ?? catalogs[0]!.id);
+    }
+  }, [catalogs, selectedCatalogId]);
 
-    void loadCatalogs();
-  }, [toast, selectedCatalogId]);
-
-  const refreshParameters = useCallback(
-    async (catalogId: string | null) => {
-      if (!catalogId) {
-        setParameters([]);
-        return;
-      }
-      try {
-        setLoadingParameters(true);
-        const res = await fetch(`/api/products/parameters?catalogId=${catalogId}`);
-        if (!res.ok) {
-          const payload = (await res.json()) as { error?: string };
-          throw new Error(payload.error || "Failed to fetch parameters.");
-        }
-        const data = (await res.json()) as ProductParameter[];
-        setParameters(data);
-      } catch (error) {
-        toast(
-          error instanceof Error ? error.message : "Failed to fetch parameters",
-          { variant: "error" }
-        );
-      } finally {
-        setLoadingParameters(false);
-      }
-    },
-    [toast]
-  );
+  const parametersQuery = useParameters(selectedCatalogId);
+  const parameters = parametersQuery.data || [];
 
   useEffect(() => {
-    void refreshParameters(selectedCatalogId);
-  }, [selectedCatalogId, refreshParameters]);
+    if (catalogsQuery.error) {
+      toast(catalogsQuery.error.message, { variant: "error" });
+    }
+  }, [catalogsQuery.error, toast]);
+
+  useEffect(() => {
+    if (parametersQuery.error) {
+      toast(parametersQuery.error.message, { variant: "error" });
+    }
+  }, [parametersQuery.error, toast]);
 
   return (
     <div className="rounded-lg bg-card p-6 shadow-lg">
@@ -79,12 +44,12 @@ export function ProductConstructorPage(): React.JSX.Element {
 
         <TabsContent value="parameters" className="mt-0">
           <ParametersSettings
-            loading={loadingParameters}
+            loading={parametersQuery.isLoading}
             parameters={parameters}
             catalogs={catalogs}
             selectedCatalogId={selectedCatalogId}
             onCatalogChange={setSelectedCatalogId}
-            onRefresh={() => void refreshParameters(selectedCatalogId)}
+            onRefresh={() => void parametersQuery.refetch()}
           />
         </TabsContent>
       </Tabs>

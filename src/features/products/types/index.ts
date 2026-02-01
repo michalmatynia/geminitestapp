@@ -20,8 +20,8 @@ export type Catalog = {
   name: string;
   description: string | null;
   isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   languageIds: string[];
   defaultLanguageId?: string | null;
   defaultPriceGroupId?: string | null;

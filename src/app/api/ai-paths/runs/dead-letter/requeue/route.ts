@@ -31,11 +31,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
     if (!parsed.ok) return parsed.response;
 
-    const runIds = Array.isArray(parsed.data.runIds) ? parsed.data.runIds : [];
-    const pathId = parsed.data.pathId?.trim() || undefined;
-    const mode = parsed.data.mode ?? "resume";
-    const query = parsed.data.query?.trim() || undefined;
-    const limit = parsed.data.limit ?? undefined;
+    const runIds = Array.isArray(parsed.data?.runIds) ? parsed.data.runIds : [];
+    const pathId = parsed.data?.pathId?.trim() || undefined;
+    const mode = parsed.data?.mode ?? "resume";
+    const query = parsed.data?.query?.trim() || undefined;
+    const limit = parsed.data?.limit ?? undefined;
 
     const repo = getPathRunRepository();
     let targetRunIds = runIds;

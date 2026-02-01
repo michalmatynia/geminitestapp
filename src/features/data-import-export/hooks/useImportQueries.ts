@@ -2,7 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations";
-import type { CatalogOption, Template, ImageRetryPreset } from "@/features/data-import-export/types/imports";
+import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset } from "@/features/data-import-export/types/imports";
+
+export type { CatalogRecord };
 
 export const importKeys = {
   all: ["import-export"] as const,
@@ -39,7 +41,7 @@ export function useCatalogs() {
     queryFn: async () => {
       const res = await fetch("/api/catalogs");
       if (!res.ok) throw new Error("Failed to load catalogs");
-      return (await res.json()) as CatalogOption[];
+      return (await res.json()) as CatalogRecord[];
     },
   });
 }
@@ -167,5 +169,117 @@ export function useParameters(inventoryId: string, productId: string, enabled: b
       return await res.json();
     },
     enabled: enabled && !!inventoryId && !!productId,
+  });
+}
+
+export function useImportList(inventoryId: string, limit?: string | number, uniqueOnly?: boolean, enabled: boolean = true) {
+  return useQuery({
+    queryKey: importKeys.importList(inventoryId, limit, uniqueOnly),
+    queryFn: async () => {
+      const res = await fetch("/api/integrations/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "list",
+          inventoryId,
+          limit: limit === "all" ? undefined : Number(limit),
+          uniqueOnly,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to load import list");
+      return await res.json();
+    },
+    enabled: enabled && !!inventoryId,
+  });
+}
+
+export function useImportMutation() {
+  return useMutation({
+    mutationFn: async (params: {
+      inventoryId: string;
+      catalogId: string;
+      templateId?: string;
+      limit?: number;
+      imageMode: "links" | "download";
+      uniqueOnly: boolean;
+      allowDuplicateSku: boolean;
+      selectedIds?: string[];
+    }) => {
+      const res = await fetch("/api/integrations/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "import",
+          ...params,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json();
+        throw new Error(payload.error || "Import failed");
+      }
+      return res.json();
+    },
+  });
+}
+
+export function useSaveExportSettingsMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (params: {
+      exportActiveTemplateId?: string | null;
+      exportInventoryId?: string | null;
+      selectedBaseConnectionId?: string | null;
+      exportStockFallbackEnabled?: boolean;
+      imageRetryPresets?: ImageRetryPreset[];
+      exportWarehouseId?: string | null;
+    }) => {
+      const requests = [
+        fetch("/api/integrations/exports/base/active-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId: params.exportActiveTemplateId }),
+        }),
+        fetch("/api/integrations/exports/base/default-inventory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inventoryId: params.exportInventoryId }),
+        }),
+        fetch("/api/integrations/exports/base/default-connection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ connectionId: params.selectedBaseConnectionId }),
+        }),
+        fetch("/api/integrations/exports/base/stock-fallback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: params.exportStockFallbackEnabled }),
+        }),
+        fetch("/api/integrations/exports/base/image-retry-presets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ presets: params.imageRetryPresets }),
+        }),
+      ];
+      
+      if (params.exportInventoryId && params.exportWarehouseId !== undefined) {
+        requests.push(
+          fetch("/api/integrations/imports/base/export-warehouse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              warehouseId: params.exportWarehouseId,
+              inventoryId: params.exportInventoryId,
+            }),
+          })
+        );
+      }
+      
+      const responses = await Promise.all(requests);
+      if (responses.some(r => !r.ok)) throw new Error("Failed to save some settings");
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });
+    }
   });
 }

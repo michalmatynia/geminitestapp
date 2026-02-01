@@ -1,6 +1,7 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox, useToast } from "@/shared/ui";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import type { ProductWithImages } from "@/features/products";
 import type {
@@ -17,8 +18,6 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { isImageExportError } from "./utils";
 import { useProducts } from "@/features/products/hooks/useProductsQuery";
-import { useExportToBaseMutation } from "@/features/integrations/hooks/useProductListingMutations";
-import { useMutation } from "@tanstack/react-query";
 
 type SelectProductForListingModalProps = {
   integrationId: string;
@@ -36,6 +35,7 @@ export default function SelectProductForListingModal({
   const [error, setError] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const { data: products = [], isLoading: loadingProducts } = useProducts({ pageSize: 1000 });
 
@@ -70,9 +70,21 @@ export default function SelectProductForListingModal({
     (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
 
-  const { toast } = useToast(); // Wait, useToast is not imported? I'll check. Ah, it's not. I'll use setError for now.
+  const exportMutation = useMutation({
+    mutationFn: async ({ productId, payload }: { productId: string; payload: any }) => {
+      const res = await fetch(`/api/integrations/products/${productId}/export-to-base`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to export product");
+      }
+      return data;
+    }
+  });
 
-  const exportMutation = useExportToBaseMutation(selectedProductId);
   const createListingMutation = useMutation({
     mutationFn: async ({ productId, payload }: { productId: string; payload: any }) => {
       const res = await fetch(`/api/integrations/products/${productId}/listings`, {
@@ -87,10 +99,6 @@ export default function SelectProductForListingModal({
       return res.json();
     }
   });
-
-  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
-    (c: { id: string; name: string }) => c.id === selectedConnectionId
-  )?.name || "";
 
   const handleSubmit = async (): Promise<void> => {
     if (!selectedProductId) {
@@ -121,8 +129,9 @@ export default function SelectProductForListingModal({
           templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
           allowDuplicateSku,
         };
-        const result = await exportMutation.mutateAsync(payload as any);
+        const result = await exportMutation.mutateAsync({ productId: selectedProductId, payload });
         if (result.logs) setExportLogs(result.logs);
+        toast("Product exported to Base.com", { variant: "success" });
         onSuccess();
       } else {
         await createListingMutation.mutateAsync({
@@ -132,6 +141,7 @@ export default function SelectProductForListingModal({
             connectionId: selectedConnectionId,
           }
         });
+        toast("Product listing created", { variant: "success" });
         onSuccess();
       }
     } catch (err: unknown) {
@@ -164,8 +174,9 @@ export default function SelectProductForListingModal({
         exportImagesAsBase64: true,
       };
 
-      const result = await exportMutation.mutateAsync(payload as any);
+      const result = await exportMutation.mutateAsync({ productId: selectedProductId, payload });
       if (result.logs) setExportLogs(result.logs);
+      toast("Product exported with new image settings", { variant: "success" });
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");

@@ -190,8 +190,8 @@ export function AdminNotesPage(): React.JSX.Element {
       // The `setNotes` in `useNoteData` calls `queryClient.setQueryData`.
       
       // The original code updated local state:
-      setNotes((prev: NoteWithRelations[]): NoteWithRelations[] =>
-        prev.map((item: NoteWithRelations): NoteWithRelations =>
+      setNotes((prev: NoteWithRelations[] | undefined): NoteWithRelations[] =>
+        (prev || []).map((item: NoteWithRelations): NoteWithRelations =>
           item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
         )
       );

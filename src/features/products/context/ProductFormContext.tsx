@@ -43,6 +43,7 @@ import {
 import { useProductImages } from "@/features/products/hooks/useProductImages";
 import { useProductMetadata } from "@/features/products/hooks/useProductMetadata";
 import { delay } from "@/shared/utils";
+import { useCreateProductMutation, useUpdateProductMutation } from "@/features/products/hooks/useProductData";
 
 interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
@@ -163,12 +164,14 @@ export function ProductFormProvider({
   } = methods;
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const createMutation = useCreateProductMutation();
+  const updateMutation = useUpdateProductMutation();
 
   const {
     imageSlots,
@@ -257,7 +260,6 @@ export function ProductFormProvider({
       }
     }
 
-    setUploading(true);
     setUploadError(null);
     setUploadSuccess(false);
 
@@ -302,32 +304,30 @@ export function ProductFormProvider({
     formData.append("parameters", JSON.stringify(normalizedParameters));
 
     try {
-      const response = await fetch(
-        product ? `/api/products/${product.id}` : "/api/products",
-        {
-          method: product ? "PUT" : "POST",
+      let savedProduct: ProductWithImages;
+      
+      if (product) {
+        // Update mode - we can't easily use FormData with our current update mutation because it expects JSON
+        // Actually, the API route handles both.
+        // Let's check the API route.
+        
+        // Wait, updateProduct in api/products.ts uses fetch with body: JSON.stringify(data)
+        // If we want to support images, we might need a separate endpoint or multipart support.
+        // The context code above uses fetch(url, { method: "PUT", body: formData })
+        
+        const response = await fetch(`/api/products/${product.id}`, {
+          method: "PUT",
           body: formData,
-        }
-      );
+        });
 
-      if (!response.ok) {
-        let errorData: { error?: string; errorId?: string } | null = null;
-        try {
-          errorData = (await response.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-        } catch {
-          errorData = null;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to update product");
         }
-        const message = errorData?.error || "Failed to save product";
-        const errorIdSuffix = errorData?.errorId
-          ? ` (Error ID: ${errorData.errorId})`
-          : "";
-        throw new Error(`${message}${errorIdSuffix}`);
+        savedProduct = await response.json();
+      } else {
+        savedProduct = (await createMutation.mutateAsync(formData)) as ProductWithImages;
       }
-
-      const savedProduct = (await response.json()) as ProductWithImages;
 
       toast(product ? "Product updated." : "Product created.", {
         variant: "success",
@@ -342,13 +342,9 @@ export function ProductFormProvider({
         queryClient.invalidateQueries({ queryKey: ["products-count"] }),
       ]);
 
-      // Only close modal for Create mode, not Edit mode
       if (!product) {
-        // For Create mode, close modal immediately without updating image state
-        // This prevents the flickering caused by image slots re-rendering before modal closes
         onSuccess?.();
       } else {
-        // For Edit mode, update image slots to reflect saved state
         refreshImages(savedProduct);
         setUploadSuccess(true);
         if (successTimerRef.current) {
@@ -358,7 +354,6 @@ export function ProductFormProvider({
           setUploadSuccess(false);
         }, 3000);
         onEditSave?.(savedProduct);
-        // Refresh to show updated data
         router.refresh();
       }
     } catch (error: unknown) {
@@ -367,8 +362,6 @@ export function ProductFormProvider({
       } else {
         setUploadError("An unknown error occurred");
       }
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -383,7 +376,7 @@ export function ProductFormProvider({
           getValues,
           imageSlots,
           imageLinks,
-          uploading,
+          uploading: createMutation.isPending || updateMutation.isPending,
           uploadError,
           uploadSuccess,
           showFileManager,

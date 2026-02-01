@@ -39,7 +39,7 @@ async function POST_handler(
       throw notFoundError("Run not found", { runId });
     }
     assertAiPathRunAccess(access, existing);
-    const nodeId = parsed.data.nodeId;
+    const nodeId = parsed.data?.nodeId!;
     const run: unknown = retryPathRunNode(runId, nodeId);
     startAiPathRunQueue();
     return NextResponse.json({ run });

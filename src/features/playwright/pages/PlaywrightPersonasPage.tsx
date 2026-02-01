@@ -4,19 +4,10 @@ import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, Section
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-
-
-
-
-
-
-
-
 import { serializeSetting } from "@/shared/utils/settings-json";
-
-
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
+import { buildPlaywrightSettings, fetchPlaywrightPersonas, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
 import type {
   PlaywrightPersona,
   PlaywrightSettings,
@@ -51,7 +42,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
-  const [draftSettings, setDraftSettings] = useState<PlaywrightSettings | null>(null);
+  const [draftSettings, setDraftSettings] = useState<PlaywrightSettings>(buildPlaywrightSettings());
 
   const sortedPersonas = useMemo((): PlaywrightPersona[] => {
     return [...personas].sort((a: PlaywrightPersona, b: PlaywrightPersona) => {
@@ -65,13 +56,9 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     let active = true;
     const loadPersonas = async (): Promise<void> => {
       try {
-        const { fetchPlaywrightPersonas, buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPersonas(stored);
-        if (!draftSettings) {
-          setDraftSettings(buildPlaywrightSettings());
-        }
       } catch (error) {
         if (active) {
           const message =
@@ -86,10 +73,9 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     return (): void => {
       active = false;
     };
-  }, [toast, draftSettings]);
+  }, [toast]);
 
-  const resetDraft = async (): Promise<void> => {
-    const { buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
+  const resetDraft = (): void => {
     setEditingId(null);
     setDraftName("");
     setDraftDescription("");
@@ -97,12 +83,11 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   };
 
   const openCreate = (): void => {
-    void resetDraft();
+    resetDraft();
     setModalOpen(true);
   };
 
-  const openEdit = async (persona: PlaywrightPersona): Promise<void> => {
-    const { buildPlaywrightSettings } = await import("@/features/playwright/utils/personas");
+  const openEdit = (persona: PlaywrightPersona): void => {
     setEditingId(persona.id);
     setDraftName(persona.name);
     setDraftDescription(persona.description ?? "");
@@ -112,7 +97,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
   const closeModal = (): void => {
     setModalOpen(false);
-    void resetDraft();
+    resetDraft();
   };
 
   const persistPersonas = async (next: PlaywrightPersona[], message: string): Promise<boolean> => {
@@ -152,12 +137,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       return;
     }
 
-    if (!draftSettings) {
-      toast("Settings not loaded.", { variant: "error" });
-      return;
-    }
-
-    const { buildPlaywrightSettings, createPlaywrightPersonaId } = await import("@/features/playwright/utils/personas");
     const now = new Date().toISOString();
     const existing = personas.find((persona: PlaywrightPersona) => persona.id === editingId);
     const nextPersona: PlaywrightPersona = {
@@ -188,14 +167,6 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
     await persistPersonas(next, "Persona deleted.");
   };
-
-  if (!draftSettings) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="text-center text-gray-400">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-10 space-y-6">

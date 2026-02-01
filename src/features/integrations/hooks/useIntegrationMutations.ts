@@ -214,3 +214,36 @@ export function useAllegroApiRequest(): UseMutationResult<
     },
   });
 }
+
+export function useUpdatePreferredTemplate(): UseMutationResult<
+  void,
+  Error,
+  { templateId: string }
+> {
+  return useMutation({
+    mutationFn: async ({ templateId }) => {
+      await fetch("/api/integrations/exports/base/templates/preferred", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId }),
+      });
+    },
+  });
+}
+
+export function useUpdatePreferredInventory(): UseMutationResult<
+  void,
+  Error,
+  { inventoryId: string; connectionId: string }
+> {
+  return useMutation({
+    mutationFn: async ({ inventoryId, connectionId }) => {
+      await fetch("/api/integrations/exports/base/inventories/preferred", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inventoryId, connectionId }),
+      });
+    },
+  });
+}
+

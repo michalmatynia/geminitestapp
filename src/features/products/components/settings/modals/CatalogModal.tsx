@@ -100,7 +100,7 @@ export function CatalogModal({
   }, [catalog, defaultGroupId]);
 
   const handleSubmit = async () => {
-    if (saving) return;
+    if (saveMutation.isPending) return;
     const name = form.name.trim();
     if (!name) {
       toast("Catalog name is required.", { variant: "error" });

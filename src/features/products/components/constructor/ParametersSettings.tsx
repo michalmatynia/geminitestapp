@@ -4,13 +4,9 @@ import { useToast, Button, AppModal, Input, Label, Select, SelectContent, Select
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-
-
-
-
-
 import type { CatalogRecord } from "@/features/products/types";
 import type { ProductParameter } from "@/features/products/types";
+import { useSaveParameterMutation, useDeleteParameterMutation } from "@/features/products/hooks/useProductSettingsQueries";
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -31,7 +27,6 @@ export function ParametersSettings({
 }: ParametersSettingsProps): React.JSX.Element {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [editingParameter, setEditingParameter] = useState<ProductParameter | null>(null);
   const [formData, setFormData] = useState({
     name_en: "",
@@ -39,6 +34,9 @@ export function ParametersSettings({
     name_de: "",
     catalogId: "",
   });
+
+  const saveParameterMutation = useSaveParameterMutation();
+  const deleteParameterMutation = useDeleteParameterMutation();
 
   const openCreateModal = (): void => {
     if (!selectedCatalogId) {
@@ -76,25 +74,19 @@ export function ParametersSettings({
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint = editingParameter
-        ? `/api/products/parameters/${editingParameter.id}`
-        : "/api/products/parameters";
-      const res = await fetch(endpoint, {
-        method: editingParameter ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name_en: formData.name_en.trim(),
-          name_pl: formData.name_pl.trim() || null,
-          name_de: formData.name_de.trim() || null,
-          catalogId: formData.catalogId,
-        }),
+      const payload = {
+        name_en: formData.name_en.trim(),
+        name_pl: formData.name_pl.trim() || null,
+        name_de: formData.name_de.trim() || null,
+        catalogId: formData.catalogId,
+      };
+
+      await saveParameterMutation.mutateAsync({
+        id: editingParameter?.id,
+        data: payload,
       });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to save parameter.");
-      }
+
       toast(editingParameter ? "Parameter updated." : "Parameter created.", {
         variant: "success",
       });
@@ -104,8 +96,6 @@ export function ParametersSettings({
       const message =
         error instanceof Error ? error.message : "Failed to save parameter.";
       toast(message, { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -115,13 +105,7 @@ export function ParametersSettings({
     );
     if (!confirmed) return;
     try {
-      const res = await fetch(`/api/products/parameters/${parameter.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to delete parameter.");
-      }
+      await deleteParameterMutation.mutateAsync({ id: parameter.id, catalogId: selectedCatalogId });
       toast("Parameter deleted.", { variant: "success" });
       onRefresh();
     } catch (error) {
@@ -147,7 +131,7 @@ export function ParametersSettings({
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
           >
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>
@@ -296,8 +280,8 @@ export function ParametersSettings({
               <Button variant="outline" onClick={(): void => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button onClick={(): void => { void handleSave(); }} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
+              <Button onClick={(): void => { void handleSave(); }} disabled={saveParameterMutation.isPending}>
+                {saveParameterMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>

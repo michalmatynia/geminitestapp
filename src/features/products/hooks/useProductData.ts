@@ -1,18 +1,37 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { getProducts, countProducts, createProduct, updateProduct, deleteProduct } from "@/features/products/api";
-import type { ProductWithImages } from "@/features/products/types";
+import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { 
+  getProducts, 
+  countProducts, 
+  createProduct, 
+  updateProduct, 
+  deleteProduct 
+} from "@/features/products/api";
+import type { 
+  ProductWithImages, 
+} from "@/features/products/types";
 import type { DeleteResponse } from "@/shared/types/api";
-import type { PriceGroupWithDetails } from "@/features/products/types"; // Assuming this type exists and is imported correctly
-import type { UseProductsFilters } from "@/features/products/hooks/useProductsQuery"; // Assuming this type exists
 
-// --- TanStack Query Hooks ---
+// --- Queries ---
 
-export function useProductsQuery(
+export interface UseProductsFilters {
+  search?: string | undefined;
+  sku?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  catalogId?: string | undefined;
+  searchLanguage?: string | undefined;
+}
+
+export function useProducts(
   filters: UseProductsFilters,
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean } = {}
 ): UseQueryResult<ProductWithImages[], Error> {
   const { enabled = true } = options;
 
@@ -23,9 +42,9 @@ export function useProductsQuery(
   });
 }
 
-export function useProductsCountQuery(
+export function useProductsCount(
   filters: UseProductsFilters,
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean } = {}
 ): UseQueryResult<number, Error> {
   const { enabled = true } = options;
 
@@ -36,82 +55,39 @@ export function useProductsCountQuery(
   });
 }
 
-export function useProductsWithCount(
-  filters: UseProductsFilters,
-  options: { enabled?: boolean } = {},
-): {
-  products: ProductWithImages[];
-  total: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  error: unknown;
-  refetch: () => Promise<void>;
-} {
-  const { enabled = true } = options;
-  const queryClient = useQueryClient();
-
-  const productsQuery = useProductsQuery(filters, { enabled });
-  const countQuery = useProductsCountQuery(filters, { enabled });
-
-  const refetch = useCallback(async (): Promise<void> => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["products"] }),
-      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-    ]);
-  }, [queryClient]);
-
-  return {
-    products: productsQuery.data ?? [],
-    total: countQuery.data ?? 0,
-    isLoading: productsQuery.isPending || countQuery.isPending,
-    isFetching: productsQuery.isFetching || countQuery.isFetching,
-    error: productsQuery.error || countQuery.error,
-    refetch,
-  };
-}
-
-
 // --- Mutations ---
 
 export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData: FormData): Promise<unknown> => {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Failed to create product");
-      return response.json();
-    },
-    onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["products"] }),
-        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-      ]);
+    mutationFn: (formData: FormData) => createProduct(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
 
-export function useUpdateProductMutation(): UseMutationResult<ProductWithImages, Error, { id: string; data: Partial<ProductWithImages> }, unknown> {
+export function useUpdateProductMutation(): UseMutationResult<ProductWithImages, Error, { id: string; data: Partial<ProductWithImages> | FormData }, unknown> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductWithImages> }): Promise<ProductWithImages> => {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update product");
-      return (await response.json()) as ProductWithImages;
+    mutationFn: async ({ id, data }) => {
+      if (data instanceof FormData) {
+        const response = await fetch(`/api/products/${id}`, {
+          method: "PUT",
+          body: data,
+        });
+        if (!response.ok) throw new Error("Failed to update product");
+        return response.json();
+      } else {
+        return updateProduct(id, data);
+      }
     },
-    onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["products"] }),
-        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-      ]);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", data.id] });
     },
   });
 }
@@ -120,197 +96,137 @@ export function useDeleteProductMutation(): UseMutationResult<DeleteResponse, Er
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<DeleteResponse> => {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete product");
-      return (await response.json()) as DeleteResponse;
-    },
-    onSuccess: async (): Promise<void> => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["products"] }),
-        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-      ]);
+    mutationFn: (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
 
-// --- Hook Logic ---
+export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean }, Error, string[], unknown> {
+  const queryClient = useQueryClient();
 
-function convertPriceFilterToBase(
-  filterValue: number | undefined,
-  currencyCode: string | undefined,
-  priceGroups: PriceGroupWithDetails[] | undefined,
-): number | undefined {
-  if (filterValue === undefined || !currencyCode || !priceGroups?.length) {
-    return filterValue;
-  }
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const responses = await Promise.all(
+        ids.map(id => deleteProduct(id))
+      );
+      if (responses.some(r => !r.success)) throw new Error("Failed to delete some products");
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+    },
+  });
+}
 
-  const targetGroup = priceGroups.find(
-    (g) => g.currency?.code === currencyCode || g.currencyCode === currencyCode,
-  );
+// --- Composite Hook ---
 
-  if (!targetGroup) {
-    return filterValue;
-  }
+export interface UseProductDataProps {
+  refreshTrigger?: number;
+  initialCatalogFilter?: string | null;
+  initialPageSize?: number | null;
+  preferencesLoaded: boolean;
+  currencyCode?: string | null;
+  priceGroups?: any[];
+  searchLanguage?: string | null;
+}
 
-  if (targetGroup.type === "dependent" && targetGroup.sourceGroupId) {
-    const multiplier = targetGroup.priceMultiplier || 1;
-    const addToPrice = targetGroup.addToPrice || 0;
-    return Math.round((filterValue - addToPrice) / multiplier);
-  }
-
-  return filterValue;
+export interface ProductDataHookResult {
+  data: ProductWithImages[];
+  totalPages: number;
+  page: number;
+  setPage: (p: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  search: string;
+  setSearch: (s: string) => void;
+  sku: string;
+  setSku: (s: string) => void;
+  minPrice: number | undefined;
+  setMinPrice: (p: number | undefined) => void;
+  maxPrice: number | undefined;
+  setMaxPrice: (p: number | undefined) => void;
+  startDate: string | undefined;
+  setStartDate: (s: string | undefined) => void;
+  endDate: string | undefined;
+  setEndDate: (s: string | undefined) => void;
+  catalogFilter: string;
+  setCatalogFilter: (f: string) => void;
+  loadError: Error | null;
+  isLoading: boolean;
+  isFetching: boolean;
+  refresh: () => void;
 }
 
 export function useProductData({
   refreshTrigger,
-  initialCatalogFilter = "all",
-  initialPageSize = 24,
-  preferencesLoaded = true,
-  currencyCode,
-  priceGroups,
+  initialCatalogFilter,
+  initialPageSize,
+  preferencesLoaded,
   searchLanguage,
-}: {
-  refreshTrigger: number;
-  initialCatalogFilter?: string;
-  initialPageSize?: number;
-  preferencesLoaded?: boolean;
-  currencyCode?: string;
-  priceGroups?: PriceGroupWithDetails[];
-  searchLanguage?: string;
-}): ProductDataHookResult {
-  // Filter state
-  const [search, setSearch] = useState<string>("");
-  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const [sku, setSku] = useState<string>("");
-  const [debouncedSku, setDebouncedSku] = useState<string>("");
+}: UseProductDataProps): ProductDataHookResult {
+  const queryClient = useQueryClient();
+  
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize || 20);
+  const [search, setSearch] = useState("");
+  const [sku, setSku] = useState("");
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter);
-
-  // Pagination state
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(initialPageSize);
-
-  const [initialSyncComplete, setInitialSyncComplete] = useState(false);
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || "all");
 
   useEffect(() => {
-    if (preferencesLoaded && !initialSyncComplete) {
-      setInitialSyncComplete(true);
-      if (catalogFilter !== initialCatalogFilter) {
-        setCatalogFilter(initialCatalogFilter);
-      }
-      if (pageSize !== initialPageSize) {
-        setPageSize(initialPageSize);
-      }
+    if (preferencesLoaded && initialCatalogFilter) {
+      setCatalogFilter(initialCatalogFilter);
     }
-  }, [preferencesLoaded, initialSyncComplete, catalogFilter, initialCatalogFilter, pageSize, initialPageSize, setCatalogFilter, setPageSize]);
+  }, [preferencesLoaded, initialCatalogFilter]);
 
-  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+    if (preferencesLoaded && initialPageSize) {
+      setPageSize(initialPageSize);
+    }
+  }, [preferencesLoaded, initialPageSize]);
 
-  // Debounce SKU
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSku(sku);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [sku]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    const t = setTimeout(() => setPage(1), 0);
-    return () => clearTimeout(t);
-  }, [
-    debouncedSearch,
-    debouncedSku,
+  const filters: UseProductsFilters = useMemo(() => ({
+    search: search || undefined,
+    sku: sku || undefined,
     minPrice,
     maxPrice,
-    startDate,
-    endDate,
-    catalogFilter,
-  ]);
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+    page,
+    pageSize,
+    catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+    searchLanguage: searchLanguage || undefined,
+  }), [search, sku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
 
-  const convertedMinPrice = useMemo(
-    () => convertPriceFilterToBase(minPrice, currencyCode, priceGroups),
-    [minPrice, currencyCode, priceGroups],
-  );
-
-  const convertedMaxPrice = useMemo(
-    () => convertPriceFilterToBase(maxPrice, currencyCode, priceGroups),
-    [maxPrice, currencyCode, priceGroups],
-  );
-
-  const filters = useMemo(
-    () => ({
-      search: debouncedSearch,
-      sku: debouncedSku,
-      minPrice: convertedMinPrice,
-      maxPrice: convertedMaxPrice,
-      startDate,
-      endDate,
-      page,
-      pageSize,
-      catalogId: catalogFilter === "all" ? undefined : catalogFilter,
-      searchLanguage,
-    }),
-    [
-      debouncedSearch,
-      debouncedSku,
-      convertedMinPrice,
-      convertedMaxPrice,
-      startDate,
-      endDate,
-      page,
-      pageSize,
-      catalogFilter,
-      searchLanguage,
-    ],
-  );
-
-  // TanStack Query for products and count
-  const productsQuery = useProductsQuery(filters, {
-    enabled: preferencesLoaded && initialSyncComplete && filters.page !== undefined && filters.pageSize !== undefined,
-  });
-
-  const countQuery = useProductsCountQuery(filters, {
-    enabled: preferencesLoaded && initialSyncComplete && filters.page !== undefined && filters.pageSize !== undefined,
-  });
-
-  const refetchProducts = useCallback(async (): Promise<void> => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["products"] }),
-      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-    ]);
-  }, [queryClient]);
-
-  const loadError = useMemo(() => {
-    if (!productsQuery.error && !countQuery.error) return null;
-    const error = productsQuery.error || countQuery.error;
-    return error instanceof Error ? error.message : "Failed to load products";
-  }, [productsQuery.error, countQuery.error]);
+  const productsQuery = useProducts(filters, { enabled: preferencesLoaded });
+  const countQuery = useProductsCount(filters, { enabled: preferencesLoaded });
 
   const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil((countQuery.data ?? 0) / pageSize));
+    const total = countQuery.data || 0;
+    return Math.ceil(total / pageSize);
   }, [countQuery.data, pageSize]);
 
-  // Update mutations from previous hook
-  const createProductMutation = useCreateProductMutation();
-  const updateProductMutation = useUpdateProductMutation();
-  const deleteProductMutation = useDeleteProductMutation();
+  const refresh = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["products"] });
+    void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+  }, [queryClient]);
+
+  // Invalidate when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      refresh();
+    }
+  }, [refreshTrigger, refresh]);
 
   return {
-    data: productsQuery.data ?? [],
-    total: countQuery.data ?? 0,
+    data: productsQuery.data || [],
     totalPages,
     page,
     setPage,
@@ -330,12 +246,9 @@ export function useProductData({
     setEndDate,
     catalogFilter,
     setCatalogFilter,
-    loadError,
-    isLoading: productsQuery.isPending || countQuery.isPending,
+    loadError: (productsQuery.error || countQuery.error) as Error | null,
+    isLoading: productsQuery.isLoading || countQuery.isLoading,
     isFetching: productsQuery.isFetching || countQuery.isFetching,
-    refetchProducts,
-    createProductMutation,
-    updateProductMutation,
-    deleteProductMutation,
+    refresh,
   };
 }

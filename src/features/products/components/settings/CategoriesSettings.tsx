@@ -10,12 +10,8 @@ import {
   FolderPlus,
 } from "lucide-react";
 
-
-
-
-import type { ProductCategoryWithChildren, Catalog } from "@/features/products/types";
-
-
+import type { ProductCategoryWithChildren, Catalog, ProductCategory } from "@/features/products/types";
+import { useSaveCategoryMutation, useDeleteCategoryMutation } from "@/features/products/hooks/useProductSettingsQueries";
 
 type CategoriesSettingsProps = {
   loading: boolean;
@@ -64,6 +60,14 @@ function CategoryNode({
     if (draggedId === category.id) return false;
 
     // Check if the target category is a descendant of the dragged category
+    const isDescendant = (
+      cat: ProductCategoryWithChildren,
+      targetId: string
+    ): boolean => {
+      if (cat.id === targetId) return true;
+      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
+    };
+
     const findCategory = (
       cats: ProductCategoryWithChildren[],
       id: string
@@ -74,14 +78,6 @@ function CategoryNode({
         if (found) return found;
       }
       return null;
-    };
-
-    const isDescendant = (
-      cat: ProductCategoryWithChildren,
-      targetId: string
-    ): boolean => {
-      if (cat.id === targetId) return true;
-      return cat.children.some((child: ProductCategoryWithChildren): boolean => isDescendant(child, targetId));
     };
 
     const draggedCategory: ProductCategoryWithChildren | null = findCategory(allCategories, draggedId);
@@ -233,7 +229,10 @@ export function CategoriesSettings({
     parentId: null as string | null,
     catalogId: "",
   });
-  const [saving, setSaving] = useState<boolean>(false);
+
+  const saveCategoryMutation = useSaveCategoryMutation();
+  const deleteCategoryMutation = useDeleteCategoryMutation();
+
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
   const [modalCategories, setModalCategories] = useState<ProductCategoryWithChildren[]>([]);
   const [modalLoadingCategories, setModalLoadingCategories] = useState<boolean>(false);
@@ -311,15 +310,7 @@ export function CategoriesSettings({
     if (!window.confirm(message)) return;
 
     try {
-      const res: Response = await fetch(`/api/products/categories/${category.id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const data: { error?: string } = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to delete category");
-      }
-
+      await deleteCategoryMutation.mutateAsync({ id: category.id, catalogId: selectedCatalogId });
       toast("Category deleted successfully", { variant: "success" });
       onRefresh();
     } catch (error) {
@@ -335,44 +326,25 @@ export function CategoriesSettings({
       return;
     }
 
-    const targetCatalogId: string | null = formData.catalogId || selectedCatalogId;
+    const targetCatalogId: string | undefined = (formData.catalogId || selectedCatalogId) || undefined;
     if (!targetCatalogId && !editingCategory) {
       toast("Please select a catalog first", { variant: "error" });
       return;
     }
 
-    setSaving(true);
     try {
-      const endpoint: string = editingCategory
-        ? `/api/products/categories/${editingCategory.id}`
-        : "/api/products/categories";
+      const payload: Partial<ProductCategory> = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        color: formData.color,
+        parentId: formData.parentId ?? null,
+        catalogId: targetCatalogId!,
+      };
 
-      const payload: { name: string; description: string | null; color: string; parentId: string | null; catalogId: string | null } = editingCategory
-        ? {
-            name: formData.name.trim(),
-            description: formData.description.trim() || null,
-            color: formData.color,
-            parentId: formData.parentId ?? null,
-            catalogId: targetCatalogId,
-          }
-        : {
-            name: formData.name.trim(),
-            description: formData.description.trim() || null,
-            color: formData.color,
-            parentId: formData.parentId ?? null,
-            catalogId: targetCatalogId,
-          };
-
-      const res: Response = await fetch(endpoint, {
-        method: editingCategory ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      await saveCategoryMutation.mutateAsync({
+        id: editingCategory?.id,
+        data: payload,
       });
-
-      if (!res.ok) {
-        const data: { error?: string } = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to save category");
-      }
 
       toast(
         editingCategory
@@ -386,8 +358,6 @@ export function CategoriesSettings({
       const message: string =
         error instanceof Error ? error.message : "Failed to save category";
       toast(message, { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -395,16 +365,10 @@ export function CategoriesSettings({
     if (draggedCatId === targetId) return;
 
     try {
-      const res: Response = await fetch(`/api/products/categories/${draggedCatId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parentId: targetId }),
+      await saveCategoryMutation.mutateAsync({
+        id: draggedCatId,
+        data: { parentId: targetId, catalogId: selectedCatalogId || undefined },
       });
-
-      if (!res.ok) {
-        const data: { error?: string } = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to move category");
-      }
 
       toast("Category moved successfully", { variant: "success" });
       onRefresh();
@@ -523,7 +487,7 @@ export function CategoriesSettings({
     if (!formData.parentId) return;
     const stillValid: boolean = parentOptions.some((opt: { id: string }): boolean => opt.id === formData.parentId);
     if (!stillValid) {
-      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, parentId: null }));
+      setFormData((prev) => ({ ...prev, parentId: null }));
     }
   }, [showModal, parentOptions, formData.parentId]);
 
@@ -665,7 +629,7 @@ export function CategoriesSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, name: e.target.value }))
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
                   placeholder="Category name"
                 />
@@ -678,7 +642,7 @@ export function CategoriesSettings({
                   rows={3}
                   value={formData.description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
+                    setFormData((prev) => ({
                       ...prev,
                       description: e.target.value,
                     }))
@@ -694,7 +658,7 @@ export function CategoriesSettings({
                   value={formData.catalogId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
                     const nextCatalogId: string = e.target.value;
-                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
+                    setFormData((prev) => ({
                       ...prev,
                       catalogId: nextCatalogId,
                       parentId:
@@ -718,7 +682,7 @@ export function CategoriesSettings({
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.parentId ?? ""}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({
+                    setFormData((prev) => ({
                       ...prev,
                       parentId: e.target.value ? e.target.value : null,
                     }))
@@ -754,7 +718,7 @@ export function CategoriesSettings({
                     className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, color: e.target.value }))
+                      setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                   />
                   <Input
@@ -762,7 +726,7 @@ export function CategoriesSettings({
                     className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: { name: string; description: string; color: string; parentId: string | null; catalogId: string }): { name: string; description: string; color: string; parentId: string | null; catalogId: string } => ({ ...prev, color: e.target.value }))
+                      setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                     placeholder="#10b981"
                   />
@@ -781,9 +745,9 @@ export function CategoriesSettings({
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={(): void => { void handleSave(); }}
-                  disabled={saving}
+                  disabled={saveCategoryMutation.isPending}
                 >
-                  {saving ? "Saving..." : "Save"}
+                  {saveCategoryMutation.isPending ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>

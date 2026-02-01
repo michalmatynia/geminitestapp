@@ -89,6 +89,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         source: "ai-paths.db-query",
       });
     }
+    const data = parsed.data as z.infer<typeof querySchema>;
     const {
       collection,
       query,
@@ -97,7 +98,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       limit = 20,
       single = false,
       idType,
-    } = parsed.data;
+    } = data;
 
     if (!ALLOWED_COLLECTIONS.has(collection)) {
       return createErrorResponse(internalError("Collection not allowlisted"), {

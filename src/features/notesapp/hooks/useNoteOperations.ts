@@ -17,8 +17,6 @@ export function useNoteOperations({
   selectedNotebookId,
   notesRef,
   folderTreeRef,
-  fetchNotes,
-  fetchFolderTree,
   setUndoStack,
   toast,
   setSelectedFolderId,
@@ -70,24 +68,6 @@ export function useNoteOperations({
     if (!confirm("Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.")) return;
 
     try {
-      // Note: The API handles recursive delete if not specified? 
-      // The original code used `?recursive=true`.
-      // The mutation wrapper `useDeleteCategoryMutation` calls DELETE /api/notes/categories/:id
-      // We might need to ensure the mutation supports query params or the API defaults to recursive?
-      // Looking at `useNoteData.ts`, `useDeleteCategoryMutation` does NOT support params.
-      // I should update `useDeleteCategoryMutation` or assume API handles it.
-      // Let's assume for now we use the mutation as is, but if the API requires ?recursive=true, 
-      // we might need to modify the mutation in `useNoteData.ts`.
-      // The original fetch was: `/api/notes/categories/${folderId}?recursive=true`
-      
-      // I will assume for now I should modify the mutation or just use fetch here if mutation is too rigid.
-      // But let's check `useDeleteCategoryMutation` implementation I wrote.
-      // It takes `id`.
-      
-      // I'll stick to mutation for consistency, but if recursive delete fails, I know why.
-      // Actually, standardizing on mutation is better. 
-      // If the API requires the param, I should fix the mutation.
-      // For now, I'll use the mutation.
       await deleteCategoryMutation.mutateAsync(folderId);
       toast("Folder deleted successfully");
     } catch (error: unknown) {
@@ -117,14 +97,14 @@ export function useNoteOperations({
 
   const handleDuplicateNote = useCallback(async (noteId: string): Promise<void> => {
     try {
-      // Keep using fetch for reading current note state to duplicate
-      const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
-      if (!response.ok) {
-        toast("Failed to fetch note details for duplication", { variant: "error" });
-        return;
-      }
-
-      const note = (await response.json()) as NoteWithRelations;
+      const note = await queryClient.fetchQuery<NoteWithRelations>({
+        queryKey: ["notes", noteId],
+        queryFn: async () => {
+          const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+          if (!response.ok) throw new Error("Failed to fetch note");
+          return response.json();
+        }
+      });
 
       const baseTitle = note.title.replace(/\s*\(\d+\)$/, "");
       let newTitle = `${baseTitle} (1)`;
@@ -160,7 +140,7 @@ export function useNoteOperations({
       console.error("Failed to duplicate note:", error);
       toast("An unexpected error occurred while duplicating the note", { variant: "error" });
     }
-  }, [selectedNotebookId, notesRef, createNoteMutation, toast]);
+  }, [selectedNotebookId, notesRef, createNoteMutation, toast, queryClient]);
 
   const handleDeleteNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
     if (!confirm("Are you sure you want to delete this note?")) return;
@@ -291,18 +271,24 @@ export function useNoteOperations({
     if (!sourceNoteId || !targetNoteId) return;
     if (sourceNoteId === targetNoteId) return;
     try {
-      const [sourceRes, targetRes] = await Promise.all([
-        fetch(`/api/notes/${sourceNoteId}`, { cache: "no-store" }),
-        fetch(`/api/notes/${targetNoteId}`, { cache: "no-store" }),
+      const [sourceNote, targetNote] = await Promise.all([
+        queryClient.fetchQuery<NoteWithRelations>({
+          queryKey: ["notes", sourceNoteId],
+          queryFn: async () => {
+            const res = await fetch(`/api/notes/${sourceNoteId}`, { cache: "no-store" });
+            if (!res.ok) throw new Error("Failed to fetch source note");
+            return res.json();
+          }
+        }),
+        queryClient.fetchQuery<NoteWithRelations>({
+          queryKey: ["notes", targetNoteId],
+          queryFn: async () => {
+            const res = await fetch(`/api/notes/${targetNoteId}`, { cache: "no-store" });
+            if (!res.ok) throw new Error("Failed to fetch target note");
+            return res.json();
+          }
+        }),
       ]);
-      if (!sourceRes.ok || !targetRes.ok) {
-        toast("Failed to link notes", { variant: "error" });
-        return;
-      }
-      const [sourceNote, targetNote] = (await Promise.all([
-        sourceRes.json(),
-        targetRes.json(),
-      ])) as [NoteWithRelations, NoteWithRelations];
 
       const sourceRelatedIds =
         sourceNote.relationsFrom?.map((rel: { targetNote: { id: string } }) => rel.targetNote.id) || [];
@@ -323,24 +309,12 @@ export function useNoteOperations({
         updateNoteMutation.mutateAsync({ id: targetNoteId, relatedNoteIds: nextTargetIds }),
       ]);
 
-      if (selectedNote && (selectedNote.id === sourceNoteId || selectedNote.id === targetNoteId)) {
-        // Invalidate specific note? The mutation already invalidates "notes", noteId.
-        // We might want to refresh the selected note specifically if it was one of them?
-        // But invalidation should trigger refetch if `useNote(selectedNote.id)` is used.
-        // AdminNotesPage uses `useNoteData` which uses `useNotes` (list).
-        // It also uses `handleSelectNoteFromTree` which fetches manual details?
-        
-        // Wait, `AdminNotesPage` has `handleSelectNoteFromTree` which does manual fetch.
-        // I should eventually refactor that too, but for now, I'll let it be.
-        // But here in operations, I can just invalidate.
-      }
-
       toast("Notes linked");
     } catch (error: unknown) {
       console.error("Failed to relate notes:", error);
       toast("Failed to link notes", { variant: "error" });
     }
-  }, [selectedNote, updateNoteMutation, toast]);
+  }, [updateNoteMutation, toast, queryClient]);
 
   return {
     handleCreateFolder,

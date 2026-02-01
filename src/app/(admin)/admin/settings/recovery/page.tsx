@@ -37,7 +37,7 @@ export default function TransientRecoverySettingsPage() {
 
   useEffect(() => {
     const loadConstants = async () => {
-      const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import("@/features/observability/server");
+      const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } = await import("@/features/observability/constants");
       setConstants({ DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS });
     };
     loadConstants();

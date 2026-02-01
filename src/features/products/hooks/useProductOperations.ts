@@ -3,6 +3,7 @@
 
 import { useToast } from "@/shared/ui";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { ProductWithImages } from "@/features/products/types";
 import type { ProductDraft } from "@/features/products/types/drafts";
@@ -11,6 +12,7 @@ export function useProductOperations(
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
 ) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // UI State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -34,20 +36,25 @@ export function useProductOperations(
       return;
     }
     try {
-      const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        setActionError(payload?.error || "Failed to validate SKU");
-        return;
-      }
-      const products = (await res.json()) as ProductWithImages[];
+      const products = await queryClient.fetchQuery({
+        queryKey: ["products", { sku }],
+        queryFn: async () => {
+          const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
+          if (!res.ok) {
+            const payload = (await res.json()) as { error?: string };
+            throw new Error(payload?.error || "Failed to validate SKU");
+          }
+          return (await res.json()) as ProductWithImages[];
+        }
+      });
+      
       if (products.some((p) => p.sku === sku)) {
         setActionError("SKU already exists.");
         return;
       }
     } catch (error) {
       console.error("Failed to validate SKU:", error);
-      setActionError("Failed to validate SKU. Please try again.");
+      setActionError(error instanceof Error ? error.message : "Failed to validate SKU. Please try again.");
       return;
     }
     setInitialSku(sku);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast, Button, Input, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, ModalShell } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,24 +10,22 @@ import {
   AgentSnapshot,
 } from "@/shared/types/chatbot";
 import { AiPathRunRecord } from "@/shared/types/ai-paths";
+import {
+  useAgentRuns,
+  useAgentSnapshots,
+  useAgentLogs,
+  useAgentAudits,
+  useDeleteAgentRunMutation,
+  useDeleteCompletedAgentRunsMutation,
+} from "../hooks/useAgentRunsQueries";
 
 
 export default function AgentRunsPage(): React.ReactElement {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [bulkDeletingAgents, setBulkDeletingAgents] = useState(false);
-  const [agentRuns, setAgentRuns] = useState<AiPathRunRecord[]>([]);
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
     null
   );
-  const [agentSnapshot, setAgentSnapshot] = useState<AgentSnapshot | null>(
-    null
-  );
-  const [agentLogs, setAgentLogs] = useState<AgentBrowserLog[]>([]);
-  const [agentAudits, setAgentAudits] = useState<AgentAuditLog[]>([]);
   const [expandedAuditIds, setExpandedAuditIds] = useState<
     Record<string, boolean>
   >({});
@@ -35,46 +33,30 @@ export default function AgentRunsPage(): React.ReactElement {
     "idle" | "connecting" | "live" | "error"
   >("idle");
 
-  const loadAgentRuns = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/agentcreator/agent");
-      if (!res.ok) {
-        throw new Error("Failed to load agent runs.");
-      }
-      const data = (await res.json()) as { runs?: AiPathRunRecord[] };
-      setAgentRuns(data.runs ?? []);
-      setError(null);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load agent runs.";
-      setError(message);
-      toast(message, { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  // Queries
+  const { data: agentRuns = [], isLoading: loading, error: queryError, refetch: loadAgentRuns } = useAgentRuns();
+  
+  const { data: agentSnapshots = [] } = useAgentSnapshots(selectedAgentRunId);
+  const { data: agentBrowserLogs = [] } = useAgentLogs(selectedAgentRunId, { refetchInterval: 5000 });
+  const { data: agentAuditLogs = [] } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
 
-  useEffect(() => {
-    void loadAgentRuns();
-  }, [loadAgentRuns]);
+  const agentSnapshot = agentSnapshots[0] ?? null;
+
+  // Mutations
+  const deleteMutation = useDeleteAgentRunMutation();
+  const bulkDeleteMutation = useDeleteCompletedAgentRunsMutation();
+
+  const error = queryError instanceof Error ? queryError.message : (queryError || null);
 
   useEffect(() => {
     if (!selectedAgentRunId) return;
     setExpandedAuditIds({});
-    let isMounted = true;
     setAgentStreamStatus("connecting");
     const source = new EventSource(
       `/api/agentcreator/agent/${selectedAgentRunId}/stream`
     );
-    source.onmessage = (event: MessageEvent): void => {
+    source.onmessage = (): void => {
       try {
-        const payload = JSON.parse(event.data as string) as {
-          snapshot?: AgentSnapshot | null;
-        };
-        if (payload.snapshot) {
-          setAgentSnapshot(payload.snapshot);
-        }
         setAgentStreamStatus("live");
       } catch {
         setAgentStreamStatus("error");
@@ -85,69 +67,8 @@ export default function AgentRunsPage(): React.ReactElement {
       source.close();
     };
 
-    const loadSnapshot = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          `/api/agentcreator/agent/${selectedAgentRunId}/snapshots`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to load agent snapshots.");
-        }
-        const data = (await res.json()) as { snapshots?: AgentSnapshot[] };
-        if (isMounted) {
-          setAgentSnapshot(data.snapshots?.[0] ?? null);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    const loadLogs = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          `/api/agentcreator/agent/${selectedAgentRunId}/logs`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to load agent logs.");
-        }
-        const data = (await res.json()) as { logs?: AgentBrowserLog[] };
-        if (isMounted) {
-          setAgentLogs(data.logs ?? []);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    const loadAudits = async (): Promise<void> => {
-      try {
-        const res = await fetch(
-          `/api/agentcreator/agent/${selectedAgentRunId}/audits`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to load agent steps.");
-        }
-        const data = (await res.json()) as { audits?: AgentAuditLog[] };
-        if (isMounted) {
-          setAgentAudits(data.audits ?? []);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    void loadSnapshot();
-    void loadLogs();
-    void loadAudits();
-    const logTimer = setInterval(() => {
-      void loadLogs();
-      void loadAudits();
-    }, 5000);
-
     return (): void => {
-      isMounted = false;
       source.close();
-      clearInterval(logTimer);
     };
   }, [selectedAgentRunId]);
 
@@ -166,58 +87,38 @@ export default function AgentRunsPage(): React.ReactElement {
   }, [agentRuns, query]);
 
   const deleteAgentRun = async (runId: string, force: boolean = false): Promise<void> => {
-    setDeletingId(runId);
     try {
       const confirmed = window.confirm(
         "Delete this agent run and its files permanently? This cannot be undone."
       );
       if (!confirmed) return;
-      const url = force
-        ? `/api/agentcreator/agent/${runId}?force=true`
-        : `/api/agentcreator/agent/${runId}`;
-      const res = await fetch(url, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to delete agent run.");
-      }
+      
+      await deleteMutation.mutateAsync({ runId, force });
+      
       if (selectedAgentRunId === runId) {
         closeAgentModal();
       }
-      await loadAgentRuns();
       toast("Agent run deleted", { variant: "success" });
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete agent run.";
       toast(message, { variant: "error" });
-    } finally {
-      setDeletingId(null);
     }
   };
 
   const deleteCompletedAgentRuns = async (): Promise<void> => {
-    setBulkDeletingAgents(true);
     try {
       const confirmed = window.confirm(
         "Delete all completed agent runs and their files? This cannot be undone."
       );
       if (!confirmed) return;
-      const res = await fetch("/api/agentcreator/agent?scope=terminal", {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to delete agent runs.");
-      }
-      await loadAgentRuns();
+      
+      await bulkDeleteMutation.mutateAsync();
       toast("Completed agent runs deleted", { variant: "success" });
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to delete agent runs.";
       toast(message, { variant: "error" });
-    } finally {
-      setBulkDeletingAgents(false);
     }
   };
 
@@ -227,46 +128,46 @@ export default function AgentRunsPage(): React.ReactElement {
   );
   const sessionContextLogs = useMemo(
     () =>
-      agentLogs.filter((log: AgentBrowserLog) => log.message === "Captured session context."),
-    [agentLogs]
+      agentBrowserLogs.filter((log: AgentBrowserLog) => log.message === "Captured session context."),
+    [agentBrowserLogs]
   );
   const loginCandidateLogs = useMemo(
     () =>
-      agentLogs.filter((log: AgentBrowserLog) => log.message === "Inferred login candidates."),
-    [agentLogs]
+      agentBrowserLogs.filter((log: AgentBrowserLog) => log.message === "Inferred login candidates."),
+    [agentBrowserLogs]
   );
   const plannerContextAudits = useMemo(
     () =>
-      agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "planner-context"),
-    [agentAudits]
+      agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === "planner-context"),
+    [agentAuditLogs]
   );
   const planAudits = useMemo(
-    () => agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan"),
-    [agentAudits]
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan"),
+    [agentAuditLogs]
   );
   const planUpdateAudits = useMemo(
     () =>
-      agentAudits.filter((audit: AgentAuditLog) => {
+      agentAuditLogs.filter((audit: AgentAuditLog) => {
         const auditType =
           typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
         return ["plan", "plan-update"].includes(auditType);
       }),
-    [agentAudits]
+    [agentAuditLogs]
   );
   const branchAudits = useMemo(
-    () => agentAudits.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan-branch"),
-    [agentAudits]
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === "plan-branch"),
+    [agentAuditLogs]
   );
   const replanAudits = useMemo(
     () =>
-      agentAudits.filter((audit: AgentAuditLog) => {
+      agentAuditLogs.filter((audit: AgentAuditLog) => {
         const auditType =
           typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
         return ["plan-replan", "plan-adapt", "self-check-replan"].includes(
           auditType
         );
       }),
-    [agentAudits]
+    [agentAuditLogs]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
   const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
@@ -313,9 +214,6 @@ export default function AgentRunsPage(): React.ReactElement {
 
   const closeAgentModal = (): void => {
     setSelectedAgentRunId(null);
-    setAgentSnapshot(null);
-    setAgentLogs([]);
-    setAgentAudits([]);
     setAgentStreamStatus("idle");
   };
 
@@ -356,9 +254,9 @@ export default function AgentRunsPage(): React.ReactElement {
               variant="destructive"
               size="sm"
               onClick={() => void deleteCompletedAgentRuns()}
-              disabled={bulkDeletingAgents}
+              disabled={bulkDeleteMutation.isPending}
             >
-              {bulkDeletingAgents
+              {bulkDeleteMutation.isPending
                 ? "Deleting agent runs..."
                 : "Delete completed agent runs"}
             </Button>
@@ -417,19 +315,19 @@ export default function AgentRunsPage(): React.ReactElement {
                     <Button
                       variant="destructive"
                       size="sm"
-                      disabled={deletingId === job.id}
+                      disabled={deleteMutation.isPending}
                       onClick={() => void deleteAgentRun(job.id)}
                     >
-                      {deletingId === job.id ? "Deleting..." : "Delete"}
+                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
                     </Button>
                     {job.status === "running" ? (
                       <Button
                         variant="destructive"
                         size="sm"
-                        disabled={deletingId === job.id}
+                        disabled={deleteMutation.isPending}
                         onClick={() => void deleteAgentRun(job.id, true)}
                       >
-                        {deletingId === job.id ? "Deleting..." : "Force delete"}
+                        {deleteMutation.isPending ? "Deleting..." : "Force delete"}
                       </Button>
                     ) : null}
                   </div>
@@ -884,10 +782,10 @@ export default function AgentRunsPage(): React.ReactElement {
                   <div className="mt-4 rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Agent steps</p>
                     <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {agentAudits.length === 0 ? (
+                      {agentAuditLogs.length === 0 ? (
                         <p className="text-gray-500">No steps yet.</p>
                       ) : (
-                        agentAudits.map((step: AgentAuditLog) => (
+                        agentAuditLogs.map((step: AgentAuditLog) => (
                           <div
                             key={step.id}
                             className="rounded-md border border-border px-2 py-1"
@@ -934,10 +832,10 @@ export default function AgentRunsPage(): React.ReactElement {
                   <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Logs</p>
                     <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {agentLogs.length === 0 ? (
+                      {agentBrowserLogs.length === 0 ? (
                         <p className="text-gray-500">No logs yet.</p>
                       ) : (
-                        agentLogs.map((log: AgentBrowserLog) => (
+                        agentBrowserLogs.map((log: AgentBrowserLog) => (
                           <p key={log.id}>
                             [{log.level}] {log.message}
                           </p>

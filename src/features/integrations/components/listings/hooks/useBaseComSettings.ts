@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import type { Template, BaseInventory } from "@/features/data-import-export";
+import {
+  useExportTemplates,
+  useActiveExportTemplate,
+  useDefaultExportInventory,
+  useBaseInventories,
+} from "@/features/integrations/hooks/useIntegrationQueries";
+import {
+  useUpdatePreferredTemplate,
+  useUpdatePreferredInventory,
+} from "@/features/integrations/hooks/useIntegrationMutations";
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping
@@ -17,158 +27,59 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: Dispatch<SetStateAction<boolean>>;
 } {
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
-  const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
-  const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
-  const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
-  const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
-  const previousConnectionId = useRef<string>("");
 
-  // Load templates when connection changes
-  useEffect((): void => {
-    if (!isBaseComIntegration || !connectionId) {
-      setTemplates([]);
-      return;
-    }
+  // Queries
+  const templatesQuery = useExportTemplates();
+  const activeTemplateQuery = useActiveExportTemplate();
+  const defaultInventoryQuery = useDefaultExportInventory();
+  const inventoriesQuery = useBaseInventories(connectionId, isBaseComIntegration);
 
-    if (previousConnectionId.current === connectionId) return;
-    previousConnectionId.current = connectionId;
+  // Mutations
+  const updatePreferredTemplateMutation = useUpdatePreferredTemplate();
+  const updatePreferredInventoryMutation = useUpdatePreferredInventory();
 
-    void (async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/export-templates");
-        if (!res.ok) throw new Error("Failed to load templates");
-        const data = (await res.json()) as Template[];
-        setTemplates(Array.isArray(data) ? data : []);
-        // Load preferred template
-        try {
-          const prefRes = await fetch("/api/integrations/exports/base/active-template");
-          if (prefRes.ok) {
-            const prefData = (await prefRes.json()) as { templateId?: string | null };
-            setPreferredTemplateId(prefData.templateId || null);
-            setSelectedTemplateId(prefData.templateId || "none");
-          }
-        } catch {
-          // Preference load failed, not critical
-        }
-      } catch (err: unknown) {
-        console.error("Failed to load templates:", err);
-        setTemplates([]);
-      }
-    })();
-  }, [isBaseComIntegration, connectionId]);
-
-  // Load inventories when connection changes
-  useEffect((): void => {
-    if (!isBaseComIntegration || !connectionId) {
-      setInventories([]);
-      setLoadingInventories(false);
-      return;
-    }
-
-    setLoadingInventories(true);
-    void (async (): Promise<void> => {
-      try {
-        const res = await fetch("/api/integrations/imports/base", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "inventories",
-            connectionId: connectionId,
-          }),
-        });
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error(`Failed to load inventories (${res.status}):`, errorText);
-          setInventories([]);
-          return;
-        }
-        const data = (await res.json()) as {
-          inventories?: BaseInventory[];
-          error?: string;
-        };
-        if (data.error) {
-          console.error("Failed to load inventories:", data.error);
-          setInventories([]);
-          return;
-        }
-        setInventories(Array.isArray(data.inventories) ? data.inventories : []);
-
-        // Load preferred inventory
-        try {
-          const prefRes = await fetch("/api/integrations/exports/base/default-inventory");
-          if (prefRes.ok) {
-            const prefData = (await prefRes.json()) as { inventoryId?: string | null };
-            setPreferredInventoryId(prefData.inventoryId || null);
-            if (prefData.inventoryId) setSelectedInventoryId(prefData.inventoryId);
-          }
-        } catch {
-          // Preference load failed, not critical
-        }
-      } catch (err: unknown) {
-        console.error("Failed to load inventories:", err);
-        setInventories([]);
-      } finally {
-        setLoadingInventories(false);
-      }
-    })();
-  }, [isBaseComIntegration, connectionId]);
+  const templates = templatesQuery.data ?? [];
+  const inventories = inventoriesQuery.data ?? [];
+  const preferredTemplateId = activeTemplateQuery.data?.templateId ?? null;
+  const preferredInventoryId = defaultInventoryQuery.data?.inventoryId ?? null;
 
   // Auto-select preferred template
   useEffect((): void => {
-    if (!isBaseComIntegration) return;
-    if (!preferredTemplateId) return;
-    if (selectedTemplateId !== "none") return;
-    setSelectedTemplateId(preferredTemplateId);
+    if (!isBaseComIntegration || !preferredTemplateId) return;
+    if (selectedTemplateId === "none") {
+      setSelectedTemplateId(preferredTemplateId);
+    }
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
   // Auto-select preferred inventory or first available
   useEffect((): void => {
-    if (!isBaseComIntegration) return;
-    if (selectedInventoryId) return;
-    if (!inventories.length) return;
-    if (loadingInventories) return;
+    if (!isBaseComIntegration || selectedInventoryId || inventories.length === 0 || inventoriesQuery.isLoading) return;
+    
     if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
       setSelectedInventoryId(preferredInventoryId);
-      return;
+    } else {
+      setSelectedInventoryId(inventories[0]?.id ?? "");
     }
-    setSelectedInventoryId(inventories[0]?.id ?? "");
-  }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, loadingInventories]);
+  }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery.isLoading]);
 
   // Sync template preference when selected changes
   useEffect((): void => {
     if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === "none") return;
-    void (async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/exports/base/templates/preferred", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ templateId: selectedTemplateId }),
-        });
-      } catch {
-        // Silent failure - preference save shouldn't block UI
-      }
-    })();
-  }, [isBaseComIntegration, selectedTemplateId]);
+    if (selectedTemplateId !== preferredTemplateId) {
+      void updatePreferredTemplateMutation.mutateAsync({ templateId: selectedTemplateId });
+    }
+  }, [isBaseComIntegration, selectedTemplateId, preferredTemplateId]);
 
   // Sync inventory preference when selected changes
   useEffect((): void => {
-    if (!isBaseComIntegration || !selectedInventoryId) return;
-    void (async (): Promise<void> => {
-      try {
-        await fetch("/api/integrations/exports/base/inventories/preferred", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inventoryId: selectedInventoryId, connectionId }),
-        });
-      } catch {
-        // Silent failure - preference save shouldn't block UI
-      }
-    })();
-  }, [isBaseComIntegration, selectedInventoryId, connectionId]);
+    if (!isBaseComIntegration || !selectedInventoryId || !connectionId) return;
+    if (selectedInventoryId !== preferredInventoryId) {
+      void updatePreferredInventoryMutation.mutateAsync({ inventoryId: selectedInventoryId, connectionId });
+    }
+  }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId]);
 
   return {
     templates,
@@ -177,7 +88,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     inventories,
     selectedInventoryId,
     setSelectedInventoryId,
-    loadingInventories,
+    loadingInventories: inventoriesQuery.isLoading,
     allowDuplicateSku,
     setAllowDuplicateSku,
   };

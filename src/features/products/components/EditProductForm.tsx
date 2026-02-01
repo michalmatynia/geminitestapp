@@ -1,8 +1,13 @@
 "use client";
 import { Button } from "@/shared/ui";
 import { useRouter } from "next/navigation";
-import { FileManager } from "@/features/files/components/FileManager";
+import dynamic from "next/dynamic";
 import ProductForm from "@/features/products/components/ProductForm";
+
+const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+  ssr: false,
+  loading: () => <div>Loading file manager...</div>
+});
 
 import {
   ProductFormProvider,

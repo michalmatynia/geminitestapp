@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from "react";
 import type { Template, BaseInventory } from "@/features/data-import-export";
 import {
   useExportTemplates,
@@ -30,6 +30,8 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
+  const hasInitializedTemplate = useRef(false);
+  const hasInitializedInventory = useRef(false);
 
   // Queries
   const templatesQuery = useExportTemplates();
@@ -42,26 +44,29 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const updatePreferredInventoryMutation = useUpdatePreferredInventory();
 
   const templates = templatesQuery.data ?? [];
-  const inventories = inventoriesQuery.data ?? [];
+  const inventories = useMemo(() => inventoriesQuery.data ?? [], [inventoriesQuery.data]);
   const preferredTemplateId = activeTemplateQuery.data?.templateId ?? null;
   const preferredInventoryId = defaultInventoryQuery.data?.inventoryId ?? null;
 
   // Auto-select preferred template
   useEffect((): void => {
-    if (!isBaseComIntegration || !preferredTemplateId) return;
+    if (!isBaseComIntegration || !preferredTemplateId || hasInitializedTemplate.current) return;
     if (selectedTemplateId === "none") {
       setSelectedTemplateId(preferredTemplateId);
+      hasInitializedTemplate.current = true;
     }
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
   // Auto-select preferred inventory or first available
   useEffect((): void => {
-    if (!isBaseComIntegration || selectedInventoryId || inventories.length === 0 || inventoriesQuery.isLoading) return;
+    if (!isBaseComIntegration || selectedInventoryId || inventories.length === 0 || inventoriesQuery.isLoading || hasInitializedInventory.current) return;
     
     if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
       setSelectedInventoryId(preferredInventoryId);
+      hasInitializedInventory.current = true;
     } else {
       setSelectedInventoryId(inventories[0]?.id ?? "");
+      hasInitializedInventory.current = true;
     }
   }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery.isLoading]);
 
@@ -71,7 +76,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (selectedTemplateId !== preferredTemplateId) {
       void updatePreferredTemplateMutation.mutateAsync({ templateId: selectedTemplateId });
     }
-  }, [isBaseComIntegration, selectedTemplateId, preferredTemplateId]);
+  }, [isBaseComIntegration, selectedTemplateId, preferredTemplateId, updatePreferredTemplateMutation]);
 
   // Sync inventory preference when selected changes
   useEffect((): void => {
@@ -79,7 +84,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (selectedInventoryId !== preferredInventoryId) {
       void updatePreferredInventoryMutation.mutateAsync({ inventoryId: selectedInventoryId, connectionId });
     }
-  }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId]);
+  }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId, updatePreferredInventoryMutation]);
 
   return {
     templates,

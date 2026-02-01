@@ -70,13 +70,13 @@ export default function SelectProductForListingModal({
   )?.name || "";
 
   const exportMutation = useMutation({
-    mutationFn: async ({ productId, payload }: { productId: string; payload: any }) => {
+    mutationFn: async ({ productId, payload }: { productId: string; payload: Record<string, unknown> }): Promise<{ logs?: CapturedLog[] }> => {
       const res = await fetch(`/api/integrations/products/${productId}/export-to-base`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string; logs?: CapturedLog[] };
       if (!res.ok) {
         throw new Error(data.error || "Failed to export product");
       }
@@ -85,7 +85,7 @@ export default function SelectProductForListingModal({
   });
 
   const createListingMutation = useMutation({
-    mutationFn: async ({ productId, payload }: { productId: string; payload: any }) => {
+    mutationFn: async ({ productId, payload }: { productId: string; payload: Record<string, unknown> }): Promise<unknown> => {
       const res = await fetch(`/api/integrations/products/${productId}/listings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,7 +95,7 @@ export default function SelectProductForListingModal({
         const data = (await res.json()) as { error?: string };
         throw new Error(data.error || "Failed to create listing");
       }
-      return res.json();
+      return res.json() as Promise<unknown>;
     }
   });
 
@@ -145,8 +145,8 @@ export default function SelectProductForListingModal({
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to list product");
-      if (err instanceof Error && (err as any).logs) {
-        setExportLogs((err as any).logs);
+      if (err instanceof Error && (err as { logs?: CapturedLog[] }).logs) {
+        setExportLogs((err as { logs: CapturedLog[] }).logs);
       }
     } finally {
       setSubmitting(false);

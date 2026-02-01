@@ -1,9 +1,11 @@
 "use client";
 import { ModalShell, Button, AppModal } from "@/shared/ui";
+import dynamic from "next/dynamic";
 
-
-
-import { FileManager } from "@/features/files/components/FileManager";
+const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+  ssr: false,
+  loading: () => <div>Loading file manager...</div>
+});
 import ProductForm from "@/features/products/components/ProductForm";
 import { ProductListingsModal } from "@/features/integrations/components/listings/ProductListingsModal";
 import { ListProductModal } from "@/features/integrations/components/listings/ListProductModal";

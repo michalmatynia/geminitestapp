@@ -4,8 +4,13 @@ import React, { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
-import { FileManager } from "@/features/files/components/FileManager";
+import dynamic from "next/dynamic";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
+
+const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
+  ssr: false,
+  loading: () => <div>Loading file manager...</div>
+});
 
 interface MediaLibraryPanelProps {
   open: boolean;

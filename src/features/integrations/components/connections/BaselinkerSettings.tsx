@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
 import { useSettings, useUpdateSetting } from "@/shared/hooks/useSettings";
 
@@ -26,12 +26,14 @@ export function BaselinkerSettings({
   
   const [syncIntervalMinutes, setSyncIntervalMinutes] = useState("10");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (settingsQuery.data) {
-      const found = settingsQuery.data.find((setting) => setting.key === "base_sync_poll_interval_minutes");
+    if (settingsQuery.data && !hasInitialized.current) {
+      const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === "base_sync_poll_interval_minutes");
       if (found?.value) {
         setSyncIntervalMinutes(found.value);
+        hasInitialized.current = true;
       }
     }
   }, [settingsQuery.data]);

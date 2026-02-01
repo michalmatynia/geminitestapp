@@ -30,15 +30,15 @@ type PlaywrightSettingsFormProps = {
   onSave: () => void;
 };
 
-function DynamicPlaywrightSettingsForm(props: PlaywrightSettingsFormProps) {
+function DynamicPlaywrightSettingsForm(props: PlaywrightSettingsFormProps): React.JSX.Element {
   const [Component, setComponent] = useState<React.ComponentType<PlaywrightSettingsFormProps> | null>(null);
 
   useEffect(() => {
-    const loadComponent = async () => {
+    const loadComponent = async (): Promise<void> => {
       const { PlaywrightSettingsForm } = await import("@/features/playwright");
       setComponent(() => PlaywrightSettingsForm);
     };
-    loadComponent();
+    void loadComponent();
   }, []);
 
   if (!Component) {

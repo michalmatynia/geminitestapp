@@ -29,6 +29,38 @@ type JobMeta = {
   subEntity?: string;
 };
 
+interface JobPayload {
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+  vision?: boolean;
+  imageUrls?: string[];
+  entityType?: string;
+  entityId?: string;
+  productId?: string;
+  source?: string;
+  graph?: Record<string, unknown>;
+  context?: Record<string, unknown>;
+  prompt?: string;
+}
+
+interface JobResult {
+  visionModel?: string;
+  generationModel?: string;
+  visionOutputEnabled?: boolean;
+  generationOutputEnabled?: boolean;
+  analysisInitial?: string;
+  analysisFinal?: string;
+  analysis?: string;
+  descriptionInitial?: string;
+  descriptionFinal?: string;
+  description?: string;
+  translationModel?: string;
+  sourceLanguage?: string;
+  targetLanguages?: string[];
+  translations?: Record<string, { name?: string; description?: string }>;
+}
+
 export default function ProductAiJobsPanel({
   title = "AI Jobs",
   description = "Monitor AI, import, and export jobs across the platform.",
@@ -161,7 +193,7 @@ export default function ProductAiJobsPanel({
       meta.source,
       job.product?.name_en,
       job.product?.sku,
-    ].some((val) => val && String(val).toLowerCase().includes(searchStr));
+    ].some((val: string | null | undefined) => val && String(val).toLowerCase().includes(searchStr));
   });
 
   const aiContent = (
@@ -364,7 +396,7 @@ export default function ProductAiJobsPanel({
                   </div>
                   {((): React.ReactNode => {
                     const meta = getJobMeta(selectedJob);
-                    const payload = (meta.payload ?? {}) as any;
+                    const payload = (meta.payload ?? {}) as JobPayload;
                     const modelId = payload.modelId;
                     const temperature = payload.temperature;
                     const maxTokens = payload.maxTokens;
@@ -437,28 +469,28 @@ export default function ProductAiJobsPanel({
                   })()}
                 </div>
 
-                {selectedJob.result && (selectedJob.result.visionModel || selectedJob.result.generationModel) && (
+                {selectedJob.result && typeof selectedJob.result === 'object' && ((selectedJob.result as JobResult).visionModel || (selectedJob.result as JobResult).generationModel) && (
                   <div className="rounded-md bg-card/50 border border-border p-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedJob.result.visionModel && (
+                      {(selectedJob.result as JobResult).visionModel && (
                         <div>
                           <div className="text-blue-400 text-[10px] font-bold uppercase mb-1">Vision Model (Path 1)</div>
-                          <div className="text-white font-mono text-sm">{selectedJob.result.visionModel}</div>
-                          {selectedJob.result.visionOutputEnabled !== undefined && (
+                          <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).visionModel}</div>
+                          {(selectedJob.result as JobResult).visionOutputEnabled !== undefined && (
                             <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {selectedJob.result.visionOutputEnabled ? "Enabled" : "Disabled"}
+                              Refinement: {(selectedJob.result as JobResult).visionOutputEnabled ? "Enabled" : "Disabled"}
                             </div>
                           )}
                         </div>
                       )}
-                      {selectedJob.result.generationModel && (
+                      {(selectedJob.result as JobResult).generationModel && (
                         <div>
                           <div className="text-purple-400 text-[10px] font-bold uppercase mb-1">Generation Model (Path 2)</div>
-                          <div className="text-white font-mono text-sm">{selectedJob.result.generationModel}</div>
-                          {selectedJob.result.generationOutputEnabled !== undefined && (
+                          <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).generationModel}</div>
+                          {(selectedJob.result as JobResult).generationOutputEnabled !== undefined && (
                             <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {selectedJob.result.generationOutputEnabled ? "Enabled" : "Disabled"}
+                              Refinement: {(selectedJob.result as JobResult).generationOutputEnabled ? "Enabled" : "Disabled"}
                             </div>
                           )}
                         </div>
@@ -483,14 +515,14 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
                         <div className="text-white text-sm font-mono">
-                          {(selectedJob.payload as { modelId?: string } | null)?.modelId ||
+                          {(selectedJob.payload as JobPayload | null)?.modelId ||
                             "Unknown"}
                         </div>
                         <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
                           Vision Enabled
                         </div>
                         <div className="text-white text-sm">
-                          {(selectedJob.payload as { vision?: boolean } | null)?.vision
+                          {(selectedJob.payload as JobPayload | null)?.vision
                             ? "Yes"
                             : "No"}
                         </div>
@@ -498,12 +530,12 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
                         {Array.isArray(
-                          (selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls
+                          (selectedJob.payload as JobPayload | null)?.imageUrls
                         ) &&
-                        (selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls
+                        (selectedJob.payload as JobPayload | null)?.imageUrls
                           ?.length ? (
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {(selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls?.map(
+                            {(selectedJob.payload as JobPayload | null)?.imageUrls?.map(
                               (url: string, index: number) => (
                                 <div key={`${url}-${index}`} className="truncate">
                                   {url}
@@ -519,7 +551,7 @@ export default function ProductAiJobsPanel({
                     <div className="mt-4 space-y-2">
                       <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
                       <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
-                        {(selectedJob.payload as { prompt?: string } | null)?.prompt ||
+                        {(selectedJob.payload as JobPayload | null)?.prompt ||
                           "No prompt provided."}
                       </pre>
                     </div>
@@ -534,15 +566,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                          {(selectedJob.result as any).analysisInitial || (selectedJob.result as any).analysis || 'N/A'}
+                          {(selectedJob.result as JobResult).analysisInitial || (selectedJob.result as JobResult).analysis || 'N/A'}
                         </div>
                       </div>
 
-                      {(selectedJob.result as any).analysisFinal && (
+                      {(selectedJob.result as JobResult).analysisFinal && (
                         <div className="space-y-2">
                           <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {(selectedJob.result as any).analysisFinal}
+                            {(selectedJob.result as JobResult).analysisFinal}
                           </div>
                         </div>
                       )}
@@ -552,15 +584,15 @@ export default function ProductAiJobsPanel({
                       <div className="space-y-2">
                         <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                          {(selectedJob.result as any).descriptionInitial || (selectedJob.result as any).description || 'N/A'}
+                          {(selectedJob.result as JobResult).descriptionInitial || (selectedJob.result as JobResult).description || 'N/A'}
                         </div>
                       </div>
 
-                      {(selectedJob.result as any).descriptionFinal && (
+                      {(selectedJob.result as JobResult).descriptionFinal && (
                         <div className="space-y-2">
                           <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                            {(selectedJob.result as any).descriptionFinal}
+                            {(selectedJob.result as JobResult).descriptionFinal}
                           </div>
                         </div>
                       )}
@@ -570,23 +602,23 @@ export default function ProductAiJobsPanel({
                   <div className="space-y-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
 
-                    {(selectedJob.result as any).translationModel && (
+                    {(selectedJob.result as JobResult).translationModel && (
                       <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
-                            <div className="text-white font-mono text-sm">{(selectedJob.result as any).translationModel}</div>
+                            <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).translationModel}</div>
                           </div>
-                          {(selectedJob.result as any).sourceLanguage && (
+                          {(selectedJob.result as JobResult).sourceLanguage && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
-                              <div className="text-white text-sm">{(selectedJob.result as any).sourceLanguage}</div>
+                              <div className="text-white text-sm">{(selectedJob.result as JobResult).sourceLanguage}</div>
                             </div>
                           )}
-                          {(selectedJob.result as any).targetLanguages && (
+                          {(selectedJob.result as JobResult).targetLanguages && (
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
-                              <div className="text-white text-sm">{(selectedJob.result as any).targetLanguages.join(', ')}</div>
+                              <div className="text-white text-sm">{(selectedJob.result as JobResult).targetLanguages?.join(', ') || 'N/A'}</div>
                             </div>
                           )}
                         </div>
@@ -594,7 +626,7 @@ export default function ProductAiJobsPanel({
                     )}
 
                     <div className="space-y-4">
-                      {(selectedJob.result as any).translations && Object.entries((selectedJob.result as any).translations).map(([lang, trans]: [string, any]) => (
+                      {(selectedJob.result as JobResult).translations && Object.entries((selectedJob.result as JobResult).translations!).map(([lang, trans]: [string, { name?: string; description?: string }]) => (
                         <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
                           <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

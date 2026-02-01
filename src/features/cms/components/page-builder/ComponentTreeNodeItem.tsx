@@ -33,7 +33,7 @@ import {
   Folder,
   type LucideIcon,
 } from "lucide-react";
-import type { SectionInstance, BlockInstance } from "../../types/page-builder";
+import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
 import { ColumnBlockPicker } from "./ColumnBlockPicker";
 import { getSectionDefinition } from "./section-registry";
 
@@ -110,6 +110,7 @@ interface SectionNodeItemProps {
   onSelect: (nodeId: string) => void;
   onAddBlock: (sectionId: string, blockType: string) => void;
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
+  onDropBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
@@ -135,6 +136,10 @@ interface SectionNodeItemProps {
   setDraggedSectionId: (id: string | null) => void;
   draggedSectionType: string | null;
   setDraggedSectionType: (type: string | null) => void;
+  draggedSectionIndex: number | null;
+  setDraggedSectionIndex: (index: number | null) => void;
+  draggedSectionZone: PageZone | null;
+  setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
 }
 
@@ -145,6 +150,7 @@ export function SectionNodeItem({
   onSelect,
   onAddBlock: _onAddBlock,
   onDropBlock,
+  onDropBlockToSection,
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddGridRow,
@@ -170,6 +176,10 @@ export function SectionNodeItem({
   setDraggedSectionId,
   draggedSectionType,
   setDraggedSectionType,
+  draggedSectionIndex,
+  setDraggedSectionIndex,
+  draggedSectionZone,
+  setDraggedSectionZone,
   onDropSectionToColumn,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
@@ -219,12 +229,16 @@ export function SectionNodeItem({
         target.style.opacity = "0.4";
         setDraggedSectionId(section.id);
         setDraggedSectionType(section.type);
+        setDraggedSectionIndex(sectionIndex);
+        setDraggedSectionZone(section.zone);
       }}
       onDragEnd={(e: React.DragEvent) => {
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "1";
         setDraggedSectionId(null);
         setDraggedSectionType(null);
+        setDraggedSectionIndex(null);
+        setDraggedSectionZone(null);
       }}
       className="group/section"
     >
@@ -243,7 +257,22 @@ export function SectionNodeItem({
           e.stopPropagation();
           if (draggedSectionId && draggedSectionId !== section.id) {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            setSectionDropPosition(resolveSectionDropPosition(e.clientY, rect));
+            const nextDrop = resolveSectionDropPosition(e.clientY, rect);
+            if (
+              nextDrop &&
+              draggedSectionZone === section.zone &&
+              draggedSectionIndex !== null
+            ) {
+              const targetIndex =
+                nextDrop === "below" ? sectionIndex + 1 : sectionIndex;
+              if (targetIndex === draggedSectionIndex) {
+                setSectionDropPosition(null);
+                setIsSectionDragOver(true);
+                setIsDragOver(false);
+                return;
+              }
+            }
+            setSectionDropPosition(nextDrop);
             setIsSectionDragOver(true);
             setIsDragOver(false);
           } else if (draggedBlockId && !isFileSection) {
@@ -293,21 +322,62 @@ export function SectionNodeItem({
             }
             setDraggedSectionId(null);
             setDraggedSectionType(null);
-          } else if (draggedBlockId && draggedFromSectionId && !isFileSection) {
+            setDraggedSectionIndex(null);
+            setDraggedSectionZone(null);
+          } else if (draggedBlockId && !isFileSection) {
+            const fromSection =
+              draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || "";
+            if (!fromSection) return;
+            const fromColumn =
+              (draggedFromColumnId ?? e.dataTransfer.getData("fromColumnId")) || null;
+            const fromParent =
+              (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
+            const blockType = e.dataTransfer.getData("blockType") || "";
+            const isImageElement = blockType === "ImageElement";
             if (section.type === "Grid") {
-              // Block dropped on a Grid — route to first column
-              const firstColumn =
-                gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
-                gridColumns.find((b: BlockInstance) => b.type === "Column");
-              if (firstColumn) {
-                onDropBlockToColumn(draggedBlockId, draggedFromSectionId, draggedFromColumnId ?? undefined, section.id, firstColumn.id, (firstColumn.blocks ?? []).length, draggedFromParentBlockId ?? undefined);
+              if (isImageElement) {
+                onDropBlockToSection(
+                  draggedBlockId,
+                  fromSection,
+                  fromColumn || undefined,
+                  section.id,
+                  section.blocks.length,
+                  fromParent || undefined
+                );
+              } else {
+                // Block dropped on a Grid — route to first column
+                const firstColumn =
+                  gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
+                  gridColumns.find((b: BlockInstance) => b.type === "Column");
+                if (firstColumn) {
+                  onDropBlockToColumn(
+                    draggedBlockId,
+                    fromSection,
+                    fromColumn || undefined,
+                    section.id,
+                    firstColumn.id,
+                    (firstColumn.blocks ?? []).length,
+                    fromParent || undefined
+                  );
+                }
               }
+            } else if (fromColumn || fromParent) {
+              onDropBlockToSection(
+                draggedBlockId,
+                fromSection,
+                fromColumn || undefined,
+                section.id,
+                section.blocks.length,
+                fromParent || undefined
+              );
             } else {
               // Block drop
-              onDropBlock(draggedBlockId, draggedFromSectionId, section.id, section.blocks.length);
+              onDropBlock(draggedBlockId, fromSection, section.id, section.blocks.length);
             }
             setDraggedBlockId(null);
             setDraggedFromSectionId(null);
+            setDraggedFromColumnId(null);
+            setDraggedFromParentBlockId(null);
           }
         }}
         className={`relative flex w-full items-center gap-2 rounded px-2 py-2 text-sm font-medium transition ${
@@ -473,6 +543,7 @@ export function SectionNodeItem({
                   selectedNodeId={selectedNodeId}
                   onSelect={onSelect}
                   onDropBlock={onDropBlock}
+                  onDropBlockToSection={onDropBlockToSection}
                   onDropBlockToColumn={onDropBlockToColumn}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
@@ -511,6 +582,7 @@ export function SectionNodeItem({
               selectedNodeId={selectedNodeId}
               onSelect={onSelect}
               onDropBlock={onDropBlock}
+              onDropBlockToSection={onDropBlockToSection}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
               draggedFromSectionId={draggedFromSectionId}
@@ -618,7 +690,10 @@ function RowNodeItem({
           e.stopPropagation();
           setIsDragOver(true);
         }}
-        onDragLeave={() => setIsDragOver(false)}
+        onDragLeave={(e: React.DragEvent) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+        }}
         onDrop={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
@@ -857,7 +932,10 @@ function ColumnNodeItem({
         e.stopPropagation();
       }}
       onDragOver={handleColumnDragOver}
-      onDragLeave={() => setIsDragOver(false)}
+      onDragLeave={(e: React.DragEvent) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsDragOver(false);
+      }}
       onDrop={handleColumnDrop}
       className={`${isDragOver ? "rounded ring-1 ring-emerald-500/30" : ""}`}
     >
@@ -876,7 +954,10 @@ function ColumnNodeItem({
           }
         }}
         onDragOver={handleColumnDragOver}
-        onDragLeave={() => setIsDragOver(false)}
+        onDragLeave={(e: React.DragEvent) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+        }}
         onDrop={handleColumnDrop}
         className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
           isDragOver
@@ -934,7 +1015,10 @@ function ColumnNodeItem({
         <div
           className="ml-4 border-l border-border/30 pl-1"
           onDragOver={handleColumnDragOver}
-          onDragLeave={() => setIsDragOver(false)}
+          onDragLeave={(e: React.DragEvent) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsDragOver(false);
+          }}
           onDrop={handleColumnDrop}
         >
           {hasBlocks ? (
@@ -990,7 +1074,10 @@ function ColumnNodeItem({
           ) : (
             <div
               onDragOver={handleColumnDragOver}
-              onDragLeave={() => setIsDragOver(false)}
+              onDragLeave={(e: React.DragEvent) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setIsDragOver(false);
+              }}
               onDrop={handleColumnDrop}
               className={`mt-1 flex min-h-[36px] items-center gap-2 rounded border border-dashed px-2 py-1 text-[11px] transition ${
                 isDragOver
@@ -1076,6 +1163,7 @@ function SectionBlockNodeItem({
         e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
         e.dataTransfer.setData("text/plain", block.id);
+        e.dataTransfer.setData("blockType", block.type);
         e.dataTransfer.setData("fromSectionId", sectionId);
         e.dataTransfer.setData("fromColumnId", columnId ?? "");
         e.dataTransfer.setData("fromParentBlockId", "");
@@ -1120,7 +1208,10 @@ function SectionBlockNodeItem({
           e.stopPropagation();
           setIsDragOver(true);
         }}
-        onDragLeave={() => setIsDragOver(false)}
+        onDragLeave={(e: React.DragEvent) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setIsDragOver(false);
+        }}
         onDrop={(e: React.DragEvent) => {
           e.preventDefault();
           e.stopPropagation();
@@ -1259,6 +1350,7 @@ interface BlockNodeItemProps {
   onSelect: (nodeId: string) => void;
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
   onDropBlockToColumn?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onDropBlockToSection?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
   draggedFromSectionId: string | null;
@@ -1279,6 +1371,7 @@ function BlockNodeItem({
   onSelect,
   onDropBlock,
   onDropBlockToColumn,
+  onDropBlockToSection,
   draggedBlockId,
   setDraggedBlockId,
   draggedFromSectionId,
@@ -1301,6 +1394,7 @@ function BlockNodeItem({
         e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
         e.dataTransfer.setData("text/plain", block.id);
+        e.dataTransfer.setData("blockType", block.type);
         e.dataTransfer.setData("fromSectionId", sectionId);
         e.dataTransfer.setData("fromColumnId", columnId ?? "");
         e.dataTransfer.setData("fromParentBlockId", "");
@@ -1329,7 +1423,10 @@ function BlockNodeItem({
         e.stopPropagation();
         setIsDragOver(true);
       }}
-      onDragLeave={() => setIsDragOver(false)}
+      onDragLeave={(e: React.DragEvent) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsDragOver(false);
+      }}
       onDrop={(e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1361,9 +1458,22 @@ function BlockNodeItem({
           return;
         }
         if (!fromSection) return;
-        onDropBlock(dragId, fromSection, sectionId, index);
+        if ((fromColumn || fromParent) && onDropBlockToSection) {
+          onDropBlockToSection(
+            dragId,
+            fromSection,
+            fromColumn || undefined,
+            sectionId,
+            index,
+            fromParent || undefined
+          );
+        } else {
+          onDropBlock(dragId, fromSection, sectionId, index);
+        }
         setDraggedBlockId(null);
         setDraggedFromSectionId(null);
+        if (setDraggedFromColumnId) setDraggedFromColumnId(null);
+        if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
       className="group"
     >

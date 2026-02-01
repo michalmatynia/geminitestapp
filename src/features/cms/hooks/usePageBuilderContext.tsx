@@ -951,6 +951,49 @@ export function basePageBuilderReducer(
       return { ...state, sections: sectionsAfterInsert };
     }
 
+    case "MOVE_BLOCK_TO_SECTION": {
+      const removeFromSource = (
+        sections: SectionInstance[],
+        fromSectionId: string,
+        fromColumnId?: string,
+        fromParentBlockId?: string
+      ): { sections: SectionInstance[]; moved: BlockInstance | null } => {
+        let moved: BlockInstance | null = null;
+        const nextSections = sections.map((s: SectionInstance) => {
+          if (s.id !== fromSectionId) return s;
+          if (fromColumnId) {
+            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            if (result.moved) moved = result.moved;
+            return { ...s, blocks: result.blocks };
+          }
+          const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
+          if (block) moved = block;
+          return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId) };
+        });
+        return { sections: nextSections, moved };
+      };
+
+      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      if (!removal.moved) {
+        const found = findBlock(state.sections, action.blockId);
+        if (!found) return state;
+        removal = removeFromSource(
+          state.sections,
+          found.section.id,
+          found.parentColumn?.id,
+          found.parentBlock?.id
+        );
+      }
+      if (!removal.moved) return state;
+      const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        const nextBlocks = [...s.blocks];
+        nextBlocks.splice(action.toIndex, 0, removal.moved!);
+        return { ...s, blocks: nextBlocks };
+      });
+      return { ...state, sections: sectionsAfterInsert };
+    }
+
     case "CONVERT_SECTION_TO_BLOCK": {
       if (action.sectionId === action.toSectionId) return state;
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);

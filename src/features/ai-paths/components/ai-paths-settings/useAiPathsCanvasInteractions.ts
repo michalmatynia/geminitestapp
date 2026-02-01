@@ -494,7 +494,7 @@ export function useAiPathsCanvasInteractions({
       CANVAS_WIDTH - NODE_WIDTH - 16
     );
     const nextY = Math.min(
-      Math.max((event.clientY - viewport.left - view.y) / view.scale - dragState.offsetY, 16),
+      Math.max((event.clientY - viewport.top - view.y) / view.scale - dragState.offsetY, 16),
       CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
     );
 
@@ -791,4 +791,3 @@ export function useAiPathsCanvasInteractions({
     resetView,
   };
 }
-

@@ -66,6 +66,23 @@ const shouldShowSectionDivider = (settings: Record<string, unknown>): boolean =>
 };
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
+const INSPECTOR_TOOLTIP_WIDTH = 260;
+const INSPECTOR_TOOLTIP_GAP = 10;
+const inspectorTooltipOrder: string[] = [];
+
+const registerInspectorTooltip = (id: string): number => {
+  const existingIndex = inspectorTooltipOrder.indexOf(id);
+  if (existingIndex >= 0) return existingIndex;
+  inspectorTooltipOrder.push(id);
+  return inspectorTooltipOrder.length - 1;
+};
+
+const unregisterInspectorTooltip = (id: string): void => {
+  const index = inspectorTooltipOrder.indexOf(id);
+  if (index >= 0) inspectorTooltipOrder.splice(index, 1);
+};
+
+const getInspectorTooltipIndex = (id: string): number => inspectorTooltipOrder.indexOf(id);
 const STYLE_KEY_REGEX = /(color|padding|margin|radius|border|shadow|align|font|size|width|height|spacing|background|opacity)/i;
 
 const formatSettingValue = (value: unknown): string => {
@@ -163,6 +180,7 @@ const InspectorHover = ({
   const [open, setOpen] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const timerRef = useRef<number | null>(null);
+  const tooltipIdRef = useRef<string>(`inspector-${Math.random().toString(36).slice(2, 10)}`);
   const isTooltipEnabled = enabled && showTooltip;
   const effectiveOpen = isTooltipEnabled ? open : false;
 
@@ -184,9 +202,13 @@ const InspectorHover = ({
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const margin = 12;
+    const index = Math.max(0, getInspectorTooltipIndex(tooltipIdRef.current));
+    const offset = index * (INSPECTOR_TOOLTIP_WIDTH + INSPECTOR_TOOLTIP_GAP);
+    const minRightEdge = margin + INSPECTOR_TOOLTIP_WIDTH;
+    const rightEdge = rect.right - margin - offset;
     setTooltipPos({
       top: rect.bottom - margin,
-      left: rect.right - margin,
+      left: Math.max(minRightEdge, rightEdge),
     });
   };
 
@@ -206,6 +228,7 @@ const InspectorHover = ({
     clearTimer();
     if (showTooltip) {
       timerRef.current = window.setTimeout(() => {
+        registerInspectorTooltip(tooltipIdRef.current);
         updateTooltipPosition();
         setOpen(true);
       }, INSPECTOR_TOOLTIP_DELAY_MS);
@@ -217,6 +240,7 @@ const InspectorHover = ({
     onHover?.(fallbackNodeId ?? null);
     clearTimer();
     setOpen(false);
+    unregisterInspectorTooltip(tooltipIdRef.current);
   };
 
   useEffect((): void | (() => void) => {
@@ -231,6 +255,12 @@ const InspectorHover = ({
     };
   }, [open, isTooltipEnabled]);
 
+  useEffect((): (() => void) => {
+    return () => {
+      unregisterInspectorTooltip(tooltipIdRef.current);
+    };
+  }, []);
+
   return (
     <div
       ref={wrapperRef}
@@ -241,9 +271,9 @@ const InspectorHover = ({
       {children}
       {enabled && showTooltip && effectiveOpen && content && tooltipPos && typeof document !== "undefined"
         ? createPortal(
-            <div
+          <div
               className="fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none"
-              style={{ left: tooltipPos.left, top: tooltipPos.top }}
+              style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
             >
               {content}
             </div>,

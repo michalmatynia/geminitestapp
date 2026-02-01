@@ -51,7 +51,9 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
   return toProductAiJob(jobRecord);
 }
 
-export async function getProductAiJobs(productId?: string): Promise<(ProductAiJob & { product: { name_en: string | null; sku: string | null } | null })[]> {
+export async function getProductAiJobs(
+  productId?: string
+): Promise<Array<Omit<ProductAiJob, "product"> & { product: ProductSummary | null }>> {
   const jobRepository = await getProductAiJobRepository();
   const jobRecords = await jobRepository.findJobs(productId);
   const jobs = jobRecords.map(toProductAiJob);
@@ -107,7 +109,9 @@ export async function getProductAiJobs(productId?: string): Promise<(ProductAiJo
   }));
 }
 
-export async function getProductAiJob(jobId: string): Promise<(ProductAiJob & { product: Record<string, unknown> | null }) | null> {
+export async function getProductAiJob(
+  jobId: string
+): Promise<(Omit<ProductAiJob, "product"> & { product: Record<string, unknown> | null }) | null> {
   const jobRepository = await getProductAiJobRepository();
   const jobRecord = await jobRepository.findJobById(jobId);
   if (!jobRecord) return null;

@@ -158,6 +158,7 @@ export type PageBuilderAction =
   | { type: "UPDATE_COLUMN_SETTINGS"; sectionId: string; columnId: string; settings: Record<string, unknown> }
   | { type: "UPDATE_BLOCK_IN_COLUMN"; sectionId: string; columnId: string; blockId: string; settings: Record<string, unknown> }
   | { type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number }
+  | { type: "MOVE_BLOCK_TO_SECTION"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toIndex: number }
   | { type: "CONVERT_SECTION_TO_BLOCK"; sectionId: string; toSectionId: string; toIndex: number }
   | { type: "MOVE_SECTION_TO_COLUMN"; sectionId: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number }
   | { type: "ADD_ELEMENT_TO_NESTED_BLOCK"; sectionId: string; columnId: string; parentBlockId: string; elementType: string }

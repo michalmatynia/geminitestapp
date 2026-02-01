@@ -278,7 +278,14 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!config || config.preset === "none" || !ref.current) return;
+    if (!config || !ref.current) return;
+
+    const hasCoreAnimation = config.preset !== "none";
+    const hasParallax = config.parallaxPreset !== undefined && config.parallaxPreset !== "none";
+    const hasVelocity = config.velocityEffect !== undefined && config.velocityEffect !== "none";
+    const hasMotionPath = Boolean(config.motionPathEnabled && config.motionPathPath);
+
+    if (!hasCoreAnimation && !hasParallax && !hasVelocity && !hasMotionPath) return;
 
     const el = ref.current;
     const cleanupFns: Array<() => void> = [];
@@ -428,149 +435,151 @@ export function GsapAnimationWrapper({ config, children, className }: GsapAnimat
         );
       };
 
-      if (effectiveTimelineMode !== "none" && orderedTargets.length > 1) {
-        const allowLoop = timelineLoop && !isScrubMode;
-        const timelineVars: gsap.TimelineVars = {
-          delay,
-          repeat: allowLoop ? timelineRepeat : 0,
-          yoyo: allowLoop ? timelineYoyo : false,
-          repeatDelay: allowLoop ? timelineRepeatDelay : 0,
-          defaults: { ease: finalEase },
-        };
-        const timelineScrollTrigger = makeScrollTrigger(true);
-        if (timelineScrollTrigger) {
-          timelineVars.scrollTrigger = timelineScrollTrigger;
-        }
-        const tl = gsap.timeline(timelineVars);
-
-        if (effectiveTimelineMode === "cascade" || effectiveTimelineMode === "wave" || effectiveTimelineMode === "ripple") {
-          const staggerConfig: gsap.StaggerVars = {
-            each: timelineStaggerEach,
-            from: effectiveTimelineMode === "cascade" ? "start" : "center",
+      if (hasCoreAnimation) {
+        if (effectiveTimelineMode !== "none" && orderedTargets.length > 1) {
+          const allowLoop = timelineLoop && !isScrubMode;
+          const timelineVars: gsap.TimelineVars = {
+            delay,
+            repeat: allowLoop ? timelineRepeat : 0,
+            yoyo: allowLoop ? timelineYoyo : false,
+            repeatDelay: allowLoop ? timelineRepeatDelay : 0,
+            defaults: { ease: finalEase },
           };
-          if (effectiveTimelineMode === "wave") {
-            staggerConfig.ease = "sine.inOut";
-            if (timelineWaveAmount > 0) {
-              staggerConfig.amount = timelineWaveAmount;
+          const timelineScrollTrigger = makeScrollTrigger(true);
+          if (timelineScrollTrigger) {
+            timelineVars.scrollTrigger = timelineScrollTrigger;
+          }
+          const tl = gsap.timeline(timelineVars);
+
+          if (effectiveTimelineMode === "cascade" || effectiveTimelineMode === "wave" || effectiveTimelineMode === "ripple") {
+            const staggerConfig: gsap.StaggerVars = {
+              each: timelineStaggerEach,
+              from: effectiveTimelineMode === "cascade" ? "start" : "center",
+            };
+            if (effectiveTimelineMode === "wave") {
+              staggerConfig.ease = "sine.inOut";
+              if (timelineWaveAmount > 0) {
+                staggerConfig.amount = timelineWaveAmount;
+              }
             }
+
+            if (revealVars && !isFadeOut) {
+              tl.fromTo(
+                orderedTargets,
+                { ...tweenFromVars, ...revealVars.from },
+                {
+                  ...revealVars.to,
+                  duration,
+                  ease: finalEase,
+                  stagger: staggerConfig,
+                },
+                0
+              );
+            } else if (isFadeOut) {
+              tl.to(
+                orderedTargets,
+                {
+                  opacity: 0,
+                  duration,
+                  ease: finalEase,
+                  stagger: staggerConfig,
+                },
+                0
+              );
+            } else {
+              tl.from(
+                orderedTargets,
+                {
+                  ...tweenFromVars,
+                  duration,
+                  ease: finalEase,
+                  stagger: staggerConfig,
+                },
+                0
+              );
+            }
+
+            orderedTargets.forEach((_: HTMLElement, index: number): void => {
+              const labelTime = index * timelineStaggerEach;
+              tl.addLabel(`step-${index}`, labelTime);
+            });
+          } else {
+            let cursor = 0;
+            orderedTargets.forEach((target: HTMLElement, index: number): void => {
+              let position = cursor;
+              if (effectiveTimelineMode === "sequence") {
+                position = index * (duration + timelineGap);
+              } else if (effectiveTimelineMode === "overlap") {
+                position = cursor;
+                cursor += Math.max(0, duration - timelineOverlap);
+              } else if (effectiveTimelineMode === "domino") {
+                position = cursor;
+                cursor += Math.max(0, duration - timelineOverlap);
+              } else if (effectiveTimelineMode === "callResponse") {
+                position = index * timelineGap + (index % 2 === 1 ? timelineResponseOffset : 0);
+              }
+
+              applyTimelineTween(tl, target, position);
+              tl.addLabel(`step-${index}`, position);
+
+              if (effectiveTimelineMode === "sequence") {
+                cursor = position + duration + timelineGap;
+              }
+            });
+          }
+        } else {
+          const allowLoop = timelineLoop && !isScrubMode;
+          const tweenVars: gsap.TweenVars = {
+            ...(isFadeOut ? { opacity: 0 } : tweenFromVars),
+            duration,
+            delay,
+            ease: finalEase,
+            repeat: allowLoop ? timelineRepeat : 0,
+            yoyo: allowLoop ? timelineYoyo : false,
+            repeatDelay: allowLoop ? timelineRepeatDelay : 0,
+          };
+
+          if (config.preset === "stagger") {
+            const staggerEach = config.staggerEach ?? DEFAULT_STAGGER;
+            const staggerAmount = config.staggerAmount ?? 0;
+            const staggerFrom = config.staggerFrom ?? DEFAULT_STAGGER_FROM;
+            tweenVars.stagger =
+              staggerAmount > 0
+                ? { amount: staggerAmount, from: staggerFrom }
+                : { each: staggerEach, from: staggerFrom };
+          }
+
+          const scrollTrigger = makeScrollTrigger(false);
+          if (keyframePreset) {
+            gsap.to(orderedTargets, {
+              ...keyframePreset,
+              duration,
+              delay,
+              ease: keyframePreset.ease ?? finalEase,
+              ...(scrollTrigger ? { scrollTrigger } : {}),
+            });
+            return;
           }
 
           if (revealVars && !isFadeOut) {
-            tl.fromTo(
+            gsap.fromTo(
               orderedTargets,
               { ...tweenFromVars, ...revealVars.from },
               {
                 ...revealVars.to,
                 duration,
+                delay,
                 ease: finalEase,
-                stagger: staggerConfig,
-              },
-              0
-            );
-          } else if (isFadeOut) {
-            tl.to(
-              orderedTargets,
-              {
-                opacity: 0,
-                duration,
-                ease: finalEase,
-                stagger: staggerConfig,
-              },
-              0
+                ...(scrollTrigger ? { scrollTrigger } : {}),
+              }
             );
           } else {
-            tl.from(
-              orderedTargets,
-              {
-                ...tweenFromVars,
-                duration,
-                ease: finalEase,
-                stagger: staggerConfig,
-              },
-              0
-            );
-          }
-
-          orderedTargets.forEach((_: HTMLElement, index: number): void => {
-            const labelTime = index * timelineStaggerEach;
-            tl.addLabel(`step-${index}`, labelTime);
-          });
-        } else {
-          let cursor = 0;
-          orderedTargets.forEach((target: HTMLElement, index: number): void => {
-            let position = cursor;
-            if (effectiveTimelineMode === "sequence") {
-              position = index * (duration + timelineGap);
-            } else if (effectiveTimelineMode === "overlap") {
-              position = cursor;
-              cursor += Math.max(0, duration - timelineOverlap);
-            } else if (effectiveTimelineMode === "domino") {
-              position = cursor;
-              cursor += Math.max(0, duration - timelineOverlap);
-            } else if (effectiveTimelineMode === "callResponse") {
-              position = index * timelineGap + (index % 2 === 1 ? timelineResponseOffset : 0);
-            }
-
-            applyTimelineTween(tl, target, position);
-            tl.addLabel(`step-${index}`, position);
-
-            if (effectiveTimelineMode === "sequence") {
-              cursor = position + duration + timelineGap;
-            }
-          });
-        }
-      } else {
-        const allowLoop = timelineLoop && !isScrubMode;
-        const tweenVars: gsap.TweenVars = {
-          ...(isFadeOut ? { opacity: 0 } : tweenFromVars),
-          duration,
-          delay,
-          ease: finalEase,
-          repeat: allowLoop ? timelineRepeat : 0,
-          yoyo: allowLoop ? timelineYoyo : false,
-          repeatDelay: allowLoop ? timelineRepeatDelay : 0,
-        };
-
-        if (config.preset === "stagger") {
-          const staggerEach = config.staggerEach ?? DEFAULT_STAGGER;
-          const staggerAmount = config.staggerAmount ?? 0;
-          const staggerFrom = config.staggerFrom ?? DEFAULT_STAGGER_FROM;
-          tweenVars.stagger =
-            staggerAmount > 0
-              ? { amount: staggerAmount, from: staggerFrom }
-              : { each: staggerEach, from: staggerFrom };
-        }
-
-        const scrollTrigger = makeScrollTrigger(false);
-        if (keyframePreset) {
-          gsap.to(orderedTargets, {
-            ...keyframePreset,
-            duration,
-            delay,
-            ease: keyframePreset.ease ?? finalEase,
-            ...(scrollTrigger ? { scrollTrigger } : {}),
-          });
-          return;
-        }
-
-        if (revealVars && !isFadeOut) {
-          gsap.fromTo(
-            orderedTargets,
-            { ...tweenFromVars, ...revealVars.from },
-            {
-              ...revealVars.to,
-              duration,
-              delay,
-              ease: finalEase,
+            const tweenFn = isFadeOut ? gsap.to : gsap.from;
+            tweenFn(orderedTargets, {
+              ...tweenVars,
               ...(scrollTrigger ? { scrollTrigger } : {}),
-            }
-          );
-        } else {
-          const tweenFn = isFadeOut ? gsap.to : gsap.from;
-          tweenFn(orderedTargets, {
-            ...tweenVars,
-            ...(scrollTrigger ? { scrollTrigger } : {}),
-          });
+            });
+          }
         }
       }
 

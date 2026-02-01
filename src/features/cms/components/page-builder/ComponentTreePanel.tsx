@@ -111,6 +111,26 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleDropBlockToSection = useCallback(
+    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => {
+      dispatch({
+        type: "MOVE_BLOCK_TO_SECTION",
+        blockId,
+        fromSectionId,
+        fromColumnId,
+        fromParentBlockId,
+        toSectionId,
+        toIndex,
+      });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
   const handleAddGridRow = useCallback(
     (sectionId: string) => {
       dispatch({ type: "ADD_GRID_ROW", sectionId });
@@ -246,6 +266,8 @@ export function ComponentTreePanel(): React.ReactNode {
   // Section drag-and-drop state
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   const [draggedSectionType, setDraggedSectionType] = useState<string | null>(null);
+  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
+  const [draggedSectionZone, setDraggedSectionZone] = useState<PageZone | null>(null);
 
   const handleDropSectionInZone = useCallback(
     (droppedSectionId: string, zone: PageZone, toIndex: number) => {
@@ -300,6 +322,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 onAddSection={handleAddSection}
                 onAddBlock={handleAddBlock}
                 onDropBlock={handleDropBlock}
+                onDropBlockToSection={handleDropBlockToSection}
                 onAddBlockToColumn={handleAddBlockToColumn}
                 onDropBlockToColumn={handleDropBlockToColumn}
                 onAddGridRow={handleAddGridRow}
@@ -325,6 +348,10 @@ export function ComponentTreePanel(): React.ReactNode {
                 setDraggedSectionId={setDraggedSectionId}
                 draggedSectionType={draggedSectionType}
                 setDraggedSectionType={setDraggedSectionType}
+                draggedSectionIndex={draggedSectionIndex}
+                setDraggedSectionIndex={setDraggedSectionIndex}
+                draggedSectionZone={draggedSectionZone}
+                setDraggedSectionZone={setDraggedSectionZone}
                 onDropSectionToColumn={handleDropSectionToColumn}
                 onConvertSectionToBlock={handleConvertSectionToBlock}
               />
@@ -353,6 +380,7 @@ interface ZoneGroupProps {
   onAddSection: (sectionType: string, zone: PageZone) => void;
   onAddBlock: (sectionId: string, blockType: string) => void;
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
+  onDropBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onAddGridRow: (sectionId: string) => void;
@@ -378,6 +406,10 @@ interface ZoneGroupProps {
   setDraggedSectionId: (id: string | null) => void;
   draggedSectionType: string | null;
   setDraggedSectionType: (type: string | null) => void;
+  draggedSectionIndex: number | null;
+  setDraggedSectionIndex: (index: number | null) => void;
+  draggedSectionZone: PageZone | null;
+  setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
   onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
 }
@@ -395,6 +427,7 @@ function ZoneGroup({
   onAddSection,
   onAddBlock,
   onDropBlock,
+  onDropBlockToSection,
   onAddBlockToColumn,
   onDropBlockToColumn,
   onAddGridRow,
@@ -420,6 +453,10 @@ function ZoneGroup({
   setDraggedSectionId,
   draggedSectionType,
   setDraggedSectionType,
+  draggedSectionIndex,
+  setDraggedSectionIndex,
+  draggedSectionZone,
+  setDraggedSectionZone,
   onDropSectionToColumn,
   onConvertSectionToBlock,
 }: ZoneGroupProps): React.ReactNode {
@@ -485,8 +522,9 @@ function ZoneGroup({
                   sectionIndex={index}
                   selectedNodeId={selectedNodeId}
                   onSelect={onSelectNode}
-                  onAddBlock={onAddBlock}
-                  onDropBlock={onDropBlock}
+                onAddBlock={onAddBlock}
+                onDropBlock={onDropBlock}
+                onDropBlockToSection={onDropBlockToSection}
                   onAddBlockToColumn={onAddBlockToColumn}
                   onDropBlockToColumn={onDropBlockToColumn}
                   onAddGridRow={onAddGridRow}
@@ -511,6 +549,10 @@ function ZoneGroup({
                   setDraggedSectionId={setDraggedSectionId}
                   draggedSectionType={draggedSectionType}
                   setDraggedSectionType={setDraggedSectionType}
+                  draggedSectionIndex={draggedSectionIndex}
+                  setDraggedSectionIndex={setDraggedSectionIndex}
+                  draggedSectionZone={draggedSectionZone}
+                  setDraggedSectionZone={setDraggedSectionZone}
                   onDropSectionToColumn={onDropSectionToColumn}
                   onConvertSectionToBlock={onConvertSectionToBlock}
                 />

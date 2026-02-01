@@ -709,9 +709,6 @@ export function NoteForm({
       };
 
       void fetchResults();
-      return (): void => {
-        isActive = false;
-      };
     }, 250);
 
     relatedSearchTimerRef.current = timer;

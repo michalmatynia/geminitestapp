@@ -15,11 +15,6 @@ import {
 } from "@/features/integrations/types/integrations-ui";
 import { defaultPlaywrightSettings } from "@/features/playwright";
 import type { PlaywrightPersona } from "@/features/playwright";
-import {
-  buildPlaywrightSettings,
-  fetchPlaywrightPersonas,
-  findPlaywrightPersonaMatch,
-} from "@/features/playwright";
 import { normalizeSteps } from "@/features/integrations/utils/connections";
 import { IntegrationList } from "@/features/integrations/components/connections/IntegrationList";
 import { IntegrationModal } from "@/features/integrations/components/connections/IntegrationModal";
@@ -188,6 +183,7 @@ function IntegrationsContent(): React.JSX.Element {
     let active = true;
     const loadPersonas = async (): Promise<void> => {
       try {
+        const { fetchPlaywrightPersonas } = await import("@/features/playwright");
         const stored = await fetchPlaywrightPersonas();
         if (!active) return;
         setPlaywrightPersonas(stored);
@@ -282,15 +278,19 @@ function IntegrationsContent(): React.JSX.Element {
   }, [connections, editingConnectionId]);
 
   useEffect(() => {
-    if (playwrightPersonas.length === 0) {
-      setPlaywrightPersonaId(null);
-      return;
-    }
-    const match = findPlaywrightPersonaMatch(
-      playwrightSettings,
-      playwrightPersonas
-    );
-    setPlaywrightPersonaId(match?.id ?? null);
+    const loadPlaywrightUtils = async () => {
+      if (playwrightPersonas.length === 0) {
+        setPlaywrightPersonaId(null);
+        return;
+      }
+      const { findPlaywrightPersonaMatch } = await import("@/features/playwright");
+      const match = findPlaywrightPersonaMatch(
+        playwrightSettings,
+        playwrightPersonas
+      );
+      setPlaywrightPersonaId(match?.id ?? null);
+    };
+    loadPlaywrightUtils();
   }, [playwrightPersonas, playwrightSettings]);
 
   const ensureIntegration = async (
@@ -713,13 +713,14 @@ function IntegrationsContent(): React.JSX.Element {
     setShowSessionModal(true);
   };
 
-  const handleSelectPlaywrightPersona = (personaId: string | null): void => {
+  const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
     if (!personaId) {
       setPlaywrightPersonaId(null);
       return;
     }
     const persona = playwrightPersonas.find((item: PlaywrightPersona) => item.id === personaId);
     if (!persona) return;
+    const { buildPlaywrightSettings } = await import("@/features/playwright");
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
     toast(`Applied persona "${persona.name}".`, { variant: "success" });
@@ -1048,7 +1049,7 @@ function IntegrationsContent(): React.JSX.Element {
           playwrightPersonas={playwrightPersonas}
           playwrightPersonasLoading={playwrightPersonasLoading}
           playwrightPersonaId={playwrightPersonaId}
-          onSelectPlaywrightPersona={handleSelectPlaywrightPersona}
+          onSelectPlaywrightPersona={(personaId: string | null): void => { void handleSelectPlaywrightPersona(personaId); }}
           playwrightSettings={playwrightSettings}
           setPlaywrightSettings={setPlaywrightSettings}
           onSavePlaywrightSettings={(): void => { void handleSavePlaywrightSettings(); }}

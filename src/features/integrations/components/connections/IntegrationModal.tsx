@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Card, ModalShell, AppModal, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState, useEffect } from "react";
 
 import {
   Integration,
@@ -9,7 +9,6 @@ import {
   TestLogEntry,
 } from "@/features/integrations/types/integrations-ui";
 import { ConnectionManager } from "./ConnectionManager";
-import { PlaywrightSettingsForm } from "@/features/playwright";
 import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright";
 import { BaseApiConsole } from "./BaseApiConsole";
 import { AllegroApiConsole } from "./AllegroApiConsole";
@@ -24,6 +23,30 @@ import { SessionModal } from "./SessionModal";
 
 
 import Link from "next/link";
+
+type PlaywrightSettingsFormProps = {
+  settings: PlaywrightSettings;
+  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
+  onSave: () => void;
+};
+
+function DynamicPlaywrightSettingsForm(props: PlaywrightSettingsFormProps) {
+  const [Component, setComponent] = useState<React.ComponentType<PlaywrightSettingsFormProps> | null>(null);
+
+  useEffect(() => {
+    const loadComponent = async () => {
+      const { PlaywrightSettingsForm } = await import("@/features/playwright");
+      setComponent(() => PlaywrightSettingsForm);
+    };
+    loadComponent();
+  }, []);
+
+  if (!Component) {
+    return <div className="p-4 text-gray-400">Loading...</div>;
+  }
+
+  return <Component {...props} />;
+}
 
 
 type IntegrationModalProps = {
@@ -505,7 +528,7 @@ export function IntegrationModal({
                   )}
                 </Card>
 
-                <PlaywrightSettingsForm
+                <DynamicPlaywrightSettingsForm
                   settings={playwrightSettings}
                   setSettings={setPlaywrightSettings}
                   onSave={onSavePlaywrightSettings}

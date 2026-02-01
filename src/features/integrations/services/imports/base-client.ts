@@ -120,7 +120,7 @@ const extractProductIds = (payload: BaseApiResponse): string[] => {
     (payload.data as Record<string, unknown> | undefined)?.items;
   const ids = new Set<string>();
   if (Array.isArray(rawProducts)) {
-    for (const entry of rawProducts) {
+    for (const entry of rawProducts as unknown[]) {
       if (entry && typeof entry === "object") {
         const record = entry as Record<string, unknown>;
         const id =
@@ -136,7 +136,7 @@ const extractProductIds = (payload: BaseApiResponse): string[] => {
   } else if (rawProducts && typeof rawProducts === "object") {
     for (const [key, value] of Object.entries(
       rawProducts as Record<string, unknown>
-    )) {
+    ) as [string, unknown][]) {
       const record = value && typeof value === "object" ? value : null;
       const id =
         (record as Record<string, unknown> | null)?.product_id ??

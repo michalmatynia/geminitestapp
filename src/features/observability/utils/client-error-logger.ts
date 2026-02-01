@@ -132,7 +132,7 @@ export const logClientError = (
 
 let handlerAttached = false;
 
-export const initClientErrorReporting = () => {
+export const initClientErrorReporting = (): void => {
   if (handlerAttached || typeof window === "undefined") return;
   handlerAttached = true;
 
@@ -141,7 +141,7 @@ export const initClientErrorReporting = () => {
     (window as Window & { _logClientError?: typeof logClientError })._logClientError = logClientError;
   }
 
-  window.addEventListener("error", (event: ErrorEvent) => {
+  window.addEventListener("error", (event: ErrorEvent): void => {
     logClientError(event.error ?? event.message, {
       context: {
         source: "window.error",
@@ -152,7 +152,7 @@ export const initClientErrorReporting = () => {
     });
   });
 
-  window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => {
+  window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent): void => {
     logClientError(event.reason ?? "Unhandled promise rejection", {
       context: { source: "window.unhandledrejection" },
     });

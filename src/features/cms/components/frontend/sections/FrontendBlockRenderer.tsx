@@ -328,6 +328,7 @@ function ImageElementBlock({
 
   const imageStyles: React.CSSProperties = {
     width: "100%",
+    maxHeight: "100%",
     objectFit,
     objectPosition,
     opacity: opacity / 100,
@@ -413,7 +414,9 @@ function ImageBlock({
     ...(stretch ? { height: "100%" } : {}),
     ...resolvedStyles,
   };
-  const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
+  const imageClassName = stretch
+    ? "block h-full w-full object-cover"
+    : "block h-auto w-full max-h-full object-cover";
 
   return (
     <div className="cms-media" style={wrapperStyles}>

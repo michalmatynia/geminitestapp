@@ -2240,6 +2240,7 @@ function PreviewBlockItem({
                   ...presentation.imageStyles,
                   display: "block",
                   height: useFill ? "100%" : "auto",
+                  maxHeight: "100%",
                 }}
               />
               {presentation.hasOverlay && (
@@ -2368,7 +2369,9 @@ function PreviewBlockItem({
     const wrapperStyles: React.CSSProperties = stretch
       ? { width: `${width}%`, height: "100%", ...resolvedStyles }
       : { width: `${width}%`, ...resolvedStyles };
-    const imageClassName = stretch ? "block h-full w-full object-cover" : "block h-auto w-full object-cover";
+    const imageClassName = stretch
+      ? "block h-full w-full object-cover"
+      : "block h-auto w-full max-h-full object-cover";
 
     return (
       wrapBlock(

@@ -1,13 +1,9 @@
 "use client";
 
 import { Button, Input, Label, Checkbox, SectionPanel } from "@/shared/ui";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, ChangeEvent, ReactElement } from "react";
 import type { PlaywrightSettings } from "@/features/playwright/types";
 import { playwrightDeviceOptions } from "@/features/playwright/constants/playwright";
-
-
-
-
 
 type PlaywrightSettingsProps = {
   settings: PlaywrightSettings;
@@ -19,7 +15,7 @@ type PlaywrightSettingsProps = {
   description?: string;
 };
 
-const toNumber = (value: string, fallback: number) => {
+const toNumber = (value: string, fallback: number): number => {
   if (value.trim() === "") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -33,7 +29,7 @@ export function PlaywrightSettingsForm({
   showSave,
   title,
   description,
-}: PlaywrightSettingsProps) {
+}: PlaywrightSettingsProps): ReactElement {
   const shouldShowSave = showSave ?? Boolean(onSave);
 
   return (
@@ -59,8 +55,12 @@ export function PlaywrightSettingsForm({
             </span>
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.headless} onCheckedChange={(checked) =>
-                setSettings((prev) => ({ ...prev, headless: Boolean(checked) }))
+              checked={settings.headless}
+              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                setSettings((prev: PlaywrightSettings) => ({
+                  ...prev,
+                  headless: Boolean(checked),
+                }))
               }
             />
           </Label>
@@ -76,8 +76,9 @@ export function PlaywrightSettingsForm({
             </span>
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.emulateDevice} onCheckedChange={(checked) =>
-                setSettings((prev) => ({
+              checked={settings.emulateDevice}
+              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   emulateDevice: Boolean(checked),
                 }))
@@ -89,18 +90,20 @@ export function PlaywrightSettingsForm({
               <select
                 className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={settings.deviceName}
-                onChange={(e) =>
-                  setSettings((prev) => ({
+                onChange={(e: ChangeEvent<HTMLSelectElement>): void =>
+                  setSettings((prev: PlaywrightSettings) => ({
                     ...prev,
                     deviceName: e.target.value,
                   }))
                 }
               >
-                {playwrightDeviceOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
+                {playwrightDeviceOptions.map(
+                  (opt: { label: string; value: string }): ReactElement => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  )
+                )}
               </select>
             </div>
           )}
@@ -113,8 +116,8 @@ export function PlaywrightSettingsForm({
               type="number"
               className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.slowMo}
-              onChange={(e) =>
-                setSettings((prev) => ({
+              onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   slowMo: toNumber(e.target.value, prev.slowMo),
                 }))
@@ -127,8 +130,8 @@ export function PlaywrightSettingsForm({
               type="number"
               className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.timeout}
-              onChange={(e) =>
-                setSettings((prev) => ({
+              onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   timeout: toNumber(e.target.value, prev.timeout),
                 }))
@@ -143,8 +146,8 @@ export function PlaywrightSettingsForm({
               type="number"
               className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.navigationTimeout}
-              onChange={(e) =>
-                setSettings((prev) => ({
+              onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   navigationTimeout: toNumber(
                     e.target.value,
@@ -166,8 +169,9 @@ export function PlaywrightSettingsForm({
             </span>
             <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.humanizeMouse} onCheckedChange={(checked) =>
-                setSettings((prev) => ({
+              checked={settings.humanizeMouse}
+              onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                setSettings((prev: PlaywrightSettings) => ({
                   ...prev,
                   humanizeMouse: Boolean(checked),
                 }))
@@ -183,8 +187,8 @@ export function PlaywrightSettingsForm({
                 type="number"
                 className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={settings.mouseJitter}
-                onChange={(e) =>
-                  setSettings((prev) => ({
+                onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                  setSettings((prev: PlaywrightSettings) => ({
                     ...prev,
                     mouseJitter: toNumber(e.target.value, prev.mouseJitter),
                   }))
@@ -217,8 +221,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.clickDelayMin}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       clickDelayMin: toNumber(
                         e.target.value,
@@ -236,8 +240,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.clickDelayMax}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       clickDelayMax: toNumber(
                         e.target.value,
@@ -258,8 +262,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.inputDelayMin}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       inputDelayMin: toNumber(
                         e.target.value,
@@ -277,8 +281,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.inputDelayMax}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       inputDelayMax: toNumber(
                         e.target.value,
@@ -299,8 +303,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.actionDelayMin}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       actionDelayMin: toNumber(
                         e.target.value,
@@ -318,8 +322,8 @@ export function PlaywrightSettingsForm({
                   type="number"
                   className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.actionDelayMax}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       actionDelayMax: toNumber(
                         e.target.value,
@@ -342,8 +346,8 @@ export function PlaywrightSettingsForm({
                 <Checkbox
                   className="h-4 w-4 accent-emerald-400"
                   checked={settings.proxyEnabled}
-                  onCheckedChange={(checked) =>
-                    setSettings((prev) => ({
+                  onCheckedChange={(checked: boolean | "indeterminate"): void =>
+                    setSettings((prev: PlaywrightSettings) => ({
                       ...prev,
                       proxyEnabled: Boolean(checked),
                     }))
@@ -361,8 +365,8 @@ export function PlaywrightSettingsForm({
                       className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                       placeholder="http://host:port"
                       value={settings.proxyServer}
-                      onChange={(e) =>
-                        setSettings((prev) => ({
+                      onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                        setSettings((prev: PlaywrightSettings) => ({
                           ...prev,
                           proxyServer: e.target.value,
                         }))
@@ -378,8 +382,8 @@ export function PlaywrightSettingsForm({
                         type="text"
                         className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                         value={settings.proxyUsername}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
+                        onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                          setSettings((prev: PlaywrightSettings) => ({
                             ...prev,
                             proxyUsername: e.target.value,
                           }))
@@ -394,8 +398,8 @@ export function PlaywrightSettingsForm({
                         type="password"
                         className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                         value={settings.proxyPassword}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
+                        onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+                          setSettings((prev: PlaywrightSettings) => ({
                             ...prev,
                             proxyPassword: e.target.value,
                           }))
@@ -424,3 +428,4 @@ export function PlaywrightSettingsForm({
     </SectionPanel>
   );
 }
+

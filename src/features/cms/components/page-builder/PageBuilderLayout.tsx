@@ -60,21 +60,14 @@ function PageBuilderInner(): React.ReactNode {
       }
     };
 
-    const media: MediaQueryList = window.matchMedia(`(max-width: ${breakpoint}px)`);
-
     applyBreakpoint(media.matches);
     const handler = (event: MediaQueryListEvent): void => {
       applyBreakpoint(event.matches);
     };
-    if ("addEventListener" in media) {
-      (media as MediaQueryList).addEventListener("change", handler);
-      return (): void => {
-        (media as MediaQueryList).removeEventListener("change", handler);
-      };
-    }
-    (media as MediaQueryList).addListener(handler);
+
+    media.addEventListener("change", handler);
     return (): void => {
-      (media as MediaQueryList).removeListener(handler);
+      media.removeEventListener("change", handler);
     };
   }, [dispatch, state.rightPanelCollapsed]);
 

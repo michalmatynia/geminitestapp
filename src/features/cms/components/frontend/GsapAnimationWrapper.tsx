@@ -2,12 +2,12 @@
 
 import React, { useRef, useEffect, type ReactNode } from "react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/scrollTrigger";
-import { MotionPathPlugin } from "gsap/motionPathPlugin";
-import { Flip } from "gsap/flip";
-import { Draggable } from "gsap/draggable";
-import { CustomEase } from "gsap/customEase";
-import { Observer } from "gsap/observer";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { Flip } from "gsap/Flip";
+import { Draggable } from "gsap/Draggable";
+import { CustomEase } from "gsap/CustomEase";
+import { Observer } from "gsap/Observer";
 import type { GsapAnimationConfig, RevealStyle, TextEffect } from "@/features/gsap";
 import { getGsapFromVars, getParallaxDefaults } from "@/features/gsap";
 

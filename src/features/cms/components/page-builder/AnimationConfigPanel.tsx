@@ -236,7 +236,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
     [config, onChange]
   );
 
-  const resolvedNodeTarget: "self" | "children" | "descendants" | "custom" = ((): string => {
+  const resolvedNodeTarget: "self" | "children" | "descendants" | "custom" = ((): "self" | "children" | "descendants" | "custom" => {
     const normalized = selectorValue.trim();
     if (!normalized || normalized === ":scope") return "self";
     if (normalized === ":scope > *") return "children";

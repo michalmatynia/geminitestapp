@@ -85,6 +85,11 @@ type CanvasBoardProps = {
     node: AiNode,
     port: string
   ) => void;
+  onCompleteConnection: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    node: AiNode,
+    port: string
+  ) => void;
   onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   onPanStart: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -122,6 +127,7 @@ export function CanvasBoard({
   onPointerMoveNode,
   onPointerUpNode,
   onStartConnection,
+  onCompleteConnection,
   onDrop,
   onDragOver,
   onPanStart,
@@ -920,7 +926,10 @@ export function CanvasBoard({
                                 }}
                                 onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
                                   event.stopPropagation();
-                                  if (connecting) return;
+                                  if (connecting) {
+                                    onCompleteConnection(event, node, input);
+                                    return;
+                                  }
                                   if (hasIncomingEdge) {
                                     onReconnectInput(event, node.id, input);
                                   }

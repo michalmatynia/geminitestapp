@@ -107,7 +107,6 @@ export type {
   PriceGroupWithDetails,
 } from "./records";
 
-export type { ProductRecord } from "./records";
 export type { ProductFormData } from "./forms";
 export type {
   ProductDraft,

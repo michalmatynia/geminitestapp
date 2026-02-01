@@ -1139,6 +1139,7 @@ export function GsapAnimationWrapper({
             type: dragType,
             bounds: bounds ?? undefined,
             inertia: false,
+            // eslint-disable-next-line react-hooks/unsupported-syntax
             onPress: function (this: Draggable): void {
               const now = performance.now();
               velocityMap.set(this, {

@@ -60,6 +60,9 @@ vi.mock("@/shared/lib/db/prisma", () => {
         imageFileId: args?.data?.imageFileId,
         assignedAt: new Date(),
       })),
+      createMany: vi.fn().mockImplementation((args) => ({
+        count: args?.data?.length || 0,
+      })),
       delete: vi.fn().mockResolvedValue({}),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
@@ -75,6 +78,115 @@ vi.mock("@/shared/lib/db/prisma", () => {
         updatedAt: new Date(),
       })),
       update: vi.fn().mockResolvedValue({}),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+
+    // Catalog model
+    catalog: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-catalog-${Date.now()}`,
+        ...args?.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        products: [],
+        languages: [],
+        categories: [],
+        tags: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // ProductCatalog model (join table)
+    productCatalog: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        productId: args?.data?.productId,
+        catalogId: args?.data?.catalogId,
+        assignedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+
+    // ProductCategory model
+    productCategory: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-category-${Date.now()}`,
+        ...args?.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        children: [],
+        products: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // ProductCategoryAssignment model (join table)
+    productCategoryAssignment: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        productId: args?.data?.productId,
+        categoryId: args?.data?.categoryId,
+        assignedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+
+    // ProductTag model
+    productTag: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-tag-${Date.now()}`,
+        ...args?.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        products: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // ProductTagAssignment model (join table)
+    productTagAssignment: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        productId: args?.data?.productId,
+        tagId: args?.data?.tagId,
+        assignedAt: new Date(),
+      })),
       delete: vi.fn().mockResolvedValue({}),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
@@ -134,9 +246,124 @@ vi.mock("@/shared/lib/db/prisma", () => {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       count: vi.fn().mockResolvedValue(0),
       aggregate: vi.fn().mockResolvedValue({ _count: { id: 0 } }),
+      groupBy: vi.fn().mockResolvedValue([]),
     },
 
-    $transaction: vi.fn().mockImplementation((callback) => callback(mockPrismaClient)),
+    // CMS Page model
+    page: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-page-${Date.now()}`,
+        ...args?.data,
+        status: args?.data?.status || "draft",
+        publishedAt: args?.data?.publishedAt || null,
+        seoTitle: args?.data?.seoTitle || null,
+        seoDescription: args?.data?.seoDescription || null,
+        seoOgImage: args?.data?.seoOgImage || null,
+        seoCanonical: args?.data?.seoCanonical || null,
+        robotsMeta: args?.data?.robotsMeta || "index,follow",
+        showMenu: args?.data?.showMenu ?? true,
+        themeId: args?.data?.themeId || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        slugs: [],
+        components: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // CMS Slug model
+    slug: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-slug-${Date.now()}`,
+        ...args?.data,
+        isDefault: args?.data?.isDefault ?? false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        pages: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // CMS Theme model
+    cmsTheme: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-theme-${Date.now()}`,
+        ...args?.data,
+        customCss: args?.data?.customCss || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        pages: [],
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    // PageSlug join table
+    pageSlug: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        pageId: args?.data?.pageId,
+        slugId: args?.data?.slugId,
+        assignedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+
+    // PageComponent model
+    pageComponent: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args) => ({
+        id: `mock-component-${Date.now()}`,
+        ...args?.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+      update: vi.fn().mockImplementation((args) => ({
+        id: args?.where?.id,
+        ...args?.data,
+        updatedAt: new Date(),
+      })),
+      delete: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      count: vi.fn().mockResolvedValue(0),
+    },
+
+    $transaction: vi
+      .fn()
+      .mockImplementation((callback) => callback(mockPrismaClient)),
   };
 
   return {

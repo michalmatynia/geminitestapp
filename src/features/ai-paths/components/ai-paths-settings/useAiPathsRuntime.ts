@@ -445,7 +445,7 @@ export function useAiPathsRuntime({
     };
   };
 
-  const runGraphForTrigger = async (
+  const runGraphForTrigger = useCallback(async (
     triggerNode: AiNode,
     event?: React.MouseEvent,
     contextOverride?: Record<string, unknown>
@@ -492,7 +492,8 @@ export function useAiPathsRuntime({
         },
       }));
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, activePathId, pathName, fetchEntityByType, toast]);
 
   const runPollUpdate = useCallback(
     async (

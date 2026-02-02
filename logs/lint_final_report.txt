@@ -1,0 +1,10 @@
+
+> libapp2@0.1.0 lint
+> eslint . --no-cache
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts
+  448:9  warning  The 'runGraphForTrigger' function makes the dependencies of useCallback Hook (at line 752) change on every render. To fix this, wrap the definition of 'runGraphForTrigger' in its own useCallback() Hook  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)
+

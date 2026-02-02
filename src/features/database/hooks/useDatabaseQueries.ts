@@ -1,13 +1,88 @@
+/* eslint-disable @typescript-eslint/typedef */
 "use client";
 
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import type { DatabasePreviewPayload, DatabasePreviewMode } from "../types";
-import { fetchDatabasePreview } from "../api";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import type { 
+  DatabasePreviewPayload, 
+  DatabasePreviewMode, 
+  DatabaseType, 
+  DatabaseInfo,
+  DatabaseBackupResponse,
+  DatabaseRestoreResponse
+} from "../types";
+import { 
+  fetchDatabasePreview, 
+  fetchDatabaseBackups, 
+  createDatabaseBackup, 
+  restoreDatabaseBackup, 
+  uploadDatabaseBackup, 
+  deleteDatabaseBackup 
+} from "../api";
+
+export function useDatabaseBackups(dbType: DatabaseType): UseQueryResult<DatabaseInfo[], Error> {
+  return useQuery({
+    queryKey: ["database-backups", dbType],
+    queryFn: () => fetchDatabaseBackups(dbType),
+  });
+}
+
+export function useCreateBackupMutation(): UseMutationResult<
+  { ok: boolean; payload: DatabaseBackupResponse },
+  Error,
+  DatabaseType
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
+    onSuccess: (_, dbType) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", dbType] });
+    },
+  });
+}
+
+export function useRestoreBackupMutation(): UseMutationResult<
+  { ok: boolean; payload: DatabaseRestoreResponse },
+  Error,
+  { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
+> {
+  return useMutation({
+    mutationFn: ({ dbType, backupName, truncateBeforeRestore }) => 
+      restoreDatabaseBackup(dbType, { backupName, truncateBeforeRestore }),
+  });
+}
+
+export function useUploadBackupMutation(): UseMutationResult<
+  { ok: boolean; payload: DatabaseBackupResponse },
+  Error,
+  { dbType: DatabaseType; file: File }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dbType, file }) => uploadDatabaseBackup(dbType, file),
+    onSuccess: (_, { dbType }) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", dbType] });
+    },
+  });
+}
+
+export function useDeleteBackupMutation(): UseMutationResult<
+  { ok: boolean; payload: DatabaseBackupResponse },
+  Error,
+  { dbType: DatabaseType; backupName: string }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dbType, backupName }) => deleteDatabaseBackup(dbType, backupName),
+    onSuccess: (_, { dbType }) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", dbType] });
+    },
+  });
+}
 
 export function useDatabasePreview(input: {
   backupName?: string;
   mode?: DatabasePreviewMode;
-  type?: "postgresql" | "mongodb";
+  type?: DatabaseType;
   page?: number;
   pageSize?: number;
   enabled?: boolean;
@@ -16,7 +91,7 @@ export function useDatabasePreview(input: {
 
   return useQuery({
     queryKey: ["database-preview", { backupName, mode, type, page, pageSize }],
-    queryFn: async () => {
+    queryFn: async (): Promise<DatabasePreviewPayload> => {
       const { ok, payload } = await fetchDatabasePreview({
         backupName,
         mode,

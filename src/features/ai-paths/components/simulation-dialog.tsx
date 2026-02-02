@@ -88,7 +88,9 @@ export function SimulationDialog({
               <Button
                 className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
                 type="button"
-                onClick={() => onRunSimulation(simulationNode)}
+                onClick={(): void => {
+                  void onRunSimulation(simulationNode);
+                }}
               >
                 Simulate Trigger
               </Button>

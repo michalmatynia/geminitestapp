@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, type Query } from "@tanstack/react-query";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
@@ -21,7 +21,8 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
   void restorePromise
     .then(() => {
       const cache = queryClient.getQueryCache();
-      cache.getAll().forEach((query) => {
+      cache.getAll().forEach((query: Query) => {
+         
         if (!Array.isArray(query.queryKey)) {
           cache.remove(query);
         }

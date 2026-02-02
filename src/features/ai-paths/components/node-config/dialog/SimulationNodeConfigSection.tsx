@@ -80,7 +80,7 @@ export function SimulationNodeConfigSection({
       <Button
         className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"
         type="button"
-        onClick={() => handleRunSimulation(selectedNode)}
+        onClick={() => { void handleRunSimulation(selectedNode); }}
       >
         Run Simulation
       </Button>

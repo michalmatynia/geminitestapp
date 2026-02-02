@@ -1,14 +1,46 @@
 "use client";
 
-
-
-
-import { Avatar, AvatarFallback, AvatarImage, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Switch,
+} from "@/shared/ui";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { LogOut, LogIn } from "lucide-react";
 
 export function UserNav(): React.ReactNode {
   const { data: session } = useSession();
+  const settingsQuery = useSettingsMap();
+  const updateSettings = useUpdateSettingsBulk();
+  const settingsMap = settingsQuery.data;
+
+  const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
+    if (value === undefined) return fallback;
+    return ["true", "1", "yes", "on"].includes(value.toLowerCase());
+  };
+
+  const queryPanelEnabled = parseEnabled(settingsMap?.get("query_status_panel_enabled"), false);
+  const queryPanelOpen = parseEnabled(settingsMap?.get("query_status_panel_open"), false);
+
+  const setQueryPanelSetting = (key: string, value: boolean): void => {
+    if (key === "query_status_panel_enabled") {
+      updateSettings.mutate([
+        { key: "query_status_panel_enabled", value: value ? "true" : "false" },
+        { key: "query_status_panel_open", value: value ? "true" : "false" },
+      ]);
+      return;
+    }
+    updateSettings.mutate([{ key, value: value ? "true" : "false" }]);
+  };
 
   if (!session) {
     return (
@@ -38,6 +70,43 @@ export function UserNav(): React.ReactNode {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="flex flex-col items-start gap-2"
+          onSelect={(event: Event) => event.preventDefault()}
+        >
+          <div className="text-xs font-medium text-muted-foreground">Query Panel</div>
+          <div className="flex w-full items-center justify-between gap-3">
+            <span className="text-sm">Enable Panel</span>
+            <Switch
+              checked={queryPanelEnabled}
+              onCheckedChange={(checked: boolean): void => setQueryPanelSetting("query_status_panel_enabled", checked)}
+            />
+          </div>
+          <div className="flex w-full items-center justify-between gap-3">
+            <span className="text-sm">Open Panel</span>
+            <Switch
+              checked={queryPanelOpen}
+              onCheckedChange={(checked: boolean): void => setQueryPanelSetting("query_status_panel_open", checked)}
+              disabled={!queryPanelEnabled}
+            />
+          </div>
+          <div className="flex w-full justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() =>
+                updateSettings.mutate([
+                  { key: "query_status_panel_enabled", value: "false" },
+                  { key: "query_status_panel_open", value: "false" },
+                ])
+              }
+            >
+              Switch Panel Off
+            </Button>
+          </div>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => { void signOut(); }}>
           <LogOut className="mr-2 h-4 w-4" />

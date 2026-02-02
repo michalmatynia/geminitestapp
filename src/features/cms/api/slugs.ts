@@ -38,6 +38,26 @@ export const fetchSlug = async (id: string, domainId?: string | null): Promise<S
   return res.json() as Promise<Slug>;
 };
 
+export const fetchSlugDomains = async (id: string): Promise<{ domainIds: string[] }> => {
+  const res = await fetch(`/api/cms/slugs/${id}/domains`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch slug domains");
+  }
+  return res.json() as Promise<{ domainIds: string[] }>;
+};
+
+export const updateSlugDomains = async (id: string, domainIds: string[]): Promise<{ domainIds: string[] }> => {
+  const res = await fetch(`/api/cms/slugs/${id}/domains`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ domainIds }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to update slug domains");
+  }
+  return res.json() as Promise<{ domainIds: string[] }>;
+};
+
 export const createSlug = async (input: { slug: string; domainId?: string | null }): Promise<{ ok: boolean; payload: Slug }> => {
   const res = await fetch(withDomainQuery("/api/cms/slugs", input.domainId ?? undefined), {
     method: "POST",

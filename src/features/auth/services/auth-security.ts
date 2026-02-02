@@ -147,7 +147,7 @@ const getPrismaAttempt = async (key: string): Promise<AttemptRecord | null> => {
   const row = await prisma.authSecurityAttempt.findUnique({ where: { id: key } });
   if (!row) return null;
   if (row.data && typeof row.data === "object") {
-    return row.data as AttemptRecord;
+    return row.data as unknown as AttemptRecord;
   }
   return null;
 };

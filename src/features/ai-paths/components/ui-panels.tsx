@@ -113,6 +113,7 @@ export function PathsTabPanel({
 }
 
 type DocsTabPanelProps = {
+  docsOverviewSnippet: string;
   docsWiringSnippet: string;
   docsDescriptionSnippet: string;
   docsJobsSnippet: string;
@@ -122,6 +123,7 @@ type DocsTabPanelProps = {
 };
 
 export function DocsTabPanel({
+  docsOverviewSnippet,
   docsWiringSnippet,
   docsDescriptionSnippet,
   docsJobsSnippet,
@@ -129,6 +131,11 @@ export function DocsTabPanel({
   onCopyDocsDescription,
   onCopyDocsJobs,
 }: DocsTabPanelProps): React.JSX.Element {
+  const overviewLines = docsOverviewSnippet
+    .split("\n")
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0);
+
   return (
     <div className="space-y-6 text-sm text-gray-300">
       <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
@@ -137,6 +144,17 @@ export function DocsTabPanel({
           Modular workflows are built by connecting node outputs (right) to matching
           node inputs (left). Connections are strict: port names must match.
         </p>
+      </div>
+
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
+        <h3 className="text-base font-semibold text-white">How AI Paths Works</h3>
+        <ul className="mt-3 space-y-2 text-gray-400">
+          {overviewLines.map((line: string, index: number) => (
+            <li key={`${line}-${index}`} className="leading-relaxed">
+              {line}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">

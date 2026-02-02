@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "pg";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
+import { getMongoClient } from "@/shared/lib/db/mongo-client";
 
 import {
   pgBackupsDir,
@@ -10,6 +11,13 @@ import {
   assertValidPgBackupName,
   getPgRestoreCommand,
   pgExecFileAsync,
+  mongoBackupsDir,
+  ensureMongoBackupsDir,
+  assertValidMongoBackupName,
+  getMongoConnectionUrl,
+  getMongoDatabaseName,
+  getMongoRestoreCommand,
+  mongoExecFileAsync,
 } from "@/features/database/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -21,6 +29,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let previewDbName: string | null = null;
   let safePage = 1;
   let safePageSize = 20;
+  const dbUrl = process.env.DATABASE_URL ?? "";
   try {
     let body: unknown;
     try {
@@ -34,13 +43,16 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const parsed = body as {
       backupName?: string;
       mode?: "backup" | "current";
+      type?: "postgresql" | "mongodb";
       page?: number;
       pageSize?: number;
     };
     backupName = parsed.backupName;
     previewMode = parsed.mode === "current" ? "current" : "backup";
+    const previewType = parsed.type === "mongodb" ? "mongodb" : "postgresql";
     const page = parsed.page;
     const pageSize = parsed.pageSize;
+
     if (previewMode === "backup" && !backupName) {
       return createErrorResponse(
         badRequestError("Backup name is required"),
@@ -49,17 +61,101 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     stage = "validate";
-    if (previewMode === "backup") {
-      assertValidPgBackupName(backupName ?? "");
-      await ensurePgBackupsDir();
+    if (previewType === "mongodb") {
+      if (previewMode === "backup") {
+        assertValidMongoBackupName(backupName ?? "");
+        await ensureMongoBackupsDir();
+      }
+    } else {
+      if (previewMode === "backup") {
+        assertValidPgBackupName(backupName ?? "");
+        await ensurePgBackupsDir();
+      }
+      
+      if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
+        return createErrorResponse(
+          badRequestError("Preview is only supported for PostgreSQL backups."),
+          { request: req, source: "databases.preview.POST" }
+        );
+      }
     }
 
-    const dbUrl = process.env.DATABASE_URL ?? "";
-    if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
-      return createErrorResponse(
-        badRequestError("Preview is only supported for PostgreSQL backups."),
-        { request: req, source: "databases.preview.POST" }
+    if (previewType === "mongodb") {
+      const mongoUri = getMongoConnectionUrl();
+      const sourceDbName = getMongoDatabaseName();
+      const previewDb = previewMode === "backup" ? `stardb_preview_${Date.now()}` : sourceDbName;
+      safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
+      safePageSize = Math.min(
+        200,
+        Math.max(1, Number.isFinite(pageSize) ? Number(pageSize) : 20)
       );
+      const offset = (safePage - 1) * safePageSize;
+
+      if (previewMode === "backup") {
+        stage = "mongorestore";
+        const backupPath = path.join(mongoBackupsDir, backupName ?? "");
+        await mongoExecFileAsync(getMongoRestoreCommand(), [
+          "--uri",
+          mongoUri,
+          "--archive=" + backupPath,
+          "--gzip",
+          "--nsFrom",
+          `${sourceDbName}.*`,
+          "--nsTo",
+          `${previewDb}.*`,
+          "--drop",
+        ]);
+      }
+
+      const mongoClient = await getMongoClient();
+      const db = mongoClient.db(previewDb);
+      let collections: string[] = [];
+      let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
+      let tableStats: { name: string; rowEstimate: number }[] = [];
+
+      try {
+        stage = "mongo_list_collections";
+        const collectionInfos = await db.listCollections().toArray();
+        collections = collectionInfos.map((info: { name: string }) => info.name);
+
+        stage = "mongo_fetch_rows";
+        const rowsResults = await Promise.all(
+          collections.map(async (collectionName: string) => {
+            const collection = db.collection(collectionName);
+            const totalRows = await collection.countDocuments();
+            const rows = await collection
+              .find({})
+              .skip(offset)
+              .limit(safePageSize)
+              .toArray();
+            return { name: collectionName, rows: rows as Record<string, unknown>[], totalRows };
+          })
+        );
+        tableRows = rowsResults;
+
+        tableStats = await Promise.all(
+          collections.map(async (collectionName: string) => {
+            const collection = db.collection(collectionName);
+            const estimate = await collection.estimatedDocumentCount();
+            return { name: collectionName, rowEstimate: estimate };
+          })
+        );
+      } finally {
+        if (previewMode === "backup") {
+          stage = "mongo_cleanup";
+          await db.dropDatabase();
+        }
+      }
+
+      return NextResponse.json({
+        stats: {
+          tables: tableStats,
+          groups: collections.length ? { COLLECTION: collections } : {},
+        },
+        data: tableRows,
+        page: safePage,
+        pageSize: safePageSize,
+      });
     }
 
     let output = "";
@@ -130,7 +226,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     previewDbName = `stardb_preview_${Date.now()}`;
-    const adminUrl = new URL(dbUrl);
+    const adminUrl = new URL(process.env.DATABASE_URL ?? "");
     adminUrl.pathname = "/postgres";
     adminUrl.searchParams.delete("schema");
     const adminClient =
@@ -153,7 +249,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }[] = [];
     try {
       stage = "connect";
-      const previewUrl = new URL(dbUrl);
+      const previewUrl = new URL(process.env.DATABASE_URL ?? "");
       if (previewMode === "backup") {
         await adminClient?.connect();
         await adminClient?.query(`CREATE DATABASE "${previewDbName}"`);

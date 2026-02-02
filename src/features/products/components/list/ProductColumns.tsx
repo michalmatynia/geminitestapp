@@ -123,7 +123,7 @@ function calculatePriceForCurrency(
       return (
         groupCode === normalizedTarget ||
         groupIdCode === normalizedTarget ||
-        (currencyIdCode && currencyIdCode === normalizedTarget)
+        Boolean(currencyIdCode && currencyIdCode === normalizedTarget)
       );
     }
   );
@@ -281,7 +281,9 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   );
 };
 
-export const columns: ColumnDef<ProductWithImages>[] = [
+export const getProductColumns = (
+  thumbnailSource: "file" | "link" | "base64" = "file"
+): ColumnDef<ProductWithImages>[] => [
   {
     id: "select",
     header: ({ table }: { table: Table<ProductWithImages> }): React.JSX.Element => (
@@ -319,7 +321,18 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         (link: string) => link && link.trim().length > 0
       );
 
-      const imageUrl: string | undefined = firstFileImage || firstLinkImage;
+      const firstBase64Image: string | undefined = product.imageBase64s?.find(
+        (link: string) => link && link.trim().length > 0
+      );
+
+      let imageUrl: string | undefined;
+      if (thumbnailSource === "link") {
+        imageUrl = firstLinkImage;
+      } else if (thumbnailSource === "base64") {
+        imageUrl = firstBase64Image;
+      } else {
+        imageUrl = firstFileImage;
+      }
 
       return (
         <ProductImageCell
@@ -405,7 +418,10 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       return (
         <Button variant="ghost" onClick={(): void => column.toggleSorting()}>
-          Price {currencyCode && <span className="ml-1 text-xs text-muted-foreground">({currencyCode})</span>}
+          Price{" "}
+          <span className="ml-1 text-xs text-muted-foreground" suppressHydrationWarning>
+            {currencyCode ? `(${currencyCode})` : ""}
+          </span>
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
       );

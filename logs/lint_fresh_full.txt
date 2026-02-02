@@ -1,0 +1,150 @@
+
+> libapp2@0.1.0 lint
+> eslint . --no-cache
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/CmsPageRenderer.tsx
+  92:12  error  Unknown property 'push(s);
+' found  react/no-unknown-property
+  92:49  error  Unknown property 'ylesP' found      react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/sections/FrontendBlockRenderer.tsx
+   85:16   error  Unknown property 'ding";
+  ' found          react/no-unknown-property
+   85:87   error  Unknown property '  con' found              react/no-unknown-property
+   88:16   error  Unknown property 'll") {
+  ' found          react/no-unknown-property
+   88:88   error  Unknown property 'g-tig' found              react/no-unknown-property
+   91:14   error  Unknown property ' (size ==' found          react/no-unknown-property
+   91:86   error  Unknown property 'ng-ti' found              react/no-unknown-property
+   98:13   error  Unknown property 'eact.Reac' found          react/no-unknown-property
+   98:76   error  Unknown property 'ing) ' found              react/no-unknown-property
+  105:13   error  Unknown property 'eact.Reac' found          react/no-unknown-property
+  105:73   error  Unknown property 'strin' found              react/no-unknown-property
+  142:10   error  Unknown property 'tifyC' found              react/no-unknown-property
+  154:11   error  Unknown property 'g, unknow' found          react/no-unknown-property
+  154:36   error  Unknown property 'ctNod' found              react/no-unknown-property
+  169:9    error  Unknown property 'lue:' found               react/no-unknown-property
+  170:9    error  Unknown property 'ck: boole' found          react/no-unknown-property
+  171:9    error  Unknown property ' {
+  ' found              react/no-unknown-property
+  179:11   error  Unknown property '= "false"' found          react/no-unknown-property
+  179:45   error  Unknown property 'urn f' found              react/no-unknown-property
+  214:9    error  Unknown property 's(to' found               react/no-unknown-property
+  215:9    error  Unknown property '"rotation' found          react/no-unknown-property
+  216:9    error  Unknown property 'pi/as' found              react/no-unknown-property
+  225:7    error  Unknown property 'th.m' found               react/no-unknown-property
+  226:7    error  Unknown property ')}px` }}>' found          react/no-unknown-property
+  227:7    error  Unknown property 'r}
+  ' found              react/no-unknown-property
+  239:7    error  Unknown property 'round}
+  ' found          react/no-unknown-property
+  240:7    error  Unknown property 'actShadows}
+     ' found  react/no-unknown-property
+  242:10   error  Unknown property 'tte}
+    ' found          react/no-unknown-property
+  354:9    error  Unknown property 'mpNumber(' found          react/no-unknown-property
+  355:9    error  Unknown property 'adien' found              react/no-unknown-property
+  365:10   error  Unknown property 'verlayGra' found          react/no-unknown-property
+  365:31   error  Unknown property 'on"] ' found              react/no-unknown-property
+  368:9    error  Unknown property 'e";' found                react/no-unknown-property
+  369:9    error  Unknown property 'are' found                react/no-unknown-property
+  370:9    error  Unknown property '(sett' found              react/no-unknown-property
+  377:14   error  Unknown property 't.CSSProp' found          react/no-unknown-property
+  377:63   error  Unknown property '   wi' found              react/no-unknown-property
+  404:9    error  Unknown property 'st shadow' found          react/no-unknown-property
+  405:9    error  Unknown property ' (sha' found              react/no-unknown-property
+  422:10   error  Unknown property 'Styles, b' found          react/no-unknown-property
+  422:32   error  Unknown property 'ncyMa' found              react/no-unknown-property
+  424:12   error  Unknown property 'rin' found                react/no-unknown-property
+  424:22   error  Unknown property '];
+' found                react/no-unknown-property
+  424:32   error  Unknown property 'lur > 0) ' found          react/no-unknown-property
+  519:12   error  Unknown property 'apperStyl' found          react/no-unknown-property
+  519:109  error  Unknown property ' : {}' found              react/no-unknown-property
+  526:10   error  Unknown property ' object-c' found          react/no-unknown-property
+  526:48   error  Unknown property 'ull m' found              react/no-unknown-property
+  528:9    error  Unknown property '<div clas' found          react/no-unknown-property
+  529:9    error  Unknown property '   ' found                react/no-unknown-property
+  530:9    error  Unknown property '   <i' found              react/no-unknown-property
+  531:9    error  Unknown property 'ssNam' found              react/no-unknown-property
+  532:9    error  Unknown property 'er, fallback: n' found    react/no-unknown-property
+  543:14   error  Unknown property 't",
+    "' found          react/no-unknown-property
+  543:40   error  Unknown property 'top",' found              react/no-unknown-property
+  551:15   error  Unknown property 'right",
+ ' found          react/no-unknown-property
+  555:10   error  Unknown property 'eturn map' found          react/no-unknown-property
+  565:13   error  Unknown property 'rig' found                react/no-unknown-property
+  566:13   error  Unknown property ' lef' found               react/no-unknown-property
+  567:13   error  Unknown property '"to bo' found             react/no-unknown-property
+  568:13   error  Unknown property 'rig' found                react/no-unknown-property
+  569:13   error  Unknown property 'left": "t' found          react/no-unknown-property
+  571:19   error  Unknown property 'h.max(0, ' found          react/no-unknown-property
+  585:10   error  Unknown property 'ctRatio =' found          react/no-unknown-property
+  586:13   error  Unknown property ' cons' found              react/no-unknown-property
+  586:69   error  Unknown property 'yes"' found               react/no-unknown-property
+  586:80   error  Unknown property 't embedUrl' found         react/no-unknown-property
+  601:10   error  Unknown property '  padding' found          react/no-unknown-property
+  602:12   error  Unknown property 'nter just' found          react/no-unknown-property
+  603:14   error  Unknown property '/50 py-8 ' found          react/no-unknown-property
+  604:14   error  Unknown property '    </div' found          react/no-unknown-property
+  608:11   error  Unknown property '"ab' found                react/no-unknown-property
+  609:11   error  Unknown property 'w-ful' found              react/no-unknown-property
+  610:11   error  Unknown property 'utoplay ?' found          react/no-unknown-property
+  611:11   error  Unknown property '     ' found              react/no-unknown-property
+  615:11   error  Unknown property 'edia; gyr' found          react/no-unknown-property
+  616:11   error  Unknown property 'rd<st' found              react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-sync.ts
+    95:3   error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+    95:42  error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+  2019:32  error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/components/FileManager.tsx
+  365:19  error  Unknown property 'file)}
+' found    react/no-unknown-property
+  367:24  error  Unknown property 'rounded b' found  react/no-unknown-property
+  377:22  error  Unknown property 'text-sm w' found  react/no-unknown-property
+  381:26  error  Unknown property 'stify-cen' found  react/no-unknown-property
+  383:31  error  Unknown property ' bg' found        react/no-unknown-property
+  383:41  error  Unknown property '00/70 px-' found  react/no-unknown-property
+  389:24  error  Unknown property 'xs text-g' found  react/no-unknown-property
+  400:24  error  Unknown property 'er gap-2"' found  react/no-unknown-property
+  427:18  error  Unknown property 'id-cols-3' found  react/no-unknown-property
+  429:22  error  Unknown property '-md' found        react/no-unknown-property
+  429:37  error  Unknown property 'er-border' found  react/no-unknown-property
+  430:24  error  Unknown property 'king-wide' found  react/no-unknown-property
+  431:24  error  Unknown property 'bold text' found  react/no-unknown-property
+  432:24  error  Unknown property 'break-wor' found  react/no-unknown-property
+  434:26  error  Unknown property 'p-1">
+   ' found  react/no-unknown-property
+  436:31  error  Unknown property ' bg' found        react/no-unknown-property
+  436:41  error  Unknown property '00/70 px-' found  react/no-unknown-property
+  442:24  error  Unknown property ' justify-' found  react/no-unknown-property
+  446:24  error  Unknown property '>
+       ' found  react/no-unknown-property
+  461:14  error  Unknown property 'id-cols-4' found  react/no-unknown-property
+  464:15  error  Unknown property 'Nam' found        react/no-unknown-property
+  465:15  error  Unknown property '         ' found  react/no-unknown-property
+  470:15  error  Unknown property 'file)}
+' found    react/no-unknown-property
+  472:20  error  Unknown property 'rounded b' found  react/no-unknown-property
+  482:18  error  Unknown property 'text-sm w' found  react/no-unknown-property
+  486:22  error  Unknown property 'stify-cen' found  react/no-unknown-property
+  488:27  error  Unknown property ' bg' found        react/no-unknown-property
+  488:37  error  Unknown property '00/70 px-' found  react/no-unknown-property
+  494:20  error  Unknown property 'xs text-g' found  react/no-unknown-property
+  505:20  error  Unknown property 'er gap-2"' found  react/no-unknown-property
+  536:15  error  Unknown property ' mb-4">Li' found  react/no-unknown-property
+  537:16  error  Unknown property '
+        ' found  react/no-unknown-property
+  558:16  error  Unknown property '-gray-200' found  react/no-unknown-property
+  559:18  error  Unknown property '    <div>' found  react/no-unknown-property
+  575:22  error  Unknown property 'ap text-g' found  react/no-unknown-property
+  578:18  error  Unknown property 'er-border' found  react/no-unknown-property
+  579:20  error  Unknown property 'uppercase' found  react/no-unknown-property
+  582:20  error  Unknown property '-auto tex' found  react/no-unknown-property
+
+✖ 119 problems (119 errors, 0 warnings)
+

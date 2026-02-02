@@ -37,6 +37,8 @@ export function useProducts(
     queryKey: ["products", filters],
     queryFn: () => getProducts(filters),
     enabled,
+    staleTime: 1000 * 60 * 2, // 2 minutes for products
+    refetchOnWindowFocus: true,
   });
 }
 

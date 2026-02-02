@@ -22,6 +22,7 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode["type"]>([
   "http",
   "prompt",
   "model",
+  "agent",
   "database",
   "db_schema",
   "viewer",

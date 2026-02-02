@@ -166,18 +166,18 @@ export function useProductMetadata({
   const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
 
   const arraysEqual = (a: string[], b: string[]): boolean =>
-    a.length === b.length && a.every((value, index) => value === b[index]);
+    a.length === b.length && a.every((value: string, index: number) => value === b[index]);
 
   React.useEffect(() => {
-    setSelectedCatalogIds((prev) => (arraysEqual(prev, initialCatalogSelection) ? prev : initialCatalogSelection));
+    setSelectedCatalogIds((prev: string[]) => (arraysEqual(prev, initialCatalogSelection) ? prev : initialCatalogSelection));
   }, [initialCatalogSelection]);
 
   React.useEffect(() => {
-    setSelectedCategoryIds((prev) => (arraysEqual(prev, initialCategorySelection) ? prev : initialCategorySelection));
+    setSelectedCategoryIds((prev: string[]) => (arraysEqual(prev, initialCategorySelection) ? prev : initialCategorySelection));
   }, [initialCategorySelection]);
 
   React.useEffect(() => {
-    setSelectedTagIds((prev) => (arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection));
+    setSelectedTagIds((prev: string[]) => (arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection));
   }, [initialTagSelection]);
   
   const primaryCatalogId = selectedCatalogIds[0] || "";
@@ -222,18 +222,18 @@ export function useProductMetadata({
       };
     }
 
-    const selectedCatalogs = catalogs.filter((catalog) =>
+    const selectedCatalogs = catalogs.filter((catalog: CatalogRecord) =>
       selectedCatalogIds.includes(catalog.id)
     );
     const languageIdSet = new Set(
-      selectedCatalogs.flatMap((catalog) => catalog.languageIds ?? [])
+      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.languageIds ?? [])
     );
     const normalizedLanguageSet = new Set(
-      Array.from(languageIdSet).map((value) => String(value).trim().toUpperCase())
+      Array.from(languageIdSet).map((value: string) => String(value).trim().toUpperCase())
     );
 
     const filteredLanguages = languageIdSet.size
-      ? languages.filter((language) => {
+      ? languages.filter((language: Language) => {
           const idKey = String(language.id).trim().toUpperCase();
           const codeKey = String(language.code).trim().toUpperCase();
           return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
@@ -241,10 +241,10 @@ export function useProductMetadata({
       : languages;
 
     const priceGroupIdSet = new Set(
-      selectedCatalogs.flatMap((catalog) => catalog.priceGroupIds ?? [])
+      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.priceGroupIds ?? [])
     );
     const filteredPriceGroups = priceGroupIdSet.size
-      ? priceGroups.filter((group) => priceGroupIdSet.has(group.id))
+      ? priceGroups.filter((group: PriceGroupWithDetails) => priceGroupIdSet.has(group.id))
       : priceGroups;
 
     return { filteredLanguages, filteredPriceGroups };

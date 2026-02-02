@@ -69,6 +69,7 @@ export type ProductRecord = {
   length: number | null;
   parameters?: ProductParameterValue[];
   imageLinks: string[];
+  imageBase64s: string[];
   createdAt: Date;
   updatedAt: Date;
 };

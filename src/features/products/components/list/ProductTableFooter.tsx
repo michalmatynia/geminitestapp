@@ -8,7 +8,7 @@ import { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 
 
-import { Trash2 } from "lucide-react";
+import { Trash2, Image as ImageIcon } from "lucide-react";
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;
@@ -25,6 +25,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
   const hasSelection = selectedCount > 0;
   const { toast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBase64Confirm, setShowBase64Confirm] = useState(false);
 
   const handleMassDelete = async (): Promise<void> => {
     logger.log("Mass delete initiated.");
@@ -84,6 +85,42 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
     }
   };
 
+  const handleMassBase64 = async (): Promise<void> => {
+    const selectedProductIds = table
+      .getSelectedRowModel()
+      .rows.map((row: Row<TData>) => (row.original as ProductWithImages)?.id)
+      .filter(Boolean);
+
+    if (selectedProductIds.length === 0) {
+      setActionError("Please select products to convert.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/products/images/base64", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: selectedProductIds }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error || "Failed to convert images");
+      }
+      toast("Base64 images generated for selected products.", {
+        variant: "success",
+      });
+      table.setRowSelection({});
+      setRefreshTrigger((prev: number) => prev + 1);
+      setShowBase64Confirm(false);
+    } catch (error) {
+      logger.error("Error during base64 conversion:", error);
+      setActionError("An error occurred during base64 conversion.");
+      toast("An error occurred during base64 conversion", {
+        variant: "error",
+      });
+    }
+  };
+
   return (
     <>
       <div className="space-y-3 border-t bg-muted/50 px-4 py-4">
@@ -102,6 +139,16 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
           >
             <Trash2 className="h-4 w-4" />
             Delete Selected ({selectedCount})
+          </Button>
+          <Button
+            onClick={() => setShowBase64Confirm(true)}
+            disabled={!hasSelection}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <ImageIcon className="h-4 w-4" />
+            Base64 Images ({selectedCount})
           </Button>
         </div>
       </div>
@@ -124,6 +171,27 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showBase64Confirm} onOpenChange={setShowBase64Confirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate Base64 images?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Create Base64-encoded image links for {selectedCount} selected{" "}
+              {selectedCount === 1 ? "product" : "products"}? This can be heavy for large images.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleMassBase64()}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Convert
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -39,4 +39,5 @@ export type ProductListPreferences = {
   catalogFilter: string;
   currencyCode: string | null;
   pageSize: number;
+  thumbnailSource: "file" | "link" | "base64";
 };

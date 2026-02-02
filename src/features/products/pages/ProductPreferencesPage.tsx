@@ -13,6 +13,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   catalogFilter: "all",
   currencyCode: "PLN",
   pageSize: 50,
+  thumbnailSource: "file",
 };
 
 export function ProductPreferencesPage(): React.JSX.Element {
@@ -168,6 +169,32 @@ export function ProductPreferencesPage(): React.JSX.Element {
                 />
                 <p className="text-xs text-gray-500">
                   Preferred currency code for price display (leave empty for catalog default)
+                </p>
+              </div>
+
+              {/* Thumbnail Source */}
+              <div className="space-y-2">
+                <Label htmlFor="thumbnailSource">Thumbnail Source</Label>
+                <Select
+                  value={preferences.thumbnailSource || "file"}
+                  onValueChange={(value: "file" | "link" | "base64") =>
+                    setPreferences((prev: ProductListPreferences) => ({
+                      ...prev,
+                      thumbnailSource: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="thumbnailSource">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="file">File Uploads</SelectItem>
+                    <SelectItem value="link">URL Links</SelectItem>
+                    <SelectItem value="base64">Base64</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Choose which image source is used for product list thumbnails
                 </p>
               </div>
 

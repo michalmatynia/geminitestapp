@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
   Checkbox,
@@ -25,16 +24,11 @@ import { PageSelectorBar } from "./PageSelectorBar";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
+import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
-const EDIT_BUTTON_HIDE_DELAY = 1200;
-
-type UserPreferencesResponse = {
-  cmsPreviewEnabled?: boolean | null;
-};
-
-const userPreferencesQueryKey = ["user-preferences"] as const;
-
+const EDIT_BUTTON_HIDE_DELAY = 2000;
+// ...
 export function PagePreviewPanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const { theme } = useThemeSettings();
@@ -54,36 +48,10 @@ export function PagePreviewPanel(): React.ReactNode {
   const [canvasScale, setCanvasScale] = useState(1);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
-  const queryClient = useQueryClient();
-  const preferencesQuery = useQuery({
-    queryKey: userPreferencesQueryKey,
-    queryFn: async (): Promise<UserPreferencesResponse> => {
-      const res = await fetch("/api/user/preferences");
-      if (!res.ok) {
-        throw new Error("Failed to load user preferences");
-      }
-      return (await res.json()) as UserPreferencesResponse;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: UserPreferencesResponse): Promise<void> => {
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update user preferences");
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
-    },
-    onError: (error: Error) => {
-      console.warn("[CMS] Failed to persist preview toggle.", error);
-    },
-  });
+  
+  const preferencesQuery = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferences();
+
   const domainSlugSet = useMemo(
     (): Set<string> | null =>
       (slugsQuery.data ?? []).length

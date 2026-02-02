@@ -53,6 +53,7 @@ interface ProductFormContextType {
   getValues: UseFormGetValues<ProductFormData>;
   imageSlots: (ProductImageSlot | null)[];
   imageLinks: string[];
+  imageBase64s: string[];
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
@@ -65,6 +66,7 @@ interface ProductFormContextType {
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   swapImageSlots: (fromIndex: number, toIndex: number) => void;
   setImageLinkAt: (index: number, value: string) => void;
+  setImageBase64At: (index: number, value: string) => void;
   setImagesReordering: (reordering: boolean) => void;
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
@@ -176,6 +178,7 @@ export function ProductFormProvider({
   const {
     imageSlots,
     imageLinks,
+    imageBase64s,
     showFileManager,
     setShowFileManager,
     handleSlotImageChange,
@@ -185,6 +188,7 @@ export function ProductFormProvider({
     handleMultiFileSelect,
     swapImageSlots,
     setImageLinkAt,
+    setImageBase64At,
     refreshFromProduct: refreshImages,
     setImagesReordering,
   } = useProductImages(product, draft?.imageLinks);
@@ -282,6 +286,8 @@ export function ProductFormProvider({
     });
     const normalizedLinks = imageLinks.map((link: string): string => link.trim());
     formData.append("imageLinks", JSON.stringify(normalizedLinks));
+    const normalizedBase64s = imageBase64s.map((link: string): string => link.trim());
+    formData.append("imageBase64s", JSON.stringify(normalizedBase64s));
 
     // Process image slots
     imageSlots.forEach((slot: ProductImageSlot | null): void => {
@@ -381,6 +387,7 @@ export function ProductFormProvider({
           getValues,
           imageSlots,
           imageLinks,
+          imageBase64s,
           uploading: createMutation.isPending || updateMutation.isPending,
           uploadError,
           uploadSuccess,
@@ -393,6 +400,7 @@ export function ProductFormProvider({
           handleMultiFileSelect,
           swapImageSlots,
           setImageLinkAt,
+          setImageBase64At,
           setImagesReordering,
           catalogs,
           catalogsLoading,

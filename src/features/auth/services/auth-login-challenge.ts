@@ -34,7 +34,7 @@ const getPrismaChallenge = async (id: string): Promise<ChallengeRecord | null> =
   const row = await prisma.authLoginChallenge.findUnique({ where: { id } });
   if (!row) return null;
   if (row.data && typeof row.data === "object") {
-    return row.data as ChallengeRecord;
+    return row.data as unknown as ChallengeRecord;
   }
   return null;
 };

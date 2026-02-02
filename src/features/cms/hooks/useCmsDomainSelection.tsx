@@ -1,18 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCmsDomains } from "@/features/cms/hooks/useCmsQueries";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain } from "@/features/cms/types";
-
-type UserPreferencesResponse = {
-  cmsActiveDomainId?: string | null;
-};
-
-const userPreferencesQueryKey = ["user-preferences"] as const;
+import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
 
 type CmsDomainSelectionOptions = {
   initialDomainId?: string | null;
@@ -45,38 +39,9 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   const zoningEnabled = domainSettings.zoningEnabled;
   const domainsQuery = useCmsDomains();
   const domains = useMemo<CmsDomain[]>(() => domainsQuery.data ?? [], [domainsQuery.data]);
-  const queryClient = useQueryClient();
 
-  const preferencesQuery = useQuery({
-    queryKey: userPreferencesQueryKey,
-    queryFn: async (): Promise<UserPreferencesResponse> => {
-      const res = await fetch("/api/user/preferences");
-      if (!res.ok) {
-        throw new Error("Failed to load user preferences");
-      }
-      return (await res.json()) as UserPreferencesResponse;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: UserPreferencesResponse): Promise<void> => {
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update user preferences");
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
-    },
-    onError: (error: Error) => {
-      console.warn("[CMS] Failed to persist domain selection.", error);
-    },
-  });
+  const preferencesQuery = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const hostDomainId = useMemo((): string | null => {
     if (typeof window === "undefined") return null;
@@ -121,20 +86,17 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   );
 
   const setActiveDomainId = useCallback(
-    (domainId: string | null) => {
+    (domainId: string | null): void => {
       if (!persist) return;
       if (!zoningEnabled) return;
       if (domainId === preferencesQuery.data?.cmsActiveDomainId) return;
-      queryClient.setQueryData<UserPreferencesResponse>(userPreferencesQueryKey, (prev: UserPreferencesResponse | undefined) => ({
-        ...(prev ?? {}),
-        cmsActiveDomainId: domainId,
-      }));
+      
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
-    [persist, preferencesQuery.data?.cmsActiveDomainId, queryClient, updatePreferencesMutation, zoningEnabled]
+    [persist, preferencesQuery.data?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
   );
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!persist) return;
     if (!zoningEnabled) return;
     if (!preferencesQuery.isSuccess) return;

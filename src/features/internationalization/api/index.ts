@@ -33,7 +33,11 @@ export async function deleteLanguage(id: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete language.");
 }
 
-export async function saveCurrency(id: string | undefined, data: Partial<CurrencyOption>): Promise<CurrencyOption> {
+export type SaveCurrencyInput = Partial<CurrencyOption>;
+export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
+export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };
+
+export async function saveCurrency(id: string | undefined, data: SaveCurrencyInput): Promise<CurrencyOption> {
   const res = await fetch(id ? `/api/currencies/${id}` : "/api/currencies", {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
@@ -43,7 +47,7 @@ export async function saveCurrency(id: string | undefined, data: Partial<Currenc
   return res.json() as Promise<CurrencyOption>;
 }
 
-export async function saveCountry(id: string | undefined, data: Partial<CountryOption>): Promise<CountryOption> {
+export async function saveCountry(id: string | undefined, data: SaveCountryInput): Promise<CountryOption> {
   const res = await fetch(id ? `/api/countries/${id}` : "/api/countries", {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
@@ -53,7 +57,7 @@ export async function saveCountry(id: string | undefined, data: Partial<CountryO
   return res.json() as Promise<CountryOption>;
 }
 
-export async function saveLanguage(id: string | undefined, data: Partial<Language>): Promise<Language> {
+export async function saveLanguage(id: string | undefined, data: SaveLanguageInput): Promise<Language> {
   const res = await fetch(id ? `/api/languages/${id}` : "/api/languages", {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },

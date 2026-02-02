@@ -56,7 +56,7 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
@@ -640,6 +640,163 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "borderRadius", label: "Border radius", type: "number", defaultValue: 0 },
     ],
   },
+  Model3D: {
+    type: "Model3D",
+    label: "3D model",
+    icon: "Cube",
+    defaultSettings: {
+      assetId: "",
+      height: 360,
+      backgroundColor: "#111827",
+      autoRotate: "true",
+      autoRotateSpeed: 2,
+      environment: "studio",
+      lighting: "studio",
+      lightIntensity: 1,
+      enableShadows: "true",
+      enableBloom: "false",
+      bloomIntensity: 0.5,
+      exposure: 1,
+      showGround: "false",
+      enableContactShadows: "true",
+      enableVignette: "false",
+      autoFit: "true",
+      presentationMode: "false",
+      positionX: 0,
+      positionY: 0,
+      positionZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      scale: 1,
+    },
+    settingsSchema: [
+      { key: "assetId", label: "3D asset", type: "asset3d" },
+      { key: "height", label: "Height (px)", type: "number", defaultValue: 360 },
+      { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "#111827" },
+      {
+        key: "autoRotate",
+        label: "Auto-rotate",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      { key: "autoRotateSpeed", label: "Rotate speed", type: "number", defaultValue: 2 },
+      {
+        key: "environment",
+        label: "Environment",
+        type: "select",
+        options: [
+          { label: "Studio", value: "studio" },
+          { label: "Sunset", value: "sunset" },
+          { label: "Dawn", value: "dawn" },
+          { label: "Night", value: "night" },
+          { label: "Warehouse", value: "warehouse" },
+          { label: "Forest", value: "forest" },
+          { label: "Apartment", value: "apartment" },
+          { label: "City", value: "city" },
+          { label: "Park", value: "park" },
+          { label: "Lobby", value: "lobby" },
+        ],
+        defaultValue: "studio",
+      },
+      {
+        key: "lighting",
+        label: "Lighting",
+        type: "select",
+        options: [
+          { label: "Studio", value: "studio" },
+          { label: "Outdoor", value: "outdoor" },
+          { label: "Dramatic", value: "dramatic" },
+          { label: "Soft", value: "soft" },
+        ],
+        defaultValue: "studio",
+      },
+      { key: "lightIntensity", label: "Light intensity", type: "number", defaultValue: 1 },
+      {
+        key: "enableShadows",
+        label: "Shadows",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "enableBloom",
+        label: "Bloom",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "false",
+      },
+      { key: "bloomIntensity", label: "Bloom intensity", type: "number", defaultValue: 0.5 },
+      { key: "exposure", label: "Exposure", type: "number", defaultValue: 1 },
+      {
+        key: "showGround",
+        label: "Ground plane",
+        type: "select",
+        options: [
+          { label: "Show", value: "true" },
+          { label: "Hide", value: "false" },
+        ],
+        defaultValue: "false",
+      },
+      {
+        key: "enableContactShadows",
+        label: "Contact shadows",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "enableVignette",
+        label: "Vignette",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "false",
+      },
+      {
+        key: "autoFit",
+        label: "Auto-fit camera",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "presentationMode",
+        label: "Presentation mode",
+        type: "select",
+        options: [
+          { label: "On", value: "true" },
+          { label: "Off", value: "false" },
+        ],
+        defaultValue: "false",
+      },
+      { key: "positionX", label: "Position X", type: "number", defaultValue: 0 },
+      { key: "positionY", label: "Position Y", type: "number", defaultValue: 0 },
+      { key: "positionZ", label: "Position Z", type: "number", defaultValue: 0 },
+      { key: "rotationX", label: "Rotation X (deg)", type: "number", defaultValue: 0 },
+      { key: "rotationY", label: "Rotation Y (deg)", type: "number", defaultValue: 0 },
+      { key: "rotationZ", label: "Rotation Z (deg)", type: "number", defaultValue: 0 },
+      { key: "scale", label: "Scale", type: "number", defaultValue: 1 },
+    ],
+  },
   VideoEmbed: {
     type: "VideoEmbed",
     label: "Video embed",
@@ -857,6 +1014,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     allowedBlockTypes: [],
     defaultSettings: { ...BLOCK_DEFINITIONS.ImageElement!.defaultSettings },
     settingsSchema: [...BLOCK_DEFINITIONS.ImageElement!.settingsSchema],
+  },
+  Model3DElement: {
+    type: "Model3DElement",
+    label: "3D element",
+    icon: "Cube",
+    allowedBlockTypes: [],
+    defaultSettings: { ...BLOCK_DEFINITIONS.Model3D!.defaultSettings },
+    settingsSchema: [...BLOCK_DEFINITIONS.Model3D!.settingsSchema],
   },
   ButtonElement: {
     type: "ButtonElement",
@@ -1246,9 +1411,9 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "ButtonElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
+  header: ["AnnouncementBar", "Block", "TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement", "Hero", "ImageWithText", "RichText", "Grid", "Slideshow"],
   template: Object.keys(SECTION_DEFINITIONS).filter((type: string) => type !== "AnnouncementBar"),
-  footer: ["Block", "TextElement", "TextAtom", "ImageElement", "ButtonElement", "RichText", "Grid", "Newsletter", "ContactForm"],
+  footer: ["Block", "TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement", "RichText", "Grid", "Newsletter", "ContactForm"],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {

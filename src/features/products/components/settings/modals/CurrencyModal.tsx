@@ -11,7 +11,7 @@ import {
   useToast,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
-import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
+import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 interface CurrencyModalProps {
   isOpen: boolean;

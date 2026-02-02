@@ -170,6 +170,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     const memoryValidationModel = getPrefModel("memoryValidationModel");
     const memorySummarizationModel = getPrefModel("memorySummarizationModel");
     const extractionValidationModel = getPrefModel("extractionValidationModel");
+    const toolRouterModel = getPrefModel("toolRouterModel");
     const selectorInferenceModel = getPrefModel("selectorInferenceModel");
     const outputNormalizationModel = getPrefModel("outputNormalizationModel");
 
@@ -351,10 +352,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       ...(activeStepId && { activeStepId }),
       ...(stepLabel && { stepLabel }),
     };
+    const toolLlmContext = {
+      ...llmContext,
+      model: toolRouterModel ?? resolvedModel,
+    };
 
     try {
       const searchFirstDecision = await decideSearchFirstWithLLM(
-          llmContext, 
+          toolLlmContext, 
           prompt ?? "", 
           targetUrl, 
           hasExplicitUrl(prompt),
@@ -382,7 +387,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
           const picked =
             query && allowedResults.length
-              ? await pickSearchResultWithLLM(llmContext, query, prompt ?? "", allowedResults)
+              ? await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? "", allowedResults)
               : null;
           
           const resolvedPicked =
@@ -439,7 +444,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             });
             
             // Search escalation
-            const query = (await buildSearchQueryWithLLM(llmContext, prompt ?? "")) ?? prompt ?? "";
+            const query = (await buildSearchQueryWithLLM(toolLlmContext, prompt ?? "")) ?? prompt ?? "";
             let searchUrl: string | null = null;
              if (query) {
                 const results = await fetchSearchResults(query, resolvedSearchProvider, log);
@@ -455,7 +460,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                           targetHostname,
                         });
                     } else {
-                        const picked = await pickSearchResultWithLLM(llmContext, query, prompt ?? "", allowedResults);
+                        const picked = await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? "", allowedResults);
                          const resolvedPicked =
                             picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
                             ? picked
@@ -498,7 +503,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         }
       } else {
         // No explicit target, try search escalation
-        const query = (await buildSearchQueryWithLLM(llmContext, prompt ?? "")) ?? prompt ?? "";
+        const query = (await buildSearchQueryWithLLM(toolLlmContext, prompt ?? "")) ?? prompt ?? "";
         let searchUrl: string | null = null;
          if (query) {
              const results = await fetchSearchResults(query, resolvedSearchProvider, log);
@@ -514,7 +519,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                         targetHostname,
                      });
                  } else {
-                      const picked = await pickSearchResultWithLLM(llmContext, query, prompt ?? "", allowedResults);
+                      const picked = await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? "", allowedResults);
                       const resolvedPicked =
                         picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
                         ? picked

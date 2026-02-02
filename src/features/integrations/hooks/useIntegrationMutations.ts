@@ -231,6 +231,19 @@ export function useUpdatePreferredTemplate(): UseMutationResult<
   });
 }
 
+export function useSyncAllBaseImagesMutation(): UseMutationResult<{ message?: string }, Error, void> {
+  return useMutation({
+    mutationFn: async (): Promise<{ message?: string }> => {
+      const res = await fetch("/api/integrations/images/sync-base/all", { method: "POST" });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error || "Failed to enqueue Base.com image sync");
+      }
+      return (await res.json()) as { message?: string };
+    },
+  });
+}
+
 export function useUpdatePreferredInventory(): UseMutationResult<
   void,
   Error,

@@ -7,6 +7,7 @@ import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 import { getBlockTypographyStyles } from "../theme-styles";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { useMediaStyles } from "../media-styles-context";
+import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -57,6 +58,8 @@ function renderBlockContent(
       return <ImageElementBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
     case "Image":
       return <ImageBlock settings={block.settings} mediaStyles={mediaStyles} stretch={stretch} />;
+    case "Model3D":
+      return <Model3DBlock settings={block.settings} />;
     case "VideoEmbed":
       return <VideoEmbedBlock settings={block.settings} mediaStyles={mediaStyles} />;
     case "Divider":
@@ -154,6 +157,81 @@ function TextAtomLetterBlock({ settings }: { settings: Record<string, unknown> }
     <span className="inline-block" style={{ ...typoStyles, whiteSpace: "pre" }}>
       {text}
     </span>
+  );
+}
+
+const toNumber = (value: unknown, fallback: number): number =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback;
+
+const toBoolean = (value: unknown, fallback: boolean): boolean => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
+  }
+  return fallback;
+};
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+
+function Model3DBlock({ settings }: { settings: Record<string, unknown> }): React.ReactNode {
+  const assetId = (settings["assetId"] as string) || "";
+  if (!assetId) return null;
+
+  const height = toNumber(settings["height"], 360);
+  const backgroundColor = (settings["backgroundColor"] as string) || "#111827";
+  const autoRotate = toBoolean(settings["autoRotate"], true);
+  const autoRotateSpeed = toNumber(settings["autoRotateSpeed"], 2);
+  const environment = (settings["environment"] as EnvironmentPreset) || "studio";
+  const lighting = (settings["lighting"] as LightingPreset) || "studio";
+  const lightIntensity = toNumber(settings["lightIntensity"], 1);
+  const enableShadows = toBoolean(settings["enableShadows"], true);
+  const enableBloom = toBoolean(settings["enableBloom"], false);
+  const bloomIntensity = toNumber(settings["bloomIntensity"], 0.5);
+  const exposure = toNumber(settings["exposure"], 1);
+  const showGround = toBoolean(settings["showGround"], false);
+  const enableContactShadows = toBoolean(settings["enableContactShadows"], true);
+  const enableVignette = toBoolean(settings["enableVignette"], false);
+  const autoFit = toBoolean(settings["autoFit"], true);
+  const presentationMode = toBoolean(settings["presentationMode"], false);
+  const position = [
+    toNumber(settings["positionX"], 0),
+    toNumber(settings["positionY"], 0),
+    toNumber(settings["positionZ"], 0),
+  ] as [number, number, number];
+  const rotation = [
+    toRadians(toNumber(settings["rotationX"], 0)),
+    toRadians(toNumber(settings["rotationY"], 0)),
+    toRadians(toNumber(settings["rotationZ"], 0)),
+  ] as [number, number, number];
+  const scale = toNumber(settings["scale"], 1);
+  const modelUrl = `/api/assets3d/${assetId}/file`;
+
+  return (
+    <div className="w-full" style={{ height: `${Math.max(120, height)}px` }}>
+      <Viewer3D
+        modelUrl={modelUrl}
+        backgroundColor={backgroundColor}
+        autoRotate={autoRotate}
+        autoRotateSpeed={autoRotateSpeed}
+        environment={environment}
+        lighting={lighting}
+        lightIntensity={lightIntensity}
+        enableShadows={enableShadows}
+        enableBloom={enableBloom}
+        bloomIntensity={bloomIntensity}
+        exposure={exposure}
+        showGround={showGround}
+        enableContactShadows={enableContactShadows}
+        enableVignette={enableVignette}
+        autoFit={autoFit}
+        presentationMode={presentationMode}
+        modelPosition={position}
+        modelRotation={rotation}
+        modelScale={scale}
+        className="h-full w-full"
+      />
+    </div>
   );
 }
 

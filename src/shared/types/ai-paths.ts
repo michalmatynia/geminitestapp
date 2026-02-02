@@ -18,6 +18,7 @@ export type NodeType =
   | "http"
   | "prompt"
   | "model"
+  | "agent"
   | "database"
   | "db_schema"
   | "viewer"
@@ -51,6 +52,12 @@ export type ModelConfig = {
   temperature: number;
   maxTokens: number;
   vision: boolean;
+  waitForResult?: boolean;
+};
+
+export type AgentConfig = {
+  personaId?: string;
+  promptTemplate?: string;
   waitForResult?: boolean;
 };
 
@@ -286,6 +293,7 @@ export type NodeConfig = {
   parser?: ParserConfig;
   prompt?: PromptConfig;
   model?: ModelConfig;
+  agent?: AgentConfig;
   database?: DatabaseConfig;
   runtime?: NodeRuntimeConfig;
 };

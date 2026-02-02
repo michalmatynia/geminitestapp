@@ -89,7 +89,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       plannerModel?: string;
       selfCheckModel?: string;
       extractionValidationModel?: string;
+      toolRouterModel?: string;
       loopGuardModel?: string;
+      approvalGateModel?: string;
       memorySummarizationModel?: string;
       selectorInferenceModel?: string;
       outputNormalizationModel?: string;
@@ -175,13 +177,30 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         selfCheckModel: body.selfCheckModel?.trim() || null,
         extractionValidationModel:
           body.extractionValidationModel?.trim() || null,
+        toolRouterModel: body.toolRouterModel?.trim() || null,
         loopGuardModel: body.loopGuardModel?.trim() || null,
+        approvalGateModel: body.approvalGateModel?.trim() || null,
         memorySummarizationModel: body.memorySummarizationModel?.trim() || null,
         selectorInferenceModel: body.selectorInferenceModel?.trim() || null,
         outputNormalizationModel: body.outputNormalizationModel?.trim() || null,
         planSettings,
       });
     }
+
+    const hasPreferenceOverrides =
+      body.ignoreRobotsTxt !== undefined ||
+      body.requireHumanApproval !== undefined ||
+      Boolean(body.memoryValidationModel?.trim()) ||
+      Boolean(body.plannerModel?.trim()) ||
+      Boolean(body.selfCheckModel?.trim()) ||
+      Boolean(body.extractionValidationModel?.trim()) ||
+      Boolean(body.toolRouterModel?.trim()) ||
+      Boolean(body.loopGuardModel?.trim()) ||
+      Boolean(body.approvalGateModel?.trim()) ||
+      Boolean(body.memorySummarizationModel?.trim()) ||
+      Boolean(body.selectorInferenceModel?.trim()) ||
+      Boolean(body.outputNormalizationModel?.trim());
+    const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides);
 
     const run = await prisma.chatbotAgentRun.create({
       data: {
@@ -192,9 +211,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         agentBrowser: body.agentBrowser?.trim() || null,
         runHeadless: body.runHeadless ?? true,
         logLines: [`[${new Date().toISOString()}] Run queued.`],
-        ...(planSettings ||
-        body.ignoreRobotsTxt !== undefined ||
-        body.requireHumanApproval !== undefined
+        ...(shouldAttachPlanState
           ? {
               planState: {
                 ...(planSettings ? { settings: planSettings } : {}),
@@ -219,8 +236,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
                           body.extractionValidationModel.trim(),
                       }
                     : {}),
+                  ...(body.toolRouterModel?.trim()
+                    ? { toolRouterModel: body.toolRouterModel.trim() }
+                    : {}),
                   ...(body.loopGuardModel?.trim()
                     ? { loopGuardModel: body.loopGuardModel.trim() }
+                    : {}),
+                  ...(body.approvalGateModel?.trim()
+                    ? { approvalGateModel: body.approvalGateModel.trim() }
                     : {}),
                   ...(body.memorySummarizationModel?.trim()
                     ? {

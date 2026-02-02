@@ -1,0 +1,12 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/components/UserNav.tsx
+  62:22  error  Expected event to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/hooks/useCmsDomainSelection.tsx
+  43:9  error  'queryClient' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/useUserPreferences.ts
+  41:17  error  Expected data to have a type annotation  @typescript-eslint/typedef
+
+✖ 3 problems (3 errors, 0 warnings)
+

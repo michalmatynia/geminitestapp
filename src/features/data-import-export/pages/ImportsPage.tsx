@@ -85,11 +85,15 @@ export default function ImportsPage(): React.JSX.Element {
   const [limit, setLimit] = useState("all");
   const [imageMode, setImageMode] = useState<"links" | "download">("links");
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
-  const [importSearch, setImportSearch] = useState("");
+  const [importNameSearch, setImportNameSearch] = useState("");
+  const [importSkuSearch, setImportSkuSearch] = useState("");
   const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(new Set());
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const [templateScope, setTemplateScope] = useState<"import" | "export">("import");
+  const [importListPage, setImportListPage] = useState(1);
+  const [importListPageSize, setImportListPageSize] = useState(25);
+  const [importListEnabled, setImportListEnabled] = useState(false);
   
   const [importTemplateId, setImportTemplateId] = useState("");
   const [importActiveTemplateId, setImportActiveTemplateId] = useState("");
@@ -107,6 +111,7 @@ export default function ImportsPage(): React.JSX.Element {
   const [isBaseConnected, setIsBaseConnected] = useState(false);
   const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
+  const lastSavedImportActiveTemplateId = useRef<string | null>(null);
 
   const hasInitializedCatalog = useRef(false);
 
@@ -271,12 +276,15 @@ export default function ImportsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (importActiveTemplateId) {
+      if (activeImportTemplatePref?.templateId === importActiveTemplateId) return;
+      if (lastSavedImportActiveTemplateId.current === importActiveTemplateId) return;
+      lastSavedImportActiveTemplateId.current = importActiveTemplateId;
       savePreferenceMutation.mutate({
         endpoint: "/api/integrations/imports/base/active-template",
         data: { templateId: importActiveTemplateId },
       });
     }
-  }, [importActiveTemplateId, savePreferenceMutation]);
+  }, [importActiveTemplateId, activeImportTemplatePref?.templateId, savePreferenceMutation]);
 
   // Data loading hooks
   const inventoriesQuery = useInventories(selectedBaseConnectionId, isBaseConnected);
@@ -314,7 +322,18 @@ export default function ImportsPage(): React.JSX.Element {
   const warehouses: WarehouseOption[] = (warehousesData as { warehouses?: WarehouseOption[] })?.warehouses ?? [];
   const allWarehouses: WarehouseOption[] = (warehousesData as { allWarehouses?: WarehouseOption[] })?.allWarehouses ?? [];
 
-  const importListQuery = useImportList(inventoryId, limit, uniqueOnly, isBaseConnected && !!inventoryId);
+  const importListQuery = useImportList(
+    inventoryId,
+    {
+      limit,
+      uniqueOnly,
+      page: importListPage,
+      pageSize: importListPageSize,
+      searchName: importNameSearch,
+      searchSku: importSkuSearch,
+    },
+    importListEnabled && isBaseConnected && !!inventoryId
+  );
   const importListData = importListQuery.data;
   const loadingImportList = importListQuery.isFetching;
   const refetchImportList = importListQuery.refetch;
@@ -328,6 +347,9 @@ export default function ImportsPage(): React.JSX.Element {
       available?: number;
       existing?: number;
       skuDuplicates?: number;
+      page?: number;
+      pageSize?: number;
+      totalPages?: number;
     };
     return {
       total: data.total ?? 0,
@@ -335,8 +357,11 @@ export default function ImportsPage(): React.JSX.Element {
       available: data.available ?? data.filtered ?? 0,
       existing: data.existing ?? 0,
       skuDuplicates: data.skuDuplicates ?? 0,
+      page: data.page ?? 1,
+      pageSize: data.pageSize ?? importListPageSize,
+      totalPages: data.totalPages ?? 1,
     };
-  }, [importListData]);
+  }, [importListData, importListPageSize]);
 
   const hasInitializedImportListSelection = useRef(false);
 
@@ -352,6 +377,13 @@ export default function ImportsPage(): React.JSX.Element {
     return undefined;
   }, [importList]);
 
+  const [prevInventoryId, setPrevInventoryId] = useState(inventoryId);
+
+      if (inventoryId !== prevInventoryId) {
+        setPrevInventoryId(inventoryId);
+        setImportListEnabled(false);
+        setImportListPage(1);
+      }
   // Actions
   const handleLoadInventories = async (): Promise<void> => {
     await refetchInventories();
@@ -364,6 +396,8 @@ export default function ImportsPage(): React.JSX.Element {
   };
 
   const handleLoadImportList = async (): Promise<void> => {
+    setImportListEnabled(true);
+    setImportListPage(1);
     await refetchImportList();
     toast("Import list reloaded", { variant: "success" });
   };
@@ -517,17 +551,9 @@ export default function ImportsPage(): React.JSX.Element {
   const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
   const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
 
-  const normalizedImportQuery = importSearch.trim().toLowerCase();
-  const filteredImportList = useMemo(() => {
-    if (!normalizedImportQuery) return importList;
-    return importList.filter((item: ImportListItem) => {
-      const searchFields = [item.baseProductId, item.name, item.sku ?? "", item.description ?? ""];
-      return searchFields.some((field: string) => field.toLowerCase().includes(normalizedImportQuery));
-    });
-  }, [importList, normalizedImportQuery]);
   const selectedImportCount = selectedImportIds.size;
-  const allVisibleSelected = filteredImportList.length > 0 && filteredImportList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
-  const isSomeVisibleSelected = filteredImportList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
+  const allVisibleSelected = importList.length > 0 && importList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
+  const isSomeVisibleSelected = importList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
 
   if (checkingIntegration) return <SectionPanel className="p-6">Checking integration...</SectionPanel>;
   if (!isBaseConnected) return <SectionPanel className="p-6">Base.com integration required.</SectionPanel>;
@@ -566,15 +592,20 @@ export default function ImportsPage(): React.JSX.Element {
             setAllowDuplicateSku={setAllowDuplicateSku}
             importing={importMutation.isPending}
             handleImport={handleImport}
-            importSearch={importSearch}
-            setImportSearch={setImportSearch}
+            importNameSearch={importNameSearch}
+            setImportNameSearch={setImportNameSearch}
+            importSkuSearch={importSkuSearch}
+            setImportSkuSearch={setImportSkuSearch}
+            importListPage={importListPage}
+            setImportListPage={setImportListPage}
+            importListPageSize={importListPageSize}
+            setImportListPageSize={setImportListPageSize}
             uniqueOnly={uniqueOnly}
             setUniqueOnly={setUniqueOnly}
             handleLoadImportList={handleLoadImportList}
             loadingImportList={loadingImportList}
             importListStats={importListStats}
             importList={importList}
-            filteredImportList={filteredImportList}
             selectedImportIds={selectedImportIds}
             setSelectedImportIds={setSelectedImportIds}
             selectedImportCount={selectedImportCount}

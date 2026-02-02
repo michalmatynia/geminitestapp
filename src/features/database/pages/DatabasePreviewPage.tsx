@@ -47,6 +47,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const searchParams = useSearchParams();
   const backupName = searchParams.get("backup") ?? "";
   const mode = searchParams.get("mode") ?? "backup";
+  const previewType = searchParams.get("type") ?? "postgresql";
   const previewMode: DatabasePreviewMode =
     mode === "current" ? "current" : "backup";
   
@@ -59,6 +60,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const { data: payload, isLoading: loading, error: queryError } = useDatabasePreview({
     backupName: backupName || undefined,
     mode: previewMode,
+    type: previewType === "mongodb" ? "mongodb" : "postgresql",
     page,
     pageSize,
   });

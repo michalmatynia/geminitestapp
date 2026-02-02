@@ -93,6 +93,7 @@ export type ChatbotDebugState = {
     plannerModel?: string;
     selfCheckModel?: string;
     extractionValidationModel?: string;
+    toolRouterModel?: string;
     loopGuardModel?: string;
     approvalGateModel?: string;
     memorySummarizationModel?: string;
@@ -134,6 +135,7 @@ export type ChatbotSettingsPayload = {
   plannerModel: string | null;
   selfCheckModel: string | null;
   extractionValidationModel: string | null;
+  toolRouterModel: string | null;
   loopGuardModel: string | null;
   approvalGateModel: string | null;
   memorySummarizationModel: string | null;
@@ -232,6 +234,7 @@ export type AgentSettingsPayload = {
   plannerModel: string | null;
   selfCheckModel: string | null;
   extractionValidationModel: string | null;
+  toolRouterModel: string | null;
   loopGuardModel: string | null;
   approvalGateModel: string | null;
   memorySummarizationModel: string | null;

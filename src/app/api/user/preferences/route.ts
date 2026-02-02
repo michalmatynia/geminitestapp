@@ -19,6 +19,7 @@ const updatePreferencesSchema = z.object({
   productListCatalogFilter: z.string().optional().nullable(),
   productListCurrencyCode: z.string().optional().nullable(),
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
+  productListThumbnailSource: z.enum(["file", "link", "base64"]).optional().nullable(),
   aiPathsActivePathId: z.string().optional().nullable(),
   aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
   aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
@@ -48,6 +49,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         productListCatalogFilter: "all",
         productListCurrencyCode: "PLN",
         productListPageSize: 12,
+        productListThumbnailSource: "file",
         aiPathsActivePathId: null,
         aiPathsExpandedGroups: ["Triggers"],
         aiPathsPaletteCollapsed: false,
@@ -107,6 +109,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.productListCatalogFilter !== undefined) partial.productListCatalogFilter = parsed.productListCatalogFilter;
     if (parsed.productListCurrencyCode !== undefined) partial.productListCurrencyCode = parsed.productListCurrencyCode;
     if (parsed.productListPageSize !== undefined) partial.productListPageSize = parsed.productListPageSize;
+    if (parsed.productListThumbnailSource !== undefined) partial.productListThumbnailSource = parsed.productListThumbnailSource;
     if (parsed.aiPathsActivePathId !== undefined) partial.aiPathsActivePathId = parsed.aiPathsActivePathId;
     if (parsed.aiPathsExpandedGroups !== undefined) partial.aiPathsExpandedGroups = parsed.aiPathsExpandedGroups ?? [];
     if (parsed.aiPathsPaletteCollapsed !== undefined) partial.aiPathsPaletteCollapsed = parsed.aiPathsPaletteCollapsed;

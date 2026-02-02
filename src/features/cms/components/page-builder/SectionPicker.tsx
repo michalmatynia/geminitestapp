@@ -34,7 +34,7 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
   const { dispatch } = usePageBuilder();
   const settingsQuery = useSettingsMap();
   const primitiveTypes = useMemo(() => new Set(["Grid", "Block"]), []);
-  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "ButtonElement"]), []);
+  const elementTypes = useMemo(() => new Set(["TextElement", "TextAtom", "ImageElement", "Model3DElement", "ButtonElement"]), []);
   const gridAllowed = useMemo(
     () => sectionTypes.some((def: SectionDefinition) => def.type === "Grid"),
     [sectionTypes]

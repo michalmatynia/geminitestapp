@@ -63,6 +63,8 @@ export interface UseChatbotLogicReturn {
   setAgentSelfCheckModel: (model: string | null) => void;
   agentExtractionValidationModel: string | null;
   setAgentExtractionValidationModel: (model: string | null) => void;
+  agentToolRouterModel: string | null;
+  setAgentToolRouterModel: (model: string | null) => void;
   agentLoopGuardModel: string | null;
   setAgentLoopGuardModel: (model: string | null) => void;
   agentApprovalGateModel: string | null;
@@ -148,6 +150,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentSelfCheckModel,
     agentExtractionValidationModel,
     setAgentExtractionValidationModel,
+    agentToolRouterModel,
+    setAgentToolRouterModel,
     agentLoopGuardModel,
     setAgentLoopGuardModel,
     agentApprovalGateModel,
@@ -214,6 +218,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       plannerModel: agentPlannerModel ?? "",
       selfCheckModel: agentSelfCheckModel ?? "",
       extractionValidationModel: agentExtractionValidationModel ?? "",
+      toolRouterModel: agentToolRouterModel ?? "",
       loopGuardModel: agentLoopGuardModel ?? "",
       approvalGateModel: agentApprovalGateModel ?? "",
       memorySummarizationModel: agentMemorySummarizationModel ?? "",
@@ -245,6 +250,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       agentPlannerModel,
       agentSelfCheckModel,
       agentExtractionValidationModel,
+      agentToolRouterModel,
       agentLoopGuardModel,
       agentApprovalGateModel,
       agentMemorySummarizationModel,
@@ -557,6 +563,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentSelfCheckModel,
     agentExtractionValidationModel,
     setAgentExtractionValidationModel,
+    agentToolRouterModel,
+    setAgentToolRouterModel,
     agentLoopGuardModel,
     setAgentLoopGuardModel,
     agentApprovalGateModel,

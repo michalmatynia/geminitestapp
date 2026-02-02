@@ -22,6 +22,7 @@ export type UserPreferencesData = {
   productListCatalogFilter?: string | null;
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
+  productListThumbnailSource?: "file" | "link" | "base64" | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean | null;
@@ -43,6 +44,7 @@ export type UserPreferences = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  productListThumbnailSource: "file" | "link" | "base64" | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
@@ -66,6 +68,7 @@ type UserPreferencesDocument = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  productListThumbnailSource: "file" | "link" | "base64" | null;
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
@@ -91,6 +94,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   productListCatalogFilter: doc.productListCatalogFilter,
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
+  productListThumbnailSource: doc.productListThumbnailSource ?? "file",
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
   aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
@@ -113,6 +117,7 @@ const defaultPreferences = (userId: string): Omit<UserPreferences, "id" | "creat
   productListCatalogFilter: "all",
   productListCurrencyCode: "PLN",
   productListPageSize: 12,
+  productListThumbnailSource: "file",
   aiPathsActivePathId: null,
   aiPathsExpandedGroups: ["Triggers"],
   aiPathsPaletteCollapsed: false,

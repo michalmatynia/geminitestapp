@@ -120,6 +120,14 @@ export function resolveAgentPreferences(
       typeof rawPreferences?.selfCheckModel === "string"
         ? rawPreferences.selfCheckModel
         : undefined,
+    extractionValidationModel:
+      typeof rawPreferences?.extractionValidationModel === "string"
+        ? rawPreferences.extractionValidationModel
+        : undefined,
+    toolRouterModel:
+      typeof rawPreferences?.toolRouterModel === "string"
+        ? rawPreferences.toolRouterModel
+        : undefined,
     loopGuardModel:
       typeof rawPreferences?.loopGuardModel === "string"
         ? rawPreferences.loopGuardModel
@@ -131,6 +139,14 @@ export function resolveAgentPreferences(
     memorySummarizationModel:
       typeof rawPreferences?.memorySummarizationModel === "string"
         ? rawPreferences.memorySummarizationModel
+        : undefined,
+    selectorInferenceModel:
+      typeof rawPreferences?.selectorInferenceModel === "string"
+        ? rawPreferences.selectorInferenceModel
+        : undefined,
+    outputNormalizationModel:
+      typeof rawPreferences?.outputNormalizationModel === "string"
+        ? rawPreferences.outputNormalizationModel
         : undefined,
   };
 }

@@ -72,6 +72,42 @@ export type BrowseResponse = {
   total: number;
 };
 
+export type SettingRecord = {
+  key: string;
+  value: string;
+};
+
+export type AgentEnqueuePayload = {
+  prompt: string;
+  model?: string;
+  plannerModel?: string;
+  selfCheckModel?: string;
+  extractionValidationModel?: string;
+  toolRouterModel?: string;
+  memoryValidationModel?: string;
+  memorySummarizationModel?: string;
+  loopGuardModel?: string;
+  approvalGateModel?: string;
+  selectorInferenceModel?: string;
+  outputNormalizationModel?: string;
+  tools?: string[];
+  searchProvider?: string;
+  agentBrowser?: string;
+  runHeadless?: boolean;
+  ignoreRobotsTxt?: boolean;
+  requireHumanApproval?: boolean;
+  planSettings?: {
+    maxSteps?: number;
+    maxStepAttempts?: number;
+    maxReplanCalls?: number;
+    replanEverySteps?: number;
+    maxSelfChecks?: number;
+    loopGuardThreshold?: number;
+    loopBackoffBaseMs?: number;
+    loopBackoffMaxMs?: number;
+  };
+};
+
 // ============================================================================
 // Base Fetch Utilities
 // ============================================================================
@@ -174,6 +210,30 @@ export const dbApi = {
     if (options?.skip) params.set("skip", String(options.skip));
     if (options?.query) params.set("query", options.query);
     return apiFetch<BrowseResponse>(`/api/databases/browse?${params.toString()}`);
+  },
+};
+
+// ============================================================================
+// Settings API
+// ============================================================================
+
+export const settingsApi = {
+  async list(): Promise<ApiResponse<SettingRecord[]>> {
+    return apiFetch<SettingRecord[]>("/api/settings");
+  },
+};
+
+// ============================================================================
+// Agent Creator API
+// ============================================================================
+
+export const agentApi = {
+  async enqueue(payload: AgentEnqueuePayload): Promise<ApiResponse<{ runId: string; status?: string }>> {
+    return apiPost<{ runId: string; status?: string }>("/api/agentcreator/agent", payload);
+  },
+
+  async poll(runId: string): Promise<ApiResponse<{ run?: unknown }>> {
+    return apiFetch<{ run?: unknown }>(`/api/agentcreator/agent/${encodeURIComponent(runId)}`);
   },
 };
 

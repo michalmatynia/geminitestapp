@@ -1,4 +1,6 @@
 import {
+  AGENT_INPUT_PORTS,
+  AGENT_OUTPUT_PORTS,
   CONTEXT_INPUT_PORTS,
   CONTEXT_OUTPUT_PORTS,
   DATABASE_INPUT_PORTS,
@@ -499,6 +501,22 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         },
       };
     }
+    if (node.type === "agent") {
+      const agentConfig = node.config?.agent;
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, AGENT_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs, AGENT_OUTPUT_PORTS),
+        config: {
+          ...node.config,
+          agent: {
+            personaId: agentConfig?.personaId ?? "",
+            promptTemplate: agentConfig?.promptTemplate ?? "",
+            waitForResult: agentConfig?.waitForResult ?? true,
+          },
+        },
+      };
+    }
     if (nodeType === "updater") {
       const updaterConfig: LegacyUpdaterConfig =
         (node.config as { updater?: LegacyUpdaterConfig } | undefined)?.updater ?? {};
@@ -750,6 +768,15 @@ export const getDefaultConfigForType = (
         maxTokens: 800,
         vision: inputs.includes("images"),
         waitForResult: false,
+      },
+    };
+  }
+  if (type === "agent") {
+    return {
+      agent: {
+        personaId: "",
+        promptTemplate: "",
+        waitForResult: true,
       },
     };
   }

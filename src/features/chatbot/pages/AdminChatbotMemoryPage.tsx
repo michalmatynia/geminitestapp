@@ -1,15 +1,10 @@
 "use client";
 
 import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-
-
-
-
-
+import { useChatbotMemory } from "../hooks/useChatbotMemory";
 import type { ChatbotMemoryItem } from "../types";
-import * as chatbotApi from "../api";
 
 const formatDate = (value?: string | null): string => {
   if (!value) return "—";
@@ -18,9 +13,6 @@ const formatDate = (value?: string | null): string => {
 };
 
 export default function AgentMemoryPage(): React.JSX.Element {
-  const [items, setItems] = useState<ChatbotMemoryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [memoryKey, setMemoryKey] = useState<string>("");
   const [tag, setTag] = useState<string>("");
   const [query, setQuery] = useState<string>("");
@@ -36,32 +28,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
-  useEffect((): (() => void) => {
-    let isMounted: boolean = true;
-    const load = async (): Promise<void> => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await chatbotApi.fetchChatbotMemory(queryString);
-        if (isMounted) {
-          setItems(data);
-        }
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to load memory.";
-        if (isMounted) {
-          setError(message);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    void load();
-    return (): void => {
-      isMounted = false;
-    };
-  }, [queryString]);
+  const { data: items = [], isLoading: loading, error } = useChatbotMemory(queryString);
 
   return (
     <div className="container mx-auto py-10">
@@ -121,7 +88,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
           {loading ? (
             <p className="text-gray-400">Loading memory…</p>
           ) : error ? (
-            <p className="text-rose-300">{error}</p>
+            <p className="text-rose-300">{(error as Error)?.message || String(error)}</p>
           ) : items.length === 0 ? (
             <p className="text-gray-400">No memory entries found.</p>
           ) : (

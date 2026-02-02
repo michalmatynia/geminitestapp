@@ -1,20 +1,34 @@
 "use client";
 
-import { Button, Input, Switch } from "@/shared/ui";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Input,
+} from "@/shared/ui";
 import NextImage from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 
 
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import { PlusIcon, XIcon, GripVertical } from "lucide-react";
+import { PlusIcon, XIcon, GripVertical, MoreVertical } from "lucide-react";
 import { DebugInfo, ProductImageSlot } from "@/features/products/types/products-ui";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+
+const EXTERNAL_IMAGE_BASE_URL_KEY = "product_images_external_base_url";
+type SlotViewMode = "upload" | "link" | "base64" | "external";
 
 export default function ProductImageManager(): React.JSX.Element {
   const {
     imageSlots,
     imageLinks,
+    imageBase64s,
     setImageLinkAt,
+    setImageBase64At,
     handleSlotImageChange,
     handleSlotDisconnectImage,
     setShowFileManager,
@@ -26,49 +40,80 @@ export default function ProductImageManager(): React.JSX.Element {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSlotIndexRef = useRef<number | null>(null);
 
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const externalBaseSetting = settingsQuery.data?.get(EXTERNAL_IMAGE_BASE_URL_KEY) ?? "";
+
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
-  const [slotViewModes, setSlotViewModes] = useState<Array<"upload" | "link">>(
+  const [slotViewModes, setSlotViewModes] = useState<SlotViewMode[]>(
     Array(imageSlots.length).fill("upload")
   );
-  const [prevSlots, setPrevSlots] = useState(imageSlots);
-  const [prevLinks, setPrevLinks] = useState(imageLinks);
+  const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
+  const [externalBaseInput, setExternalBaseInput] = useState(externalBaseSetting);
+
+  useEffect(() => {
+    setExternalBaseInput(externalBaseSetting);
+  }, [externalBaseSetting]);
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isReordering, setIsReordering] = useState(false);
 
-  // Sync slotViewModes when imageSlots or imageLinks change - adjusting state during render
-  if (!isReordering && (imageSlots !== prevSlots || imageLinks !== prevLinks)) {
-    setPrevSlots(imageSlots);
-    setPrevLinks(imageLinks);
+  useEffect(() => {
+    if (isReordering) return;
+    setSlotViewModes((prev: SlotViewMode[]) => {
+      const next = Array(imageSlots.length).fill("upload") as SlotViewMode[];
+      let changed = next.length !== prev.length;
 
-    const next = Array(imageSlots.length).fill("upload") as Array<
-      "upload" | "link"
-    >;
-    let changed = next.length !== slotViewModes.length;
-
-    for (let i = 0; i < imageSlots.length; i += 1) {
-      const hasUpload = Boolean(imageSlots[i]);
-      const hasLink = Boolean(imageLinks[i]?.trim());
-      const current = slotViewModes[i];
-      if (hasUpload && hasLink) {
-        next[i] = current ?? "upload";
-      } else if (hasLink && !hasUpload) {
-        next[i] = "link";
-      } else {
-        next[i] = "upload";
+      for (let i = 0; i < imageSlots.length; i += 1) {
+        const hasUpload = Boolean(imageSlots[i]);
+        const hasLink = Boolean(imageLinks[i]?.trim());
+        const hasBase64 = Boolean(imageBase64s[i]?.trim());
+        const slot = imageSlots[i];
+        const hasExternal = Boolean(
+          externalBaseSetting.trim() &&
+            slot?.type === "existing" &&
+            slot.data &&
+            'filepath' in slot.data &&
+            slot.data.filepath
+        );
+        const current = prev[i];
+        const currentValid =
+          (current === "upload" && hasUpload) ||
+          (current === "link" && hasLink) ||
+          (current === "base64" && hasBase64) ||
+          (current === "external" && hasExternal);
+        if (hasUpload && (hasLink || hasBase64 || hasExternal)) {
+          if (currentValid) {
+            next[i] = current;
+          } else if (hasBase64) {
+            next[i] = "base64";
+          } else if (hasLink) {
+            next[i] = "link";
+          } else if (hasExternal) {
+            next[i] = "external";
+          } else {
+            next[i] = "upload";
+          }
+        } else if (hasBase64 && !hasUpload) {
+          next[i] = "base64";
+        } else if (hasLink && !hasUpload) {
+          next[i] = "link";
+        } else if (hasExternal && !hasUpload) {
+          next[i] = "external";
+        } else {
+          next[i] = "upload";
+        }
+        if (next[i] !== current) {
+          changed = true;
+        }
       }
-      if (next[i] !== current) {
-        changed = true;
-      }
-    }
 
-    if (changed) {
-      setSlotViewModes(next);
-    }
-  }
+      return changed ? next : prev;
+    });
+  }, [imageSlots, imageLinks, imageBase64s, externalBaseSetting, isReordering]);
 
   const pushDebug = (info: Omit<DebugInfo, "timestamp">): void => {
     setDebugInfo({
@@ -143,6 +188,117 @@ export default function ProductImageManager(): React.JSX.Element {
     setShowFileManager(true);
   };
 
+  const blobToDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve: (value: string) => void, reject: (reason?: unknown) => void) => {
+      const reader = new FileReader();
+      reader.onload = (): void => resolve(reader.result as string);
+      reader.onerror = (): void => reject(new Error("Failed to read image"));
+      reader.readAsDataURL(blob);
+    });
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve: (value: string) => void, reject: (reason?: unknown) => void) => {
+      const reader = new FileReader();
+      reader.onload = (): void => resolve(reader.result as string);
+      reader.onerror = (): void => reject(new Error("Failed to read image file"));
+      reader.readAsDataURL(file);
+    });
+
+  const convertSlotToBase64 = async (index: number): Promise<void> => {
+    const slot = imageSlots[index];
+    const linkValue = imageLinks[index] ?? "";
+    const base64Value = imageBase64s[index] ?? "";
+    const hasLink = Boolean(linkValue.trim());
+    const hasBase64 = Boolean(base64Value.trim());
+    const displayUrl = slot?.previewUrl || (hasLink ? linkValue : "");
+
+    if (!slot && !displayUrl && !hasBase64) {
+      pushDebug({
+        action: "base64-convert",
+        message: "No image available to convert",
+        slotIndex: index,
+      });
+      return;
+    }
+
+    try {
+      setBase64LoadingSlots((prev: Record<number, boolean>) => ({ ...prev, [index]: true }));
+      let dataUrl = base64Value.trim();
+
+      if (!dataUrl && linkValue.trim().startsWith("data:")) {
+        dataUrl = linkValue.trim();
+      } else if (!dataUrl && slot?.type === "file") {
+        dataUrl = await fileToDataUrl(slot.data);
+      } else if (!dataUrl && displayUrl) {
+        const res = await fetch(displayUrl);
+        if (!res.ok) throw new Error("Failed to fetch image");
+        const blob = await res.blob();
+        dataUrl = await blobToDataUrl(blob);
+      }
+
+      if (!dataUrl) throw new Error("Failed to generate base64 data");
+
+      setImageBase64At(index, dataUrl);
+      setSlotViewModes((prev: SlotViewMode[]) => {
+        const next = [...prev];
+        next[index] = "base64";
+        return next;
+      });
+    } catch (error: unknown) {
+      pushDebug({
+        action: "base64-convert",
+        message: error instanceof Error ? error.message : "Failed to convert image",
+        slotIndex: index,
+      });
+    } finally {
+      setBase64LoadingSlots((prev: Record<number, boolean>) => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+    }
+  };
+
+  const convertAllSlotsToBase64 = async (): Promise<void> => {
+    for (let i = 0; i < imageSlots.length; i += 1) {
+      const slot = imageSlots[i];
+      const linkValue = imageLinks[i] ?? "";
+      if (slot || linkValue.trim()) {
+        await convertSlotToBase64(i);
+      }
+    }
+  };
+
+  const normalizeExternalBaseUrl = (value: string): string => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    return trimmed.replace(/\/+$/, "");
+  };
+
+  const buildExternalUrl = (filepath: string): string => {
+    const base = normalizeExternalBaseUrl(externalBaseSetting);
+    if (!base) return filepath;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(filepath)) {
+      try {
+        const url = new URL(filepath);
+        const cleanPath = url.pathname.replace(/^\/+/, "");
+        return `${base}/${cleanPath}`;
+      } catch {
+        return filepath;
+      }
+    }
+    const cleanPath = filepath.replace(/^\/+/, "");
+    return `${base}/${cleanPath}`;
+  };
+
+  const saveExternalBaseUrl = (): void => {
+    const next = normalizeExternalBaseUrl(externalBaseInput);
+    updateSetting.mutate({
+      key: EXTERNAL_IMAGE_BASE_URL_KEY,
+      value: next,
+    });
+  };
+
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number): void => {
     const slot = imageSlots[index];
@@ -200,7 +356,7 @@ export default function ProductImageManager(): React.JSX.Element {
       swapImageSlots(fromIndex, toIndex);
 
       // Swap the view modes to follow the content
-      setSlotViewModes((prev: Array<"upload" | "link">) => {
+      setSlotViewModes((prev: SlotViewMode[]) => {
         const next = [...prev];
         const tempMode = next[fromIndex];
         const toMode = next[toIndex];
@@ -224,15 +380,54 @@ export default function ProductImageManager(): React.JSX.Element {
           <span className="text-xs text-gray-400">Image slots</span>
           <span className="text-xs text-gray-500">(drag to reorder)</span>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void convertAllSlotsToBase64()}
+            className="h-7 px-2 text-xs"
+          >
+            Convert All to Base64
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDebug((prev: boolean) => !prev)}
+            className="h-7 px-2 text-xs"
+          >
+            {showDebug ? "Hide debug" : "Show debug"}
+          </Button>
+        </div>
+      </div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-gray-400">External host</span>
+        <Input
+          value={externalBaseInput}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            setExternalBaseInput(event.target.value)
+          }
+          onBlur={saveExternalBaseUrl}
+          placeholder="https://cdn.example.com"
+          className="h-7 w-64 px-2 text-[11px]"
+          aria-label="External image host"
+        />
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           size="sm"
-          onClick={() => setShowDebug((prev: boolean) => !prev)}
           className="h-7 px-2 text-xs"
+          onClick={saveExternalBaseUrl}
+          disabled={updateSetting.isPending}
         >
-          {showDebug ? "Hide debug" : "Show debug"}
+          {updateSetting.isPending ? "Saving..." : "Save"}
         </Button>
+        {externalBaseSetting.trim() ? (
+          <span className="text-[10px] text-emerald-300/80">Active</span>
+        ) : (
+          <span className="text-[10px] text-gray-500">Not set</span>
+        )}
       </div>
 
       {showDebug && (uploadError || debugInfo) && (
@@ -261,10 +456,44 @@ export default function ProductImageManager(): React.JSX.Element {
           const isDragOver = dragOverIndex === index;
           const hasUpload = slot !== null;
           const linkValue = imageLinks[index] ?? "";
+          const base64Value = imageBase64s[index] ?? "";
           const hasLink = Boolean(linkValue.trim());
-          const prefersLink = slotViewModes[index] === "link";
-          const showLink = (prefersLink && hasLink) || (!hasUpload && hasLink);
-          const displayUrl = showLink ? linkValue : slot?.previewUrl;
+          const hasBase64 = Boolean(base64Value.trim());
+          const hasExternal =
+            Boolean(externalBaseSetting.trim()) &&
+            slot?.type === "existing" &&
+            Boolean(slot.data?.filepath);
+          const mode = slotViewModes[index];
+          const prefersLink = mode === "link";
+          const prefersBase64 = mode === "base64";
+          const prefersExternal = mode === "external";
+          const showBase64 =
+            (prefersBase64 && hasBase64) ||
+            (!hasUpload && !hasLink && hasBase64);
+          const showLink =
+            (prefersLink && hasLink) ||
+            (!hasUpload && hasLink && !prefersBase64);
+          const externalUrl =
+            hasExternal && slot?.data?.filepath
+              ? buildExternalUrl(slot.data.filepath)
+              : "";
+          const showExternal = prefersExternal && hasExternal;
+          const displayUrl = showBase64
+            ? base64Value
+            : showLink
+              ? linkValue
+              : showExternal
+                ? externalUrl
+                : slot?.previewUrl;
+          const modeLabel =
+            mode === "upload"
+              ? "Upload"
+              : mode === "link"
+                ? "Link"
+                : mode === "base64"
+                  ? "Base64"
+                  : "External";
+          const canConvertToBase64 = Boolean(slot || linkValue.trim());
 
           // Use index as key to prevent re-mounting during drag/drop and updates
           // This eliminates flickering when reordering or updating slots
@@ -272,38 +501,176 @@ export default function ProductImageManager(): React.JSX.Element {
 
           return (
             <div key={slotKey} className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
+              <div className="flex w-full items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-[10px] text-gray-400">
                   <span
-                    className={`h-2 w-2 rounded-full border ${
+                    className={`rounded-full border px-1 ${
                       hasUpload
-                        ? "border-emerald-400 bg-emerald-400"
-                        : "border-gray-500 bg-transparent"
+                        ? "border-emerald-400 text-emerald-300"
+                        : "border-gray-600 text-gray-500"
                     }`}
                     title="Uploaded image"
-                  />
+                  >
+                    U
+                  </span>
                   <span
-                    className={`h-2 w-2 rounded-full border ${
+                    className={`rounded-full border px-1 ${
                       hasLink
-                        ? "border-sky-400 bg-sky-400"
-                        : "border-gray-500 bg-transparent"
+                        ? "border-sky-400 text-sky-300"
+                        : "border-gray-600 text-gray-500"
                     }`}
                     title="Image link"
-                  />
+                  >
+                    L
+                  </span>
+                  <span
+                    className={`rounded-full border px-1 ${
+                      hasBase64
+                        ? "border-purple-400 text-purple-300"
+                        : "border-gray-600 text-gray-500"
+                    }`}
+                    title="Base64 image"
+                  >
+                    B
+                  </span>
+                  <span
+                    className={`rounded-full border px-1 ${
+                      hasExternal
+                        ? "border-amber-400 text-amber-300"
+                        : "border-gray-600 text-gray-500"
+                    }`}
+                    title="External host"
+                  >
+                    E
+                  </span>
                 </div>
-                <Switch
-                  checked={prefersLink}
-                  onCheckedChange={(checked: boolean) => {
-                    setSlotViewModes((prev: Array<"upload" | "link">) => {
-                      const next = [...prev];
-                      next[index] = checked ? "link" : "upload";
-                      return next;
-                    });
-                  }}
-                  disabled={!hasLink || !hasUpload}
-                  aria-label={`Toggle image source for slot ${index + 1}`}
-                  className="h-5 w-9 data-[state=checked]:bg-sky-500"
-                />
+                <div className="flex items-center gap-1">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                      >
+                        View: {modeLabel}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        disabled={!hasUpload}
+                        onClick={() =>
+                          setSlotViewModes((prev: SlotViewMode[]) => {
+                            const next = [...prev];
+                            next[index] = "upload";
+                            return next;
+                          })
+                        }
+                      >
+                        Upload
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!hasLink}
+                        onClick={() =>
+                          setSlotViewModes((prev: SlotViewMode[]) => {
+                            const next = [...prev];
+                            next[index] = "link";
+                            return next;
+                          })
+                        }
+                      >
+                        Link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!hasBase64}
+                        onClick={() =>
+                          setSlotViewModes((prev: SlotViewMode[]) => {
+                            const next = [...prev];
+                            next[index] = "base64";
+                            return next;
+                          })
+                        }
+                      >
+                        Base64
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!hasExternal}
+                        onClick={() =>
+                          setSlotViewModes((prev: SlotViewMode[]) => {
+                            const next = [...prev];
+                            next[index] = "external";
+                            return next;
+                          })
+                        }
+                      >
+                        External
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6">
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => triggerFileInput(index)}>
+                        Upload image
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => triggerFileManager(index)}>
+                        Choose existing
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={!canConvertToBase64 || base64LoadingSlots[index]}
+                        onClick={() => void convertSlotToBase64(index)}
+                      >
+                        {base64LoadingSlots[index] ? "Converting..." : "Convert to Base64"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!hasBase64}
+                        onClick={() => {
+                          setImageBase64At(index, "");
+                          setSlotViewModes((prev: SlotViewMode[]) => {
+                            const next = [...prev];
+                            if (linkValue.trim()) {
+                              next[index] = "link";
+                            } else {
+                              next[index] = "upload";
+                            }
+                            return next;
+                          });
+                        }}
+                      >
+                        Clear Base64
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={!hasLink}
+                        onClick={() => setImageLinkAt(index, "")}
+                      >
+                        Clear link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={!hasUpload}
+                        onClick={() => {
+                          handleSlotDisconnectImage(index).catch((error: unknown) => {
+                            pushDebug({
+                              action: "remove-image",
+                              message:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Failed to remove image",
+                              slotIndex: index,
+                            });
+                          });
+                        }}
+                      >
+                        Clear upload
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
               <div
                 draggable={hasUpload}
@@ -335,6 +702,8 @@ export default function ProductImageManager(): React.JSX.Element {
                         height={128}
                         unoptimized
                         className="rounded-md object-cover pointer-events-none"
+                        draggable={false}
+                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
                         onError={() =>
                           pushDebug({
                             action: "image-load",
@@ -395,14 +764,23 @@ export default function ProductImageManager(): React.JSX.Element {
                   )}
                 </div>
               </div>
-              <Input
-                type="url"
-                value={linkValue}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setImageLinkAt(index, event.target.value)}
-                placeholder="Image link"
-                className="h-7 w-24 px-2 text-[10px]"
-                aria-label={`Image link for slot ${index + 1}`}
-              />
+              {(mode === "link" || (hasLink && !hasUpload)) ? (
+                <Input
+                  type="url"
+                  value={linkValue}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setImageLinkAt(index, event.target.value)
+                  }
+                  placeholder="Paste image link"
+                  className="h-7 w-full px-2 text-[10px]"
+                  aria-label={`Image link for slot ${index + 1}`}
+                />
+              ) : null}
+              {hasBase64 ? (
+                <div className="w-full text-[10px] text-purple-300/80">
+                  Base64 stored
+                </div>
+              ) : null}
             </div>
           );
         })}

@@ -93,6 +93,7 @@ export function CanvasSidebar({
                 types: ["prompt", "model", "ai_description"],
                 icon: "🤖",
               },
+              { title: "Agents", types: ["agent"], icon: "🧠" },
               { title: "Description", types: ["description_updater"], icon: "✍️" },
               { title: "Viewers", types: ["viewer", "notification"], icon: "👁" },
             ].map((group: { title: string; types: string[]; icon: string }): React.JSX.Element | null => {

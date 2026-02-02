@@ -40,6 +40,10 @@ const requestSchema = z.object({
   catalogId: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  pageSize: z.coerce.number().int().positive().optional(),
+  searchName: z.string().trim().optional(),
+  searchSku: z.string().trim().optional(),
   imageMode: z.enum(["links", "download"]).optional(),
   uniqueOnly: z.boolean().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
@@ -209,9 +213,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
         : listItems;
 
-      const pagedItems = data.limit
-        ? filteredItems.slice(0, data.limit)
-        : filteredItems;
+      const pageSize = data.pageSize ?? data.limit ?? 50;
+      const page = data.page ?? 1;
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const pagedItems = filteredItems.slice(startIndex, endIndex);
 
       if (pagedItems.length === 0) {
         return NextResponse.json({
@@ -219,6 +225,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           total: listItems.length,
           filtered: filteredItems.length,
           existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
+          page,
+          pageSize,
+          totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize)),
         });
       }
 
@@ -276,15 +285,26 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         })
         .filter((item): item is MappedItem => Boolean(item.baseProductId));
 
-      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
+      const normalizedName = (data.searchName ?? "").trim().toLowerCase();
+      const normalizedSku = (data.searchSku ?? "").trim().toLowerCase();
+      const searchedList = mappedList.filter((item: MappedItem) => {
+        const nameOk = normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
+        const skuOk = normalizedSku.length === 0 ? true : (item.sku ?? "").toLowerCase().includes(normalizedSku);
+        return nameOk && skuOk;
+      });
+
+      const skuDuplicateCount = searchedList.filter((item) => item.skuExists).length;
 
       return NextResponse.json({
-        products: mappedList,
+        products: searchedList,
         total: listItems.length,
-        filtered: mappedList.length, // Actual number of items being shown (after limit applied)
+        filtered: searchedList.length, // Actual number of items being shown (after limit applied)
         available: filteredItems.length, // Total available after uniqueOnly filter
         existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
         skuDuplicates: skuDuplicateCount, // New stat
+        page,
+        pageSize,
+        totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize)),
       });
     }
 

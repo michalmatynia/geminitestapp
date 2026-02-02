@@ -102,6 +102,7 @@ export const deleteDatabaseBackup = async (
 export const fetchDatabasePreview = async (input: {
   backupName?: string | undefined;
   mode?: DatabasePreviewMode | undefined;
+  type?: DatabaseType | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 }): Promise<{ ok: boolean; payload: DatabasePreviewPayload }> => {
@@ -111,6 +112,7 @@ export const fetchDatabasePreview = async (input: {
     body: JSON.stringify({
       backupName: input.backupName,
       mode: input.mode,
+      type: input.type,
       page: input.page,
       pageSize: input.pageSize,
     }),

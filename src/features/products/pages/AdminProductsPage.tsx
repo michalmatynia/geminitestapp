@@ -15,9 +15,15 @@ import { useProductOperations } from "@/features/products/hooks/useProductOperat
 import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
+import { useProductListSync } from "@/shared/hooks/useBackgroundSync";
+import { 
+  useProductCacheWarmup, 
+  useProductPrefetch, 
+  useProductSync 
+} from "@/features/products/hooks/useProductEnhancements";
 import { ProductListPanel } from "@/features/products/components/ProductListPanel";
 import { ProductModals } from "@/features/products/components/ProductModals";
-import { columns } from "@/features/products/components/list/ProductColumns";
+import { getProductColumns } from "@/features/products/components/list/ProductColumns";
 import DebugPanel from "@/features/products/components/DebugPanel";
 import type { RowSelectionState } from "@tanstack/react-table";
 import type { ProductDraft } from "@/features/products/types/drafts";
@@ -42,6 +48,11 @@ export function AdminProductsPage(): React.JSX.Element {
 
   const { data: allDrafts = [] } = useDrafts();
   const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
+
+  // Enhanced TanStack Query features
+  useProductCacheWarmup();
+  useProductSync();
+  useProductPrefetch();
 
   // Load user preferences
   const {
@@ -96,6 +107,19 @@ export function AdminProductsPage(): React.JSX.Element {
     priceGroups,
     searchLanguage: preferences.nameLocale,
   });
+
+  // Enable background sync for product list
+  useProductListSync({
+    search,
+    sku,
+    minPrice,
+    maxPrice,
+    startDate,
+    endDate,
+    catalogFilter,
+    page,
+    pageSize,
+  }, !isLoading);
 
   const {
     isCreateOpen,
@@ -369,6 +393,11 @@ export function AdminProductsPage(): React.JSX.Element {
       });
     },
     [isDebugOpen]
+  );
+
+  const columns = useMemo(
+    () => getProductColumns(preferences.thumbnailSource ?? "file"),
+    [preferences.thumbnailSource]
   );
 
   return (

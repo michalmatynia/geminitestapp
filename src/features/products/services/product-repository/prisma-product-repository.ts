@@ -165,6 +165,7 @@ const toProductRecord = (product: {
   length: number | null;
   parameters?: Prisma.JsonValue | null;
   imageLinks: string[];
+  imageBase64s: string[];
   createdAt: Date;
   updatedAt: Date;
 }): ProductRecord => ({
@@ -192,6 +193,7 @@ const toProductRecord = (product: {
   length: product.length ?? null,
   parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
+  imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
 });
@@ -227,7 +229,10 @@ export const prismaProductRepository: ProductRepository = {
     });
 
     return products.map((product: typeof products[number]) => ({
-      ...toProductRecord(product),
+      ...toProductRecord({
+        ...product,
+        imageBase64s: [],
+      }),
       images: product.images.map((image: typeof product.images[number]) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
@@ -271,7 +276,10 @@ export const prismaProductRepository: ProductRepository = {
     });
     if (!product) return null;
     return {
-      ...toProductRecord(product),
+      ...toProductRecord({
+        ...product,
+        imageBase64s: [],
+      }),
       images: product.images.map((image: typeof product.images[number]) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
@@ -290,7 +298,10 @@ export const prismaProductRepository: ProductRepository = {
   async getProductBySku(sku: string) {
     const product = await prisma.product.findUnique({ where: { sku } });
     if (!product) return null;
-    return toProductRecord(product);
+    return toProductRecord({
+      ...product,
+      imageBase64s: [],
+    });
   },
 
   async findProductByBaseId(baseProductId: string) {
@@ -298,7 +309,10 @@ export const prismaProductRepository: ProductRepository = {
       where: { baseProductId },
     });
     if (!product) return null;
-    return toProductRecord(product);
+    return toProductRecord({
+      ...product,
+      imageBase64s: [],
+    });
   },
 
   async createProduct(data: CreateProductInput) {
@@ -318,7 +332,10 @@ export const prismaProductRepository: ProductRepository = {
     const cleanData = removeUndefined(data) as Prisma.ProductCreateInput;
     try {
       const product = await prisma.product.create({ data: cleanData });
-      return toProductRecord(product);
+      return toProductRecord({
+        ...product,
+        imageBase64s: [],
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -339,14 +356,20 @@ export const prismaProductRepository: ProductRepository = {
     if (!productExists) return null;
     const cleanData = removeUndefined(data) as Prisma.ProductUpdateInput;
     const product = await prisma.product.update({ where: { id }, data: cleanData });
-    return toProductRecord(product);
+    return toProductRecord({
+      ...product,
+      imageBase64s: [],
+    });
   },
 
   async deleteProduct(id: string) {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
     const product = await prisma.product.delete({ where: { id } });
-    return toProductRecord(product);
+    return toProductRecord({
+      ...product,
+      imageBase64s: [],
+    });
   },
 
   async duplicateProduct(id: string, sku: string) {
@@ -390,7 +413,10 @@ export const prismaProductRepository: ProductRepository = {
         sku,
       },
     });
-    return toProductRecord(duplicated);
+    return toProductRecord({
+      ...duplicated,
+      imageBase64s: [],
+    });
   },
 
   async addProductImages(productId: string, imageFileIds: string[]) {

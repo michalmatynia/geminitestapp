@@ -65,6 +65,7 @@ type ProductDocument = {
   weight: number | null;
   length: number | null;
   imageLinks?: string[] | null;
+  imageBase64s?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   images: Array<{
@@ -107,6 +108,7 @@ type ProductInput = {
   weight: number | null;
   length: number | null;
   imageLinks?: string[] | null;
+  imageBase64s?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   images: Array<{
@@ -178,6 +180,7 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   weight: product.weight ?? null,
   length: product.length ?? null,
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
+  imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
   images: product.images.map((image: ProductInput["images"][number]) => ({

@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { logClientError } from "@/features/observability";
 import { useUpdateSetting } from "@/shared/hooks/use-settings";
 import { dbApi, entityApi } from "@/features/ai-paths/lib";
-import { DOCS_DESCRIPTION_SNIPPET, DOCS_JOBS_SNIPPET, DOCS_WIRING_SNIPPET } from "./docs-snippets";
+import { DOCS_DESCRIPTION_SNIPPET, DOCS_JOBS_SNIPPET, DOCS_OVERVIEW_SNIPPET, DOCS_WIRING_SNIPPET } from "./docs-snippets";
 import { useAiPathsCanvasInteractions } from "./useAiPathsCanvasInteractions";
 import { useAiPathsPersistence } from "./useAiPathsPersistence";
 import { useAiPathsRunHistory } from "./useAiPathsRunHistory";
@@ -952,6 +952,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   return {
     loading,
+    docsOverviewSnippet: DOCS_OVERVIEW_SNIPPET,
     docsWiringSnippet: DOCS_WIRING_SNIPPET,
     docsDescriptionSnippet: DOCS_DESCRIPTION_SNIPPET,
     docsJobsSnippet: DOCS_JOBS_SNIPPET,
@@ -1099,4 +1100,3 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 }
 
 export type AiPathsSettingsState = ReturnType<typeof useAiPathsSettingsState>;
-

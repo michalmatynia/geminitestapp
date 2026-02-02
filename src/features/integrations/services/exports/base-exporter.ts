@@ -990,6 +990,15 @@ export async function buildBaseProductData(
     if (Object.keys(base64Images).length > 0) {
       baseData.images = base64Images;
     }
+  } else {
+    const urlImages = getAllImageUrls(
+      product,
+      options?.imageBaseUrl ?? null,
+      options?.imageDiagnostics
+    );
+    if (urlImages.length > 0) {
+      baseData.images = urlImages;
+    }
   }
 
   // Apply template mappings (these override defaults)

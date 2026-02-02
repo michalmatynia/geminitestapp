@@ -22,12 +22,14 @@ import {
   getSettingValue,
   translateProduct,
 } from "@/features/products/server";
+import { buildImageBase64Slots } from "@/features/products/services/image-base64";
 import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import type { ProductFormData } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
 import type { ImageFileRecord } from "@/features/files/server";
 import { runDatabaseSync, type DatabaseSyncDirection } from "@/features/database/server";
+import { listBaseListingsForSync, syncBaseImagesForListing } from "@/features/integrations/services/base-image-sync";
 
 type LanguageRecord = {
   id: string;
@@ -201,6 +203,84 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
 export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
   const direction = job.payload.direction ?? "mongo_to_prisma";
   return runDatabaseSync(direction);
+}
+
+export async function processBase64ConvertAll(job: Job): Promise<Record<string, unknown>> {
+  const productRepo = await getProductRepository();
+  const pageSize = typeof job.payload.pageSize === "number" ? job.payload.pageSize : 100;
+  let page = 1;
+  let requested = 0;
+  let succeeded = 0;
+  let failed = 0;
+
+  for (;;) {
+    const products = await productRepo.getProducts({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    if (!products.length) break;
+    requested += products.length;
+
+    for (const product of products) {
+      try {
+        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
+        await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
+        succeeded += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    if (products.length < pageSize) break;
+    page += 1;
+  }
+
+  return {
+    collections: [
+      {
+        name: "products",
+        requested,
+        succeeded,
+        failed,
+      },
+    ],
+    requested,
+    succeeded,
+    failed,
+    pageSize,
+    source: job.payload.source ?? "base64_all",
+  };
+}
+
+export async function processBaseImageSyncAll(job: Job): Promise<Record<string, unknown>> {
+  const listings = await listBaseListingsForSync();
+  const requested = listings.length;
+  let succeeded = 0;
+  let failed = 0;
+
+  for (const listing of listings) {
+    try {
+      await syncBaseImagesForListing(listing.id, listing.productId, listing.inventoryId ?? null);
+      succeeded += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return {
+    collections: [
+      {
+        name: "base_image_sync",
+        requested,
+        succeeded,
+        failed,
+      },
+    ],
+    requested,
+    succeeded,
+    failed,
+    source: job.payload.source ?? "base_image_sync_all",
+  };
 }
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
@@ -688,6 +768,22 @@ const pollQueue = async (): Promise<void> => {
 
               console.log(`[productAiQueue] Database sync completed for job ${typedJob.id}`);
 
+            } else if (nextJob.type === "base64_all") {
+
+              console.log(`[productAiQueue] Processing base64 conversion for job ${typedJob.id}`);
+
+              result = await processBase64ConvertAll(typedJob);
+
+              console.log(`[productAiQueue] Base64 conversion completed for job ${typedJob.id}`);
+
+            } else if (nextJob.type === "base_images_sync_all") {
+
+              console.log(`[productAiQueue] Processing Base.com image sync for job ${typedJob.id}`);
+
+              result = await processBaseImageSyncAll(typedJob);
+
+              console.log(`[productAiQueue] Base.com image sync completed for job ${typedJob.id}`);
+
             } else {
         throw operationFailedError(`Unknown job type: ${nextJob.type}`, undefined, {
           jobId: nextJob.id,
@@ -837,6 +933,14 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
       console.log(`[processSingleJob] Processing database sync for job ${job.id}`);
       result = await processDatabaseSync(typedJob);
       console.log(`[processSingleJob] Database sync completed for job ${job.id}`);
+    } else if (job.type === "base64_all") {
+      console.log(`[processSingleJob] Processing base64 conversion for job ${job.id}`);
+      result = await processBase64ConvertAll(typedJob);
+      console.log(`[processSingleJob] Base64 conversion completed for job ${job.id}`);
+    } else if (job.type === "base_images_sync_all") {
+      console.log(`[processSingleJob] Processing Base.com image sync for job ${job.id}`);
+      result = await processBaseImageSyncAll(typedJob);
+      console.log(`[processSingleJob] Base.com image sync completed for job ${job.id}`);
     } else {
       throw operationFailedError(`Unknown job type: ${job.type}`, undefined, {
         jobId: job.id,

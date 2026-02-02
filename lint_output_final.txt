@@ -1,0 +1,7 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/components/UserNav.tsx
+  39:5  warning  React Hook useMemo has a missing dependency: 'queryPanelKeys.enabled'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  43:5  warning  React Hook useMemo has a missing dependency: 'queryPanelKeys.open'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+
+✖ 2 problems (0 errors, 2 warnings)
+

@@ -15,7 +15,9 @@ import {
   fetchSlug,
   fetchSlugs,
   fetchAllSlugs,
+  fetchSlugDomains,
   updateSlug,
+  updateSlugDomains,
 } from "@/features/cms/api/slugs";
 import {
   createDomain,
@@ -30,6 +32,7 @@ import {
   fetchThemes,
   updateTheme,
 } from "@/features/cms/api/themes";
+import type { ImageFileRecord } from "@/shared/types/files";
 
 const cmsKeys = {
   pages: ["cms-pages"] as const,
@@ -37,6 +40,7 @@ const cmsKeys = {
   slugs: ["cms-slugs"] as const,
   slugsAll: ["cms-slugs", "all"] as const,
   slug: (id: string) => ["cms-slug", id] as const,
+  slugDomains: (id: string) => ["cms-slug-domains", id] as const,
   domains: ["cms-domains"] as const,
   themes: ["cms-themes"] as const,
   theme: (id: string) => ["cms-theme", id] as const,
@@ -123,6 +127,14 @@ export function useCmsSlug(id?: string, domainId?: string): UseQueryResult<Slug,
   });
 }
 
+export function useCmsSlugDomains(id?: string): UseQueryResult<{ domainIds: string[] }, Error> {
+  return useQuery({
+    queryKey: id ? cmsKeys.slugDomains(id) : cmsKeys.slugDomains(""),
+    queryFn: () => fetchSlugDomains(id as string),
+    enabled: !!id,
+  });
+}
+
 export function useCreateSlug(): UseMutationResult<Slug, Error, { slug: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return useMutation({
@@ -156,6 +168,23 @@ export function useUpdateSlug(): UseMutationResult<Slug, Error, { id: string; in
     onSuccess: (_data: Slug, variables: { id: string; input: Partial<Slug>; domainId?: string | null }) => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs });
       void queryClient.invalidateQueries({ queryKey: cmsKeys.slug(variables.id) });
+    },
+  });
+}
+
+export function useUpdateSlugDomains(): UseMutationResult<
+  { domainIds: string[] },
+  Error,
+  { id: string; domainIds: string[] }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, domainIds }: { id: string; domainIds: string[] }) => {
+      return updateSlugDomains(id, domainIds);
+    },
+    onSuccess: (_data: { domainIds: string[] }, variables: { id: string; domainIds: string[] }) => {
+      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugDomains(variables.id) });
+      void queryClient.invalidateQueries({ queryKey: cmsKeys.slugs });
     },
   });
 }
@@ -285,6 +314,28 @@ export function useDeleteTheme(): UseMutationResult<string, Error, string> {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: cmsKeys.themes });
+    },
+  });
+}
+
+export function useUploadCmsMedia(): UseMutationResult<ImageFileRecord, Error, File> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/cms/media", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch((): Record<string, unknown> => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Upload failed");
+      }
+      return (await res.json()) as ImageFileRecord;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["files"] });
     },
   });
 }

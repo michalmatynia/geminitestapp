@@ -48,6 +48,7 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   length: doc.length ?? null,
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+  imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
   images: Array.isArray(doc.images) ? doc.images : [],
@@ -79,6 +80,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
   length: doc.length ?? null,
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+  imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -246,6 +248,7 @@ export const mongoProductRepository: ProductRepository = {
       length: typeof data.length === "number" ? data.length : null,
       parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
+      imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -311,6 +314,13 @@ export const mongoProductRepository: ProductRepository = {
         ? {
             imageLinks: Array.isArray(data.imageLinks)
               ? data.imageLinks
+              : [],
+          }
+        : null),
+      ...(data.imageBase64s !== undefined
+        ? {
+            imageBase64s: Array.isArray(data.imageBase64s)
+              ? data.imageBase64s
               : [],
           }
         : null),
@@ -386,6 +396,7 @@ export const mongoProductRepository: ProductRepository = {
       length: existing.length ?? null,
       parameters: Array.isArray(existing.parameters) ? existing.parameters : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
+      imageBase64s: Array.isArray(existing.imageBase64s) ? existing.imageBase64s : [],
       createdAt: now,
       updatedAt: now,
       images: [],

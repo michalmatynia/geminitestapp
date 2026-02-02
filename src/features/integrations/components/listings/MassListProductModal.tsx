@@ -9,6 +9,9 @@ import type { CapturedLog } from "@/features/integrations/services/exports/log-c
 
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
+import { useGenericExportToBaseMutation, useGenericCreateListingMutation } from "../../hooks/useProductListingMutations";
+
+import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -18,8 +21,6 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
-import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
-
 export function MassListProductModal({
   productIds,
   integrationId: initialIntegrationId,
@@ -28,7 +29,6 @@ export function MassListProductModal({
   onSuccess,
 }: MassListProductModalProps): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
 
   // Integration & connection selection
@@ -56,6 +56,9 @@ export function MassListProductModal({
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
 
+  const exportMutation = useGenericExportToBaseMutation();
+  const createListingMutation = useGenericCreateListingMutation();
+
   const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
     (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
@@ -66,7 +69,6 @@ export function MassListProductModal({
       return;
     }
 
-    setSubmitting(true);
     setError(null);
     setProgress({ current: 0, total: productIds.length, errors: 0 });
     setExportLogs([]);
@@ -82,39 +84,24 @@ export function MassListProductModal({
         
         try {
             if (isBaseComIntegration) {
-                const res = await fetch(`/api/integrations/products/${productId}/export-to-base`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    connectionId: selectedConnectionId,
-                    inventoryId: selectedInventoryId,
-                    templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-                    allowDuplicateSku,
-                  }),
+                const result = await exportMutation.mutateAsync({
+                  productId,
+                  connectionId: selectedConnectionId,
+                  inventoryId: selectedInventoryId,
+                  templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+                  allowDuplicateSku,
                 });
         
-                const data = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[] };
-                if (data.logs) {
-                  allLogs.push(...data.logs);
+                if (result.logs) {
+                  allLogs.push(...result.logs);
                   setExportLogs([...allLogs]);
                 }
-
-                if (!res.ok) {
-                    errors++;
-                }
               } else {
-                const res = await fetch(`/api/integrations/products/${productId}/listings`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    integrationId: initialIntegrationId,
-                    connectionId: selectedConnectionId,
-                  }),
+                await createListingMutation.mutateAsync({
+                  productId,
+                  integrationId: initialIntegrationId,
+                  connectionId: selectedConnectionId,
                 });
-        
-                if (!res.ok) {
-                    errors++;
-                }
               }
         } catch (e: unknown) {
             logger.error("Failed to list product", e);
@@ -124,17 +111,16 @@ export function MassListProductModal({
         setProgress((prev: { current: number; total: number; errors: number } | null) => prev ? { ...prev, errors } : null);
     }
 
-    setSubmitting(false);
     if (errors === 0) {
         onSuccess();
     } else {
         setError(`Completed with ${errors} errors.`);
-        // Don't close immediately if there were errors, so user can see
         setTimeout(() => onSuccess(), 2000); 
     }
   };
 
   const loading = loadingIntegrations;
+  const submitting = exportMutation.isPending || createListingMutation.isPending;
 
   return (
     <ModalShell

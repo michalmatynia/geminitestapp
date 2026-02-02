@@ -26,6 +26,7 @@ import { ConstantNodeConfigSection } from "./node-config/dialog/ConstantNodeConf
 import { DelayNodeConfigSection } from "./node-config/dialog/DelayNodeConfigSection";
 import { GateNodeConfigSection } from "./node-config/dialog/GateNodeConfigSection";
 import { HttpNodeConfigSection } from "./node-config/dialog/HttpNodeConfigSection";
+import { AgentNodeConfigSection } from "./node-config/dialog/AgentNodeConfigSection";
 import { MapperNodeConfigSection } from "./node-config/dialog/MapperNodeConfigSection";
 import { MathNodeConfigSection } from "./node-config/dialog/MathNodeConfigSection";
 import { ModelNodeConfigSection } from "./node-config/dialog/ModelNodeConfigSection";
@@ -236,6 +237,10 @@ export function NodeConfigDialog({
                 nodes={nodes}
                 edges={edges}
                 modelOptions={modelOptions}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <AgentNodeConfigSection
+                selectedNode={selectedNode}
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
               />
               <DatabaseNodeConfigSection

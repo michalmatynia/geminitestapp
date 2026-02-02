@@ -43,10 +43,12 @@ import {
   useCurrencies,
   useCountries,
   useLanguages,
+} from "@/features/internationalization/hooks/useInternationalizationQueries";
+import {
   useDeleteCurrencyMutation,
   useDeleteCountryMutation,
   useDeleteLanguageMutation
-} from "@/features/internationalization/hooks/useInternationalizationQueries";
+} from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 
 export function ProductSettingsPage(): React.JSX.Element {

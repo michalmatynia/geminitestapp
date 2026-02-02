@@ -1,11 +1,9 @@
-"use client";
-
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { Upload, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast } from "@/shared/ui";
 import dynamic from "next/dynamic";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
+import { useUploadCmsMedia } from "../../hooks/useCmsQueries";
 
 const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
   ssr: false,
@@ -22,25 +20,6 @@ interface MediaLibraryPanelProps {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-const readUploadError = async (res: Response): Promise<string> => {
-  const contentType = res.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    try {
-      const data = (await res.json()) as { error?: string };
-      if (data?.error) return data.error;
-    } catch {
-      // Fall back to text.
-    }
-  }
-  try {
-    const text = await res.text();
-    if (text.trim().length > 0) return text;
-  } catch {
-    // ignore
-  }
-  return `Upload failed (${res.status})`;
-};
-
 export function MediaLibraryPanel({
   open,
   onOpenChange,
@@ -49,10 +28,10 @@ export function MediaLibraryPanel({
   autoConfirmSelection,
 }: MediaLibraryPanelProps): React.ReactNode {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === "single";
+
+  const uploadMutation = useUploadCmsMedia();
 
   const handleSelect = (files: ImageFileSelection[]): void => {
     const filepaths = files.map((file: ImageFileSelection) => file.filepath).filter(Boolean);
@@ -63,49 +42,37 @@ export function MediaLibraryPanel({
     }
   };
 
-  const uploadSingleFile = async (file: File): Promise<ImageFileRecord> => {
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error("File exceeds 10MB limit");
-    }
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/cms/media", {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) {
-      throw new Error(await readUploadError(res));
-    }
-    return (await res.json()) as ImageFileRecord;
-  };
-
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const files = event.target.files;
     event.target.value = "";
     if (!files || files.length === 0) return;
 
-    setUploading(true);
     try {
       const list = Array.from(files);
       const uploaded: ImageFileRecord[] = [];
       for (const file of list) {
-        uploaded.push(await uploadSingleFile(file));
+        if (file.size > MAX_FILE_SIZE) {
+          toast(`File ${file.name} exceeds 10MB limit`, { variant: "error" });
+          continue;
+        }
+        const result = await uploadMutation.mutateAsync(file);
+        uploaded.push(result);
       }
-      toast("Upload complete.", { variant: "success" });
-      await queryClient.invalidateQueries({ queryKey: ["files"] });
-      if (shouldAutoConfirm && uploaded.length > 0) {
-        const selections: ImageFileSelection[] = uploaded
-          .map((file: ImageFileRecord): ImageFileSelection => ({ id: file.id, filepath: file.filepath }))
-          .filter((file: ImageFileSelection): boolean => Boolean(file.filepath));
-        if (selections.length > 0) {
-          handleSelect(selections);
+      
+      if (uploaded.length > 0) {
+        toast("Upload complete.", { variant: "success" });
+        if (shouldAutoConfirm) {
+          const selections: ImageFileSelection[] = uploaded
+            .map((file: ImageFileRecord): ImageFileSelection => ({ id: file.id, filepath: file.filepath }))
+            .filter((file: ImageFileSelection): boolean => Boolean(file.filepath));
+          if (selections.length > 0) {
+            handleSelect(selections);
+          }
         }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
       toast(message, { variant: "error" });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -127,10 +94,10 @@ export function MediaLibraryPanel({
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploadMutation.isPending}
           >
             <Upload className="mr-2 size-4" />
-            {uploading ? "Uploading..." : "Upload images"}
+            {uploadMutation.isPending ? "Uploading..." : "Upload images"}
           </Button>
           <input
             ref={fileInputRef}

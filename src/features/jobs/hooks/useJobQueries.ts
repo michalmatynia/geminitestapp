@@ -17,7 +17,7 @@ export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
     queryFn: async (): Promise<ProductJob[]> => {
       const res = await fetch("/api/integrations/jobs");
       if (!res.ok) throw new Error("Failed to load integration jobs");
-      return res.json() as Promise<ProductJob[]>;
+      return (await res.json()) as ProductJob[];
     },
   });
 }
@@ -28,8 +28,10 @@ export function useProductAiJobs(scope: string = "all"): UseQueryResult<{ jobs: 
     queryFn: async (): Promise<{ jobs: ProductAiJob[] }> => {
       const res = await fetch(`/api/products/ai-jobs?scope=${scope}`);
       if (!res.ok) throw new Error("Failed to load product AI jobs");
-      return res.json() as Promise<{ jobs: ProductAiJob[] }>;
+      return (await res.json()) as { jobs: ProductAiJob[] };
     },
+    refetchInterval: 5000, // Refetch every 5 seconds for job status
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -39,7 +41,7 @@ export function useChatbotJobs(scope: string = "all"): UseQueryResult<{ jobs: un
     queryFn: async (): Promise<{ jobs: unknown[] }> => {
       const res = await fetch(`/api/chatbot/jobs?scope=${scope}`);
       if (!res.ok) throw new Error("Failed to load chatbot jobs");
-      return res.json() as Promise<{ jobs: unknown[] }>;
+      return (await res.json()) as { jobs: unknown[] };
     },
   });
 }

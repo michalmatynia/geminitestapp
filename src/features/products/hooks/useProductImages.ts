@@ -10,7 +10,31 @@ const normalizeImageLinks = (links?: string[] | null): string[] => {
   const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link: string, index: number) => {
-      next[index] = typeof link === "string" ? link : "";
+      const value = typeof link === "string" ? link.trim() : "";
+      next[index] = value && !value.startsWith("data:") ? value : "";
+    });
+  }
+  return next;
+};
+
+const normalizeImageBase64s = (
+  base64s?: string[] | null,
+  links?: string[] | null,
+): string[] => {
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
+  if (Array.isArray(base64s)) {
+    base64s.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
+      next[index] = typeof value === "string" && value.trim().startsWith("data:")
+        ? value.trim()
+        : "";
+    });
+  }
+  if (Array.isArray(links)) {
+    links.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
+      const trimmed = typeof value === "string" ? value.trim() : "";
+      if (trimmed.startsWith("data:") && !next[index]) {
+        next[index] = trimmed;
+      }
     });
   }
   return next;
@@ -45,6 +69,7 @@ const createSlotId = (): string =>
 export interface ProductImagesHookResult {
   imageSlots: (ProductImageSlot | null)[];
   imageLinks: string[];
+  imageBase64s: string[];
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
   handleSlotImageChange: (file: File | null, index: number) => void;
@@ -54,6 +79,7 @@ export interface ProductImagesHookResult {
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   swapImageSlots: (fromIndex: number, toIndex: number) => void;
   setImageLinkAt: (index: number, value: string) => void;
+  setImageBase64At: (index: number, value: string) => void;
   refreshFromProduct: (savedProduct: ProductWithImages) => void;
   setImagesReordering: (value: boolean) => void;
 }
@@ -67,6 +93,9 @@ export function useProductImages(
   );
   const [imageLinks, setImageLinks] = useState<string[]>(() =>
     normalizeImageLinks(product?.imageLinks ?? initialImageLinks),
+  );
+  const [imageBase64s, setImageBase64s] = useState<string[]>(() =>
+    normalizeImageBase64s(product?.imageBase64s, product?.imageLinks ?? initialImageLinks),
   );
   const [showFileManager, setShowFileManager] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
@@ -86,7 +115,7 @@ export function useProductImages(
     }
   });
 
-  // Effect to clean up object URLs when component unmounts or imageSlots change
+  // Effect to clean up object URLs when imageSlots change
   useEffect(() => {
     const currentObjectUrls = imageSlots
       .map((slot: ProductImageSlot | null): string | null => (slot?.type === "file" ? slot.previewUrl : null))
@@ -100,13 +129,15 @@ export function useProductImages(
 
     // Update ref with current object URLs
     objectUrlsRef.current = currentObjectUrls;
+  }, [imageSlots]);
 
+  // Clean up all object URLs on unmount only
+  useEffect(() => {
     return (): void => {
-      // Clean up all object URLs on unmount
       objectUrlsRef.current.forEach((url: string) => URL.revokeObjectURL(url));
       objectUrlsRef.current = [];
     };
-  }, [imageSlots]);
+  }, []);
 
   const handleSlotImageChange = useCallback(
     (file: File | null, index: number): void => {
@@ -205,6 +236,15 @@ export function useProductImages(
     });
   }, []);
 
+  const setImageBase64At = useCallback((index: number, value: string): void => {
+    setImageBase64s((prev: string[]) => {
+      const next = [...prev];
+      if (index < 0 || index >= next.length) return prev;
+      next[index] = value;
+      return next;
+    });
+  }, []);
+
   const handleMultiImageChange = useCallback((files: File[]): void => {
     setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
       const newSlots = [...prevSlots];
@@ -270,6 +310,14 @@ export function useProductImages(
       newLinks[toIndex] = temp!;
       return newLinks;
     });
+
+    setImageBase64s((prevBase64s: string[]) => {
+      const newBase64s = [...prevBase64s];
+      const temp = newBase64s[fromIndex];
+      newBase64s[fromIndex] = newBase64s[toIndex]!;
+      newBase64s[toIndex] = temp!;
+      return newBase64s;
+    });
   }, []);
 
   const applyRefresh = useCallback((savedProduct: ProductWithImages): void => {
@@ -310,6 +358,7 @@ export function useProductImages(
       return newSlots;
     });
     setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
+    setImageBase64s(normalizeImageBase64s(savedProduct.imageBase64s, savedProduct.imageLinks));
   }, []);
 
   const setImagesReordering = useCallback(
@@ -342,6 +391,7 @@ export function useProductImages(
   return {
     imageSlots,
     imageLinks,
+    imageBase64s,
     showFileManager,
     setShowFileManager,
     handleSlotImageChange,
@@ -351,6 +401,7 @@ export function useProductImages(
     handleMultiFileSelect,
     swapImageSlots,
     setImageLinkAt,
+    setImageBase64At,
     refreshFromProduct,
     setImagesReordering,
   };

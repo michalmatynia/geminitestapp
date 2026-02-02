@@ -27,3 +27,5 @@ export { ListPanel } from "../components/list-panel";
 export { DataTable, type PriceGroupForCalculation } from "../components/data-table";
 export { default as ModalShell } from "../components/modal-shell";
 export { BreadcrumbScroller } from "../components/breadcrumb-scroller";
+export { QueryDevPanel } from "../components/QueryDevPanel";
+export { QueryMonitor } from "../components/QueryMonitor";

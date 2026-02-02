@@ -97,15 +97,17 @@ export const useNoteTags = (options?: { enabled?: boolean }): UseQueryResult<Tag
   });
 };
 
-export const useNoteCategories = (options?: { enabled?: boolean }): UseQueryResult<CategoryRecord[], Error> => {
+export const useNoteCategories = (notebookId?: string | null, options?: { enabled?: boolean }): UseQueryResult<CategoryRecord[], Error> => {
   return useQuery<CategoryRecord[], Error>({
-    queryKey: ["notes", "categories"],
+    queryKey: ["notes", "categories", notebookId],
     queryFn: async (): Promise<CategoryRecord[]> => {
-      const response = await fetch("/api/notes/categories");
+      if (!notebookId) return [] as CategoryRecord[];
+      const params = new URLSearchParams({ notebookId });
+      const response = await fetch(`/api/notes/categories?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch categories");
       return response.json() as Promise<CategoryRecord[]>;
     },
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true) && !!notebookId,
   });
 };
 
@@ -524,7 +526,7 @@ export function useNoteData({
   const notebooksQuery = useNoteTree();
   const tagsQuery = useNoteTags();
   const themesQuery = useNoteThemes();
-  const categoriesQuery = useNoteCategories();
+  const categoriesQuery = useNoteCategories(selectedNotebookId);
 
   // Derived state
   const notes = useMemo(() => notesQuery.data || [], [notesQuery.data]);

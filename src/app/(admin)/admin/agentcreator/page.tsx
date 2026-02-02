@@ -19,6 +19,15 @@ export default function AgentCreatorPage(): JSX.Element {
               Review agent execution logs, snapshots, and plan details.
             </p>
           </Link>
+          <Link
+            href="/admin/agentcreator/personas"
+            className="rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600"
+          >
+            <h2 className="text-lg font-semibold text-white">Agent Personas</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Define the reasoning stack for each agent model role.
+            </p>
+          </Link>
         </div>
       </div>
     </div>

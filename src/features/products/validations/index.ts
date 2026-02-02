@@ -42,7 +42,30 @@ const imageLinksSchema = z.preprocess((value: unknown): string[] => {
     }
   }
   return [];
-}, z.array(z.string().trim()));
+}, z.array(z.string().trim())).transform((links: string[]) =>
+  links.map((link: string) => link.trim()).filter((link: string) => link && !link.startsWith("data:"))
+);
+
+const imageBase64sSchema = z.preprocess((value: unknown): string[] => {
+  if (value === null || value === undefined) return [];
+  if (Array.isArray(value)) return value as string[];
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) return parsed as string[];
+    } catch {
+      return trimmed
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}, z.array(z.string().trim())).transform((links: string[]) =>
+  links.map((link: string) => link.trim()).filter((link: string) => link && link.startsWith("data:"))
+);
 
 const parameterValueSchema = z.object({
   parameterId: z.string().trim().min(1, "Parameter ID is required"),
@@ -87,6 +110,7 @@ const productBaseSchema = z.object({
   weight: emptyStringToUndefined,
   length: emptyStringToUndefined,
   imageLinks: imageLinksSchema.optional(),
+  imageBase64s: imageBase64sSchema.optional(),
   parameters: parametersSchema.optional(),
 });
 

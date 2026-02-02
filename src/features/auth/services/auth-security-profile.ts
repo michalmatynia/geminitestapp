@@ -123,7 +123,12 @@ export const updateAuthSecurityProfile = async (
       update: payload,
       create: {
         userId,
-        ...(payload as AuthSecurityProfile),
+        mfaEnabled: payload.mfaEnabled ?? false,
+        mfaSecret: payload.mfaSecret ?? null,
+        recoveryCodes: payload.recoveryCodes ?? [],
+        allowedIps: payload.allowedIps ?? [],
+        disabledAt: payload.disabledAt ?? null,
+        bannedAt: payload.bannedAt ?? null,
         createdAt: now,
         updatedAt: now,
       },

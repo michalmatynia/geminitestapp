@@ -24,6 +24,8 @@ export const useAgentCreatorSettings = (): {
   setAgentSelfCheckModel: (value: string | null) => void;
   agentExtractionValidationModel: string | null;
   setAgentExtractionValidationModel: (value: string | null) => void;
+  agentToolRouterModel: string | null;
+  setAgentToolRouterModel: (value: string | null) => void;
   agentLoopGuardModel: string | null;
   setAgentLoopGuardModel: (value: string | null) => void;
   agentApprovalGateModel: string | null;
@@ -73,6 +75,9 @@ export const useAgentCreatorSettings = (): {
   );
   const [agentExtractionValidationModel, setAgentExtractionValidationModel] =
     useState<string | null>(DEFAULT_AGENT_SETTINGS.extractionValidationModel);
+  const [agentToolRouterModel, setAgentToolRouterModel] = useState<string | null>(
+    DEFAULT_AGENT_SETTINGS.toolRouterModel
+  );
   const [agentLoopGuardModel, setAgentLoopGuardModel] = useState<string | null>(
     DEFAULT_AGENT_SETTINGS.loopGuardModel
   );
@@ -129,6 +134,8 @@ export const useAgentCreatorSettings = (): {
     setAgentSelfCheckModel: setAgentSelfCheckModel as (value: string | null) => void,
     agentExtractionValidationModel,
     setAgentExtractionValidationModel: setAgentExtractionValidationModel as (value: string | null) => void,
+    agentToolRouterModel,
+    setAgentToolRouterModel: setAgentToolRouterModel as (value: string | null) => void,
     agentLoopGuardModel,
     setAgentLoopGuardModel: setAgentLoopGuardModel as (value: string | null) => void,
     agentApprovalGateModel,

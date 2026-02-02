@@ -2,7 +2,9 @@ export type ProductAiJobType =
   | "description_generation"
   | "translation"
   | "graph_model"
-  | "db_sync";
+  | "db_sync"
+  | "base64_all"
+  | "base_images_sync_all";
 
 export type ProductAiJobResult = {
   visionModel?: string;

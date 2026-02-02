@@ -148,12 +148,6 @@ export default function Menu(): React.ReactNode {
         >
           Marketplaces
         </Link>
-        <Link
-          href="/admin/integrations/jobs"
-          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
-        >
-          Export Jobs
-        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="AI Paths"
@@ -166,11 +160,37 @@ export default function Menu(): React.ReactNode {
         >
           Canvas
         </Link>
+      </CollapsibleMenu>
+      <CollapsibleMenu title="Jobs" icon={<ActivityIcon />} href="/admin/products/jobs">
+        <Link
+          href="/admin/products/jobs"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          All Jobs
+        </Link>
         <Link
           href="/admin/ai-paths/jobs"
           className="block hover:bg-gray-700 p-2 rounded"
         >
           AI Jobs
+        </Link>
+        <Link
+          href="/admin/products/jobs?tab=import"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Import Jobs
+        </Link>
+        <Link
+          href="/admin/integrations/jobs"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Export Jobs
+        </Link>
+        <Link
+          href="/admin/chatbot/jobs"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Chatbot Jobs
         </Link>
         <Link
           href="/admin/ai-paths/dead-letter"
@@ -338,6 +358,12 @@ export default function Menu(): React.ReactNode {
           Transient Recovery
         </Link>
         <Link
+          href="/admin/settings/sync"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Background Sync
+        </Link>
+        <Link
           href="/admin/settings/database"
           className="block hover:bg-gray-700 p-2 rounded"
         >
@@ -382,6 +408,12 @@ export default function Menu(): React.ReactNode {
         href="/admin/agentcreator"
       >
         <Link
+          href="/admin/agentcreator/personas"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Personas
+        </Link>
+        <Link
           href="/admin/agentcreator/runs"
           className="block hover:bg-gray-700 p-2 rounded"
         >
@@ -394,12 +426,6 @@ export default function Menu(): React.ReactNode {
           className="block hover:bg-gray-700 p-2 rounded"
         >
           Sessions
-        </Link>
-        <Link
-          href="/admin/chatbot/jobs"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          Jobs
         </Link>
         <Link
           href="/admin/chatbot"

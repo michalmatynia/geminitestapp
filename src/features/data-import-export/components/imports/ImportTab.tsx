@@ -34,15 +34,20 @@ type ImportTabProps = {
   setAllowDuplicateSku: (value: boolean) => void;
   importing: boolean;
   handleImport: () => void | Promise<void>;
-  importSearch: string;
-  setImportSearch: (value: string) => void;
+  importNameSearch: string;
+  setImportNameSearch: (value: string) => void;
+  importSkuSearch: string;
+  setImportSkuSearch: (value: string) => void;
+  importListPage: number;
+  setImportListPage: (value: number) => void;
+  importListPageSize: number;
+  setImportListPageSize: (value: number) => void;
   uniqueOnly: boolean;
   setUniqueOnly: (value: boolean) => void;
   handleLoadImportList: () => void | Promise<void>;
   loadingImportList: boolean;
   importListStats: ImportListStats | null;
   importList: ImportListItem[];
-  filteredImportList: ImportListItem[];
   selectedImportIds: Set<string>;
   setSelectedImportIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   selectedImportCount: number;
@@ -74,15 +79,20 @@ export function ImportTab({
   setAllowDuplicateSku,
   importing,
   handleImport,
-  importSearch,
-  setImportSearch,
+  importNameSearch,
+  setImportNameSearch,
+  importSkuSearch,
+  setImportSkuSearch,
+  importListPage,
+  setImportListPage,
+  importListPageSize,
+  setImportListPageSize,
   uniqueOnly,
   setUniqueOnly,
   handleLoadImportList,
   loadingImportList,
   importListStats,
   importList,
-  filteredImportList,
   selectedImportIds,
   setSelectedImportIds,
   selectedImportCount,
@@ -287,22 +297,44 @@ export function ImportTab({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              value={importSearch}
+              value={importNameSearch}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setImportSearch(event.target.value)
+                (setImportNameSearch(event.target.value), setImportListPage(1))
               }
-              placeholder="Search products..."
+              placeholder="Search name..."
               className="h-8 w-48 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
+            />
+            <Input
+              value={importSkuSearch}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                (setImportSkuSearch(event.target.value), setImportListPage(1))
+              }
+              placeholder="Search SKU..."
+              className="h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
             <select
               className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
               value={uniqueOnly ? "unique" : "all"}
               onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-                setUniqueOnly(event.target.value === "unique")
+                (setUniqueOnly(event.target.value === "unique"), setImportListPage(1))
               }
             >
               <option value="unique">Unique only</option>
               <option value="all">All products</option>
+            </select>
+            <select
+              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+              value={String(importListPageSize)}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
+                const nextSize = Number(event.target.value);
+                setImportListPageSize(Number.isFinite(nextSize) ? nextSize : 25);
+                setImportListPage(1);
+              }}
+            >
+              <option value="10">10 / page</option>
+              <option value="25">25 / page</option>
+              <option value="50">50 / page</option>
+              <option value="100">100 / page</option>
             </select>
             <Button
               onClick={(): void => {
@@ -327,10 +359,13 @@ export function ImportTab({
                 · SKU duplicates: {importListStats.skuDuplicates}
               </span>
             ) : null}
+            <span className="ml-2 text-gray-500">
+              · Page {importListStats.page ?? importListPage} of {importListStats.totalPages ?? 1}
+            </span>
           </div>
         ) : null}
 
-        {filteredImportList.length > 0 ? (
+        {importList.length > 0 ? (
           <div className="mt-3 max-h-96 overflow-auto rounded-md border border-border bg-card/70">
             <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10">
               <span className="flex items-center">
@@ -346,7 +381,7 @@ export function ImportTab({
                     if (Boolean(checked)) {
                       setSelectedImportIds((prev: Set<string>) => {
                         const next = new Set(prev);
-                        filteredImportList.forEach((item: ImportListItem) => {
+                        importList.forEach((item: ImportListItem) => {
                           if (item.baseProductId) next.add(item.baseProductId);
                         });
                         return next;
@@ -354,7 +389,7 @@ export function ImportTab({
                     } else {
                       setSelectedImportIds((prev: Set<string>) => {
                         const next = new Set(prev);
-                        filteredImportList.forEach((item: ImportListItem) => {
+                        importList.forEach((item: ImportListItem) => {
                           if (item.baseProductId)
                             next.delete(item.baseProductId);
                         });
@@ -373,7 +408,7 @@ export function ImportTab({
               <span>Qty</span>
               <span>Status</span>
             </div>
-            {filteredImportList.map((item: ImportListItem) => (
+            {importList.map((item: ImportListItem) => (
               <div
                 key={item.baseProductId}
                 className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
@@ -464,6 +499,23 @@ export function ImportTab({
               : "No items loaded yet."}
           </p>
         )}
+
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <Button
+            variant="secondary"
+            disabled={loadingImportList || importListPage <= 1}
+            onClick={(): void => setImportListPage(Math.max(1, importListPage - 1))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={loadingImportList || (importListStats?.totalPages ?? 1) <= importListPage}
+            onClick={(): void => setImportListPage(importListPage + 1)}
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {lastResult ? (

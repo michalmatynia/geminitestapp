@@ -1,4 +1,3 @@
-
 import type { PageComponent } from "../../types";
 import type { ColorSchemeColors } from "@/features/cms/types/theme-settings";
 import type { BlockInstance, PageZone } from "../../types/page-builder";
@@ -23,10 +22,7 @@ import { FrontendTextElementSection } from "./sections/FrontendTextElementSectio
 import { FrontendImageElementSection } from "./sections/FrontendImageElementSection";
 import { FrontendTextAtomSection } from "./sections/FrontendTextAtomSection";
 import { FrontendButtonElementSection } from "./sections/FrontendButtonElementSection";
-
-// ---------------------------------------------------------------------------
-// Types for the section content stored in PageComponent.content
-// ---------------------------------------------------------------------------
+import { FrontendModel3DElementSection } from "./sections/FrontendModel3DElementSection";
 
 interface SectionContent {
   zone?: PageZone;
@@ -34,15 +30,7 @@ interface SectionContent {
   blocks?: BlockInstance[];
 }
 
-// ---------------------------------------------------------------------------
-// Zone ordering
-// ---------------------------------------------------------------------------
-
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
-
-// ---------------------------------------------------------------------------
-// Main renderer
-// ---------------------------------------------------------------------------
 
 interface CmsPageRendererProps {
   components: PageComponent[];
@@ -64,7 +52,7 @@ export function CmsPageRenderer({
   mediaStyles,
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
-  // Parse components into sections with zone info
+  
   const sections = components.map((comp: PageComponent, idx: number) => {
     const content = comp.content as SectionContent;
     return {
@@ -76,7 +64,6 @@ export function CmsPageRenderer({
     };
   }).filter((section: { key: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !section.settings["isHidden"]);
 
-  // Group by zone and render in order
   const sectionsByZone: Record<PageZone, typeof sections> = {
     header: [],
     template: [],
@@ -115,10 +102,6 @@ export function CmsPageRenderer({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Section type router
-// ---------------------------------------------------------------------------
-
 interface SectionRendererProps {
   type: string;
   settings: Record<string, unknown>;
@@ -139,6 +122,8 @@ function SectionRenderer({ type, settings, blocks, colorSchemes, layout }: Secti
       return <FrontendTextAtomSection settings={settings} blocks={blocks} />;
     case "ImageElement":
       return <FrontendImageElementSection settings={settings} />;
+    case "Model3DElement":
+      return <FrontendModel3DElementSection settings={settings} />;
     case "ButtonElement":
       return <FrontendButtonElementSection settings={settings} />;
     case "Hero":

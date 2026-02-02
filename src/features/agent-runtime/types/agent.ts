@@ -72,9 +72,13 @@ export type AgentPlanPreferences = {
   memoryValidationModel?: string | undefined;
   plannerModel?: string | undefined;
   selfCheckModel?: string | undefined;
+  extractionValidationModel?: string | undefined;
+  toolRouterModel?: string | undefined;
   loopGuardModel?: string | undefined;
   approvalGateModel?: string | undefined;
   memorySummarizationModel?: string | undefined;
+  selectorInferenceModel?: string | undefined;
+  outputNormalizationModel?: string | undefined;
 };
 
 export type AgentCheckpoint = {

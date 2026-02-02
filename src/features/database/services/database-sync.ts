@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import "server-only";
 
@@ -52,13 +54,15 @@ const toDate = (value: unknown): Date | null => {
 };
 
 const toJsonValue = (value: unknown): Prisma.JsonValue => {
-  if (value === undefined) return null;
-  if (value === null) return null;
+  if (value === undefined || value === null) return null;
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();
-  if (Array.isArray(value)) return value.map((entry: unknown) => toJsonValue(entry)) as Prisma.JsonValue;
+  if (Array.isArray(value)) {
+    return value.map((entry: any) => toJsonValue(entry)) as Prisma.JsonValue;
+  }
   if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>).map(([key, entry]: [string, unknown]) => [
+    const record = value as Record<string, unknown>;
+    const entries = Object.entries(record).map(([key, entry]) => [
       key,
       toJsonValue(entry),
     ]);
@@ -88,7 +92,7 @@ const recordResult = (
 const listMongoCollections = async (): Promise<string[]> => {
   const mongo = await getMongoDb();
   const collections = await mongo.listCollections().toArray();
-  return collections.map((entry) => entry.name);
+  return collections.map((entry: { name: string }) => entry.name);
 };
 
 const requireDatabases = (): void => {
@@ -623,7 +627,7 @@ async function syncMongoToPrisma(results: DatabaseSyncCollectionResult[]): Promi
       : { count: 0 };
 
     const joinRows = data.flatMap((lang) =>
-      lang.countries.map((entry) => ({
+      lang.countries.map((entry: any) => ({
         languageId: lang.id,
         countryId: entry.countryId,
       }))
@@ -1552,7 +1556,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("settings", async () => {
     const rows = await prisma.setting.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.key,
       key: row.key,
       value: row.value,
@@ -1567,7 +1571,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("users", async () => {
     const rows = await prisma.user.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       name: row.name ?? null,
@@ -1578,7 +1582,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("users");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return {
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
@@ -1591,7 +1595,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("accounts", async () => {
     const rows = await prisma.account.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       userId: toObjectIdMaybe(row.userId),
@@ -1608,13 +1612,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("accounts");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("sessions", async () => {
     const rows = await prisma.session.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       sessionToken: row.sessionToken,
@@ -1623,26 +1627,26 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("sessions");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("verification_tokens", async () => {
     const rows = await prisma.verificationToken.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       identifier: row.identifier,
       token: row.token,
       expires: row.expires,
     }));
     const collection = mongo.collection("verification_tokens");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("auth_security_profiles", async () => {
     const rows = await prisma.authSecurityProfile.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       userId: row.userId,
@@ -1657,7 +1661,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("auth_security_profiles");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -1675,7 +1679,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     });
     const collection = mongo.collection("auth_login_challenges");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -1693,13 +1697,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     });
     const collection = mongo.collection("auth_security_attempts");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("user_preferences", async () => {
     const rows = await prisma.userPreferences.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       userId: row.userId,
       productListNameLocale: row.productListNameLocale,
@@ -1716,7 +1720,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("user_preferences");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return {
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
@@ -1727,7 +1731,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
   await syncCollection("system_logs", async () => {
     const rows = await prisma.systemLog.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       level: row.level,
@@ -1744,13 +1748,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("system_logs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("ai_configurations", async () => {
     const rows = await prisma.aiConfiguration.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       type: row.type ?? null,
@@ -1768,7 +1772,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("ai_configurations");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -1790,13 +1794,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("chatbot_sessions");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: sessions.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("chatbot_jobs", async () => {
     const rows = await prisma.chatbotJob.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       sessionId: row.sessionId,
       status: row.status,
@@ -1810,13 +1814,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("chatbot_jobs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("currencies", async () => {
     const rows = await prisma.currency.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
@@ -1827,36 +1831,36 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("currencies");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("countries", async () => {
     const rows = await prisma.country.findMany({ include: { currencies: true } });
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
       name: row.name,
-      currencyIds: row.currencies.map((entry) => entry.currencyId),
+      currencyIds: row.currencies.map((entry: { currencyId: string }) => entry.currencyId),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }));
     const collection = mongo.collection("countries");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("languages", async () => {
     const rows = await prisma.language.findMany({ include: { countries: { include: { country: true } } } });
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       code: row.code,
       name: row.name,
       nativeName: row.nativeName ?? null,
-      countries: row.countries.map((entry) => ({
+      countries: row.countries.map((entry: { countryId: string; country: { id: string; code: any; name: string } }) => ({
         countryId: entry.countryId,
         country: {
           id: entry.country.id,
@@ -1869,13 +1873,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("languages");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("price_groups", async () => {
     const rows = await prisma.priceGroup.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       groupId: row.groupId,
@@ -1893,13 +1897,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("price_groups");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("catalogs", async () => {
     const rows = await prisma.catalog.findMany({ include: { languages: true } });
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -1909,20 +1913,20 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       defaultPriceGroupId: row.defaultPriceGroupId ?? null,
       priceGroupIds: row.priceGroupIds ?? [],
       languageIds: row.languages
-        .sort((a, b) => a.position - b.position)
-        .map((entry) => entry.languageId),
+        .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
+        .map((entry: { languageId: string }) => entry.languageId),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }));
     const collection = mongo.collection("catalogs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("product_categories", async () => {
     const rows = await prisma.productCategory.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -1935,13 +1939,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("product_categories");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("product_tags", async () => {
     const rows = await prisma.productTag.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -1952,13 +1956,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("product_tags");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("product_parameters", async () => {
     const rows = await prisma.productParameter.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       catalogId: row.catalogId,
@@ -1970,13 +1974,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("product_parameters");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("image_files", async () => {
     const rows = await prisma.imageFile.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       filename: row.filename,
@@ -1991,7 +1995,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("image_files");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2008,11 +2012,11 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       prisma.catalog.findMany({ include: { languages: true } }),
     ]);
     const catalogLanguageMap = new Map(
-      catalogRows.map((catalog) => [
+      catalogRows.map((catalog: any) => [
         catalog.id,
         catalog.languages
-          .sort((a, b) => a.position - b.position)
-          .map((entry) => entry.languageId),
+          .sort((a: any, b: any) => a.position - b.position)
+          .map((entry: { languageId: string }) => entry.languageId),
       ])
     );
     const docs = rows.map((product) => ({
@@ -2061,7 +2065,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
           updatedAt: image.imageFile.updatedAt,
         },
       })),
-      catalogs: product.catalogs.map((entry) => ({
+      catalogs: product.catalogs.map((entry: any) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
@@ -2078,12 +2082,12 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
           languageIds: catalogLanguageMap.get(entry.catalog.id) ?? [],
         },
       })),
-      categories: product.categories.map((entry) => ({
+      categories: product.categories.map((entry: any) => ({
         productId: entry.productId,
         categoryId: entry.categoryId,
         assignedAt: entry.assignedAt,
       })),
-      tags: product.tags.map((entry) => ({
+      tags: product.tags.map((entry: any) => ({
         productId: entry.productId,
         tagId: entry.tagId,
         assignedAt: entry.assignedAt,
@@ -2092,13 +2096,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
     const collection = mongo.collection("products");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("product_drafts", async () => {
     const rows = await prisma.productDraft.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2135,13 +2139,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("product_drafts");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_slugs", async () => {
     const rows = await prisma.slug.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       slug: row.slug,
@@ -2151,13 +2155,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("cms_slugs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_themes", async () => {
     const rows = await prisma.cmsTheme.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2170,13 +2174,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("cms_themes");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_pages", async () => {
     const rows = await prisma.page.findMany({ include: { components: true } });
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2190,8 +2194,8 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       themeId: row.themeId ?? null,
       showMenu: row.showMenu ?? true,
       components: row.components
-        .sort((a, b) => a.order - b.order)
-        .map((component) => ({
+        .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+        .map((component: { type: string; content: any }) => ({
           type: component.type,
           content: component.content ?? {},
         })),
@@ -2200,26 +2204,26 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("cms_pages");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_page_slugs", async () => {
     const rows = await prisma.pageSlug.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       pageId: row.pageId,
       slugId: row.slugId,
       assignedAt: row.assignedAt,
     }));
     const collection = mongo.collection("cms_page_slugs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_domains", async () => {
     const rows = await prisma.cmsDomain.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: toObjectIdMaybe(row.id),
       id: row.id,
       domain: row.domain,
@@ -2229,13 +2233,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("cms_domains");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("cms_domain_slugs", async () => {
     const rows = await prisma.cmsDomainSlug.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: new ObjectId(),
       domainId: row.domainId,
       slugId: row.slugId,
@@ -2245,7 +2249,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("cms_domain_slugs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2267,7 +2271,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     const noteMap = new Map(notes.map((note) => [note.id, note]));
 
     const docs = notes.map((note) => {
-      const tagEntries = note.tags.map((entry) => {
+      const tagEntries = note.tags.map((entry: any) => {
         const tag = tagMap.get(entry.tagId);
         return {
           noteId: entry.noteId,
@@ -2285,7 +2289,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
             : { id: entry.tagId, name: "", color: null, notebookId: null, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const categoryEntries = note.categories.map((entry) => {
+      const categoryEntries = note.categories.map((entry: any) => {
         const category = categoryMap.get(entry.categoryId);
         return {
           noteId: entry.noteId,
@@ -2307,7 +2311,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
             : { id: entry.categoryId, name: "", description: null, color: null, parentId: null, themeId: null, notebookId: null, sortIndex: 0, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const relationsFrom = note.relationsFrom.map((entry) => {
+      const relationsFrom = note.relationsFrom.map((entry: any) => {
         const target = noteMap.get(entry.targetNoteId);
         return {
           sourceNoteId: entry.sourceNoteId,
@@ -2353,7 +2357,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
 
     const collection = mongo.collection("notes");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: notes.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2375,13 +2379,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("noteFiles");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: files.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("tags", async () => {
     const rows = await prisma.tag.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2392,13 +2396,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("tags");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("categories", async () => {
     const rows = await prisma.category.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2413,13 +2417,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("categories");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("notebooks", async () => {
     const rows = await prisma.notebook.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2430,13 +2434,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("notebooks");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("themes", async () => {
     const rows = await prisma.theme.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       name: row.name,
@@ -2456,13 +2460,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("themes");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("product_ai_jobs", async () => {
     const rows = await prisma.productAiJob.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       productId: row.productId,
@@ -2477,13 +2481,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("product_ai_jobs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("ai_path_runs", async () => {
     const rows = await prisma.aiPathRun.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       userId: row.userId ?? null,
@@ -2510,13 +2514,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("ai_path_runs");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("ai_path_run_nodes", async () => {
     const rows = await prisma.aiPathRunNode.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       runId: row.runId,
@@ -2535,13 +2539,13 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("ai_path_run_nodes");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
   await syncCollection("ai_path_run_events", async () => {
     const rows = await prisma.aiPathRunEvent.findMany();
-    const docs = rows.map((row) => ({
+    const docs = rows.map((row: any) => ({
       _id: row.id,
       id: row.id,
       runId: row.runId,
@@ -2552,7 +2556,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     }));
     const collection = mongo.collection("ai_path_run_events");
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any);
+    if (docs.length) await collection.insertMany(docs as any[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 }

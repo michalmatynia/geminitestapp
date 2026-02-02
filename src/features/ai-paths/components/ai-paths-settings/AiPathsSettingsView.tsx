@@ -32,6 +32,7 @@ export function AiPathsSettingsView({
 }: AiPathsSettingsViewProps): React.JSX.Element {
   const {
     loading,
+    docsOverviewSnippet,
     docsWiringSnippet,
     docsDescriptionSnippet,
     docsJobsSnippet,
@@ -418,6 +419,7 @@ export function AiPathsSettingsView({
 
       {activeTab === "docs" && (
         <DocsTabPanel
+          docsOverviewSnippet={docsOverviewSnippet}
           docsWiringSnippet={docsWiringSnippet}
           docsDescriptionSnippet={docsDescriptionSnippet}
           docsJobsSnippet={docsJobsSnippet}

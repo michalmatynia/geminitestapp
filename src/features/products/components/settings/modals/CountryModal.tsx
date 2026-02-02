@@ -16,7 +16,7 @@ import type {
   CurrencyOption,
 } from "@/shared/types/internationalization";
 import { countryCodeOptions } from "@/shared/constants/internationalization";
-import { useSaveCountryMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
+import { useSaveCountryMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 interface CountryModalProps {
   isOpen: boolean;

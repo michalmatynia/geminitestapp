@@ -102,9 +102,21 @@ interface Model3DProps {
   onError?: (error: Error) => void;
   castShadow?: boolean;
   receiveShadow?: boolean;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number | [number, number, number];
 }
 
-function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true }: Model3DProps): React.JSX.Element {
+function Model3D({
+  url,
+  onLoad,
+  onError,
+  castShadow = true,
+  receiveShadow = true,
+  position,
+  rotation,
+  scale,
+}: Model3DProps): React.JSX.Element {
   const { scene } = useGLTF(url, true); // Enable error handling
   const modelRef = useRef<THREE.Group>(null);
 
@@ -152,6 +164,9 @@ function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true
       ref={modelRef}
       object={scene}
       dispose={null}
+      position={position}
+      rotation={rotation}
+      scale={scale}
     />
   );
   /* eslint-enable react/no-unknown-property */
@@ -333,6 +348,12 @@ export interface Viewer3DProps {
   enableAntiAliasing?: boolean;
   /** Use presentation controls (drag to rotate) */
   presentationMode?: boolean;
+  /** Model position [x, y, z] */
+  modelPosition?: [number, number, number];
+  /** Model rotation [x, y, z] in radians */
+  modelRotation?: [number, number, number];
+  /** Model scale (number or [x, y, z]) */
+  modelScale?: number | [number, number, number];
 }
 
 export function Viewer3D({
@@ -367,6 +388,9 @@ export function Viewer3D({
   autoFit = true,
   enableAntiAliasing = true,
   presentationMode = false,
+  modelPosition,
+  modelRotation,
+  modelScale,
 }: Viewer3DProps): React.JSX.Element {
   const hasPostProcessing =
     enableDithering ||
@@ -457,6 +481,9 @@ export function Viewer3D({
                       {...(onError && { onError })}
                       castShadow={enableShadows}
                       receiveShadow={enableShadows}
+                      position={modelPosition}
+                      rotation={modelRotation}
+                      scale={modelScale}
                     />
                   </Model3DErrorBoundary>
                 </Bounds>
@@ -472,6 +499,9 @@ export function Viewer3D({
                     {...(onError && { onError })}
                     castShadow={enableShadows}
                     receiveShadow={enableShadows}
+                    position={modelPosition}
+                    rotation={modelRotation}
+                    scale={modelScale}
                   />
                 </Model3DErrorBoundary>
               </Bounds>

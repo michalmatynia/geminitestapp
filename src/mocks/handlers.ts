@@ -332,6 +332,7 @@ export const handlers = [
     return HttpResponse.json({
       productListNameLocale: 'name_en',
       productListCurrencyCode: 'USD',
+      productListThumbnailSource: 'file',
       cmsLastPageId: null,
       cmsThemeOpenSections: [],
       cmsThemeLogoWidth: null,

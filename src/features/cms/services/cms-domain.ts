@@ -198,6 +198,18 @@ export async function getDomainSlugLinks(domainId: string): Promise<CmsDomainSlu
     .toArray();
 }
 
+export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
+  const zoningEnabled = await isDomainZoningEnabled();
+  if (!zoningEnabled) return [];
+  const db = await getMongoDb();
+  const links = await db
+    .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
+    .find({ slugId })
+    .toArray();
+  const ids = links.map((link: CmsDomainSlugLink) => link.domainId);
+  return Array.from(new Set(ids));
+}
+
 const toDomainResponse = (doc: CmsDomainRecord): CmsDomainResponse => ({
   id: doc.id,
   domain: doc.domain,

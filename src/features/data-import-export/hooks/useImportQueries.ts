@@ -18,8 +18,8 @@ export const importKeys = {
     [...importKeys.all, "warehouses", { inventoryId, connectionId, includeAll }] as const,
   parameters: (inventoryId: string, productId: string) => 
     [...importKeys.all, "parameters", { inventoryId, productId }] as const,
-  importList: (inventoryId: string, limit?: string | number, uniqueOnly?: boolean) =>
-    [...importKeys.all, "import-list", { inventoryId, limit, uniqueOnly }] as const,
+  importList: (inventoryId: string, params: { limit?: string | number; uniqueOnly?: boolean; page?: number; pageSize?: number; searchName?: string; searchSku?: string }) =>
+    [...importKeys.all, "import-list", { inventoryId, ...params }] as const,
 };
 
 // --- Queries ---
@@ -172,10 +172,22 @@ export function useParameters(inventoryId: string, productId: string, enabled: b
   });
 }
 
-export function useImportList(inventoryId: string, limit?: string | number, uniqueOnly?: boolean, enabled: boolean = true): UseQueryResult<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number }, Error> {
+export function useImportList(
+  inventoryId: string,
+  params: {
+    limit?: string | number;
+    uniqueOnly?: boolean;
+    page?: number;
+    pageSize?: number;
+    searchName?: string;
+    searchSku?: string;
+  },
+  enabled: boolean = true
+): UseQueryResult<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }, Error> {
   return useQuery({
-    queryKey: importKeys.importList(inventoryId, limit, uniqueOnly),
-    queryFn: async (): Promise<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number }> => {
+    queryKey: importKeys.importList(inventoryId, params),
+    queryFn: async (): Promise<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }> => {
+      const { limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
       const res = await fetch("/api/integrations/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -184,10 +196,14 @@ export function useImportList(inventoryId: string, limit?: string | number, uniq
           inventoryId,
           limit: limit === "all" ? undefined : Number(limit),
           uniqueOnly,
+          page,
+          pageSize,
+          searchName,
+          searchSku,
         }),
       });
       if (!res.ok) throw new Error("Failed to load import list");
-      return (await res.json()) as { products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number };
+      return (await res.json()) as { products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number };
     },
     enabled: enabled && !!inventoryId,
   });

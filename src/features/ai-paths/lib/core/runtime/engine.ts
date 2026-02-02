@@ -1,4 +1,11 @@
-import { appendInputValue, cloneValue, hashRuntimeValue } from "../utils";
+import {
+  appendInputValue,
+  cloneValue,
+  hashRuntimeValue,
+  sanitizeEdges,
+  getPortDataTypes,
+  isValueCompatibleWithTypes,
+} from "../utils";
 import { CACHEABLE_NODE_TYPE_SET } from "../constants";
 import type {
   AiNode,
@@ -11,6 +18,7 @@ import type {
 import {
   NodeHandler,
   handleAiDescription,
+  handleAgent,
   handleBundle,
   handleCompare,
   handleConstant,
@@ -134,6 +142,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   template: handleTemplate,
   prompt: handlePrompt,
   model: handleModel,
+  agent: handleAgent,
   ai_description: handleAiDescription,
   description_updater: handleDescriptionUpdater,
   viewer: handleViewer,
@@ -164,6 +173,7 @@ export async function evaluateGraph({
   reportAiPathsError,
   toast,
 }: EvaluateGraphOptions): Promise<RuntimeState> {
+  const sanitizedEdges = sanitizeEdges(nodes, edges);
   const outputs: Record<string, RuntimePortValues> = seedOutputs
     ? Object.fromEntries(
         Object.entries(seedOutputs).map(([key, value]: [string, RuntimePortValues]) => [key, cloneValue(value)])
@@ -188,7 +198,7 @@ export async function evaluateGraph({
   const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
   const incomingEdgesByNode = new Map<string, Edge[]>();
   const outgoingEdgesByNode = new Map<string, Edge[]>();
-  edges.forEach((edge: Edge) => {
+  sanitizedEdges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
     const incoming = incomingEdgesByNode.get(edge.to) ?? [];
     incoming.push(edge);
@@ -271,7 +281,7 @@ export async function evaluateGraph({
 
   if (triggerNodeId) {
     const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge: Edge) => {
+    sanitizedEdges.forEach((edge: Edge) => {
       if (!edge.from || !edge.to) return;
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
@@ -326,7 +336,7 @@ export async function evaluateGraph({
       : null;
 
   if (triggerNodeId) {
-    const simulationEdge = edges.find(
+    const simulationEdge = sanitizedEdges.find(
       (edge: Edge) => edge.to === triggerNodeId && edge.toPort === "simulation"
     );
     if (simulationEdge) {
@@ -392,11 +402,13 @@ export async function evaluateGraph({
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const nextInputs: Record<string, RuntimePortValues> = {};
-    edges.forEach((edge: Edge) => {
+    sanitizedEdges.forEach((edge: Edge) => {
       const fromOutput = outputs[edge.from];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
       const value = fromOutput[edge.fromPort];
       if (value === undefined) return;
+      const expectedTypes = getPortDataTypes(edge.toPort);
+      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
       const existing = nextInputs[edge.to]?.[edge.toPort];
       const mergedValue = appendInputValue(existing, value);
       nextInputs[edge.to] = {
@@ -483,7 +495,7 @@ export async function evaluateGraph({
             node,
             nodeInputs,
             prevOutputs,
-            edges,
+            edges: sanitizedEdges,
             nodes,
             activePathId,
             triggerNodeId,

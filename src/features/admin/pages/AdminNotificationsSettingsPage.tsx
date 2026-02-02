@@ -2,13 +2,7 @@
 
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, useToastSettings, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
-import { useState } from "react";
-
-
-
-
-
-
+import React, { useState } from "react";
 
 const positionOptions = [
   { value: "top-right", label: "Top Right", desc: "Corner top right" },
@@ -28,11 +22,19 @@ const accentOptions = [
 type PositionType = (typeof positionOptions)[number]["value"];
 type AccentType = (typeof accentOptions)[number]["value"];
 
-export function AdminNotificationsSettingsPage(): React.ReactNode {
+export function AdminNotificationsSettingsPage(): React.JSX.Element {
   const { settings, updateSettings } = useToastSettings();
   const { toast } = useToast();
-  const [position, setPosition] = useState<PositionType>(settings.position);
-  const [accent, setAccent] = useState<AccentType>(settings.accent);
+  const [position, setPosition] = useState<PositionType>("top-right");
+  const [accent, setAccent] = useState<AccentType>("emerald");
+
+  const [prevSettings, setPrevSettings] = useState(settings);
+
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
+    setPosition(settings.position ?? "top-right");
+    setAccent(settings.accent ?? "emerald");
+  }
 
   const handleSave = (): void => {
     updateSettings({ position, accent });
@@ -56,6 +58,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
   };
 
   const preview = positionPreview[position];
+  const accentColor = accentOptions.find((option: { value: string; color: string }) => option.value === accent)?.color ?? "bg-emerald-500";
 
   return (
     <div className="container mx-auto py-10">
@@ -85,7 +88,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
                   <SelectContent>
-                    {positionOptions.map((option: (typeof positionOptions)[number]) => (
+                    {positionOptions.map((option: { value: string; label: string; desc: string }) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div>
                           <p className="font-medium">{option.label}</p>
@@ -110,7 +113,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
                     <SelectValue placeholder="Select accent color" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accentOptions.map((option: (typeof accentOptions)[number]) => (
+                    {accentOptions.map((option: { value: string; label: string; color: string }) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center gap-2">
                           <div className={`size-3 rounded-full ${option.color}`} />
@@ -129,10 +132,10 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
               <div className="pt-2">
                 <Label className="mb-3 block text-sm font-semibold">Available Colors</Label>
                 <div className="grid grid-cols-5 gap-2">
-                  {accentOptions.map((option: (typeof accentOptions)[number]) => (
+                  {accentOptions.map((option: { value: string; label: string; color: string }) => (
                     <Button
                       key={option.value}
-                      onClick={() => setAccent(option.value)}
+                      onClick={() => setAccent(option.value as AccentType)}
                       className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
                         accent === option.value
                           ? "ring-2 ring-offset-2 ring-offset-gray-950 ring-white"
@@ -196,7 +199,7 @@ export function AdminNotificationsSettingsPage(): React.ReactNode {
                 <p className="flex items-center justify-between text-xs text-gray-400">
                   <span>Accent:</span>
                   <div className="flex items-center gap-1">
-                    <div className={`size-2 rounded-full bg-${accent}-500`} />
+                    <div className={`size-2 rounded-full ${accentColor}`} />
                     <span className="font-mono text-gray-300 capitalize">{accent}</span>
                   </div>
                 </p>

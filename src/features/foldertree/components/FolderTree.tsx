@@ -413,7 +413,7 @@ function FolderTreeBase({
               : isAllNotesDragOver
               ? "bg-green-600 text-white"
               : "text-gray-300 hover:bg-muted/50"
-          }`}
+          } justify-start text-left`}
         >
           <Folder className="size-4" />
           <span>All Notes</span>
@@ -425,7 +425,7 @@ function FolderTreeBase({
               isFavoritesActive
                 ? "bg-yellow-500/20 text-yellow-200"
                 : "text-gray-300 hover:bg-muted/50"
-            }`}
+            } justify-start text-left`}
           >
             <Star className="size-4" />
             <span>Favorites</span>

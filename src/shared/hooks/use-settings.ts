@@ -20,7 +20,10 @@ export function useSettings(): UseQueryResult<SystemSetting[], Error> {
       if (!res.ok) throw new Error("Failed to fetch settings");
       return (await res.json()) as SystemSetting[];
     },
-    staleTime: 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
@@ -34,7 +37,10 @@ export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
     },
     select: (data: SystemSetting[]): Map<string, string> =>
       new Map(data.map((item) => [item.key, item.value])),
-    staleTime: 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 

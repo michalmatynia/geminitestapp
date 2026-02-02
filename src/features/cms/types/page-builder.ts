@@ -18,6 +18,7 @@ export interface SettingsField {
     | "radio"
     | "number"
     | "image"
+    | "asset3d"
     | "color-scheme"
     | "range"
     | "color"

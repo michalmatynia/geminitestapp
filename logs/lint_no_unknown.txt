@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 lint
+> eslint . --no-cache
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/pages/ImportsPage.tsx
+  381:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/pages/ImportsPage.tsx:381:5
+  379 |
+  380 |   useEffect(() => {
+> 381 |     setImportListEnabled(false);
+      |     ^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  382 |     setImportListPage(1);
+  383 |   }, [inventoryId]);
+  384 |  react-hooks/set-state-in-effect
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-sync.ts
+  5:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useAiConfigQueries.ts
+  24:3   error  Unsafe return of a value of type `Promise<any>`   @typescript-eslint/no-unsafe-return
+  34:3   error  Unsafe return of a value of type `Promise<any>`   @typescript-eslint/no-unsafe-return
+  51:17  error  Expected updatedConfig to have a type annotation  @typescript-eslint/typedef
+
+✖ 5 problems (4 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

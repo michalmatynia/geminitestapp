@@ -1,5 +1,7 @@
 import type { NodeDefinition } from "@/shared/types/ai-paths";
 import {
+  AGENT_INPUT_PORTS,
+  AGENT_OUTPUT_PORTS,
   BUNDLE_INPUT_PORTS,
   CONTEXT_INPUT_PORTS,
   DATABASE_INPUT_PORTS,
@@ -226,5 +228,12 @@ export const palette: NodeDefinition[] = [
     description: "Runs a selected model.",
     inputs: ["prompt", "images"],
     outputs: MODEL_OUTPUT_PORTS,
+  },
+  {
+    type: "agent",
+    title: "Reasoning Agent",
+    description: "Run a multi-step agent persona over the prompt.",
+    inputs: AGENT_INPUT_PORTS,
+    outputs: AGENT_OUTPUT_PORTS,
   },
 ];

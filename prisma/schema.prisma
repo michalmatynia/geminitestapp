@@ -31,6 +31,7 @@ model Product {
   length              Int?
   parameters          Json                        @default("[]")
   imageLinks          String[]                    @default([])
+  imageBase64s        String[]                    @default([])
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   images              ProductImage[]
@@ -498,6 +499,7 @@ model Slug {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   pages     PageSlug[]
+  domains   CmsDomainSlug[]
 }
 
 model CmsTheme {
@@ -826,6 +828,7 @@ model UserPreferences {
   productListCatalogFilter String? // catalog ID or "all"
   productListCurrencyCode  String? // currency code
   productListPageSize      Int?    // page size
+  productListThumbnailSource String? // "file", "link", "base64"
   // AI Paths preferences
   aiPathsActivePathId    String?
   aiPathsExpandedGroups  String[] @default([])

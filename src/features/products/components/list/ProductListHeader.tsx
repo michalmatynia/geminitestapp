@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import { memo } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
+import { memo, useState } from "react";
 import {
   PlusIcon,
   ChevronLeft,
@@ -80,6 +80,30 @@ export const ProductListHeader = memo(function ProductListHeader({
   setCatalogFilter,
   catalogs,
 }: ProductListHeaderProps) {
+  const { toast } = useToast();
+  const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);
+  const [isConvertingAll, setIsConvertingAll] = useState(false);
+
+  const handleConvertAllBase64 = async (): Promise<void> => {
+    setIsConvertingAll(true);
+    try {
+      const res = await fetch("/api/products/images/base64/all", { method: "POST" });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error || "Failed to convert images");
+      }
+      toast("Base64 images generated for all products.", { variant: "success" });
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "An error occurred during conversion",
+        { variant: "error" }
+      );
+    } finally {
+      setIsConvertingAll(false);
+      setShowBase64AllConfirm(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -236,7 +260,38 @@ export const ProductListHeader = memo(function ProductListHeader({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowBase64AllConfirm(true)}
+            disabled={isConvertingAll}
+          >
+            {isConvertingAll ? "Converting..." : "Convert all products"}
+          </Button>
+        </div>
       </div>
+
+      <AlertDialog open={showBase64AllConfirm} onOpenChange={setShowBase64AllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate Base64 images for all products?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate Base64 images for every product and may take time on large catalogs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleConvertAllBase64()}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Convert
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 });

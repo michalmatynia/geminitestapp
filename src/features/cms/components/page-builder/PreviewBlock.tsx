@@ -43,6 +43,7 @@ const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
   Announcement: 32,
   Button: 44,
   ImageElement: 140,
+  Model3D: 200,
   Image: 140,
   VideoEmbed: 160,
   Divider: 12,
@@ -1172,6 +1173,40 @@ export function PreviewSection({
               No image selected
             </div>
           ) : null}
+        </div>
+      )
+    );
+  }
+
+  // 3D element section
+  if (section.type === "Model3DElement") {
+    const assetId = (section.settings["assetId"] as string) || "";
+    const height = getSpacingValue(section.settings["height"]) || 360;
+    const hasAsset = assetId.trim().length > 0;
+    if (!hasAsset && !showEditorChrome) {
+      return null;
+    }
+
+    return (
+      wrapInspector(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={(e: React.KeyboardEvent): void => {
+            if (e.key === "Enter" || e.key === " ") handleSelect();
+          }}
+          style={getSectionStyles(section.settings, colorSchemes)}
+          className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        >
+          {renderSectionActions()}
+          {divider}
+          <div
+            className="flex items-center justify-center rounded border border-dashed border-border/40 bg-gray-900/40 text-xs text-gray-400"
+            style={{ height: `${Math.max(120, height)}px` }}
+          >
+            {hasAsset ? `3D model: ${assetId}` : "No 3D asset selected"}
+          </div>
         </div>
       )
     );
@@ -2334,6 +2369,36 @@ function PreviewBlockItem({
               No image selected
             </div>
           ) : null}
+        </div>
+      )
+    );
+  }
+
+  // 3D model block
+  if (block.type === "Model3D") {
+    const assetId = (block.settings["assetId"] as string) || "";
+    const height = getSpacingValue(block.settings["height"]) || 360;
+    const hasAsset = assetId.trim().length > 0;
+    return (
+      wrapBlock(
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleSelect}
+          onKeyDown={handleKeyDown}
+          className={buildContainerClass(
+            `w-full ${contained ? "max-w-full" : ""}`,
+            `rounded border ${
+              isSelected
+                ? `${selectedBorderClass} ${selectedSoftBg}`
+                : "border-border/30 bg-gray-800/20 hover:border-border/50"
+            }`
+          )}
+          style={{ height: `${Math.max(120, height)}px` }}
+        >
+          <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+            {hasAsset ? `3D model: ${assetId}` : "No 3D asset selected"}
+          </div>
         </div>
       )
     );

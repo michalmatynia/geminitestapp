@@ -15,7 +15,7 @@ import type {
   Language,
   CountryOption,
 } from "@/shared/types/internationalization";
-import { useSaveLanguageMutation } from "@/features/internationalization/hooks/useInternationalizationQueries";
+import { useSaveLanguageMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 interface LanguageModalProps {
   isOpen: boolean;

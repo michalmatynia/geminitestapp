@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Layers } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -15,12 +14,7 @@ import type { PageSummary } from "../../types";
 import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
-
-type UserPreferencesResponse = {
-  cmsLastPageId?: string | null;
-};
-
-const userPreferencesQueryKey = ["user-preferences"] as const;
+import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
 
 type PageSelectorBarProps = {
   variant?: "bar" | "toolbar";
@@ -34,36 +28,9 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const searchParams = useSearchParams();
   const pageIdParam = searchParams.get("pageId");
   const lastSavedPageIdRef = useRef<string | null>(null);
-  const queryClient = useQueryClient();
-  const preferencesQuery = useQuery({
-    queryKey: userPreferencesQueryKey,
-    queryFn: async (): Promise<UserPreferencesResponse> => {
-      const res = await fetch("/api/user/preferences");
-      if (!res.ok) {
-        throw new Error("Failed to load user preferences");
-      }
-      return (await res.json()) as UserPreferencesResponse;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-  const updatePreferencesMutation = useMutation({
-    mutationFn: async (payload: UserPreferencesResponse): Promise<void> => {
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to update user preferences");
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: userPreferencesQueryKey });
-    },
-    onError: (error: Error) => {
-      console.warn("[CMS] Failed to persist page selection.", error);
-    },
-  });
+  
+  const preferencesQuery = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const initialPageId = useMemo((): string => {
     if (pageIdParam && pagesQuery.data?.some((page: PageSummary) => page.id === pageIdParam)) {

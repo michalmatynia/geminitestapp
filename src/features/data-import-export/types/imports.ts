@@ -89,6 +89,9 @@ export type ImportListStats = {
   available?: number;
   existing: number;
   skuDuplicates?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
 };
 
 export type DebugWarehouses = {

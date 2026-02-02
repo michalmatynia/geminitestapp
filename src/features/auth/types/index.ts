@@ -1,4 +1,4 @@
-export type AuthDbProvider = "mongodb";
+// export type AuthDbProvider = "mongodb";
 
 export type AuthUserSummary = {
   id: string;
@@ -6,7 +6,8 @@ export type AuthUserSummary = {
   email: string | null;
   image: string | null;
   emailVerified: string | null;
-  provider: AuthDbProvider;
+  // provider: AuthDbProvider;
+  provider: string; // fallback
 };
 
 export type AuthUserAccess = {
@@ -17,13 +18,13 @@ export type AuthUserAccess = {
   lastLogin?: Date;
 };
 
-export type AuthSecurityProfile = {
-  id: string;
-  userId: string;
-  twoFactorEnabled: boolean;
-  securityQuestions: boolean;
-  lastPasswordChange: Date;
-};
+// export type AuthSecurityProfile = {
+//   id: string;
+//   userId: string;
+//   twoFactorEnabled: boolean;
+//   securityQuestions: boolean;
+//   lastPasswordChange: Date;
+// };
 
 export type AuthUserPageSettings = {
   defaultPage: string;

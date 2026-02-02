@@ -75,6 +75,7 @@ export type UserPreferences = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  productListThumbnailSource?: "file" | "link" | "base64" | null;
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[] | null;
   aiPathsPaletteCollapsed?: boolean | null;

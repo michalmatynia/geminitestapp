@@ -171,8 +171,9 @@ export function useStreamValidation(
   const startValidation = (
     data: Record<string, unknown>,
     validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>
-  ): void => {
+  ): Promise<void> => {
     validationStreamer.streamValidation(id, data, validator, options);
+    return Promise.resolve();
   };
 
   const cancelValidation = (): void => {

@@ -47,7 +47,7 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
   }, []);
 
   const validateField = useCallback(async (field: string, value: unknown): Promise<void> => {
-    const partialData = { [field]: value };
+    const partialData: Record<string, unknown> = { [field]: value };
     const result = await validateProductCreate(partialData);
     
     setValidationState((prev: ValidationState) => ({

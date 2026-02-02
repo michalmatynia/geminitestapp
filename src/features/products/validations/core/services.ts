@@ -6,7 +6,8 @@ import {
   ValidationResult,
   FieldValidationResult,
   ValidationMetadata,
-  ValidationError
+  ValidationError,
+  ValidationMetric
 } from './interfaces';
 import { handleValidationError } from './errors';
 
@@ -22,7 +23,7 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
   constructor(protected dependencies: ValidationServiceDependencies) {}
 
   async validate(data: unknown): Promise<ValidationResult<T>> {
-    const startTime = performance.now();
+    const startTime: number = performance.now();
     const metadata: ValidationMetadata = {
       validationTime: 0,
       rulesApplied: [],
@@ -32,8 +33,8 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
 
     try {
       // Check cache first
-      const cacheKey = this.getCacheKey(data);
-      const cached = this.dependencies.cache.get<ValidationResult<T>>(cacheKey);
+      const cacheKey: string = this.getCacheKey(data);
+      const cached: ValidationResult<T> | null = this.dependencies.cache.get<ValidationResult<T>>(cacheKey);
       
       if (cached) {
         metadata.cacheHit = true;
@@ -42,7 +43,7 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
       }
 
       // Perform validation
-      const result = await this.performValidation(data, metadata);
+      const result: ValidationResult<T> = await this.performValidation(data, metadata);
       
       // Cache successful results
       if (result.success) {
@@ -50,18 +51,19 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
       }
 
       // Record metrics
-      this.dependencies.metrics.record({
+      const metric: ValidationMetric = {
         name: this.getValidationName(),
         duration: metadata.validationTime,
         success: result.success,
         errorCount: result.success ? 0 : result.errors.length
-      });
+      };
+      this.dependencies.metrics.record(metric);
 
       return result;
 
-    } catch (error) {
+    } catch (error: unknown) {
       metadata.validationTime = performance.now() - startTime;
-      const errors = handleValidationError(error);
+      const errors: ValidationError[] = handleValidationError(error);
       
       return {
         success: false,
@@ -72,8 +74,8 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
   }
 
   async validateField(field: string, value: unknown): Promise<FieldValidationResult> {
-    const partialData = { [field]: value };
-    const result = await this.validate(partialData);
+    const partialData: Record<string, unknown> = { [field]: value };
+    const result: ValidationResult<T> = await this.validate(partialData);
     
     return {
       field,

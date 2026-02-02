@@ -1,6 +1,5 @@
 "use client";
 
-import { useToast } from "@/shared/ui";
 import type { Language } from "@/shared/types/internationalization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -172,7 +171,6 @@ export function ProductFormProvider({
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
@@ -340,9 +338,9 @@ export function ProductFormProvider({
           };
           let message = errorData.error || "Failed to update product";
           if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-            const detailMessages = (errorData.details as Array<{ field?: unknown; message?: unknown }>)
+            const detailMessages = errorData.details
               .slice(0, 3)
-              .map((d) => {
+              .map((d: { field?: unknown; message?: unknown }) => {
                 const field = typeof d.field === "string" && d.field ? d.field : "field";
                 const msg = typeof d.message === "string" && d.message ? d.message : "invalid";
                 return `${field}: ${msg}`;
@@ -356,10 +354,6 @@ export function ProductFormProvider({
       } else {
         savedProduct = (await createMutation.mutateAsync(formData)) as ProductWithImages;
       }
-
-      toast(product ? "Product updated." : "Product created.", {
-        variant: "success",
-      });
 
       // Small delay to ensure DB consistency before refetch
       await delay(500);

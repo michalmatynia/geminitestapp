@@ -194,30 +194,28 @@ export default function SystemLogsPage(): React.JSX.Element {
                 >
                   Client Logging Settings
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    await logsQuery.refetch();
-                    await metricsQuery.refetch();
-                  }}
-                  disabled={logsQuery.isFetching || metricsQuery.isFetching}
-                >
-                  <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(): void => {
+                                      void logsQuery.refetch();
+                                      void metricsQuery.refetch();
+                                    }}
+                                    disabled={logsQuery.isFetching || metricsQuery.isFetching}
+                                  >                  <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
                   Refresh
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  disabled={logs.length === 0}
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(logsJson).then(() => {
-                      toast("Copied to clipboard", { variant: "success" });
-                    });
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    disabled={logs.length === 0}
+                                    onClick={(): void => {
+                                      void navigator.clipboard.writeText(logsJson).then(() => {
+                                        toast("Copied to clipboard", { variant: "success" });
+                                      });
+                                    }}
+                                  >                  <Copy className="h-4 w-4" />
                   Copy
                 </Button>
                 <Button
@@ -271,13 +269,12 @@ export default function SystemLogsPage(): React.JSX.Element {
                       ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
                       : "—"}
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => { await mongoDiagnosticsQuery.refetch(); }}
-                    disabled={mongoDiagnosticsQuery.isFetching}
-                  >
-                    Refresh
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(): void => { void mongoDiagnosticsQuery.refetch(); }}
+                                        disabled={mongoDiagnosticsQuery.isFetching}
+                                      >                    Refresh
                   </Button>
                   <Button
                     variant="outline"

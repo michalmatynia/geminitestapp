@@ -1,4 +1,5 @@
 import { ValidationError } from './interfaces';
+import type { ZodError, ZodIssue } from "zod";
 
 // Base error classes
 export abstract class ValidationErrorBase extends Error {
@@ -64,13 +65,13 @@ export class ZodErrorHandler implements IErrorHandler {
   }
 
   handle(error: Error): ValidationError[] {
-    const zodError = error as { errors?: Array<{ path?: string[]; message: string; code: string; received?: unknown }> };
-    return zodError.errors?.map((err: { path?: string[]; message: string; code: string; received?: unknown }) => ({
+    const zodError = error as ZodError;
+    return zodError.issues.map((err: ZodIssue) => ({
       field: err.path?.join('.') || 'root',
       message: err.message,
       code: err.code,
       severity: this.getSeverity(err.code),
-      context: { path: err.path, received: err.received }
+      context: { path: err.path }
     })) || [];
   }
 

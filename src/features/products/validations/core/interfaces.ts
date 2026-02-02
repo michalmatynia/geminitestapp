@@ -54,6 +54,7 @@ export type ValidationMetadata = {
   rulesApplied: string[];
   cacheHit: boolean;
   source: 'schema' | 'config' | 'external' | 'rule' | 'batch';
+  metadata?: Record<string, unknown>;
 };
 
 export type ValidationMetric = {
@@ -61,6 +62,7 @@ export type ValidationMetric = {
   duration: number;
   success: boolean;
   errorCount: number;
+  context?: Record<string, unknown>;
 };
 
 export type ValidationStats = {

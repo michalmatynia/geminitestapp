@@ -97,25 +97,31 @@ class ValidationMetrics {
 
 export const validationMetrics = new ValidationMetrics();
 
-export function withMetrics<T extends (...args: unknown[]) => Promise<unknown>>(
-  fn: T,
+export function withMetrics<Args extends unknown[], R>(
+  fn: (...args: Args) => Promise<R>,
   name: string
-): T {
-  return (async (...args: Parameters<T>): Promise<unknown> => {
+): (...args: Args) => Promise<R> {
+  return (async (...args: Args): Promise<R> => {
     const start = performance.now();
     let success = false;
     let errorCount = 0;
     const fieldErrors: Record<string, number> = {};
 
     try {
-      const result = (await fn(...args)) as { success: boolean; errors?: Array<{ field: string }> };
-      success = true;
+      const result = await fn(...args);
+      const resultAny = result as unknown as {
+        success?: unknown;
+        errors?: unknown;
+      };
+      success = resultAny?.success === true;
       
       // If result has validation errors, count them
-      if (result && !result.success && result.errors) {
-        errorCount = result.errors.length;
-        result.errors.forEach((error: { field: string }) => {
-          fieldErrors[error.field] = (fieldErrors[error.field] || 0) + 1;
+      if (resultAny && resultAny.success === false && Array.isArray(resultAny.errors)) {
+        const errs = resultAny.errors as Array<{ field?: unknown }>;
+        errorCount = errs.length;
+        errs.forEach((error: { field?: unknown }) => {
+          const field = typeof error.field === "string" ? error.field : "unknown";
+          fieldErrors[field] = (fieldErrors[field] || 0) + 1;
         });
       }
       
@@ -134,7 +140,7 @@ export function withMetrics<T extends (...args: unknown[]) => Promise<unknown>>(
         fieldErrors
       });
     }
-  }) as T;
+  });
 }
 
 // Health check for validation system

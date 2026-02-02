@@ -71,9 +71,8 @@ export class ValidationMetrics implements IValidationMetrics {
 
   record(metric: ValidationMetric): void {
     this.metrics.push({
-      ...metric,
-      timestamp: Date.now()
-    } as ValidationMetric & { timestamp: number });
+      ...metric
+    });
 
     // Keep only recent metrics
     if (this.metrics.length > this.maxMetrics) {
@@ -90,8 +89,8 @@ export class ValidationMetrics implements IValidationMetrics {
       };
     }
 
-    const successful = this.metrics.filter((m: ValidationMetric) => m.success).length;
-    const totalDuration = this.metrics.reduce((sum: number, m: ValidationMetric) => sum + m.duration, 0);
+    const successful: number = this.metrics.filter((m: ValidationMetric) => m.success).length;
+    const totalDuration: number = this.metrics.reduce((sum: number, m: ValidationMetric) => sum + m.duration, 0);
 
     return {
       totalValidations: this.metrics.length,
@@ -131,13 +130,14 @@ export class ValidationRuleEngine implements IValidationRuleEngine {
         ruleErrors.forEach((error: ValidationError) => {
           if (error.severity === 'low') {
             warnings.push(error);
-          } else {
+          }
+          else {
             errors.push(error);
           }
         });
 
         rulesExecuted.push(rule.id);
-      } catch (error) {
+      } catch (error: unknown) {
         // Rule execution failed - add as warning
         warnings.push({
           field: 'rule',

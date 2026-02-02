@@ -27,12 +27,12 @@ export class RateLimiter {
     };
   }
 
-  async checkLimit(req: NextRequest): Promise<{
+  checkLimit(req: NextRequest): {
     allowed: boolean;
     remaining: number;
     resetTime: number;
     totalHits: number;
-  }> {
+  } {
     const key = this.config.keyGenerator(req);
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
@@ -163,13 +163,8 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
   status?: number;
   message?: string;
 }> {
-  return async (req: NextRequest): Promise<{
-    allowed: boolean;
-    headers: Record<string, string>;
-    status?: number;
-    message?: string;
-  }> => {
-    const result = await limiter.checkLimit(req);
+  return async (req: NextRequest) => {
+    const result = limiter.checkLimit(req);
     const config = (limiter as unknown as { config: Required<RateLimitConfig> }).config;
     
     const headers = {

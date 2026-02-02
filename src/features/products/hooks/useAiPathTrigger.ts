@@ -175,6 +175,7 @@ export function useAiPathTrigger(): {
       const prefs = (await prefsRes.json()) as {
         aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
         aiPathsPathIndex?: Array<{ id?: string }> | null;
+        aiPathsActivePathId?: string | null;
       };
       let configs: Record<string, PathConfig> = {};
       let settingsPathOrder: string[] = [];
@@ -271,7 +272,16 @@ export function useAiPathTrigger(): {
             )
           : false
       );
-      const selectedConfig: PathConfig | undefined = triggerCandidates[0] ?? orderedConfigs[0];
+      const activePathId =
+        typeof prefs.aiPathsActivePathId === "string" &&
+        prefs.aiPathsActivePathId.trim().length > 0
+          ? prefs.aiPathsActivePathId.trim()
+          : null;
+      const activeTriggerCandidate = activePathId
+        ? triggerCandidates.find((config: PathConfig): boolean => config.id === activePathId)
+        : undefined;
+      const selectedConfig: PathConfig | undefined =
+        activeTriggerCandidate ?? triggerCandidates[0] ?? orderedConfigs[0];
       if (!selectedConfig) {
         toast(
           "No AI Path found. Configure a path with the Path Generate Description trigger.",

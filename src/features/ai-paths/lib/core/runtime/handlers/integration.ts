@@ -843,6 +843,7 @@ export const handleDatabase: NodeHandler = async ({
         updates: Record<string, unknown>;
         primaryTarget: string;
         missingSourcePorts: string[];
+        unresolvedSourcePorts: string[];
       } => {
         const fallbackTarget: string =
           dbConfig.mappings?.[0]?.targetPath ?? "content_en";
@@ -866,8 +867,15 @@ export const handleDatabase: NodeHandler = async ({
           value === null ||
           (typeof value === "string" && (value).trim() === "") ||
           (Array.isArray(value) && (value as unknown[]).length === 0);
+        const isEffectivelyMissing = (value: unknown): boolean =>
+          isEmptyValue(value) ||
+          (typeof value === "object" &&
+            !Array.isArray(value) &&
+            value !== null &&
+            Object.keys(value as Record<string, unknown>).length === 0);
         const updates: Record<string, unknown> = {};
         const requiredSourcePorts: Set<string> = new Set<string>();
+        const unresolvedSourcePorts: Set<string> = new Set<string>();
         mappings.forEach((mapping: UpdaterMapping): void => {
           const sourcePort: string = mapping.sourcePort;
           if (!sourcePort) return;
@@ -879,6 +887,9 @@ export const handleDatabase: NodeHandler = async ({
             const resolved: unknown = getValueAtMappingPath(value, mapping.sourcePath);
             if (resolved !== undefined) {
               value = resolved;
+            } else if (sourcePort === "result") {
+              unresolvedSourcePorts.add(sourcePort);
+              return;
             }
           }
           if (
@@ -892,6 +903,10 @@ export const handleDatabase: NodeHandler = async ({
               .description;
             const contentValue: unknown = (value as Record<string, unknown>).content_en;
             value = resultValue ?? descriptionValue ?? contentValue ?? value;
+          }
+          if (sourcePort === "result" && isEffectivelyMissing(value)) {
+            unresolvedSourcePorts.add(sourcePort);
+            return;
           }
           if (typeof value === "string" && trimStrings) {
             value = (value).trim();
@@ -911,10 +926,16 @@ export const handleDatabase: NodeHandler = async ({
           primaryTarget:
             mappings.find((m: UpdaterMapping): boolean => !!m.targetPath)?.targetPath ?? fallbackTarget,
           missingSourcePorts,
+          unresolvedSourcePorts: Array.from(unresolvedSourcePorts),
         };
       };
 
-      const { updates, primaryTarget, missingSourcePorts } = buildUpdatesFromMappings();
+      const {
+        updates,
+        primaryTarget,
+        missingSourcePorts,
+        unresolvedSourcePorts,
+      } = buildUpdatesFromMappings();
       const extractMissingTemplatePorts = (template: string): string[] => {
         const missing: Set<string> = new Set<string>();
         const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([^\]]+)\s*\]/g;
@@ -939,12 +960,13 @@ export const handleDatabase: NodeHandler = async ({
       const missingTemplatePorts: string[] = updateTemplate
         ? extractMissingTemplatePorts(updateTemplate)
         : [];
-      if (
-        !updateTemplate &&
-        Object.keys(updates).length === 0 &&
-        missingSourcePorts.length > 0
-      ) {
-        return prevOutputs;
+      if (!updateTemplate) {
+        if (missingSourcePorts.length > 0 || unresolvedSourcePorts.length > 0) {
+          return prevOutputs;
+        }
+        if (Object.keys(updates).length === 0) {
+          return prevOutputs;
+        }
       }
       if (missingTemplatePorts.length > 0) {
         return prevOutputs;
@@ -1315,8 +1337,15 @@ export const handleDatabase: NodeHandler = async ({
       value === null ||
       (typeof value === "string" && (value).trim() === "") ||
       (Array.isArray(value) && (value as unknown[]).length === 0);
+    const isEffectivelyMissing = (value: unknown): boolean =>
+      isEmptyValue(value) ||
+      (typeof value === "object" &&
+        !Array.isArray(value) &&
+        value !== null &&
+        Object.keys(value as Record<string, unknown>).length === 0);
     const updates: Record<string, unknown> = {};
     const requiredSourcePorts: Set<string> = new Set<string>();
+    const unresolvedSourcePorts: Set<string> = new Set<string>();
     mappings.forEach((mapping: UpdaterMapping) => {
       const sourcePort = mapping.sourcePort;
       if (!sourcePort) return;
@@ -1328,6 +1357,9 @@ export const handleDatabase: NodeHandler = async ({
         const resolved = getValueAtMappingPath(value, mapping.sourcePath);
         if (resolved !== undefined) {
           value = resolved;
+        } else if (sourcePort === "result") {
+          unresolvedSourcePorts.add(sourcePort);
+          return;
         }
       }
       if (
@@ -1340,6 +1372,10 @@ export const handleDatabase: NodeHandler = async ({
         const descriptionValue: unknown = (value as Record<string, unknown>).description;
         const contentValue: unknown = (value as Record<string, unknown>).content_en;
         value = resultValue ?? descriptionValue ?? contentValue ?? value;
+      }
+      if (sourcePort === "result" && isEffectivelyMissing(value)) {
+        unresolvedSourcePorts.add(sourcePort);
+        return;
       }
       if (typeof value === "string" && trimStrings) {
         value = (value).trim();
@@ -1355,7 +1391,7 @@ export const handleDatabase: NodeHandler = async ({
       (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
     );
     const hasUpdates = Object.keys(updates).length > 0;
-    if (!hasUpdates && missingSourcePorts.length > 0) {
+    if (missingSourcePorts.length > 0 || unresolvedSourcePorts.size > 0) {
       return prevOutputs;
     }
     if (!hasUpdates) {

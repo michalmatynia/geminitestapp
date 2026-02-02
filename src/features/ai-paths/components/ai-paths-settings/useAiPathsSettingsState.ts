@@ -659,6 +659,45 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     }
   };
 
+  const handleClearConnectorData = async (): Promise<void> => {
+    if (!activePathId) return;
+    const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} };
+    const updatedAt = new Date().toISOString();
+    const config: PathConfig = {
+      id: activePathId,
+      version: STORAGE_VERSION,
+      name: pathName,
+      description: pathDescription,
+      trigger: activeTrigger,
+      nodes,
+      edges,
+      updatedAt,
+      parserSamples,
+      updaterSamples,
+      runtimeState: nextRuntimeState,
+      lastRunAt,
+    };
+    setRuntimeState(nextRuntimeState);
+    const nextConfigs = { ...pathConfigs, [activePathId]: config };
+    setPathConfigs(nextConfigs);
+    try {
+      const safeConfigs = serializePathConfigs(nextConfigs);
+      await persistPreferences({
+        aiPathsPathIndex: paths,
+        aiPathsPathConfigs: safeConfigs,
+      });
+      await persistPathSettings(paths, activePathId, config);
+      toast("Connector data cleared for current path.", { variant: "success" });
+    } catch (error) {
+      reportAiPathsError(
+        error,
+        { action: "clearConnectorData", pathId: activePathId },
+        "Failed to clear connector data:"
+      );
+      toast("Failed to clear connector data.", { variant: "error" });
+    }
+  };
+
   const updateSelectedNode = (patch: Partial<AiNode>): void => {
     if (!selectedNodeId) return;
     const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
@@ -1011,6 +1050,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleDeleteSelectedNode,
     handleRemoveEdge,
     handleClearWires,
+    handleClearConnectorData,
     handleDisconnectPort,
     handleReconnectInput,
     handleSelectNode,

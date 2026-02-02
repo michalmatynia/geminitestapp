@@ -6,7 +6,6 @@ import type { PathMeta } from "@/features/ai-paths/lib";
 type PathsTabPanelProps = {
   paths: PathMeta[];
   onCreatePath: () => void;
-  onCreateAiDescriptionPath: () => void;
   onSaveList: () => void;
   onEditPath: (id: string) => void;
   onDeletePath: (id: string) => void;
@@ -15,7 +14,6 @@ type PathsTabPanelProps = {
 export function PathsTabPanel({
   paths,
   onCreatePath,
-  onCreateAiDescriptionPath,
   onSaveList,
   onEditPath,
   onDeletePath,
@@ -33,13 +31,6 @@ export function PathsTabPanel({
             onClick={onCreatePath}
           >
             New Path
-          </Button>
-          <Button
-            className="rounded-md border border-indigo-500/40 text-sm text-indigo-200 hover:bg-indigo-500/10"
-            type="button"
-            onClick={onCreateAiDescriptionPath}
-          >
-            Create AI Description Path
           </Button>
           <Button
             className="rounded-md border text-sm text-white hover:bg-muted/60"

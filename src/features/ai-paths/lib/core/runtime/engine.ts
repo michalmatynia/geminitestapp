@@ -1,6 +1,7 @@
 import {
   appendInputValue,
   cloneValue,
+  coerceInput,
   hashRuntimeValue,
   sanitizeEdges,
   getPortDataTypes,
@@ -369,6 +370,110 @@ export async function evaluateGraph({
         : null;
   const fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
 
+  const deriveDatabaseInputs = (
+    rawInputs: RuntimePortValues
+  ): RuntimePortValues => {
+    const next: RuntimePortValues = { ...rawInputs };
+    const pickString = (value: unknown): string | undefined => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed ? trimmed : undefined;
+      }
+      if (typeof value === "number") {
+        return String(value);
+      }
+      return undefined;
+    };
+    const applyRecord = (value: unknown): void => {
+      if (!value || typeof value !== "object") return;
+      const record = value as Record<string, unknown>;
+      if (!pickString(next.entityId)) {
+        const resolvedEntityId =
+          pickString(record.entityId) ??
+          pickString(record.productId) ??
+          pickString(record.id) ??
+          pickString(record._id);
+        if (resolvedEntityId) {
+          next.entityId = resolvedEntityId;
+        }
+      }
+      if (!pickString(next.productId)) {
+        const resolvedProductId =
+          pickString(record.productId) ??
+          pickString(record.entityId) ??
+          pickString(record.id) ??
+          pickString(record._id);
+        if (resolvedProductId) {
+          next.productId = resolvedProductId;
+        }
+      }
+      if (!pickString(next.entityType)) {
+        const resolvedEntityType = pickString(record.entityType);
+        if (resolvedEntityType) {
+          next.entityType = resolvedEntityType;
+        }
+      }
+    };
+
+    applyRecord(coerceInput(next.context));
+    applyRecord(coerceInput(next.meta));
+    applyRecord(coerceInput(next.bundle));
+
+    if (!pickString(next.entityId)) {
+      next.entityId =
+        pickString(triggerContext?.entityId) ??
+        pickString(triggerContext?.productId) ??
+        fallbackEntityId ??
+        undefined;
+    }
+    if (!pickString(next.productId)) {
+      next.productId =
+        pickString(triggerContext?.productId) ??
+        pickString(triggerContext?.entityId) ??
+        pickString(next.entityId) ??
+        undefined;
+    }
+    if (!pickString(next.entityType)) {
+      next.entityType =
+        pickString(triggerContext?.entityType) ??
+        simulationEntityType ??
+        undefined;
+    }
+
+    if (!pickString(next.entityId) || !pickString(next.productId) || !pickString(next.entityType)) {
+      for (const [nodeId, output] of Object.entries(outputs)) {
+        if (!output || typeof output !== "object") continue;
+        const nodeType = nodeById.get(nodeId)?.type;
+        if (nodeType !== "trigger" && nodeType !== "simulation" && nodeType !== "context") {
+          continue;
+        }
+        applyRecord(output as Record<string, unknown>);
+        if (pickString(next.entityId) && pickString(next.productId) && pickString(next.entityType)) {
+          break;
+        }
+      }
+    }
+
+    const resolvedEntityId = pickString(next.entityId);
+    const resolvedEntityType = pickString(next.entityType);
+
+    if (!resolvedEntityId && resolvedEntity && typeof resolvedEntity === "object") {
+      const fallbackId =
+        pickString(resolvedEntity.id) ??
+        pickString(resolvedEntity._id);
+      if (fallbackId) {
+        next.entityId = fallbackId;
+      }
+    }
+    if (!pickString(next.productId) && pickString(next.entityId)) {
+      next.productId = pickString(next.entityId);
+    }
+    if (!resolvedEntityType && simulationEntityType) {
+      next.entityType = simulationEntityType;
+    }
+    return next;
+  };
+
   // Pre-calculate simulation nodes
   for (const node of nodes) {
     if (!isActiveNode(node)) {
@@ -445,7 +550,11 @@ export async function evaluateGraph({
       }
       if (node.type === "simulation") continue; // Already handled
 
-      const nodeInputs = nextInputs[node.id] ?? {};
+      let nodeInputs = nextInputs[node.id] ?? {};
+      if (node.type === "database") {
+        nodeInputs = deriveDatabaseInputs(nodeInputs);
+        nextInputs[node.id] = nodeInputs;
+      }
       const prevOutputs = outputs[node.id] ?? {};
       let nextOutputs: RuntimePortValues = prevOutputs;
 

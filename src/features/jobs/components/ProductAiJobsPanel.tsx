@@ -215,6 +215,21 @@ export default function ProductAiJobsPanel({
     [isMounted],
   );
 
+  if (!isMounted) {
+    return (
+      <div className="container mx-auto py-10">
+        <SectionHeader
+          title={title}
+          description={description}
+          className="mb-6"
+        />
+        <SectionPanel className="p-6">
+          <div className="text-sm text-gray-400">Loading jobs panel...</div>
+        </SectionPanel>
+      </div>
+    );
+  }
+
   const aiContent = (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">

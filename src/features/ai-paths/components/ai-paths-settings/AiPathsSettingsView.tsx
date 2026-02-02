@@ -43,7 +43,6 @@ export function AiPathsSettingsView({
     autoSaveClasses,
     saving,
     handleCreatePath,
-    handleCreateAiDescriptionPath,
     handleSave,
     handleReset,
     handleDeletePath,
@@ -89,6 +88,7 @@ export function AiPathsSettingsView({
     handleDeleteSelectedNode,
     handleRemoveEdge,
     handleClearWires,
+    handleClearConnectorData,
     handleDisconnectPort,
     handleReconnectInput,
     handleSelectNode,
@@ -198,13 +198,6 @@ export function AiPathsSettingsView({
                       New Path
                     </Button>
                     <Button
-                      className="rounded-md border border-indigo-500/40 text-sm text-indigo-200 hover:bg-indigo-500/10"
-                      type="button"
-                      onClick={handleCreateAiDescriptionPath}
-                    >
-                      Create AI Description Path
-                    </Button>
-                    <Button
                       className="rounded-md border text-sm text-white hover:bg-muted/60"
                       onClick={() => { void handleSave(); }}
                       disabled={saving}
@@ -217,6 +210,16 @@ export function AiPathsSettingsView({
                       type="button"
                     >
                       Reset to Defaults
+                    </Button>
+                    <Button
+                      className="rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10"
+                      onClick={() => {
+                        void handleClearConnectorData();
+                      }}
+                      type="button"
+                      disabled={!activePathId}
+                    >
+                      Clear Connector Data
                     </Button>
                     <Button
                       className="rounded-md border border-border text-sm text-rose-200 hover:bg-rose-500/10"
@@ -405,7 +408,6 @@ export function AiPathsSettingsView({
         <PathsTabPanel
           paths={paths}
           onCreatePath={() => { void handleCreatePath(); }}
-          onCreateAiDescriptionPath={() => { void handleCreateAiDescriptionPath(); }}
           onSaveList={() => { void savePathIndex(paths); }}
           onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);

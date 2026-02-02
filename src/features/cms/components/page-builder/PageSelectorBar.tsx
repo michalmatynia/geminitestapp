@@ -15,6 +15,7 @@ import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 type PageSelectorBarProps = {
   variant?: "bar" | "toolbar";
@@ -30,6 +31,7 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const lastSavedPageIdRef = useRef<string | null>(null);
   
   const preferencesQuery = useUserPreferences();
+  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const initialPageId = useMemo((): string => {
@@ -39,12 +41,12 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
     if (state.currentPage?.id) {
       return state.currentPage.id;
     }
-    const preferredId = preferencesQuery.data?.cmsLastPageId ?? null;
+    const preferredId = userPreferences?.cmsLastPageId ?? null;
     if (preferredId && pagesQuery.data?.some((page: PageSummary) => page.id === preferredId)) {
       return preferredId;
     }
     return "";
-  }, [pageIdParam, pagesQuery.data, state.currentPage?.id, preferencesQuery.data?.cmsLastPageId]);
+  }, [pageIdParam, pagesQuery.data, state.currentPage?.id, userPreferences?.cmsLastPageId]);
 
   const [userPageId, setUserPageId] = useState<string | null>(null);
   const selectedPageId = useMemo((): string => {
@@ -71,14 +73,14 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
 
   useEffect((): void => {
     if (!selectedPageId) return;
-    if (selectedPageId === preferencesQuery.data?.cmsLastPageId) {
+    if (selectedPageId === userPreferences?.cmsLastPageId) {
       lastSavedPageIdRef.current = selectedPageId;
       return;
     }
     if (lastSavedPageIdRef.current === selectedPageId) return;
     lastSavedPageIdRef.current = selectedPageId;
     updatePreferencesMutation.mutate({ cmsLastPageId: selectedPageId });
-  }, [selectedPageId, preferencesQuery.data?.cmsLastPageId, updatePreferencesMutation]);
+  }, [selectedPageId, userPreferences?.cmsLastPageId, updatePreferencesMutation]);
 
   const handlePageChange = useCallback((value: string): void => {
     setUserPageId((prev: string | null) => (prev === value ? prev : value));

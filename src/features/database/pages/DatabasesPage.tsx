@@ -198,8 +198,8 @@ export default function DatabasesPage(): React.JSX.Element {
 
       <ConfirmDialog
         open={!!backupToDelete}
-        onOpenChange={(open) => !open && setBackupToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setBackupToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Delete Backup"
         description={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
         confirmText="Delete"

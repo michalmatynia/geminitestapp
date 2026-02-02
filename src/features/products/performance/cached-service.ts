@@ -20,29 +20,29 @@ export class CachedProductService {
 
   // Get products list with filtering and caching
   static getProducts = withQueryCache(
-    async (_filters: any = {}) => {
+    async (_filters: Record<string, unknown> = {}) => {
       // const products = await db.product.findMany({ where: filters });
       // return products;
       return []; // Placeholder
     },
     {
-      keyGenerator: (filters: any) => `products:list:${JSON.stringify(filters)}`,
+      keyGenerator: (filters: Record<string, unknown>) => `products:list:${JSON.stringify(filters)}`,
       ttl: 180000, // 3 minutes
-      tags: (filters: any) => ProductCacheHelpers.getTags.productList(filters)
+      tags: (filters: Record<string, unknown>) => ProductCacheHelpers.getTags.productList(filters)
     }
   );
 
   // Get product count with caching
   static getProductCount = withQueryCache(
-    async (_filters: any = {}) => {
+    async (_filters: Record<string, unknown> = {}) => {
       // const count = await db.product.count({ where: filters });
       // return count;
       return 0; // Placeholder
     },
     {
-      keyGenerator: (filters: any) => `products:count:${JSON.stringify(filters)}`,
+      keyGenerator: (filters: Record<string, unknown>) => `products:count:${JSON.stringify(filters)}`,
       ttl: 300000, // 5 minutes
-      tags: (filters: any) => ['products:count', ...ProductCacheHelpers.getTags.productList(filters)]
+      tags: (filters: Record<string, unknown>) => ['products:count', ...ProductCacheHelpers.getTags.productList(filters)]
     }
   );
 
@@ -85,7 +85,7 @@ export class CachedProductService {
 
   // Search products with caching
   static searchProducts = withQueryCache(
-    async (query: string, filters: any = {}) => {
+    async (query: string, filters: Record<string, unknown> = {}) => {
       // const products = await db.product.findMany({
       //   where: {
       //     OR: [
@@ -99,9 +99,9 @@ export class CachedProductService {
       return []; // Placeholder
     },
     {
-      keyGenerator: (query: string, filters: any) => `products:search:${query}:${JSON.stringify(filters)}`,
+      keyGenerator: (query: string, filters: Record<string, unknown>) => `products:search:${query}:${JSON.stringify(filters)}`,
       ttl: 120000, // 2 minutes (shorter for search results)
-      tags: (query: string, filters: any) => ['products:search', 'products:list']
+      tags: (query: string, filters: Record<string, unknown>) => ['products:search', 'products:list']
     }
   );
 
@@ -120,7 +120,7 @@ export class CachedProductService {
 }
 
 // Middleware for automatic cache invalidation
-export function withCacheInvalidation<T extends (...args: any[]) => Promise<any>>(
+export function withCacheInvalidation<T extends (...args: any[]) => Promise<unknown>>(
   mutationFn: T,
   invalidationStrategy: {
     tags?: (...args: Parameters<T>) => string[];
@@ -140,7 +140,7 @@ export function withCacheInvalidation<T extends (...args: any[]) => Promise<any>
     // Invalidate by patterns
     if (invalidationStrategy.patterns) {
       const patterns = invalidationStrategy.patterns(...args);
-      patterns.forEach(pattern => {
+      patterns.forEach(_pattern => {
         // queryCache.invalidateByPattern(pattern);
       });
     }
@@ -158,7 +158,7 @@ export function withCacheInvalidation<T extends (...args: any[]) => Promise<any>
 export class CachedProductMutations {
   
   static createProduct = withCacheInvalidation(
-    async (data: any) => {
+    async (_data: Record<string, unknown>) => {
       // const product = await db.product.create({ data });
       // return product;
       return null; // Placeholder
@@ -170,7 +170,7 @@ export class CachedProductMutations {
   );
 
   static updateProduct = withCacheInvalidation(
-    async (id: string, data: any) => {
+    async (id: string, _data: Record<string, unknown>) => {
       // const product = await db.product.update({ where: { id }, data });
       // return product;
       return null; // Placeholder

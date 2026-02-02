@@ -13,9 +13,9 @@ type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 export type MediaReplaceTarget = {
   kind: "section" | "block";
   sectionId: string;
-  blockId?: string;
-  columnId?: string;
-  parentBlockId?: string;
+  blockId?: string | undefined;
+  columnId?: string | undefined;
+  parentBlockId?: string | undefined;
   key: string;
 };
 
@@ -1855,21 +1855,21 @@ export function PreviewSection({
 interface PreviewBlockItemProps {
   block: BlockInstance;
   isSelected: boolean;
-  isInspecting?: boolean;
+  isInspecting?: boolean | undefined;
   inspectorSettings: InspectorSettings;
   hoveredNodeId?: string | null | undefined;
   onSelect: (nodeId: string) => void;
   sectionId: string;
-  sectionType?: string;
-  sectionZone?: PageZone;
-  columnId?: string;
-  parentBlockId?: string;
-  contained?: boolean;
-  selectedNodeId?: string | null;
-  onHoverNode?: (nodeId: string | null) => void | undefined;
-  onOpenMedia?: (target: MediaReplaceTarget) => void;
+  sectionType?: string | undefined;
+  sectionZone?: PageZone | undefined;
+  columnId?: string | undefined;
+  parentBlockId?: string | undefined;
+  contained?: boolean | undefined;
+  selectedNodeId?: string | null | undefined;
+  onHoverNode?: ((nodeId: string | null) => void) | undefined;
+  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
   mediaStyles?: React.CSSProperties | null | undefined;
-  stretch?: boolean;
+  stretch?: boolean | undefined;
 }
 
 function PreviewBlockItem({
@@ -2852,19 +2852,19 @@ function PreviewBlockItem({
 
 interface PreviewSectionBlockProps {
   block: BlockInstance;
-  selectedNodeId?: string | null;
-  isInspecting?: boolean;
+  selectedNodeId?: string | null | undefined;
+  isInspecting?: boolean | undefined;
   inspectorSettings: InspectorSettings;
-  hoveredNodeId?: string | null;
+  hoveredNodeId?: string | null | undefined;
   onSelect: (nodeId: string) => void;
   sectionId: string;
-  sectionType?: string;
-  sectionZone?: PageZone;
-  columnId?: string;
-  stretch?: boolean;
-  onHoverNode?: (nodeId: string | null) => void;
-  onOpenMedia?: (target: MediaReplaceTarget) => void;
-  mediaStyles?: React.CSSProperties | null;
+  sectionType?: string | undefined;
+  sectionZone?: PageZone | undefined;
+  columnId?: string | undefined;
+  stretch?: boolean | undefined;
+  onHoverNode?: ((nodeId: string | null) => void) | undefined;
+  onOpenMedia?: ((target: MediaReplaceTarget) => void) | undefined;
+  mediaStyles?: React.CSSProperties | null | undefined;
 }
 
 function PreviewImageWithTextBlock({

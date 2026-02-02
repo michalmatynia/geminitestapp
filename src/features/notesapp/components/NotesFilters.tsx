@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Button, Input, SearchInput, UnifiedSelect } from "@/shared/ui";
+import { Button, SearchInput, UnifiedSelect } from "@/shared/ui";
 
-import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
+import { FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
 import type { NotesFiltersProps } from "@/features/notesapp/types/notes-ui";
 import type { TagRecord } from "@/shared/types/notes";
 

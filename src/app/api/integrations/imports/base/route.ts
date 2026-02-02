@@ -247,7 +247,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         return null;
       };
 
-      const mappedList: MappedItem[] = (products as BaseProductRecord[])
+      const mappedList: MappedItem[] = products
         .map((record: BaseProductRecord) => {
           const mapped: ProductCreateInput = mapBaseProduct(record);
           const images = extractBaseImageUrls(record);
@@ -285,7 +285,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             image: images[0] ?? null,
           };
         })
-        .filter((item): item is MappedItem => Boolean(item.baseProductId));
+        .filter((item) => Boolean(item.baseProductId && item.sku));
 
       const normalizedName = (data.searchName ?? "").trim().toLowerCase();
       const normalizedSku = (data.searchSku ?? "").trim().toLowerCase();
@@ -475,7 +475,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
     };
 
-    for (const raw of (productsToImport as BaseProductRecord[])) {
+    for (const raw of productsToImport) {
       try {
         const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
 

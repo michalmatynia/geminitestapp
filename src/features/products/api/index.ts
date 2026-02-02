@@ -1,3 +1,6 @@
+// Product API functions
+export * from './products';
+
 // API versioning
 export * from './versioning';
 

@@ -16,7 +16,7 @@ import { conflictError, internalError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import type { LanguageWithCountries } from "@/shared/types/internationalization";
+
 
 export const runtime = "nodejs";
 
@@ -119,7 +119,12 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         .find({})
         .sort({ code: 1 })
         .toArray();
-      return NextResponse.json(languages as LanguageWithCountries[]);
+      const formattedLanguages = languages.map(lang => ({
+        ...lang,
+        createdAt: lang.createdAt.toISOString(),
+        updatedAt: lang.updatedAt.toISOString()
+      }));
+      return NextResponse.json(formattedLanguages);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -138,7 +143,21 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         },
       },
     });
-    return NextResponse.json(languages as LanguageWithCountries[]);
+    const formattedLanguages = languages.map(lang => ({
+      ...lang,
+      createdAt: lang.createdAt.toISOString(),
+      updatedAt: lang.updatedAt.toISOString(),
+      countries: lang.countries.map(lc => ({
+        ...lc,
+        assignedAt: lc.assignedAt.toISOString(),
+        country: {
+          ...lc.country,
+          createdAt: lc.country.createdAt.toISOString(),
+          updatedAt: lc.country.updatedAt.toISOString()
+        }
+      }))
+    }));
+    return NextResponse.json(formattedLanguages);
   } catch (error) {
     void logSystemEvent({
       level: "error",

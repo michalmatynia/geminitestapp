@@ -364,7 +364,7 @@ export function ImportTab({
             <Pagination
               page={importListPage}
               totalPages={importListStats.totalPages ?? 1}
-              setPage={setImportListPage}
+              onPageChange={setImportListPage}
               className="scale-90 origin-right"
             />
           </div>

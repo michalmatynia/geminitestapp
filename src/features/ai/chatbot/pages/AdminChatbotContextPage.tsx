@@ -93,15 +93,15 @@ function ChatbotContextPageInner(): React.JSX.Element {
     let isMounted: boolean = true;
     const loadContext = async (): Promise<void> => {
       try {
-        const data = await chatbotApi.fetchSettings() as any[];
+        const data = await chatbotApi.fetchSettings();
         const storedItems = data.find(
-          (item): boolean => item.key === "chatbot_global_context_items"
+          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context_items"
         );
         const storedActive = data.find(
-          (item): boolean => item.key === "chatbot_global_context_active"
+          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context_active"
         );
-        const storedLegacy: { key: string; value: string } | undefined = data.find(
-          (item: { key: string; value: string }): boolean => item.key === "chatbot_global_context"
+        const storedLegacy = data.find(
+          (item: { key: string; value?: string }): boolean => item.key === "chatbot_global_context"
         );
         if (isMounted) {
           const items: ContextItem[] = buildContextItems(
@@ -215,7 +215,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         return;
       }
       const now: string = new Date().toISOString();
-      const nextItems: ContextItem[] = data.segments.map((segment): ContextItem => ({
+      const nextItems: ContextItem[] = data.segments.map((segment: ChatbotContextSegmentDto): ContextItem => ({
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         title: `PDF Content ${segment.id}`,
         content: segment.content,

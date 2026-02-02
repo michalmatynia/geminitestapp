@@ -64,7 +64,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
       const existing = await CachedProductService.getProductById(skuField.trim());
       if (existing) {
-        return NextResponse.json({ ...(existing as any), idempotent: true });
+        return NextResponse.json({ ...(existing as Record<string, unknown>), idempotent: true });
       }
     }
     

@@ -6,7 +6,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
-import type { ImageFile } from "@prisma/client";
+import type { ImageFileRecord } from "@/shared/types/files";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
@@ -54,10 +54,10 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         : null;
 
     const result = files
-      .filter((file: ImageFile) =>
+      .filter((file: ImageFileRecord) =>
         allowedImageFileIds ? allowedImageFileIds.has(file.id) : true
       )
-      .map((file: ImageFile) => ({
+      .map((file: ImageFileRecord) => ({
         ...file,
         products: imageFileToProducts.get(file.id) ?? [],
       }));

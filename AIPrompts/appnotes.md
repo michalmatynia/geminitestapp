@@ -9,24 +9,16 @@ Connect everything including validators into a centralized error handling and re
 implement Tanstack Query
 Architecture segmentation and restructuring
 
----
-enable requiring explicit type annotations
-Require typedef and module boundaries and one more need to be set to true
 
-Products 
-Changing currency doesn't work again
+---
 
 I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a cursor there
 
 unify Refresh button so that it's one component everywhere
 
-* AI Prompt needs to be sent on pressing the return button in Database Query Node.
-
 When AI model generates content, it keeps on appearing in my prompt suggestion in Database, maybe for suggestions I need another  channel ?
 
-images still flicker
 
-LATER - All Jobs / runners should be in one place 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 
 

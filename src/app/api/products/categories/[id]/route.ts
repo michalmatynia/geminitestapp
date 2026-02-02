@@ -13,8 +13,8 @@ import {
   notFoundError,
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { ApiHandlerContext, DeleteResponse } from "@/shared/types/api";
-import type { ProductCategory } from "@/features/products/types";
+import type { ApiHandlerContext } from "@/shared/types/api";
+import type { ProductCategoryDto } from "@/features/products/types";
 
 interface MongoCategory {
   id: string;
@@ -227,7 +227,7 @@ async function PUT_handler(
       const updated = await db
         .collection<MongoCategory>("product_categories")
         .findOne({ id: params.id });
-      return NextResponse.json(updated as unknown as unknown as ProductCategory);
+      return NextResponse.json(updated as unknown as ProductCategoryDto);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -306,7 +306,7 @@ async function PUT_handler(
       },
     });
 
-    return NextResponse.json(category as unknown as ProductCategory);
+    return NextResponse.json(category as unknown as ProductCategoryDto);
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
@@ -343,7 +343,7 @@ async function DELETE_handler(
       await db
         .collection("product_categories")
         .deleteMany({ id: { $in: idsToDelete } });
-      return NextResponse.json({ success: true } as DeleteResponse);
+      return NextResponse.json({ success: true });
     }
 
     if (!process.env.DATABASE_URL) {

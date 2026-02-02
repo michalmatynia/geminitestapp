@@ -108,11 +108,13 @@ export function useTemplateMutation(scope: "import" | "export", id?: string): Us
       const url = id ? `${endpoint}/${id}` : endpoint;
       const method = isDelete ? "DELETE" : (id ? "PUT" : "POST");
       
-      const res = await fetch(url, {
+      const fetchOptions: RequestInit = {
         method,
         headers: isDelete ? {} : { "Content-Type": "application/json" },
-        body: isDelete ? undefined : JSON.stringify(data),
-      });
+      };
+      if (!isDelete) fetchOptions.body = JSON.stringify(data);
+      
+      const res = await fetch(url, fetchOptions);
       
       if (!res.ok) throw new Error(`Failed to ${isDelete ? "delete" : "save"} template`);
       return res.json();

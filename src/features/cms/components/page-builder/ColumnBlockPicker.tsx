@@ -46,7 +46,7 @@ export function ColumnBlockPicker({ onSelect }: ColumnBlockPickerProps): React.R
         label: def.label,
       })),
     },
-  ].filter(g => g.options.length > 0), [elementTypes, sectionTypes]);
+  ].filter((g: { label: string; options: { type: string; label: string }[] }) => g.options.length > 0), [elementTypes, sectionTypes]);
 
   if (allTypes.length === 0) return null;
 

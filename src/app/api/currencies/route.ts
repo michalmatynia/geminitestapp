@@ -93,7 +93,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       orderBy: { code: "asc" },
     });
 
-    return NextResponse.json(currencies as CurrencyRecord[]);
+    return NextResponse.json(currencies as unknown as CurrencyRecord[]);
   } catch (error) {
     void logSystemEvent({
       level: "error",

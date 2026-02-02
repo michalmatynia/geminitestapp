@@ -40,7 +40,7 @@ export function PickerDropdown({
     [onSelect]
   );
 
-  const allOptionsCount = groups.reduce((acc, group) => acc + group.options.length, 0);
+  const allOptionsCount = groups.reduce((acc: number, group: PickerGroup) => acc + group.options.length, 0);
   if (allOptionsCount === 0) return null;
 
   return (
@@ -83,13 +83,13 @@ export function PickerDropdown({
             "absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md",
             dropdownClassName
           )}>
-            {groups.map((group, groupIdx) => (
+            {groups.map((group: PickerGroup, groupIdx: number) => (
               <React.Fragment key={group.label}>
                 {groupIdx > 0 && <div className="my-1 border-t border-border/30" />}
                 <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
                   {group.label}
                 </div>
-                {group.options.map((opt) => (
+                {group.options.map((opt: PickerOption) => (
                   <button
                     key={opt.type}
                     type="button"

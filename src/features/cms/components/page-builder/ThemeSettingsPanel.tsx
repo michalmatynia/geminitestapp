@@ -4,23 +4,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import { ArrowLeft, Bold, ChevronDown, FolderOpen, Italic, Link2, List, ListOrdered, Upload } from "lucide-react";
+import { ArrowLeft, Bold, ChevronDown, Italic, Link2, List, ListOrdered } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import {
   Button,
-  Input,
   Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Checkbox,
 } from "@/shared/ui";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
-import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import type { ColorScheme, ColorSchemeColors, ThemeSettings } from "@/features/cms/types/theme-settings";
 import type { CmsTheme } from "@/features/cms/types";
 import {
@@ -210,9 +207,7 @@ function MiniRichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: showFormatSelect ? { levels: [1, 2, 3] } : false,
-        bulletList: enableLists ? undefined : false,
-        orderedList: enableLists ? undefined : false,
-        listItem: enableLists ? undefined : false,
+        ...(enableLists ? {} : { bulletList: false, orderedList: false, listItem: false }),
       }),
       Link.configure({
         openOnClick: false,

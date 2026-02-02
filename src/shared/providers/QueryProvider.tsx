@@ -4,13 +4,13 @@
 import { QueryClient, QueryClientProvider, type Query } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { setupOfflineSupport, isOfflineQuery } from "@/shared/lib/offline-support";
-import { useGlobalQueryErrorHandler } from "@/shared/hooks/useQueryErrorHandling";
+import { useGlobalQueryErrorHandler } from "@/shared/hooks/query/useQueryErrorHandling";
 import { usePerformanceMonitor } from "@/shared/hooks/useQueryAnalytics";
-import { useQueryPersistence } from "@/shared/hooks/useQueryPersistence";
-import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from "@/shared/hooks/useQueryMiddleware";
-import { useSmartCache, useCacheWarming } from "@/shared/hooks/useSmartCache";
-import { useQueryLifecycle } from "@/shared/hooks/useQueryLifecycle";
-import { useQueryBatching } from "@/shared/hooks/useQueryBatching";
+import { useQueryPersistence } from "@/shared/hooks/query/useQueryPersistence";
+import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from "@/shared/hooks/query/useQueryMiddleware";
+import { useSmartCache, useCacheWarming } from "@/shared/hooks/query/useSmartCache";
+import { useQueryLifecycle } from "@/shared/hooks/query/useQueryLifecycle";
+import { useQueryBatching } from "@/shared/hooks/query/useQueryBatching";
 
 type QueryProviderProps = {
   children: React.ReactNode;

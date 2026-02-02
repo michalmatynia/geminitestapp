@@ -1583,14 +1583,15 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     const collection = mongo.collection("users");
     const deleted = await collection.deleteMany({});
     if (docs.length) await collection.insertMany(docs as any[]);
-    return {
+    const result: any = {
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
       targetInserted: docs.length,
-      warnings: rows.some((row) => !isObjectIdString(row.id))
-        ? ["Some user IDs are not ObjectId strings; Mongo auth adapters may not accept them."]
-        : undefined,
     };
+    if (rows.some((row) => !isObjectIdString(row.id))) {
+      result.warnings = ["Some user IDs are not ObjectId strings; Mongo auth adapters may not accept them."];
+    }
+    return result;
   });
 
   await syncCollection("accounts", async () => {

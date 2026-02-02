@@ -28,11 +28,11 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
 
-  const clearSelection = () => setSelectedIds(new Set());
-  const selectAllVisible = () => setSelectedIds(new Set(filteredSessions.map(s => s.id)));
-  const selectAllMatching = () => setSelectedIds(new Set(filteredSessions.map(s => s.id)));
-  const toggleSelected = (id: string) => {
-    setSelectedIds(prev => {
+  const clearSelection = (): void => setSelectedIds(new Set());
+  const selectAllVisible = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
+  const selectAllMatching = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
+  const toggleSelected = (id: string): void => {
+    setSelectedIds((prev: Set<string>): Set<string> => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
@@ -358,8 +358,8 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
 
       <ConfirmDialog
         open={!!sessionToDelete}
-        onOpenChange={(open) => !open && setSessionToDelete(null)}
-        onConfirm={() => sessionToDelete && deleteSession(sessionToDelete)}
+        onOpenChange={(open: boolean) => !open && setSessionToDelete(null)}
+        onConfirm={(): void => { if (sessionToDelete) { void deleteSession(sessionToDelete); } }}
         title="Delete Session"
         description={`Are you sure you want to delete session "${sessionToDelete?.title || 'this session'}"? This cannot be undone.`}
         confirmText="Delete"
@@ -368,8 +368,8 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
 
       <ConfirmDialog
         open={isBulkDeleteConfirmOpen}
-        onOpenChange={setIsBulkDeleteConfirmOpen}
-        onConfirm={bulkDelete}
+        onOpenChange={(open: boolean) => setIsBulkDeleteConfirmOpen(open)}
+        onConfirm={(): void => { void bulkDelete(); }}
         title="Delete Sessions"
         description={`Are you sure you want to delete ${selectedIds.size} selected sessions? This action cannot be undone.`}
         confirmText="Delete All"

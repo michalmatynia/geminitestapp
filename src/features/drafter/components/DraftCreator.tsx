@@ -4,15 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
 import type { CatalogRecord } from "@/features/products";
-import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
+import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
 import { PRODUCT_ICONS } from "@/shared/constants/product-icons";
-import {
-  PlusIcon,
-  Edit2Icon,
-  TrashIcon,
-  CheckIcon,
-  XIcon,
-} from "lucide-react";
 import { useDraft, useCreateDraft, useUpdateDraft } from "@/features/drafter/hooks/useDrafts";
 import { useCatalogs } from "@/features/products/hooks/useProductMetadata";
 import { useQueries } from "@tanstack/react-query";
@@ -70,9 +63,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   const categoryQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: ["categories", id],
-      queryFn: async (): Promise<ProductCategory[]> => {
+      queryFn: async (): Promise<ProductCategoryDto[]> => {
         const res = await fetch(`/api/products/categories?catalogId=${id}`);
-        return (await res.json()) as ProductCategory[];
+        return (await res.json()) as ProductCategoryDto[];
       }
     }))
   });
@@ -97,9 +90,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     }))
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap((q: { data?: ProductCategory[] }) => q.data || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap((q: { data?: ProductTag[] }) => q.data || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap((q: { data?: ProductParameter[] }) => q.data || []), [parameterQueries]);
+  const categories = useMemo(() => categoryQueries.flatMap((q: any) => q.data || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap((q: any) => q.data || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap((q: any) => q.data || []), [parameterQueries]);
   const parametersLoading = useMemo(() => parameterQueries.some((q: { isLoading: boolean }) => q.isLoading), [parameterQueries]);
 
   // Sync form with draft data
@@ -640,7 +633,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
           <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
             <h3 className="text-sm font-semibold text-white">Categories</h3>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category: ProductCategory): React.JSX.Element => (
+              {categories.map((category: ProductCategoryDto): React.JSX.Element => (
                 <Button
                   key={category.id}
                   type="button"

@@ -26,8 +26,8 @@ const toRecord = (imageFile: {
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
   tags: imageFile.tags ?? [],
-  createdAt: imageFile.createdAt,
-  updatedAt: imageFile.updatedAt,
+  createdAt: imageFile.createdAt.toISOString(),
+  updatedAt: imageFile.updatedAt.toISOString(),
 });
 
 export const prismaImageFileRepository: ImageFileRepository = {

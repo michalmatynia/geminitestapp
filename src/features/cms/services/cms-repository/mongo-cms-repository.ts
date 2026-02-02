@@ -344,7 +344,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      customCss: doc.customCss ?? undefined,
+      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     }));
@@ -360,7 +360,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      customCss: doc.customCss ?? undefined,
+      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
@@ -386,7 +386,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      customCss: doc.customCss ?? undefined,
+      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
@@ -415,7 +415,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: result.colors,
       typography: result.typography,
       spacing: result.spacing,
-      customCss: result.customCss ?? undefined,
+      ...(result.customCss && { customCss: result.customCss }),
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
     };
@@ -431,7 +431,7 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      customCss: doc.customCss ?? undefined,
+      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };

@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api';
+import type { ApiVersion } from '@/features/products/api';
 import { withSecurity } from '@/features/products/security';
 import { CachedProductService } from '@/features/products/performance';
 
 // Versioned products API handler
-async function productsHandler(req: NextRequest, version: string): Promise<Response> {
+async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {
   const { searchParams } = new URL(req.url);
   
   try {
@@ -26,7 +27,7 @@ async function productsHandler(req: NextRequest, version: string): Promise<Respo
   }
 }
 
-async function handleGetProducts(req: NextRequest, version: string, searchParams: URLSearchParams): Promise<Response> {
+async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchParams: URLSearchParams): Promise<Response> {
   const filters = Object.fromEntries(searchParams.entries());
   const page = parseInt(searchParams.get('page') || '1');
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
@@ -55,16 +56,16 @@ async function handleGetProducts(req: NextRequest, version: string, searchParams
       }
     };
 
-    return createVersionedResponse(responseData, version as any);
+    return createVersionedResponse(responseData, version);
 
-  } catch (error) {
+  } catch (_error) {
     return StandardErrors.serverError()
       .withMeta(version, '/api/products', 'GET')
       .toResponse(500);
   }
 }
 
-async function handleCreateProduct(req: NextRequest, version: string): Promise<Response> {
+async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promise<Response> {
   try {
     const contentType = req.headers.get('content-type') || '';
     
@@ -74,10 +75,11 @@ async function handleCreateProduct(req: NextRequest, version: string): Promise<R
         .toResponse(400);
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
+    const sku = typeof body.sku === 'string' ? body.sku : null;
     
     // Basic validation
-    if (!body.sku) {
+    if (!sku) {
       return StandardErrors.validationError([
         { field: 'sku', message: 'SKU is required', code: 'REQUIRED_FIELD' }
       ])
@@ -86,9 +88,9 @@ async function handleCreateProduct(req: NextRequest, version: string): Promise<R
     }
 
     // Check for duplicate SKU
-    const existing = await CachedProductService.getProductById(body.sku);
+    const existing = await CachedProductService.getProductById(sku);
     if (existing) {
-      return StandardErrors.duplicateResource('sku', body.sku)
+      return StandardErrors.duplicateResource('sku', sku)
         .withMeta(version, '/api/products', 'POST')
         .toResponse(409);
     }
@@ -104,7 +106,7 @@ async function handleCreateProduct(req: NextRequest, version: string): Promise<R
     // Invalidate cache
     CachedProductService.invalidateAll();
 
-    return createVersionedResponse(product, version as any, 201);
+    return createVersionedResponse(product, version, 201);
 
   } catch (error) {
     if (error instanceof SyntaxError) {

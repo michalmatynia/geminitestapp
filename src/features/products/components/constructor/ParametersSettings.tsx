@@ -236,8 +236,8 @@ export function ParametersSettings({
 
       <ConfirmDialog
         open={!!parameterToDelete}
-        onOpenChange={(open) => !open && setParameterToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setParameterToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Delete Parameter"
         description={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
         confirmText="Delete"

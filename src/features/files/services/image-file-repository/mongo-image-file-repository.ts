@@ -35,8 +35,8 @@ const toRecord = (doc: WithId<ImageFileDocument>): ImageFileRecord => ({
   width: doc.width ?? null,
   height: doc.height ?? null,
   tags: doc.tags ?? [],
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 export const mongoImageFileRepository: ImageFileRepository = {

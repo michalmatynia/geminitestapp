@@ -1,7 +1,4 @@
-"use client";
-
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import NextImage from "next/image";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Input,
   Label,
@@ -18,24 +15,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  useToast,
 } from "@/shared/ui";
-import { useQueryClient } from "@tanstack/react-query";
-import { Upload, FolderOpen, Link2, Search } from "lucide-react";
+import { Link2, Search } from "lucide-react";
 import type { SettingsField, SettingsFieldOption } from "../../types/page-builder";
 import { useCmsSlugs } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import type { Slug } from "../../types";
-import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import type { ColorScheme } from "@/features/cms/types/theme-settings";
-import type { ImageFileRecord } from "@/shared/types/files";
 import {
   ColorField,
   NumberField,
   RangeField,
   SelectField,
-  CheckboxField,
   TextField,
   ImagePickerField,
 } from "./shared-fields";
@@ -92,26 +84,7 @@ const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
   { label: "Scheme 5", value: "scheme-5" },
 ];
 
-const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-const readUploadError = async (res: Response): Promise<string> => {
-  const contentType = res.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    try {
-      const data = (await res.json()) as { error?: string };
-      if (data?.error) return data.error;
-    } catch {
-      // Fall back to text.
-    }
-  }
-  try {
-    const text = await res.text();
-    if (text.trim().length > 0) return text;
-  } catch {
-    // ignore
-  }
-  return `Upload failed (${res.status})`;
-};
 
 interface SettingsFieldRendererProps {
   field: SettingsField;
@@ -146,48 +119,7 @@ export function SettingsFieldRenderer({
     [field.key, onChange]
   );
 
-  const [mediaOpen, setMediaOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const imageValue = typeof value === "string" ? value : "";
-
-  const uploadSingleImage = async (file: File): Promise<ImageFileRecord> => {
-    if (file.size > MAX_IMAGE_FILE_SIZE) {
-      throw new Error("File exceeds 10MB limit");
-    }
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/cms/media", {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) {
-      throw new Error(await readUploadError(res));
-    }
-    return (await res.json()) as ImageFileRecord;
-  };
-
-  const handleUploadImage = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const files = event.target.files;
-    event.target.value = "";
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    if (!file) return;
-    setUploadingImage(true);
-    try {
-      const uploaded = await uploadSingleImage(file);
-      handleChange(uploaded.filepath ?? "");
-      toast("Upload complete.", { variant: "success" });
-      await queryClient.invalidateQueries({ queryKey: ["files"] });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
-      toast(message, { variant: "error" });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   return (
     <div className="space-y-1.5">
@@ -215,8 +147,8 @@ export function SettingsFieldRenderer({
           value={(value as number) ?? 0}
           onChange={handleChange}
           disabled={isDisabled}
-          min={field.min}
-          max={field.max}
+          {...(field.min !== undefined && { min: field.min })}
+          {...(field.max !== undefined && { max: field.max })}
         />
       )}
 

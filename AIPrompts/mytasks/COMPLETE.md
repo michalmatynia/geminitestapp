@@ -1172,3 +1172,45 @@ Add compensation cleanup in createProduct/updateProduct to prevent orphans
 
 
 Validate and type ProductFilters at the API boundary (route handler)
+
+
+
+---
+
+1. AppErrorCodes Mismatch (app-error.ts)
+The AppErrorCodes object only defines 4 codes, but helper functions reference ~15 undefined codes (unauthorized, forbidden, notFound, etc.). This will cause runtime errors.
+
+2. Security Vulnerabilities (185+ warnings detected)
+XSS in Allegro callback, WebSocket, streaming hooks
+Path traversal in file upload/restore/backup routes
+SSRF in external API calls
+Log injection throughout logging (sanitize user input)
+Hardcoded credentials in some files
+3. Validation Over-Engineering (products/validations/)
+~80KB of validation code with 20+ files including validators.ts, validators-old.ts, validators-enhanced.ts, validators-clean.ts. This is framework-level complexity for simple product validation.
+
+🟡 Architecture Improvements
+4. Consolidate Validation
+Keep: schemas.ts + validators.ts (single entry)
+Delete: validators-old.ts, validators-enhanced.ts, validators-clean.ts
+Move: batch/streaming/cache to feature-specific modules (imports, admin)
+5. Complete AppErrorCodes - Add missing codes:
+const AppErrorCodes = {
+  validation: 'VALIDATION_ERROR',
+  unauthorized: 'UNAUTHORIZED',
+  forbidden: 'FORBIDDEN', 
+  notFound: 'NOT_FOUND',
+  conflict: 'CONFLICT',
+  rateLimited: 'RATE_LIMITED',
+  // ... all others used in helper functions
+} as const;
+6. Type Organization
+Use Zod schemas as single source of truth for DTOs
+Keep only cross-domain types in shared/types
+Feature-specific types stay in feature folders
+7. Performance
+Avoid double-fetching between RSC and React Query
+Confirm single Prisma client instance (connection pooling)
+Add staleTime for read-heavy data
+Want me to implement any of these fixes? The AppErrorCodes fix is highest priority—it will cause runtime errors currently.
+

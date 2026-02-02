@@ -8,8 +8,14 @@ type SecurityConfig = {
   enableInputSanitization?: boolean;
   enableFileUploadSecurity?: boolean;
   rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth';
-  customSanitizationRules?: Record<string, any>;
+  customSanitizationRules?: Record<string, unknown>;
 };
+
+interface SanitizedFile {
+  file: File;
+  sanitizedName: string;
+  hash: string;
+}
 
 export class SecurityMiddleware {
   static async validateRequest(
@@ -20,7 +26,7 @@ export class SecurityMiddleware {
     headers?: Record<string, string>;
     status?: number;
     message?: string;
-    sanitizedData?: any;
+    sanitizedData?: unknown;
   }> {
     const {
       enableRateLimit = true,
@@ -44,20 +50,20 @@ export class SecurityMiddleware {
     }
 
     // Input sanitization
-    let sanitizedData;
+    let sanitizedData: unknown;
     if (enableInputSanitization) {
       try {
         const contentType = req.headers.get('content-type') || '';
         
         if (contentType.includes('application/json')) {
-          const body = await req.json();
+          const body = (await req.json()) as Record<string, unknown>;
           sanitizedData = InputSanitizer.sanitizeObject(
             body,
             config.customSanitizationRules || ProductSanitizationRules
           );
           
           // Validate sanitized data
-          const validation = validateProductInput(sanitizedData);
+          const validation = validateProductInput(sanitizedData as any);
           if (!validation.isValid) {
             return {
               allowed: false,
@@ -89,7 +95,7 @@ export class SecurityMiddleware {
     headers?: Record<string, string>;
     status?: number;
     message?: string;
-    files?: any[];
+    files?: SanitizedFile[];
   }> {
     // Rate limiting for file uploads
     if (config.enableRateLimit !== false) {
@@ -119,7 +125,7 @@ export class SecurityMiddleware {
 
       return {
         allowed: true,
-        files: uploadResult.sanitizedFiles
+        files: uploadResult.sanitizedFiles as SanitizedFile[]
       };
     }
 
@@ -148,12 +154,14 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+type Handler = (req: NextRequest, ...args: any[]) => Promise<Response>;
+
 // API route wrapper with security
 export function withSecurity(
-  handler: (req: NextRequest, ...args: any[]) => Promise<Response>,
+  handler: Handler,
   config: SecurityConfig = {}
 ) {
-  return async (req: NextRequest, ...args: any[]): Promise<Response> => {
+  return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     try {
       // Validate request
       const validation = await SecurityMiddleware.validateRequest(req, config);
@@ -198,12 +206,14 @@ export function withSecurity(
   };
 }
 
+type FileUploadHandler = (req: NextRequest, files: SanitizedFile[], ...args: any[]) => Promise<Response>;
+
 // File upload wrapper with security
 export function withFileUploadSecurity(
-  handler: (req: NextRequest, files: any[], ...args: any[]) => Promise<Response>,
+  handler: FileUploadHandler,
   config: SecurityConfig = {}
 ) {
-  return async (req: NextRequest, ...args: any[]): Promise<Response> => {
+  return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     try {
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
       

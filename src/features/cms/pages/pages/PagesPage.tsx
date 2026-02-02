@@ -23,11 +23,7 @@ import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms
 import { useMemo, useState, useCallback } from "react";
 import { Eye, Plus } from "lucide-react";
 
-const STATUS_LABELS: Record<PageStatus, string> = {
-  draft: "Draft",
-  published: "Published",
-  scheduled: "Scheduled",
-};
+
 
 type StatusFilter = PageStatus | "all";
 type StatusFilterOption = { label: string; value: StatusFilter };

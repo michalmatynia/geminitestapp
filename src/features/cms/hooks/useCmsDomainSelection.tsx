@@ -7,6 +7,7 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain } from "@/features/cms/types";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 type CmsDomainSelectionOptions = {
   initialDomainId?: string | null;
@@ -41,6 +42,7 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   const domains = useMemo<CmsDomain[]>(() => domainsQuery.data ?? [], [domainsQuery.data]);
 
   const preferencesQuery = useUserPreferences();
+  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const hostDomainId = useMemo((): string | null => {
@@ -55,8 +57,8 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   const preferredDomainId = useMemo(() => {
     if (!zoningEnabled) return null;
     if (initialDomainId) return initialDomainId;
-    return preferencesQuery.data?.cmsActiveDomainId ?? null;
-  }, [initialDomainId, preferencesQuery.data?.cmsActiveDomainId, zoningEnabled]);
+    return userPreferences?.cmsActiveDomainId ?? null;
+  }, [initialDomainId, userPreferences?.cmsActiveDomainId, zoningEnabled]);
 
   const activeDomainId = useMemo(() => {
     if (!zoningEnabled) return null;
@@ -89,25 +91,25 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
     (domainId: string | null): void => {
       if (!persist) return;
       if (!zoningEnabled) return;
-      if (domainId === preferencesQuery.data?.cmsActiveDomainId) return;
+      if (domainId === userPreferences?.cmsActiveDomainId) return;
       
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
-    [persist, preferencesQuery.data?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
+    [persist, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
   );
 
   useEffect((): void => {
     if (!persist) return;
     if (!zoningEnabled) return;
     if (!preferencesQuery.isSuccess) return;
-    if (preferredDomainId && preferredDomainId !== preferencesQuery.data?.cmsActiveDomainId) {
+    if (preferredDomainId && preferredDomainId !== userPreferences?.cmsActiveDomainId) {
       updatePreferencesMutation.mutate({ cmsActiveDomainId: preferredDomainId });
       return;
     }
     if (!preferredDomainId && hostDomainId) {
       updatePreferencesMutation.mutate({ cmsActiveDomainId: hostDomainId });
     }
-  }, [persist, preferredDomainId, hostDomainId, preferencesQuery.isSuccess, preferencesQuery.data?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]);
+  }, [persist, preferredDomainId, hostDomainId, preferencesQuery.isSuccess, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]);
 
   return {
     domains: zoningEnabled ? domains : [],

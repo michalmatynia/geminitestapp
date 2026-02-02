@@ -65,7 +65,7 @@ export function AgentPersonasPage(): React.JSX.Element {
   const [draftSettings, setDraftSettings] = useState<AgentPersonaSettings>(
     buildAgentPersonaSettings()
   );
-  const [personaToDelete, setPersonaToDelete] = useState<AgentPersona | null>(null);
+  const [_personaToDelete, setPersonaToDelete] = useState<AgentPersona | null>(null);
 
   const sortedPersonas = useMemo((): AgentPersona[] => {
     return [...personas].sort((a: AgentPersona, b: AgentPersona) => {
@@ -250,7 +250,7 @@ export function AgentPersonasPage(): React.JSX.Element {
 
       <AppModal
         open={modalOpen}
-        onOpenChange={(open) => !open && closeModal()}
+        onOpenChange={(open: boolean) => !open && closeModal()}
         title={editingId ? "Edit persona" : "New persona"}
       >
         <ModalShell 

@@ -58,8 +58,8 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
     >
       <ConfirmDialog
         open={!!draftToDelete}
-        onOpenChange={(open) => !open && setDraftToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setDraftToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Delete Draft"
         description="Are you sure you want to delete this draft? This action cannot be undone."
         confirmText="Delete"

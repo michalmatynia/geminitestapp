@@ -51,7 +51,8 @@
       "Bash(npx eslint src/shared/types/notes.ts src/features/products/types/records.ts src/features/products/hooks/useMetadata.ts src/features/chatbot/components/DebugPanel.tsx src/features/foldertree/types/folder-tree-ui.ts --no-cache)",
       "Bash(npx eslint:*)",
       "Bash(npm install:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(xargs -I {} sh -c 'head -5 {} | grep -q \"\"^import\"\" && echo {}')"
     ]
   }
 }

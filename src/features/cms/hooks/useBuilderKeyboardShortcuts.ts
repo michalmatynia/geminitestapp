@@ -54,8 +54,8 @@ export function useBuilderKeyboardShortcuts(): void {
             type: "COPY_BLOCK",
             sectionId: selectedParentSection.id,
             blockId: selectedBlock.id,
-            columnId: selectedParentColumn?.id,
-            parentBlockId: selectedParentBlock?.id,
+            ...(selectedParentColumn?.id && { columnId: selectedParentColumn.id }),
+            ...(selectedParentBlock?.id && { parentBlockId: selectedParentBlock.id }),
           });
         }
         return;
@@ -75,12 +75,14 @@ export function useBuilderKeyboardShortcuts(): void {
             selectedColumnParentSection?.id ??
             selectedSection?.id;
           if (!targetSectionId) return;
-          dispatch({
+          const pasteAction: any = {
             type: "PASTE_BLOCK",
             sectionId: targetSectionId,
-            columnId: selectedParentColumn?.id ?? selectedColumn?.id,
-            parentBlockId: selectedParentBlock?.id,
-          });
+          };
+          const columnId = selectedParentColumn?.id ?? selectedColumn?.id;
+          if (columnId) pasteAction.columnId = columnId;
+          if (selectedParentBlock?.id) pasteAction.parentBlockId = selectedParentBlock.id;
+          dispatch(pasteAction);
         }
         return;
       }
@@ -129,7 +131,7 @@ export function useBuilderKeyboardShortcuts(): void {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return (): void => { window.removeEventListener("keydown", handleKeyDown); };
   }, [
     dispatch,
     selectedSection,

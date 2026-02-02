@@ -804,8 +804,8 @@ function IntegrationsContent(): React.JSX.Element {
     <div className="container mx-auto py-10">
       <ConfirmDialog
         open={!!connectionToDelete}
-        onOpenChange={(open) => !open && setConnectionToDelete(null)}
-        onConfirm={handleConfirmDeleteConnection}
+        onOpenChange={(open: boolean) => !open && setConnectionToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDeleteConnection(); }}
         title="Delete Connection"
         description={`Are you sure you want to delete connection "${connectionToDelete?.name}"? This cannot be undone.`}
         confirmText="Delete"

@@ -231,8 +231,8 @@ export function TagsSettings({
 
       <ConfirmDialog
         open={!!tagToDelete}
-        onOpenChange={(open) => !open && setTagToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setTagToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Delete Tag"
         description={`Are you sure you want to delete tag "${tagToDelete?.name}"? This action cannot be undone.`}
         confirmText="Delete"

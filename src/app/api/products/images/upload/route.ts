@@ -29,18 +29,6 @@ async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<
         }
       });
 
-      // Store in database (placeholder)
-      // const imageRecord = await db.imageFile.create({
-      //   data: {
-      //     originalName: file.name,
-      //     sanitizedName,
-      //     hash,
-      //     mimeType: file.type,
-      //     size: file.size,
-      //     optimizedVersions: optimizedImages
-      //   }
-      // });
-
       results.push({
         id: `img_${hash.slice(0, 8)}`, // Placeholder ID
         originalName: file.name,

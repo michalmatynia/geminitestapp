@@ -213,7 +213,7 @@ export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
 const toDomainResponse = (doc: CmsDomainRecord): CmsDomainResponse => ({
   id: doc.id,
   domain: doc.domain,
-  aliasOf: doc.aliasOf ?? undefined,
+  aliasOf: doc.aliasOf ?? null,
   createdAt: doc.createdAt?.toISOString?.() ?? undefined,
   updatedAt: doc.updatedAt?.toISOString?.() ?? undefined,
 });

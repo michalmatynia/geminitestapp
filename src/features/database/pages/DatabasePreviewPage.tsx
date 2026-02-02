@@ -57,13 +57,15 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({});
 
-  const { data: payload, isLoading: loading, error: queryError } = useDatabasePreview({
-    backupName: backupName || undefined,
+  const queryParams: any = {
     mode: previewMode,
     type: previewType === "mongodb" ? "mongodb" : "postgresql",
     page,
     pageSize,
-  });
+  };
+  if (backupName) queryParams.backupName = backupName;
+
+  const { data: payload, isLoading: loading, error: queryError } = useDatabasePreview(queryParams);
 
   const error = queryError?.message || null;
   const errorMeta = (queryError as Error & { payload?: { errorId?: string; stage?: string; backupName?: string; mode?: string } })?.payload || null;
@@ -277,9 +279,9 @@ function DatabasePreviewPageInner(): React.JSX.Element {
               <Pagination
                 page={page}
                 totalPages={maxPage}
-                setPage={setPage}
+                onPageChange={setPage}
                 pageSize={pageSize}
-                setPageSize={(size) => {
+                onPageSizeChange={(size) => {
                   setPage(1);
                   setPageSize(size);
                 }}
@@ -400,13 +402,14 @@ function DatabasePreviewPageInner(): React.JSX.Element {
             <h2 className="text-sm font-semibold text-white">
               Raw Backup List
             </h2>
-            <CopyButton
-              value={content}
+            <Button
               variant="outline"
               size="sm"
-              showText
+              onClick={() => navigator.clipboard.writeText(content)}
               className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-            />
+            >
+              Copy
+            </Button>
           </div>
           <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}

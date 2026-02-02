@@ -320,7 +320,7 @@ export function CategoriesSettings({
       await deleteCategoryMutation.mutateAsync({ id: categoryToDelete.id, catalogId: selectedCatalogId });
       toast("Category deleted successfully", { variant: "success" });
       onRefresh();
-    } catch (error) {
+    } catch (error: unknown) {
       const message: string =
         error instanceof Error ? error.message : "Failed to delete category";
       toast(message, { variant: "error" });
@@ -620,8 +620,8 @@ export function CategoriesSettings({
 
       <ConfirmDialog
         open={!!categoryToDelete}
-        onOpenChange={(open) => !open && setCategoryToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setCategoryToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Delete Category"
         description={
           categoryToDelete?.children && categoryToDelete.children.length > 0
@@ -736,7 +736,7 @@ export function CategoriesSettings({
                   className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                   value={formData.color}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
                   }
                 />
                 <Input
@@ -744,7 +744,7 @@ export function CategoriesSettings({
                   className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.color}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                    setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
                   }
                   placeholder="#10b981"
                 />

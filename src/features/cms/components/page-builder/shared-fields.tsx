@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Button } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import NextImage from "next/image";
@@ -22,7 +22,6 @@ export function ImagePickerField({
   disabled,
 }: FieldProps<string>): React.JSX.Element {
   const [open, setOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div className="space-y-2">
@@ -51,7 +50,7 @@ export function ImagePickerField({
           size="sm"
           variant="outline"
           className="text-xs"
-          onClick={() => setOpen(true)}
+          onClick={(): void => setOpen(true)}
           disabled={disabled}
         >
           <Upload className="mr-1.5 size-3" />
@@ -62,7 +61,7 @@ export function ImagePickerField({
           size="sm"
           variant="outline"
           className="text-xs"
-          onClick={() => setOpen(true)}
+          onClick={(): void => setOpen(true)}
           disabled={disabled}
         >
           <FolderOpen className="mr-1.5 size-3" />
@@ -75,7 +74,7 @@ export function ImagePickerField({
           size="sm"
           variant="ghost"
           className="w-full text-xs text-gray-400 hover:text-gray-200"
-          onClick={() => onChange("")}
+          onClick={(): void => onChange("")}
           disabled={disabled}
         >
           Clear image
@@ -113,7 +112,7 @@ export function ColorField({
           <input
             type="color"
             value={value || "#ffffff"}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
             className="absolute inset-0 size-full cursor-pointer opacity-0"
             disabled={disabled}
           />
@@ -124,7 +123,7 @@ export function ColorField({
         </label>
         <Input
           value={value || "#ffffff"}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
           className="h-7 flex-1 bg-gray-800/40 text-xs font-mono"
           maxLength={7}
           disabled={disabled}
@@ -159,7 +158,7 @@ export function NumberField({
           min={min}
           max={max}
           step={step}
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
           className="h-7 flex-1 bg-gray-800/40 text-xs"
           disabled={disabled}
         />
@@ -200,7 +199,7 @@ export function RangeField({
         max={max}
         step={step}
         value={safeValue}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
         className={cn("w-full accent-blue-500", disabled && "opacity-50 cursor-not-allowed")}
         disabled={disabled}
       />
@@ -224,12 +223,12 @@ export function SelectField({
           {label}
         </Label>
       )}
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="h-7 bg-gray-800/40 text-xs" disabled={disabled}>
+      <Select value={value} onValueChange={onChange} disabled={disabled || false}>
+        <SelectTrigger className="h-7 bg-gray-800/40 text-xs">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((opt) => (
+          {options.map((opt: { label: string; value: string }): React.JSX.Element => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}
             </SelectItem>
@@ -257,7 +256,7 @@ export function CheckboxField({
     <label className={cn("flex items-center gap-2 cursor-pointer", disabled && "cursor-not-allowed opacity-50", className)}>
       <Checkbox
         checked={checked}
-        onCheckedChange={(v) => onChange(v === true)}
+        onCheckedChange={(v: boolean | "indeterminate"): void => onChange(v === true)}
         disabled={disabled}
       />
       <span className="text-xs text-gray-300">{label}</span>
@@ -282,7 +281,7 @@ export function TextField({
       )}
       <Input
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
         placeholder={placeholder}
         className="h-7 bg-gray-800/40 text-xs"
         disabled={disabled}

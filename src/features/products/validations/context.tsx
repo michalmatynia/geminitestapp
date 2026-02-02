@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useReducer, type ReactNode } from "react";
 import type { ValidationError } from "./validators";
 

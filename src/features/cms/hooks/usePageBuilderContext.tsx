@@ -285,7 +285,7 @@ function removeBlockFromColumnBlocks(
     }
     return block;
   });
-  return { blocks: nextBlocks, moved };
+  return { blocks: nextBlocks, ...(moved && { moved }) };
 }
 
 function insertBlockIntoColumnBlocks(
@@ -387,7 +387,12 @@ function findBlock(
     parentBlock?: BlockInstance
   ): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance } | null => {
     for (const b of blocks) {
-      if (b.id === nodeId) return { block: b, section, parentColumn, parentBlock };
+      if (b.id === nodeId) return { 
+        block: b, 
+        section, 
+        ...(parentColumn && { parentColumn }), 
+        ...(parentBlock && { parentBlock }) 
+      };
       if (!b.blocks || b.blocks.length === 0) continue;
       if (b.type === "Column") {
         for (const cb of b.blocks ?? []) {
@@ -1268,7 +1273,12 @@ export function basePageBuilderReducer(
         currentPage: {
           ...state.currentPage,
           status: action.status,
-          publishedAt: action.status === "published" ? new Date().toISOString() : state.currentPage.publishedAt,
+          ...(action.status === "published" 
+            ? { publishedAt: new Date().toISOString() } 
+            : state.currentPage.publishedAt 
+              ? { publishedAt: state.currentPage.publishedAt }
+              : {}
+          ),
         },
       };
     }
@@ -1424,7 +1434,7 @@ export function basePageBuilderReducer(
         ...state,
         currentPage: {
           ...state.currentPage,
-          themeId: action.themeId ?? undefined,
+          ...(action.themeId ? { themeId: action.themeId } : {}),
         },
       };
     }

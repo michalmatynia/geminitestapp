@@ -74,7 +74,6 @@ export function AdminDraftsPage(): React.JSX.Element {
       <DraftList
         onEdit={handleEdit}
         onCreateNew={handleCreateNew}
-        refreshTrigger={refreshTrigger}
       />
 
       <AppModal

@@ -6,6 +6,17 @@ import Link from "next/link";
 import { useChatbotMemory } from "../hooks/useChatbotMemory";
 import type { ChatbotMemoryItem } from "../types";
 
+interface ExtendedMemoryItem extends ChatbotMemoryItem {
+  memoryKey?: string;
+  summary?: string;
+  content?: string;
+  tags?: string[];
+  importance?: number;
+  runId?: string;
+  lastAccessedAt?: string;
+  metadata?: Record<string, unknown>;
+}
+
 const formatDate = (value?: string | null): string => {
   if (!value) return "—";
   const date = new Date(value);
@@ -28,7 +39,8 @@ export default function AgentMemoryPage(): React.JSX.Element {
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
-  const { data: items = [], isLoading: loading, error } = useChatbotMemory(queryString);
+  const { data: itemsData = [], isLoading: loading, error } = useChatbotMemory(queryString);
+  const items = itemsData as ExtendedMemoryItem[];
 
   return (
     <div className="container mx-auto py-10">
@@ -88,26 +100,26 @@ export default function AgentMemoryPage(): React.JSX.Element {
           {loading ? (
             <p className="text-gray-400">Loading memory…</p>
           ) : error ? (
-            <p className="text-rose-300">{error?.message || String(error)}</p>
+            <p className="text-rose-300">{(error as Error).message || String(error)}</p>
           ) : items.length === 0 ? (
             <p className="text-gray-400">No memory entries found.</p>
           ) : (
             <div className="space-y-3">
-              {items.map((item: ChatbotMemoryItem): React.JSX.Element => (
+              {items.map((item: ExtendedMemoryItem): React.JSX.Element => (
                 <div
                   key={item.id}
                   className="rounded-md border border-border bg-card p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
-                    <span>Key: {(item as any).memoryKey || item.key}</span>
+                    <span>Key: {item.memoryKey || item.key}</span>
                     <span>Updated: {formatDate(item.updatedAt)}</span>
                   </div>
                   <p className="mt-2 text-sm text-white">
-                    {(item as any).summary || (item as any).content?.slice(0, 240) || item.value.slice(0, 240)}
+                    {item.summary || item.content?.slice(0, 240) || item.value.slice(0, 240)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-400">
-                    {(item as any).tags?.length ? (
-                      (item as any).tags.map((tagValue: string): React.JSX.Element => (
+                    {item.tags?.length ? (
+                      item.tags.map((tagValue: string): React.JSX.Element => (
                         <span
                           key={`${item.id}-${tagValue}`}
                           className="rounded-full border border-border bg-gray-900 px-2 py-[1px]"
@@ -118,12 +130,12 @@ export default function AgentMemoryPage(): React.JSX.Element {
                     ) : (
                       <span>No tags</span>
                     )}
-                    <span>Importance: {(item as any).importance ?? "—"}</span>
-                    <span>Run: {(item as any).runId ?? "—"}</span>
+                    <span>Importance: {item.importance ?? "—"}</span>
+                    <span>Run: {item.runId ?? "—"}</span>
                   </div>
                   <div className="mt-2 text-xs text-gray-500">
                     Created: {formatDate(item.createdAt)} · Last accessed:{" "}
-                    {formatDate((item as any).lastAccessedAt || item.updatedAt)}
+                    {formatDate(item.lastAccessedAt || item.updatedAt)}
                   </div>
                   <div className="mt-2">
                     <Button
@@ -146,16 +158,16 @@ export default function AgentMemoryPage(): React.JSX.Element {
                           Content
                         </p>
                         <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
-                          {(item as any).content || item.value}
+                          {item.content || item.value}
                         </pre>
                       </div>
-                      {(item as any).metadata ? (
+                      {item.metadata ? (
                         <div>
                           <p className="text-[10px] uppercase text-gray-500">
                             Metadata
                           </p>
                           <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
-                            {JSON.stringify((item as any).metadata, null, 2)}
+                            {JSON.stringify(item.metadata, null, 2)}
                           </pre>
                         </div>
                       ) : null}

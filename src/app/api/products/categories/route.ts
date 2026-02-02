@@ -9,7 +9,6 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductCategory } from "@/features/products/types";
 
 const productCategoryCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -56,7 +55,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           id: (rest as { id?: string }).id ?? fallbackId,
         };
       });
-      return NextResponse.json(normalized as unknown as ProductCategory[]);
+      return NextResponse.json(normalized);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -67,7 +66,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       where: { catalogId },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(categories as unknown as ProductCategory[]);
+    return NextResponse.json(categories);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -122,7 +121,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         updatedAt: now,
       };
       await db.collection("product_categories").insertOne(category);
-      return NextResponse.json(category as unknown as ProductCategory, { status: 201 });
+      return NextResponse.json(category, { status: 201 });
     }
 
     if (!process.env.DATABASE_URL) {
@@ -156,7 +155,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       },
     });
 
-    return NextResponse.json(category as unknown as ProductCategory, { status: 201 });
+    return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

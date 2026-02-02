@@ -7,7 +7,10 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 interface GenerateDescriptionBody {
-  productData?: ProductFormData;
+  productData?: {
+    name_en?: string | null;
+    [key: string]: unknown;
+  };
   imageUrls?: string[];
   visionOutputEnabled?: boolean;
   generationOutputEnabled?: boolean;
@@ -30,7 +33,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const result = await generateProductDescription({
-      productData,
+      productData: productData as ProductFormData,
       imageUrls,
       visionOutputEnabled: body.visionOutputEnabled,
       generationOutputEnabled: body.generationOutputEnabled

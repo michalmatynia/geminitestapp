@@ -409,16 +409,18 @@ export default function ImportsPage(): React.JSX.Element {
     }
     try {
       const selectedIds = Array.from(selectedImportIds);
-      const res = await importMutation.mutateAsync({
+      const importData: any = {
         inventoryId,
         catalogId,
-        templateId: importTemplateId || undefined,
-        limit: limit === "all" ? undefined : Number(limit),
         imageMode,
         uniqueOnly,
         allowDuplicateSku,
-        selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
-      });
+      };
+      if (importTemplateId) importData.templateId = importTemplateId;
+      if (limit !== "all") importData.limit = Number(limit);
+      if (selectedIds.length > 0) importData.selectedIds = selectedIds;
+      
+      const res = await importMutation.mutateAsync(importData);
       setLastResult(res);
       const importedCount = (res as { imported?: number }).imported ?? 0;
       toast(`Imported ${importedCount} products`, { variant: "success" });

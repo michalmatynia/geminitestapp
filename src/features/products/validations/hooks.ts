@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback, useMemo } from "react";
 import { validateProductCreate, validateProductUpdate, type ValidationError } from "./validators";
 import type { ProductCreateInput, ProductUpdateInput } from "./schemas";

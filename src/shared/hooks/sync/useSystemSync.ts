@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useOfflineSync } from "./useOfflineMutation";
+import { useOfflineSync } from "../offline/useOfflineMutation";
 
 interface SystemSyncOptions {
   enabled?: boolean;

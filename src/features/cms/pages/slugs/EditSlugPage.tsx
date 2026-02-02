@@ -22,7 +22,7 @@ export default function EditSlugPageLoader(): React.JSX.Element {
     return <div>Loading...</div>;
   }
 
-  return <EditSlugForm initialSlug={slugQuery.data} id={id} domainId={domainId} />;
+  return <EditSlugForm initialSlug={slugQuery.data} id={id} {...(domainId && { domainId })} />;
 }
 
 function EditSlugForm({
@@ -67,7 +67,9 @@ function EditSlugForm({
       return;
     }
 
-    await updateSlug.mutateAsync({ id, input: slug, domainId });
+    const updateData: any = { id, input: slug };
+    if (domainId) updateData.domainId = domainId;
+    await updateSlug.mutateAsync(updateData);
     if (zoningEnabled) {
       await updateSlugDomains.mutateAsync({ id, domainIds: selectedDomainIds });
     }

@@ -11,7 +11,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Input,
   Label,
   Checkbox,
   Switch,
@@ -172,7 +171,7 @@ export default function SlugsPage(): React.JSX.Element {
                   </Label>
                 </div>
                 {zoningEnabled ? (
-                  <Select value={activeDomainId ?? undefined} onValueChange={handleDomainChange}>
+                  <Select value={activeDomainId || ""} onValueChange={handleDomainChange}>
                     <SelectTrigger className="h-9 w-[220px]">
                       <SelectValue placeholder="Current domain" />
                     </SelectTrigger>
@@ -352,8 +351,8 @@ export default function SlugsPage(): React.JSX.Element {
 
       <ConfirmDialog
         open={!!slugToDelete}
-        onOpenChange={(open) => !open && setSlugToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onOpenChange={(open: boolean) => !open && setSlugToDelete(null)}
+        onConfirm={(): void => { void handleConfirmDelete(); }}
         title="Remove Slug from Zone"
         description="Are you sure you want to remove this slug from the current zone? It will stay in other zones if assigned."
         confirmText="Remove"

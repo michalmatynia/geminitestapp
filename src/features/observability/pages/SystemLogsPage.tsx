@@ -1,12 +1,12 @@
 "use client";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, CopyButton, StatusBadge, ConfirmDialog } from "@/shared/ui";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog } from "@/shared/ui";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
 import { useClearLogsMutation, useRebuildIndexesMutation } from "@/features/observability/hooks/useLogMutations";
 
-import { RefreshCcw, Trash2, Download } from "lucide-react";
+import { RefreshCcw, Trash2, Copy } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
@@ -201,14 +201,20 @@ export default function SystemLogsPage(): React.JSX.Element {
                   <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
                   Refresh
                 </Button>
-                <CopyButton
-                  value={logsJson}
+                <Button
                   variant="outline"
                   size="sm"
-                  showText
                   className="gap-2"
                   disabled={logs.length === 0}
-                />
+                  onClick={() => {
+                    void navigator.clipboard.writeText(logsJson).then(() => {
+                      toast("Copied to clipboard", { variant: "success" });
+                    });
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"

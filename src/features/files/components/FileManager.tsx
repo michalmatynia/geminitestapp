@@ -70,10 +70,15 @@ export default function FileManager({
   }, [filenameSearch, productNameSearch, tagSearchList, enableTagSearch]);
 
   const { data: files = [] } = useFiles(queryParams);
-  const assetFilters = useMemo(() => ({
-    search: filenameSearch || null,
-    tags: enableTagSearch && tagSearchList.length > 0 ? tagSearchList : undefined,
-  }), [enableTagSearch, filenameSearch, tagSearchList]);
+  const assetFilters = useMemo(() => {
+    const filters: any = {
+      search: filenameSearch || null,
+    };
+    if (enableTagSearch && tagSearchList.length > 0) {
+      filters.tags = tagSearchList;
+    }
+    return filters;
+  }, [enableTagSearch, filenameSearch, tagSearchList]);
   const { data: assets3d = [] } = useAssets3D(assetFilters);
 
   const resolveFolder = (filepath: string): string => {

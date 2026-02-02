@@ -25,6 +25,7 @@ import { useThemeSettings } from "./ThemeSettingsContext";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
+import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 2000;
@@ -50,6 +51,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
   
   const preferencesQuery = useUserPreferences();
+  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const domainSlugSet = useMemo(
@@ -130,11 +132,12 @@ export function PagePreviewPanel(): React.ReactNode {
   }, [state.currentPage]);
 
   const initialPreviewDraftsEnabled = useMemo((): boolean => {
-    return Boolean(preferencesQuery.data?.cmsPreviewEnabled);
-  }, [preferencesQuery.data?.cmsPreviewEnabled]);
+    return Boolean(userPreferences?.cmsPreviewEnabled);
+  }, [userPreferences?.cmsPreviewEnabled]);
 
   const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
   const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
+
 
   const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return "";

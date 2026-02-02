@@ -5,13 +5,13 @@ import type { ValidationError } from "./validators";
 
 type ValidationContextState = {
   globalErrors: ValidationError[];
-  fieldValidations: Record<string, { isValid: boolean; message?: string }>;
+  fieldValidations: Record<string, { isValid: boolean; message?: string | undefined }>;
   isValidating: boolean;
 };
 
 type ValidationAction = 
   | { type: "SET_GLOBAL_ERRORS"; errors: ValidationError[] }
-  | { type: "SET_FIELD_VALIDATION"; field: string; isValid: boolean; message?: string }
+  | { type: "SET_FIELD_VALIDATION"; field: string; isValid: boolean; message?: string | undefined }
   | { type: "CLEAR_FIELD_VALIDATION"; field: string }
   | { type: "SET_VALIDATING"; isValidating: boolean }
   | { type: "RESET" };

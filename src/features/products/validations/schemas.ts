@@ -8,9 +8,6 @@ const nullishTrimmedString = trimmedString.nullish();
 const positiveNumber = z.number().int().positive();
 const optionalPositiveNumber = positiveNumber.optional();
 
-// URL validation
-const urlString = z.string().url().or(z.literal(""));
-
 // Array validation helpers
 const stringArray = z.array(z.string()).default([]);
 const imageUrlArray = stringArray.transform(urls => 

@@ -5,11 +5,11 @@ type ModalShellProps = {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  footer?: React.ReactNode;
-  header?: React.ReactNode;
-  bodyClassName?: string;
-  size?: "md" | "lg" | "xl";
-  showClose?: boolean;
+  footer?: React.ReactNode | undefined;
+  header?: React.ReactNode | undefined;
+  bodyClassName?: string | undefined;
+  size?: "md" | "lg" | "xl" | undefined;
+  showClose?: boolean | undefined;
 };
 
 export default function ModalShell({

@@ -13,9 +13,9 @@ export function createConditionalSchema<T extends z.ZodRawShape>(
   return baseSchema.superRefine((data, ctx) => {
     conditions.forEach(({ when, then, field }) => {
       if (when(data)) {
-        const result = then.safeParse(data[field]);
+        const result = then.safeParse((data as any)[field]);
         if (!result.success) {
-          result.error.errors.forEach(error => {
+          result.error.issues.forEach(error => {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: [field as string],
@@ -51,7 +51,8 @@ export function validateFieldDependencies(
       errors.push({
         field,
         message: error,
-        code: "dependency_validation_failed"
+        code: "dependency_validation_failed",
+        severity: 'medium'
       });
     }
   });
@@ -84,7 +85,8 @@ export class ValidationQueue {
         allErrors.push({
           field: "unknown",
           message: "Validation error occurred",
-          code: "validation_exception"
+          code: "validation_exception",
+          severity: 'critical'
         });
       }
     }

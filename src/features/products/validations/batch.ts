@@ -4,7 +4,7 @@ import { withMetrics } from "./metrics";
 export type BatchValidationResult<T> = {
   index: number;
   success: boolean;
-  data?: T;
+  data?: T | undefined;
   errors: ValidationError[];
 };
 
@@ -76,7 +76,8 @@ class BatchValidator {
             errors: [{
               field: 'root',
               message: error instanceof Error ? error.message : 'Validation failed',
-              code: 'validation_exception'
+              code: 'validation_exception',
+              severity: 'critical'
             }]
           };
         }
@@ -128,7 +129,8 @@ class BatchValidator {
         errors.push({
           field: 'batch',
           message: `Duplicate ${field} "${value}" found at indices: ${indices.join(', ')}`,
-          code: 'duplicate_value'
+          code: 'duplicate_value',
+          severity: 'high'
         });
       }
     });

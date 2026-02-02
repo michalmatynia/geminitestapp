@@ -4,24 +4,24 @@ export type ValidationStream = {
   id: string;
   status: 'pending' | 'validating' | 'completed' | 'error';
   progress: number;
-  currentField?: string;
+  currentField?: string | undefined;
   errors: ValidationError[];
   data?: any;
 };
 
 export type StreamValidationOptions = {
-  debounceMs?: number;
-  fields?: string[];
-  onProgress?: (stream: ValidationStream) => void;
-  onComplete?: (stream: ValidationStream) => void;
-  onError?: (stream: ValidationStream) => void;
+  debounceMs?: number | undefined;
+  fields?: string[] | undefined;
+  onProgress?: ((stream: ValidationStream) => void) | undefined;
+  onComplete?: ((stream: ValidationStream) => void) | undefined;
+  onError?: ((stream: ValidationStream) => void) | undefined;
 };
 
 class ValidationStreamer {
   private streams = new Map<string, ValidationStream>();
   private timers = new Map<string, NodeJS.Timeout>();
 
-  createStream(id: string, options: StreamValidationOptions = {}): ValidationStream {
+  createStream(id: string, _options: StreamValidationOptions = {}): ValidationStream {
     const stream: ValidationStream = {
       id,
       status: 'pending',
@@ -64,6 +64,8 @@ class ValidationStreamer {
 
           for (let i = 0; i < fields.length; i++) {
             const field = fields[i];
+            if (field === undefined) continue;
+            
             stream.currentField = field;
             stream.progress = ((i + 1) / totalFields) * 100;
             
@@ -105,7 +107,8 @@ class ValidationStreamer {
         stream.errors = [{
           field: 'stream',
           message: error instanceof Error ? error.message : 'Stream validation failed',
-          code: 'stream_error'
+          code: 'stream_error',
+          severity: 'high'
         }];
         onError?.(stream);
       }
@@ -133,7 +136,8 @@ class ValidationStreamer {
       stream.errors = [{
         field: 'stream',
         message: 'Validation cancelled',
-        code: 'cancelled'
+        code: 'cancelled',
+        severity: 'low'
       }];
     }
   }

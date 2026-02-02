@@ -5,8 +5,6 @@
 
 import {
   validateProductCreate,
-  validateProductUpdate,
-  type ProductCreateInput,
 } from "@/features/products/validations";
 
 // Basic validation usage

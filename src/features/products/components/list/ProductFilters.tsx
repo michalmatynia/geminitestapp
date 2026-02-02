@@ -176,8 +176,8 @@ interface ProductSelectionActionsProps {
   data?: ProductWithImages[];
   rowSelection?: RowSelectionState;
   setRowSelection?: (selection: RowSelectionState) => void;
-  onSelectAllGlobal?: () => Promise<void>;
-  loadingGlobal?: boolean;
+  onSelectAllGlobal?: (() => Promise<void>) | undefined;
+  loadingGlobal?: boolean | undefined;
   onDeleteSelected?: () => Promise<void>;
   onAddToMarketplace?: () => void;
 }

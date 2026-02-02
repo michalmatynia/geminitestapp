@@ -67,12 +67,12 @@ class ValidationMetrics {
       if (!performanceByValidation[metric.name]) {
         performanceByValidation[metric.name] = { count: 0, avgDuration: 0, successRate: 0 };
       }
-      performanceByValidation[metric.name].count++;
+      performanceByValidation[metric.name]!.count++;
     });
 
     Object.keys(performanceByValidation).forEach(name => {
       const nameMetrics = recentMetrics.filter(m => m.name === name);
-      const stats = performanceByValidation[name];
+      const stats = performanceByValidation[name]!;
       stats.avgDuration = nameMetrics.reduce((sum, m) => sum + m.duration, 0) / nameMetrics.length;
       stats.successRate = nameMetrics.filter(m => m.success).length / nameMetrics.length;
     });
@@ -163,9 +163,10 @@ export function getValidationHealth(): {
   }
 
   // Check for common errors
-  if (stats.commonErrors.length > 0 && stats.commonErrors[0].count > stats.totalValidations * 0.3) {
+  const mostCommonError = stats.commonErrors[0];
+  if (mostCommonError && mostCommonError.count > stats.totalValidations * 0.3) {
     status = status === 'unhealthy' ? 'unhealthy' : 'degraded';
-    issues.push(`High error rate for field: ${stats.commonErrors[0].field}`);
+    issues.push(`High error rate for field: ${mostCommonError.field}`);
   }
 
   return { status, metrics: stats, issues };

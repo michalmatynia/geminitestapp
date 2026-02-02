@@ -39,7 +39,8 @@ const defaultConfig: ValidationConfig = {
           return [{
             field: "supplierLink",
             message: "Supplier link is required when supplier name is provided",
-            code: "business_rule_violation"
+            code: "business_rule_violation",
+            severity: "medium"
           }];
         }
         return [];
@@ -56,7 +57,8 @@ const defaultConfig: ValidationConfig = {
           errors.push({
             field: "name_en",
             message: "English name is required when any language name is provided",
-            code: "multilingual_rule"
+            code: "multilingual_rule",
+            severity: "medium"
           });
         }
         
@@ -80,7 +82,7 @@ export function resetValidationConfig(): void {
   currentConfig = { ...defaultConfig };
 }
 
-export function validateWithConfig(data: any, schema: z.ZodSchema): ValidationError[] {
+export function validateWithConfig(data: any, _schema: z.ZodSchema): ValidationError[] {
   const errors: ValidationError[] = [];
   
   // Apply custom field validators
@@ -88,7 +90,7 @@ export function validateWithConfig(data: any, schema: z.ZodSchema): ValidationEr
     if (data[field] !== undefined) {
       const error = validator(data[field]);
       if (error) {
-        errors.push({ field, message: error, code: "custom_validation" });
+        errors.push({ field, message: error, code: "custom_validation", severity: "medium" });
       }
     }
   });
@@ -101,28 +103,32 @@ export function validateWithConfig(data: any, schema: z.ZodSchema): ValidationEr
         errors.push({
           field,
           message: `${field} must be at least ${constraints.min}`,
-          code: "constraint_violation"
+          code: "constraint_violation",
+          severity: "medium"
         });
       }
       if (constraints.max !== undefined && value > constraints.max) {
         errors.push({
           field,
           message: `${field} must be at most ${constraints.max}`,
-          code: "constraint_violation"
+          code: "constraint_violation",
+          severity: "medium"
         });
       }
       if (constraints.pattern && typeof value === "string" && !constraints.pattern.test(value)) {
         errors.push({
           field,
           message: `${field} format is invalid`,
-          code: "pattern_mismatch"
+          code: "pattern_mismatch",
+          severity: "medium"
         });
       }
       if (constraints.custom && !constraints.custom(value)) {
         errors.push({
           field,
           message: `${field} failed custom validation`,
-          code: "custom_constraint"
+          code: "custom_constraint",
+          severity: "medium"
         });
       }
     }

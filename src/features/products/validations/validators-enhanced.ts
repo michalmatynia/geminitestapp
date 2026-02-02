@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { ProductCreateInput, ProductUpdateInput } from "./schemas";
 import { validateWithConfig } from "./config";
 import { withMetrics } from "./metrics";
 import { withCache } from "./cache";
@@ -8,33 +7,33 @@ import { withCache } from "./cache";
 export type ValidationResult<T> = {
   success: true;
   data: T;
-  warnings?: ValidationError[];
-  metadata?: ValidationMetadata;
+  warnings?: ValidationError[] | undefined;
+  metadata?: ValidationMetadata | undefined;
 } | {
   success: false;
   errors: ValidationError[];
-  warnings?: ValidationError[];
-  metadata?: ValidationMetadata;
+  warnings?: ValidationError[] | undefined;
+  metadata?: ValidationMetadata | undefined;
 };
 
 export type ValidationError = {
   field: string;
   message: string;
   code: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  context?: Record<string, any>;
+  severity?: 'low' | 'medium' | 'high' | 'critical' | undefined;
+  context?: Record<string, any> | undefined;
 };
 
 export type ValidationMetadata = {
   validationTime: number;
   rulesApplied: string[];
-  cacheHit?: boolean;
-  source: 'schema' | 'config' | 'external' | 'custom';
+  cacheHit?: boolean | undefined;
+  source: 'schema' | 'config' | 'external' | 'custom' | 'batch';
 };
 
 // Enhanced error transformation with context
 function transformZodError(error: z.ZodError, source: string = 'schema'): ValidationError[] {
-  return error.errors.map(err => ({
+  return error.issues.map((err: z.ZodIssue) => ({
     field: err.path.join('.') || 'root',
     message: err.message,
     code: err.code,
@@ -99,7 +98,7 @@ async function validateWithEnhancedErrorHandling<T>(
         if (error.code.includes('warning') || error.severity === 'low') {
           warnings.push(error);
         } else {
-          errors.push({ ...error, source: 'config' } as ValidationError);
+          errors.push({ ...error, source: 'config' } as any);
         }
       });
       metadata.rulesApplied.push('config');
@@ -126,7 +125,7 @@ async function validateWithEnhancedErrorHandling<T>(
     
     return {
       success: true,
-      data: result.data,
+      data: result.data as T,
       warnings: warnings.length > 0 ? warnings : undefined,
       metadata
     };
@@ -154,7 +153,7 @@ const validateProductCreateCached = withCache(
     data,
     async () => {
       const { productCreateSchema } = await import("./schemas");
-      return { schema: productCreateSchema };
+      return { schema: productCreateSchema as z.ZodSchema<any> };
     },
     'product_create'
   ),
@@ -167,7 +166,7 @@ const validateProductUpdateCached = withCache(
     data,
     async () => {
       const { productUpdateSchema } = await import("./schemas");
-      return { schema: productUpdateSchema };
+      return { schema: productUpdateSchema as z.ZodSchema<any> };
     },
     'product_update'
   ),
@@ -270,7 +269,7 @@ export function getValidationSummary(result: ValidationResult<any>): {
     if (!fieldErrors[error.field]) {
       fieldErrors[error.field] = [];
     }
-    fieldErrors[error.field].push(error);
+    fieldErrors[error.field]!.push(error);
   });
   
   return {

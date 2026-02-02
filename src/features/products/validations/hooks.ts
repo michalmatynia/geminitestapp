@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { validateProductCreate, validateProductUpdate, type ValidationError } from "./validators";
-import type { ProductCreateInput, ProductUpdateInput } from "./schemas";
 
 export type UseValidationOptions = {
   validateOnChange?: boolean;
@@ -16,7 +15,7 @@ export type ValidationState = {
   isValidating: boolean;
 };
 
-export function useProductCreateValidation(options: UseValidationOptions = {}) {
+export function useProductCreateValidation(_options: UseValidationOptions = {}) {
   const [validationState, setValidationState] = useState<ValidationState>({
     isValid: false,
     errors: [],
@@ -68,7 +67,7 @@ export function useProductCreateValidation(options: UseValidationOptions = {}) {
   };
 }
 
-export function useProductUpdateValidation(options: UseValidationOptions = {}) {
+export function useProductUpdateValidation(_options: UseValidationOptions = {}) {
   const [validationState, setValidationState] = useState<ValidationState>({
     isValid: true, // Updates are more permissive
     errors: [],

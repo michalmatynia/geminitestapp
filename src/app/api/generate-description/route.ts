@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateProductDescription } from "@/features/products/services/aiDescriptionService";
-import type { ProductFormData } from "@/features/products/types/forms";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+import { productCreateSchema } from "@/features/products/validations/schemas"; // Import schema
 
 interface GenerateDescriptionBody {
   productData?: {
@@ -23,17 +23,20 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   try {
     const body = (await req.json()) as GenerateDescriptionBody;
 
-    const productData = body.productData;
+    const rawProductData = body.productData;
     const imageUrls = Array.isArray(body.imageUrls)
       ? body.imageUrls.filter((item: unknown): item is string => typeof item === "string")
       : [];
 
-    if (!productData?.name_en) {
+    if (!rawProductData?.name_en) {
       throw validationError("Product name is required", { field: "name_en" });
     }
 
+    // Validate and transform rawProductData to ProductFormData
+    const productData = productCreateSchema.parse(rawProductData);
+
     const result = await generateProductDescription({
-      productData: productData ? (productData as ProductFormData) : { name_en: "" }, // Provide a default or handle appropriately
+      productData: productData,
       imageUrls,
       visionOutputEnabled: body.visionOutputEnabled,
       generationOutputEnabled: body.generationOutputEnabled

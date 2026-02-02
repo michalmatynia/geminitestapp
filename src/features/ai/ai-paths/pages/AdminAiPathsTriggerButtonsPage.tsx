@@ -85,7 +85,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               typeof config.name === "string" && config.name.trim().length > 0
                 ? config.name.trim()
                 : `Path ${id.slice(0, 6)}`;
-            const nodes: AiNode[] = Array.isArray(config.nodes) ? (config.nodes as AiNode[]) : [];
+            const nodes: AiNode[] = Array.isArray(config.nodes) ? config.nodes : [];
             return { id, name, nodes };
           });
       };
@@ -97,9 +97,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           const prefs = (await prefsRes.json()) as PrefsResponse;
           const order: string[] = Array.isArray(prefs.aiPathsPathIndex)
             ? prefs.aiPathsPathIndex
-                .map((item: { id?: string } | unknown) =>
+                .map((item: { id?: string }) =>
                   typeof item === "object" && item !== null && "id" in item
-                    ? ((item as { id?: unknown }).id as string | undefined)
+                    ? (item.id as string | undefined)
                     : undefined
                 )
                 .filter((id: string | undefined): id is string => typeof id === "string" && id.trim().length > 0)
@@ -116,7 +116,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               configs = {};
             }
           } else if (rawConfigs && typeof rawConfigs === "object") {
-            configs = rawConfigs as unknown as Record<string, PathConfig>;
+            configs = rawConfigs as Record<string, PathConfig>;
           }
 
           const fromPrefs = Object.keys(configs).length > 0 ? tryBuildFromConfigs(configs, order) : [];
@@ -133,15 +133,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
         const map = new Map<string, string>(
           settings
-            .filter((item) => typeof item?.key === "string" && typeof item?.value === "string")
-            .map((item) => [item.key, item.value])
+            .filter((item: { key: string; value: string }) => typeof item?.key === "string" && typeof item?.value === "string")
+            .map((item: { key: string; value: string }) => [item.key, item.value])
         );
         const indexRaw = map.get(PATH_INDEX_KEY);
         if (!indexRaw) return [];
         let metas: PathMeta[] = [];
         try {
-          const parsed = JSON.parse(indexRaw) as unknown;
-          metas = Array.isArray(parsed) ? (parsed as PathMeta[]) : [];
+          const parsed = JSON.parse(indexRaw) as PathMeta[];
+          metas = Array.isArray(parsed) ? parsed : [];
         } catch {
           metas = [];
         }
@@ -172,7 +172,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const attachmentsByTriggerId = useMemo(() => {
     const paths = pathsQuery.data ?? [];
     const map = new Map<string, Map<string, string>>();
-    paths.forEach((path) => {
+    paths.forEach((path: { id: string; name: string; nodes: AiNode[] }) => {
       const nodes = Array.isArray(path.nodes) ? path.nodes : [];
       nodes.forEach((node: AiNode) => {
         if (node.type !== "trigger") return;
@@ -185,10 +185,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     });
 
     const result = new Map<string, PathAttachment[]>();
-    map.forEach((byPath, eventId) => {
+    map.forEach((byPath: Map<string, string>, eventId: string) => {
       const list: PathAttachment[] = Array.from(byPath.entries())
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .map(([id, name]: [string, string]) => ({ id, name }))
+        .sort((a: PathAttachment, b: PathAttachment) => a.name.localeCompare(b.name));
       result.set(eventId, list);
     });
     return result;
@@ -435,8 +435,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Label>Name</Label>
             <Input
               value={draft.name}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setDraft((prev) => ({ ...prev, name: event.target.value }))
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, name: event.target.value }))
               }
               placeholder="e.g. Generate SEO Title"
             />
@@ -446,8 +446,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Label>Icon</Label>
             <Select
               value={draft.iconId ?? "none"}
-              onValueChange={(value: string) =>
-                setDraft((prev) => ({ ...prev, iconId: value === "none" ? null : value }))
+              onValueChange={(value: string): void =>
+                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, iconId: value === "none" ? null : value }))
               }
             >
               <SelectTrigger className="w-full">
@@ -455,7 +455,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No icon</SelectItem>
-                {PRODUCT_ICONS.map((item) => (
+                {PRODUCT_ICONS.map((item: { id: string; label: string; icon: React.FC<React.SVGProps<SVGSVGElement>> }): React.JSX.Element => (
                   <SelectItem key={item.id} value={item.id}>
                     {item.label}
                   </SelectItem>
@@ -467,7 +467,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           <div className="space-y-3">
             <Label>Attach to</Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {LOCATION_OPTIONS.map((option) => {
+              {LOCATION_OPTIONS.map((option: { value: AiTriggerButtonLocation; label: string }): React.JSX.Element => {
                 const checked = draft.locations.includes(option.value);
                 return (
                   <label
@@ -476,9 +476,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                   >
                     <Checkbox
                       checked={checked}
-                      onCheckedChange={(value) => {
+                      onCheckedChange={(value: boolean | "indeterminate"): void => {
                         const nextChecked = Boolean(value);
-                        setDraft((prev) => {
+                        setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
                           const next = new Set(prev.locations);
                           if (nextChecked) next.add(option.value);
                           else next.delete(option.value);
@@ -497,15 +497,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Label>Trigger condition</Label>
             <Select
               value={draft.mode}
-              onValueChange={(value: string) =>
-                setDraft((prev) => ({ ...prev, mode: value as AiTriggerButtonMode }))
+              onValueChange={(value: string): void =>
+                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
               }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select mode" />
               </SelectTrigger>
               <SelectContent>
-                {MODE_OPTIONS.map((option) => (
+                {MODE_OPTIONS.map((option: { value: AiTriggerButtonMode; label: string }): React.JSX.Element => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -527,7 +527,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 }
                 return (
                   <div className="flex flex-wrap gap-1">
-                    {usedIn.map((path) => (
+                    {usedIn.map((path: PathAttachment): React.JSX.Element => (
                       <Button
                         key={path.id}
                         type="button"
@@ -547,10 +547,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           ) : null}
 
           <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditorOpen(false)} disabled={saving}>
+            <Button variant="outline" onClick={(): void => setEditorOpen(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={() => void handleSave()} disabled={saving}>
+            <Button onClick={(): Promise<void> => handleSave()} disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>
           </div>

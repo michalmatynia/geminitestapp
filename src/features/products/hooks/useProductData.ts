@@ -225,34 +225,29 @@ export function useProductData({
   }, [countQuery.data, pageSize]);
 
   // Keep pagination valid when filters change.
-  // Without this, switching catalog/filter while being on a high page can show an empty table.
-  const previousFiltersRef = useRef<string>("");
-  useEffect(() => {
-    const currentFiltersSignature = JSON.stringify({
-      search,
-      sku,
-      minPrice,
-      maxPrice,
-      startDate,
-      endDate,
-      catalogFilter,
-      pageSize,
-    });
-    if (
-      previousFiltersRef.current &&
-      previousFiltersRef.current !== currentFiltersSignature
-    ) {
-      setPage(1);
-    }
-    previousFiltersRef.current = currentFiltersSignature;
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
+  // We use the adjustment during render pattern to avoid cascading renders in useEffect.
+  const currentFiltersSignature = JSON.stringify({
+    search,
+    sku,
+    minPrice,
+    maxPrice,
+    startDate,
+    endDate,
+    catalogFilter,
+    pageSize,
+  });
+
+  const [lastFiltersSignature, setLastFiltersSignature] = useState(currentFiltersSignature);
+
+  if (lastFiltersSignature !== currentFiltersSignature) {
+    setLastFiltersSignature(currentFiltersSignature);
+    setPage(1);
+  }
 
   // Clamp page when current page no longer exists after count change.
-  useEffect(() => {
-    if (page > 1 && totalPages > 0 && page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+  if (page > 1 && totalPages > 0 && page > totalPages) {
+    setPage(totalPages);
+  }
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["products"] });

@@ -10,9 +10,9 @@ type AppModalProps = {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
   title: string;
-  titleHidden?: boolean;
-  titleClassName?: string;
-  contentClassName?: string;
+  titleHidden?: boolean | undefined;
+  titleClassName?: string | undefined;
+  contentClassName?: string | undefined;
   closeOnOutside?: boolean;
   closeOnEscape?: boolean;
   children: React.ReactNode;

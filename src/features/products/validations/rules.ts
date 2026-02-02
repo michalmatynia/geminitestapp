@@ -132,7 +132,8 @@ class ValidationRuleEngine {
           errors.push({
             field: action.field || 'rule',
             message: action.message || `Rule ${rule.name} failed`,
-            code: action.code || 'rule_violation'
+            code: action.code || 'rule_violation',
+            severity: action.severity || 'medium'
           });
           break;
 
@@ -140,7 +141,8 @@ class ValidationRuleEngine {
           warnings.push({
             field: action.field || 'rule',
             message: action.message || `Rule ${rule.name} warning`,
-            code: action.code || 'rule_warning'
+            code: action.code || 'rule_warning',
+            severity: action.severity || 'low'
           });
           break;
 

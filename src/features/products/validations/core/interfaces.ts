@@ -25,12 +25,12 @@ export interface IValidationRuleEngine {
 export type ValidationResult<T> = {
   success: true;
   data: T;
-  warnings?: ValidationError[];
+  warnings?: ValidationError[] | undefined;
   metadata: ValidationMetadata;
 } | {
   success: false;
   errors: ValidationError[];
-  warnings?: ValidationError[];
+  warnings?: ValidationError[] | undefined;
   metadata: ValidationMetadata;
 };
 
@@ -38,7 +38,7 @@ export type FieldValidationResult = {
   field: string;
   isValid: boolean;
   errors: ValidationError[];
-  warnings?: ValidationError[];
+  warnings?: ValidationError[] | undefined;
 };
 
 export type ValidationError = {
@@ -46,7 +46,7 @@ export type ValidationError = {
   message: string;
   code: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  context?: Record<string, any>;
+  context?: Record<string, any> | undefined;
 };
 
 export type ValidationMetadata = {

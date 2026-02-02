@@ -134,7 +134,7 @@ export class StandardErrors {
     return new ApiErrorBuilder('DUPLICATE_RESOURCE', 'Resource already exists')
       .withDetails([{
         field,
-        message: `${field} '${value}' already exists`,
+        message: `${field} '${String(value)}' already exists`,
         code: 'DUPLICATE_VALUE',
         value
       }]);

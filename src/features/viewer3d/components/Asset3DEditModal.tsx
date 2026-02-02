@@ -6,10 +6,9 @@ import {
   Input,
   Label,
   AppModal,
-  ModalShell,
   LoadingButton,
 } from "@/shared/ui";
-import { Save, X, Plus, Loader2 } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import type { Asset3DRecord, Asset3DUpdateInput } from "../types";
 import { updateAsset3D } from "../api";
 

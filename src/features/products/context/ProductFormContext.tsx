@@ -45,7 +45,7 @@ import { useProductMetadata } from "@/features/products/hooks/useProductMetadata
 import { delay } from "@/shared/utils";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/features/products/hooks/useProductData";
 
-interface ProductFormContextType {
+export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
   errors: FieldErrors<ProductFormData>;

@@ -2,12 +2,19 @@
 export * from "./core";
 
 // Re-export schemas and types
-export {
+import {
   productCreateSchema,
   productUpdateSchema,
   type ProductCreateInput,
   type ProductUpdateInput,
 } from "./schemas";
+
+export {
+  productCreateSchema,
+  productUpdateSchema,
+  type ProductCreateInput,
+  type ProductUpdateInput,
+};
 
 // Re-export enhanced validation utilities
 export {

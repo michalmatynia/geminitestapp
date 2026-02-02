@@ -1,5 +1,3 @@
-import { z } from "zod";
-import type { ProductCreateInput, ProductUpdateInput } from "./schemas";
 import { ValidationApp } from "./core";
 
 // Re-export core types for backward compatibility
@@ -49,7 +47,7 @@ export function getValidationSummary(result: any): {
     if (!fieldErrors[error.field]) {
       fieldErrors[error.field] = [];
     }
-    fieldErrors[error.field].push(error);
+    fieldErrors[error.field]!.push(error);
   });
   
   return {

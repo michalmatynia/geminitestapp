@@ -142,8 +142,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
             <TabsList>
               {filteredLanguages.map((language: { name: string; code: string }) => {
-                const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
-                const fieldValue = allValues[fieldName];
+                const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
+                const fieldValue = allValues[fieldName] as string | undefined;
                 return (
                   <TabsTrigger
                     key={language.code}
@@ -160,18 +160,19 @@ export default function ProductFormGeneral(): React.JSX.Element {
               })}
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
-              const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
+              const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
+              const error = errors[fieldName];
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
                   <Label htmlFor={fieldName}>{language.name} Name</Label>
                   <Input
                     id={fieldName}
                     {...register(fieldName)}
-                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                    aria-invalid={error ? "true" : "false"}
                   />
-                  {errors[fieldName] && (
+                  {error && (
                     <p className="text-red-500 text-sm mt-1" role="alert">
-                      {errors[fieldName]?.message}
+                      {error.message}
                     </p>
                   )}
                 </TabsContent>
@@ -182,8 +183,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
             <TabsList>
               {filteredLanguages.map((language: { name: string; code: string }) => {
-                const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
-                const fieldValue = allValues[fieldName];
+                const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
+                const fieldValue = allValues[fieldName] as string | undefined;
                 return (
                   <TabsTrigger
                     key={language.code}
@@ -200,18 +201,19 @@ export default function ProductFormGeneral(): React.JSX.Element {
               })}
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
-              const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
+              const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
+              const error = errors[fieldName];
               return (
                 <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
                   <Label htmlFor={fieldName}>{language.name} Description</Label>
                   <Textarea
                     id={fieldName}
                     {...register(fieldName)}
-                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                    aria-invalid={error ? "true" : "false"}
                   />
-                  {errors[fieldName] && (
+                  {error && (
                     <p className="text-red-500 text-sm mt-1" role="alert">
-                      {errors[fieldName]?.message}
+                      {error.message}
                     </p>
                   )}
                   {language.code === "EN" && (

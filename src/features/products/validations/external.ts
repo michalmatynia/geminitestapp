@@ -89,7 +89,8 @@ class ExternalValidationService {
       errors: [{
         field: 'external_validation',
         message: `External validation failed: ${lastError?.message}`,
-        code: 'external_service_error'
+        code: 'external_service_error',
+        severity: 'medium'
       }],
       provider: provider.name,
     };
@@ -111,7 +112,8 @@ class ExternalValidationService {
         errors: [{
           field: 'provider',
           message: `Unknown validation provider: ${providerName}`,
-          code: 'unknown_provider'
+          code: 'unknown_provider',
+          severity: 'medium'
         }],
         provider: providerName,
       };

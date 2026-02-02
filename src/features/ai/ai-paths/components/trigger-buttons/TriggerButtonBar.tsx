@@ -21,6 +21,8 @@ type TriggerButtonBarProps = {
 
 const TOGGLE_STORAGE_KEY = "aiPathsTriggerButtonToggles";
 
+const TOGGLE_STORAGE_KEY = "aiPathsTriggerButtonToggles";
+
 const readToggleMap = (): Record<string, boolean> => {
   if (typeof window === "undefined") return {};
   try {
@@ -52,7 +54,7 @@ export function TriggerButtonBar({
 }: TriggerButtonBarProps): React.JSX.Element | null {
   const { toast } = useToast();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
-  const [toggleMap, setToggleMap] = useState<Record<string, boolean>>({});
+  const [toggleMap, setToggleMap] = useState<Record<string, boolean>>(readToggleMap());
 
   const triggerButtonsQuery = useQuery({
     queryKey: ["ai-paths", "trigger-buttons"],
@@ -65,8 +67,8 @@ export function TriggerButtonBar({
   });
 
   useEffect(() => {
-    setToggleMap((_prev) => readToggleMap());
-  }, []);
+    setToggleMap((prev) => readToggleMap());
+  }, [readToggleMap]);
 
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];

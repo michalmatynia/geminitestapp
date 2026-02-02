@@ -3,7 +3,7 @@ import { validateProductCreate, validateProductUpdate, type ValidationError } fr
 
 // Validation decorator for methods
 export function ValidateInput(schema: z.ZodSchema) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -11,10 +11,11 @@ export function ValidateInput(schema: z.ZodSchema) {
       const result = schema.safeParse(input);
       
       if (!result.success) {
-        const errors: ValidationError[] = result.error.errors.map(err => ({
+        const errors: ValidationError[] = result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
+          severity: 'high'
         }));
         
         throw new ValidationException("Input validation failed", errors);
@@ -29,7 +30,7 @@ export function ValidateInput(schema: z.ZodSchema) {
 
 // Validation decorator for product creation
 export function ValidateProductCreate() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -49,7 +50,7 @@ export function ValidateProductCreate() {
 
 // Validation decorator for product updates
 export function ValidateProductUpdate() {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -101,7 +102,7 @@ export class ValidationResult<T> {
   }
 
   static failure<T>(errors: ValidationError[]): ValidationResult<T> {
-    return new ValidationResult(false, undefined, errors);
+    return new ValidationResult(false, undefined, errors) as ValidationResult<T>;
   }
 
   map<U>(fn: (data: T) => U): ValidationResult<U> {

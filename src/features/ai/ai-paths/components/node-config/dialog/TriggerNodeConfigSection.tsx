@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
@@ -9,8 +7,13 @@ import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
 import { TRIGGER_EVENTS, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
+type TriggerNodeConfigSectionProps = {
+  selectedNode: AiNode;
+  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
+};
+
 // Query for trigger buttons (always called)
-const useTriggerButtonsQuery = () => useQuery({
+const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => useQuery({
   queryKey: ["ai-paths", "trigger-buttons"],
   queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
     const result = await triggerButtonsApi.list();
@@ -41,18 +44,19 @@ export function TriggerNodeConfigSection({
 
   if (selectedNode.type !== "trigger") return null;
 
-
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
   };
   const isScheduled = triggerConfig.event === "scheduled_run";
+
+  if (!selectedNode.config) return null; // Added type guard
 
   return (
     <div className="space-y-4">
       <div>
         <Label className="text-xs text-gray-400">Trigger Action</Label>
         <Select
-          value={triggerConfig.event}
+          value={triggerConfig.event} // Removed unnecessary type assertion
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               trigger: { event: value },

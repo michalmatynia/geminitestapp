@@ -11,7 +11,7 @@ export type ValidationStep<T = any> = {
 
 export type PipelineResult<T> = {
   success: boolean;
-  data?: T;
+  data?: T | undefined;
   errors: ValidationError[];
   stepResults: Record<string, { success: boolean; errors: ValidationError[] }>;
 };
@@ -43,7 +43,8 @@ export class ValidationPipeline<T = any> {
         allErrors.push({
           field: "middleware",
           message: error instanceof Error ? error.message : "Middleware error",
-          code: "middleware_error"
+          code: "middleware_error",
+          severity: 'critical'
         });
         return {
           success: false,
@@ -66,7 +67,8 @@ export class ValidationPipeline<T = any> {
             errors: [{
               field: "dependency",
               message: `Step ${step.name} skipped due to failed dependencies`,
-              code: "dependency_failed"
+              code: "dependency_failed",
+              severity: 'low'
             }]
           };
           continue;
@@ -86,7 +88,8 @@ export class ValidationPipeline<T = any> {
         const validationError: ValidationError = {
           field: step.name,
           message: error instanceof Error ? error.message : "Validation step failed",
-          code: "step_execution_error"
+          code: "step_execution_error",
+          severity: 'high'
         };
         
         stepResults[step.name] = {
@@ -127,10 +130,11 @@ export function createProductValidationPipeline(): ValidationPipeline {
       validator: async (data) => {
         const { productCreateSchema } = await import("./schemas");
         const result = productCreateSchema.safeParse(data);
-        return result.success ? [] : result.error.errors.map(err => ({
+        return result.success ? [] : result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
+          severity: 'high'
         }));
       }
     })
@@ -147,7 +151,8 @@ export function createProductValidationPipeline(): ValidationPipeline {
           return [{
             field: "sku",
             message: "SKU already exists",
-            code: "duplicate_sku"
+            code: "duplicate_sku",
+            severity: 'medium'
           }];
         }
         return [];
@@ -169,10 +174,11 @@ export function createProductUpdatePipeline(): ValidationPipeline {
       validator: async (data) => {
         const { productUpdateSchema } = await import("./schemas");
         const result = productUpdateSchema.safeParse(data);
-        return result.success ? [] : result.error.errors.map(err => ({
+        return result.success ? [] : result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
+          severity: 'high'
         }));
       }
     })

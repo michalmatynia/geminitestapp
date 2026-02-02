@@ -52,7 +52,7 @@ export function TriggerNodeConfigSection({
             Server Schedule
           </div>
           <div className="mt-1 text-amber-100/80">
-            This trigger runs from server schedules or cron. Simulation input is optional,
+            This trigger runs from server schedules or cron. Context input is optional,
             and manual runs are allowed for testing.
           </div>
         </div>

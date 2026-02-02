@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Checkbox, Input, Label, SectionHeader } from "@/shared/ui";
+import { Button, Checkbox, Input, Label, SectionHeader, Switch } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
@@ -27,6 +27,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(true);
   const [search, setSearch] = useState("");
+  const [includeAllZones, setIncludeAllZones] = useState(false);
   const [manualSelectedSlugIds, setManualSelectedSlugIds] = useState<string[] | null>(null);
   const router = useRouter();
   const updatePage = useUpdatePage();
@@ -65,9 +66,10 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
 
   const filteredDomainSlugs = useMemo((): Slug[] => {
     const term = search.trim().toLowerCase();
-    if (!term) return domainSlugs;
-    return domainSlugs.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
-  }, [domainSlugs, search]);
+    const base = includeAllZones ? allSlugs : domainSlugs;
+    if (!term) return base;
+    return base.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
+  }, [domainSlugs, allSlugs, search, includeAllZones]);
 
   const handleSave = async (): Promise<void> => {
     if (!page) return;
@@ -95,7 +97,17 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="slug-search">Slugs for this zone</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="slug-search">Slugs</Label>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Switch
+                  id="slug-all-zones"
+                  checked={includeAllZones}
+                  onCheckedChange={setIncludeAllZones}
+                />
+                <Label htmlFor="slug-all-zones">All zones</Label>
+              </div>
+            </div>
             <Input
               id="slug-search"
               value={search}
@@ -110,6 +122,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
               ) : (
                 filteredDomainSlugs.map((slug: Slug) => {
                   const checked = selectedSlugIds.includes(slug.id);
+                  const isCrossZone = !domainSlugIds.has(slug.id);
                   return (
                     <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
                       <Checkbox
@@ -123,7 +136,14 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                           });
                         }}
                       />
-                      /{slug.slug}
+                      <span>
+                        /{slug.slug}
+                        {isCrossZone ? (
+                          <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200">
+                            Other zone
+                          </span>
+                        ) : null}
+                      </span>
                     </label>
                   );
                 })
@@ -138,7 +158,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                 Cross-zone slugs
               </p>
               <p className="mt-1 text-xs text-amber-200/80">
-                These slugs are not part of the current zone. Remove them or switch zones.
+                These slugs belong to other zones but can still point to this page.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {crossZoneSlugs.map((slug: Slug) => (

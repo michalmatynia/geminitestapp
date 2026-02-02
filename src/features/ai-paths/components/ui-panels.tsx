@@ -211,15 +211,21 @@ export function DocsTabPanel({
               <span className="text-emerald-200"> context</span>.
             </li>
             <li>
+              <span className="text-white">Trigger → Simulation:</span> Connect
+              <span className="text-cyan-200"> trigger</span> from Trigger to Simulation
+              <span className="text-cyan-200"> trigger</span>.
+            </li>
+            <li>
               <span className="text-white">Simulation → Trigger:</span> Connect
-              <span className="text-cyan-200"> simulation</span> from Simulation to Trigger
-              <span className="text-cyan-200"> simulation</span>.
+              <span className="text-cyan-200"> context</span> from Simulation to Trigger
+              <span className="text-cyan-200"> context</span>.
             </li>
             <li>
               <span className="text-white">Trigger → Viewer:</span> Connect
               <span className="text-amber-200"> context</span>,
               <span className="text-amber-200"> meta</span>, or
-              <span className="text-amber-200"> trigger</span> into Result Viewer.
+              <span className="text-amber-200"> trigger</span> /
+              <span className="text-amber-200"> triggerName</span> into Result Viewer.
             </li>
           </ul>
         </div>
@@ -230,7 +236,8 @@ export function DocsTabPanel({
             <li>Ports must match exactly (e.g. result → result).</li>
             <li>Context Filter accepts context input or can fetch context if left unconnected.</li>
             <li>Viewer is terminal (no outputs).</li>
-            <li>Trigger simulation input only accepts simulation from Simulation.</li>
+            <li>Trigger context input only accepts context from Simulation.</li>
+            <li>Simulation trigger input only accepts trigger from Trigger.</li>
             <li>Multiple wires into the same input are collected as arrays.</li>
             <li>Gate expects valid from a Validator node.</li>
           </ul>
@@ -352,21 +359,23 @@ export function DocsTabPanel({
           <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Trigger</h4>
             <p className="mt-2 text-gray-400">
-              The execution hub. Accepts simulation input and emits trigger,
-              context, and meta outputs. Use Scheduled Run for server-initiated
+              The execution hub. Accepts context input and emits trigger (signal),
+              triggerName (string), context, and meta outputs. Wire Trigger → Simulation to kick off
+              simulation runs. Use Scheduled Run for server-initiated
               periodic jobs.
             </p>
           </div>
           <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Simulation Modal</h4>
             <p className="mt-2 text-gray-400">
-              Emits a simulation payload (e.g. productId) used to emulate a trigger run.
+              Accepts a trigger signal and emits a context payload (e.g. productId)
+              used to emulate a trigger run.
             </p>
           </div>
           <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Result Viewer</h4>
             <p className="mt-2 text-gray-400">
-              Terminal node to inspect outputs. Connect context/meta/trigger or model
+              Terminal node to inspect outputs. Connect context/meta/trigger/triggerName or model
               results to review data.
             </p>
           </div>

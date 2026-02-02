@@ -109,7 +109,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
       type: "viewer",
       title: "Result Viewer",
       description: "Preview description + runtime outputs.",
-      inputs: ["description", "description_en", "context", "meta", "trigger"],
+      inputs: ["description", "description_en", "context", "meta", "trigger", "triggerName"],
       outputs: [],
       position: { x: 1730, y: 600 },
       config: {
@@ -119,6 +119,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
             context: "",
             meta: "",
             trigger: "",
+            triggerName: "",
             description: "",
           },
         },

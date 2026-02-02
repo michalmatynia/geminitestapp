@@ -556,19 +556,35 @@ export function useAiPathsCanvasInteractions({
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
-    const data =
-      event.dataTransfer.getData("application/x-ai-node") ||
-      event.dataTransfer.getData("text/plain");
-    if (!data) return;
+    const types = Array.from(event.dataTransfer.types ?? []);
+    const nodeData = event.dataTransfer.getData("application/x-ai-node");
+    const textData = event.dataTransfer.getData("text/plain");
+    const raw = nodeData || textData;
+    if (!raw) return;
+    if (!nodeData) {
+      const trimmed = raw.trim();
+      if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
+        return;
+      }
+      if (!types.includes("text/plain")) {
+        return;
+      }
+    }
     let payload: NodeDefinition | null = null;
     try {
-      payload = JSON.parse(data) as NodeDefinition;
+      payload = JSON.parse(raw) as NodeDefinition;
     } catch (error) {
-      reportAiPathsError(error, { action: "dropNode", dataPreview: data.slice(0, 120) });
+      reportAiPathsError(
+        error,
+        { action: "dropNode", dataPreview: raw.slice(0, 120) },
+        "Invalid node payload dropped:"
+      );
       toast("Failed to add node. Drag again.", { variant: "error" });
       return;
     }
-    if (!payload) return;
+    if (!payload || typeof payload.type !== "string" || !Array.isArray(payload.inputs) || !Array.isArray(payload.outputs)) {
+      return;
+    }
     const localX = canvasRect
       ? (event.clientX - canvasRect.left) / view.scale
       : (event.clientX - viewport.left - view.x) / view.scale;

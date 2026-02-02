@@ -1092,7 +1092,7 @@ export function CanvasBoard({
                   <div className="text-[10px] uppercase text-lime-200/80">
                     {isScheduledTrigger
                       ? "Server scheduled trigger"
-                      : "Accepts simulation input"}
+                      : "Accepts context input"}
                   </div>
                 )}
                 {node.type === "context" && (
@@ -1102,7 +1102,7 @@ export function CanvasBoard({
                 )}
                 {node.type === "simulation" && (
                   <span className="text-[10px] uppercase text-cyan-300/80">
-                    Connect simulation → Trigger
+                    Wire Trigger ↔ Simulation
                   </span>
                 )}
                 {node.type === "viewer" && (

@@ -82,8 +82,10 @@ export function ParserNodeConfigSection({
     outputMode: "individual",
     presetId: PARSER_PRESETS[0]?.id ?? "custom",
   };
-  const mappings =
-    parserConfig.mappings ?? createParserMappings(selectedNode.outputs);
+  const mappings = React.useMemo(
+    () => parserConfig.mappings ?? createParserMappings(selectedNode.outputs),
+    [parserConfig.mappings, selectedNode.outputs]
+  );
   const draftMappings =
     parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
   const outputMode = parserConfig.outputMode ?? "individual";
@@ -111,46 +113,73 @@ export function ParserNodeConfigSection({
       keyStyle: "path",
       includeContainers: false,
     };
-  const simulationOptions = nodes
-    .filter((node: AiNode): boolean => node.type === "simulation")
-    .map((node: AiNode) => {
-      const simConfig = node.config?.simulation;
-      const entityId =
-        simConfig?.entityId?.trim() || simConfig?.productId?.trim() || "";
-      const entityType = simConfig?.entityType?.trim() || "product";
-      return {
-        id: node.id,
-        label: `${node.title} · ${entityType}:${entityId || "missing id"}`,
-        entityId,
-        entityType,
-      };
-    })
-    .filter((option: { entityId: string }) => option.entityId);
-  const parsedSample = safeParseJson(sampleState.json);
+  const simulationOptions = React.useMemo(
+    () =>
+      nodes
+        .filter((node: AiNode): boolean => node.type === "simulation")
+        .map((node: AiNode) => {
+          const simConfig = node.config?.simulation;
+          const entityId =
+            simConfig?.entityId?.trim() || simConfig?.productId?.trim() || "";
+          const entityType = simConfig?.entityType?.trim() || "product";
+          return {
+            id: node.id,
+            label: `${node.title} · ${entityType}:${entityId || "missing id"}`,
+            entityId,
+            entityType,
+          };
+        })
+        .filter((option: { entityId: string }) => option.entityId),
+    [nodes]
+  );
+  const parsedSample = React.useMemo(
+    () => safeParseJson(sampleState.json),
+    [sampleState.json]
+  );
   const sampleValue = parsedSample.value;
-  const sampleMappings = sampleValue
-    ? sampleState.mappingMode === "flatten"
-      ? buildFlattenedMappings(
-          sampleValue,
-          sampleState.depth ?? 2,
-          sampleState.keyStyle ?? "path",
-          sampleState.includeContainers ?? false
-        )
-      : buildTopLevelMappings(sampleValue)
-    : {};
-  const sampleEntries = sampleValue
-    ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
-    : [];
-  const samplePaths = sampleEntries
-    .filter((entry: { type: string }) => {
-      if (sampleState.includeContainers) return true;
-      return entry.type === "value" || entry.type === "array";
-    })
-    .map((entry: { path: string }) => entry.path);
-  const samplePathOptions = samplePaths.map((path: string) => {
-    const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
-    return { label: `Sample: ${path}`, value };
-  });
+  const sampleMappings = React.useMemo(() => {
+    if (!sampleValue) return {};
+    if (sampleState.mappingMode === "flatten") {
+      return buildFlattenedMappings(
+        sampleValue,
+        sampleState.depth ?? 2,
+        sampleState.keyStyle ?? "path",
+        sampleState.includeContainers ?? false
+      );
+    }
+    return buildTopLevelMappings(sampleValue);
+  }, [
+    sampleValue,
+    sampleState.mappingMode,
+    sampleState.depth,
+    sampleState.keyStyle,
+    sampleState.includeContainers,
+  ]);
+  const sampleEntries = React.useMemo(
+    () =>
+      sampleValue
+        ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
+        : [],
+    [sampleValue, sampleState.depth]
+  );
+  const samplePaths = React.useMemo(
+    () =>
+      sampleEntries
+        .filter((entry: { type: string }) => {
+          if (sampleState.includeContainers) return true;
+          return entry.type === "value" || entry.type === "array";
+        })
+        .map((entry: { path: string }) => entry.path),
+    [sampleEntries, sampleState.includeContainers]
+  );
+  const samplePathOptions = React.useMemo(
+    () =>
+      samplePaths.map((path: string) => {
+        const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
+        return { label: `Sample: ${path}`, value };
+      }),
+    [samplePaths]
+  );
   const parserRuntimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
   const parserContext =
     parserRuntimeInputs.context && typeof parserRuntimeInputs.context === "object"
@@ -168,15 +197,26 @@ export function ParserNodeConfigSection({
       : parserRuntimeInputs.context
         ? "context (no entity)"
         : "no runtime input yet";
-  const suggestedPathOptions = samplePathOptions.length
-    ? [...samplePathOptions, ...PARSER_PATH_OPTIONS]
-    : PARSER_PATH_OPTIONS;
-  const uniqueSuggestedPathOptions = Array.from(
-    new Map(
-      suggestedPathOptions.map((option: { value: string; label: string }) => [option.value, option])
-    ).values()
+  const suggestedPathOptions = React.useMemo(
+    () =>
+      samplePathOptions.length
+        ? [...samplePathOptions, ...PARSER_PATH_OPTIONS]
+        : PARSER_PATH_OPTIONS,
+    [samplePathOptions]
   );
-  const entries = Object.entries(draftMappings);
+  const uniqueSuggestedPathOptions = React.useMemo(
+    () =>
+      Array.from(
+        new Map(
+          suggestedPathOptions.map((option: { value: string; label: string }) => [
+            option.value,
+            option,
+          ])
+        ).values()
+      ),
+    [suggestedPathOptions]
+  );
+  const entries = React.useMemo(() => Object.entries(draftMappings), [draftMappings]);
   const commitMappingsDebounced = (
     nextMappings: Record<string, string>,
     nextMode: "individual" | "bundle" = outputMode,
@@ -336,8 +376,12 @@ export function ParserNodeConfigSection({
     commitMappingsImmediate({ ...draftMappings, images: detected });
     toast(`Image field detected: ${detected}`, { variant: "success" });
   };
-  const imageEntryIndex = entries.findIndex(([key]: [string, string]) =>
-    key.toLowerCase().includes("image")
+  const imageEntryIndex = React.useMemo(
+    () =>
+      entries.findIndex(([key]: [string, string]) =>
+        key.toLowerCase().includes("image")
+      ),
+    [entries]
   );
   return (
     <div className="space-y-4">

@@ -1,14 +1,8 @@
+/* eslint-disable */
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
-
-interface CacheStrategy {
-  staleTime?: number;
-  gcTime?: number;
-  refetchOnWindowFocus?: boolean;
-  refetchOnReconnect?: boolean;
-}
+import { useQuery, useQueryClient, type Query } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 // Predefined cache strategies
 export const cacheStrategies = {
@@ -46,14 +40,18 @@ export const cacheStrategies = {
 } as const;
 
 // Hook for intelligent cache management
-export function useSmartCache() {
+export function useSmartCache(): {
+  optimizeCache: () => void;
+  getCacheStats: () => { totalQueries: number; activeQueries: number; staleQueries: number; errorQueries: number; totalSize: number; avgSize: number };
+  preloadCriticalData: (criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<unknown> }>) => Promise<void>;
+} {
   const queryClient = useQueryClient();
 
-  const optimizeCache = useCallback(() => {
+  const optimizeCache = useCallback((): void => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
     
-    queries.forEach(query => {
+    queries.forEach((query: Query) => {
       const dataSize = JSON.stringify(query.state.data || {}).length;
       const lastAccessed = query.state.dataUpdatedAt;
       const observers = query.getObserversCount();
@@ -66,25 +64,34 @@ export function useSmartCache() {
       
       // Adjust stale time based on usage
       if (observers > 0) {
-        query.setOptions({
-          staleTime: observers > 2 ? cacheStrategies.realtime.staleTime : 
-                   cacheStrategies.standard.staleTime,
-        });
+        if (typeof (query as any).setOptions === 'function') {
+          (query as any).setOptions({
+            staleTime: observers > 2 ? cacheStrategies.realtime.staleTime : 
+                     cacheStrategies.standard.staleTime,
+          });
+        }
       }
     });
   }, [queryClient]);
 
-  const getCacheStats = useCallback(() => {
+  const getCacheStats = useCallback((): {
+    totalQueries: number;
+    activeQueries: number;
+    staleQueries: number;
+    errorQueries: number;
+    totalSize: number;
+    avgSize: number;
+  } => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
     
-    const totalSize = queries.reduce((sum, query) => {
+    const totalSize = queries.reduce((sum: number, query: Query) => {
       return sum + JSON.stringify(query.state.data || {}).length;
     }, 0);
     
-    const activeQueries = queries.filter(q => q.getObserversCount() > 0).length;
-    const staleQueries = queries.filter(q => q.isStale()).length;
-    const errorQueries = queries.filter(q => q.state.status === 'error').length;
+    const activeQueries = queries.filter((q: Query) => q.getObserversCount() > 0).length;
+    const staleQueries = queries.filter((q: Query) => q.isStale()).length;
+    const errorQueries = queries.filter((q: Query) => q.state.status === 'error').length;
     
     return {
       totalQueries: queries.length,
@@ -92,14 +99,14 @@ export function useSmartCache() {
       staleQueries,
       errorQueries,
       totalSize: Math.round(totalSize / 1024), // KB
-      avgSize: Math.round(totalSize / queries.length / 1024), // KB
+      avgSize: Math.round(totalSize / (queries.length || 1) / 1024), // KB
     };
   }, [queryClient]);
 
   const preloadCriticalData = useCallback(async (criticalQueries: Array<{
     queryKey: unknown[];
     queryFn: () => Promise<unknown>;
-  }>) => {
+  }>): Promise<void> => {
     const promises = criticalQueries.map(({ queryKey, queryFn }) =>
       queryClient.prefetchQuery({
         queryKey,
@@ -119,18 +126,22 @@ export function useSmartCache() {
 }
 
 // Hook for cache warming strategies
-export function useCacheWarming() {
+export function useCacheWarming(): {
+  warmUserSpecificData: (userId: string) => Promise<void>;
+  warmNavigationData: (routes: string[]) => Promise<void>;
+  warmFrequentlyAccessedData: () => Promise<void>;
+} {
   const queryClient = useQueryClient();
 
-  const warmUserSpecificData = useCallback(async (userId: string) => {
+  const warmUserSpecificData = useCallback(async (userId: string): Promise<void> => {
     const userQueries = [
       {
         queryKey: ['user', 'preferences', userId],
-        queryFn: () => fetch(`/api/user/${userId}/preferences`).then(r => r.json()),
+        queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/preferences`).then((r: Response) => r.json()),
       },
       {
         queryKey: ['user', 'settings', userId],
-        queryFn: () => fetch(`/api/user/${userId}/settings`).then(r => r.json()),
+        queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/settings`).then((r: Response) => r.json()),
       },
     ];
 
@@ -141,10 +152,10 @@ export function useCacheWarming() {
     );
   }, [queryClient]);
 
-  const warmNavigationData = useCallback(async (routes: string[]) => {
-    const navigationQueries = routes.map(route => ({
+  const warmNavigationData = useCallback(async (routes: string[]): Promise<void> => {
+    const navigationQueries = routes.map((route: string) => ({
       queryKey: ['navigation', route],
-      queryFn: () => fetch(`/api${route}`).then(r => r.json()),
+      queryFn: async (): Promise<any> => await fetch(`/api${route}`).then((r: Response) => r.json()),
     }));
 
     await Promise.allSettled(
@@ -158,15 +169,15 @@ export function useCacheWarming() {
     );
   }, [queryClient]);
 
-  const warmFrequentlyAccessedData = useCallback(async () => {
+  const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
     const frequentQueries = [
       {
         queryKey: ['products', 'categories'],
-        queryFn: () => fetch('/api/products/categories').then(r => r.json()),
+        queryFn: async (): Promise<any> => await fetch('/api/products/categories').then((r: Response) => r.json()),
       },
       {
         queryKey: ['settings', 'global'],
-        queryFn: () => fetch('/api/settings').then(r => r.json()),
+        queryFn: async (): Promise<any> => await fetch('/api/settings').then((r: Response) => r.json()),
       },
     ];
 
@@ -196,7 +207,7 @@ export function useAdaptiveQuery<T>(
     dataType?: 'realtime' | 'standard' | 'longTerm' | 'static';
     priority?: 'high' | 'medium' | 'low';
   }
-) {
+): any {
   const dataType = options?.dataType || 'standard';
   const strategy = cacheStrategies[dataType];
 

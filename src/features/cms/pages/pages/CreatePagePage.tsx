@@ -1,12 +1,12 @@
 "use client";
 
-import { Button, Input, Label, SectionHeader, Checkbox } from "@/shared/ui";
-import { useState } from "react";
+import { Button, Input, Label, SectionHeader, Checkbox, Switch } from "@/shared/ui";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { CmsDomainSelector } from "@/features/cms";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
-import { useCmsSlugs, useCreatePage } from "@/features/cms/hooks/useCmsQueries";
+import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from "@/features/cms/hooks/useCmsQueries";
 import type { Slug } from "@/features/cms/types";
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -15,11 +15,16 @@ export default function CreatePagePage(): React.JSX.Element {
   const router = useRouter();
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
+  const [includeAllZones, setIncludeAllZones] = useState(false);
+  const allSlugsQuery = useCmsAllSlugs(includeAllZones);
   const createPage = useCreatePage();
   const [search, setSearch] = useState("");
 
-  const slugs = slugsQuery.data ?? [];
-  const filteredSlugs = slugs.filter((slug: Slug): boolean =>
+  const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
+  const allSlugs = allSlugsQuery.data ?? [];
+  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const visibleSlugs = includeAllZones ? allSlugs : domainSlugs;
+  const filteredSlugs = visibleSlugs.filter((slug: Slug): boolean =>
     slug.slug.toLowerCase().includes(search.trim().toLowerCase())
   );
 
@@ -46,7 +51,17 @@ export default function CreatePagePage(): React.JSX.Element {
           />
         </div>
         <div className="mb-4 space-y-2">
-          <Label htmlFor="slug-search">Slugs</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="slug-search">Slugs</Label>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Switch
+                id="slug-all-zones"
+                checked={includeAllZones}
+                onCheckedChange={setIncludeAllZones}
+              />
+              <Label htmlFor="slug-all-zones">All zones</Label>
+            </div>
+          </div>
           <Input
             id="slug-search"
             value={search}
@@ -61,6 +76,7 @@ export default function CreatePagePage(): React.JSX.Element {
             ) : (
               filteredSlugs.map((slug: Slug) => {
                 const checked = slugIds.includes(slug.id);
+                const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
                 return (
                   <label key={slug.id} className="flex items-center gap-2 text-sm text-gray-200">
                     <Checkbox
@@ -71,7 +87,14 @@ export default function CreatePagePage(): React.JSX.Element {
                         );
                       }}
                     />
-                    /{slug.slug}
+                    <span>
+                      /{slug.slug}
+                      {isCrossZone ? (
+                        <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200">
+                          Other zone
+                        </span>
+                      ) : null}
+                    </span>
                   </label>
                 );
               })

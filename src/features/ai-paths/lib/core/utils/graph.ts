@@ -20,8 +20,11 @@ export const getPortOffsetY = (index: number, totalPorts: number): number => {
   return startY + index * PORT_GAP;
 };
 
-export const normalizePortName = (port: string): string =>
-  port === "productJson" ? "entityJson" : port;
+export const normalizePortName = (port: string): string => {
+  if (port === "productJson") return "entityJson";
+  if (port === "simulation") return "context";
+  return port;
+};
 
 export const isValidConnection = (
   from: AiNode,
@@ -36,6 +39,16 @@ export const isValidConnection = (
   const allowed = PORT_COMPATIBILITY[fromPort];
   const portCompatible = allowed?.includes(toPort) || fromPort === toPort;
   if (!portCompatible) return false;
+  if (
+    to.type === "trigger" &&
+    toPort === "context" &&
+    (from.type !== "simulation" || (fromPort !== "context" && fromPort !== "simulation"))
+  ) {
+    return false;
+  }
+  if (to.type === "simulation" && toPort === "trigger") {
+    if (from.type !== "trigger" || fromPort !== "trigger") return false;
+  }
   const fromTypes = getPortDataTypes(fromPort);
   const toTypes = getPortDataTypes(toPort);
   return arePortTypesCompatible(fromTypes, toTypes);
@@ -145,6 +158,22 @@ export const validateConnection = (
         fromTypes
       )}) -> ${toPort} (${formatPortDataTypes(toTypes)}).`,
     };
+  }
+  if (toNode.type === "trigger" && toPort === "context") {
+    if (fromNode.type !== "simulation" || (fromPort !== "context" && fromPort !== "simulation")) {
+      return {
+        valid: false,
+        message: "Trigger 'context' input must connect from Simulation 'context'.",
+      };
+    }
+  }
+  if (toNode.type === "simulation" && toPort === "trigger") {
+    if (fromNode.type !== "trigger" || fromPort !== "trigger") {
+      return {
+        valid: false,
+        message: "Simulation 'trigger' input must connect from Trigger 'trigger'.",
+      };
+    }
   }
   return { valid: true };
 };

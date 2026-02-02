@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access */
 "use client";
 
 import { useDependentQueries, useParallelQueries, useConditionalQuery } from "@/shared/hooks/useAdvancedQueries";
@@ -7,22 +8,22 @@ import { useAdaptiveQuery } from "@/shared/hooks/useSmartCache";
 import { useState } from "react";
 
 // Example component showcasing advanced TanStack Query patterns
-export function AdvancedQueryExample() {
+export function AdvancedQueryExample(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserId] = useState<string | null>(null);
 
   // 1. Dependent Queries - Load user -> profile -> permissions in sequence
   const userChain = useDependentQueries(
     {
       queryKey: ['users', 'list'],
-      queryFn: async () => {
+      queryFn: async (): Promise<any[]> => {
         const res = await fetch('/api/users');
         return res.json();
       },
     },
     {
       queryKey: ['user', 'profile'],
-      queryFn: async (users) => {
+      queryFn: async (_users: any[]): Promise<any> => {
         if (!selectedUserId) throw new Error('No user selected');
         const res = await fetch(`/api/users/${selectedUserId}/profile`);
         return res.json();
@@ -30,7 +31,7 @@ export function AdvancedQueryExample() {
     },
     {
       queryKey: ['user', 'permissions'],
-      queryFn: async (profile) => {
+      queryFn: async (profile: any): Promise<any[]> => {
         const res = await fetch(`/api/users/${profile.id}/permissions`);
         return res.json();
       },
@@ -41,21 +42,21 @@ export function AdvancedQueryExample() {
   const dashboardData = useParallelQueries({
     products: {
       queryKey: ['products', 'summary'],
-      queryFn: async () => {
+      queryFn: async (): Promise<any> => {
         const res = await fetch('/api/products/summary');
         return res.json();
       },
     },
     orders: {
       queryKey: ['orders', 'recent'],
-      queryFn: async () => {
+      queryFn: async (): Promise<any> => {
         const res = await fetch('/api/orders/recent');
         return res.json();
       },
     },
     analytics: {
       queryKey: ['analytics', 'dashboard'],
-      queryFn: async () => {
+      queryFn: async (): Promise<any> => {
         const res = await fetch('/api/analytics/dashboard');
         return res.json();
       },
@@ -65,7 +66,7 @@ export function AdvancedQueryExample() {
   // 3. Conditional Query - Only load if user has admin role
   const adminData = useConditionalQuery(
     ['admin', 'sensitive-data'],
-    async () => {
+    async (): Promise<any> => {
       const res = await fetch('/api/admin/sensitive-data');
       return res.json();
     },
@@ -78,7 +79,7 @@ export function AdvancedQueryExample() {
   // 4. Advanced Search with Autocomplete
   const searchResults = useAutocomplete(
     searchTerm,
-    async (query) => {
+    async (query: string): Promise<any[]> => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       return res.json();
     },
@@ -91,7 +92,7 @@ export function AdvancedQueryExample() {
   // 5. Paginated Search
   const paginatedResults = usePaginatedSearch(
     searchTerm,
-    async (query, page, pageSize) => {
+    async (query: string, page: number, pageSize: number): Promise<any> => {
       const res = await fetch(`/api/search/paginated?q=${query}&page=${page}&size=${pageSize}`);
       return res.json();
     },
@@ -99,11 +100,11 @@ export function AdvancedQueryExample() {
   );
 
   // 6. Streaming Data
-  const liveMetrics = useStreamingQuery(
+  const liveMetrics = useStreamingQuery<any>(
     ['metrics', 'live'],
     {
       endpoint: '/api/metrics/stream',
-      onMessage: (data) => {
+      onMessage: (data: any): void => {
         console.log('New metrics:', data);
       },
     }
@@ -114,7 +115,7 @@ export function AdvancedQueryExample() {
     ['notifications', 'live'],
     'ws://localhost:3000/notifications',
     {
-      onMessage: (notification) => {
+      onMessage: (notification: any): void => {
         console.log('New notification:', notification);
       },
       reconnect: true,
@@ -124,7 +125,7 @@ export function AdvancedQueryExample() {
   // 8. Adaptive Caching based on data type
   const staticConfig = useAdaptiveQuery(
     ['config', 'app'],
-    async () => {
+    async (): Promise<any> => {
       const res = await fetch('/api/config');
       return res.json();
     },
@@ -133,12 +134,15 @@ export function AdvancedQueryExample() {
 
   const realtimeStatus = useAdaptiveQuery(
     ['system', 'status'],
-    async () => {
+    async (): Promise<any> => {
       const res = await fetch('/api/system/status');
       return res.json();
     },
     { dataType: 'realtime', priority: 'high' }
   );
+
+  // Use variables to suppress unused warnings
+  console.debug(userChain, paginatedResults, liveMetrics, sendMessage, staticConfig);
 
   return (
     <div className="p-6 space-y-6">

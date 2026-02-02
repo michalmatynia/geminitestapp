@@ -70,13 +70,14 @@ export const handleTrigger: NodeHandler = ({
   }
   const eventName: string =
     triggerEvent ?? node.config?.trigger?.event ?? "path_generate_description";
-  const simulation = coerceInput(nodeInputs.simulation) as
-    | { entityId?: string; entityType?: string; productId?: string }
+  const contextInput = (coerceInput(nodeInputs.context) ??
+    coerceInput(nodeInputs.simulation)) as
+    | { entityId?: string; entityType?: string; productId?: string; entity?: unknown }
     | undefined;
   const simulationInputId: string | null =
-    simulation?.entityId ?? simulation?.productId ?? null;
+    contextInput?.entityId ?? contextInput?.productId ?? null;
   const simulationInputType: string | null =
-    simulation?.entityType ?? simulationEntityType ?? null;
+    contextInput?.entityType ?? simulationEntityType ?? null;
   const resolvedEntityId: string | null = simulationInputId ?? null;
   const resolvedEntityType: string | null = simulationInputType ?? null;
   const triggerExtras: Record<string, unknown> = (triggerContext as Record<string, unknown>) ?? {};
@@ -93,16 +94,19 @@ export const handleTrigger: NodeHandler = ({
   const effectiveEntityId: string | null = resolvedEntityId ?? triggerEntityId ?? null;
   const effectiveEntityType: string | null = resolvedEntityType ?? triggerEntityType ?? null;
   const resolvedContext: Record<string, unknown> = {
-    entityType: resolvedEntityType ?? triggerEntityType,
-    entityId: resolvedEntityId ?? triggerEntityId,
+    ...(contextInput && typeof contextInput === "object" ? contextInput : {}),
+    entityType: resolvedEntityType ?? triggerEntityType ?? contextInput?.entityType,
+    entityId: resolvedEntityId ?? triggerEntityId ?? contextInput?.entityId,
     source: node.title,
     timestamp: now,
     entity:
       resolvedEntity ??
+      contextInput?.entity ??
       buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
   };
   return {
-    trigger: eventName,
+    trigger: true,
+    triggerName: eventName,
     meta: {
       firedAt: now,
       trigger: eventName,
@@ -193,6 +197,7 @@ export const handleNotification: NodeHandler = ({
     coerceInput(nodeInputs.value) ??
     coerceInput(nodeInputs.bundle) ??
     coerceInput(nodeInputs.context) ??
+    coerceInput(nodeInputs.triggerName) ??
     coerceInput(nodeInputs.trigger) ??
     coerceInput(nodeInputs.meta) ??
     coerceInput(nodeInputs.entityId) ??

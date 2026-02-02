@@ -13,7 +13,8 @@ export type PortDataType =
 
 const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   simulation: "object",
-  trigger: "object",
+  trigger: "boolean",
+  triggerName: "string",
   context: "object",
   meta: "object",
   entityJson: "object",

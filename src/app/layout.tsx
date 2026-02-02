@@ -1,5 +1,4 @@
 import { ToastProvider } from "@/shared/ui";
-import { QueryDevtools } from "@/shared/components/QueryDevtools";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
@@ -38,26 +37,25 @@ export default function RootLayout({
         />
       </head>
       <body className={cn(inter.className)}>
-        <QueryProvider>
-          <BackgroundSyncProvider>
-            <SessionProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <ToastProvider>
+        <ToastProvider>
+          <QueryProvider>
+            <BackgroundSyncProvider>
+              <SessionProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
                   <Suspense fallback={null}>
                     <ClientErrorReporter />
                   </Suspense>
                   {children}
-                  {process.env.NODE_ENV === 'development' && <QueryDevtools />}
-                </ToastProvider>
-              </ThemeProvider>
-            </SessionProvider>
-          </BackgroundSyncProvider>
-        </QueryProvider>
+                </ThemeProvider>
+              </SessionProvider>
+            </BackgroundSyncProvider>
+          </QueryProvider>
+        </ToastProvider>
       </body>
     </html>
   );

@@ -25,16 +25,18 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   "viewer",
 ];
 export const CACHEABLE_NODE_TYPE_SET = new Set<NodeType>(CACHEABLE_NODE_TYPES);
-export const TRIGGER_INPUT_PORTS = ["simulation"];
-export const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
+export const TRIGGER_INPUT_PORTS = ["context"];
+export const TRIGGER_OUTPUT_PORTS = ["trigger", "triggerName", "context", "meta", "entityId", "entityType"];
 export const CONTEXT_INPUT_PORTS = ["context"];
 export const CONTEXT_OUTPUT_PORTS = ["context", "entityId", "entityType", "entityJson"];
-export const SIMULATION_OUTPUT_PORTS = ["simulation", "entityId", "entityType", "productId"];
+export const SIMULATION_INPUT_PORTS = ["trigger"];
+export const SIMULATION_OUTPUT_PORTS = ["context", "entityId", "entityType", "productId"];
 export const DESCRIPTION_OUTPUT_PORTS = ["description_en"];
 export const BUNDLE_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "result",
   "entityJson",
   "entityId",
@@ -49,6 +51,7 @@ export const TEMPLATE_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "result",
   "entityJson",
   "entityId",
@@ -336,6 +339,7 @@ export const VIEWER_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "jobId",
   "status",
   "entityId",
@@ -376,6 +380,7 @@ export const NOTIFICATION_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "entityId",
 ];
 
@@ -398,14 +403,15 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   productId: ["productId", "entityId", "value", "result"],
   entityId: ["entityId", "productId", "value", "result"],
   entityType: ["entityType", "value", "result"],
-  trigger: ["trigger", "context", "value", "result"],
+  trigger: ["trigger", "value", "result"],
+  triggerName: ["triggerName", "value", "result"],
   prompt: ["prompt"],
   result: ["result", "queryCallback", "aiQuery"],
   images: ["images", "value", "result"],
   title: ["title", "value", "result", "prompt", "aiPrompt"],
   content_en: ["content_en", "value", "result", "description_en", "prompt", "aiPrompt"],
   context: ["context", "entityJson", "value", "result"],
-  simulation: ["simulation"],
+  simulation: ["context", "simulation"],
   meta: ["meta", "value", "result"],
   bundle: ["bundle", "context", "value", "result"],
   value: ["value", "result", "query", "jobId", "status", "prompt", "aiPrompt", "queryCallback"],
@@ -453,6 +459,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "delay",
     "poll",
     "database",
+    "simulation",
   ],
   simulation: ["trigger", "notification"],
   parser: [

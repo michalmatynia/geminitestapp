@@ -19,6 +19,7 @@ import {
   PROMPT_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
+  SIMULATION_INPUT_PORTS,
   SIMULATION_OUTPUT_PORTS,
   TRIGGER_EVENTS,
   TRIGGER_INPUT_PORTS,
@@ -93,7 +94,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
       const resolvedId = rawEntityId.trim() || rawProductId.trim() || "";
       return {
         ...node,
-        inputs: [],
+        inputs: SIMULATION_INPUT_PORTS,
         outputs: SIMULATION_OUTPUT_PORTS,
         config: {
           ...node.config,

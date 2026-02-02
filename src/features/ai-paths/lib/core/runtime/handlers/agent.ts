@@ -37,7 +37,7 @@ const parseAgentPersonas = (value: unknown): AgentPersona[] => {
 const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   const response = await settingsApi.list();
   if (!response.ok) return [];
-  const record = response.data.find((item) => item.key === AGENT_PERSONA_SETTINGS_KEY);
+  const record = response.data.find((item: { key: string }) => item.key === AGENT_PERSONA_SETTINGS_KEY);
   if (!record) return [];
   return parseAgentPersonas(record.value);
 };
@@ -65,7 +65,7 @@ const pollAgentRun = async (
       return { run, status };
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, intervalMs));
     }
   }
   throw new Error("Agent run timed out.");
@@ -124,7 +124,7 @@ export const handleAgent: NodeHandler = async ({
   }
   const persona =
     agentConfig.personaId
-      ? personas.find((item) => item.id === agentConfig.personaId)
+      ? personas.find((item: { id: string }) => item.id === agentConfig.personaId)
       : undefined;
   const settings = persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS;
 

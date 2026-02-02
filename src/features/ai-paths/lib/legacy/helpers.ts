@@ -34,16 +34,18 @@ const VIEW_MARGIN = 40;
 const PORT_GAP = 18;
 const PORT_SIZE = 10;
 const DEFAULT_CONTEXT_ROLE = "entity";
-const TRIGGER_INPUT_PORTS = ["simulation"];
-const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
+const TRIGGER_INPUT_PORTS = ["context"];
+const TRIGGER_OUTPUT_PORTS = ["trigger", "triggerName", "context", "meta", "entityId", "entityType"];
 const CONTEXT_INPUT_PORTS = ["context"];
 const CONTEXT_OUTPUT_PORTS = ["context", "entityId", "entityType", "entityJson"];
-const SIMULATION_OUTPUT_PORTS = ["simulation", "entityId", "entityType", "productId"];
+const SIMULATION_INPUT_PORTS = ["trigger"];
+const SIMULATION_OUTPUT_PORTS = ["context", "entityId", "entityType", "productId"];
 const DESCRIPTION_OUTPUT_PORTS = ["description_en"];
 const BUNDLE_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "result",
   "entityJson",
   "entityId",
@@ -58,6 +60,7 @@ const TEMPLATE_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "result",
   "entityJson",
   "entityId",
@@ -342,6 +345,7 @@ const VIEWER_INPUT_PORTS = [
   "context",
   "meta",
   "trigger",
+  "triggerName",
   "jobId",
   "status",
   "entityId",
@@ -401,7 +405,7 @@ const palette: NodeDefinition[] = [
     type: "simulation",
     title: "Simulation: Entity Modal",
     description: "Simulate a modal action by Entity ID.",
-    inputs: [],
+    inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
   },
   {
@@ -585,8 +589,11 @@ const createViewerOutputs = (inputs: string[]): Record<string, string> =>
     return acc;
   }, {});
 
-const normalizePortName = (port: string): string =>
-  port === "productJson" ? "entityJson" : port;
+const normalizePortName = (port: string): string => {
+  if (port === "productJson") return "entityJson";
+  if (port === "simulation") return "context";
+  return port;
+};
 
 const ensureUniquePorts = (ports: string[], add: string[]): string[] => {
   const set = new Set(ports.map(normalizePortName));
@@ -631,6 +638,25 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
           ...node.config,
           trigger: {
             event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
+          },
+        },
+      };
+    }
+    if (node.type === "simulation") {
+      const simulationConfig = node.config?.simulation;
+      const rawEntityId = simulationConfig?.entityId ?? "";
+      const rawProductId = simulationConfig?.productId ?? "";
+      const resolvedId = rawEntityId.trim() || rawProductId.trim() || "";
+      return {
+        ...node,
+        inputs: SIMULATION_INPUT_PORTS,
+        outputs: SIMULATION_OUTPUT_PORTS,
+        config: {
+          ...node.config,
+          simulation: {
+            productId: rawProductId || resolvedId,
+            entityType: simulationConfig?.entityType ?? "product",
+            entityId: rawEntityId || resolvedId,
           },
         },
       };
@@ -1864,13 +1890,14 @@ const PORT_COMPATIBILITY: Record<string, string[]> = {
   entityId: ["entityId"],
   entityType: ["entityType"],
   trigger: ["trigger"],
+  triggerName: ["triggerName"],
   prompt: ["prompt"],
   result: ["result"],
   images: ["images"],
   title: ["title"],
   content_en: ["content_en"],
   context: ["context"],
-  simulation: ["simulation"],
+  simulation: ["context", "simulation"],
   meta: ["meta"],
   bundle: ["bundle"],
   value: ["value"],
@@ -1915,6 +1942,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "delay",
     "poll",
     "database",
+    "simulation",
   ],
   simulation: ["trigger", "notification"],
   parser: [
@@ -2028,12 +2056,23 @@ const validateConnection = (
     };
   }
 
-  // Rule 9: Trigger simulation input must come from Simulation simulation
-  if (toNode.type === "trigger" && toPort === "simulation") {
-    if (fromNode.type !== "simulation" || fromPort !== "simulation") {
+  // Rule 9: Trigger context input must come from Simulation context
+  if (toNode.type === "trigger" && toPort === "context") {
+    if (
+      fromNode.type !== "simulation" ||
+      (fromPort !== "context" && fromPort !== "simulation")
+    ) {
       return {
         valid: false,
-        message: "Trigger 'simulation' input must connect from Simulation 'simulation'.",
+        message: "Trigger 'context' input must connect from Simulation 'context'.",
+      };
+    }
+  }
+  if (toNode.type === "simulation" && toPort === "trigger") {
+    if (fromNode.type !== "trigger" || fromPort !== "trigger") {
+      return {
+        valid: false,
+        message: "Simulation 'trigger' input must connect from Trigger 'trigger'.",
       };
     }
   }
@@ -2526,6 +2565,7 @@ export {
   PORT_SIZE,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
+  SIMULATION_INPUT_PORTS,
   SIMULATION_OUTPUT_PORTS,
   STORAGE_VERSION,
   TEMPLATE_INPUT_PORTS,

@@ -146,9 +146,17 @@ const buildSkipSet = (
   return new Set<string>();
 };
 
+const normalizeEntityType = (value?: string | null): string | null => {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "product" || normalized === "products") return "product";
+  if (normalized === "note" || normalized === "notes") return "note";
+  return normalized;
+};
+
 const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
-  const normalized = entityType.toLowerCase();
+  const normalized = normalizeEntityType(entityType);
   if (normalized === "product") {
     const repo = await getProductRepository();
     return (await repo.getProductById(entityId)) as Record<string, unknown> | null;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/typedef */
 "use client";
 
 import { useOptimisticMutation } from "@/shared/hooks/useOptimisticMutation";

@@ -322,6 +322,14 @@ export async function evaluateGraph({
     return data;
   };
 
+  const normalizeEntityType = (value?: string | null): string | null => {
+    const normalized = value?.trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === "product" || normalized === "products") return "product";
+    if (normalized === "note" || normalized === "notes") return "note";
+    return normalized;
+  };
+
   let simulationEntityId: string | null = null;
   let simulationEntityType: string | null = null;
   const triggerEntityId =
@@ -332,19 +340,19 @@ export async function evaluateGraph({
         : null;
   const triggerEntityType =
     typeof triggerContext?.entityType === "string"
-      ? triggerContext?.entityType
+      ? normalizeEntityType(triggerContext?.entityType)
       : null;
 
   if (triggerNodeId) {
     const simulationEdge = sanitizedEdges.find(
-      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === "simulation"
+      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === "context"
     );
     if (simulationEdge) {
       const simNode = nodes.find(
         (node: AiNode) => node.id === simulationEdge.from && node.type === "simulation"
       );
       simulationEntityType =
-        simNode?.config?.simulation?.entityType?.trim() ?? "product";
+        normalizeEntityType(simNode?.config?.simulation?.entityType) ?? "product";
       simulationEntityId =
         simNode?.config?.simulation?.entityId?.trim() ||
         simNode?.config?.simulation?.productId?.trim() ||
@@ -367,7 +375,7 @@ export async function evaluateGraph({
     }
     if (node.type === "simulation") {
       const entityType =
-        node.config?.simulation?.entityType?.trim() || "product";
+        normalizeEntityType(node.config?.simulation?.entityType) || "product";
       const entityId =
         node.config?.simulation?.entityId?.trim() ||
         node.config?.simulation?.productId?.trim() ||
@@ -375,7 +383,7 @@ export async function evaluateGraph({
       const entity =
         entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
       outputs[node.id] = {
-        simulation: {
+        context: {
           entityType,
           entityId,
           source: node.title,

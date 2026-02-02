@@ -36,7 +36,7 @@ type UseAiPathsPresetsArgs = {
 const DEFAULT_PRESET_DRAFT: ClusterPresetDraft = {
   name: "",
   description: "",
-  bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
+  bundlePorts: "context\nmeta\ntrigger\ntriggerName\nentityJson\nentityId\nentityType\nresult",
   template: "Write a summary for {{context.entity.title}}",
 };
 

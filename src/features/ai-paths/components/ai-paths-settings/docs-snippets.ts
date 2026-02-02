@@ -1,10 +1,12 @@
 export const DOCS_WIRING_SNIPPET = [
-  "Simulation.simulation → Trigger.simulation",
+  "Trigger.trigger → Simulation.trigger",
+  "Simulation.context → Trigger.context",
   "Trigger.context → ContextFilter.context",
   "ContextFilter.entityJson → Parser.entityJson",
   "Trigger.context → ResultViewer.context",
   "Trigger.meta → ResultViewer.meta",
   "Trigger.trigger → ResultViewer.trigger",
+  "Trigger.triggerName → ResultViewer.triggerName",
 ].join("\n");
 
 export const DOCS_OVERVIEW_SNIPPET = [
@@ -23,7 +25,7 @@ export const DOCS_OVERVIEW_SNIPPET = [
   "- Image data flows as URLs; Model nodes resolve to base64 when invoking vision models.",
   "",
   "Core node roles:",
-  "- Trigger: start signal + context/meta payloads.",
+  "- Trigger: start signal + triggerName + context/meta payloads.",
   "- Simulation: mock trigger data to test paths without live events.",
   "- Context / Parser: select an entity and shape it into structured fields.",
   "- Mapper / Mutator / Template / Math / Compare / Gate / Router / Validator: transform, validate, and branch.",

@@ -177,10 +177,18 @@ export function useAiPathsRuntime({
     [queryClient, reportAiPathsError]
   );
 
+  const normalizeEntityType = (value?: string | null): string | null => {
+    const normalized = value?.trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === "product" || normalized === "products") return "product";
+    if (normalized === "note" || normalized === "notes") return "note";
+    return normalized;
+  };
+
   const fetchEntityByType = useCallback(
     async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
       if (!entityType || !entityId) return null;
-      const normalized = entityType.toLowerCase();
+      const normalized = normalizeEntityType(entityType);
       if (normalized === "product") {
         return fetchProductById(entityId);
       }
@@ -680,20 +688,29 @@ export function useAiPathsRuntime({
     const entityId =
       simulationNode.config?.simulation?.entityId?.trim() ||
       simulationNode.config?.simulation?.productId?.trim();
-    const entityType = simulationNode.config?.simulation?.entityType ?? "product";
+    const entityType =
+      normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? "product";
     if (!entityId) {
       toast("Enter an Entity ID in the simulation node.", { variant: "error" });
       return;
     }
     let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
     if (!triggerEvent) {
-      const connectedTriggerIds = edges
-        .filter(
-          (edge: Edge): boolean =>
-            edge.from === simulationNode.id &&
-            (!edge.fromPort || edge.fromPort === "simulation")
-        )
-        .map((edge: Edge): string => edge.to);
+      const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
+        if (
+          edge.from === simulationNode.id &&
+          (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
+        ) {
+          return [edge.to];
+        }
+        if (
+          edge.to === simulationNode.id &&
+          (!edge.toPort || edge.toPort === "trigger")
+        ) {
+          return [edge.from];
+        }
+        return [];
+      });
       const triggerNode = nodes.find(
         (node: AiNode): boolean =>
           node.type === "trigger" && connectedTriggerIds.includes(node.id)
@@ -712,21 +729,30 @@ export function useAiPathsRuntime({
   const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === "scheduled_run";
-    const connectedSimulationIds = edges
-      .filter((edge: Edge): boolean => edge.to === triggerNode.id)
-      .filter(
-        (edge: Edge): boolean =>
-          (!edge.toPort || edge.toPort === "simulation") &&
-          (!edge.fromPort || edge.fromPort === "simulation")
-      )
-      .map((edge: Edge): string => edge.from);
+    const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
+      if (
+        edge.to === triggerNode.id &&
+        (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
+        (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
+      ) {
+        return [edge.from];
+      }
+      if (
+        edge.from === triggerNode.id &&
+        (!edge.fromPort || edge.fromPort === "trigger") &&
+        (!edge.toPort || edge.toPort === "trigger")
+      ) {
+        return [edge.to];
+      }
+      return [];
+    });
     const simulationNodes = nodes.filter(
       (node: AiNode): boolean =>
         node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
       if (!isScheduled) {
-        toast("Connect a Simulation node to the Trigger simulation input.", {
+        toast("Connect a Simulation node to the Trigger context input.", {
           variant: "error",
         });
         return;
@@ -744,21 +770,30 @@ export function useAiPathsRuntime({
   ): Promise<void> => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     const isScheduled = triggerEvent === "scheduled_run";
-    const connectedSimulationIds = edges
-      .filter((edge: Edge): boolean => edge.to === triggerNode.id)
-      .filter(
-        (edge: Edge): boolean =>
-          (!edge.toPort || edge.toPort === "simulation") &&
-          (!edge.fromPort || edge.fromPort === "simulation")
-      )
-      .map((edge: Edge): string => edge.from);
+    const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
+      if (
+        edge.to === triggerNode.id &&
+        (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
+        (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
+      ) {
+        return [edge.from];
+      }
+      if (
+        edge.from === triggerNode.id &&
+        (!edge.fromPort || edge.fromPort === "trigger") &&
+        (!edge.toPort || edge.toPort === "trigger")
+      ) {
+        return [edge.to];
+      }
+      return [];
+    });
     const simulationNodes = nodes.filter(
       (node: AiNode): boolean =>
         node.type === "simulation" && connectedSimulationIds.includes(node.id)
     );
     if (simulationNodes.length === 0) {
       if (!isScheduled) {
-        toast("Connect a Simulation node to the Trigger simulation input.", {
+        toast("Connect a Simulation node to the Trigger context input.", {
           variant: "error",
         });
         return;

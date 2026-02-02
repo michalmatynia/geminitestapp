@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import type { ChatbotMemoryItem } from "../types";
 
 export const memoryKeys = {
@@ -8,18 +8,18 @@ export const memoryKeys = {
   list: (params: string) => ["chatbot", "memory", "list", params] as const,
 };
 
-export function useChatbotMemory(params: string = "") {
+export function useChatbotMemory(params: string = ""): UseQueryResult<ChatbotMemoryItem[], Error> {
   return useQuery({
     queryKey: memoryKeys.list(params),
     queryFn: async (): Promise<ChatbotMemoryItem[]> => {
       const res = await fetch(`/api/chatbot/memory?${params}`);
       if (!res.ok) throw new Error("Failed to load memory");
-      return res.json();
+      return res.json() as Promise<ChatbotMemoryItem[]>;
     },
   });
 }
 
-export function useDeleteMemoryItem() {
+export function useDeleteMemoryItem(): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   
   return useMutation({

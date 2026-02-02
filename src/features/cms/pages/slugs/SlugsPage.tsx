@@ -139,7 +139,7 @@ export default function SlugsPage(): React.JSX.Element {
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (window.confirm("Are you sure you want to delete this slug?")) {
+    if (window.confirm("Remove this slug from the current zone? It will stay in other zones if assigned.")) {
       await deleteSlug.mutateAsync({ id, domainId: activeDomainId });
     }
   };
@@ -323,7 +323,7 @@ export default function SlugsPage(): React.JSX.Element {
                 variant="destructive"
                 onClick={() => void handleDelete(slug.id)}
               >
-                Delete
+                Remove from zone
               </Button>
             </li>
           ))}

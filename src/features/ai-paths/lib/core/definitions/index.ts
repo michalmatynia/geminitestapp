@@ -17,6 +17,7 @@ import {
   PROMPT_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
+  SIMULATION_INPUT_PORTS,
   SIMULATION_OUTPUT_PORTS,
   TEMPLATE_INPUT_PORTS,
   TRIGGER_INPUT_PORTS,
@@ -65,7 +66,7 @@ export const palette: NodeDefinition[] = [
     type: "simulation",
     title: "Simulation: Entity Modal",
     description: "Simulate a modal action by Entity ID.",
-    inputs: [],
+    inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
   },
   {

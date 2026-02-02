@@ -127,9 +127,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       if (entityType === "custom") {
         throw new Error("Use pasted JSON for custom samples.");
       }
-      const normalized = entityType.toLowerCase();
+      const normalized = entityType.trim().toLowerCase();
+      const resolvedType =
+        normalized === "products" ? "product" : normalized === "notes" ? "note" : normalized;
       let sample: Record<string, unknown> | null = null;
-      if (normalized === "product") {
+      if (resolvedType === "product") {
         sample = await queryClient.fetchQuery({
           queryKey: ["products", entityId],
           queryFn: async () => {
@@ -138,7 +140,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           },
           staleTime: 0,
         });
-      } else if (normalized === "note") {
+      } else if (resolvedType === "note") {
         sample = await queryClient.fetchQuery({
           queryKey: ["notes", entityId],
           queryFn: async () => {

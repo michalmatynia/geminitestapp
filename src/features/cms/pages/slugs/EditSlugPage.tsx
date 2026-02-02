@@ -1,14 +1,15 @@
 "use client";
 
-import { Button, Input, Label, Switch, SectionHeader } from "@/shared/ui";
-import { useState } from "react";
+import { Button, Input, Label, Switch, SectionHeader, Checkbox } from "@/shared/ui";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 
 
 
 
-import { useCmsSlug, useUpdateSlug } from "@/features/cms/hooks/useCmsQueries";
-import type { Slug } from "@/features/cms/types";
+import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from "@/features/cms/hooks/useCmsQueries";
+import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
+import type { CmsDomain, Slug } from "@/features/cms/types";
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
@@ -34,14 +35,42 @@ function EditSlugForm({
   domainId?: string;
 }): React.JSX.Element {
   const [slug, setSlug] = useState<Slug>(initialSlug);
+  const { zoningEnabled } = useCmsDomainSelection();
+  const domainsQuery = useCmsDomains();
+  const slugDomainsQuery = useCmsSlugDomains(id);
+  const updateSlugDomains = useUpdateSlugDomains();
+  const [domainSelection, setDomainSelection] = useState<string[] | null>(null);
+  const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
+  const selectedDomainIds = domainSelection ?? slugDomainsQuery.data?.domainIds ?? [];
   const router = useRouter();
   const updateSlug = useUpdateSlug();
+
+  useEffect(() => {
+    if (!zoningEnabled) return;
+    if (!slugDomainsQuery.data) return;
+    if (domainSelection !== null) return;
+    
+    // Use a timeout to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      setDomainSelection(slugDomainsQuery.data.domainIds);
+    }, 0);
+    
+    return (): void => clearTimeout(timer);
+  }, [slugDomainsQuery.data, domainSelection, zoningEnabled]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!slug) return;
 
+    if (zoningEnabled && selectedDomainIds.length === 0) {
+      alert("Assign this slug to at least one zone.");
+      return;
+    }
+
     await updateSlug.mutateAsync({ id, input: slug, domainId });
+    if (zoningEnabled) {
+      await updateSlugDomains.mutateAsync({ id, domainIds: selectedDomainIds });
+    }
     const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";
     router.push(next);
   };
@@ -69,6 +98,49 @@ function EditSlugForm({
             Set as default
           </Label>
         </div>
+        {zoningEnabled ? (
+          <div className="mb-6 space-y-2 rounded border border-border/50 bg-gray-900/40 p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Zones using this slug</Label>
+              <span className="text-xs text-muted-foreground">
+                {selectedDomainIds.length} selected
+              </span>
+            </div>
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-950/40 p-2">
+              {domains.length === 0 ? (
+                <p className="py-3 text-center text-xs text-muted-foreground">No zones available.</p>
+              ) : (
+                domains.map((domain: CmsDomain) => {
+                  const checked = selectedDomainIds.includes(domain.id);
+                  return (
+                    <label key={domain.id} className="flex items-center gap-2 text-sm text-gray-200">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => {
+                          setDomainSelection((prev: string[] | null): string[] => {
+                            const current = prev ?? selectedDomainIds;
+                            return checked
+                              ? current.filter((idValue: string): boolean => idValue !== domain.id)
+                              : [...current, domain.id];
+                          });
+                        }}
+                      />
+                      {domain.domain}
+                      {domain.aliasOf ? (
+                        <span className="text-[11px] text-muted-foreground">
+                          (alias of {domains.find((item: CmsDomain) => item.id === domain.aliasOf)?.domain ?? "zone"})
+                        </span>
+                      ) : null}
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Assign this slug to multiple zones to reuse the same path across hostnames.
+            </p>
+          </div>
+        ) : null}
         <Button type="submit">Update</Button>
       </form>
     </div>

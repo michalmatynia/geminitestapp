@@ -1233,14 +1233,17 @@ function SectionBlockNodeItem({
             (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
           if (isTextAtom) {
             if (!dragId || dragId === block.id) return;
+            const draggedType = e.dataTransfer.getData("blockType") || "";
+            const shouldNest = draggedType === "TextAtomLetter";
             onDropBlockToColumn(
               dragId,
               fromSection,
               fromColumn || undefined,
               sectionId,
               columnId,
-              index,
-              fromParent || undefined
+              shouldNest ? (block.blocks ?? []).length : index,
+              fromParent || undefined,
+              shouldNest ? block.id : undefined
             );
             setDraggedBlockId(null);
             setDraggedFromSectionId(null);
@@ -1404,7 +1407,7 @@ function BlockNodeItem({
         e.dataTransfer.setData("blockType", block.type);
         e.dataTransfer.setData("fromSectionId", sectionId);
         e.dataTransfer.setData("fromColumnId", columnId ?? "");
-        e.dataTransfer.setData("fromParentBlockId", "");
+        e.dataTransfer.setData("fromParentBlockId", parentBlockId ?? "");
         e.dataTransfer.effectAllowed = "move";
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.4";

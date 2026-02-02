@@ -29,14 +29,15 @@ export function AgentNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: AgentNodeConfigSectionProps): React.JSX.Element | null {
+  const personasQuery = useAgentPersonas();
+  
   if (selectedNode.type !== "agent") return null;
 
-  const personasQuery = useAgentPersonas();
   const personas = personasQuery.data ?? [];
   const agentConfig = selectedNode.config?.agent ?? DEFAULT_AGENT_CONFIG;
   const selectedPersona =
     agentConfig.personaId
-      ? personas.find((persona) => persona.id === agentConfig.personaId)
+      ? personas.find((persona: { id: string }) => persona.id === agentConfig.personaId)
       : null;
 
   return (
@@ -70,7 +71,7 @@ export function AgentNodeConfigSection({
         </SelectTrigger>
         <SelectContent className="border-border bg-gray-900">
           <SelectItem value="">Default (runtime settings)</SelectItem>
-          {personas.map((persona) => (
+          {personas.map((persona: { id: string; name: string }) => (
             <SelectItem key={persona.id} value={persona.id}>
               {persona.name}
             </SelectItem>

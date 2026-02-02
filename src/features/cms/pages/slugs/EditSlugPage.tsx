@@ -67,7 +67,7 @@ function EditSlugForm({
       return;
     }
 
-    const updateData: any = { id, input: slug };
+    const updateData: { id: string; input: Partial<Slug>; domainId?: string | null } = { id, input: slug };
     if (domainId) updateData.domainId = domainId;
     await updateSlug.mutateAsync(updateData);
     if (zoningEnabled) {

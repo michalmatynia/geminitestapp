@@ -25,11 +25,10 @@ import { useThemeSettings } from "./ThemeSettingsContext";
 import { buildColorSchemeMap } from "@/features/cms/types/theme-settings";
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from "../frontend/theme-styles";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
-import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 const ZONE_ORDER: PageZone[] = ["header", "template", "footer"];
 const EDIT_BUTTON_HIDE_DELAY = 2000;
-// ...
+
 export function PagePreviewPanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const { theme } = useThemeSettings();
@@ -51,7 +50,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
   
   const preferencesQuery = useUserPreferences();
-  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
+  const userPreferences = preferencesQuery.data;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const domainSlugSet = useMemo(
@@ -137,7 +136,6 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
   const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
-
 
   const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return "";
@@ -235,7 +233,6 @@ export function PagePreviewPanel(): React.ReactNode {
       toast("Save before preview failed. Try again.", { variant: "error" });
     }
   }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
-
 
   const handleOpenMedia = useCallback((target: MediaReplaceTarget): void => {
     setMediaTarget(target);

@@ -24,13 +24,37 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState<boolean>(false);
+  const [selectingAll, setSelectingAll] = useState<boolean>(false);
   const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
   const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
 
   const clearSelection = (): void => setSelectedIds(new Set());
   const selectAllVisible = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
-  const selectAllMatching = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
+  const selectAllMatching = (): void => {
+    void (async (): Promise<void> => {
+      if (selectingAll) return;
+      setSelectingAll(true);
+      try {
+        const term: string = query.trim();
+        const ids: string[] = await chatbotApi.fetchChatbotSessionIds(
+          term || undefined
+        );
+        setSelectedIds(new Set(ids));
+        toast(
+          ids.length
+            ? `Selected ${ids.length} sessions`
+            : "No matching sessions found"
+        );
+      } catch (error: unknown) {
+        const message: string =
+          error instanceof Error ? error.message : "Failed to select sessions.";
+        toast(message, { variant: "error" });
+      } finally {
+        setSelectingAll(false);
+      }
+    })();
+  };
   const toggleSelected = (id: string): void => {
     setSelectedIds((prev: Set<string>): Set<string> => {
       const newSet = new Set(prev);
@@ -219,10 +243,10 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { void selectAllMatching(); }}
-                disabled={bulkDeleting}
+                onClick={selectAllMatching}
+                disabled={bulkDeleting || selectingAll}
               >
-                Select all (all pages)
+                {selectingAll ? "Selecting..." : "Select all (all pages)"}
               </Button>
               <Button
                 variant="ghost"

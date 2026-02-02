@@ -9,7 +9,7 @@ export interface BaseRecord {
   updatedAt: string | Date;
 }
 
-export interface Entity extends BaseRecord {}
+export type Entity = BaseRecord;
 
 export interface Dto {
   id: string;

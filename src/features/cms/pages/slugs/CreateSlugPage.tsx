@@ -29,7 +29,7 @@ export default function CreateSlugPage(): React.JSX.Element {
     }
 
     try {
-      const createData: any = { slug };
+      const createData: { slug: string; domainId?: string | null } = { slug };
       if (domainId) createData.domainId = domainId;
       await createSlug.mutateAsync(createData);
       const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : "/admin/cms/slugs";

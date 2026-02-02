@@ -57,6 +57,8 @@ export interface BlockDefinition {
   icon: string;
   defaultSettings: Record<string, unknown>;
   settingsSchema: SettingsField[];
+  /** Optional: block types that can be dropped directly into this block (e.g., Row accepts elements) */
+  allowedBlockTypes?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +161,7 @@ export type PageBuilderAction =
   | { type: "UPDATE_COLUMN_SETTINGS"; sectionId: string; columnId: string; settings: Record<string, unknown> }
   | { type: "UPDATE_BLOCK_IN_COLUMN"; sectionId: string; columnId: string; blockId: string; settings: Record<string, unknown> }
   | { type: "MOVE_BLOCK_TO_COLUMN"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toColumnId: string; toParentBlockId?: string; toIndex: number }
+  | { type: "MOVE_BLOCK_TO_ROW"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toRowId: string; toIndex: number }
   | { type: "MOVE_BLOCK_TO_SECTION"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toSectionId: string; toIndex: number }
   | { type: "CONVERT_BLOCK_TO_SECTION"; blockId: string; fromSectionId: string; fromColumnId?: string; fromParentBlockId?: string; toZone: PageZone; toIndex: number }
   | { type: "CONVERT_SECTION_TO_BLOCK"; sectionId: string; toSectionId: string; toIndex: number }

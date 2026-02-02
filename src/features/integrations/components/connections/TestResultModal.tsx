@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, AppModal } from "@/shared/ui";
+import { Button, AppModal, ModalShell } from "@/shared/ui";
+import * as React from "react";
 
 type TestResultModalProps = {
   success: boolean;
@@ -32,22 +33,26 @@ export function TestResultModal({
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
   const footer = (
-    <CopyButton
-      value={copyText}
+    <Button
       variant="outline"
-      showText
+      onClick={() => navigator.clipboard.writeText(copyText)}
       className="border border-white/20 hover:border-white/40"
-    />
+    >
+      Copy
+    </Button>
   );
 
   return (
-    <SharedModal
+    <AppModal
       open={true}
-      onClose={onClose}
+      onOpenChange={() => {}}
       title={success ? "Playwright Test Success" : "Playwright Test Error"}
-      size={success ? "md" : "lg"}
-      footer={footer}
     >
+      <ModalShell
+        title={success ? "Playwright Test Success" : "Playwright Test Error"}
+        onClose={onClose}
+        footer={footer}
+      >
       <div className="space-y-3">
         {!success && (
           <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
@@ -80,6 +85,7 @@ export function TestResultModal({
           </pre>
         )}
       </div>
-    </SharedModal>
+      </ModalShell>
+    </AppModal>
   );
 }

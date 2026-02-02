@@ -126,6 +126,9 @@ interface SectionNodeItemProps {
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType: string | null;
+  setDraggedBlockType: (type: string | null) => void;
+  onDropBlockToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId: string | null;
@@ -166,6 +169,9 @@ export function SectionNodeItem({
   onToggleExpand,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType,
+  setDraggedBlockType,
+  onDropBlockToRow,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -243,11 +249,12 @@ export function SectionNodeItem({
         setDraggedSectionIndex(null);
         setDraggedSectionZone(null);
       }}
-      className="group/section"
+      className="group/section cursor-grab active:cursor-grabbing"
     >
       <div
         role="button"
         tabIndex={0}
+        draggable={false}
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -486,11 +493,14 @@ export function SectionNodeItem({
                 onRemoveColumnFromRow={onRemoveColumnFromRow}
                 onAddBlockToColumn={onAddBlockToColumn}
                 onDropBlockToColumn={onDropBlockToColumn}
+                onDropBlockToRow={onDropBlockToRow}
                 onAddElementToNestedBlock={onAddElementToNestedBlock}
                 expandedIds={expandedIds}
                 onToggleExpand={onToggleExpand}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
+                draggedBlockType={draggedBlockType}
+                setDraggedBlockType={setDraggedBlockType}
                 draggedFromSectionId={draggedFromSectionId}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 draggedFromColumnId={draggedFromColumnId}
@@ -618,11 +628,14 @@ interface RowNodeItemProps {
   onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddBlockToColumn: (sectionId: string, columnId: string, blockType: string) => void;
   onDropBlockToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
+  onDropBlockToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
   expandedIds: Set<string>;
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType: string | null;
+  setDraggedBlockType: (type: string | null) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId: string | null;
@@ -647,11 +660,14 @@ function RowNodeItem({
   onRemoveColumnFromRow,
   onAddBlockToColumn,
   onDropBlockToColumn,
+  onDropBlockToRow,
   onAddElementToNestedBlock,
   expandedIds,
   onToggleExpand,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType,
+  setDraggedBlockType,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -666,7 +682,6 @@ function RowNodeItem({
   const isSelected = selectedNodeId === row.id;
   const isExpanded = expandedIds.has(row.id);
   const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
-  const hasColumns = columns.length > 0;
   const canRemoveRow = rowCount > 1;
   const [isDragOver, setIsDragOver] = useState(false);
   const firstColumn = columns[0] ?? null;
@@ -692,7 +707,8 @@ function RowNodeItem({
           const hasBlockPayload = Array.from(e.dataTransfer.types ?? []).includes("text/plain");
           const dragId =
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          if ((!dragId && !hasBlockPayload) || !firstColumn) return;
+          // Allow drops if we have a block being dragged
+          if (!dragId && !hasBlockPayload) return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
@@ -707,7 +723,7 @@ function RowNodeItem({
           setIsDragOver(false);
           const dragId =
             draggedBlockId || e.dataTransfer.getData("blockId") || e.dataTransfer.getData("text/plain");
-          if (!dragId || !firstColumn) return;
+          if (!dragId) return;
           const fromSection =
             draggedFromSectionId || e.dataTransfer.getData("fromSectionId") || sectionId;
           const fromColumn =
@@ -715,16 +731,38 @@ function RowNodeItem({
           const fromParent =
             (draggedFromParentBlockId ?? e.dataTransfer.getData("fromParentBlockId")) || null;
           if (!fromSection) return;
-          onDropBlockToColumn(
-            dragId,
-            fromSection,
-            fromColumn || undefined,
-            sectionId,
-            firstColumn.id,
-            (firstColumn.blocks ?? []).length,
-            fromParent || undefined
-          );
+
+          // Get the block type being dragged
+          const blockType = draggedBlockType || e.dataTransfer.getData("blockType") || "";
+
+          // If it's a Column type, route to first column (existing behavior)
+          if (blockType === "Column" && firstColumn) {
+            onDropBlockToColumn(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              firstColumn.id,
+              (firstColumn.blocks ?? []).length,
+              fromParent || undefined
+            );
+          } else {
+            // For all other block types, drop directly into the Row
+            // Calculate the drop index (append to end of row children)
+            const rowChildren = row.blocks ?? [];
+            onDropBlockToRow(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              row.id,
+              rowChildren.length,
+              fromParent || undefined
+            );
+          }
+
           setDraggedBlockId(null);
+          setDraggedBlockType(null);
           setDraggedFromSectionId(null);
           setDraggedFromColumnId(null);
           setDraggedFromParentBlockId(null);
@@ -782,38 +820,64 @@ function RowNodeItem({
         </button>
       </div>
 
-      {isExpanded && hasColumns && (
+      {isExpanded && (row.blocks ?? []).length > 0 && (
         <div className="ml-4 border-l border-border/30 pl-1">
-          {columns.map((column: BlockInstance, colIndex: number) => (
-            <ColumnNodeItem
-              key={column.id}
-              column={column}
-              columnIndex={colIndex}
-              sectionId={sectionId}
-              selectedNodeId={selectedNodeId}
-              onSelect={onSelect}
-              onAddBlockToColumn={onAddBlockToColumn}
-              onDropBlockToColumn={onDropBlockToColumn}
-              onAddElementToNestedBlock={onAddElementToNestedBlock}
-              onRemoveColumnFromRow={onRemoveColumnFromRow}
-              rowId={row.id}
-              rowColumnCount={columns.length}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              draggedBlockId={draggedBlockId}
-              setDraggedBlockId={setDraggedBlockId}
-              draggedFromSectionId={draggedFromSectionId}
-              setDraggedFromSectionId={setDraggedFromSectionId}
-              draggedFromColumnId={draggedFromColumnId}
-              setDraggedFromColumnId={setDraggedFromColumnId}
-              draggedFromParentBlockId={draggedFromParentBlockId}
-              setDraggedFromParentBlockId={setDraggedFromParentBlockId}
-              draggedSectionId={draggedSectionId}
-              setDraggedSectionId={setDraggedSectionId}
-              draggedSectionType={draggedSectionType}
-              onDropSectionToColumn={onDropSectionToColumn}
-            />
-          ))}
+          {/* Render all row children - both Columns and direct elements */}
+          {(row.blocks ?? []).map((child: BlockInstance, childIndex: number) => {
+            if (child.type === "Column") {
+              return (
+                <ColumnNodeItem
+                  key={child.id}
+                  column={child}
+                  columnIndex={childIndex}
+                  sectionId={sectionId}
+                  selectedNodeId={selectedNodeId}
+                  onSelect={onSelect}
+                  onAddBlockToColumn={onAddBlockToColumn}
+                  onDropBlockToColumn={onDropBlockToColumn}
+                  onAddElementToNestedBlock={onAddElementToNestedBlock}
+                  onRemoveColumnFromRow={onRemoveColumnFromRow}
+                  rowId={row.id}
+                  rowColumnCount={columns.length}
+                  expandedIds={expandedIds}
+                  onToggleExpand={onToggleExpand}
+                  draggedBlockId={draggedBlockId}
+                  setDraggedBlockId={setDraggedBlockId}
+                  draggedFromSectionId={draggedFromSectionId}
+                  setDraggedFromSectionId={setDraggedFromSectionId}
+                  draggedFromColumnId={draggedFromColumnId}
+                  setDraggedFromColumnId={setDraggedFromColumnId}
+                  draggedFromParentBlockId={draggedFromParentBlockId}
+                  setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+                  draggedSectionId={draggedSectionId}
+                  setDraggedSectionId={setDraggedSectionId}
+                  draggedSectionType={draggedSectionType}
+                  onDropSectionToColumn={onDropSectionToColumn}
+                />
+              );
+            }
+            // Render direct element children (non-Column blocks in the Row)
+            return (
+              <BlockNodeItem
+                key={child.id}
+                block={child}
+                index={childIndex}
+                sectionId={sectionId}
+                selectedNodeId={selectedNodeId}
+                onSelect={onSelect}
+                onDropBlock={() => {}}
+                onDropBlockToColumn={onDropBlockToColumn}
+                draggedBlockId={draggedBlockId}
+                setDraggedBlockId={setDraggedBlockId}
+                draggedFromSectionId={draggedFromSectionId}
+                setDraggedFromSectionId={setDraggedFromSectionId}
+                draggedFromColumnId={draggedFromColumnId}
+                setDraggedFromColumnId={setDraggedFromColumnId}
+                draggedFromParentBlockId={draggedFromParentBlockId}
+                setDraggedFromParentBlockId={setDraggedFromParentBlockId}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -1190,11 +1254,12 @@ function SectionBlockNodeItem({
         setDraggedFromColumnId(null);
         setDraggedFromParentBlockId(null);
       }}
-      className="group/sblock"
+      className="group/sblock cursor-grab active:cursor-grabbing"
     >
       <div
         role="button"
         tabIndex={0}
+        draggable={false}
         onClick={() => onSelect(block.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -1485,11 +1550,19 @@ function BlockNodeItem({
         if (setDraggedFromColumnId) setDraggedFromColumnId(null);
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
-      className="group"
+      className="group cursor-grab active:cursor-grabbing"
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
+        draggable={false}
         onClick={() => onSelect(block.id)}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(block.id);
+          }
+        }}
         className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
@@ -1500,13 +1573,13 @@ function BlockNodeItem({
             : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover:opacity-100 active:cursor-grabbing" />
+        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
         <Icon className="size-3.5 shrink-0" />
         <span className="truncate">{blockLabel}</span>
         {isDragOver && (
           <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
         )}
-      </button>
+      </div>
     </div>
   );
 }

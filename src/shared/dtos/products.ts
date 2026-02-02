@@ -1,4 +1,4 @@
-import type { Entity } from '@/shared/types/base-types';
+import type { Entity } from '../types/core/base-types';
 
 export interface ProductDto extends Entity {
   name: string;

@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox, useToast } from "@/shared/ui";
+import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, useToast } from "@/shared/ui";
 import { useState } from "react";
 
 import type { ProductWithImages } from "@/features/products";
@@ -93,12 +93,13 @@ export default function SelectProductForListingModal({
       setLogsOpen(true);
 
       if (isBaseComIntegration) {
-        const payload = {
+        const payload: any = {
           connectionId: selectedConnectionId,
           inventoryId: selectedInventoryId,
-          templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
           allowDuplicateSku,
         };
+        if (selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
+        
         const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
         if (result.logs) setExportLogs(result.logs);
         toast("Product exported to Base.com", { variant: "success" });
@@ -132,15 +133,15 @@ export default function SelectProductForListingModal({
       setExportLogs([]);
       setLogsOpen(true);
       
-      const payload = {
+      const payload: any = {
         connectionId: selectedConnectionId,
         inventoryId: selectedInventoryId,
-        templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
         allowDuplicateSku,
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
         exportImagesAsBase64: true,
       };
+      if (selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
 
       const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
       if (result.logs) setExportLogs(result.logs);

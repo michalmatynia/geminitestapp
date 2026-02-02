@@ -59,13 +59,18 @@ function sectionStyleFields(): SettingsField[] {
 export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
+// Row can contain columns and also elements/blocks directly (not just inside columns)
+export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement", "TextAtom", "Button", "Image", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "Hero", "ImageWithText", "RichText", "Block", "Model3D"];
+
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
   Row: {
     type: "Row",
     label: "Row",
     icon: "GripVertical",
+    allowedBlockTypes: ROW_ALLOWED_BLOCK_TYPES,
     defaultSettings: {
       gap: "inherit",
+      direction: "horizontal",
       heightMode: "inherit",
       height: 0,
       paddingTop: 0,
@@ -80,8 +85,18 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     },
     settingsSchema: [
       {
+        key: "direction",
+        label: "Direction",
+        type: "select",
+        options: [
+          { label: "Horizontal (side by side)", value: "horizontal" },
+          { label: "Vertical (stacked)", value: "vertical" },
+        ],
+        defaultValue: "horizontal",
+      },
+      {
         key: "gap",
-        label: "Column gap",
+        label: "Item gap",
         type: "select",
         options: [
           { label: "Inherit section gap", value: "inherit" },
@@ -1435,4 +1450,14 @@ export function getColumnAllowedBlockTypes(): BlockDefinition[] {
   return COLUMN_ALLOWED_BLOCK_TYPES
     .map((bt: string) => BLOCK_DEFINITIONS[bt])
     .filter((b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined);
+}
+
+export function getRowAllowedBlockTypes(): BlockDefinition[] {
+  return ROW_ALLOWED_BLOCK_TYPES
+    .map((bt: string) => BLOCK_DEFINITIONS[bt])
+    .filter((b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined);
+}
+
+export function isBlockTypeAllowedInRow(blockType: string): boolean {
+  return ROW_ALLOWED_BLOCK_TYPES.includes(blockType);
 }

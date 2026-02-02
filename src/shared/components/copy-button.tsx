@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/shared/ui";
 import { Check, Copy } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -21,10 +21,10 @@ export function CopyButton({
   size = "icon",
   timeout = 2000,
   showText = false,
-}: CopyButtonProps) {
+}: CopyButtonProps): React.JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
     if (!value) return;
 
@@ -56,7 +56,7 @@ export function CopyButton({
       type="button"
       variant={variant}
       size={showText ? "default" : size}
-      onClick={handleCopy}
+      onClick={(e: React.MouseEvent): void => { void handleCopy(e); }}
       className={className}
       title={isCopied ? "Copied!" : "Copy to clipboard"}
     >

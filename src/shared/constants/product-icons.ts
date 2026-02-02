@@ -32,8 +32,8 @@ export const PRODUCT_ICONS = [
 ] as const;
 
 export const PRODUCT_ICON_MAP: Record<string, LucideIcon> = PRODUCT_ICONS.reduce(
-  (acc, { id, icon }) => ({ ...acc, [id]: icon }),
-  {}
+  (acc: Record<string, LucideIcon>, { id, icon }: { id: string; icon: LucideIcon }) => ({ ...acc, [id]: icon }),
+  {} as Record<string, LucideIcon>
 );
 
 export type ProductIconId = (typeof PRODUCT_ICONS)[number]["id"];

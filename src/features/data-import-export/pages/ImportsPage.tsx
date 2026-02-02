@@ -409,7 +409,16 @@ export default function ImportsPage(): React.JSX.Element {
     }
     try {
       const selectedIds = Array.from(selectedImportIds);
-      const importData: any = {
+      const importData: {
+        inventoryId: string;
+        catalogId: string;
+        imageMode: "download" | "links";
+        uniqueOnly: boolean;
+        allowDuplicateSku: boolean;
+        templateId?: string;
+        limit?: number;
+        selectedIds?: string[];
+      } = {
         inventoryId,
         catalogId,
         imageMode,
@@ -420,9 +429,9 @@ export default function ImportsPage(): React.JSX.Element {
       if (limit !== "all") importData.limit = Number(limit);
       if (selectedIds.length > 0) importData.selectedIds = selectedIds;
       
-      const res = await importMutation.mutateAsync(importData);
+      const res = (await importMutation.mutateAsync(importData)) as ImportResponse;
       setLastResult(res);
-      const importedCount = (res as { imported?: number }).imported ?? 0;
+      const importedCount = res.imported ?? 0;
       toast(`Imported ${importedCount} products`, { variant: "success" });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Import failed';

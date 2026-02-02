@@ -1,6 +1,6 @@
 "use client";
 
-import { AppModal } from "@/shared/ui/app-modal";
+import { AppModal } from "@/shared/ui";
 import ModalShell from "./modal-shell";
 import * as React from "react";
 
@@ -28,11 +28,11 @@ export function SharedModal({
   showClose = true,
   contentClassName,
   bodyClassName,
-}: SharedModalProps) {
+}: SharedModalProps): React.JSX.Element {
   return (
     <AppModal
       open={open}
-      onOpenChange={(isOpen) => !isOpen && onClose()}
+      onOpenChange={(isOpen: boolean) => !isOpen && onClose()}
       title={title}
       contentClassName={contentClassName}
     >

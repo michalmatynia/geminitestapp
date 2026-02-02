@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Checkbox } from "@/shared/ui";
+import { Button, SharedModal } from "@/shared/ui";
 import { useState } from "react";
 
 import { logger } from "@/shared/utils/logger";
@@ -85,13 +85,15 @@ export function MassListProductModal({
         
         try {
             if (isBaseComIntegration) {
-                const result = await exportMutation.mutateAsync({
+                const exportData: any = {
                   productId,
                   connectionId: selectedConnectionId,
                   inventoryId: selectedInventoryId,
-                  templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
                   allowDuplicateSku,
-                });
+                };
+                if (selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
+                
+                const result = await exportMutation.mutateAsync(exportData);
         
                 if (result.logs) {
                   allLogs.push(...result.logs);

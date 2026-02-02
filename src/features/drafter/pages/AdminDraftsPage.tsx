@@ -11,7 +11,6 @@ import { DraftCreator } from "../components/DraftCreator";
 export function AdminDraftsPage(): React.JSX.Element {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleEdit = (id: string): void => {
@@ -25,7 +24,6 @@ export function AdminDraftsPage(): React.JSX.Element {
   };
 
   const handleSaveSuccess = (): void => {
-    setRefreshTrigger((prev: number): number => prev + 1);
     setEditingDraftId(null);
     setIsCreatorOpen(false);
   };

@@ -5,7 +5,7 @@ import type { ChatCompletionContentPart } from "openai/resources/chat/completion
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getImageFileRepository } from "@/features/files/server";
-import type { ProductFormData } from "@/features/products/types";
+import type { ProductFormData } from "../types/forms";
 import type { ImageFileRecord } from "@/shared/types/files";
 import fs from "fs/promises";
 import path from "path";

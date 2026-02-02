@@ -956,6 +956,82 @@ export function basePageBuilderReducer(
       return { ...state, sections: sectionsAfterInsert };
     }
 
+    case "MOVE_BLOCK_TO_ROW": {
+      // Remove block from source (section direct, column, or nested inside a parent block in a column)
+      const removeFromSource = (
+        sections: SectionInstance[],
+        fromSectionId: string,
+        fromColumnId?: string,
+        fromParentBlockId?: string
+      ): { sections: SectionInstance[]; moved: BlockInstance | null } => {
+        let moved: BlockInstance | null = null;
+        const nextSections = sections.map((s: SectionInstance) => {
+          if (s.id !== fromSectionId) return s;
+          if (fromColumnId) {
+            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            if (result.moved) moved = result.moved;
+            return { ...s, blocks: result.blocks };
+          }
+          // Remove from section's direct blocks (could be from a row)
+          const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
+            return blocks.map((b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return null as unknown as BlockInstance;
+              }
+              if (b.type === "Row" && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+                }
+              }
+              if (b.blocks) {
+                return { ...b, blocks: removeFromBlocks(b.blocks) };
+              }
+              return b;
+            }).filter(Boolean);
+          };
+          return { ...s, blocks: removeFromBlocks(s.blocks) };
+        });
+        return { sections: nextSections, moved };
+      };
+
+      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      if (!removal.moved) {
+        const found = findBlock(state.sections, action.blockId);
+        if (!found) return state;
+        removal = removeFromSource(
+          state.sections,
+          found.section.id,
+          found.parentColumn?.id,
+          found.parentBlock?.id
+        );
+      }
+      if (!removal.moved) return state;
+
+      // Insert into target row
+      const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
+        if (s.id !== action.toSectionId) return s;
+        const insertIntoRow = (blocks: BlockInstance[]): BlockInstance[] => {
+          return blocks.map((b: BlockInstance) => {
+            if (b.id === action.toRowId && b.type === "Row") {
+              const nextBlocks = [...(b.blocks ?? [])];
+              nextBlocks.splice(action.toIndex, 0, removal.moved!);
+              return { ...b, blocks: nextBlocks };
+            }
+            if (b.blocks) {
+              return { ...b, blocks: insertIntoRow(b.blocks) };
+            }
+            return b;
+          });
+        };
+        return { ...s, blocks: insertIntoRow(s.blocks) };
+      });
+      return { ...state, sections: sectionsAfterInsert };
+    }
+
     case "MOVE_BLOCK_TO_SECTION": {
       const removeFromSource = (
         sections: SectionInstance[],

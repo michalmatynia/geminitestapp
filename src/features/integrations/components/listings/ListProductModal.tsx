@@ -1,5 +1,5 @@
 "use client";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, ModalShell, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Checkbox } from "@/shared/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal } from "@/shared/ui";
 import { useState } from "react";
 
 import { ProductWithImages } from "@/features/products/types";
@@ -88,14 +88,16 @@ export function ListProductModal({
     imageBase64Mode?: "base-only" | "full-data-uri";
     imageTransform?: ImageTransformOptions | null;
   }): Promise<void> => {
-    const payloadRes = await exportToBaseMutation.mutateAsync({
+    const exportData: any = {
       connectionId: selectedConnectionId,
       inventoryId: selectedInventoryId,
-      templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-      imageBase64Mode: options?.imageBase64Mode,
-      imageTransform: options?.imageTransform,
       exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
-    });
+    };
+    if (selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
+    if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
+    if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
+    
+    const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
 
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);

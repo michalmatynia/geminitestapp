@@ -7,7 +7,7 @@ import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products";
 import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";
 import { useAssets3D } from "@/features/viewer3d/hooks/useAsset3dQueries";
-import type { Asset3DRecord } from "@/features/viewer3d/types";
+import type { Asset3DRecord, Asset3DListFilters } from "@/features/viewer3d/types";
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -71,7 +71,7 @@ export default function FileManager({
 
   const { data: files = [] } = useFiles(queryParams);
   const assetFilters = useMemo(() => {
-    const filters: any = {
+    const filters: Asset3DListFilters = {
       search: filenameSearch || null,
     };
     if (enableTagSearch && tagSearchList.length > 0) {

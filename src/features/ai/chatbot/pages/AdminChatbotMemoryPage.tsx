@@ -39,8 +39,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
-  const { data: itemsData = [], isLoading: loading, error } = useChatbotMemory(queryString);
-  const items = itemsData as ExtendedMemoryItem[];
+  const { data: items = [], isLoading: loading, error } = useChatbotMemory(queryString);
 
   return (
     <div className="container mx-auto py-10">

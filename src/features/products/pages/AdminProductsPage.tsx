@@ -15,7 +15,7 @@ import { useProductOperations } from "@/features/products/hooks/useProductOperat
 import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
-// import { useProductListSync } from "@/shared/hooks/useBackgroundSync";
+import { useProductListSync } from "@/shared/hooks/sync/useBackgroundSync";
 import { 
   useProductCacheWarmup, 
   useProductPrefetch, 
@@ -474,7 +474,7 @@ export function AdminProductsPage(): React.JSX.Element {
         setRowSelection={setRowSelection}
         onSelectAllGlobal={handleSelectAllGlobal}
         loadingGlobal={loadingGlobalSelection}
-        onDeleteSelected={() => setIsMassDeleteConfirmOpen(true)}
+        onDeleteSelected={async () => setIsMassDeleteConfirmOpen(true)}
         onAddToMarketplace={handleAddToMarketplace}
         handleProductsTableRender={handleProductsTableRender}
         tableColumns={columns}

@@ -15,7 +15,6 @@ import { useCmsPages, useCmsPage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
-import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 type PageSelectorBarProps = {
   variant?: "bar" | "toolbar";
@@ -31,7 +30,7 @@ export function PageSelectorBar({ variant = "bar" }: PageSelectorBarProps): Reac
   const lastSavedPageIdRef = useRef<string | null>(null);
   
   const preferencesQuery = useUserPreferences();
-  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
+  const userPreferences = preferencesQuery.data;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const initialPageId = useMemo((): string => {

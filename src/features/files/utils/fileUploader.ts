@@ -106,8 +106,8 @@ export async function uploadFile(
         width: null,
         height: null,
         tags: [],
-        createdAt: now,
-        updatedAt: now,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       };
     }
     throw error;

@@ -1583,7 +1583,12 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
     const collection = mongo.collection("users");
     const deleted = await collection.deleteMany({});
     if (docs.length) await collection.insertMany(docs as any[]);
-    const result: any = {
+    const result: {
+      sourceCount: number;
+      targetDeleted: number;
+      targetInserted: number;
+      warnings?: string[];
+    } = {
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
       targetInserted: docs.length,

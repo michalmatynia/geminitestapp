@@ -4,10 +4,10 @@ import path from "path";
 import fs from "fs/promises";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/server";
-import { getCatalogRepository } from "@/features/products/server";
+import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getCatalogRepository } from "@/features/products/services/catalog-repository";
 import { getImageFileRepository } from "@/features/files/server";
-import { getProductRepository } from "@/features/products/server";
+import { getProductRepository } from "@/features/products/services/product-repository";
 import { getImportTemplate } from "@/features/integrations/services/import-template-repository";
 import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
 import { decryptSecret } from "@/features/integrations/utils/encryption";
@@ -29,7 +29,7 @@ import { productCreateSchema } from "@/features/products/validations/schemas";
 import type { ProductCreateInput } from "@/features/products/validations/schemas";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages } from "@/features/products/types/records";
 
 export const runtime = "nodejs";
 
@@ -206,7 +206,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
       );
 
-      const listItems = allBaseIds.map((id: string) => ({
+      const listItems = (allBaseIds as string[]).map((id: string) => ({
         id,
         exists: existingIds.has(id),
       }));
@@ -412,7 +412,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             where: { isDefault: true },
             select: { id: true },
           });
-    const resolvedDefault = await defaultPriceGroup;
+    const resolvedDefault = (await defaultPriceGroup) as { id: string } | null;
     if (!resolvedDefault?.id) {
       return NextResponse.json(
         { error: "Default price group is required before importing products." },
@@ -495,7 +495,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           defaultPriceGroupId: resolvedDefault.id,
           imageLinks: imageUrls,
         });
-        const created = await productRepository.createProduct(payload);
+        const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
         if (!created && payload.sku) {
           throw new Error("Failed to create product.");
         }
@@ -504,9 +504,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         if (existingSkus && payload.sku) {
           existingSkus.add(payload.sku);
         }
-        await productRepository.replaceProductCatalogs(created.id, [
-          targetCatalog.id,
-        ]);
+        if (created) {
+          await productRepository.replaceProductCatalogs(created.id, [
+            targetCatalog.id,
+          ]);
+        }
 
         if (imageUrls.length > 0) {
           const imageFileIds: string[] = [];
@@ -515,7 +517,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             if (!url) continue;
             try {
               if (imageMode === "download") {
-                const file = await downloadImage(url, payload.sku ?? created.id, i + 1);
+                const file = await downloadImage(url, payload.sku ?? (created?.id || 'unknown'), i + 1);
                 imageFileIds.push(file.id);
               } else {
                 const filename = extractFilename(url, `base-image-${i + 1}.jpg`);
@@ -537,7 +539,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
               }
             }
           }
-          if (imageFileIds.length > 0) {
+          if (imageFileIds.length > 0 && created) {
             await productRepository.addProductImages(created.id, imageFileIds);
           }
         }
@@ -557,10 +559,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
               defaultPriceGroupId: resolvedDefault.id,
               imageLinks: imageUrls,
             });
-            const created = await productRepository.createProduct(payload);
-            await productRepository.replaceProductCatalogs(created.id, [
-              targetCatalog.id,
-            ]);
+            const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
+            if (created) {
+              await productRepository.replaceProductCatalogs(created.id, [
+                targetCatalog.id,
+              ]);
+            }
 
             if (imageUrls.length > 0) {
               const imageFileIds: string[] = [];
@@ -571,7 +575,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
                   if (imageMode === "download") {
                     const file = await downloadImage(
                       url,
-                      payload.sku ?? created.id,
+                      payload.sku ?? (created?.id || 'unknown'),
                       i + 1
                     );
                     imageFileIds.push(file.id);
@@ -595,7 +599,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
                   }
                 }
               }
-              if (imageFileIds.length > 0) {
+              if (imageFileIds.length > 0 && created) {
                 await productRepository.addProductImages(created.id, imageFileIds);
               }
             }

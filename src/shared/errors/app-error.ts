@@ -1,32 +1,57 @@
-// import { AppErrorCode, AppErrorOptions, AppErrorCodes } from "@/shared/types/errors";
+// Consolidated core types for the application
+export type AppErrorCode = string;
 
-// Temporary types until errors module is implemented
-type AppErrorCode = string;
-type AppErrorOptions = {
+export type AppErrorOptions = {
   code: string;
   httpStatus: number;
-  meta?: Record<string, unknown> | undefined;
-  expected?: boolean | undefined;
-  critical?: boolean | undefined;
-  retryable?: boolean | undefined;
-  retryAfterMs?: number | undefined;
-  cause?: unknown | undefined;
+  meta?: Record<string, unknown>;
+  expected?: boolean;
+  critical?: boolean;
+  retryable?: boolean;
+  retryAfterMs?: number;
+  cause?: unknown;
 };
-const AppErrorCodes = {
+
+export const AppErrorCodes = {
+  // Client Errors
+  badRequest: 'BAD_REQUEST',
+  validation: 'VALIDATION_ERROR',
+  unauthorized: 'UNAUTHORIZED',
+  forbidden: 'FORBIDDEN',
+  notFound: 'NOT_FOUND',
+  conflict: 'CONFLICT',
+  rateLimited: 'RATE_LIMITED',
+  payloadTooLarge: 'PAYLOAD_TOO_LARGE',
+  unprocessableEntity: 'UNPROCESSABLE_ENTITY',
+  resourceLocked: 'RESOURCE_LOCKED',
+  quotaExceeded: 'QUOTA_EXCEEDED',
+  
+  // Server Errors
+  internal: 'INTERNAL_SERVER_ERROR',
+  externalService: 'EXTERNAL_SERVICE_ERROR',
+  serviceUnavailable: 'SERVICE_UNAVAILABLE',
+  timeout: 'TIMEOUT',
+  databaseError: 'DATABASE_ERROR',
+  configurationError: 'CONFIGURATION_ERROR',
+  
+  // Domain Errors
+  duplicateEntry: 'DUPLICATE_ENTRY',
+  invalidState: 'INVALID_STATE',
+  operationFailed: 'OPERATION_FAILED',
+  integrationError: 'INTEGRATION_ERROR',
+  apiKeyInvalid: 'API_KEY_INVALID',
+  webhookFailed: 'WEBHOOK_FAILED',
+  
+  // Legacy support
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   NOT_FOUND: 'NOT_FOUND',
   UNAUTHORIZED: 'UNAUTHORIZED',
-  badRequest: 'BAD_REQUEST',
-  validation: 'VALIDATION_ERROR',
 } as const;
-
-export { AppErrorCodes };
-export type { AppErrorCode, AppErrorOptions };
 
 export class AppError extends Error {
   code: AppErrorCode;
   httpStatus: number;
-  meta?: Record<string, unknown> | undefined;
+  meta?: Record<string, unknown>;
   expected: boolean;
   critical: boolean;
   retryable: boolean;

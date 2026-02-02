@@ -23,6 +23,7 @@ export function ComponentTreePanel(): React.ReactNode {
 
   // Drag-and-drop state for blocks
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [draggedBlockType, setDraggedBlockType] = useState<string | null>(null);
   const [draggedFromSectionId, setDraggedFromSectionId] = useState<string | null>(null);
   const [draggedFromColumnId, setDraggedFromColumnId] = useState<string | null>(null);
   const [draggedFromParentBlockId, setDraggedFromParentBlockId] = useState<string | null>(null);
@@ -125,6 +126,28 @@ export function ComponentTreePanel(): React.ReactNode {
       setExpandedIds((prev: Set<string>) => {
         const next = new Set(prev);
         next.add(toSectionId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
+  const handleDropBlockToRow = useCallback(
+    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => {
+      dispatch({
+        type: "MOVE_BLOCK_TO_ROW",
+        blockId,
+        fromSectionId,
+        ...(fromColumnId && { fromColumnId }),
+        ...(fromParentBlockId && { fromParentBlockId }),
+        toSectionId,
+        toRowId,
+        toIndex,
+      });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(toSectionId);
+        next.add(toRowId);
         return next;
       });
     },
@@ -343,6 +366,9 @@ export function ComponentTreePanel(): React.ReactNode {
                 onToggleExpand={handleToggleExpand}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
+                draggedBlockType={draggedBlockType}
+                setDraggedBlockType={setDraggedBlockType}
+                onDropBlockToRow={handleDropBlockToRow}
                 draggedFromSectionId={draggedFromSectionId}
                 setDraggedFromSectionId={setDraggedFromSectionId}
                 draggedFromColumnId={draggedFromColumnId}
@@ -401,6 +427,9 @@ interface ZoneGroupProps {
   onToggleExpand: (nodeId: string) => void;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
+  draggedBlockType: string | null;
+  setDraggedBlockType: (type: string | null) => void;
+  onDropBlockToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
   draggedFromSectionId: string | null;
   setDraggedFromSectionId: (id: string | null) => void;
   draggedFromColumnId: string | null;
@@ -448,6 +477,9 @@ function ZoneGroup({
   onToggleExpand,
   draggedBlockId,
   setDraggedBlockId,
+  draggedBlockType,
+  setDraggedBlockType,
+  onDropBlockToRow,
   draggedFromSectionId,
   setDraggedFromSectionId,
   draggedFromColumnId,
@@ -553,6 +585,9 @@ function ZoneGroup({
                     onToggleExpand={onToggleExpand}
                     draggedBlockId={draggedBlockId}
                     setDraggedBlockId={setDraggedBlockId}
+                    draggedBlockType={draggedBlockType}
+                    setDraggedBlockType={setDraggedBlockType}
+                    onDropBlockToRow={onDropBlockToRow}
                     draggedFromSectionId={draggedFromSectionId}
                     setDraggedFromSectionId={setDraggedFromSectionId}
                     draggedFromColumnId={draggedFromColumnId}

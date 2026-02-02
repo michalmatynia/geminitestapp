@@ -6,7 +6,7 @@ import { getColumnAllowedBlockTypes } from "./section-registry";
 import { useSettingsMap } from "@/shared/hooks/use-settings";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
-import { PickerDropdown } from "./PickerDropdown";
+import { PickerDropdown, type PickerGroup } from "./PickerDropdown";
 
 const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
 
@@ -46,7 +46,7 @@ export function ColumnBlockPicker({ onSelect }: ColumnBlockPickerProps): React.R
         label: def.label,
       })),
     },
-  ].filter((g: { label: string; options: { type: string; label: string }[] }) => g.options.length > 0), [elementTypes, sectionTypes]);
+  ].filter((g: PickerGroup) => g.options.length > 0), [elementTypes, sectionTypes]);
 
   if (allTypes.length === 0) return null;
 

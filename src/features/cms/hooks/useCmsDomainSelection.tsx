@@ -7,7 +7,6 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain } from "@/features/cms/types";
 import { useUserPreferences, useUpdateUserPreferences } from "@/shared/hooks/useUserPreferences";
-import type { UserPreferences } from "@/shared/types/domain/user-preferences";
 
 type CmsDomainSelectionOptions = {
   initialDomainId?: string | null;
@@ -42,7 +41,7 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   const domains = useMemo<CmsDomain[]>(() => domainsQuery.data ?? [], [domainsQuery.data]);
 
   const preferencesQuery = useUserPreferences();
-  const userPreferences = preferencesQuery.data as UserPreferences | undefined;
+  const userPreferences = preferencesQuery.data;
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const hostDomainId = useMemo((): string | null => {

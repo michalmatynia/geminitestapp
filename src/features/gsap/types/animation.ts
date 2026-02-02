@@ -128,8 +128,8 @@ export interface GsapAnimationConfig {
   textScrambleChars?: string;
   textTypingSpeed?: number;
   textCursor?: boolean;
-  textCountFrom?: number;
-  textCountTo?: number;
+  textCountFrom?: number | undefined;
+  textCountTo?: number | undefined;
   textCountDecimals?: number;
   visualFilterFrom?: string;
   visualFilterTo?: string;

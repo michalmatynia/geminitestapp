@@ -90,9 +90,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     }))
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap((q: any) => q.data || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap((q: any) => q.data || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap((q: any) => q.data || []), [parameterQueries]);
+  const categories = useMemo(() => categoryQueries.flatMap((q) => q.data || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap((q) => q.data || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap((q) => q.data || []), [parameterQueries]);
   const parametersLoading = useMemo(() => parameterQueries.some((q: { isLoading: boolean }) => q.isLoading), [parameterQueries]);
 
   // Sync form with draft data

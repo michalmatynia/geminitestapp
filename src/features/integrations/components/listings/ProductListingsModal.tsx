@@ -504,14 +504,16 @@ export function ProductListingsModal({
     }
     const templateId: string | undefined = getLatestTemplateId(listing) ?? undefined;
     
-    const payloadRes = await exportToBaseMutation.mutateAsync({
+    const exportData: any = {
       connectionId: listing.connectionId,
       inventoryId,
-      templateId,
-      imageBase64Mode: options?.imageBase64Mode,
-      imageTransform: options?.imageTransform,
       exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
-    });
+    };
+    if (templateId) exportData.templateId = templateId;
+    if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
+    if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
+    
+    const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
 
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
@@ -535,16 +537,18 @@ export function ProductListingsModal({
       throw new Error("External Base.com product ID is missing.");
     }
     
-    const payloadRes = await exportToBaseMutation.mutateAsync({
+    const exportData: any = {
       connectionId: listing.connectionId,
       inventoryId,
       imagesOnly: true,
       listingId: listing.id,
       externalListingId: listing.externalListingId,
       exportImagesAsBase64: true,
-      imageBase64Mode: options?.imageBase64Mode,
-      imageTransform: options?.imageTransform,
-    });
+    };
+    if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
+    if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
+    
+    const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
 
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);

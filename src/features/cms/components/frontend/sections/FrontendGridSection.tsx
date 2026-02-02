@@ -226,8 +226,11 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
           <div className={`flex flex-col ${sectionGapClass}`}>
             {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
-              const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
-              if (rowColumns.length === 0) return null;
+              const rowChildren = row.blocks ?? [];
+
+              // If no children at all, skip
+              if (rowChildren.length === 0) return null;
+
               const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
               const rowGapClass = getGapClass(rowGapValue);
               const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
@@ -237,6 +240,11 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
                 rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
               const rowBackgroundSettings = row.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
               const hasRowBackground = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+
+              // Direction setting: horizontal (side by side) or vertical (stacked)
+              const direction = (row.settings?.["direction"] as string) || "horizontal";
+              const isVertical = direction === "vertical";
+
               return (
                 <div
                   key={`grid-row-${row.id}-${rowIndex}`}
@@ -245,21 +253,45 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
                 >
                   {hasRowBackground && renderBackgroundImageLayer(rowBackgroundSettings)}
                   <div
-                    className={`relative z-10 grid ${rowGapClass}`}
+                    className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row flex-wrap"} ${rowGapClass}`}
                     style={{
-                      gridTemplateColumns: `repeat(${rowColumns.length}, 1fr)`,
                       ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
                     }}
                   >
-                    {rowColumns.map((column: BlockInstance) => (
-                      <ColumnRenderer
-                        key={column.id}
-                        column={column}
-                        colorSchemes={colorSchemes}
-                        rowHeightMode={rowHeightMode}
-                        rowHeight={rowHeight}
-                      />
-                    ))}
+                    {/* Render all children in order, handling columns and direct elements */}
+                    {rowChildren.map((child: BlockInstance) => {
+                      if (child.type === "Column") {
+                        // Columns get flex-1 to share space equally when horizontal
+                        return (
+                          <div key={child.id} className={isVertical ? "w-full" : "flex-1 min-w-0"}>
+                            <ColumnRenderer
+                              column={child}
+                              colorSchemes={colorSchemes}
+                              rowHeightMode={rowHeightMode}
+                              rowHeight={rowHeight}
+                            />
+                          </div>
+                        );
+                      }
+                      // Direct elements in row (not inside a column)
+                      const minHeight = getBlockMinHeight(child.type);
+                      const wrapperStyle: React.CSSProperties = {
+                        minHeight: `${minHeight}px`,
+                        position: "relative",
+                      };
+                      if (SECTION_BLOCK_TYPES.has(child.type)) {
+                        return (
+                          <div key={child.id} className={isVertical ? "w-full" : ""} style={wrapperStyle}>
+                            <SectionBlockRenderer block={child} colorSchemes={colorSchemes} />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={child.id} className={isVertical ? "w-full" : ""} style={wrapperStyle}>
+                          <FrontendBlockRenderer block={child} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

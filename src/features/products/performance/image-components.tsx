@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 // import { imageUrlGenerator, type ImageFormat, type ImageSize } from '../image-optimizer';
 

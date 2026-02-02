@@ -24,6 +24,7 @@ import type {
   DatabasePreviewMode,
   DatabasePreviewRow,
   DatabasePreviewTable,
+  DatabaseType,
 } from "../types";
 import { useDatabasePreview } from "../hooks/useDatabaseQueries";
 
@@ -55,11 +56,16 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({});
 
-  const queryParams: any = {
+  const queryParams: {
+    mode: DatabasePreviewMode;
+    type: DatabaseType;
+    page: number;
+    pageSize: number;
+    backupName?: string;
+  } = {
     mode: previewMode,
-    type: previewType === "mongodb" ? "mongodb" : "postgresql",
+    type: (previewType === "mongodb" ? "mongodb" : "postgresql") as DatabaseType,
     page,
     pageSize,
   };
@@ -103,10 +109,6 @@ function DatabasePreviewPageInner(): React.JSX.Element {
 
   const toggleGroup = (type: string): void => {
     setExpandedGroups((prev: Record<string, boolean>) => ({ ...prev, [type]: !prev[type] }));
-  };
-
-  const toggleTable = (name: string): void => {
-    setExpandedTables((prev: Record<string, boolean>) => ({ ...prev, [name]: !prev[name] }));
   };
 
   const maxPage = useMemo(() => {
@@ -281,7 +283,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                 totalPages={maxPage}
                 onPageChange={setPage}
                 pageSize={pageSize}
-                onPageSizeChange={(size) => {
+                onPageSizeChange={(size: number) => {
                   setPage(1);
                   setPageSize(size);
                 }}
@@ -291,107 +293,21 @@ function DatabasePreviewPageInner(): React.JSX.Element {
               />
             </div>
           </div>
-          {!loading && !error && tableRows.length === 0 && (
-            <p className="mt-3 text-xs text-gray-500">
-              No table rows available in this backup.
-            </p>
-          )}
-          {!loading && !error && tableRows.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {tableRows.map((table: DatabasePreviewRow) => {
-                const columns = table.rows[0]
-                  ? Object.keys(table.rows[0])
-                  : [];
-                const expanded = expandedTables[table.name] ?? false;
-                return (
-                  <div
-                    key={table.name}
-                    className="rounded-md border border-border bg-card/60"
-                  >
-                    <Button
-                      type="button"
-                      onClick={(): void => toggleTable(table.name)}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200"
-                    >
-                      <span className="flex items-center gap-2">
-                        <TableIcon className="size-4 text-emerald-200" />
-                        <span className="font-semibold">
-                          {table.name} ({table.rows.length} rows shown /{" "}
-                          {table.totalRows.toLocaleString()} total)
-                        </span>
-                      </span>
-                      {expanded ? (
-                        <ChevronDownIcon className="size-4 text-gray-400" />
-                      ) : (
-                        <ChevronRightIcon className="size-4 text-gray-400" />
-                      )}
-                    </Button>
-                    {expanded && (
-                      <div className="border-t border-border px-3 py-3">
-                        {table.rows.length === 0 ? (
-                          <p className="text-xs text-gray-500">
-                            No rows in this table.
-                          </p>
-                        ) : (
-                          <div className="overflow-auto rounded-md border border-border">
-                            <table className="min-w-full text-xs text-gray-300">
-                              <thead className="bg-gray-900/80 text-gray-400">
-                                <tr>
-                                  {columns.map((column: string) => (
-                                    <th
-                                      key={column}
-                                      className="whitespace-nowrap px-3 py-2 text-left font-semibold"
-                                    >
-                                      {column}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {table.rows.map((row: Record<string, unknown>, rowIndex: number) => (
-                                  <tr
-                                    key={`${table.name}-${rowIndex}`}
-                                    className="border-t border-border/60"
-                                  >
-                                    {columns.map((column: string) => (
-                                      <td
-                                        key={`${table.name}-${rowIndex}-${column}`}
-                                        className="whitespace-nowrap px-3 py-2 align-top"
-                                      >
-                                        {(() : string => {
-                                          const value = row[column];
-                                          if (
-                                            typeof value === "string" ||
-                                            typeof value === "number" ||
-                                            typeof value === "boolean"
-                                          ) {
-                                            return String(value);
-                                          }
-                                          if (value instanceof Date) {
-                                            return value.toISOString();
-                                          }
-                                          if (value == null) return "";
-                                          try {
-                                            return JSON.stringify(value);
-                                          } catch {
-                                            return "";
-                                          }
-                                        })()}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+// ...
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">
+              Raw Backup List
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(): void => { void navigator.clipboard.writeText(content); }}
+              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
+            >
+              Copy
+            </Button>
+          </div>
+
           <p className="mt-3 text-xs text-gray-500">
             Rows are extracted from a temporary restore of the backup.
           </p>

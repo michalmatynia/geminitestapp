@@ -210,7 +210,7 @@ export const VALIDATION_PROVIDERS = {
 } as const;
 
 // Initialize default providers
-Object.values(VALIDATION_PROVIDERS).forEach((provider: ExternalValidationProvider) => {
+(Object.values(VALIDATION_PROVIDERS) as unknown as ExternalValidationProvider[]).forEach((provider: ExternalValidationProvider) => {
   externalValidationService.registerProvider(provider);
 });
 

@@ -394,7 +394,8 @@ export const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
 export const STORAGE_VERSION = 1;
 export const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 export const TRIGGER_EVENTS = [
-  { id: "path_generate_description", label: "Path Generate Description" },
+  // Default trigger for interactive / client-driven runs.
+  { id: "manual", label: "Manual / UI Trigger" },
   { id: "scheduled_run", label: "Scheduled Run (Server)" },
 ];
 

@@ -7,7 +7,7 @@ import { AiPathsSettings } from "../components/AiPathsSettings";
 
 
 export function AdminAiPathsPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs" | "queue">(
+  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
     "canvas"
   );
   const [mounted, setMounted] = useState(false);
@@ -24,14 +24,13 @@ export function AdminAiPathsPage(): React.JSX.Element {
           <Tabs
             value={activeTab}
             onValueChange={(value: string) =>
-              setActiveTab(value as "canvas" | "paths" | "docs" | "queue")
+              setActiveTab(value as "canvas" | "paths" | "docs")
             }
           >
             <TabsList className="bg-card/70">
               <TabsTrigger value="canvas">Canvas</TabsTrigger>
               <TabsTrigger value="paths">Paths</TabsTrigger>
               <TabsTrigger value="docs">Docs</TabsTrigger>
-              <TabsTrigger value="queue">Job Queue</TabsTrigger>
             </TabsList>
           </Tabs>
         ) : (

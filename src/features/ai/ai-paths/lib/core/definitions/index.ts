@@ -49,13 +49,6 @@ export const palette: NodeDefinition[] = [
   },
   {
     type: "trigger",
-    title: "Trigger: Path Generate Description",
-    description: "Runs when the Path Generate Description button is clicked.",
-    inputs: TRIGGER_INPUT_PORTS,
-    outputs: TRIGGER_OUTPUT_PORTS,
-  },
-  {
-    type: "trigger",
     title: "Trigger: Scheduled Run",
     description: "Runs on a server schedule or cron.",
     inputs: TRIGGER_INPUT_PORTS,
@@ -89,13 +82,6 @@ export const palette: NodeDefinition[] = [
     description: "Runs the AI Description pipeline to produce description_en.",
     inputs: ["entityJson", "images", "title"],
     outputs: DESCRIPTION_OUTPUT_PORTS,
-  },
-  {
-    type: "description_updater",
-    title: "Description Updater",
-    description: "Writes description_en back to the product.",
-    inputs: ["productId", "description_en"],
-    outputs: ["description_en"],
   },
   {
     type: "context",

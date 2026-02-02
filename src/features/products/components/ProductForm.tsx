@@ -29,8 +29,6 @@ export default function ProductForm({
 }: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
-    uploadError,
-    uploadSuccess,
     product,
   } = useProductFormContext();
   
@@ -74,20 +72,6 @@ export default function ProductForm({
           <span className="font-mono select-all cursor-text" title="Click to select">
             {product.id}
           </span>
-        </div>
-      )}
-      {(uploadSuccess || uploadError) && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div
-            className={`rounded-md px-4 py-3 text-sm shadow-lg ${
-              uploadError
-                ? "bg-red-500 text-white"
-                : "bg-emerald-500 text-white"
-            }`}
-            role={uploadError ? "alert" : "status"}
-          >
-            {uploadError ? uploadError : "Saved."}
-          </div>
         </div>
       )}
     </form>

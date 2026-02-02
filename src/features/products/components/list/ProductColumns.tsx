@@ -345,22 +345,35 @@ export const getProductColumns = (
 
       return (
         <div>
-          {handleNameClick ? (
-            <Button
-              variant="ghost"
-              className="h-auto w-full cursor-pointer justify-start p-0 text-left text-sm font-normal text-white/90 transition-colors hover:bg-transparent hover:text-white/70 whitespace-normal break-words"
-              onClick={(): void => handleNameClick(product)}
-              type="button"
-            >
-              {nameValue || "—"}
-            </Button>
-          ) : (
-            <span>{nameValue || "—"}</span>
-          )}
+          <span
+            className={[
+              "inline-block w-full whitespace-normal break-words rounded",
+              "select-text cursor-text",
+              "text-sm font-normal text-white/90",
+              "transition-colors hover:bg-foreground/5 hover:text-white/80",
+              "px-1 -mx-1",
+            ].join(" ")}
+            onClick={(): void => {
+              if (!handleNameClick) return;
+              const selection = typeof window !== "undefined" ? window.getSelection() : null;
+              if (selection && selection.toString().trim().length > 0) return; // user is selecting for copy
+              handleNameClick(product);
+            }}
+          >
+            {nameValue || "—"}
+          </span>
 
           {product.sku && (
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
-              <span>{product.sku}</span>
+              <span
+                className={[
+                  "select-text cursor-text rounded",
+                  "transition-colors hover:bg-foreground/5 hover:text-gray-300",
+                  "px-1 -mx-1",
+                ].join(" ")}
+              >
+                {product.sku}
+              </span>
               {isImported && (
                 <span title="Imported product">
                   <Download
@@ -561,7 +574,15 @@ export const getProductColumns = (
       if (!handleClick) return null;
       const showMarketplaceBadge: boolean =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
-      const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
+      const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "not_started";
+      const baseIcon = (
+        <span
+          aria-hidden="true"
+          className="inline-flex size-4 items-center justify-center rounded-sm border border-current/30 text-[9px] font-black leading-none"
+        >
+          B
+        </span>
+      );
 
       return (
         <div className="inline-flex items-center gap-1">
@@ -582,10 +603,16 @@ export const getProductColumns = (
               variant="ghost"
               size="icon"
               className="p-0 h-auto w-auto"
-              title={`Base.com status: ${status} - Click for export settings`}
+              title={`Base.com export status: ${status} - Click for export settings`}
               aria-label={`Base.com export settings - status: ${status}`}
             >
-              <StatusBadge status={status} className="h-7 min-w-[28px] px-1.5" />
+              <StatusBadge
+                status={status}
+                icon={baseIcon}
+                hideLabel
+                className="h-7 min-w-[34px] px-1.5"
+                title={`Base.com export status: ${status}`}
+              />
             </Button>
           )}
         </div>

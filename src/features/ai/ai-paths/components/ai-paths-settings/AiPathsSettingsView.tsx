@@ -2,25 +2,26 @@
 
 
 import { createPortal } from "react-dom";
-import { Button, Input } from "@/shared/ui";
+import { useMemo, useState } from "react";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal } from "@/shared/ui";
 import { CanvasBoard } from "../canvas-board";
 import { CanvasSidebar } from "../canvas-sidebar";
 import { ClusterPresetsPanel } from "../cluster-presets-panel";
 import { DocsTabPanel, PathsTabPanel } from "../ui-panels";
 import { GraphModelDebugPanel } from "../graph-model-debug-panel";
-import { JobQueuePanel } from "../job-queue-panel";
 import { NodeConfigDialog } from "../node-config-dialog";
 import { PresetsDialog } from "../presets-dialog";
 import { RunDetailDialog } from "../run-detail-dialog";
 import { RunHistoryPanel } from "../run-history-panel";
 import { SimulationDialog } from "../simulation-dialog";
 import type { AiNode } from "@/features/ai/ai-paths/lib";
+import type { PathConfig } from "@/shared/types/ai-paths";
 import type { AiPathsSettingsState } from "./useAiPathsSettingsState";
 
 type AiPathsSettingsViewProps = {
-  activeTab: "canvas" | "paths" | "docs" | "queue";
+  activeTab: "canvas" | "paths" | "docs";
   renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
-  onTabChange?: ((tab: "canvas" | "paths" | "docs" | "queue") => void) | undefined;
+  onTabChange?: ((tab: "canvas" | "paths" | "docs") => void) | undefined;
   state: AiPathsSettingsState;
 };
 
@@ -46,7 +47,13 @@ export function AiPathsSettingsView({
     handleSave,
     handleReset,
     handleDeletePath,
+    isPathLocked,
+    isPathActive,
+    handleTogglePathLock,
+    handleTogglePathActive,
     activePathId,
+    activeTrigger,
+    triggers,
     lastError,
     setLastError,
     persistLastError,
@@ -56,6 +63,8 @@ export function AiPathsSettingsView({
     setPathName,
     updateActivePathMeta,
     paths,
+    pathConfigs,
+    pathFlagsById,
     handleSwitchPath,
     savePathIndex,
     nodes,
@@ -178,6 +187,37 @@ export function AiPathsSettingsView({
     toast,
   } = state;
 
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
+
+  const activePathConfig: PathConfig | undefined = activePathId ? pathConfigs?.[activePathId] : undefined;
+  const groupKey: string | null =
+    (activePathConfig?.trigger && activePathConfig.trigger.trim().length > 0
+      ? activePathConfig.trigger
+      : activeTrigger?.trim()
+        ? activeTrigger
+        : triggers?.[0]) ?? null;
+
+  const groupPaths = useMemo(() => {
+    if (!groupKey) return paths;
+    const filtered = paths.filter((p) => {
+      const cfg = pathConfigs?.[p.id];
+      const trig = typeof cfg?.trigger === "string" ? cfg.trigger : "";
+      return trig === groupKey;
+    });
+    return filtered.length > 0 ? filtered : paths;
+  }, [groupKey, pathConfigs, paths]);
+
+  const setNodesFromUser: React.Dispatch<React.SetStateAction<AiNode[]>> = (
+    next: React.SetStateAction<AiNode[]>
+  ): void => {
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
+    setNodes(next);
+  };
+
   if (loading) {
     return <div className="text-sm text-gray-400">Loading AI Paths...</div>;
   }
@@ -196,6 +236,24 @@ export function AiPathsSettingsView({
                       onClick={handleCreatePath}
                     >
                       New Path
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
+                      onClick={handleTogglePathLock}
+                      disabled={!activePathId}
+                      title={isPathLocked ? "Unlock to edit nodes and connections" : "Lock to prevent edits"}
+                    >
+                      {isPathLocked ? "Unlock Path" : "Lock Path"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className={`rounded-md border text-sm ${isPathActive ? "border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10" : "border-rose-500/40 text-rose-200 hover:bg-rose-500/10"}`}
+                      onClick={handleTogglePathActive}
+                      disabled={!activePathId}
+                      title={isPathActive ? "Deactivate to stop runs" : "Activate to allow runs"}
+                    >
+                      {isPathActive ? "Deactivate" : "Activate"}
                     </Button>
                     <Button
                       className="rounded-md border text-sm text-white hover:bg-muted/60"
@@ -279,10 +337,8 @@ export function AiPathsSettingsView({
             : null}
           {typeof document !== "undefined" && activePathId
             ? createPortal(
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}
-                  >
+                <div className="flex items-center justify-end gap-2">
+                  <div className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}>
                     {autoSaveLabel}
                   </div>
                   {lastRunAt && (
@@ -290,20 +346,91 @@ export function AiPathsSettingsView({
                       Last run: {new Date(lastRunAt).toLocaleTimeString()}
                     </div>
                   )}
-                  <Input
-                    className="h-9 w-[260px] rounded-md border border-border bg-card/60 px-3 text-sm text-white"
-                    value={pathName}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      const value = event.target.value;
-                      setPathName(value);
-                      updateActivePathMeta(value);
+                  <Select
+                    value={activePathId}
+                    onValueChange={(value: string): void => {
+                      if (!value || value === activePathId) return;
+                      handleSwitchPath(value);
                     }}
-                    placeholder="Path name"
-                  />
+                  >
+                    <SelectTrigger className="h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white">
+                      <SelectValue placeholder="Switch path" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-gray-900">
+                      {groupPaths.map((path) => (
+                        <SelectItem key={path.id} value={path.id}>
+                          {path.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    className="h-9 rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                    onClick={() => {
+                      setRenameDraft(pathName);
+                      setRenameOpen(true);
+                    }}
+                    disabled={!activePathId}
+                    title="Rename this path"
+                  >
+                    Rename
+                  </Button>
                 </div>,
                 document.getElementById("ai-paths-name") ?? document.body
               )
             : null}
+
+          <SharedModal
+            open={renameOpen}
+            onClose={() => setRenameOpen(false)}
+            title="Rename Path"
+            size="md"
+            footer={
+              <div className="flex w-full justify-end gap-2">
+                <Button
+                  type="button"
+                  className="rounded-md border border-border text-sm text-gray-200 hover:bg-card/60"
+                  onClick={() => setRenameOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="rounded-md border text-sm text-white hover:bg-muted/60"
+                  onClick={() => {
+                    const nextName = renameDraft.trim();
+                    if (!nextName) {
+                      toast("Path name is required.", { variant: "error" });
+                      return;
+                    }
+                    setPathName(nextName);
+                    updateActivePathMeta(nextName);
+                    setRenameOpen(false);
+                    void handleSave();
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            }
+          >
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-gray-400">Name</Label>
+                <Input
+                  className="h-9 w-full rounded-md border border-border bg-card/60 px-3 text-sm text-white"
+                  value={renameDraft}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRenameDraft(event.target.value)}
+                  placeholder="Path name"
+                  autoFocus
+                />
+              </div>
+              {groupKey ? (
+                <div className="text-[11px] text-gray-500">Group: {groupKey}</div>
+              ) : null}
+            </div>
+          </SharedModal>
 
           <div className="flex flex-wrap items-start gap-6">
             <div className="min-w-[240px] flex-1 space-y-4" />
@@ -407,6 +534,7 @@ export function AiPathsSettingsView({
       {activeTab === "paths" && (
         <PathsTabPanel
           paths={paths}
+          pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
           onSaveList={() => { void savePathIndex(paths); }}
           onEditPath={(pathId: string): void => {
@@ -430,8 +558,6 @@ export function AiPathsSettingsView({
           onCopyDocsJobs={() => void handleCopyDocsJobs()}
         />
       )}
-
-      {activeTab === "queue" && <JobQueuePanel activePathId={activePathId} />}
 
       <NodeConfigDialog
         configOpen={configOpen}
@@ -501,7 +627,8 @@ export function AiPathsSettingsView({
         openNodeId={simulationOpenNodeId}
         onClose={() => setSimulationOpenNodeId(null)}
         nodes={nodes}
-        setNodes={setNodes}
+        setNodes={setNodesFromUser}
+        isPathLocked={isPathLocked}
         onRunSimulation={handleRunSimulation}
       />
     </div>

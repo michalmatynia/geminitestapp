@@ -114,7 +114,7 @@ class BatchValidator {
         fields.forEach((field: string) => {
           const value: unknown = (item as Record<string, unknown>)[field];
           if (value !== undefined && value !== null) {
-            const valueStr: string = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            const valueStr: string = typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean);
             const key: string = `${field}:${valueStr}`;
             if (!seen.has(key)) {
               seen.set(key, []);

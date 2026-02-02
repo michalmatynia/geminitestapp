@@ -37,7 +37,8 @@ type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error
 
 type UseAiPathsRuntimeArgs = {
   activePathId: string | null;
-  activeTab: "canvas" | "paths" | "docs" | "queue";
+  activeTab: "canvas" | "paths" | "docs";
+  isPathActive: boolean;
   activeTrigger: string;
   edges: Edge[];
   nodes: AiNode[];
@@ -75,6 +76,7 @@ type UseAiPathsRuntimeResult = {
 export function useAiPathsRuntime({
   activePathId,
   activeTab,
+  isPathActive,
   activeTrigger,
   edges,
   nodes,
@@ -450,10 +452,14 @@ export function useAiPathsRuntime({
     event?: React.MouseEvent,
     contextOverride?: Record<string, unknown>
   ): Promise<void> => {
+    if (!isPathActive) {
+      toast("This path is deactivated. Activate it to run.", { variant: "info" });
+      return;
+    }
     const triggerEvent =
       triggerNode.config?.trigger?.event ??
       TRIGGER_EVENTS[0]?.id ??
-      "path_generate_description";
+      "manual";
     lastTriggerNodeIdRef.current = triggerNode.id;
     const triggerContext = {
       ...buildTriggerContext(triggerNode, triggerEvent, event),
@@ -493,7 +499,7 @@ export function useAiPathsRuntime({
       }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, activePathId, pathName, fetchEntityByType, toast]);
+  }, [nodes, edges, activePathId, pathName, fetchEntityByType, isPathActive, toast]);
 
   const runPollUpdate = useCallback(
     async (
@@ -714,7 +720,7 @@ export function useAiPathsRuntime({
         ...(entity ? { entity } : {}),
       };
       pendingSimulationContextRef.current = simulationContext;
-      let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
+      let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "manual";
       if (!triggerEvent) {
         const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
           if (

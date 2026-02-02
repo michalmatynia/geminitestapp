@@ -20,6 +20,7 @@ type UseAiPathsPresetsArgs = {
   nodes: AiNode[];
   edges: Edge[];
   selectedNode: AiNode | null;
+  isPathLocked: boolean;
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   setSelectedNodeId: (value: string | null) => void;
@@ -78,6 +79,7 @@ export function useAiPathsPresets({
   nodes,
   edges,
   selectedNode,
+  isPathLocked,
   setNodes,
   setEdges,
   setSelectedNodeId,
@@ -264,6 +266,10 @@ export function useAiPathsPresets({
   };
 
   const handleApplyPreset = (preset: ClusterPreset): void => {
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to apply presets.", { variant: "info" });
+      return;
+    }
     const base = getCanvasCenterPosition();
     const bundleNode: AiNode = {
       id: `node-${Math.random().toString(36).slice(2, 8)}`,

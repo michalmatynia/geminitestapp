@@ -30,6 +30,12 @@ export function SimulationNodeConfigSection({
     simulationConfig.entityId?.trim()
       ? simulationConfig.entityId
       : simulationConfig.productId ?? "";
+  const trimmedEntityId = simulationEntityValue.trim();
+  const looksLikeUuid = trimmedEntityId.includes("-");
+  const idLength = trimmedEntityId.length;
+  const showIdHint =
+    Boolean(trimmedEntityId) &&
+    (looksLikeUuid ? idLength !== 36 : false);
 
   return (
     <div className="space-y-4">
@@ -73,6 +79,11 @@ export function SimulationNodeConfigSection({
             })
           }
         />
+        {showIdHint ? (
+          <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+            This looks like a UUID, but its length is {idLength}. UUIDs should be 36 characters.
+          </div>
+        ) : null}
       </div>
       <p className="text-[11px] text-gray-500">
         Used to simulate {simulationConfig.entityType ?? "products"} collection context.

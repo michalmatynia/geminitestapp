@@ -464,6 +464,7 @@ export type PathConfig = {
   edges: Edge[];
   updatedAt: string;
   isLocked?: boolean;
+  isActive?: boolean;
   parserSamples?: Record<string, ParserSampleState>;
   updaterSamples?: Record<string, UpdaterSampleState>;
   runtimeState?: RuntimeState | string | null;

@@ -25,6 +25,8 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
   waitForResult: true,
 };
 
+const RUNTIME_PERSONA_VALUE = "__runtime__";
+
 export function AgentNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
@@ -59,10 +61,10 @@ export function AgentNodeConfigSection({
         </Button>
       </div>
       <Select
-        value={agentConfig.personaId ?? ""}
+        value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({
-            agent: { ...agentConfig, personaId: value },
+            agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? "" : value },
           })
         }
       >
@@ -70,7 +72,8 @@ export function AgentNodeConfigSection({
           <SelectValue placeholder="Select persona" />
         </SelectTrigger>
         <SelectContent className="border-border bg-gray-900">
-          <SelectItem value="">Default (runtime settings)</SelectItem>
+          {/* Radix Select forbids empty item values; we use a sentinel for "runtime defaults". */}
+          <SelectItem value={RUNTIME_PERSONA_VALUE}>Default (runtime settings)</SelectItem>
           {personas.map((persona: { id: string; name: string }) => (
             <SelectItem key={persona.id} value={persona.id}>
               {persona.name}

@@ -181,6 +181,12 @@ export default function Menu(): React.ReactNode {
           AI Jobs
         </Link>
         <Link
+          href="/admin/ai-paths/queue"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          AI Paths Queue
+        </Link>
+        <Link
           href="/admin/products/jobs?tab=import"
           className="block hover:bg-gray-700 p-2 rounded"
         >

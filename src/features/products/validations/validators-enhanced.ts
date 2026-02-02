@@ -21,7 +21,7 @@ export type ValidationError = {
   message: string;
   code: string;
   severity?: 'low' | 'medium' | 'high' | 'critical' | undefined;
-  context?: Record<string, any> | undefined;
+  context?: Record<string, unknown> | undefined;
 };
 
 export type ValidationMetadata = {
@@ -40,8 +40,8 @@ function transformZodError(error: z.ZodError, source: string = 'schema'): Valida
     severity: getSeverityFromCode(err.code),
     context: {
       path: err.path,
-      received: (err as any).received,
-      expected: (err as any).expected,
+      received: (err as { received?: unknown }).received,
+      expected: (err as { expected?: unknown }).expected,
       source
     }
   }));
@@ -100,16 +100,16 @@ async function validateWithEnhancedErrorHandling<T>(
             ? (data as Record<string, unknown>)
             : {};
 
-      const configErrors = validateWithConfig(configTarget, schema);
-      configErrors.forEach(error => {
+      const configErrors: ValidationError[] = validateWithConfig(configTarget, schema);
+      configErrors.forEach((error: ValidationError) => {
         if (error.code.includes('warning') || error.severity === 'low') {
           warnings.push(error);
         } else {
-          errors.push({ ...error, source: 'config' } as any);
+          errors.push({ ...error, source: 'config' } as unknown as ValidationError);
         }
       });
       metadata.rulesApplied.push('config');
-    } catch (configError) {
+    } catch (_configError: unknown) {
       // Config validation is optional, don't fail the entire validation
       warnings.push({
         field: 'config',
@@ -160,11 +160,11 @@ const validateProductCreateCached = withCache(
     data,
     async () => {
       const { productCreateSchema } = await import("./schemas");
-      return { schema: productCreateSchema as z.ZodSchema<any> };
+      return { schema: productCreateSchema as z.ZodSchema<unknown> };
     },
     'product_create'
   ),
-  (data) => `create:${JSON.stringify(data).slice(0, 100)}`,
+  (data: unknown) => `create:${JSON.stringify(data).slice(0, 100)}`,
   60000 // 1 minute cache
 );
 
@@ -173,11 +173,11 @@ const validateProductUpdateCached = withCache(
     data,
     async () => {
       const { productUpdateSchema } = await import("./schemas");
-      return { schema: productUpdateSchema as z.ZodSchema<any> };
+      return { schema: productUpdateSchema as z.ZodSchema<unknown> };
     },
     'product_update'
   ),
-  (data) => `update:${JSON.stringify(data).slice(0, 100)}`,
+  (data: unknown) => `update:${JSON.stringify(data).slice(0, 100)}`,
   60000 // 1 minute cache
 );
 
@@ -210,7 +210,7 @@ export async function isValidProductUpdate(data: unknown): Promise<boolean> {
 }
 
 // Synchronous type guards for basic checks
-export function isProductLike(data: unknown): data is Record<string, any> {
+export function isProductLike(data: unknown): data is Record<string, unknown> {
   return data !== null && typeof data === 'object' && !Array.isArray(data);
 }
 
@@ -250,7 +250,7 @@ export async function validateProductFields(
   const results: Record<string, ValidationResult<unknown>> = {};
   
   await Promise.all(
-    Object.entries(fields).map(async ([field, value]) => {
+    Object.entries(fields).map(async ([field, value]: [string, unknown]) => {
       results[field] = await validateProductField(field, value, context);
     })
   );
@@ -259,20 +259,20 @@ export async function validateProductFields(
 }
 
 // Validation summary utilities
-export function getValidationSummary(result: ValidationResult<any>): {
+export function getValidationSummary(result: ValidationResult<unknown>): {
   isValid: boolean;
   errorCount: number;
   warningCount: number;
   criticalErrors: ValidationError[];
   fieldErrors: Record<string, ValidationError[]>;
 } {
-  const errors = result.success ? [] : result.errors;
-  const warnings = result.warnings || [];
+  const errors: ValidationError[] = result.success ? [] : result.errors;
+  const warnings: ValidationError[] = result.warnings || [];
   
-  const criticalErrors = errors.filter(e => e.severity === 'critical');
+  const criticalErrors: ValidationError[] = errors.filter((e: ValidationError) => e.severity === 'critical');
   const fieldErrors: Record<string, ValidationError[]> = {};
   
-  [...errors, ...warnings].forEach(error => {
+  [...errors, ...warnings].forEach((error: ValidationError) => {
     if (!fieldErrors[error.field]) {
       fieldErrors[error.field] = [];
     }

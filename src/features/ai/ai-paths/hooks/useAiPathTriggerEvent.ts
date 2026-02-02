@@ -35,6 +35,13 @@ export type FireAiPathTriggerEventArgs = {
   event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent;
   source?: { tab?: string; location?: string; page?: string } | null;
   extras?: Record<string, unknown> | null;
+  onProgress?: (payload: {
+    status: "running" | "success" | "error";
+    progress: number;
+    completedNodes: number;
+    totalNodes: number;
+    node?: { id: string; title?: string | null; type?: string | null } | null;
+  }) => void;
 };
 
 const safeJsonStringify = (value: unknown): string => {
@@ -294,7 +301,7 @@ export function useAiPathTriggerEvent(): {
             .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
         : configsList;
 
-      const defaultEvent = (TRIGGER_EVENTS[0]?.id as string) ?? "path_generate_description";
+      const defaultEvent = (TRIGGER_EVENTS[0]?.id as string) ?? "manual";
       const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
         Array.isArray(config?.nodes)
           ? config.nodes.some((node: AiNode) => {
@@ -324,6 +331,11 @@ export function useAiPathTriggerEvent(): {
           : undefined) ??
         triggerCandidates[0]!;
 
+      if (selectedConfig.isActive === false) {
+        toast("This path is deactivated. Activate it to run.", { variant: "info" });
+        return;
+      }
+
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
 
       const nodes: AiNode[] = normalizeNodes(Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []);
@@ -345,6 +357,64 @@ export function useAiPathTriggerEvent(): {
         return;
       }
 
+      const adjacency = new Map<string, Set<string>>();
+      edges.forEach((edge: Edge) => {
+        if (!edge.from || !edge.to) return;
+        const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+        fromSet.add(edge.to);
+        adjacency.set(edge.from, fromSet);
+        const toSet = adjacency.get(edge.to) ?? new Set<string>();
+        toSet.add(edge.from);
+        adjacency.set(edge.to, toSet);
+      });
+
+      const connected = new Set<string>();
+      const queue: string[] = [triggerNode.id];
+      connected.add(triggerNode.id);
+      while (queue.length) {
+        const current = queue.shift();
+        if (!current) continue;
+        const neighbors = adjacency.get(current);
+        if (!neighbors) continue;
+        neighbors.forEach((neighbor: string) => {
+          if (connected.has(neighbor)) return;
+          connected.add(neighbor);
+          queue.push(neighbor);
+        });
+      }
+
+      const alwaysActiveTypes = new Set(["parser", "prompt", "viewer", "database"]);
+      const totalNodes = Math.max(
+        1,
+        nodes.filter((node: AiNode): boolean => {
+          if (node.type === "simulation") return false;
+          return connected.has(node.id) || alwaysActiveTypes.has(node.type);
+        }).length
+      );
+      const completed = new Set<string>();
+
+      const reportProgress = (payload: {
+        status: "running" | "success" | "error";
+        progress: number;
+        node?: AiNode | null | undefined;
+      }): void => {
+        if (!args.onProgress) return;
+        const rawProgress = Number.isFinite(payload.progress) ? payload.progress : 0;
+        const clamped = Math.max(0, Math.min(1, rawProgress));
+        const node = payload.node
+          ? { id: payload.node.id, title: payload.node.title ?? null, type: payload.node.type ?? null }
+          : null;
+        args.onProgress({
+          status: payload.status,
+          progress: clamped,
+          completedNodes: completed.size,
+          totalNodes,
+          node,
+        });
+      };
+
+      reportProgress({ status: "running", progress: 0 });
+
       const entityJson = args.getEntityJson ? args.getEntityJson() : null;
 
       const triggerContext = buildTriggerContext({
@@ -361,34 +431,56 @@ export function useAiPathTriggerEvent(): {
       });
 
       const runAt = new Date().toISOString();
-      const runtimeState: RuntimeState = await evaluateGraph({
-        nodes,
-        edges,
-        activePathId: selectedConfig.id ?? "path",
-        activePathName: selectedConfig.name ?? undefined,
-        triggerNodeId: triggerNode.id,
-        triggerEvent: triggerEventId,
-        triggerContext,
-        deferPoll: false,
-        fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
-          if (!entityId) return null;
-          if (entityType === "product") {
-            const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, { cache: "no-store" });
-            if (!res.ok) return null;
-            return (await res.json()) as Record<string, unknown>;
-          }
-          if (entityType === "note") {
-            const res = await fetch(`/api/notes/${encodeURIComponent(entityId)}`, { cache: "no-store" });
-            if (!res.ok) return null;
-            return (await res.json()) as Record<string, unknown>;
-          }
-          return null;
-        },
-        reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
-          logger.error(summary ?? "AI Paths trigger failed", error, meta);
-        },
-        toast,
-      });
+      let runtimeState: RuntimeState;
+      try {
+        runtimeState = await evaluateGraph({
+          nodes,
+          edges,
+          activePathId: selectedConfig.id ?? "path",
+          activePathName: selectedConfig.name ?? undefined,
+          triggerNodeId: triggerNode.id,
+          triggerEvent: triggerEventId,
+          triggerContext,
+          deferPoll: false,
+          onNodeFinish: async (payload: { node: AiNode }): Promise<void> => {
+            const { node } = payload;
+            if (!node || node.type === "simulation") return;
+            if (!connected.has(node.id) && !alwaysActiveTypes.has(node.type)) return;
+            if (!completed.has(node.id)) {
+              completed.add(node.id);
+            }
+            reportProgress({ status: "running", progress: completed.size / totalNodes, node });
+          },
+          onNodeError: async (payload: { node: AiNode; error: unknown }): Promise<void> => {
+            const { node, error } = payload;
+            logger.error("AI Paths trigger node failed", error, { nodeId: node.id, nodeType: node.type });
+            reportProgress({ status: "error", progress: completed.size / totalNodes, node });
+          },
+          fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
+            if (!entityId) return null;
+            if (entityType === "product") {
+              const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, { cache: "no-store" });
+              if (!res.ok) return null;
+              return (await res.json()) as Record<string, unknown>;
+            }
+            if (entityType === "note") {
+              const res = await fetch(`/api/notes/${encodeURIComponent(entityId)}`, { cache: "no-store" });
+              if (!res.ok) return null;
+              return (await res.json()) as Record<string, unknown>;
+            }
+            return null;
+          },
+          reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
+            logger.error(summary ?? "AI Paths trigger failed", error, meta);
+          },
+          toast,
+        });
+      } catch (error) {
+        reportProgress({ status: "error", progress: completed.size / totalNodes });
+        throw error;
+      }
+
+      reportProgress({ status: "success", progress: 1 });
 
       if (args.entityType === "product") {
         void queryClient.invalidateQueries({ queryKey: ["products"] });

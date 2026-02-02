@@ -79,7 +79,7 @@ export const APP_FONT_SETS: readonly AppFontSet[] = [
 ] as const;
 
 export const getAppFontSet = (id: string | null | undefined): AppFontSet => {
-  const found = APP_FONT_SETS.find((set) => set.id === id);
+  const found = APP_FONT_SETS.find((set: AppFontSet) => set.id === id);
   return found ?? APP_FONT_SETS[0]!;
 };
 

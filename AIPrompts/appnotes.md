@@ -1,18 +1,57 @@
-
 When I click Generate PAth, the Connector inputs remain empty
-I need the button to lock the paths but also to activate or deactivate them.
-
  I also need a way of grouping paths.
+Ai paths node movement
+I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a /cursor there
 
-I need a Path button manager, where I can see if the button has an assigned path or not. Where I can rename them. change their type (they could be on/OFF buttons).
+* For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
 
-Auth Users drops a error
+* My AI Paths Trigger buttons has a dropdown for an Icon Selector, use the same icon selector as Drafter feature (a matrix of icons)
+
+* I need the button to lock the paths but also to activate or deactivate them.
+
+
+GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
+
+ Backgroun Image Layering
+Reordering of Grids,
+Taking blocks from inside Columns Out
+
+Unable to upload image into ImageElement
+
+
+App manager
 
 
 
-*When I create a product, when I upload an image and then resort it, the image starts flickering.
-*The image slot menu has become bloated with options, make ti more elegant and clear
-*When exporting Products to Base.com the Images are not getting exported.
+Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
+
+Draft list should be reordered the same way as mapping parameters
+
+LATER - Loader as a separate feature
+LATER - ANalytics
+
+Link Note to Product? Why not, a special kind of Theme that has this linking field
+
+Notes App , Importing Mmarkdowns with file attachments
+
+Custom fields in Product (to account for Excluded marketplaces field and Trader checkbox)
+
+Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
+
+In note app, If I drag the folder to the edge, it should be moved to root tree
+
+
+## Filters
+Add one button called Filter option that will hide show all available search fields and filter fields
+When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
+
+In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
+
+
+
+* When I create a product, when I upload an image and then resort it, the image starts flickering.
+* The image slot menu has become bloated with options, make ti more elegant and clear
+* When exporting Products to Base.com the Images are not getting exported.
 
 * Let’s develop the query management system. 
 
@@ -22,13 +61,13 @@ Auth Users drops a error
 * When the product is exported to Base or was imported from Base, generally has established a connection with base.com,
 I would like to be able to click on B (Base.com connection icon) and have a section images in SYNC CONFIGURATION, and with the click of the button, I would like to manually sync image URLS from Base into my own database. So that in the image slots I can have both Image file uploads and the links in case files go missing.
 
-*The syncing of image URLs from Base to Product is an amazing option, I would like to add is a Bulk Action for all my images and I want to be able to run it in runtime, with a job in queue.
+* The syncing of image URLs from Base to Product is an amazing option, I would like to add is a Bulk Action for all my images and I want to be able to run it in runtime, with a job in queue.
 
 * When I click on Integrations Imports, I don’t want the imports to happen immediately, they should happen only when I load the import list. Import list should also have pagination and a Search by name and search by SKU fields in Import navigation.
 
-*I want yet another 4th way to view images in my Products section. The 4th way is when the Images are stored on another server. In that case, I want to be able to configure the external domain address, whereas the remainder of the path and file name should be reflection of what I have in my Uploaded file. 
+* I want yet another 4th way to view images in my Products section. The 4th way is when the Images are stored on another server. In that case, I want to be able to configure the external domain address, whereas the remainder of the path and file name should be reflection of what I have in my Uploaded file. 
 
-*I want All Jobs, AI Jobs, Export Jobs, Import Jobs, Chatbot Jobs, to be moved under one Link in Admin Menu called Jobs, where I have a centralized place to control and view all the Job Queues from Runtime. Currently Export Jobs has two links, one in Integrations and one Tab in AI Jobs. I only need one link per job queue. Also, move Dead letter queue Into Jobs as well.
+* I want All Jobs, AI Jobs, Export Jobs, Import Jobs, Chatbot Jobs, to be moved under one Link in Admin Menu called Jobs, where I have a centralized place to control and view all the Job Queues from Runtime. Currently Export Jobs has two links, one in Integrations and one Tab in AI Jobs. I only need one link per job queue. Also, move Dead letter queue Into Jobs as well.
 
 * Describe the functioning of AI Paths in detail in Docs
 
@@ -60,9 +99,8 @@ I would like to be able to click on B (Base.com connection icon) and have a sect
 * When in my AI Paths, I have a simulation node and provide an ID in the simulation node of a Product that has images attached, when I fire the simulation, the images are not visible in the context, the context only says “Sample Entity” and images are hardcoded as empty. I want my simulation node to be as realistic as possible and provide images where images are indeed attached to the entity of the simulation. 
 
 
-*in My cMS Builder Page I can no longer move my elements “files” and “folders” around my folder tree
+* in My cMS Builder Page I can no longer move my elements “files” and “folders” around my folder tree
 
-GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
 
 * In my Settings - Notifications, when I click on Notifications link I get Hydration error.
 
@@ -70,29 +108,10 @@ GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in
 
 * in Auth, when I click on  Settings I get an Error,
 
-* In Agent creator, I am not able to create Agents, I should have the possibility to Create Agent Personas that use different AI models in a deepreasoning Fashion and I can select which model is used for what. The nine steps of reasoning are the ones used in Chat bot before
-1. Planner/replanner vs. executor (already split for you) V
-2. Self‑questioning/critique (already split for you) V
-* Enhance agentic per step * 3. Extraction/validation model (evidence checking, schema validation, de‑duplication) V
-4. Memory validation + summarization (fast model to filter, stronger model to write) V
-5. Tool selection & fallback strategy (small model for routing)
-6. Loop detection + recovery (fast heuristic + LLM guard) V
-7. Safety/approval gate checks (separate policy model) V
-8. DOM/selector inference (cheap model good at pattern matching) V
-9. Result formatting/normalization (small model to clean outputs) V
-I can then add a reasoning Agent Node to my AI Paths.
-
-*The node connection between node Trigger and Simulation should work like this, The trigger should go from output into Trigger Input of the Simulation node, once the Simulation node is triggered, it sends data from simulation (which should be renamed context) into the context input of the Trigger node
-
 —
 
 
-Backgroun Image Layering
-Reordering of Grids,
-Taking blocks from inside Columns Out
-Ai paths node movement
 
-Unable to upload image into ImageElement
 
 Late-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
 
@@ -154,27 +173,8 @@ Don’t store raw GSAP configs from the CMS. Store a safe subset like:
 Recommended “best way” in one sentence
 Build registered preset effects + store data specs on nodes + compile them into a small set of page scenes (intro/scroll/interactions) with proper cleanup.
 
-
 ---
 
-Cloud image storage (or maybe from fastcomet ? ) path conversion
-App manager
-Mock data for store management, so Bas64 file storage maybe ? 
-
-
-Consolidate UI Elements
-Connect everything including validators into a centralized error handling and reporting system
-implement Tanstack Query
-Architecture segmentation and restructuring
-
-
----
-
-I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a cursor there
-
-unify Refresh button so that it's one component everywhere
-
-When AI model generates content, it keeps on appearing in my prompt suggestion in Database, maybe for suggestions I need another  channel ?
 
 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
@@ -194,18 +194,7 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
 
-Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
-Draft list should be reordered the same way as mapping parameters
-
-LATER - Loader as a separate feature
-LATER - ANalytics
-
-Link Note to Product? Why not, a special kind of Theme that has this linking field
-
-Notes App , Importing Mmarkdowns with file attachments
-
-Custom fields in Product (to account for Excluded marketplaces field and Trader checkbox)
 ---
 
 * Note App, Note cards show two images even if there is only one image file attached
@@ -259,21 +248,8 @@ LATER - per  User Activity Log system
 # IN PROGRESS
 
 
-Title Path for auto generations, and Sending path, 
-
 
 * In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
-
-Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
-
-In note app, If I drag the folder to the edge, it should be moved to root tree
-
-
-## Filters
-Add one button called Filter option that will hide show all available search fields and filter fields
-When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
-
-In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
 
 
 

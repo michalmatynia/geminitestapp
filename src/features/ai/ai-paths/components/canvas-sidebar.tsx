@@ -90,11 +90,10 @@ export function CanvasSidebar({
               { title: "IO + Fetch", types: ["http", "database", "db_schema"], icon: "🌐" },
               {
                 title: "Prompts + Models",
-                types: ["prompt", "model", "ai_description"],
+                types: ["prompt", "model"],
                 icon: "🤖",
               },
               { title: "Agents", types: ["agent"], icon: "🧠" },
-              { title: "Description", types: ["description_updater"], icon: "✍️" },
               { title: "Viewers", types: ["viewer", "notification"], icon: "👁" },
             ].map((group: { title: string; types: string[]; icon: string }): React.JSX.Element | null => {
               const items = palette.filter((node: NodeDefinition) => group.types.includes(node.type));

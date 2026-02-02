@@ -20,6 +20,7 @@ type SimulationDialogProps = {
   onClose: () => void;
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
+  isPathLocked?: boolean;
   onRunSimulation: (node: AiNode) => void | Promise<void>;
 };
 
@@ -28,6 +29,7 @@ export function SimulationDialog({
   onClose,
   nodes,
   setNodes,
+  isPathLocked = false,
   onRunSimulation,
 }: SimulationDialogProps): React.JSX.Element | null {
   if (!openNodeId) return null;
@@ -59,6 +61,7 @@ export function SimulationDialog({
                 <Label className="text-xs text-gray-400">Entity ID</Label>
                 <Input
                   className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                  disabled={isPathLocked}
                   value={simulationEntityValue}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                     const value = event.target.value;
@@ -81,6 +84,11 @@ export function SimulationDialog({
                     );
                   }}
                 />
+                {isPathLocked ? (
+                  <p className="mt-2 text-[11px] text-gray-500">
+                    This path is locked. Unlock it to change simulation inputs.
+                  </p>
+                ) : null}
                 <p className="mt-2 text-[11px] text-gray-500">
                   Current entity type: {simulationConfig.entityType ?? "product"}
                 </p>

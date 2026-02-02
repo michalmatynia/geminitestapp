@@ -19,7 +19,7 @@ const toTitleCase = (value: string): string =>
   value
     .split(" ")
     .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
 const deriveAssetName = (filename: string): string | null => {
@@ -42,9 +42,9 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   skipped: number;
   createdIds: string[];
 }> {
-  const entries = await fs.readdir(assets3dDiskDir, { withFileTypes: true }).catch(() => []);
-  const diskFiles = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
-  const supported = diskFiles.filter(isSupported3DFile);
+  const entries: import("fs").Dirent[] = await fs.readdir(assets3dDiskDir, { withFileTypes: true }).catch(() => []);
+  const diskFiles: string[] = entries.filter((entry: import("fs").Dirent) => entry.isFile()).map((entry: import("fs").Dirent) => entry.name);
+  const supported: string[] = diskFiles.filter(isSupported3DFile);
 
   if (supported.length === 0) {
     return {
@@ -57,13 +57,13 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
     };
   }
 
-  const existing = await prisma.asset3D.findMany({
+  const existing: Array<{ filename: string }> = await prisma.asset3D.findMany({
     where: { filename: { in: supported } },
     select: { filename: true },
   });
-  const existingNames = new Set(existing.map((row) => row.filename));
+  const existingNames: Set<string> = new Set(existing.map((row: { filename: string }) => row.filename));
 
-  const missing = supported.filter((filename) => !existingNames.has(filename));
+  const missing: string[] = supported.filter((filename: string) => !existingNames.has(filename));
   if (missing.length === 0) {
     return {
       diskFiles: diskFiles.length,
@@ -76,7 +76,7 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   }
 
   const createdIds: string[] = [];
-  const created = await prisma.$transaction(async (tx) => {
+  const created: number = await prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<number> => {
     let createdCount = 0;
     for (const filename of missing) {
       const ext = `.${filename.split(".").pop() ?? ""}`.toLowerCase() as Supported3DExtension;

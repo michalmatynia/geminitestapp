@@ -70,7 +70,7 @@ export const handleTrigger: NodeHandler = async ({
     return {};
   }
   const eventName: string =
-    triggerEvent ?? node.config?.trigger?.event ?? "path_generate_description";
+    triggerEvent ?? node.config?.trigger?.event ?? "manual";
   const contextInput = (coerceInput(nodeInputs.context) ??
     coerceInput(nodeInputs.simulation)) as
     | { entityId?: string; entityType?: string; productId?: string; entity?: unknown; entityJson?: unknown; product?: unknown }
@@ -1881,7 +1881,7 @@ export const handleDbSchema: NodeHandler = async ({
   }
 
   // Format for AI consumption
-  const formatted =
+  const schemaText =
     config.formatAs === "text"
       ? formatSchemaAsText(schema)
       : JSON.stringify(schema, null, 2);
@@ -1889,7 +1889,15 @@ export const handleDbSchema: NodeHandler = async ({
   executed.schema?.add(node.id);
 
   return {
-    schema: formatted,
-    context: formatted,
+    // Keep ports strongly-typed:
+    // - `schema` is the raw schema object (connect to "schema" inputs)
+    // - `context` is an object containing both the raw schema + a text rendering for prompt/templates
+    schema,
+    context: {
+      schema,
+      schemaText,
+      provider: schema.provider,
+      collections: schema.collections,
+    },
   };
 };

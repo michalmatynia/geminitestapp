@@ -45,8 +45,8 @@ export const resolveError = (
     critical: boolean;
     retryable: boolean;
     retryAfterMs?: number | undefined;
-    meta?: Record<string, unknown> | undefined;
-    cause?: unknown | undefined;
+    meta?: Record<string, unknown>;
+    cause?: unknown;
   }): ResolvedError => ({
     errorId,
     message: appError.message,

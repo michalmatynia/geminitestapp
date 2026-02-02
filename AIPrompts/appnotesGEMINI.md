@@ -22,6 +22,12 @@ Prepare a suite tests in vitests
 Connect tanstack queries to a unified error logging and handling system.
 connect all API to Error logging and handling system
 
+Consolidate UI Elements
+Connect everything including validators into a centralized error handling and reporting system
+implement Tanstack Query
+Architecture segmentation and restructuring
+
+
 TESTS
 -use msw API mocking - DONE
 

@@ -47,8 +47,13 @@ type LegacyUpdaterConfig = {
 };
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] =>
-  items.map((node: AiNode): AiNode => {
+  items
+    .map((node: AiNode): AiNode | null => {
     const nodeType: string = node.type as string;
+    // Remove legacy node that is no longer supported/exposed.
+    if (node.type === "trigger" && node.title === "Trigger: Path Generate Description") {
+      return null;
+    }
     if (node.type === "context") {
       const contextConfig = node.config?.context;
       const cleanedOutputs = (node.outputs ?? []).filter(
@@ -82,7 +87,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         config: {
           ...node.config,
           trigger: {
-            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
+            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "manual",
           },
         },
       };
@@ -598,7 +603,8 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
       };
     }
     return node;
-  });
+  })
+    .filter((node: AiNode | null): node is AiNode => Boolean(node));
 
 export const getDefaultConfigForType = (
   type: NodeType,
@@ -606,7 +612,7 @@ export const getDefaultConfigForType = (
   inputs: string[]
 ): NodeConfig | undefined => {
   if (type === "trigger") {
-    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description" } };
+    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? "manual" } };
   }
   if (type === "simulation") {
     return { simulation: { productId: "", entityType: "product", entityId: "" } };

@@ -9,7 +9,6 @@ import { logger } from "@/shared/utils/logger";
 import { cn } from "@/shared/utils";
 import { ProductFormData } from "@/features/products/types";
 import { useDescriptionGeneration } from "@/features/products/hooks/useDescriptionGeneration";
-import { useAiPathTrigger } from "@/features/products/hooks/useAiPathTrigger";
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -41,8 +40,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
     },
   });
 
-  const { handlePathGenerateDescription: runPathTrigger } = useAiPathTrigger();
-
   useEffect((): void => {
     const vals = getValues();
     if (vals.asin) {
@@ -57,12 +54,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
     setGenerationError(null);
     const productData = getValues();
     await generate(productData, imageSlots);
-  };
-
-  const handlePathGenerateDescription = async (
-    event?: React.MouseEvent<HTMLButtonElement>
-  ): Promise<void> => {
-    await runPathTrigger(product || null, event);
   };
 
   const handleTranslate = async (): Promise<void> => {
@@ -229,35 +220,25 @@ export default function ProductFormGeneral(): React.JSX.Element {
                           </Button>
                         </div>
                       )}
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          type="button"
-                          onClick={(): void => {
-                            void handleGenerateDescription();
-                          }}
-                          disabled={generating}
-                          aria-label="Generate product description"
-                          aria-disabled={generating}
-                          className="border border-white/20 hover:border-white/40"
-                        >
-                          {generating ? "Generating..." : "Generate Description"}
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                            void handlePathGenerateDescription(event);
-                          }}
-                          aria-label="Generate description via AI Path"
-                          className="border border-white/20 hover:border-white/40"
-                        >
-                          Path Generate Description
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={(): void => {
-                            void handleTranslate();
-                          }}
+	                      <div className="flex gap-2 mt-2">
+	                        <Button
+	                          type="button"
+	                          onClick={(): void => {
+	                            void handleGenerateDescription();
+	                          }}
+	                          disabled={generating}
+	                          aria-label="Generate product description"
+	                          aria-disabled={generating}
+	                          className="border border-white/20 hover:border-white/40"
+	                        >
+	                          {generating ? "Generating..." : "Generate Description"}
+	                        </Button>
+	                        <Button
+	                          type="button"
+	                          variant="outline"
+	                          onClick={(): void => {
+	                            void handleTranslate();
+	                          }}
                           disabled={translating || !product?.id}
                           aria-label="Translate product names and descriptions"
                           aria-disabled={translating || !product?.id}

@@ -48,9 +48,9 @@ export const DOCS_DESCRIPTION_SNIPPET = [
   "ContextFilter.entityJson → Parser.entityJson",
   "Parser.title → AI Description Generator.title",
   "Parser.images → AI Description Generator.images",
-  "AI Description Generator.description_en → Description Updater.description_en",
-  "Parser.productId → Description Updater.productId",
-  "Description Updater.description_en → Result Viewer.description_en",
+  "AI Description Generator.description_en → Database.content_en",
+  "Parser.productId → Database.entityId",
+  "Database.result → Result Viewer.result",
 ].join("\n");
 
 export const DOCS_JOBS_SNIPPET = [

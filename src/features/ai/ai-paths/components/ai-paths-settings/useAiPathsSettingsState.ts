@@ -50,7 +50,7 @@ import {
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
 type AiPathsSettingsStateOptions = {
-  activeTab: "canvas" | "paths" | "docs" | "queue";
+  activeTab: "canvas" | "paths" | "docs";
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
@@ -65,6 +65,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const [paths, setPaths] = useState<PathMeta[]>([]);
   const [pathConfigs, setPathConfigs] = useState<Record<string, PathConfig>>({});
   const [activePathId, setActivePathId] = useState<string | null>(null);
+  const [isPathLocked, setIsPathLocked] = useState(false);
+  const [isPathActive, setIsPathActive] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
     initialNodes[0]?.id ?? null
   );
@@ -497,7 +499,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     clearRuntimeInputsForEdges,
     reportAiPathsError,
     toast,
-    isPathLocked: !activePathId,
+    isPathLocked,
   });
 
   const selectedNode = useMemo(
@@ -541,6 +543,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     nodes,
     edges,
     selectedNode,
+    isPathLocked,
     setNodes,
     setEdges,
     setSelectedNodeId,
@@ -565,6 +568,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activeTrigger,
     edges,
     expandedPaletteGroups,
+    isPathActive,
+    isPathLocked,
     lastRunAt,
     loadNonce,
     loading,
@@ -592,6 +597,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setLastError,
     setLastRunAt,
     setLoading,
+    setIsPathActive,
+    setIsPathLocked,
     setNodes,
     setPaletteCollapsed,
     setParserSamples,
@@ -646,6 +653,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     activePathId,
     activeTab,
     activeTrigger,
+    isPathActive,
     edges,
     nodes,
     pathDescription,
@@ -664,6 +672,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   const handleClearWires = async (): Promise<void> => {
     if (!activePathId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
     const updatedAt = new Date().toISOString();
     const nextRuntimeState = pruneRuntimeInputs(runtimeState, edges, []);
     if (nextRuntimeState !== runtimeState) {
@@ -678,6 +690,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       nodes,
       edges: [],
       updatedAt,
+      isLocked: isPathLocked,
+      isActive: isPathActive,
       parserSamples,
       updaterSamples,
       runtimeState: nextRuntimeState,
@@ -702,6 +716,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   const handleClearConnectorData = async (): Promise<void> => {
     if (!activePathId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
     const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} };
     const updatedAt = new Date().toISOString();
     const config: PathConfig = {
@@ -713,6 +731,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       nodes,
       edges,
       updatedAt,
+      isLocked: isPathLocked,
+      isActive: isPathActive,
       parserSamples,
       updaterSamples,
       runtimeState: nextRuntimeState,
@@ -741,6 +761,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   const updateSelectedNode = (patch: Partial<AiNode>): void => {
     if (!selectedNodeId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
     const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
     setNodes((prev: AiNode[]): AiNode[] => {
       const next = prev.map((node: AiNode): AiNode =>
@@ -755,6 +779,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
 
   const updateSelectedNodeConfig = (patch: NodeConfig): void => {
     if (!selectedNodeId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
     setNodes((prev: AiNode[]): AiNode[] => {
       const currentNode = prev.find((node: AiNode): boolean => node.id === selectedNodeId);
       if (!currentNode) return prev;
@@ -815,8 +843,34 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     );
   };
 
+  const handleTogglePathLock = (): void => {
+    if (!activePathId) return;
+    const nextLocked = !isPathLocked;
+    setIsPathLocked(nextLocked);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+      const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+      return { ...prev, [activePathId]: { ...base, isLocked: nextLocked } };
+    });
+    toast(nextLocked ? "Path locked." : "Path unlocked.", { variant: "success" });
+  };
+
+  const handleTogglePathActive = (): void => {
+    if (!activePathId) return;
+    const nextActive = !isPathActive;
+    setIsPathActive(nextActive);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+      const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+      return { ...prev, [activePathId]: { ...base, isActive: nextActive } };
+    });
+    toast(nextActive ? "Path activated." : "Path deactivated.", { variant: "success" });
+  };
+
   const handleReset = (): void => {
     if (!activePathId) return;
+    if (isPathLocked) {
+      toast("This path is locked. Unlock it to edit nodes or connections.", { variant: "info" });
+      return;
+    }
     const resetConfig = createDefaultPathConfig(activePathId);
     const normalizedNodes = normalizeNodes(resetConfig.nodes);
     setNodes(normalizedNodes);
@@ -827,6 +881,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
+    setIsPathLocked(Boolean(resetConfig.isLocked));
+    setIsPathActive(resetConfig.isActive !== false);
     setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({ ...prev, [activePathId]: resetConfig }));
     updateActivePathMeta(resetConfig.name);
   };
@@ -844,6 +900,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       nodes: [],
       edges: [],
       updatedAt: now,
+      isLocked: false,
+      isActive: true,
       parserSamples: {},
       updaterSamples: {},
       runtimeState: { inputs: {}, outputs: {} },
@@ -867,6 +925,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
     setLastRunAt(null);
+    setIsPathLocked(false);
+    setIsPathActive(true);
     setSelectedNodeId(null);
   };
 
@@ -893,6 +953,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
     setLastRunAt(config.lastRunAt ?? null);
+    setIsPathLocked(Boolean(config.isLocked));
+    setIsPathActive(config.isActive !== false);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     toast("AI Description Path created.", { variant: "success" });
   };
@@ -918,6 +980,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setUpdaterSamples(fallback.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(fallback.runtimeState));
       setLastRunAt(fallback.lastRunAt ?? null);
+      setIsPathLocked(Boolean(fallback.isLocked));
+      setIsPathActive(fallback.isActive !== false);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
       toast("Cannot delete the last path. Reset to default instead.", {
         variant: "info",
@@ -942,6 +1006,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setUpdaterSamples(nextConfig.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
       setLastRunAt(nextConfig.lastRunAt ?? null);
+      setIsPathLocked(Boolean(nextConfig.isLocked));
+      setIsPathActive(nextConfig.isActive !== false);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     } else {
       setActivePathId(null);
@@ -981,6 +1047,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
     setLastRunAt(config.lastRunAt ?? null);
+    setIsPathLocked(Boolean(config.isLocked));
+    setIsPathActive(config.isActive !== false);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
   };
 
@@ -1032,6 +1100,18 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
           ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
           : "border bg-card/60 text-gray-300";
 
+  const pathFlagsById = useMemo((): Record<string, { isLocked: boolean; isActive: boolean }> => {
+    const next: Record<string, { isLocked: boolean; isActive: boolean }> = {};
+    paths.forEach((meta: PathMeta) => {
+      const config = pathConfigs[meta.id];
+      next[meta.id] = {
+        isLocked: config?.isLocked ?? false,
+        isActive: config?.isActive ?? true,
+      };
+    });
+    return next;
+  }, [pathConfigs, paths]);
+
   return {
     loading,
     docsOverviewSnippet: DOCS_OVERVIEW_SNIPPET,
@@ -1050,6 +1130,12 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     handleReset,
     handleDeletePath,
     activePathId,
+    activeTrigger,
+    triggers,
+    isPathLocked,
+    isPathActive,
+    handleTogglePathLock,
+    handleTogglePathActive,
     lastError,
     setLastError,
     persistLastError,
@@ -1059,6 +1145,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName,
     updateActivePathMeta,
     paths,
+    pathConfigs,
+    pathFlagsById,
     handleSwitchPath,
     savePathIndex,
     nodes,

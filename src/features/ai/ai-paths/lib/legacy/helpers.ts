@@ -395,13 +395,6 @@ const palette: NodeDefinition[] = [
     outputs: TRIGGER_OUTPUT_PORTS,
   },
   {
-    type: "trigger",
-    title: "Trigger: Path Generate Description",
-    description: "Runs when the Path Generate Description button is clicked.",
-    inputs: TRIGGER_INPUT_PORTS,
-    outputs: TRIGGER_OUTPUT_PORTS,
-  },
-  {
     type: "simulation",
     title: "Simulation: Entity Modal",
     description: "Simulate a modal action by Entity ID.",
@@ -574,7 +567,7 @@ const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
 const STORAGE_VERSION = 1;
 const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 const TRIGGER_EVENTS = [
-  { id: "path_generate_description", label: "Path Generate Description" },
+  { id: "manual", label: "Manual / UI Trigger" },
 ];
 
 const createParserMappings = (outputs: string[]): Record<string, string> =>
@@ -637,7 +630,7 @@ const normalizeNodes = (items: AiNode[]): AiNode[] =>
         config: {
           ...node.config,
           trigger: {
-            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
+            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "manual",
           },
         },
       };
@@ -1097,7 +1090,7 @@ const getDefaultConfigForType = (
   inputs: string[]
 ): NodeConfig | undefined => {
   if (type === "trigger") {
-    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description" } };
+    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? "manual" } };
   }
   if (type === "simulation") {
     return { simulation: { productId: "", entityType: "product", entityId: "" } };

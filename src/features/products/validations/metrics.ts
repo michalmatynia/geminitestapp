@@ -102,13 +102,13 @@ export function withMetrics<Args extends unknown[], R>(
   name: string
 ): (...args: Args) => Promise<R> {
   return (async (...args: Args): Promise<R> => {
-    const start = performance.now();
-    let success = false;
-    let errorCount = 0;
+    const start: number = performance.now();
+    let success: boolean = false;
+    let errorCount: number = 0;
     const fieldErrors: Record<string, number> = {};
 
     try {
-      const result = await fn(...args);
+      const result: R = await fn(...args);
       const resultAny = result as unknown as {
         success?: unknown;
         errors?: unknown;
@@ -117,21 +117,21 @@ export function withMetrics<Args extends unknown[], R>(
       
       // If result has validation errors, count them
       if (resultAny && resultAny.success === false && Array.isArray(resultAny.errors)) {
-        const errs = resultAny.errors as Array<{ field?: unknown }>;
+        const errs: Array<{ field?: unknown }> = resultAny.errors as Array<{ field?: unknown }>;
         errorCount = errs.length;
         errs.forEach((error: { field?: unknown }) => {
-          const field = typeof error.field === "string" ? error.field : "unknown";
+          const field: string = typeof error.field === "string" ? error.field : "unknown";
           fieldErrors[field] = (fieldErrors[field] || 0) + 1;
         });
       }
       
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       errorCount = 1;
       fieldErrors.unknown = 1;
       throw error;
     } finally {
-      const duration = performance.now() - start;
+      const duration: number = performance.now() - start;
       validationMetrics.record({
         name,
         duration,

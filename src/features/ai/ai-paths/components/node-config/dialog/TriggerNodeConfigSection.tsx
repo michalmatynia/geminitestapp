@@ -45,7 +45,7 @@ export function TriggerNodeConfigSection({
   if (selectedNode.type !== "trigger") return null;
 
   const triggerConfig = selectedNode.config?.trigger ?? {
-    event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
+    event: TRIGGER_EVENTS[0]?.id ?? "manual",
   };
   const isScheduled = triggerConfig.event === "scheduled_run";
 

@@ -513,7 +513,10 @@ export function useAiPathsCanvasInteractions({
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
   ): void => {
-    if (isPathLocked) return;
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
     event.stopPropagation();
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);

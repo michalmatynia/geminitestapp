@@ -50,6 +50,8 @@ type UseAiPathsPersistenceArgs = {
   activeTrigger: string;
   edges: Edge[];
   expandedPaletteGroups: Set<string>;
+  isPathActive: boolean;
+  isPathLocked: boolean;
   lastRunAt: string | null;
   loadNonce: number;
   loading: boolean;
@@ -85,6 +87,8 @@ type UseAiPathsPersistenceArgs = {
   >;
   setLastRunAt: (value: string | null) => void;
   setLoading: (value: boolean) => void;
+  setIsPathActive: (value: boolean) => void;
+  setIsPathLocked: (value: boolean) => void;
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   setPaletteCollapsed: (value: boolean) => void;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
@@ -118,6 +122,8 @@ export function useAiPathsPersistence({
   activeTrigger,
   edges,
   expandedPaletteGroups,
+  isPathActive,
+  isPathLocked,
   lastRunAt,
   loadNonce,
   loading,
@@ -145,6 +151,8 @@ export function useAiPathsPersistence({
   setLastError,
   setLastRunAt,
   setLoading,
+  setIsPathActive,
+  setIsPathLocked,
   setNodes,
   setPaletteCollapsed,
   setParserSamples,
@@ -625,6 +633,8 @@ export function useAiPathsPersistence({
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
         setLastRunAt(activeConfig.lastRunAt ?? null);
+        setIsPathLocked(Boolean(activeConfig.isLocked));
+        setIsPathActive(activeConfig.isActive !== false);
         setSelectedNodeId(normalizedNodes[0]?.id ?? null);
         if (loadedLastError?.message === "Failed to load AI Paths settings") {
           setLastError(null);
@@ -699,6 +709,8 @@ export function useAiPathsPersistence({
         name: pathName,
         description: pathDescription,
         trigger: activeTrigger,
+        isLocked: isPathLocked,
+        isActive: isPathActive,
         nodes: [...nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
         edges: [...edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
         parserSamples,
@@ -709,6 +721,8 @@ export function useAiPathsPersistence({
       pathName,
       pathDescription,
       activeTrigger,
+      isPathLocked,
+      isPathActive,
       nodes,
       edges,
       parserSamples,
@@ -726,6 +740,8 @@ export function useAiPathsPersistence({
       nodes,
       edges,
       updatedAt,
+      isLocked: isPathLocked,
+      isActive: isPathActive,
       parserSamples,
       updaterSamples,
       runtimeState,
@@ -738,6 +754,8 @@ export function useAiPathsPersistence({
       activeTrigger,
       nodes,
       edges,
+      isPathLocked,
+      isPathActive,
       parserSamples,
       updaterSamples,
       runtimeState,

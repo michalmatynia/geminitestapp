@@ -36,7 +36,8 @@ export class SecurityMiddleware {
 
     // Rate limiting check
     if (enableRateLimit) {
-      const limiter = rateLimiters[rateLimiter];
+      // With `noUncheckedIndexedAccess`, bracket access can be `T | undefined`, so keep a safe fallback.
+      const limiter = rateLimiters[rateLimiter ?? 'api'] ?? rateLimiters.api;
       const rateLimitResult = await withRateLimit(limiter)(req);
       
       if (!rateLimitResult.allowed) {

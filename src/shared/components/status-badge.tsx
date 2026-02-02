@@ -7,16 +7,18 @@ interface StatusBadgeProps {
   status: string;
   variant?: StatusVariant;
   icon?: ReactNode;
+  hideLabel?: boolean;
   className?: string;
   title?: string;
 }
 
 const variantStyles: Record<StatusVariant, string> = {
-  pending: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
+  pending: "bg-amber-500/20 text-amber-300 border-amber-500/40",
   active: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
   failed: "bg-red-500/20 text-red-300 border-red-500/40",
   removed: "bg-gray-500/20 text-gray-300 border-gray-500/40",
-  neutral: "bg-gray-500/20 text-gray-300 border-gray-500/40",
+  // Darker than "removed": used for "not started"/unknown states.
+  neutral: "bg-slate-950/50 text-slate-300 border-slate-700/50",
   info: "bg-blue-500/20 text-blue-300 border-blue-500/40",
   success: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
   warning: "bg-amber-500/20 text-amber-300 border-amber-500/40",
@@ -32,6 +34,7 @@ const statusToVariant = (status: string): StatusVariant => {
   if (s === "failed" || s === "error") return "failed";
   if (s === "removed" || s === "archived" || s === "deleted") return "removed";
   if (s === "processing" || s === "in_progress") return "processing";
+  if (s === "not_started" || s === "not started") return "neutral";
   return "neutral";
 };
 
@@ -39,10 +42,12 @@ export function StatusBadge({
   status,
   variant,
   icon,
+  hideLabel,
   className,
   title,
 }: StatusBadgeProps): React.JSX.Element {
   const resolvedVariant = variant || statusToVariant(status);
+  const label = status.trim();
   
   return (
     <span
@@ -54,7 +59,7 @@ export function StatusBadge({
       title={title}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}
-      {status}
+      {!hideLabel && label ? <span>{label}</span> : null}
     </span>
   );
 }

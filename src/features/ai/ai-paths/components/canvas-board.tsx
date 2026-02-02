@@ -424,6 +424,38 @@ export function CanvasBoard({
     return map;
   }, [edges, buildEdgePortKey]);
 
+  // While a "blocker" node is waiting (polling / queued / running), keep the incoming wires animated
+  // to show where the signal is currently stuck. Wires *after* the blocker won't animate until the
+  // blocker emits its downstream outputs.
+  const blockingFlowEdgeIds = React.useMemo((): Set<string> => {
+    const result = new Set<string>();
+    const blockerTypes = new Set<string>(["poll", "model", "agent", "delay"]);
+    const outputs = runtimeState.outputs ?? {};
+    nodes.forEach((node: AiNode) => {
+      if (!blockerTypes.has(node.type)) return;
+      const nodeOutputs = outputs[node.id] as Record<string, unknown> | undefined;
+      const rawStatus = nodeOutputs?.status;
+      if (typeof rawStatus !== "string") return;
+      const status = rawStatus.trim().toLowerCase();
+      if (!status) return;
+      if (status === "completed" || status === "failed") return;
+
+      edges.forEach((edge: Edge) => {
+        if (edge.to !== node.id) return;
+        if (!edge.from || !edge.to) return;
+        if (!edge.fromPort || !edge.toPort) return;
+        if (!triggerConnected.has(edge.from) || !triggerConnected.has(edge.to)) return;
+
+        // Mark the edge as "flowing" if it is currently feeding meaningful inputs into the blocker.
+        const inputVal = getPortValue("input", edge.to, edge.toPort);
+        const outputVal = getPortValue("output", edge.from, edge.fromPort);
+        if (inputVal === undefined && outputVal === undefined) return;
+        result.add(edge.id);
+      });
+    });
+    return result;
+  }, [edges, getPortValue, nodes, runtimeState.outputs, triggerConnected]);
+
   const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
     const inputHashes: Record<string, Record<string, string>> = {};
     const outputHashes: Record<string, Record<string, string>> = {};
@@ -552,15 +584,30 @@ export function CanvasBoard({
         edgeIds.add(edge.id);
       });
     });
+
+    // Special case: Trigger fires a boolean `trigger` signal that often stays `true` across runs.
+    // To still communicate "a run started", pulse all outgoing edges from Trigger nodes whenever
+    // any of their outputs change (meta/context usually changes every run).
+    outputNodes.forEach((nodeId: string) => {
+      const node = nodeById.get(nodeId);
+      if (node?.type !== "trigger") return;
+      edges.forEach((edge: Edge) => {
+        if (edge.from !== nodeId) return;
+        edgeIds.add(edge.id);
+        if (edge.to) inputNodes.add(edge.to);
+      });
+    });
     edgeIds.forEach((edgeId: string) => scheduleEdgePulse(edgeId));
     outputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "output"));
     inputNodes.forEach((nodeId: string) => scheduleNodePulse(nodeId, "input"));
   }, [
     buildRuntimeHashes,
     buildEdgePortKey,
+    edges,
     edgesByFromPort,
     edgesByToPort,
     getPortValue,
+    nodeById,
     scheduleEdgePulse,
     scheduleNodePulse,
   ]);
@@ -667,7 +714,7 @@ export function CanvasBoard({
           {edgePaths.map((edge: EdgePath): React.JSX.Element => {
             const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
-            const isFlowing = activeEdgeIds.has(edge.id);
+            const isFlowing = activeEdgeIds.has(edge.id) || blockingFlowEdgeIds.has(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
             // Check if this is a schema connection (db_schema -> database)

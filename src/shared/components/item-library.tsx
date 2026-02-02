@@ -72,10 +72,11 @@ export function ItemLibrary<T extends LibraryItem>({
     setDraft({});
   };
 
-  const handleSave = async () => {
+  const handleSave = (): void => {
     if (!draft.name?.trim()) return;
-    await onSave(draft);
-    closeModal();
+    void onSave(draft).then((): void => {
+      closeModal();
+    });
   };
 
   const formatTime = (value: string | Date | null | undefined): string => {
@@ -184,11 +185,14 @@ export function ItemLibrary<T extends LibraryItem>({
 
       <ConfirmDialog
         open={!!itemToDelete}
-        onOpenChange={(open) => !open && setItemToDelete(null)}
-        onConfirm={async () => {
+        onOpenChange={(open: boolean): void => {
+          if (!open) setItemToDelete(null);
+        }}
+        onConfirm={(): void => {
           if (itemToDelete) {
-            await onDelete(itemToDelete);
-            setItemToDelete(null);
+            void onDelete(itemToDelete).then((): void => {
+              setItemToDelete(null);
+            });
           }
         }}
         title={`Delete ${entityName}`}

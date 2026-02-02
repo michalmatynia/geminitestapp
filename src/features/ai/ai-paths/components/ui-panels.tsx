@@ -1,10 +1,15 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
+"use client";
 
-
+import { useMemo, useState } from "react";
+import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
+import { cn } from "@/shared/utils";
+import { Lock } from "lucide-react";
 import type { PathMeta } from "@/features/ai/ai-paths/lib";
+import { AI_PATHS_NODE_DOCS } from "@/features/ai/ai-paths/lib/core/docs/node-docs";
 
 type PathsTabPanelProps = {
   paths: PathMeta[];
+  pathFlagsById: Record<string, { isLocked?: boolean; isActive?: boolean }>;
   onCreatePath: () => void;
   onSaveList: () => void;
   onEditPath: (id: string) => void;
@@ -13,6 +18,7 @@ type PathsTabPanelProps = {
 
 export function PathsTabPanel({
   paths,
+  pathFlagsById,
   onCreatePath,
   onSaveList,
   onEditPath,
@@ -52,14 +58,25 @@ export function PathsTabPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paths.map((path: PathMeta): React.JSX.Element => (
-              <TableRow key={path.id} className="border-border/50">
-                <TableCell className="text-sm text-white">
+            {paths.map((path: PathMeta): React.JSX.Element => {
+              const flags = pathFlagsById[path.id] ?? {};
+              const isLocked = Boolean(flags.isLocked);
+              const isActive = flags.isActive !== false;
+              return (
+              <TableRow
+                key={path.id}
+                className={cn("border-border/50", !isActive ? "opacity-50" : null)}
+              >
+                <TableCell className={cn("text-sm text-white", !isActive ? "text-gray-400" : null)}>
                   <button
                     type="button"
-                    className="cursor-pointer text-left text-sm text-white transition hover:text-gray-200"
+                    className={cn(
+                      "inline-flex items-center gap-2 cursor-pointer text-left text-sm transition",
+                      isActive ? "text-white hover:text-gray-200" : "text-gray-400 hover:text-gray-300"
+                    )}
                     onClick={(): void => onEditPath(path.id)}
                   >
+                    {isLocked ? <Lock className="size-3 text-amber-300/90" /> : null}
                     {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
                   </button>
                 </TableCell>
@@ -85,7 +102,8 @@ export function PathsTabPanel({
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
             {paths.length === 0 && (
               <TableRow>
                 <TableCell
@@ -126,6 +144,25 @@ export function DocsTabPanel({
     .split("\n")
     .map((line: string) => line.trim())
     .filter((line: string) => line.length > 0);
+
+  const [nodeQuery, setNodeQuery] = useState("");
+  const filteredNodeDocs = useMemo(() => {
+    const q = nodeQuery.trim().toLowerCase();
+    if (!q) return AI_PATHS_NODE_DOCS;
+    return AI_PATHS_NODE_DOCS.filter((doc) => {
+      const haystack = [
+        doc.title,
+        doc.type,
+        doc.purpose,
+        doc.inputs.join(" "),
+        doc.outputs.join(" "),
+        doc.config.map((c) => `${c.path} ${c.description}`).join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [nodeQuery]);
 
   return (
     <div className="space-y-6 text-sm text-gray-300">
@@ -248,9 +285,9 @@ export function DocsTabPanel({
         <ol className="mt-3 space-y-2 text-gray-400">
           <li>Context Filter.entityJson → Parser.entityJson</li>
           <li>Parser.title/images → AI Description Generator</li>
-          <li>AI Description Generator.description_en → Description Updater.description_en</li>
-          <li>Parser.productId → Description Updater.productId</li>
-          <li>(Optional) Description Updater → Result Viewer</li>
+          <li>AI Description Generator.description_en → Database.content_en</li>
+          <li>Parser.productId → Database.entityId</li>
+          <li>(Optional) Database.result → Result Viewer.result</li>
         </ol>
       </div>
 
@@ -337,146 +374,131 @@ export function DocsTabPanel({
       </div>
 
       <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
-        <h3 className="text-base font-semibold text-white">Node Reference</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Context Filter</h4>
-            <p className="mt-2 text-gray-400">
-              Filters a context payload into scoped entity data. Feed it Trigger{" "}
-              <span className="text-emerald-200">context</span> and pass its{" "}
-              <span className="text-emerald-200">entityJson</span> to Parser.
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-base font-semibold text-white">Node Documentation</h3>
+          <div className="flex items-center gap-2">
+            <SearchInput
+              value={nodeQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNodeQuery(event.target.value)}
+              onClear={() => setNodeQuery("")}
+              placeholder="Search nodes (type, ports, config...)"
+              className="h-9 w-[320px] border-border bg-card/60 text-sm text-white"
+            />
+            <div className="text-xs text-gray-500">
+              {filteredNodeDocs.length}/{AI_PATHS_NODE_DOCS.length}
+            </div>
           </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Trigger</h4>
-            <p className="mt-2 text-gray-400">
-              The execution hub. Accepts context input and emits trigger (signal),
-              triggerName (string), context, and meta outputs. Wire Trigger → Simulation to kick off
-              simulation runs. Use Scheduled Run for server-initiated
-              periodic jobs.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Simulation Modal</h4>
-            <p className="mt-2 text-gray-400">
-              Accepts a trigger signal and emits a context payload (e.g. productId)
-              used to emulate a trigger run.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Result Viewer</h4>
-            <p className="mt-2 text-gray-400">
-              Terminal node to inspect outputs. Connect context/meta/trigger/triggerName or model
-              results to review data.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">JSON Mapper</h4>
-            <p className="mt-2 text-gray-400">
-              Maps context fields into custom outputs. Outputs must match the port
-              names of downstream nodes.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Parser</h4>
-            <p className="mt-2 text-gray-400">
-              Extracts structured fields from incoming JSON and emits outputs per
-              mapping or as a bundled object.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Prompt</h4>
-            <p className="mt-2 text-gray-400">
-              Turns data into a prompt string using placeholders and can forward image
-              URLs to the Model node.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Model</h4>
-            <p className="mt-2 text-gray-400">
-              Enqueues an AI job (<span className="text-gray-200">graph_model</span>)
-              and either waits for completion or emits only a jobId.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Mutator</h4>
-            <p className="mt-2 text-gray-400">
-              Updates a context path using a template. Use it to normalize or enrich
-              data before running prompts or models.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Validator</h4>
-            <p className="mt-2 text-gray-400">
-              Checks required context paths and emits valid/errors outputs for
-              gating downstream actions.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Gate</h4>
-            <p className="mt-2 text-gray-400">
-              Allows context through only when a validator emits valid. Useful for
-              stopping incomplete flows.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Compare</h4>
-            <p className="mt-2 text-gray-400">
-              Compares a value and emits valid/errors so you can branch with Gate or Router.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Router</h4>
-            <p className="mt-2 text-gray-400">
-              Routes payloads when a condition is met. Outputs context/value when passing.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Delay</h4>
-            <p className="mt-2 text-gray-400">
-              Introduces a pause between steps to sequence signal flows.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Poll</h4>
-            <p className="mt-2 text-gray-400">
-              Waits for AI job completion or polls a MongoDB query until a success
-              condition is met. Emits <span className="text-gray-200">result</span> and{" "}
-              <span className="text-gray-200">status</span>.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">HTTP Fetch</h4>
-            <p className="mt-2 text-gray-400">
-              Calls external APIs with templated inputs and returns response data.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Database Query</h4>
-            <p className="mt-2 text-gray-400">
-              Queries MongoDB collections using preset or custom filters and returns JSON.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Bundle</h4>
-            <p className="mt-2 text-gray-400">
-              Clusters multiple inputs into a single bundle object for downstream
-              prompts or viewers.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Template</h4>
-            <p className="mt-2 text-gray-400">
-              Converts bundled data into a custom prompt using placeholders.
-            </p>
-          </div>
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Constant + Math</h4>
-            <p className="mt-2 text-gray-400">
-              Emit reusable signals and perform numeric transformations for scoring
-              or routing.
-            </p>
-          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {filteredNodeDocs.map((doc) => (
+            <details
+              key={doc.type}
+              className="rounded-md border border-border bg-card/50"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm text-white">
+                <span className="font-semibold">{doc.title}</span>
+                <span className="rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300">
+                  {doc.type}
+                </span>
+              </summary>
+              <div className="border-t border-border/60 px-4 py-4">
+                <p className="text-gray-400">{doc.purpose}</p>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-md border border-border/60 bg-card/60 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                      Inputs
+                    </div>
+                    {doc.inputs.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {doc.inputs.map((port) => (
+                          <span
+                            key={port}
+                            className="rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[11px] text-gray-200"
+                          >
+                            {port}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-xs text-gray-500">No inputs.</div>
+                    )}
+                  </div>
+
+                  <div className="rounded-md border border-border/60 bg-card/60 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                      Outputs
+                    </div>
+                    {doc.outputs.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {doc.outputs.map((port) => (
+                          <span
+                            key={port}
+                            className="rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[11px] text-gray-200"
+                          >
+                            {port}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-xs text-gray-500">No outputs.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-md border border-border/60 bg-card/60">
+                  <div className="border-b border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    Configuration
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/60">
+                        <TableHead className="text-xs text-gray-400">Config key</TableHead>
+                        <TableHead className="text-xs text-gray-400">Meaning</TableHead>
+                        <TableHead className="text-xs text-gray-400">Default</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {doc.config.map((field) => (
+                        <TableRow key={field.path} className="border-border/50">
+                          <TableCell className="text-[11px] text-gray-200">
+                            <span className="rounded border border-border/60 bg-card/60 px-2 py-0.5">
+                              {field.path}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-[11px] text-gray-400">
+                            {field.description}
+                          </TableCell>
+                          <TableCell className="text-[11px] text-gray-400">
+                            {field.defaultValue ?? "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {doc.notes?.length ? (
+                  <div className="mt-4 rounded-md border border-border/60 bg-card/60 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                      Notes
+                    </div>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-gray-400">
+                      {doc.notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </details>
+          ))}
+          {filteredNodeDocs.length === 0 ? (
+            <div className="rounded-md border border-border bg-card/50 p-4 text-sm text-gray-400">
+              No nodes match your search.
+            </div>
+          ) : null}
         </div>
       </div>
 

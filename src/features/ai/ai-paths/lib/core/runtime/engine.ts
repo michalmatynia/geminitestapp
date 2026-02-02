@@ -494,6 +494,14 @@ export async function evaluateGraph({
         source: node.title,
         timestamp: now,
       };
+      if (entityId && !entity) {
+        const maybeUuid = entityId.includes("-");
+        const hint =
+          maybeUuid && entityId.length !== 36
+            ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
+            : "";
+        contextPayload.error = `Entity not found: ${entityType} ${entityId}${hint}`;
+      }
       if (entity) {
         const imageUrls = extractImageUrls(entity);
         if (imageUrls.length) {

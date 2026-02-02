@@ -310,14 +310,14 @@ export function Admin3DAssetsPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 disabled={reindexMutation.isPending}
-                onClick={() =>
+                onClick={(): void => {
                   void reindexMutation
                     .mutateAsync()
-                    .then(() => assetsQuery.refetch())
-                    .catch((err) => {
+                    .then((): void => { void assetsQuery.refetch(); })
+                    .catch((err: unknown): void => {
                       alert(err instanceof Error ? err.message : "Failed to reindex assets");
-                    })
-                }
+                    });
+                }}
               >
                 <RefreshCw className={cn("mr-2 h-4 w-4", reindexMutation.isPending && "animate-spin")} />
                 {reindexMutation.isPending ? "Reindexing..." : "Reindex local uploads"}

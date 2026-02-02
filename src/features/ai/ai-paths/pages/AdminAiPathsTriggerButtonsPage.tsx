@@ -444,24 +444,36 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
           <div className="space-y-2">
             <Label>Icon</Label>
-            <Select
-              value={draft.iconId ?? "none"}
-              onValueChange={(value: string): void =>
-                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, iconId: value === "none" ? null : value }))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select icon" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No icon</SelectItem>
-                {PRODUCT_ICONS.map((item: { id: string; label: string; icon: React.FC<React.SVGProps<SVGSVGElement>> }): React.JSX.Element => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-6 gap-2">
+              {PRODUCT_ICONS.map((item: (typeof PRODUCT_ICONS)[number]): React.JSX.Element => {
+                const IconComponent = item.icon;
+                const selected = draft.iconId === item.id;
+                return (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={(): void =>
+                      setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
+                        ...prev,
+                        iconId: prev.iconId === item.id ? null : item.id,
+                      }))
+                    }
+                    className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
+                      selected
+                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
+                        : "border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300"
+                    }`}
+                    title={item.label}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="text-[11px] text-gray-400">
+              Click an icon to select it. Click the selected icon again to clear.
+            </div>
           </div>
 
           <div className="space-y-3">

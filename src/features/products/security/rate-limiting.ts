@@ -33,11 +33,11 @@ export class RateLimiter {
     resetTime: number;
     totalHits: number;
   } {
-    const key = this.config.keyGenerator(req);
-    const now = Date.now();
-    const windowStart = now - this.config.windowMs;
+    const key: string = this.config.keyGenerator(req);
+    const now: number = Date.now();
+    const windowStart: number = now - this.config.windowMs;
 
-    let entry = this.store.get(key);
+    let entry: RateLimitEntry | undefined = this.store.get(key);
     
     if (!entry) {
       entry = {
@@ -57,7 +57,7 @@ export class RateLimiter {
       entry.resetTime = now + this.config.windowMs;
     }
 
-    const allowed = entry.count < this.config.maxRequests;
+    const allowed: boolean = entry.count < this.config.maxRequests;
     
     if (allowed) {
       entry.requests.push(now);
@@ -76,8 +76,8 @@ export class RateLimiter {
     if (this.config.skipSuccessfulRequests && success) return;
     if (this.config.skipFailedRequests && !success) return;
 
-    const key = this.config.keyGenerator(req);
-    const entry = this.store.get(key);
+    const key: string = this.config.keyGenerator(req);
+    const entry: RateLimitEntry | undefined = this.store.get(key);
     
     if (entry) {
       entry.requests.push(Date.now());
@@ -86,11 +86,11 @@ export class RateLimiter {
   }
 
   private getClientIP(req: NextRequest): string {
-    const forwarded = req.headers.get('x-forwarded-for');
-    const realIP = req.headers.get('x-real-ip');
+    const forwarded: string | null = req.headers.get('x-forwarded-for');
+    const realIP: string | null = req.headers.get('x-real-ip');
     
     if (forwarded) {
-      const firstIp = forwarded.split(',')[0];
+      const firstIp: string | undefined = forwarded.split(',')[0];
       return firstIp ? firstIp.trim() : 'unknown';
     }
     
@@ -103,7 +103,7 @@ export class RateLimiter {
   }
 
   cleanup(): void {
-    const now = Date.now();
+    const now: number = Date.now();
     for (const [key, entry] of this.store.entries()) {
       if (now > entry.resetTime && entry.requests.length === 0) {
         this.store.delete(key);
@@ -119,6 +119,10 @@ export class RateLimiter {
       totalKeys: this.store.size,
       memoryUsage: JSON.stringify([...this.store.entries()]).length
     };
+  }
+
+  getConfig(): Required<RateLimitConfig> {
+    return this.config;
   }
 }
 
@@ -154,7 +158,7 @@ export const rateLimiters = {
     maxRequests: 5,
     skipSuccessfulRequests: true
   })
-};
+} satisfies Record<string, RateLimiter>;
 
 // Rate limiting middleware
 export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promise<{
@@ -163,11 +167,16 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
   status?: number;
   message?: string;
 }> {
-  return async (req: NextRequest) => {
+  return (req: NextRequest): Promise<{
+    allowed: boolean;
+    headers: Record<string, string>;
+    status?: number;
+    message?: string;
+  }> => {
     const result = limiter.checkLimit(req);
-    const config = (limiter as unknown as { config: Required<RateLimitConfig> }).config;
+    const config = limiter.getConfig();
     
-    const headers = {
+    const headers: Record<string, string> = {
       'X-RateLimit-Limit': config.maxRequests.toString(),
       'X-RateLimit-Remaining': result.remaining.toString(),
       'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
@@ -175,7 +184,7 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
     };
 
     if (!result.allowed) {
-      return {
+      return Promise.resolve({
         allowed: false,
         headers: {
           ...headers,
@@ -183,13 +192,13 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
         },
         status: 429,
         message: 'Too many requests'
-      };
+      });
     }
 
-    return {
+    return Promise.resolve({
       allowed: true,
       headers
-    };
+    });
   };
 }
 

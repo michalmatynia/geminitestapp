@@ -9,7 +9,7 @@ export type AppErrorOptions = {
   critical?: boolean | undefined;
   retryable?: boolean | undefined;
   retryAfterMs?: number | undefined;
-  cause?: unknown | undefined;
+  cause?: unknown;
 };
 
 export const AppErrorCodes = {
@@ -51,19 +51,21 @@ export const AppErrorCodes = {
 export class AppError extends Error {
   code: AppErrorCode;
   httpStatus: number;
-  meta?: Record<string, unknown> | undefined;
+  meta?: Record<string, unknown>;
   expected: boolean;
   critical: boolean;
   retryable: boolean;
   retryAfterMs?: number | undefined;
-  override cause?: unknown | undefined;
+  override cause?: unknown;
 
   constructor(message: string, options: AppErrorOptions) {
     super(message);
     this.name = "AppError";
     this.code = options.code;
     this.httpStatus = options.httpStatus;
-    this.meta = options.meta;
+    if (options.meta !== undefined) {
+      this.meta = options.meta;
+    }
     this.expected = options.expected ?? true;
     this.critical = options.critical ?? false;
     this.retryable = options.retryable ?? false;
@@ -93,7 +95,7 @@ export class AppError extends Error {
       code: this.code,
       httpStatus: this.httpStatus,
       cause: this.cause,
-      meta: this.meta,
+      ...(this.meta !== undefined ? { meta: this.meta } : {}),
       expected: this.expected,
       critical: this.critical,
       retryable: this.retryable,

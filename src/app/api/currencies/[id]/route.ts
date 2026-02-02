@@ -110,7 +110,7 @@ async function PUT_handler(
         ...(data.symbol !== undefined && { symbol: data.symbol }),
       },
     });
-    return NextResponse.json(currency as CurrencyRecord);
+    return NextResponse.json(currency as unknown as CurrencyRecord);
   } catch (error: unknown) {
     return createErrorResponse(error instanceof Error ? error : new Error(String(error)), {
       request: req,

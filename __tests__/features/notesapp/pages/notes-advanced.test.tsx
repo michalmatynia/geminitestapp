@@ -58,8 +58,8 @@ describe("Notes Advanced UI", () => {
 
   beforeEach(() => {
     notes = [
-      makeNote({ id: "note-1", title: "Apple", createdAt: new Date("2023-01-01") }),
-      makeNote({ id: "note-2", title: "Banana", createdAt: new Date("2023-01-02") }),
+      makeNote({ id: "note-1", title: "Apple", createdAt: "2023-01-01T00:00:00.000Z" }),
+      makeNote({ id: "note-2", title: "Banana", createdAt: "2023-01-02T00:00:00.000Z" }),
     ];
 
     server.use(

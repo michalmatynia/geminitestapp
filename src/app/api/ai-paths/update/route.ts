@@ -105,7 +105,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       const prepared =
         mode === "append" && existing
-          ? applyAppendMode(normalizedUpdates, existing as Record<string, unknown>)
+          ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
           : normalizedUpdates;
       const validated = productUpdateSchema.safeParse(prepared);
       if (!validated.success) {
@@ -141,7 +141,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       }
       const prepared =
         mode === "append" && existing
-          ? applyAppendMode(normalizedUpdates, existing as Record<string, unknown>)
+          ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
           : normalizedUpdates;
       const validated = noteUpdateSchema.safeParse(prepared);
       if (!validated.success) {

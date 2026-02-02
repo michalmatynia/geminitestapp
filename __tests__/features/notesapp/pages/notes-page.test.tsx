@@ -47,8 +47,8 @@ const baseCategories: CategoryRecord[] = [
     parentId: null,
     notebookId: null,
     themeId: null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date(now),
+    updatedAt: new Date(now),
   },
 ];
 
@@ -78,7 +78,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
     {
       noteId: "note-1",
       tagId: "tag-1",
-      assignedAt: now,
+      assignedAt: new Date(now),
       tag: baseTags[0]!,
     },
   ],
@@ -86,7 +86,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
     {
       noteId: "note-1",
       categoryId: "cat-1",
-      assignedAt: now,
+      assignedAt: new Date(now),
       category: baseCategories[0]!,
     },
   ],
@@ -170,7 +170,7 @@ describe("Notes page UI", () => {
             return {
               noteId: "temp",
               tagId,
-              assignedAt: now,
+              assignedAt: new Date(),
               tag,
             };
           }),
@@ -180,7 +180,7 @@ describe("Notes page UI", () => {
             return {
               noteId: "temp",
               categoryId,
-              assignedAt: now,
+              assignedAt: new Date(),
               category,
             };
           }),

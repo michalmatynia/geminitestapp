@@ -3,16 +3,21 @@
 // Temporary types until errors module is implemented
 type AppErrorCode = string;
 type AppErrorOptions = {
-  httpStatus?: number;
-  meta?: Record<string, unknown>;
-  expected?: boolean;
-  code?: string;
+  code: string;
+  httpStatus: number;
+  meta?: Record<string, unknown> | undefined;
+  expected?: boolean | undefined;
+  critical?: boolean | undefined;
+  retryable?: boolean | undefined;
+  retryAfterMs?: number | undefined;
+  cause?: unknown | undefined;
 };
 const AppErrorCodes = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   NOT_FOUND: 'NOT_FOUND',
   UNAUTHORIZED: 'UNAUTHORIZED',
   badRequest: 'BAD_REQUEST',
+  validation: 'VALIDATION_ERROR',
 } as const;
 
 export { AppErrorCodes };

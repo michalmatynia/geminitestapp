@@ -21,9 +21,14 @@ export type {
   ProductParameterValue,
   ProductAiJobType,
   ProductMigrationBatchResult,
+  SyncDirection,
+  IntegrationDbProvider,
+  UserPreferences,
 } from "@/shared/types/domain/products";
 
 export type ProductCategoryWithChildren = ProductCategoryDto & {
+  children: ProductCategoryWithChildren[];
+};
 
 export type {
   CatalogRecord,

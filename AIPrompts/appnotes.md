@@ -2,6 +2,13 @@ Cloud image storage (or maybe from fastcomet ? ) path conversion
 Front page GSAP builder
 App manager
 Mock data for store management, so Bas64 file storage maybe ? 
+
+
+Consolidate UI Elements
+Connect everything including validators into a centralized error handling and reporting system
+implement Tanstack Query
+Architecture segmentation and restructuring
+
 ---
 enable requiring explicit type annotations
 Require typedef and module boundaries and one more need to be set to true

@@ -85,7 +85,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         durationMs: Date.now() - requestStart,
       });
     }
-    return NextResponse.json({ settings: saved as ChatbotSettingsRecord });
+    return NextResponse.json({ settings: saved as unknown as ChatbotSettingsRecord });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

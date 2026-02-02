@@ -5,7 +5,7 @@ export class CachedProductService {
   
   // Get product by ID with caching
   static getProductById = withQueryCache(
-    async (id: string) => {
+    async (_id: string) => {
       // This would be your actual database query
       // const product = await db.product.findUnique({ where: { id } });
       // return product;
@@ -20,7 +20,7 @@ export class CachedProductService {
 
   // Get products list with filtering and caching
   static getProducts = withQueryCache(
-    async (filters: any = {}) => {
+    async (_filters: any = {}) => {
       // const products = await db.product.findMany({ where: filters });
       // return products;
       return []; // Placeholder
@@ -34,7 +34,7 @@ export class CachedProductService {
 
   // Get product count with caching
   static getProductCount = withQueryCache(
-    async (filters: any = {}) => {
+    async (_filters: any = {}) => {
       // const count = await db.product.count({ where: filters });
       // return count;
       return 0; // Placeholder

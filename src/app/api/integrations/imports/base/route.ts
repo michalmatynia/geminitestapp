@@ -8,9 +8,9 @@ import { getProductDataProvider } from "@/features/products/server";
 import { getCatalogRepository } from "@/features/products/server";
 import { getImageFileRepository } from "@/features/files/server";
 import { getProductRepository } from "@/features/products/server";
-import { getImportTemplate } from "@/features/integrations/server";
-import { getIntegrationRepository } from "@/features/integrations/server";
-import { decryptSecret } from "@/features/integrations/server";
+import { getImportTemplate } from "@/features/integrations/services/import-template-repository";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { decryptSecret } from "@/features/integrations/utils/encryption";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   fetchBaseAllWarehouses,
@@ -22,12 +22,14 @@ import {
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails,
-} from "@/features/integrations/server";
-import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/server";
-import { productCreateSchema } from "@/features/products/server";
+} from "@/features/integrations/services/imports/base-client";
+import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
+import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
+import { productCreateSchema } from "@/features/products/validations/schemas";
+import type { ProductCreateInput } from "@/features/products/validations/schemas";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
-import type { ProductWithImages } from "@/features/products/server";
+import type { ProductWithImages } from "@/features/products/types";
 
 export const runtime = "nodejs";
 
@@ -245,9 +247,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         return null;
       };
 
-      const mappedList: MappedItem[] = (products as BaseRecord[])
-        .map((record) => {
-          const mapped = mapBaseProduct(record);
+      const mappedList: MappedItem[] = (products as BaseProductRecord[])
+        .map((record: BaseProductRecord) => {
+          const mapped: ProductCreateInput = mapBaseProduct(record);
           const images = extractBaseImageUrls(record);
           const baseProductId =
             mapped.baseProductId ??
@@ -473,9 +475,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       });
     };
 
-    for (const raw of productsToImport) {
+    for (const raw of (productsToImport as BaseProductRecord[])) {
       try {
-        const mapped = mapBaseProduct(raw, template?.mappings ?? []);
+        const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
 
         // Check for duplicate SKU if not allowed
         if (existingSkus && mapped.sku && existingSkus.has(mapped.sku)) {
@@ -544,7 +546,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       } catch (error: unknown) {
         if (isSkuConflict(error)) {
           try {
-            const mapped = mapBaseProduct(raw, template?.mappings ?? []);
+            const mapped: ProductCreateInput = mapBaseProduct(raw, template?.mappings ?? []);
             const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
             const fallbackSku = mapped.baseProductId
               ? `BASE-${mapped.baseProductId}`

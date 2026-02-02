@@ -17,7 +17,7 @@ describe("Files API", () => {
     await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
 
-    product1 = (await createMockProduct({ name_en: "Product A" })) as Product;
+    product1 = (await createMockProduct({ name_en: "Product A" })) as unknown as Product;
     await createMockProduct({ name_en: "Product B" });
 
     const imagePath1 = path.join(process.cwd(), "public", "test-image1.jpg");

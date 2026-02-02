@@ -104,6 +104,24 @@ export type ProductWithImages = ProductRecord & {
 
 export type ProductAiJobType = 'description' | 'translation' | 'tags' | 'categories' | 'parameters';
 
+export type IntegrationDbProvider = "prisma" | "mongodb";
+
+export type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
+
+export type UserPreferences = {
+  productListNameLocale: string | null;
+  productListCatalogFilter: string | null;
+  productListCurrencyCode: string | null;
+  productListPageSize: number | null;
+  productListThumbnailSource?: "file" | "link" | "base64" | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[] | null;
+  aiPathsPaletteCollapsed?: boolean | null;
+  aiPathsPathIndex?: unknown[] | null;
+  aiPathsPathConfigs?: Record<string, unknown> | string | null;
+  adminMenuCollapsed?: boolean | null;
+};
+
 export type ProductMigrationBatchResult = {
   direction: ProductMigrationDirection;
   productsProcessed: number;

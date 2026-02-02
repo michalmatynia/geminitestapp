@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateProductDescription } from "@/features/products/server";
-import type { ProductFormData } from "@/features/products/server";
+import type { ProductFormData } from "@/features/products/types";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
+
+interface GenerateDescriptionBody {
+  productData?: ProductFormData;
+  imageUrls?: string[];
+  visionOutputEnabled?: boolean;
+  generationOutputEnabled?: boolean;
+}
 
 /**
  * POST /api/generate-description
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const body = (await req.json()) as {
-      productData?: ProductFormData;
-      imageUrls?: string[];
-      visionOutputEnabled?: boolean;
-      generationOutputEnabled?: boolean;
-    };
+    const body = (await req.json()) as GenerateDescriptionBody;
 
     const productData = body.productData;
     const imageUrls = Array.isArray(body.imageUrls)
-      ? body.imageUrls.filter((item: string): item is string => typeof item === "string")
+      ? body.imageUrls.filter((item: unknown): item is string => typeof item === "string")
       : [];
 
     if (!productData?.name_en) {

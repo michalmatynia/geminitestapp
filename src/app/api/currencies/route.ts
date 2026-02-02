@@ -79,7 +79,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         .find({})
         .sort({ code: 1 })
         .toArray();
-      return NextResponse.json(currencies as CurrencyRecord[]);
+      return NextResponse.json(currencies as unknown as CurrencyRecord[]);
     }
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(fallbackCurrencies);

@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withFileUploadSecurity } from '@/features/products/security';
 import { imageOptimizer } from '@/features/products/performance';
 
+interface UploadedFile {
+  file: File;
+  sanitizedName: string;
+  hash: string;
+}
+
 // POST /api/products/images/upload
-async function uploadHandler(_req: NextRequest, files: any[]): Promise<Response> {
+async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<Response> {
   try {
     const results = [];
     

@@ -171,7 +171,7 @@ const InspectorHover = ({
   enabled: boolean;
   showTooltip?: boolean;
   nodeId: string;
-  onHover?: (nodeId: string | null) => void;
+  onHover?: ((nodeId: string | null) => void) | undefined;
   fallbackNodeId?: string | null;
   content?: React.ReactNode;
   children: React.ReactNode;
@@ -1857,7 +1857,7 @@ interface PreviewBlockItemProps {
   isSelected: boolean;
   isInspecting?: boolean;
   inspectorSettings: InspectorSettings;
-  hoveredNodeId?: string | null;
+  hoveredNodeId?: string | null | undefined;
   onSelect: (nodeId: string) => void;
   sectionId: string;
   sectionType?: string;
@@ -1866,9 +1866,9 @@ interface PreviewBlockItemProps {
   parentBlockId?: string;
   contained?: boolean;
   selectedNodeId?: string | null;
-  onHoverNode?: (nodeId: string | null) => void;
+  onHoverNode?: (nodeId: string | null) => void | undefined;
   onOpenMedia?: (target: MediaReplaceTarget) => void;
-  mediaStyles?: React.CSSProperties | null;
+  mediaStyles?: React.CSSProperties | null | undefined;
   stretch?: boolean;
 }
 

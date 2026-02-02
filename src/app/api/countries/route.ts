@@ -111,8 +111,8 @@ const normalizeCountryResponse = (
   id: country.id,
   code: country.code,
   name: country.name,
-  createdAt: country.createdAt,
-  updatedAt: country.updatedAt,
+  createdAt: country.createdAt.toISOString(),
+  updatedAt: country.updatedAt.toISOString(),
   currencies: (country.currencyIds ?? [])
     .map((currencyId: string) => {
       const currency = currencyMap.get(currencyId);
@@ -185,7 +185,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       },
     });
 
-    return NextResponse.json(countries as CountryWithCurrencies[]);
+    return NextResponse.json(countries as unknown as CountryWithCurrencies[]);
   } catch (error) {
     void logSystemEvent({
       level: "error",

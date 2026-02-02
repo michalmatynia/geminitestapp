@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getProductListingRepository } from "@/features/integrations/server";
 import { getProductRepository } from "@/features/products/server";

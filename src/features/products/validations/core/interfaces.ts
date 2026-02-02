@@ -53,7 +53,7 @@ export type ValidationMetadata = {
   validationTime: number;
   rulesApplied: string[];
   cacheHit: boolean;
-  source: 'schema' | 'config' | 'external' | 'rule';
+  source: 'schema' | 'config' | 'external' | 'rule' | 'batch';
 };
 
 export type ValidationMetric = {

@@ -81,7 +81,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         description: "",
         settings: buildPlaywrightSettings(),
       })}
-      renderItemTags={(persona) => {
+      renderItemTags={(persona: PlaywrightPersona) => {
         const settings = persona.settings;
         const tags = [
           settings.headless ? "Headless" : "Headful",
@@ -94,10 +94,10 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         }
         return tags;
       }}
-      renderExtraFields={(draft, onChange) => (
+      renderExtraFields={(draft: Partial<PlaywrightPersona>, onChange: (updates: Partial<PlaywrightPersona>) => void) => (
         <PlaywrightSettingsForm
           settings={draft.settings || buildPlaywrightSettings()}
-          setSettings={(newSettings) => {
+          setSettings={(newSettings: any) => {
             const nextSettings = typeof newSettings === 'function' ? newSettings(draft.settings || buildPlaywrightSettings()) : newSettings;
             onChange({ settings: nextSettings });
           }}

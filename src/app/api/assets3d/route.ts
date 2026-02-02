@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from "@/features/viewer3d/server";
 import { apiHandler, getQueryParams } from "@/shared/lib/api/api-handler";

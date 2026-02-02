@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { uploadNoteFile } from "@/features/files/server";
 import { noteService } from "@/features/notesapp/server";

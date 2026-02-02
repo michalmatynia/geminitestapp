@@ -429,7 +429,7 @@ export default function ImportsPage(): React.JSX.Element {
       if (limit !== "all") importData.limit = Number(limit);
       if (selectedIds.length > 0) importData.selectedIds = selectedIds;
       
-      const res = (await importMutation.mutateAsync(importData)) as ImportResponse;
+      const res = await importMutation.mutateAsync(importData);
       setLastResult(res);
       const importedCount = res.imported ?? 0;
       toast(`Imported ${importedCount} products`, { variant: "success" });

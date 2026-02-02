@@ -15,7 +15,12 @@ export type ValidationState = {
   isValidating: boolean;
 };
 
-export function useProductCreateValidation(_options: UseValidationOptions = {}) {
+export function useProductCreateValidation(_options: UseValidationOptions = {}): {
+  validationState: ValidationState;
+  validate: (data: unknown) => Promise<ValidationState>;
+  validateField: (field: string, value: unknown) => Promise<void>;
+  reset: () => void;
+} {
   const [validationState, setValidationState] = useState<ValidationState>({
     isValid: false,
     errors: [],
@@ -24,13 +29,13 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}) 
   });
 
   const validate = useCallback(async (data: unknown): Promise<ValidationState> => {
-    setValidationState(prev => ({ ...prev, isValidating: true }));
+    setValidationState((prev: ValidationState) => ({ ...prev, isValidating: true }));
     
     const result = await validateProductCreate(data);
     const newState: ValidationState = {
       isValid: result.success,
       errors: result.success ? [] : result.errors,
-      fieldErrors: result.success ? {} : result.errors.reduce((acc, error) => ({
+      fieldErrors: result.success ? {} : result.errors.reduce((acc: Record<string, string>, error: ValidationError) => ({
         ...acc,
         [error.field]: error.message
       }), {}),
@@ -41,15 +46,15 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}) 
     return newState;
   }, []);
 
-  const validateField = useCallback(async (field: string, value: unknown) => {
+  const validateField = useCallback(async (field: string, value: unknown): Promise<void> => {
     const partialData = { [field]: value };
     const result = await validateProductCreate(partialData);
     
-    setValidationState(prev => ({
+    setValidationState((prev: ValidationState) => ({
       ...prev,
       fieldErrors: {
         ...prev.fieldErrors,
-        [field]: result.success ? "" : result.errors.find(e => e.field === field)?.message || ""
+        [field]: result.success ? "" : result.errors.find((e: ValidationError) => e.field === field)?.message || ""
       }
     }));
   }, []);
@@ -58,7 +63,7 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}) 
     validationState,
     validate,
     validateField,
-    reset: () => setValidationState({
+    reset: (): void => setValidationState({
       isValid: false,
       errors: [],
       fieldErrors: {},
@@ -67,7 +72,11 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}) 
   };
 }
 
-export function useProductUpdateValidation(_options: UseValidationOptions = {}) {
+export function useProductUpdateValidation(_options: UseValidationOptions = {}): {
+  validationState: ValidationState;
+  validate: (data: unknown) => Promise<ValidationState>;
+  reset: () => void;
+} {
   const [validationState, setValidationState] = useState<ValidationState>({
     isValid: true, // Updates are more permissive
     errors: [],
@@ -76,13 +85,13 @@ export function useProductUpdateValidation(_options: UseValidationOptions = {}) 
   });
 
   const validate = useCallback(async (data: unknown): Promise<ValidationState> => {
-    setValidationState(prev => ({ ...prev, isValidating: true }));
+    setValidationState((prev: ValidationState) => ({ ...prev, isValidating: true }));
     
     const result = await validateProductUpdate(data);
     const newState: ValidationState = {
       isValid: result.success,
       errors: result.success ? [] : result.errors,
-      fieldErrors: result.success ? {} : result.errors.reduce((acc, error) => ({
+      fieldErrors: result.success ? {} : result.errors.reduce((acc: Record<string, string>, error: ValidationError) => ({
         ...acc,
         [error.field]: error.message
       }), {}),
@@ -96,7 +105,7 @@ export function useProductUpdateValidation(_options: UseValidationOptions = {}) 
   return {
     validationState,
     validate,
-    reset: () => setValidationState({
+    reset: (): void => setValidationState({
       isValid: true,
       errors: [],
       fieldErrors: {},

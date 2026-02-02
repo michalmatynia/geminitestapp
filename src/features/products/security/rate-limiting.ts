@@ -15,24 +15,24 @@ type RateLimitEntry = {
 };
 
 export class RateLimiter {
-  private store = new Map<string, RateLimitEntry>();
+  private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
 
   constructor(config: RateLimitConfig) {
     this.config = {
-      keyGenerator: (req) => this.getClientIP(req),
+      keyGenerator: (req: NextRequest) => this.getClientIP(req),
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
       ...config
     };
   }
 
-  async checkLimit(req: NextRequest): Promise<{
+  checkLimit(req: NextRequest): {
     allowed: boolean;
     remaining: number;
     resetTime: number;
     totalHits: number;
-  }> {
+  } {
     const key = this.config.keyGenerator(req);
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
@@ -49,7 +49,7 @@ export class RateLimiter {
     }
 
     // Clean old requests (sliding window)
-    entry.requests = entry.requests.filter(time => time > windowStart);
+    entry.requests = entry.requests.filter((time: number) => time > windowStart);
     entry.count = entry.requests.length;
 
     // Update reset time if window has passed
@@ -90,14 +90,16 @@ export class RateLimiter {
     const realIP = req.headers.get('x-real-ip');
     
     if (forwarded) {
-      return forwarded.split(',')[0]?.trim() || 'unknown';
+      const firstIp = forwarded.split(',')[0];
+      return firstIp ? firstIp.trim() : 'unknown';
     }
     
     if (realIP) {
       return realIP;
     }
     
-    return (req as any).ip || 'unknown';
+    // Fallback if req.ip is not available or is undefined
+    return (req as unknown as { ip?: string }).ip || 'unknown';
   }
 
   cleanup(): void {
@@ -155,20 +157,26 @@ export const rateLimiters = {
 };
 
 // Rate limiting middleware
-export function withRateLimit(limiter: RateLimiter) {
+export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promise<{
+  allowed: boolean;
+  headers: Record<string, string>;
+  status?: number;
+  message?: string;
+}> {
   return async (req: NextRequest): Promise<{
     allowed: boolean;
     headers: Record<string, string>;
     status?: number;
     message?: string;
   }> => {
-    const result = await limiter.checkLimit(req);
+    const result = limiter.checkLimit(req);
+    const config = (limiter as unknown as { config: RateLimitConfig }).config;
     
     const headers = {
-      'X-RateLimit-Limit': limiter['config'].maxRequests.toString(),
+      'X-RateLimit-Limit': config.maxRequests.toString(),
       'X-RateLimit-Remaining': result.remaining.toString(),
       'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
-      'X-RateLimit-Window': limiter['config'].windowMs.toString()
+      'X-RateLimit-Window': config.windowMs.toString()
     };
 
     if (!result.allowed) {

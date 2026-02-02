@@ -123,10 +123,13 @@ export default function SystemLogsPage(): React.JSX.Element {
     if (mongoDiagnosticsQuery.error) toast((mongoDiagnosticsQuery.error).message, { variant: "error" });
   }, [mongoDiagnosticsQuery.error, toast]);
 
-  const logs = logsQuery.data?.logs ?? [];
+  const logs = useMemo(() => logsQuery.data?.logs ?? [], [logsQuery.data]);
   const total = logsQuery.data?.total ?? 0;
   const metrics = metricsQuery.data?.metrics ?? null;
-  const diagnostics = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.collections ?? [];
+  const diagnostics = useMemo((): MongoCollectionIndexStatus[] => {
+    const data = mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined;
+    return data?.collections ?? [];
+  }, [mongoDiagnosticsQuery.data]);
   const diagnosticsUpdatedAt = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
 
   const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
@@ -234,7 +237,7 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isClearLogsConfirmOpen}
               onOpenChange={setIsClearLogsConfirmOpen}
-              onConfirm={handleClearLogs}
+              onConfirm={async () => { await handleClearLogs(); }}
               title="Clear System Logs"
               description="Are you sure you want to clear all system logs? This action cannot be undone."
               confirmText="Clear All"
@@ -243,7 +246,7 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isRebuildIndexesConfirmOpen}
               onOpenChange={setIsRebuildIndexesConfirmOpen}
-              onConfirm={handleRebuildMongoIndexes}
+              onConfirm={async () => { await handleRebuildMongoIndexes(); }}
               title="Rebuild Indexes"
               description="This will scan AI Paths collections and create missing indexes. Proceed?"
               confirmText="Rebuild"
@@ -539,7 +542,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                       <div className="flex items-center gap-3">
                         <StatusBadge
                           status={log.level}
-                          variant={log.level === "warn" ? "warning" : log.level as any}
+                          variant={(log.level === "warn" ? "warning" : log.level) as any}
                         />
                         <span className="text-xs text-gray-400">
                           {formatTimestamp(log.createdAt)}

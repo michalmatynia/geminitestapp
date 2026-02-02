@@ -83,16 +83,27 @@ export function mergeValidationResults<T>(results: ValidationResult<T>[]): Valid
     }
   }
   
-  const hasErrors: boolean = allErrors.length > 0;
-  
+  const warnings = allWarnings.length > 0 ? allWarnings : undefined;
+  const metadata = {
+    validationTime: totalTime,
+    rulesApplied: [...new Set(allRules)],
+    cacheHit: false,
+    source: 'batch' as const
+  };
+
+  if (allErrors.length > 0) {
+    return {
+      success: false,
+      errors: allErrors,
+      warnings,
+      metadata
+    };
+  }
+
   return {
-    success: !hasErrors,
-    ...(hasErrors ? { errors: allErrors } : { data: validData }),
-    warnings: allWarnings.length > 0 ? allWarnings : undefined,
-    metadata: {
-      validationTime: totalTime,
-      rulesApplied: [...new Set(allRules)],
-      source: 'batch'
-    }
+    success: true,
+    data: validData,
+    warnings,
+    metadata
   };
 }

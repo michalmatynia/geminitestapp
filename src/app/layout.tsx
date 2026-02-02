@@ -1,6 +1,5 @@
 import { ToastProvider } from "@/shared/ui";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { Suspense } from "react";
 
 import { ThemeProvider } from "@/shared/providers/theme-provider";
@@ -12,8 +11,6 @@ import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -36,7 +33,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Manrope:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap"
         />
       </head>
-      <body className={cn(inter.className)}>
+      <body className={cn("font-sans")}>
         <ToastProvider>
           <QueryProvider>
             <BackgroundSyncProvider>

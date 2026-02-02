@@ -3,7 +3,7 @@ import "server-only";
 import { productService } from "@/features/products/services/productService";
 import type { ProductFilters } from "@/features/products/types/services/product-repository";
 import type { ProductWithImages } from "@/features/products/types";
-import { withQueryCache, ProductCacheHelpers } from './query-cache';
+import { withQueryCache, ProductCacheHelpers, queryCache } from './query-cache';
 
 type ProductFilterInput = Record<string, unknown>;
 
@@ -177,28 +177,28 @@ export class CachedProductService {
 }
 
 // Middleware for automatic cache invalidation
-export function withCacheInvalidation<T extends (...args: any[]) => Promise<any>>(
-  mutationFn: T,
+export function withCacheInvalidation<TArgs extends unknown[], TResult>(
+  mutationFn: (...args: TArgs) => Promise<TResult>,
   invalidationStrategy: {
-    tags?: (...args: Parameters<T>) => string[];
-    patterns?: (...args: Parameters<T>) => RegExp[];
-    custom?: (...args: Parameters<T>) => void;
+    tags?: (...args: TArgs) => string[];
+    patterns?: (...args: TArgs) => RegExp[];
+    custom?: (...args: TArgs) => void;
   }
-): T {
-  return (async (...args: Parameters<T>) => {
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs): Promise<TResult> => {
     const result = await mutationFn(...args);
     
     // Invalidate by tags
     if (invalidationStrategy.tags) {
       const tags = invalidationStrategy.tags(...args);
-      tags.forEach((tag: string) => ProductCacheHelpers.invalidateProduct(tag));
+      tags.forEach((tag: string) => queryCache.invalidateByTag(tag));
     }
     
     // Invalidate by patterns
     if (invalidationStrategy.patterns) {
       const patterns = invalidationStrategy.patterns(...args);
-      patterns.forEach((_pattern: RegExp) => {
-        // queryCache.invalidateByPattern(pattern);
+      patterns.forEach((pattern: RegExp) => {
+        queryCache.invalidateByPattern(pattern);
       });
     }
     
@@ -208,14 +208,14 @@ export function withCacheInvalidation<T extends (...args: any[]) => Promise<any>
     }
     
     return result;
-  }) as any;
+  };
 }
 
 // Product mutation operations with cache invalidation
 export class CachedProductMutations {
   
-  static createProduct = withCacheInvalidation(
-    async (_data: Record<string, unknown>) => {
+  static createProduct: (data: Record<string, unknown>) => Promise<null> = withCacheInvalidation(
+    async (_data: Record<string, unknown>): Promise<null> => {
       // const product = await db.product.create({ data });
       // return product;
       return Promise.resolve(null); // Placeholder
@@ -226,8 +226,8 @@ export class CachedProductMutations {
     }
   );
 
-  static updateProduct = withCacheInvalidation(
-    async (_id: string, _data: Record<string, unknown>) => {
+  static updateProduct: (id: string, data: Record<string, unknown>) => Promise<null> = withCacheInvalidation(
+    async (_id: string, _data: Record<string, unknown>): Promise<null> => {
       // const product = await db.product.update({ where: { id }, data });
       // return product;
       return Promise.resolve(null); // Placeholder
@@ -238,8 +238,8 @@ export class CachedProductMutations {
     }
   );
 
-  static deleteProduct = withCacheInvalidation(
-    async (_id: string) => {
+  static deleteProduct: (id: string) => Promise<null> = withCacheInvalidation(
+    async (_id: string): Promise<null> => {
       // const product = await db.product.delete({ where: { id } });
       // return product;
       return Promise.resolve(null); // Placeholder

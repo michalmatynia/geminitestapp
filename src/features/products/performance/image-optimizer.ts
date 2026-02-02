@@ -1,7 +1,10 @@
 import sharp from 'sharp';
 
-export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
-export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+import {
+  DEFAULT_IMAGE_SIZES,
+  type ImageFormat,
+  type ImageSize,
+} from "./image-url-generator";
 
 export type OptimizationOptions = {
   formats?: ImageFormat[];
@@ -20,17 +23,9 @@ export type OptimizedImageResult = {
   url?: string;
 };
 
-const DEFAULT_SIZES: Record<ImageSize, { width: number; height?: number; quality?: number }> = {
-  thumbnail: { width: 150, height: 150, quality: 80 },
-  small: { width: 300, quality: 85 },
-  medium: { width: 600, quality: 90 },
-  large: { width: 1200, quality: 95 },
-  original: { width: 2000, quality: 100 }
-};
-
 const DEFAULT_OPTIONS: OptimizationOptions = {
   formats: ['webp', 'jpeg'],
-  sizes: DEFAULT_SIZES,
+  sizes: DEFAULT_IMAGE_SIZES,
   quality: 85,
   progressive: true
 };
@@ -148,56 +143,5 @@ export class ImageOptimizer {
   }
 }
 
-// Image URL generator for different CDN patterns
-export class ImageUrlGenerator {
-  constructor(
-    private baseUrl: string,
-    private pattern: 'cloudinary' | 'imagekit' | 'custom' = 'custom'
-  ) {}
-
-  generate(
-    imageId: string,
-    size: ImageSize,
-    format: ImageFormat,
-    options?: { quality?: number }
-  ): string {
-    const sizeConfig = DEFAULT_SIZES[size];
-    
-    switch (this.pattern) {
-      case 'cloudinary':
-        return `${this.baseUrl}/image/upload/w_${sizeConfig.width},q_${options?.quality || sizeConfig.quality},f_${format}/${imageId}`;
-      
-      case 'imagekit':
-        return `${this.baseUrl}/${imageId}?tr=w-${sizeConfig.width},q-${options?.quality || sizeConfig.quality},f-${format}`;
-      
-      default:
-        return `${this.baseUrl}/${imageId}/${size}.${format}`;
-    }
-  }
-
-  generateResponsive(imageId: string, format: ImageFormat): {
-    src: string;
-    srcSet: string;
-    sizes: string;
-  } {
-    const sizes: ImageSize[] = Object.keys(DEFAULT_SIZES) as ImageSize[];
-    const srcSet = sizes
-      .map((size: ImageSize) => `${this.generate(imageId, size, format)} ${DEFAULT_SIZES[size].width}w`)
-      .join(', ');
-
-    return {
-      src: this.generate(imageId, 'medium', format),
-      srcSet,
-      sizes: '(max-width: 300px) 300px, (max-width: 600px) 600px, (max-width: 1200px) 1200px, 2000px'
-    };
-  }
-}
-
 // Global instances
 export const imageOptimizer: ImageOptimizer = new ImageOptimizer();
-
-const cdnProvider = (process.env.IMAGE_CDN_PROVIDER || 'custom') as 'cloudinary' | 'imagekit' | 'custom';
-export const imageUrlGenerator: ImageUrlGenerator = new ImageUrlGenerator(
-  process.env.IMAGE_CDN_URL || '/api/images',
-  cdnProvider
-);

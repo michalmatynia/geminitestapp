@@ -19,12 +19,12 @@ type UploadConfig = {
 };
 
 export class SecureFileUpload {
-  private static readonly DANGEROUS_EXTENSIONS = [
+  private static readonly DANGEROUS_EXTENSIONS: string[] = [
     '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar',
     '.php', '.asp', '.aspx', '.jsp', '.py', '.rb', '.pl', '.sh', '.ps1'
   ];
 
-  private static readonly IMAGE_MIME_TYPES = [
+  private static readonly IMAGE_MIME_TYPES: string[] = [
     'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'
   ];
 
@@ -85,14 +85,14 @@ export class SecureFileUpload {
     // Check image dimensions if required
     if (cfg.requireImageDimensions && this.IMAGE_MIME_TYPES.includes(file.type)) {
       try {
-        const dimensions = await this.getImageDimensions(buffer);
+        const dimensions = this.getImageDimensions(buffer);
         if (cfg.maxWidth && dimensions.width > cfg.maxWidth) {
           errors.push(`Image width ${dimensions.width}px exceeds ${cfg.maxWidth}px limit`);
         }
         if (cfg.maxHeight && dimensions.height > cfg.maxHeight) {
           errors.push(`Image height ${dimensions.height}px exceeds ${cfg.maxHeight}px limit`);
         }
-      } catch (error) {
+      } catch (_error) {
         errors.push('Unable to read image dimensions');
       }
     }
@@ -122,7 +122,7 @@ export class SecureFileUpload {
     }
 
     // Check total size
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const totalSize = files.reduce((sum: number, file: File) => sum + file.size, 0);
     const maxTotalSize = cfg.maxFileSize * cfg.maxFiles;
     if (totalSize > maxTotalSize) {
       globalErrors.push(`Total file size exceeds ${maxTotalSize / (1024 * 1024)}MB limit`);
@@ -130,21 +130,21 @@ export class SecureFileUpload {
 
     // Validate each file
     const results = await Promise.all(
-      files.map(async (file) => ({
+      files.map(async (file: File) => ({
         fileName: file.name,
         ...(await this.validateFile(file, config))
       }))
     );
 
     // Check for duplicate files
-    const hashes = results.map(r => r.fileHash).filter(Boolean);
-    const duplicates = hashes.filter((hash, index) => hashes.indexOf(hash) !== index);
+    const hashes = results.map((r: FileValidationResult) => r.fileHash).filter(Boolean);
+    const duplicates = hashes.filter((hash: string | undefined, index: number) => hashes.indexOf(hash) !== index);
     if (duplicates.length > 0) {
       globalErrors.push('Duplicate files detected');
     }
 
     return {
-      isValid: globalErrors.length === 0 && results.every(r => r.isValid),
+      isValid: globalErrors.length === 0 && results.every((r: FileValidationResult) => r.isValid),
       results,
       globalErrors
     };
@@ -189,18 +189,18 @@ export class SecureFileUpload {
     const sigs = signatures[mimeType];
     if (!sigs) return false;
 
-    return sigs.some(sig => 
-      sig.every((byte, index) => bytes[index] === byte)
+    return sigs.some((sig: number[]) => 
+      sig.every((byte: number, index: number) => bytes[index] === byte)
     );
   }
 
   private static async generateFileHash(buffer: ArrayBuffer): Promise<string> {
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashArray.map((b: number) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  private static async getImageDimensions(buffer: ArrayBuffer): Promise<{ width: number; height: number }> {
+  private static getImageDimensions(buffer: ArrayBuffer): { width: number; height: number } {
     // This is a simplified implementation
     // In production, you'd use a proper image library like sharp
     const bytes = new Uint8Array(buffer);
@@ -253,12 +253,12 @@ export async function withSecureFileUpload(
     if (!validation.isValid) {
       const allErrors = [
         ...validation.globalErrors,
-        ...validation.results.flatMap(r => r.errors)
+        ...validation.results.flatMap((r: FileValidationResult) => r.errors)
       ];
       return { isValid: false, errors: allErrors };
     }
 
-    const sanitizedFiles = validation.results.map((result, index) => ({
+    const sanitizedFiles = validation.results.map((result: FileValidationResult, index: number) => ({
       file: files[index]!,
       sanitizedName: result.sanitizedName!,
       hash: result.fileHash!
@@ -271,7 +271,7 @@ export async function withSecureFileUpload(
       sanitizedFiles
     };
 
-  } catch (error) {
+  } catch (_error) {
     return {
       isValid: false,
       errors: ['Failed to process file upload']

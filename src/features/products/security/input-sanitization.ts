@@ -8,13 +8,13 @@ type SanitizationOptions = {
 };
 
 export class InputSanitizer {
-  private static readonly SQL_INJECTION_PATTERNS = [
+  private static readonly SQL_INJECTION_PATTERNS: RegExp[] = [
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi,
     /(--|\/\*|\*\/|;|'|"|`)/g,
     /(\bOR\b|\bAND\b).*?[=<>]/gi
   ];
 
-  private static readonly XSS_PATTERNS = [
+  private static readonly XSS_PATTERNS: RegExp[] = [
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
     /javascript:/gi,
     /on\w+\s*=/gi,
@@ -47,13 +47,13 @@ export class InputSanitizer {
       sanitized = sanitized.replace(/<[^>]*>/g, '');
       
       // Remove potential XSS patterns
-      this.XSS_PATTERNS.forEach(pattern => {
+      this.XSS_PATTERNS.forEach((pattern: RegExp) => {
         sanitized = sanitized.replace(pattern, '');
       });
     }
 
     // Remove SQL injection patterns
-    this.SQL_INJECTION_PATTERNS.forEach(pattern => {
+    this.SQL_INJECTION_PATTERNS.forEach((pattern: RegExp) => {
       sanitized = sanitized.replace(pattern, '');
     });
 
@@ -63,7 +63,7 @@ export class InputSanitizer {
     return sanitized;
   }
 
-  static sanitizeObject<T extends Record<string, any>>(
+  static sanitizeObject<T extends Record<string, unknown>>(
     obj: T,
     fieldOptions: Partial<Record<keyof T, SanitizationOptions>> = {}
   ): T {
@@ -75,13 +75,13 @@ export class InputSanitizer {
       if (typeof value === 'string') {
         sanitized[key as keyof T] = this.sanitizeString(value, options) as T[keyof T];
       } else if (Array.isArray(value)) {
-        sanitized[key as keyof T] = value.map(item => 
+        sanitized[key as keyof T] = value.map((item: unknown) => 
           typeof item === 'string' ? this.sanitizeString(item, options) : item
         ) as T[keyof T];
       } else if (value && typeof value === 'object') {
-        sanitized[key as keyof T] = this.sanitizeObject(value, {}) as T[keyof T];
+        sanitized[key as keyof T] = this.sanitizeObject(value as Record<string, unknown>, {}) as T[keyof T];
       } else {
-        sanitized[key as keyof T] = value;
+        sanitized[key as keyof T] = value as T[keyof T];
       }
     }
 
@@ -120,7 +120,7 @@ export class InputSanitizer {
 }
 
 // Product-specific sanitization rules
-export const ProductSanitizationRules = {
+export const ProductSanitizationRules: Record<string, SanitizationOptions> = {
   sku: { maxLength: 50, stripWhitespace: true },
   name_en: { maxLength: 200, stripWhitespace: true },
   name_pl: { maxLength: 200, stripWhitespace: true },
@@ -134,7 +134,7 @@ export const ProductSanitizationRules = {
 };
 
 // Middleware for automatic sanitization
-export function withInputSanitization<T extends Record<string, any>>(
+export function withInputSanitization<T extends Record<string, unknown>>(
   data: T,
   rules: Partial<Record<keyof T, SanitizationOptions>> = {}
 ): T {
@@ -142,22 +142,27 @@ export function withInputSanitization<T extends Record<string, any>>(
 }
 
 // Validation helpers
-export function validateProductInput(data: any): { isValid: boolean; errors: string[] } {
+export function validateProductInput(data: Record<string, unknown>): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (data.sku && !InputSanitizer.validateSku(data.sku)) {
+  const sku: string | undefined = typeof data['sku'] === 'string' ? data['sku'] : undefined;
+  if (sku && !InputSanitizer.validateSku(sku)) {
     errors.push('Invalid SKU format');
   }
 
-  if (data.supplierLink && !InputSanitizer.validateUrl(data.supplierLink)) {
+  const supplierLink: string | undefined =
+    typeof data['supplierLink'] === 'string' ? data['supplierLink'] : undefined;
+  if (supplierLink && !InputSanitizer.validateUrl(supplierLink)) {
     errors.push('Invalid supplier URL');
   }
 
-  if (data.price && (typeof data.price !== 'number' || data.price < 0)) {
+  const price: unknown = data['price'];
+  if (price !== undefined && (typeof price !== 'number' || price < 0)) {
     errors.push('Invalid price value');
   }
 
-  if (data.stock && (typeof data.stock !== 'number' || data.stock < 0)) {
+  const stock: unknown = data['stock'];
+  if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
     errors.push('Invalid stock value');
   }
 

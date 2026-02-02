@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, configurationError } from "@/shared/errors/app-error";

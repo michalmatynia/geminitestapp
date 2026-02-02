@@ -8,7 +8,7 @@ export abstract class ValidationErrorBase extends Error {
   constructor(
     message: string,
     public readonly field: string = 'root',
-    public readonly context?: Record<string, any>
+    public readonly context?: Record<string, unknown>
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -27,28 +27,28 @@ export abstract class ValidationErrorBase extends Error {
 
 // Specific error types
 export class SchemaValidationError extends ValidationErrorBase {
-  readonly code = 'SCHEMA_VALIDATION_ERROR';
-  readonly severity = 'high' as const;
+  readonly code: string = 'SCHEMA_VALIDATION_ERROR';
+  readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'high';
 }
 
 export class BusinessRuleError extends ValidationErrorBase {
-  readonly code = 'BUSINESS_RULE_ERROR';
-  readonly severity = 'medium' as const;
+  readonly code: string = 'BUSINESS_RULE_ERROR';
+  readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
 }
 
 export class ConfigurationError extends ValidationErrorBase {
-  readonly code = 'CONFIGURATION_ERROR';
-  readonly severity = 'low' as const;
+  readonly code: string = 'CONFIGURATION_ERROR';
+  readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
 }
 
 export class ExternalServiceError extends ValidationErrorBase {
-  readonly code = 'EXTERNAL_SERVICE_ERROR';
-  readonly severity = 'medium' as const;
+  readonly code: string = 'EXTERNAL_SERVICE_ERROR';
+  readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
 }
 
 export class ValidationSystemError extends ValidationErrorBase {
-  readonly code = 'VALIDATION_SYSTEM_ERROR';
-  readonly severity = 'critical' as const;
+  readonly code: string = 'VALIDATION_SYSTEM_ERROR';
+  readonly severity: 'low' | 'medium' | 'high' | 'critical' = 'critical';
 }
 
 // Error handler interface
@@ -63,8 +63,9 @@ export class ZodErrorHandler implements IErrorHandler {
     return error.name === 'ZodError';
   }
 
-  handle(error: any): ValidationError[] {
-    return error.errors?.map((err: any) => ({
+  handle(error: Error): ValidationError[] {
+    const zodError = error as { errors?: Array<{ path?: string[]; message: string; code: string; received?: unknown }> };
+    return zodError.errors?.map((err: { path?: string[]; message: string; code: string; received?: unknown }) => ({
       field: err.path?.join('.') || 'root',
       message: err.message,
       code: err.code,
@@ -99,7 +100,7 @@ export class ValidationErrorHandler implements IErrorHandler {
 }
 
 export class GenericErrorHandler implements IErrorHandler {
-  canHandle(): boolean {
+  canHandle(_error: Error): boolean {
     return true; // Fallback handler
   }
 
@@ -123,7 +124,7 @@ export class ErrorHandlerRegistry {
   ];
 
   handle(error: Error): ValidationError[] {
-    const handler = this.handlers.find(h => h.canHandle(error));
+    const handler = this.handlers.find((h: IErrorHandler) => h.canHandle(error));
     return handler?.handle(error) || [];
   }
 
@@ -154,7 +155,7 @@ export function createValidationError(
   message: string,
   code: string,
   severity: 'low' | 'medium' | 'high' | 'critical' = 'medium',
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): ValidationError {
   return { field, message, code, severity, context };
 }

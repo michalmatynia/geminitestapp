@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/features/integrations/server";
 import { decryptSecret } from "@/features/integrations/server";

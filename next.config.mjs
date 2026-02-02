@@ -9,6 +9,8 @@ const nextConfig = {
     // Keep Playwright external on the server bundle.
     'playwright',
     'playwright-core',
+    // MongoDB driver pulls in Node built-ins that Turbopack currently struggles to bundle.
+    'mongodb',
   ],
   turbopack: {},
   images: {

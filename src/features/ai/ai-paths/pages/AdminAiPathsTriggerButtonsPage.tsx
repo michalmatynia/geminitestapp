@@ -268,7 +268,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         id: "name",
         header: "Name",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const iconId = (row.original as AiTriggerButtonRecord).iconId;
+          const iconId = row.original.iconId;
           const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
           return (
             <div className="flex items-center gap-2">
@@ -276,8 +276,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 {Icon ? <Icon className="size-4 text-gray-200" /> : <Settings2 className="size-4 text-gray-500" />}
               </span>
               <div className="min-w-0">
-                <div className="truncate font-medium text-white">{(row.original as AiTriggerButtonRecord).name}</div>
-                <div className="truncate text-[11px] text-gray-400">{(row.original as AiTriggerButtonRecord).id}</div>
+                <div className="truncate font-medium text-white">{row.original.name}</div>
+                <div className="truncate text-[11px] text-gray-400">{row.original.id}</div>
               </div>
             </div>
           );
@@ -288,7 +288,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         header: "Locations",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <div className="text-xs text-gray-300">
-            {(row.original as AiTriggerButtonRecord).locations
+            {row.original.locations
               .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o: { value: AiTriggerButtonLocation; label: string }) => o.value === value)?.label ?? value)
               .join(", ")}
           </div>
@@ -299,7 +299,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         header: "Mode",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <span className="text-xs text-gray-300">
-            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === (row.original as AiTriggerButtonRecord).mode)?.label ?? (row.original as AiTriggerButtonRecord).mode}
+            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === row.original.mode)?.label ?? row.original.mode}
           </span>
         ),
       },
@@ -307,7 +307,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         id: "paths",
         header: "Used in Paths",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const usedIn = attachmentsByTriggerId.get((row.original as AiTriggerButtonRecord).id) ?? [];
+          const usedIn = attachmentsByTriggerId.get(row.original.id) ?? [];
           if (usedIn.length === 0) {
             return <span className="text-xs text-gray-500">Not used</span>;
           }
@@ -339,7 +339,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               variant="outline"
               size="sm"
               onClick={() => {
-                setDraft(normalizeDraft(row.original as AiTriggerButtonRecord));
+                setDraft(normalizeDraft(row.original));
                 setEditorOpen(true);
               }}
             >
@@ -348,10 +348,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Button
               variant="destructive"
               size="sm"
-              onClick={async () => {
-                const ok = confirm(`Delete trigger button \"${(row.original as AiTriggerButtonRecord).name}\"?`);
+              onClick={(): void => {
+                const ok = confirm(`Delete trigger button \"${row.original.name}\"?`);
                 if (!ok) return;
-                await deleteMutation.mutateAsync((row.original as AiTriggerButtonRecord).id);
+                void deleteMutation.mutateAsync(row.original.id);
               }}
             >
               <Trash2 className="mr-1 size-3.5" />
@@ -418,7 +418,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           <DataTable<AiTriggerButtonRecord>
             columns={columns}
             data={rows}
-            getRowId={(row) => row.id}
+            getRowId={(row: AiTriggerButtonRecord): string => row.id}
             isLoading={triggerButtonsQuery.isLoading}
           />
         </div>
@@ -426,7 +426,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
       <SharedModal
         open={editorOpen}
-        onClose={() => setEditorOpen(false)}
+        onClose={(): void => setEditorOpen(false)}
         title={draft.id ? "Edit Trigger Button" : "Create Trigger Button"}
         size="md"
       >
@@ -550,7 +550,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Button variant="outline" onClick={(): void => setEditorOpen(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={(): Promise<void> => handleSave()} disabled={saving}>
+            <Button onClick={(): void => { void handleSave(); }} disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </Button>
           </div>

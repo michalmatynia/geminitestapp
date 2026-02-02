@@ -4,17 +4,17 @@ import type { ValidationError } from "./validators";
 export type ValidationConfig = {
   strictMode: boolean;
   requiredFields: string[];
-  customValidators: Record<string, (value: any) => string | null>;
+  customValidators: Record<string, (value: unknown) => string | null>;
   fieldConstraints: Record<string, {
     min?: number;
     max?: number;
     pattern?: RegExp;
-    custom?: (value: any) => boolean;
+    custom?: (value: unknown) => boolean;
   }>;
   businessRules: Array<{
     name: string;
-    condition: (data: any) => boolean;
-    validator: (data: any) => ValidationError[];
+    condition: (data: Record<string, unknown>) => boolean;
+    validator: (data: Record<string, unknown>) => ValidationError[];
   }>;
 };
 
@@ -33,8 +33,8 @@ const defaultConfig: ValidationConfig = {
   businessRules: [
     {
       name: "supplier_link_required",
-      condition: (data) => !!data.supplierName,
-      validator: (data) => {
+      condition: (data: Record<string, unknown>): boolean => !!data.supplierName,
+      validator: (data: Record<string, unknown>): ValidationError[] => {
         if (!data.supplierLink) {
           return [{
             field: "supplierLink",
@@ -48,8 +48,8 @@ const defaultConfig: ValidationConfig = {
     },
     {
       name: "multilingual_consistency",
-      condition: (data) => data.name_en || data.name_pl || data.name_de,
-      validator: (data) => {
+      condition: (data: Record<string, unknown>): boolean => !!(data.name_en || data.name_pl || data.name_de),
+      validator: (data: Record<string, unknown>): ValidationError[] => {
         const errors: ValidationError[] = [];
         const hasAnyName = data.name_en || data.name_pl || data.name_de;
         
@@ -68,7 +68,7 @@ const defaultConfig: ValidationConfig = {
   ]
 };
 
-let currentConfig = { ...defaultConfig };
+let currentConfig: ValidationConfig = { ...defaultConfig };
 
 export function setValidationConfig(config: Partial<ValidationConfig>): void {
   currentConfig = { ...currentConfig, ...config };
@@ -82,11 +82,11 @@ export function resetValidationConfig(): void {
   currentConfig = { ...defaultConfig };
 }
 
-export function validateWithConfig(data: any, _schema: z.ZodSchema): ValidationError[] {
+export function validateWithConfig(data: Record<string, unknown>, _schema: z.ZodSchema): ValidationError[] {
   const errors: ValidationError[] = [];
   
   // Apply custom field validators
-  Object.entries(currentConfig.customValidators).forEach(([field, validator]) => {
+  Object.entries(currentConfig.customValidators).forEach(([field, validator]: [string, (value: unknown) => string | null]) => {
     if (data[field] !== undefined) {
       const error = validator(data[field]);
       if (error) {
@@ -96,10 +96,15 @@ export function validateWithConfig(data: any, _schema: z.ZodSchema): ValidationE
   });
   
   // Apply field constraints
-  Object.entries(currentConfig.fieldConstraints).forEach(([field, constraints]) => {
+  Object.entries(currentConfig.fieldConstraints).forEach(([field, constraints]: [string, {
+    min?: number;
+    max?: number;
+    pattern?: RegExp;
+    custom?: (value: unknown) => boolean;
+  }]) => {
     const value = data[field];
     if (value !== undefined && value !== null) {
-      if (constraints.min !== undefined && value < constraints.min) {
+      if (constraints.min !== undefined && (value as number) < constraints.min) {
         errors.push({
           field,
           message: `${field} must be at least ${constraints.min}`,
@@ -107,7 +112,7 @@ export function validateWithConfig(data: any, _schema: z.ZodSchema): ValidationE
           severity: "medium"
         });
       }
-      if (constraints.max !== undefined && value > constraints.max) {
+      if (constraints.max !== undefined && (value as number) > constraints.max) {
         errors.push({
           field,
           message: `${field} must be at most ${constraints.max}`,
@@ -135,7 +140,11 @@ export function validateWithConfig(data: any, _schema: z.ZodSchema): ValidationE
   });
   
   // Apply business rules
-  currentConfig.businessRules.forEach(rule => {
+  currentConfig.businessRules.forEach((rule: {
+    name: string;
+    condition: (data: Record<string, unknown>) => boolean;
+    validator: (data: Record<string, unknown>) => ValidationError[];
+  }) => {
     if (rule.condition(data)) {
       errors.push(...rule.validator(data));
     }

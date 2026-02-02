@@ -5,17 +5,17 @@ import type { ValidationError } from "./validators";
 export function createConditionalSchema<T extends z.ZodRawShape>(
   baseSchema: z.ZodObject<T>,
   conditions: Array<{
-    when: (data: any) => boolean;
+    when: (data: unknown) => boolean;
     then: z.ZodSchema;
     field: keyof T;
   }>
-) {
-  return baseSchema.superRefine((data, ctx) => {
-    conditions.forEach(({ when, then, field }) => {
+): z.ZodType<z.infer<z.ZodObject<T>>> {
+  return baseSchema.superRefine((data: z.infer<z.ZodObject<T>>, ctx: z.RefinementCtx) => {
+    conditions.forEach(({ when, then, field }: { when: (data: unknown) => boolean; then: z.ZodSchema; field: keyof T }) => {
       if (when(data)) {
-        const result = then.safeParse((data as any)[field]);
+        const result = then.safeParse((data as Record<string, unknown>)[field as string]);
         if (!result.success) {
-          result.error.issues.forEach(error => {
+          result.error.issues.forEach((error: z.ZodIssue) => {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               path: [field as string],
@@ -30,18 +30,18 @@ export function createConditionalSchema<T extends z.ZodRawShape>(
 
 // Field dependency validation
 export function validateFieldDependencies(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   dependencies: Array<{
     field: string;
     dependsOn: string[];
-    validator: (value: any, deps: Record<string, any>) => string | null;
+    validator: (value: unknown, deps: Record<string, unknown>) => string | null;
   }>
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  dependencies.forEach(({ field, dependsOn, validator }) => {
+  dependencies.forEach(({ field, dependsOn, validator }: { field: string; dependsOn: string[]; validator: (value: unknown, deps: Record<string, unknown>) => string | null }) => {
     const value = data[field];
-    const deps = dependsOn.reduce((acc, dep) => ({
+    const deps = dependsOn.reduce((acc: Record<string, unknown>, dep: string) => ({
       ...acc,
       [dep]: data[dep]
     }), {});
@@ -63,16 +63,16 @@ export function validateFieldDependencies(
 // Async validation queue
 export class ValidationQueue {
   private queue: Array<() => Promise<ValidationError[]>> = [];
-  private isProcessing = false;
+  private isProcessing: boolean = false;
 
-  add(validator: () => Promise<ValidationError[]>) {
+  add(validator: () => Promise<ValidationError[]>): void {
     this.queue.push(validator);
     if (!this.isProcessing) {
-      this.process();
+      void this.process();
     }
   }
 
-  private async process() {
+  private async process(): Promise<ValidationError[]> {
     this.isProcessing = true;
     const allErrors: ValidationError[] = [];
 
@@ -81,7 +81,7 @@ export class ValidationQueue {
       try {
         const errors = await validator();
         allErrors.push(...errors);
-      } catch (error) {
+      } catch (_error: unknown) {
         allErrors.push({
           field: "unknown",
           message: "Validation error occurred",
@@ -97,13 +97,13 @@ export class ValidationQueue {
 }
 
 // Validation caching
-const validationCache = new Map<string, { result: any; timestamp: number }>();
-const CACHE_TTL = 5000; // 5 seconds
+const validationCache: Map<string, { result: unknown; timestamp: number }> = new Map<string, { result: unknown; timestamp: number }>();
+const CACHE_TTL: number = 5000; // 5 seconds
 
 export function getCachedValidation<T>(key: string): T | null {
   const cached = validationCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.result;
+    return cached.result as T;
   }
   return null;
 }
@@ -113,11 +113,11 @@ export function setCachedValidation<T>(key: string, result: T): void {
 }
 
 // Validation performance monitoring
-export function withValidationMetrics<T extends (...args: any[]) => Promise<any>>(
+export function withValidationMetrics<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   name: string
 ): T {
-  return (async (...args: Parameters<T>) => {
+  return (async (...args: Parameters<T>): Promise<unknown> => {
     const start = performance.now();
     try {
       const result = await fn(...args);

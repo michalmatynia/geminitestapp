@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest } from "next/server";
 
 import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";

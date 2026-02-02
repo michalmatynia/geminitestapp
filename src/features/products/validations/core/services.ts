@@ -5,7 +5,8 @@ import {
   IValidationRuleEngine,
   ValidationResult,
   FieldValidationResult,
-  ValidationMetadata
+  ValidationMetadata,
+  ValidationError
 } from './interfaces';
 import { handleValidationError } from './errors';
 
@@ -77,8 +78,8 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
     return {
       field,
       isValid: result.success,
-      errors: result.success ? [] : result.errors.filter(e => e.field === field),
-      warnings: result.warnings?.filter(e => e.field === field)
+      errors: result.success ? [] : result.errors.filter((e: ValidationError) => e.field === field),
+      warnings: result.warnings?.filter((e: ValidationError) => e.field === field)
     };
   }
 
@@ -142,8 +143,8 @@ export class ProductCreateValidationService extends BaseValidationService<unknow
   }
 }
 
-export class ProductUpdateValidationService extends BaseValidationService<any> {
-  protected async performValidation(data: unknown, metadata: ValidationMetadata): Promise<ValidationResult<any>> {
+export class ProductUpdateValidationService extends BaseValidationService<unknown> {
+  protected async performValidation(data: unknown, metadata: ValidationMetadata): Promise<ValidationResult<unknown>> {
     const startTime = performance.now();
     
     try {
@@ -191,11 +192,11 @@ export class ProductUpdateValidationService extends BaseValidationService<any> {
 export class ValidationServiceFactory {
   constructor(private dependencies: ValidationServiceDependencies) {}
 
-  createProductCreateValidator(): IValidator<any> {
+  createProductCreateValidator(): IValidator<unknown> {
     return new ProductCreateValidationService(this.dependencies);
   }
 
-  createProductUpdateValidator(): IValidator<any> {
+  createProductUpdateValidator(): IValidator<unknown> {
     return new ProductUpdateValidationService(this.dependencies);
   }
 }

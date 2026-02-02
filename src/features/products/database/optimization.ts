@@ -102,6 +102,7 @@ export class QueryOptimizer {
   static async analyzeQuery(query: string, _params: unknown[] = []): Promise<QueryPlan> {
     // This would integrate with your database client
     // Example with PostgreSQL EXPLAIN ANALYZE
+    // const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query}`;
     
     // Placeholder implementation
     return Promise.resolve({

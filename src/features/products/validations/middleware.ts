@@ -9,7 +9,7 @@ export type ValidationMiddlewareOptions = {
 export async function validateProductCreateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
-): Promise<{ success: true; data: any } | { success: false; response: Response }> {
+): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
   if (options.skipValidation) {
     return { success: true, data: Object.fromEntries(formData.entries()) };
   }
@@ -37,7 +37,7 @@ export async function validateProductCreateMiddleware(
 export async function validateProductUpdateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
-): Promise<{ success: true; data: any } | { success: false; response: Response }> {
+): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
   if (options.skipValidation) {
     return { success: true, data: Object.fromEntries(formData.entries()) };
   }

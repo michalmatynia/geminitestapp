@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { generateProductDescription } from "@/features/products/services/aiDescriptionService";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

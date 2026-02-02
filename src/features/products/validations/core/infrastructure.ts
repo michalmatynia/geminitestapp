@@ -6,7 +6,8 @@ import {
   ValidationStats,
   ValidationRule,
   RuleExecutionContext,
-  RuleExecutionResult
+  RuleExecutionResult,
+  ValidationError
 } from './interfaces';
 
 // Cache implementation

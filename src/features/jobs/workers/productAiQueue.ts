@@ -423,10 +423,17 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
       gtin: rawData.gtin || "",
       asin: rawData.asin || "",
       supplierName: rawData.supplierName || "",
+      supplierLink: rawData.supplierLink || "",
+      priceComment: rawData.priceComment || "",
       weight: rawData.weight || 0,
       sizeLength: rawData.sizeLength || 0,
       sizeWidth: rawData.sizeWidth || 0,
       length: rawData.length || 0,
+      baseProductId: rawData.baseProductId || "",
+      defaultPriceGroupId: rawData.defaultPriceGroupId || "",
+      imageLinks: rawData.imageLinks || [],
+      imageBase64s: rawData.imageBase64s || [],
+      parameters: (rawData.parameters as Array<{ parameterId: string; value: string | null; }> | undefined) || [],
     };
 
     allImageUrls = payload.imageUrls || [];
@@ -458,10 +465,17 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
       gtin: product.gtin || "",
       asin: product.asin || "",
       supplierName: product.supplierName || "",
+      supplierLink: product.supplierLink || "",
+      priceComment: product.priceComment || "",
       weight: product.weight || 0,
       sizeLength: product.sizeLength || 0,
       sizeWidth: product.sizeWidth || 0,
       length: product.length || 0,
+      baseProductId: product.baseProductId || "",
+      defaultPriceGroupId: product.defaultPriceGroupId || "",
+      imageLinks: product.imageLinks || [],
+      imageBase64s: product.imageBase64s || [],
+      parameters: product.parameters || [],
     };
 
     const uploadedImages = product.images

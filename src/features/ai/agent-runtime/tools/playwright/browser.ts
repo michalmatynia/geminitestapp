@@ -1,16 +1,33 @@
 import "server-only";
 
-import { chromium, firefox, webkit } from "playwright";
 import type { Browser, BrowserContext, Page, Cookie } from "playwright";
 import prisma from "@/shared/lib/db/prisma";
 import path from "path";
 import { promises as fs } from "fs";
 import { toDataUrl } from "../utils";
+import { createRequire } from "module";
+
+const getPlaywright = (): {
+  chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+  firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+  webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+} => {
+  // Turbopack currently struggles to bundle Playwright (node built-ins + non-JS assets from playwright-core).
+  // Keep it out of the bundler graph by requiring it at runtime with a non-literal specifier.
+  const requireFn = createRequire(import.meta.url);
+  const pkgName = "play" + "wright";
+  return requireFn(pkgName) as unknown as {
+    chromium: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+    firefox: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+    webkit: { launch: (opts: { headless: boolean }) => Promise<Browser> };
+  };
+};
 
 export const launchBrowser = async (
   browserName: string = "chromium",
   headless: boolean = true
 ): Promise<Browser> => {
+  const { chromium, firefox, webkit } = getPlaywright();
   const browserType =
     browserName === "firefox"
       ? firefox

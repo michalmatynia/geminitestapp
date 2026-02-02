@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

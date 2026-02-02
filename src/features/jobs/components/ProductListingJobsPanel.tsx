@@ -274,7 +274,7 @@ export default function ProductListingJobsPanel({
               return {
                 id: listing.id,
                 type: `${typeLabel}: ${listing.integrationName}`,
-                status: status as any,
+                status: status as JobRowData["status"],
                 entityName: job.productName,
                 entitySubText: `SKU: ${job.productSku || "N/A"} · ${attemptLabel}`,
                 productId: job.productId,

@@ -31,7 +31,10 @@ export default function ChatbotJobsPage(): React.JSX.Element {
   const clearMutation = useClearChatbotJobsMutation();
   const deleteMutation = clearMutation;
 
-  const jobs = useMemo(() => (jobsQuery.data as { jobs: ChatbotJob[] } | undefined)?.jobs || [], [jobsQuery.data]);
+  const jobs = useMemo((): ChatbotJob[] => {
+    const data = jobsQuery.data as { jobs?: ChatbotJob[] } | undefined;
+    return data?.jobs || [];
+  }, [jobsQuery.data]);
 
   const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();

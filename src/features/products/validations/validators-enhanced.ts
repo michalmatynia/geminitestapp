@@ -93,7 +93,14 @@ async function validateWithEnhancedErrorHandling<T>(
     
     // Config validation (always run for warnings)
     try {
-      const configErrors = validateWithConfig(result.success ? result.data : data, schema);
+      const configTarget: Record<string, unknown> =
+        result.success && result.data && typeof result.data === "object"
+          ? (result.data as Record<string, unknown>)
+          : data && typeof data === "object"
+            ? (data as Record<string, unknown>)
+            : {};
+
+      const configErrors = validateWithConfig(configTarget, schema);
       configErrors.forEach(error => {
         if (error.code.includes('warning') || error.severity === 'low') {
           warnings.push(error);

@@ -5,8 +5,8 @@ import { IValidator, ValidationResult, FieldValidationResult } from './interface
 // Application service that orchestrates validation
 export class ValidationApplication {
   private serviceFactory: ValidationServiceFactory;
-  private productCreateValidator: IValidator<any>;
-  private productUpdateValidator: IValidator<any>;
+  private productCreateValidator: IValidator<unknown>;
+  private productUpdateValidator: IValidator<unknown>;
 
   constructor() {
     const dependencies = InfrastructureFactory.createDependencies();
@@ -16,11 +16,11 @@ export class ValidationApplication {
   }
 
   // Product validation methods
-  async validateProductCreate(data: unknown): Promise<ValidationResult<any>> {
+  async validateProductCreate(data: unknown): Promise<ValidationResult<unknown>> {
     return this.productCreateValidator.validate(data);
   }
 
-  async validateProductUpdate(data: unknown): Promise<ValidationResult<any>> {
+  async validateProductUpdate(data: unknown): Promise<ValidationResult<unknown>> {
     return this.productUpdateValidator.validate(data);
   }
 
@@ -41,7 +41,7 @@ export class ValidationApplication {
     products: unknown[], 
     context: 'create' | 'update' = 'create'
   ): Promise<{
-    results: Array<{ index: number; result: ValidationResult<any> }>;
+    results: Array<{ index: number; result: ValidationResult<unknown> }>;
     summary: { total: number; successful: number; failed: number };
   }> {
     const validator = context === 'create' 
@@ -49,13 +49,13 @@ export class ValidationApplication {
       : this.productUpdateValidator;
 
     const results = await Promise.all(
-      products.map(async (product, index) => ({
+      products.map(async (product: unknown, index: number) => ({
         index,
         result: await validator.validate(product)
       }))
     );
 
-    const successful = results.filter(r => r.result.success).length;
+    const successful = results.filter((r: { index: number; result: ValidationResult<unknown> }) => r.result.success).length;
     const failed = results.length - successful;
 
     return {
@@ -76,7 +76,7 @@ export class ValidationApplication {
     const results: Record<string, FieldValidationResult> = {};
     
     await Promise.all(
-      Object.entries(fields).map(async ([field, value]) => {
+      Object.entries(fields).map(async ([field, value]: [string, unknown]) => {
         results[field] = await this.validateProductField(field, value, context);
       })
     );

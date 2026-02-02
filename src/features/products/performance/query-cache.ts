@@ -12,35 +12,35 @@ type CacheOptions = {
 };
 
 export class QueryCache {
-  private cache = new Map<string, CacheEntry<any>>();
-  private tagIndex = new Map<string, Set<string>>();
-  private readonly defaultTTL = 300000; // 5 minutes
+  private cache: Map<string, CacheEntry<unknown>> = new Map<string, CacheEntry<unknown>>();
+  private tagIndex: Map<string, Set<string>> = new Map<string, Set<string>>();
+  private readonly defaultTTL: number = 300000; // 5 minutes
 
-  private generateKey(query: string, params: any[], prefix?: string): string {
+  private generateKey(query: string, params: unknown[], prefix?: string): string {
     const paramHash = JSON.stringify(params).slice(0, 50);
     return `${prefix || 'query'}:${query}:${paramHash}`;
   }
 
-  private isExpired(entry: CacheEntry<any>): boolean {
+  private isExpired(entry: CacheEntry<unknown>): boolean {
     return Date.now() - entry.timestamp > entry.ttl;
   }
 
   private addToTagIndex(key: string, tags: string[]): void {
-    tags.forEach(tag => {
+    tags.forEach((tag: string) => {
       if (!this.tagIndex.has(tag)) {
-        this.tagIndex.set(tag, new Set());
+        this.tagIndex.set(tag, new Set<string>());
       }
       this.tagIndex.get(tag)!.add(key);
     });
   }
 
   private removeFromTagIndex(key: string, tags: string[]): void {
-    tags.forEach(tag => {
+    tags.forEach((tag: string) => {
       this.tagIndex.get(tag)?.delete(key);
     });
   }
 
-  get<T>(query: string, params: any[] = [], options: CacheOptions = {}): T | null {
+  get<T>(query: string, params: unknown[] = [], options: CacheOptions = {}): T | null {
     const key = this.generateKey(query, params, options.keyPrefix);
     const entry = this.cache.get(key);
 
@@ -52,10 +52,10 @@ export class QueryCache {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
-  set<T>(query: string, params: any[], data: T, options: CacheOptions = {}): void {
+  set<T>(query: string, params: unknown[], data: T, options: CacheOptions = {}): void {
     const key = this.generateKey(query, params, options.keyPrefix);
     const tags = options.tags || [];
     
@@ -81,7 +81,7 @@ export class QueryCache {
     if (!keys) return 0;
 
     let count = 0;
-    keys.forEach(key => {
+    keys.forEach((key: string) => {
       const entry = this.cache.get(key);
       if (entry) {
         this.removeFromTagIndex(key, entry.tags);
@@ -111,7 +111,7 @@ export class QueryCache {
     this.tagIndex.clear();
   }
 
-  getStats() {
+  getStats(): { size: number; tags: number; memory: number } {
     return {
       size: this.cache.size,
       tags: this.tagIndex.size,
@@ -121,55 +121,55 @@ export class QueryCache {
 }
 
 // Database query wrapper with caching
-export function withQueryCache<T extends (...args: any[]) => Promise<any>>(
-  queryFn: T,
+export function withQueryCache<TArgs extends unknown[], TResult>(
+  queryFn: (...args: TArgs) => Promise<TResult>,
   options: {
-    keyGenerator: (...args: Parameters<T>) => string;
+    keyGenerator: (...args: TArgs) => string;
     ttl?: number;
-    tags?: (...args: Parameters<T>) => string[];
+    tags?: (...args: TArgs) => string[];
     invalidateOn?: string[];
-  }
-): T {
-  return (async (...args: Parameters<T>) => {
+  },
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs): Promise<TResult> => {
     const key = options.keyGenerator(...args);
     const tags = options.tags?.(...args) || [];
-    
+
     // Try cache first
-    const cached = queryCache.get(key, [], { tags, ttl: options.ttl });
-    if (cached) return cached;
+    const cached = queryCache.get<TResult>(key, [], { tags, ttl: options.ttl });
+    if (cached !== null) return cached;
 
     // Execute query
     const result = await queryFn(...args);
-    
+
     // Cache result
     queryCache.set(key, [], result, { tags, ttl: options.ttl });
-    
+
     return result;
-  }) as T;
+  };
 }
 
 // Global cache instance
-export const queryCache = new QueryCache();
+export const queryCache: QueryCache = new QueryCache();
 
 // Product-specific cache helpers
 export const ProductCacheHelpers = {
-  invalidateProduct: (productId: string) => {
+  invalidateProduct: (productId: string): void => {
     queryCache.invalidateByTag(`product:${productId}`);
     queryCache.invalidateByTag('products:list');
   },
 
-  invalidateCategory: (categoryId: string) => {
+  invalidateCategory: (categoryId: string): void => {
     queryCache.invalidateByTag(`category:${categoryId}`);
     queryCache.invalidateByTag('products:list');
   },
 
-  invalidateAll: () => {
+  invalidateAll: (): void => {
     queryCache.invalidateByPattern(/^products:/);
   },
 
   getTags: {
-    product: (id: string) => [`product:${id}`, 'products:list'],
-    productList: (filters?: any) => ['products:list', `products:filter:${JSON.stringify(filters || {})}`],
-    category: (id: string) => [`category:${id}`, 'categories:list']
+    product: (id: string): string[] => [`product:${id}`, 'products:list'],
+    productList: (filters?: Record<string, unknown>): string[] => ['products:list', `products:filter:${JSON.stringify(filters || {})}`],
+    category: (id: string): string[] => [`category:${id}`, 'categories:list']
   }
 };

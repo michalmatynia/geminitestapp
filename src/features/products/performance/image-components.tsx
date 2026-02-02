@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { imageUrlGenerator, type ImageFormat, type ImageSize } from './index';
+import Image from 'next/image';
+import { imageUrlGenerator, type ImageFormat, type ImageSize } from './image-url-generator';
 
 type OptimizedImageProps = {
   imageId: string;
@@ -40,7 +41,7 @@ export function OptimizedImage({
         return 'webp';
       }
     } catch {
-      // Ignore errors and fallback
+      // Fallback if browser block canvas access
     }
     
     return 'jpeg';
@@ -69,20 +70,27 @@ export function OptimizedImage({
   const src = size !== 'medium' ? imageUrlGenerator.generate(imageId, size, format) : responsive.src;
 
   return (
-    <img
-      src={src}
-      srcSet={responsive.srcSet}
-      sizes={responsive.sizes}
-      alt={alt}
+    <div 
       className={className}
-      loading={priority ? 'eager' : 'lazy'}
-      onLoad={handleLoad}
-      onError={handleError}
       style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         opacity: isLoaded ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out'
       }}
-    />
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        onLoad={handleLoad}
+        onError={handleError}
+        sizes={responsive.sizes}
+        style={{ objectFit: 'cover' }}
+      />
+    </div>
   );
 }
 

@@ -15,7 +15,7 @@ type CacheMetrics = {
 
 export class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
-  private readonly maxMetrics = 1000;
+  private readonly maxMetrics: number = 1000;
 
   record(name: string, value: number, tags?: Record<string, string>): void {
     this.metrics.push({
@@ -51,12 +51,12 @@ export class PerformanceMonitor {
     let filtered = this.metrics;
 
     if (name) {
-      filtered = filtered.filter(m => m.name === name);
+      filtered = filtered.filter((m: PerformanceMetric) => m.name === name);
     }
 
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
-      filtered = filtered.filter(m => m.timestamp > cutoff);
+      filtered = filtered.filter((m: PerformanceMetric) => m.timestamp > cutoff);
     }
 
     return filtered;
@@ -76,8 +76,8 @@ export class PerformanceMonitor {
       return { count: 0, avg: 0, min: 0, max: 0, p95: 0, p99: 0 };
     }
 
-    const values = metrics.map(m => m.value).sort((a, b) => a - b);
-    const sum = values.reduce((a, b) => a + b, 0);
+    const values = metrics.map((m: PerformanceMetric) => m.value).sort((a: number, b: number) => a - b);
+    const sum = values.reduce((a: number, b: number) => a + b, 0);
 
     return {
       count: values.length,
@@ -89,9 +89,9 @@ export class PerformanceMonitor {
     };
   }
 
-  getCacheMetrics(): CacheMetrics {
-    const { queryCache } = require('./query-cache');
-    const { imageOptimizer } = require('./image-optimizer');
+  async getCacheMetrics(): Promise<CacheMetrics> {
+    const { queryCache } = await import('./query-cache');
+    const { imageOptimizer } = await import('./image-optimizer');
     
     const queryStats = queryCache.getStats();
     const imageStats = imageOptimizer.getCacheStats();
@@ -110,7 +110,7 @@ export class PerformanceMonitor {
     };
   }
 
-  getSystemHealth(): {
+  async getSystemHealth(): Promise<{
     status: 'healthy' | 'degraded' | 'unhealthy';
     metrics: {
       avgQueryTime: number;
@@ -119,10 +119,10 @@ export class PerformanceMonitor {
       errorRate: number;
     };
     issues: string[];
-  } {
+  }> {
     const queryStats = this.getStats('db.query', 300000);
     const imageStats = this.getStats('image.optimize', 300000);
-    const cacheMetrics = this.getCacheMetrics();
+    const cacheMetrics = await this.getCacheMetrics();
     const errorCount = this.getMetrics('error', 300000).length;
     const totalRequests = this.getMetrics('request', 300000).length;
 
@@ -169,32 +169,37 @@ export class PerformanceMonitor {
 }
 
 // Performance decorators
-export function withPerformanceTracking<T extends (...args: any[]) => any>(
+export function withPerformanceTracking<T extends (...args: unknown[]) => unknown>(
   fn: T,
   name: string,
   tags?: Record<string, string>
 ): T {
-  return ((...args: Parameters<T>) => {
+  const wrapped = (...args: Parameters<T>): unknown => {
     return performanceMonitor.time(name, () => fn(...args), tags);
-  }) as T;
+  };
+  return wrapped as T;
 }
 
-export function withAsyncPerformanceTracking<T extends (...args: any[]) => Promise<any>>(
+export function withAsyncPerformanceTracking<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   name: string,
   tags?: Record<string, string>
 ): T {
-  return (async (...args: Parameters<T>) => {
+  const wrapped = async (...args: Parameters<T>): Promise<unknown> => {
     return performanceMonitor.timeAsync(name, () => fn(...args), tags);
-  }) as T;
+  };
+  return wrapped as T;
 }
 
 // Global performance monitor
-export const performanceMonitor = new PerformanceMonitor();
+export const performanceMonitor: PerformanceMonitor = new PerformanceMonitor();
 
 // Performance middleware for API routes
-export function withPerformanceMiddleware(handler: Function, name: string) {
-  return async (req: any, res: any, ...args: any[]) => {
+export function withPerformanceMiddleware(
+  handler: (...args: unknown[]) => Promise<unknown>, 
+  name: string
+): (...args: unknown[]) => Promise<unknown> {
+  return async (req: unknown, res: unknown, ...args: unknown[]): Promise<unknown> => {
     const start = performance.now();
     
     try {
@@ -202,7 +207,7 @@ export function withPerformanceMiddleware(handler: Function, name: string) {
       const duration = performance.now() - start;
       
       performanceMonitor.record('request', duration, {
-        method: req.method,
+        method: String((req as { method?: string })?.method || 'UNKNOWN'),
         endpoint: name,
         status: 'success'
       });
@@ -212,7 +217,7 @@ export function withPerformanceMiddleware(handler: Function, name: string) {
       const duration = performance.now() - start;
       
       performanceMonitor.record('request', duration, {
-        method: req.method,
+        method: String((req as { method?: string })?.method || 'UNKNOWN'),
         endpoint: name,
         status: 'error'
       });

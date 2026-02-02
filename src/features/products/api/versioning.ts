@@ -87,7 +87,7 @@ export class ApiVersionManager {
 
 // Version-specific transformers
 export class ProductTransformer {
-  static transformForVersion<T extends ProductWithImages & Record<string, unknown>>(
+  static transformForVersion<T extends Partial<ProductWithImages> & Record<string, unknown>>(
     data: T,
     version: ApiVersion
   ): unknown {

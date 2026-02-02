@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { InputSanitizer, ProductSanitizationRules, validateProductInput } from './input-sanitization';
+import { InputSanitizer, ProductSanitizationRules, validateProductInput, type SanitizationOptions } from './input-sanitization';
 import { withRateLimit, rateLimiters } from './rate-limiting';
 import { withSecureFileUpload } from './file-upload';
 
@@ -8,7 +8,7 @@ type SecurityConfig = {
   enableInputSanitization?: boolean | undefined;
   enableFileUploadSecurity?: boolean | undefined;
   rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth' | undefined;
-  customSanitizationRules?: Record<string, any> | undefined;
+  customSanitizationRules?: Record<string, SanitizationOptions> | undefined;
 };
 
 interface SanitizedFile {
@@ -50,7 +50,7 @@ export class SecurityMiddleware {
     }
 
     // Input sanitization
-    let sanitizedData: unknown;
+    let sanitizedData: unknown = undefined;
     if (enableInputSanitization) {
       try {
         const contentType = req.headers.get('content-type') || '';
@@ -59,11 +59,11 @@ export class SecurityMiddleware {
           const body = (await req.json()) as Record<string, unknown>;
           sanitizedData = InputSanitizer.sanitizeObject(
             body,
-            config.customSanitizationRules || ProductSanitizationRules
+            (config.customSanitizationRules || ProductSanitizationRules) as Partial<Record<string, SanitizationOptions>>
           );
           
           // Validate sanitized data
-          const validation = validateProductInput(sanitizedData as any);
+          const validation = validateProductInput(sanitizedData as Record<string, unknown>);
           if (!validation.isValid) {
             return {
               allowed: false,
@@ -72,7 +72,7 @@ export class SecurityMiddleware {
             };
           }
         }
-      } catch (error) {
+      } catch (_error) {
         return {
           allowed: false,
           status: 400,
@@ -154,13 +154,13 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-type Handler = (req: NextRequest, ...args: any[]) => Promise<Response>;
+type Handler = (req: NextRequest, ...args: unknown[]) => Promise<Response>;
 
 // API route wrapper with security
 export function withSecurity(
   handler: Handler,
   config: SecurityConfig = {}
-) {
+): (req: NextRequest, ...args: unknown[]) => Promise<Response> {
   return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     try {
       // Validate request
@@ -174,7 +174,7 @@ export function withSecurity(
         
         // Add rate limit headers if present
         if (validation.headers) {
-          Object.entries(validation.headers).forEach(([key, value]) => {
+          Object.entries(validation.headers).forEach(([key, value]: [string, string]) => {
             response.headers.set(key, value);
           });
         }
@@ -195,7 +195,7 @@ export function withSecurity(
       // Add security headers to response
       return addSecurityHeaders(response as NextResponse);
 
-    } catch (error) {
+    } catch (_error) {
       const errorResponse = NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
@@ -213,7 +213,7 @@ export function withFileUploadSecurity(
   handler: FileUploadHandler,
   config: SecurityConfig = {}
 ) {
-  return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
+  return async (req: NextRequest, ...args: any[]): Promise<Response> => {
     try {
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
       
@@ -224,7 +224,7 @@ export function withFileUploadSecurity(
         );
         
         if (validation.headers) {
-          Object.entries(validation.headers).forEach(([key, value]) => {
+          Object.entries(validation.headers).forEach(([key, value]: [string, string]) => {
             response.headers.set(key, value);
           });
         }
@@ -235,7 +235,7 @@ export function withFileUploadSecurity(
       const response = await handler(req, validation.files || [], ...args);
       return addSecurityHeaders(response as NextResponse);
 
-    } catch (error) {
+    } catch (_error) {
       const errorResponse = NextResponse.json(
         { error: 'File upload failed' },
         { status: 500 }

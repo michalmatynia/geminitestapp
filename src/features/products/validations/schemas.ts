@@ -10,11 +10,11 @@ const optionalPositiveNumber = positiveNumber.optional();
 
 // Array validation helpers
 const stringArray = z.array(z.string()).default([]);
-const imageUrlArray = stringArray.transform(urls => 
-  urls.filter(url => url && !url.startsWith("data:"))
+const imageUrlArray = stringArray.transform((urls: string[]) => 
+  urls.filter((url: string) => url && !url.startsWith("data:"))
 );
-const base64Array = stringArray.transform(urls => 
-  urls.filter(url => url && url.startsWith("data:"))
+const base64Array = stringArray.transform((urls: string[]) => 
+  urls.filter((url: string) => url && url.startsWith("data:"))
 );
 
 // Parameter validation

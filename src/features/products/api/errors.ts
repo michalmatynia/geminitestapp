@@ -248,9 +248,9 @@ export const ErrorStatusCodes: Record<ErrorCode, number> = {
 export function withErrorHandling(
   handler: (...args: any[]) => Promise<Response>
 ) {
-  return async (...args: any[]): Promise<Response> => {
+  return async (...args: unknown[]): Promise<Response> => {
     try {
-      return await handler(...args);
+      return await handler(...(args as any[]));
     } catch (error) {
       console.error('API Error:', error);
       

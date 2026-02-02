@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getAsset3DRepository, deleteAsset3D } from "@/features/viewer3d/server";
 import type { Asset3DUpdateInput } from "@/features/viewer3d/server";

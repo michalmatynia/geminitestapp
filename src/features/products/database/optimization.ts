@@ -99,10 +99,10 @@ export class QueryOptimizer {
   }
 
   // Query performance analysis
-  static async analyzeQuery(query: string, params: any[] = []): Promise<QueryPlan> {
+  static async analyzeQuery(query: string, _params: any[] = []): Promise<QueryPlan> {
     // This would integrate with your database client
     // Example with PostgreSQL EXPLAIN ANALYZE
-    const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query}`;
+    const _explainQuery = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query}`;
     
     // Placeholder implementation
     return {

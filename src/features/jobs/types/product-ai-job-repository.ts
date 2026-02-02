@@ -14,6 +14,7 @@ export type ProductAiJobRecord = {
   result?: unknown;
   errorMessage?: string | null;
   createdAt: Date;
+  updatedAt: Date;
   startedAt?: Date | null;
   finishedAt?: Date | null;
 };

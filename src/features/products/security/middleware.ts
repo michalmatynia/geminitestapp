@@ -4,11 +4,11 @@ import { withRateLimit, rateLimiters } from './rate-limiting';
 import { withSecureFileUpload } from './file-upload';
 
 type SecurityConfig = {
-  enableRateLimit?: boolean;
-  enableInputSanitization?: boolean;
-  enableFileUploadSecurity?: boolean;
-  rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth';
-  customSanitizationRules?: Record<string, unknown>;
+  enableRateLimit?: boolean | undefined;
+  enableInputSanitization?: boolean | undefined;
+  enableFileUploadSecurity?: boolean | undefined;
+  rateLimiter?: 'api' | 'productCreate' | 'imageUpload' | 'search' | 'auth' | undefined;
+  customSanitizationRules?: Record<string, any> | undefined;
 };
 
 interface SanitizedFile {
@@ -23,10 +23,10 @@ export class SecurityMiddleware {
     config: SecurityConfig = {}
   ): Promise<{
     allowed: boolean;
-    headers?: Record<string, string>;
-    status?: number;
-    message?: string;
-    sanitizedData?: unknown;
+    headers?: Record<string, string> | undefined;
+    status?: number | undefined;
+    message?: string | undefined;
+    sanitizedData?: unknown | undefined;
   }> {
     const {
       enableRateLimit = true,
@@ -92,10 +92,10 @@ export class SecurityMiddleware {
     config: SecurityConfig = {}
   ): Promise<{
     allowed: boolean;
-    headers?: Record<string, string>;
-    status?: number;
-    message?: string;
-    files?: SanitizedFile[];
+    headers?: Record<string, string> | undefined;
+    status?: number | undefined;
+    message?: string | undefined;
+    files?: SanitizedFile[] | undefined;
   }> {
     // Rate limiting for file uploads
     if (config.enableRateLimit !== false) {

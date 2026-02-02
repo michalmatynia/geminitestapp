@@ -16,5 +16,6 @@ export * from './image-components';
 // Re-export main instances
 export { queryCache, ProductCacheHelpers } from './query-cache';
 export { imageOptimizer, imageUrlGenerator } from './image-optimizer';
+export type { OptimizedImageResult } from './image-optimizer';
 export { CachedProductService, CachedProductMutations } from './cached-service';
 export { performanceMonitor } from './monitoring';

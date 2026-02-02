@@ -31,6 +31,7 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   result: toJobResult(record.result),
   errorMessage: record.errorMessage ?? null,
   createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
   startedAt: toIsoString(record.startedAt),
   finishedAt: toIsoString(record.finishedAt),
 });

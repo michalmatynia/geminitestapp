@@ -5,18 +5,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   RefreshCw,
-  ExternalLink,
   Clock,
   CheckCircle,
   XCircle,
   Loader2,
-  Trash2,
-  Eye,
 } from "lucide-react";
 
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
 import { useIntegrationJobs } from "@/features/jobs/hooks/useJobQueries";
 import { useCancelListingMutation } from "@/features/jobs/hooks/useJobMutations";
+import { JobTable, type JobRowData } from "./JobTable";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -264,128 +262,37 @@ export default function ProductListingJobsPanel({
             <Loader2 className="size-8 animate-spin text-gray-500" />
           </div>
         ) : !jobsQuery.error ? (
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-gray-900 text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">Product</th>
-                  <th className="px-4 py-3">Type / ID</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Timing</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {pagedRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                      {jobsQuery.isLoading ? "Loading export jobs..." : "No export jobs found."}
-                    </td>
-                  </tr>
-                ) : (
-                  pagedRows.map(({ job, listing, attempt, attemptIndex }: ListingRow) => {
-                    const status = attempt?.status ?? listing.status ?? "unknown";
-                    const typeLabel =
-                      status === "deleted" || status === "removed" ? "Removal" : "Export";
-                    const attemptLabel =
-                      attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : "Listing";
-                    return (
-                      <tr
-                        key={`${job.productId}-${listing.id}-${attemptIndex ?? "current"}`}
-                        className="hover:bg-card/50"
-                      >
-                        <td className="px-4 py-4">
-                          <div className="flex items-start gap-2">
-                            <div>
-                              <div className="font-medium text-white">{job.productName}</div>
-                              <div className="text-xs text-gray-500">
-                                SKU: {job.productSku || "N/A"}
-                              </div>
-                            </div>
-                            <Link
-                              href={`/admin/products?id=${job.productId}`}
-                              className="text-blue-400 hover:text-blue-300"
-                              aria-label="Open product"
-                            >
-                              <ExternalLink className="size-4" />
-                            </Link>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-xs font-mono">
-                            {typeLabel}: {listing.integrationName}
-                          </div>
-                          <div className="text-[10px] text-gray-600">
-                            {attemptLabel} · {listing.id}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <StatusBadge 
-                            status={status} 
-                            icon={getStatusIcon(status)}
-                          />
-                        </td>
-                        <td className="px-4 py-4 text-xs">
-                          {attempt?.exportedAt ? (
-                            <>
-                              <div>Attempted: {formatDateTime(attempt.exportedAt)}</div>
-                              <div className="text-gray-500">
-                                Listing updated: {formatDateTime(listing.updatedAt)}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div>Created: {formatDateTime(listing.createdAt)}</div>
-                              <div className="text-gray-500">
-                                Updated: {formatDateTime(listing.updatedAt)}
-                              </div>
-                            </>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                              onClick={(): void =>
-                                setSelectedListing({
-                                  job,
-                                  listing,
-                                  attempt: attempt ?? null,
-                                  attemptIndex,
-                                })
-                              }
-                              aria-label="View export job details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {attempt === null &&
-                              (listing.status === "pending" || listing.status === "failed") && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-500 hover:text-red-400"
-                                  onClick={(): void => { void handleCancelListing(job.productId, listing.id); }}
-                                  disabled={cancelMutation.isPending && cancelMutation.variables?.listingId === listing.id}
-                                  aria-label="Cancel export job"
-                                >
-                                  {cancelMutation.isPending && cancelMutation.variables?.listingId === listing.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <JobTable
+            data={pagedRows.map((row: ListingRow): JobRowData => {
+              const { job, listing, attempt, attemptIndex } = row;
+              const status = attempt?.status ?? listing.status ?? "unknown";
+              const typeLabel =
+                status === "deleted" || status === "removed" ? "Removal" : "Export";
+              const attemptLabel =
+                attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : "Listing";
+              
+              return {
+                id: listing.id,
+                type: `${typeLabel}: ${listing.integrationName}`,
+                status: status as any,
+                entityName: job.productName,
+                entitySubText: `SKU: ${job.productSku || "N/A"} · ${attemptLabel}`,
+                productId: job.productId,
+                createdAt: attempt?.exportedAt ?? listing.createdAt,
+                finishedAt: listing.updatedAt,
+              };
+            })}
+            isLoading={jobsQuery.isLoading}
+            onViewDetails={(id: string) => {
+              const row = pagedRows.find((r: ListingRow) => r.listing.id === id);
+              if (row) setSelectedListing(row);
+            }}
+            onCancel={(id: string) => {
+              const row = pagedRows.find((r: ListingRow) => r.listing.id === id);
+              if (row) void handleCancelListing(row.job.productId, row.listing.id);
+            }}
+            isCancelling={(id: string) => cancelMutation.isPending && cancelMutation.variables?.listingId === id}
+          />
         ) : null}
       </ListPanel>
       {selectedListing && (

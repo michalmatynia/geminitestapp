@@ -14,7 +14,7 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { isImageExportError } from "./utils";
 import { useProducts } from "@/features/products/hooks/useProductsQuery";
-import { useGenericExportToBaseMutation, useGenericCreateListingMutation } from "../../hooks/useProductListingMutations";
+import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from "../../hooks/useProductListingMutations";
 import { BaseListingSettings } from "./BaseListingSettings";
 import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
 
@@ -92,16 +92,15 @@ export default function SelectProductForListingModal({
       setExportLogs([]);
       setLogsOpen(true);
 
-      if (isBaseComIntegration) {
-        const payload: any = {
-          connectionId: selectedConnectionId,
-          inventoryId: selectedInventoryId,
-          allowDuplicateSku,
-        };
-        if (selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
-        
-        const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
-        if (result.logs) setExportLogs(result.logs);
+              if (isBaseComIntegration) {
+                const payload: ExportToBaseVariables = {
+                  connectionId: selectedConnectionId || "",
+                  inventoryId: selectedInventoryId || "",
+                  allowDuplicateSku,
+                };
+                if (selectedTemplateId && selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
+                
+                const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });        if (result.logs) setExportLogs(result.logs);
         toast("Product exported to Base.com", { variant: "success" });
         onSuccess();
       } else {
@@ -130,21 +129,20 @@ export default function SelectProductForListingModal({
     }
     try {
       setError(null);
-      setExportLogs([]);
-      setLogsOpen(true);
+              setExportLogs([]);
+              setLogsOpen(true);
+              
+              const payload: ExportToBaseVariables = {
+                connectionId: selectedConnectionId || "",
+                inventoryId: selectedInventoryId || "",
+                allowDuplicateSku,
+                imageBase64Mode: preset.imageBase64Mode,
+                imageTransform: preset.transform,
+                exportImagesAsBase64: true,
+              };
+              if (selectedTemplateId && selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
       
-      const payload: any = {
-        connectionId: selectedConnectionId,
-        inventoryId: selectedInventoryId,
-        allowDuplicateSku,
-        imageBase64Mode: preset.imageBase64Mode,
-        imageTransform: preset.transform,
-        exportImagesAsBase64: true,
-      };
-      if (selectedTemplateId !== "none") payload.templateId = selectedTemplateId;
-
-      const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
-      if (result.logs) setExportLogs(result.logs);
+              const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });      if (result.logs) setExportLogs(result.logs);
       toast("Product exported with new image settings", { variant: "success" });
       onSuccess();
     } catch (err: unknown) {

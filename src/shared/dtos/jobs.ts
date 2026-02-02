@@ -1,4 +1,4 @@
-import type { Entity, Status } from '@/shared/types/base-types';
+import type { Entity, Status } from '@/shared/types/core/base-types';
 
 export interface JobDto extends Entity {
   type: string;
@@ -25,7 +25,7 @@ export interface CreateJobDto {
 }
 
 export interface UpdateJobDto {
-  status?: JobStatus;
+  status?: Status;
   progress?: number;
   result?: Record<string, unknown>;
   error?: string;

@@ -1,4 +1,4 @@
-import type { ProductCreateData } from "@/features/products";
+import type { ProductCreateInput as ProductCreateData } from "@/features/products/validations/schemas";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 
 const toTrimmedString = (value: unknown): string | null => {
@@ -475,7 +475,7 @@ export function mapBaseProduct(
     description_en: descriptionEn ?? undefined,
     description_pl: descriptionPl ?? undefined,
     description_de: descriptionDe ?? undefined,
-    sku: sku ?? undefined,
+    sku: sku ?? "",
     price: price ?? undefined,
     stock: stock ?? undefined,
     weight: weight ?? undefined,

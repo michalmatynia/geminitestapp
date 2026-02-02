@@ -32,14 +32,15 @@ export function AppModal({
   closeOnEscape = true,
   children,
 }: AppModalProps) {
-  const handleInteractOutside = (): void => {
-    if (!closeOnOutside) return;
-    onOpenChange?.(false);
+  // Let Radix Dialog handle closing behavior and only block it when configured.
+  const handleInteractOutside = (event: Event): void => {
+    if (closeOnOutside) return;
+    event.preventDefault();
   };
 
-  const handleEscapeKeyDown = (): void => {
-    if (!closeOnEscape) return;
-    onOpenChange?.(false);
+  const handleEscapeKeyDown = (event: KeyboardEvent): void => {
+    if (closeOnEscape) return;
+    event.preventDefault();
   };
 
   return (

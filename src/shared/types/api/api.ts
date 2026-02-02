@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import type { ApiResponse, PaginatedResponse } from "./base";
+import type { ApiResponse, PaginatedResponse } from "../base";
 
 export type { ApiResponse, PaginatedResponse };
 

@@ -5,12 +5,12 @@ export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
 
 export type OptimizationOptions = {
   formats?: ImageFormat[];
-  sizes?: Record<ImageSize, { width: number; height?: number; quality?: number }>;
+  sizes?: Partial<Record<ImageSize, { width: number; height?: number; quality?: number }>>;
   quality?: number;
   progressive?: boolean;
 };
 
-export type OptimizedImage = {
+export type OptimizedImageResult = {
   format: ImageFormat;
   size: ImageSize;
   buffer: Buffer;
@@ -36,7 +36,7 @@ const DEFAULT_OPTIONS: OptimizationOptions = {
 };
 
 export class ImageOptimizer {
-  private cache = new Map<string, OptimizedImage[]>();
+  private cache: Map<string, OptimizedImageResult[]> = new Map<string, OptimizedImageResult[]>();
 
   private getCacheKey(buffer: Buffer, options: OptimizationOptions): string {
     const hash = buffer.toString('base64').slice(0, 32);
@@ -47,7 +47,7 @@ export class ImageOptimizer {
   async optimize(
     input: Buffer | string,
     options: OptimizationOptions = {}
-  ): Promise<OptimizedImage[]> {
+  ): Promise<OptimizedImageResult[]> {
     const opts = { ...DEFAULT_OPTIONS, ...options };
     const inputBuffer = typeof input === 'string' ? Buffer.from(input, 'base64') : input;
     
@@ -55,7 +55,7 @@ export class ImageOptimizer {
     const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const results: OptimizedImage[] = [];
+    const results: OptimizedImageResult[] = [];
     const image = sharp(inputBuffer);
     const metadata = await image.metadata();
 
@@ -77,7 +77,7 @@ export class ImageOptimizer {
           
           switch (format) {
             case 'webp':
-              processor = processor.webp({ quality, progressive: opts.progressive });
+              processor = processor.webp({ quality });
               break;
             case 'avif':
               processor = processor.avif({ quality });
@@ -97,8 +97,8 @@ export class ImageOptimizer {
             format,
             size: sizeName as ImageSize,
             buffer,
-            width: info.width!,
-            height: info.height!,
+            width: info.width || 0,
+            height: info.height || 0,
             fileSize: buffer.length
           });
 
@@ -115,16 +115,16 @@ export class ImageOptimizer {
   async optimizeBase64(
     base64: string,
     options?: OptimizationOptions
-  ): Promise<OptimizedImage[]> {
+  ): Promise<OptimizedImageResult[]> {
     const buffer = Buffer.from(base64.replace(/^data:image\/[^;]+;base64,/, ''), 'base64');
     return this.optimize(buffer, options);
   }
 
-  generateSrcSet(images: OptimizedImage[], format: ImageFormat): string {
+  generateSrcSet(images: OptimizedImageResult[], format: ImageFormat): string {
     return images
-      .filter(img => img.format === format)
-      .sort((a, b) => a.width - b.width)
-      .map(img => `${img.url} ${img.width}w`)
+      .filter((img: OptimizedImageResult) => img.format === format)
+      .sort((a: OptimizedImageResult, b: OptimizedImageResult) => a.width - b.width)
+      .map((img: OptimizedImageResult) => `${img.url} ${img.width}w`)
       .join(', ');
   }
 
@@ -140,7 +140,7 @@ export class ImageOptimizer {
     this.cache.clear();
   }
 
-  getCacheStats() {
+  getCacheStats(): { entries: number; memory: number } {
     return {
       entries: this.cache.size,
       memory: JSON.stringify([...this.cache.entries()]).length
@@ -180,9 +180,9 @@ export class ImageUrlGenerator {
     srcSet: string;
     sizes: string;
   } {
-    const sizes = Object.keys(DEFAULT_SIZES) as ImageSize[];
+    const sizes: ImageSize[] = Object.keys(DEFAULT_SIZES) as ImageSize[];
     const srcSet = sizes
-      .map(size => `${this.generate(imageId, size, format)} ${DEFAULT_SIZES[size].width}w`)
+      .map((size: ImageSize) => `${this.generate(imageId, size, format)} ${DEFAULT_SIZES[size].width}w`)
       .join(', ');
 
     return {
@@ -194,8 +194,10 @@ export class ImageUrlGenerator {
 }
 
 // Global instances
-export const imageOptimizer = new ImageOptimizer();
-export const imageUrlGenerator = new ImageUrlGenerator(
+export const imageOptimizer: ImageOptimizer = new ImageOptimizer();
+
+const cdnProvider = (process.env.IMAGE_CDN_PROVIDER || 'custom') as 'cloudinary' | 'imagekit' | 'custom';
+export const imageUrlGenerator: ImageUrlGenerator = new ImageUrlGenerator(
   process.env.IMAGE_CDN_URL || '/api/images',
-  (process.env.IMAGE_CDN_PROVIDER as any) || 'custom'
+  cdnProvider
 );

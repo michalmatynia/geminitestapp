@@ -79,7 +79,7 @@ const extractRequestInfo = (
     return {
       path: url.pathname,
       method: request.method,
-      requestId: request.headers.get("x-request-id") ?? undefined,
+      ...(request.headers.get("x-request-id") && { requestId: request.headers.get("x-request-id")! }),
     };
   } catch {
     return {};

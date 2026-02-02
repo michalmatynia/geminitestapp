@@ -90,10 +90,10 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
     }))
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap((q) => q.data || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap((q) => q.data || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap((q) => q.data || []), [parameterQueries]);
-  const parametersLoading = useMemo(() => parameterQueries.some((q: { isLoading: boolean }) => q.isLoading), [parameterQueries]);
+  const categories = useMemo(() => categoryQueries.flatMap((q: (typeof categoryQueries)[number]) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
+  const tags = useMemo(() => tagQueries.flatMap((q: (typeof tagQueries)[number]) => (q.data as ProductTag[]) || []), [tagQueries]);
+  const parameters = useMemo(() => parameterQueries.flatMap((q: (typeof parameterQueries)[number]) => (q.data as ProductParameter[]) || []), [parameterQueries]);
+  const parametersLoading = useMemo(() => parameterQueries.some((q: (typeof parameterQueries)[number]) => q.isLoading), [parameterQueries]);
 
   // Sync form with draft data
   useEffect(() => {
@@ -353,10 +353,9 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
             <div className="space-y-2">
               <Label>Icon</Label>
-              <div className="grid grid-cols-6 gap-2">
-                {PRODUCT_ICONS.map((item): React.JSX.Element => {
-                  const IconComponent = item.icon;
-                  return (
+                              <div className="grid grid-cols-6 gap-2">
+                                {PRODUCT_ICONS.map((item: (typeof PRODUCT_ICONS)[number]): React.JSX.Element => {
+                                  const IconComponent = item.icon;                  return (
                     <Button
                       key={item.id}
                       type="button"

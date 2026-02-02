@@ -1,0 +1,472 @@
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(3,1): error TS6133: 'Link' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(8,1): error TS6133: 'AgentPersonaSettingsForm' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(13,7): error TS6133: 'summarizeModels' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(44,43): error TS6133: 'loading' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(45,49): error TS6133: 'saving' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(48,9): error TS6133: 'mergedModels' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(52,9): error TS6133: 'handleSavePersona' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(86,9): error TS6133: 'handleDeletePersona' is declared but its value is never read.
+src/features/ai/agentcreator/pages/AgentPersonasPage.tsx(99,18): error TS2344: Type 'AgentPersona' does not satisfy the constraint 'LibraryItem'.
+  Property 'createdAt' is optional in type 'AgentPersona' but required in type 'LibraryItem'.
+src/features/jobs/components/ProductAiJobsPanel.tsx(3,112): error TS6133: 'EmptyState' is declared but its value is never read.
+src/features/jobs/components/ProductAiJobsPanel.tsx(7,10): error TS6133: 'Loader2' is declared but its value is never read.
+src/features/jobs/components/ProductAiJobsPanel.tsx(7,39): error TS6133: 'XCircle' is declared but its value is never read.
+src/features/jobs/components/ProductAiJobsPanel.tsx(7,48): error TS6133: 'Eye' is declared but its value is never read.
+src/features/jobs/components/ProductAiJobsPanel.tsx(210,9): error TS6133: 'formatTime' is declared but its value is never read.
+src/features/jobs/components/ProductAiJobsPanel.tsx(263,11): error TS2375: Type '{ id: string; type: string; status: any; entityName: string; entitySubText: string | undefined; productId: string | undefined; createdAt: string; finishedAt: string | null; errorMessage: string | null; }' is not assignable to type 'JobRowData' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entitySubText' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/jobs/components/ProductListingJobsPanel.tsx(8,3): error TS6133: 'ExternalLink' is declared but its value is never read.
+src/features/jobs/components/ProductListingJobsPanel.tsx(13,3): error TS6133: 'Trash2' is declared but its value is never read.
+src/features/jobs/components/ProductListingJobsPanel.tsx(14,3): error TS6133: 'Eye' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(4,1): error TS6133: 'Link' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(5,1): error TS6133: 'PlaywrightSettingsForm' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(13,7): error TS6133: 'buildSummaryTags' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(29,43): error TS6133: 'loading' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(30,49): error TS6133: 'saving' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(32,9): error TS6133: 'handleSavePersona' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(66,9): error TS6133: 'handleDeletePersona' is declared but its value is never read.
+src/features/playwright/pages/PlaywrightPersonasPage.tsx(79,18): error TS2344: Type 'PlaywrightPersona' does not satisfy the constraint 'LibraryItem'.
+  Property 'createdAt' is optional in type 'PlaywrightPersona' but required in type 'LibraryItem'.
+src/features/products/api/errors.ts(1,1): error TS6133: 'NextResponse' is declared but its value is never read.
+src/features/products/api/errors.ts(129,22): error TS6133: 'retryAfter' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,32): error TS6133: 'DropdownMenu' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,46): error TS6133: 'DropdownMenuContent' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,67): error TS6133: 'DropdownMenuGroup' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,104): error TS6133: 'DropdownMenuLabel' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,123): error TS6133: 'DropdownMenuSeparator' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(3,146): error TS6133: 'DropdownMenuTrigger' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(4,29): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(8,13): error TS6133: 'CheckSquare' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(8,26): error TS6133: 'Settings2' is declared but its value is never read.
+src/features/products/components/list/ProductFilters.tsx(8,37): error TS6133: 'Trash2' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,10): error TS6133: 'Button' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,18): error TS6133: 'DropdownMenu' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,32): error TS6133: 'DropdownMenuContent' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,53): error TS6133: 'DropdownMenuGroup' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,90): error TS6133: 'DropdownMenuLabel' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,109): error TS6133: 'DropdownMenuSeparator' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(3,132): error TS6133: 'DropdownMenuTrigger' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(4,29): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(7,10): error TS6133: 'CheckSquare' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(7,23): error TS6133: 'Settings2' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(7,34): error TS6133: 'Trash2' is declared but its value is never read.
+src/features/products/components/list/ProductSelectionBar.tsx(39,12): error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?
+src/features/products/components/ProductImageManager.tsx(624,24): error TS2375: Type '{ children: string; disabled: boolean | undefined; onClick: () => undefined; }' is not assignable to type 'Omit<DropdownMenuItemProps & RefAttributes<HTMLDivElement>, "ref">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'disabled' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/features/products/components/settings/CategoriesSettings.tsx(379,9): error TS2375: Type '{ parentId: string | null; catalogId: string | undefined; }' is not assignable to type 'Partial<ProductCategoryDto>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'catalogId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/products/components/settings/modals/CatalogModal.tsx(133,38): error TS2379: Argument of type '{ id: string | undefined; data: { name: string; description: string; languageIds: string[]; defaultLanguageId: string; priceGroupIds: string[]; defaultPriceGroupId: string; isDefault: boolean; }; }' is not assignable to parameter of type '{ id?: string; data: Partial<CatalogRecord>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/products/components/settings/modals/CurrencyModal.tsx(42,13): error TS6133: 'def' is declared but its value is never read.
+src/features/products/components/settings/modals/LanguageModal.tsx(69,9): error TS2375: Type '{ code: string; name: string; nativeName: string | undefined; countryIds: string[]; }' is not assignable to type 'SaveLanguageInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ code: string; name: string; nativeName: string | undefined; countryIds: string[]; }' is not assignable to type 'Partial<Language>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'nativeName' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/components/settings/TagsSettings.tsx(87,41): error TS2379: Argument of type '{ id: string | undefined; data: { name: string; color: string | null; catalogId: string; }; }' is not assignable to parameter of type '{ id?: string; data: Partial<ProductTagDto>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/products/context/ProductFormContext.tsx(214,26): error TS2379: Argument of type '{ product: ProductWithImages | undefined; initialCatalogId: string | undefined; initialCatalogIds: string[] | undefined; initialCategoryIds: string[] | undefined; initialTagIds: string[] | undefined; setValue: UseFormSetValue<...>; getValues: UseFormGetValues<...>; }' is not assignable to parameter of type 'UseProductMetadataProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'product' are incompatible.
+    Type 'ProductWithImages | undefined' is not assignable to type 'ProductWithImages'.
+      Type 'undefined' is not assignable to type 'ProductWithImages'.
+        Type 'undefined' is not assignable to type 'Entity'.
+src/features/products/database/optimization.ts(102,44): error TS6133: 'params' is declared but its value is never read.
+src/features/products/database/optimization.ts(105,11): error TS6133: 'explainQuery' is declared but its value is never read.
+src/features/products/performance/image-api.ts(34,35): error TS2304: Cannot find name 'imageOptimizer'.
+src/features/products/performance/image-api.ts(40,7): error TS7006: Parameter 'img' implicitly has an 'any' type.
+src/features/products/performance/image-api.ts(73,35): error TS2304: Cannot find name 'imageOptimizer'.
+src/features/products/performance/image-api.ts(77,35): error TS7006: Parameter 'img' implicitly has an 'any' type.
+src/features/products/performance/image-api.ts(105,33): error TS6133: 'id' is declared but its value is never read.
+src/features/products/performance/image-components.tsx(23,3): error TS6133: 'size' is declared but its value is never read.
+src/features/products/performance/image-components.tsx(31,10): error TS6133: 'hasError' is declared but its value is never read.
+src/features/products/performance/image-components.tsx(55,15): error TS2345: Argument of type '"webp" | "jpeg" | "avif"' is not assignable to parameter of type 'SetStateAction<ImageFormat>'.
+  Type '"avif"' is not assignable to type 'SetStateAction<ImageFormat>'.
+src/features/products/performance/image-components.tsx(74,22): error TS2304: Cannot find name 'imageUrlGenerator'.
+src/features/products/performance/image-components.tsx(101,10): error TS6133: 'loadedImages' is declared but its value is never read.
+src/features/products/performance/image-components.tsx(114,20): error TS2532: Object is possibly 'undefined'.
+src/features/products/performance/image-components.tsx(115,16): error TS2532: Object is possibly 'undefined'.
+src/features/products/performance/image-optimizer.ts(80,53): error TS2353: Object literal may only specify known properties, and 'progressive' does not exist in type 'WebpOptions'.
+src/features/products/performance/index.ts(14,1): error TS2308: Module './image-optimizer' has already exported a member named 'OptimizedImage'. Consider explicitly re-exporting to resolve the ambiguity.
+src/features/products/performance/monitoring.ts(21,23): error TS2379: Argument of type '{ name: string; value: number; timestamp: number; tags: Record<string, string> | undefined; }' is not assignable to parameter of type 'PerformanceMetric' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'tags' are incompatible.
+    Type 'Record<string, string> | undefined' is not assignable to type 'Record<string, string>'.
+      Type 'undefined' is not assignable to type 'Record<string, string>'.
+src/features/products/performance/monitoring.ts(85,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/features/products/performance/monitoring.ts(86,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/features/products/performance/monitoring.ts(87,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/features/products/performance/monitoring.ts(88,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/features/products/performance/query-cache.ts(138,44): error TS2379: Argument of type '{ tags: string[]; ttl: number | undefined; }' is not assignable to parameter of type 'CacheOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'ttl' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/features/products/performance/query-cache.ts(145,37): error TS2379: Argument of type '{ tags: string[]; ttl: number | undefined; }' is not assignable to parameter of type 'CacheOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'ttl' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/features/products/security/file-upload.ts(210,22): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(210,42): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(210,62): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(210,80): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(211,23): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(211,43): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(211,63): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(211,81): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/file-upload.ts(240,17): error TS6133: 'key' is declared but its value is never read.
+src/features/products/security/file-upload.ts(270,7): error TS2322: Type '{ file: File | undefined; sanitizedName: string; hash: string; }[]' is not assignable to type '{ file: File; sanitizedName: string; hash: string; }[]'.
+  Type '{ file: File | undefined; sanitizedName: string; hash: string; }' is not assignable to type '{ file: File; sanitizedName: string; hash: string; }'.
+    Types of property 'file' are incompatible.
+      Type 'File | undefined' is not assignable to type 'File'.
+        Type 'undefined' is not assignable to type 'File'.
+src/features/products/security/middleware.ts(43,9): error TS2375: Type '{ allowed: false; headers: Record<string, string>; status: number | undefined; message: string | undefined; }' is not assignable to type '{ allowed: boolean; headers?: Record<string, string>; status?: number; message?: string; sanitizedData?: unknown; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'status' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/features/products/security/middleware.ts(62,13): error TS2345: Argument of type 'Record<string, unknown> | { sku: { maxLength: number; stripWhitespace: boolean; }; name_en: { maxLength: number; stripWhitespace: boolean; }; name_pl: { maxLength: number; stripWhitespace: boolean; }; ... 6 more ...; priceComment: { ...; }; }' is not assignable to parameter of type 'Partial<Record<string, SanitizationOptions>> | undefined'.
+  Type 'Record<string, unknown>' is not assignable to type 'Partial<Record<string, SanitizationOptions>>'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'SanitizationOptions | undefined'.
+src/features/products/security/middleware.ts(105,9): error TS2375: Type '{ allowed: false; headers: Record<string, string>; status: number | undefined; message: string | undefined; }' is not assignable to type '{ allowed: boolean; headers?: Record<string, string>; status?: number; message?: string; files?: SanitizedFile[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'status' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/features/products/security/rate-limiting.ts(93,14): error TS2532: Object is possibly 'undefined'.
+src/features/products/security/rate-limiting.ts(100,16): error TS2339: Property 'ip' does not exist on type 'NextRequest'.
+src/features/products/services/catalog-repository/mongo-catalog-repository.ts(36,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/catalog-repository/mongo-catalog-repository.ts(37,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/catalog-repository/prisma-catalog-repository.ts(29,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/catalog-repository/prisma-catalog-repository.ts(30,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-migration.ts(137,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-migration.ts(138,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-migration.ts(148,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-migration.ts(149,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(130,7): error TS2322: Type 'Date' is not assignable to type 'string | RegExp | BSONRegExp'.
+src/features/products/services/product-repository/mongo-product-repository.ts(133,7): error TS2322: Type 'Date' is not assignable to type 'string | RegExp | BSONRegExp'.
+src/features/products/services/product-repository/mongo-product-repository.ts(286,7): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(287,7): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(300,7): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(434,7): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(435,7): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(476,35): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(487,35): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(504,45): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(515,37): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(534,48): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(545,31): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/mongo-product-repository.ts(564,37): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(113,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(114,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(135,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(136,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(197,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/services/product-repository/prisma-product-repository.ts(198,3): error TS2322: Type 'Date' is not assignable to type 'string'.
+src/features/products/validations/batch.ts(86,20): error TS2379: Argument of type '{ index: number; success: boolean; data: T | undefined; errors: ValidationError[]; } | { index: number; success: boolean; errors: { field: string; message: string; code: string; }[]; data?: never; }' is not assignable to parameter of type 'BatchValidationResult<T>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ index: number; success: boolean; data: T | undefined; errors: ValidationError[]; }' is not assignable to type 'BatchValidationResult<T>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'data' are incompatible.
+      Type 'T | undefined' is not assignable to type 'T'.
+        'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/products/validations/batch.ts(128,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/batch.ts(145,7): error TS2345: Argument of type '(item: unknown) => Promise<ValidationResult<any>>' is not assignable to parameter of type '(item: unknown) => Promise<{ success: boolean; data?: any; errors: ValidationError[]; }>'.
+  Type 'Promise<ValidationResult<any>>' is not assignable to type 'Promise<{ success: boolean; data?: any; errors: ValidationError[]; }>'.
+    Type 'ValidationResult<any>' is not assignable to type '{ success: boolean; data?: any; errors: ValidationError[]; }'.
+      Property 'errors' is missing in type '{ success: true; data: any; warnings?: ValidationError[]; metadata: ValidationMetadata; }' but required in type '{ success: boolean; data?: any; errors: ValidationError[]; }'.
+src/features/products/validations/batch.ts(159,7): error TS2345: Argument of type '(item: unknown) => Promise<ValidationResult<any>>' is not assignable to parameter of type '(item: unknown) => Promise<{ success: boolean; data?: any; errors: ValidationError[]; }>'.
+  Type 'Promise<ValidationResult<any>>' is not assignable to type 'Promise<{ success: boolean; data?: any; errors: ValidationError[]; }>'.
+    Type 'ValidationResult<any>' is not assignable to type '{ success: boolean; data?: any; errors: ValidationError[]; }'.
+      Property 'errors' is missing in type '{ success: true; data: any; warnings?: ValidationError[]; metadata: ValidationMetadata; }' but required in type '{ success: boolean; data?: any; errors: ValidationError[]; }'.
+src/features/products/validations/cache.ts(1,1): error TS6133: 'ValidationError' is declared but its value is never read.
+src/features/products/validations/config.ts(37,7): error TS2322: Type '(data: any) => { field: string; message: string; code: string; }[]' is not assignable to type '(data: any) => ValidationError[]'.
+  Type '{ field: string; message: string; code: string; }[]' is not assignable to type 'ValidationError[]'.
+    Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(56,23): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(83,47): error TS6133: 'schema' is declared but its value is never read.
+src/features/products/validations/config.ts(91,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(101,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(108,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(115,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/config.ts(122,21): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/context.tsx(32,9): error TS2322: Type '{ [x: string]: { isValid: boolean; message?: string; } | { isValid: boolean; message: string | undefined; }; }' is not assignable to type 'Record<string, { isValid: boolean; message?: string; }>'.
+  'string' index signatures are incompatible.
+    Type '{ isValid: boolean; message?: string; } | { isValid: boolean; message: string | undefined; }' is not assignable to type '{ isValid: boolean; message?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Type '{ isValid: boolean; message: string | undefined; }' is not assignable to type '{ isValid: boolean; message?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'message' are incompatible.
+          Type 'string | undefined' is not assignable to type 'string'.
+            Type 'undefined' is not assignable to type 'string'.
+src/features/products/validations/context.tsx(77,16): error TS2345: Argument of type '{ type: "SET_FIELD_VALIDATION"; field: string; isValid: boolean; message: string | undefined; }' is not assignable to parameter of type 'ValidationAction'.
+  Type '{ type: "SET_FIELD_VALIDATION"; field: string; isValid: boolean; message: string | undefined; }' is not assignable to type '{ type: "SET_FIELD_VALIDATION"; field: string; isValid: boolean; message?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'message' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/features/products/validations/core/errors.ts(18,5): error TS2375: Type '{ field: string; message: string; code: string; severity: "medium" | "high" | "low" | "critical"; context: Record<string, any> | undefined; }' is not assignable to type 'ValidationError' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'context' are incompatible.
+    Type 'Record<string, any> | undefined' is not assignable to type 'Record<string, any>'.
+      Type 'undefined' is not assignable to type 'Record<string, any>'.
+src/features/products/validations/core/errors.ts(159,3): error TS2375: Type '{ field: string; message: string; code: string; severity: "medium" | "high" | "low" | "critical"; context: Record<string, any> | undefined; }' is not assignable to type 'ValidationError' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'context' are incompatible.
+    Type 'Record<string, any> | undefined' is not assignable to type 'Record<string, any>'.
+      Type 'undefined' is not assignable to type 'Record<string, any>'.
+src/features/products/validations/core/services.ts(77,5): error TS2375: Type '{ field: string; isValid: boolean; errors: ValidationError[]; warnings: ValidationError[] | undefined; }' is not assignable to type 'FieldValidationResult' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'warnings' are incompatible.
+    Type 'ValidationError[] | undefined' is not assignable to type 'ValidationError[]'.
+      Type 'undefined' is not assignable to type 'ValidationError[]'.
+src/features/products/validations/decorators.ts(6,20): error TS6133: 'target' is declared but its value is never read.
+src/features/products/validations/decorators.ts(6,33): error TS6133: 'propertyKey' is declared but its value is never read.
+src/features/products/validations/decorators.ts(14,56): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+src/features/products/validations/decorators.ts(14,67): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/features/products/validations/decorators.ts(32,20): error TS6133: 'target' is declared but its value is never read.
+src/features/products/validations/decorators.ts(32,33): error TS6133: 'propertyKey' is declared but its value is never read.
+src/features/products/validations/decorators.ts(52,20): error TS6133: 'target' is declared but its value is never read.
+src/features/products/validations/decorators.ts(52,33): error TS6133: 'propertyKey' is declared but its value is never read.
+src/features/products/validations/decorators.ts(104,5): error TS2322: Type 'ValidationResult<undefined>' is not assignable to type 'ValidationResult<T>'.
+  Type 'undefined' is not assignable to type 'T'.
+    'T' could be instantiated with an arbitrary type which could be unrelated to 'undefined'.
+src/features/products/validations/examples.ts(8,3): error TS6133: 'validateProductUpdate' is declared but its value is never read.
+src/features/products/validations/examples.ts(9,8): error TS6133: 'ProductCreateInput' is declared but its value is never read.
+src/features/products/validations/external.ts(89,16): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/external.ts(111,18): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/hooks.ts(3,33): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/products/validations/hooks.ts(5,1): error TS6192: All imports in import declaration are unused.
+src/features/products/validations/hooks.ts(19,44): error TS6133: 'options' is declared but its value is never read.
+src/features/products/validations/hooks.ts(71,44): error TS6133: 'options' is declared but its value is never read.
+src/features/products/validations/index.ts(139,33): error TS2304: Cannot find name 'ProductCreateInput'.
+src/features/products/validations/index.ts(140,33): error TS2304: Cannot find name 'ProductUpdateInput'.
+src/features/products/validations/metrics.ts(70,7): error TS2532: Object is possibly 'undefined'.
+src/features/products/validations/metrics.ts(76,7): error TS18048: 'stats' is possibly 'undefined'.
+src/features/products/validations/metrics.ts(77,7): error TS18048: 'stats' is possibly 'undefined'.
+src/features/products/validations/metrics.ts(166,40): error TS2532: Object is possibly 'undefined'.
+src/features/products/validations/metrics.ts(168,47): error TS2532: Object is possibly 'undefined'.
+src/features/products/validations/middleware.ts(1,10): error TS6133: 'NextRequest' is declared but its value is never read.
+src/features/products/validations/pipeline.ts(43,24): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/pipeline.ts(66,22): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/pipeline.ts(86,15): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/pipeline.ts(103,5): error TS2375: Type '{ success: boolean; data: T | undefined; errors: ValidationError[]; stepResults: Record<string, { success: boolean; errors: ValidationError[]; }>; }' is not assignable to type 'PipelineResult<T>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'data' are incompatible.
+    Type 'T | undefined' is not assignable to type 'T'.
+      'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/products/validations/pipeline.ts(130,51): error TS2339: Property 'errors' does not exist on type 'ZodError<{ sku: string; baseProductId?: string | null | undefined; defaultPriceGroupId?: string | null | undefined; ean?: string | null | undefined; gtin?: string | null | undefined; asin?: string | null | undefined; ... 17 more ...; parameters?: { ...; }[] | undefined; }>'.
+src/features/products/validations/pipeline.ts(130,62): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/features/products/validations/pipeline.ts(144,7): error TS2322: Type '(data: any) => Promise<{ field: string; message: string; code: string; }[]>' is not assignable to type '(data: any) => ValidationError[] | Promise<ValidationError[]>'.
+  Type 'Promise<{ field: string; message: string; code: string; }[]>' is not assignable to type 'ValidationError[] | Promise<ValidationError[]>'.
+    Type 'Promise<{ field: string; message: string; code: string; }[]>' is not assignable to type 'Promise<ValidationError[]>'.
+      Type '{ field: string; message: string; code: string; }[]' is not assignable to type 'ValidationError[]'.
+        Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/pipeline.ts(172,51): error TS2339: Property 'errors' does not exist on type 'ZodError<{ baseProductId?: string | null | undefined; defaultPriceGroupId?: string | null | undefined; sku?: string | undefined; ean?: string | null | undefined; gtin?: string | null | undefined; ... 18 more ...; parameters?: { ...; }[] | undefined; }>'.
+src/features/products/validations/pipeline.ts(172,62): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/features/products/validations/rules.ts(132,23): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/rules.ts(140,25): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/schemas.ts(12,7): error TS6133: 'urlString' is declared but its value is never read.
+src/features/products/validations/streaming.ts(24,28): error TS6133: 'options' is declared but its value is never read.
+src/features/products/validations/streaming.ts(67,13): error TS2412: Type 'string | undefined' is not assignable to type 'string' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/products/validations/streaming.ts(71,33): error TS2464: A computed property name must be of type 'string', 'number', 'symbol', or 'any'.
+src/features/products/validations/streaming.ts(71,47): error TS2538: Type 'undefined' cannot be used as an index type.
+src/features/products/validations/streaming.ts(95,9): error TS2412: Type 'undefined' is not assignable to type 'string' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+src/features/products/validations/streaming.ts(105,26): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/streaming.ts(133,24): error TS2741: Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/utils.ts(16,39): error TS2536: Type 'keyof T' cannot be used to index type '$InferObjectOutput<T, {}>'.
+src/features/products/validations/utils.ts(18,24): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+src/features/products/validations/utils.ts(18,39): error TS7006: Parameter 'error' implicitly has an 'any' type.
+src/features/products/validations/utils.ts(51,19): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/utils.ts(84,24): error TS2345: Argument of type '{ field: string; message: string; code: string; }' is not assignable to parameter of type 'ValidationError'.
+  Property 'severity' is missing in type '{ field: string; message: string; code: string; }' but required in type 'ValidationError'.
+src/features/products/validations/validators-enhanced.ts(2,1): error TS6192: All imports in import declaration are unused.
+src/features/products/validations/validators-enhanced.ts(37,16): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+src/features/products/validations/validators-enhanced.ts(37,27): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/features/products/validations/validators-enhanced.ts(119,7): error TS2375: Type '{ success: false; errors: ValidationError[]; warnings: ValidationError[] | undefined; metadata: ValidationMetadata; }' is not assignable to type 'ValidationResult<T>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ success: false; errors: ValidationError[]; warnings: ValidationError[] | undefined; metadata: ValidationMetadata; }' is not assignable to type '{ success: false; errors: ValidationError[]; warnings?: ValidationError[]; metadata?: ValidationMetadata; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'warnings' are incompatible.
+      Type 'ValidationError[] | undefined' is not assignable to type 'ValidationError[]'.
+        Type 'undefined' is not assignable to type 'ValidationError[]'.
+src/features/products/validations/validators-enhanced.ts(129,7): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/products/validations/validators-enhanced.ts(273,5): error TS2532: Object is possibly 'undefined'.
+src/features/products/validations/validators-enhanced.ts(314,10): error TS2352: Conversion of type '{ warnings: ValidationError[] | undefined; metadata: { validationTime: number; rulesApplied: string[]; source: "batch"; }; errors: ValidationError[]; success: boolean; } | { ...; }' to type 'ValidationResult<T[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ warnings: ValidationError[] | undefined; metadata: { validationTime: number; rulesApplied: string[]; source: "batch"; }; data: T[]; success: boolean; }' is not comparable to type 'ValidationResult<T[]>'.
+    The types of 'metadata.source' are incompatible between these types.
+      Type '"batch"' is not comparable to type '"custom" | "schema" | "config" | "external"'.
+src/features/products/validations/validators-old.ts(2,1): error TS6192: All imports in import declaration are unused.
+src/features/products/validations/validators-old.ts(37,16): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+src/features/products/validations/validators-old.ts(37,27): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/features/products/validations/validators-old.ts(119,7): error TS2375: Type '{ success: false; errors: ValidationError[]; warnings: ValidationError[] | undefined; metadata: ValidationMetadata; }' is not assignable to type 'ValidationResult<T>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ success: false; errors: ValidationError[]; warnings: ValidationError[] | undefined; metadata: ValidationMetadata; }' is not assignable to type '{ success: false; errors: ValidationError[]; warnings?: ValidationError[]; metadata?: ValidationMetadata; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'warnings' are incompatible.
+      Type 'ValidationError[] | undefined' is not assignable to type 'ValidationError[]'.
+        Type 'undefined' is not assignable to type 'ValidationError[]'.
+src/features/products/validations/validators-old.ts(129,7): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+src/features/products/validations/validators-old.ts(273,5): error TS2532: Object is possibly 'undefined'.
+src/features/products/validations/validators-old.ts(314,10): error TS2352: Conversion of type '{ warnings: ValidationError[] | undefined; metadata: { validationTime: number; rulesApplied: string[]; source: "batch"; }; errors: ValidationError[]; success: boolean; } | { ...; }' to type 'ValidationResult<T[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ warnings: ValidationError[] | undefined; metadata: { validationTime: number; rulesApplied: string[]; source: "batch"; }; data: T[]; success: boolean; }' is not comparable to type 'ValidationResult<T[]>'.
+    The types of 'metadata.source' are incompatible between these types.
+      Type '"batch"' is not comparable to type '"custom" | "schema" | "config" | "external"'.
+src/features/products/validations/validators.ts(1,1): error TS6133: 'z' is declared but its value is never read.
+src/features/products/validations/validators.ts(2,1): error TS6192: All imports in import declaration are unused.
+src/features/products/validations/validators.ts(52,5): error TS2532: Object is possibly 'undefined'.
+src/features/viewer3d/components/Asset3DEditModal.tsx(9,3): error TS6133: 'ModalShell' is declared but its value is never read.
+src/features/viewer3d/components/Asset3DEditModal.tsx(12,10): error TS6133: 'Save' is declared but its value is never read.
+src/features/viewer3d/components/Asset3DEditModal.tsx(12,25): error TS6133: 'Loader2' is declared but its value is never read.
+src/features/viewer3d/components/Viewer3D.tsx(477,20): error TS2375: Type '{ children: Element; onError: ((error: Error) => void) | undefined; }' is not assignable to type 'Readonly<{ children: ReactNode; onError?: (error: Error) => void; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onError' are incompatible.
+    Type '((error: Error) => void) | undefined' is not assignable to type '(error: Error) => void'.
+      Type 'undefined' is not assignable to type '(error: Error) => void'.
+src/features/viewer3d/components/Viewer3D.tsx(478,22): error TS2375: Type '{ castShadow: boolean; receiveShadow: boolean; position: [number, number, number] | undefined; rotation: [number, number, number] | undefined; scale: number | [number, number, number] | undefined; onError?: (error: Error) => void; onLoad?: () => void; url: string; }' is not assignable to type 'Model3DProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'position' are incompatible.
+    Type '[number, number, number] | undefined' is not assignable to type '[number, number, number]'.
+      Type 'undefined' is not assignable to type '[number, number, number]'.
+src/features/viewer3d/components/Viewer3D.tsx(495,18): error TS2375: Type '{ children: Element; onError: ((error: Error) => void) | undefined; }' is not assignable to type 'Readonly<{ children: ReactNode; onError?: (error: Error) => void; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onError' are incompatible.
+    Type '((error: Error) => void) | undefined' is not assignable to type '(error: Error) => void'.
+      Type 'undefined' is not assignable to type '(error: Error) => void'.
+src/features/viewer3d/components/Viewer3D.tsx(496,20): error TS2375: Type '{ castShadow: boolean; receiveShadow: boolean; position: [number, number, number] | undefined; rotation: [number, number, number] | undefined; scale: number | [number, number, number] | undefined; onError?: (error: Error) => void; onLoad?: () => void; url: string; }' is not assignable to type 'Model3DProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'position' are incompatible.
+    Type '[number, number, number] | undefined' is not assignable to type '[number, number, number]'.
+      Type 'undefined' is not assignable to type '[number, number, number]'.
+src/shared/components/item-library.tsx(5,36): error TS6133: 'useCallback' is declared but its value is never read.
+src/shared/components/shared-modal.tsx(33,6): error TS2375: Type '{ children: Element; open: boolean; onOpenChange: (isOpen: boolean) => false | void; title: string; contentClassName: string | undefined; }' is not assignable to type 'AppModalProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'contentClassName' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/shared/components/shared-modal.tsx(39,8): error TS2375: Type '{ children: ReactNode; title: string; onClose: () => void; footer: ReactNode; header: ReactNode; size: "lg" | "md" | "xl"; showClose: boolean; bodyClassName: string | undefined; }' is not assignable to type 'ModalShellProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'bodyClassName' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/shared/components/unified-select.tsx(60,16): error TS2375: Type '{ children: Element; key: string; value: string; disabled: boolean | undefined; }' is not assignable to type 'Omit<SelectItemProps & RefAttributes<HTMLDivElement>, "ref">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'disabled' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/shared/errors/app-error.ts(66,5): error TS2412: Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(92,37): error TS2379: Argument of type '{ retryAfterMs?: number; code: string; httpStatus: number; cause: unknown; meta: Record<string, unknown> | undefined; expected: boolean; critical: boolean; retryable: boolean; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(119,25): error TS2379: Argument of type '{ code: "VALIDATION_ERROR"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(130,25): error TS2379: Argument of type '{ code: "UNAUTHORIZED"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(141,25): error TS2379: Argument of type '{ code: "FORBIDDEN"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(152,25): error TS2379: Argument of type '{ code: "NOT_FOUND"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(163,25): error TS2379: Argument of type '{ code: "CONFLICT"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(174,25): error TS2379: Argument of type '{ code: "BAD_REQUEST"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(186,25): error TS2379: Argument of type '{ retryAfterMs?: number; code: "RATE_LIMITED"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; retryable: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(199,25): error TS2379: Argument of type '{ code: "PAYLOAD_TOO_LARGE"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(210,25): error TS2379: Argument of type '{ code: "UNPROCESSABLE_ENTITY"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(225,25): error TS2379: Argument of type '{ code: "INTERNAL_SERVER_ERROR"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; critical: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(238,25): error TS2379: Argument of type '{ retryAfterMs?: number; code: "EXTERNAL_SERVICE_ERROR"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; retryable: boolean; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(252,25): error TS2379: Argument of type '{ retryAfterMs?: number; code: "SERVICE_UNAVAILABLE"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; retryable: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(265,25): error TS2379: Argument of type '{ code: "TIMEOUT"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; retryable: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(278,25): error TS2379: Argument of type '{ code: "DATABASE_ERROR"; httpStatus: number; cause: unknown; meta: Record<string, unknown> | undefined; expected: false; critical: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(291,25): error TS2379: Argument of type '{ code: "CONFIGURATION_ERROR"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; critical: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(307,25): error TS2379: Argument of type '{ code: "DUPLICATE_ENTRY"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(318,25): error TS2379: Argument of type '{ code: "INVALID_STATE"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(330,25): error TS2379: Argument of type '{ code: "OPERATION_FAILED"; httpStatus: number; cause: unknown; meta: Record<string, unknown> | undefined; expected: false; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(342,25): error TS2379: Argument of type '{ code: "RESOURCE_LOCKED"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; retryable: true; retryAfterMs: number; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(355,25): error TS2379: Argument of type '{ code: "QUOTA_EXCEEDED"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/errors/app-error.ts(397,25): error TS2379: Argument of type '{ code: "WEBHOOK_FAILED"; httpStatus: number; meta: Record<string, unknown> | undefined; expected: false; retryable: true; }' is not assignable to parameter of type 'AppErrorOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+src/shared/hooks/query/index.ts(2,10): error TS2459: Module '"./useInfiniteQuery"' declares 'useInfiniteQuery' locally, but it is not exported.
+src/shared/hooks/query/index.ts(4,10): error TS2724: '"./useStreamingQueries"' has no exported member named 'useStreamingQueries'. Did you mean 'useStreamingQuery'?
+src/shared/hooks/query/index.ts(6,10): error TS2305: Module '"./useQueryErrorHandling"' has no exported member 'useQueryErrorHandling'.
+src/shared/hooks/query/index.ts(7,10): error TS2305: Module '"./useAdvancedQueries"' has no exported member 'useAdvancedQueries'.
+src/shared/hooks/query/index.ts(8,10): error TS2724: '"./useSearchQueries"' has no exported member named 'useSearchQueries'. Did you mean 'useSearchQuery'?
+src/shared/hooks/query/useAdvancedQueries.ts(32,26): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<unknown, Error, unknown, unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<unknown, Error>', gave the following error.
+    Argument of type '{ queryKey: unknown[]; queryFn: (() => Promise<T3>) | undefined; enabled: boolean; }' is not assignable to parameter of type 'DefinedInitialDataOptions<unknown, Error, unknown, unknown[]>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Property 'initialData' is missing in type '{ queryKey: unknown[]; queryFn: (() => Promise<T3>) | undefined; enabled: boolean; }' but required in type '{ initialData: unknown; queryFn?: QueryFunction<unknown, unknown[]>; }'.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<T3, Error, T3, unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<NoInfer<T3>, Error>', gave the following error.
+    Argument of type '{ queryKey: unknown[]; queryFn: (() => Promise<T3>) | undefined; enabled: boolean; }' is not assignable to parameter of type 'UndefinedInitialDataOptions<T3, Error, T3, unknown[]>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Type '{ queryKey: unknown[]; queryFn: (() => Promise<T3>) | undefined; enabled: boolean; }' is not assignable to type 'UseQueryOptions<T3, Error, T3, unknown[]>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'queryFn' are incompatible.
+          Type '(() => Promise<T3>) | undefined' is not assignable to type 'unique symbol | QueryFunction<T3, unknown[], never>'.
+            Type 'undefined' is not assignable to type 'unique symbol | QueryFunction<T3, unknown[], never>'.
+  Overload 3 of 3, '(options: UseQueryOptions<T3, Error, T3, unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<NoInfer<T3>, Error>', gave the following error.
+    Argument of type '{ queryKey: unknown[]; queryFn: (() => Promise<T3>) | undefined; enabled: boolean; }' is not assignable to parameter of type 'UseQueryOptions<T3, Error, T3, unknown[]>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'queryFn' are incompatible.
+        Type '(() => Promise<T3>) | undefined' is not assignable to type 'unique symbol | QueryFunction<T3, unknown[], never>'.
+          Type 'undefined' is not assignable to type 'unique symbol | QueryFunction<T3, unknown[], never>'.
+src/shared/types/api/api.ts(2,53): error TS2307: Cannot find module './base' or its corresponding type declarations.
+src/shared/types/index.ts(35,8): error TS2724: '"./domain/products"' has no exported member named 'PriceGroup'. Did you mean 'PriceGroupDto'?

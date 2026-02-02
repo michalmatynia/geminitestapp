@@ -1,16 +1,74 @@
+import "server-only";
+
+import { productService } from "@/features/products/services/productService";
+import type { ProductFilters } from "@/features/products/types/services/product-repository";
+import type { ProductWithImages } from "@/features/products/types";
 import { withQueryCache, ProductCacheHelpers } from './query-cache';
+
+type ProductFilterInput = Record<string, unknown>;
+
+function toOptionalString(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return undefined;
+}
+
+function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
+  const pageSize = toOptionalString(filters.pageSize) ?? toOptionalString(filters.limit);
+  let page = toOptionalString(filters.page);
+
+  // Support offset+limit payloads used by API v2.
+  if (!page && pageSize) {
+    const offsetRaw = toOptionalString(filters.offset);
+    if (offsetRaw) {
+      const parsedPageSize = Number(pageSize);
+      const parsedOffset = Number(offsetRaw);
+      if (
+        Number.isFinite(parsedPageSize) &&
+        parsedPageSize > 0 &&
+        Number.isFinite(parsedOffset) &&
+        parsedOffset >= 0
+      ) {
+        page = String(Math.floor(parsedOffset / parsedPageSize) + 1);
+      }
+    }
+  }
+
+  const normalized: ProductFilters = {};
+  const search = toOptionalString(filters.search);
+  const sku = toOptionalString(filters.sku);
+  const minPrice = toOptionalString(filters.minPrice);
+  const maxPrice = toOptionalString(filters.maxPrice);
+  const startDate = toOptionalString(filters.startDate);
+  const endDate = toOptionalString(filters.endDate);
+  const catalogId = toOptionalString(filters.catalogId);
+  const searchLanguage = toOptionalString(filters.searchLanguage);
+
+  if (search !== undefined) normalized.search = search;
+  if (sku !== undefined) normalized.sku = sku;
+  if (minPrice !== undefined) normalized.minPrice = minPrice;
+  if (maxPrice !== undefined) normalized.maxPrice = maxPrice;
+  if (startDate !== undefined) normalized.startDate = startDate;
+  if (endDate !== undefined) normalized.endDate = endDate;
+  if (page !== undefined) normalized.page = page;
+  if (pageSize !== undefined) normalized.pageSize = pageSize;
+  if (catalogId !== undefined) normalized.catalogId = catalogId;
+  if (searchLanguage !== undefined) normalized.searchLanguage = searchLanguage;
+
+  return normalized;
+}
 
 // Cached database operations for products
 export class CachedProductService {
   
   // Get product by ID with caching
   static getProductById = withQueryCache(
-    async (_id: string) => {
-      // This would be your actual database query
-      // const product = await db.product.findUnique({ where: { id } });
-      // return product;
-      return null; // Placeholder
-    },
+    async (id: string) => productService.getProductById(id),
     {
       keyGenerator: (id: string) => `product:${id}`,
       ttl: 300000, // 5 minutes
@@ -18,43 +76,56 @@ export class CachedProductService {
     }
   );
 
+  // Get product by SKU with caching
+  static getProductBySku = withQueryCache(
+    async (sku: string) => productService.getProductBySku(sku),
+    {
+      keyGenerator: (sku: string) => `product:sku:${sku}`,
+      ttl: 300000, // 5 minutes
+      tags: (_sku: string) => ["products:list"]
+    }
+  );
+
   // Get products list with filtering and caching
   static getProducts = withQueryCache(
-    async (_filters: Record<string, unknown> = {}) => {
-      // const products = await db.product.findMany({ where: filters });
-      // return products;
-      return []; // Placeholder
+    async (filters: ProductFilterInput = {}) => {
+      return productService.getProducts(normalizeFilters(filters));
     },
     {
-      keyGenerator: (filters: Record<string, unknown>) => `products:list:${JSON.stringify(filters)}`,
+      keyGenerator: (filters: ProductFilterInput = {}) => `products:list:${JSON.stringify(filters)}`,
       ttl: 180000, // 3 minutes
-      tags: (filters: Record<string, unknown>) => ProductCacheHelpers.getTags.productList(filters)
+      tags: (filters: ProductFilterInput = {}) => ProductCacheHelpers.getTags.productList(filters)
     }
   );
 
   // Get product count with caching
   static getProductCount = withQueryCache(
-    async (_filters: Record<string, unknown> = {}) => {
-      // const count = await db.product.count({ where: filters });
-      // return count;
-      return 0; // Placeholder
+    async (filters: ProductFilterInput = {}) => {
+      return productService.countProducts(normalizeFilters(filters));
     },
     {
-      keyGenerator: (filters: Record<string, unknown>) => `products:count:${JSON.stringify(filters)}`,
+      keyGenerator: (filters: ProductFilterInput = {}) => `products:count:${JSON.stringify(filters)}`,
       ttl: 300000, // 5 minutes
-      tags: (filters: Record<string, unknown>) => ['products:count', ...ProductCacheHelpers.getTags.productList(filters)]
+      tags: (filters: ProductFilterInput = {}) => ['products:count', ...ProductCacheHelpers.getTags.productList(filters)]
     }
   );
 
   // Get products by category with caching
   static getProductsByCategory = withQueryCache(
     async (categoryId: string, limit?: number) => {
-      // const products = await db.product.findMany({
-      //   where: { categories: { some: { categoryId } } },
-      //   take: limit
-      // });
-      // return products;
-      return []; // Placeholder
+      const categoryFilters: ProductFilters = {};
+      if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) {
+        categoryFilters.pageSize = String(limit);
+      }
+      const products = await productService.getProducts(categoryFilters);
+      const filtered = products.filter(
+        (product: ProductWithImages) =>
+          Array.isArray(product.categories) &&
+          product.categories.some((entry: { categoryId: string }) => entry.categoryId === categoryId)
+      );
+      return typeof limit === "number" && limit > 0
+        ? filtered.slice(0, limit)
+        : filtered;
     },
     {
       keyGenerator: (categoryId: string, limit?: number) => `products:category:${categoryId}:${limit || 'all'}`,
@@ -68,14 +139,7 @@ export class CachedProductService {
 
   // Get product with images (expensive query)
   static getProductWithImages = withQueryCache(
-    async (id: string) => {
-      // const product = await db.product.findUnique({
-      //   where: { id },
-      //   include: { images: { include: { imageFile: true } } }
-      // });
-      // return product;
-      return null; // Placeholder
-    },
+    async (id: string) => productService.getProductById(id),
     {
       keyGenerator: (id: string) => `product:${id}:with-images`,
       ttl: 600000, // 10 minutes (longer for expensive queries)
@@ -85,23 +149,16 @@ export class CachedProductService {
 
   // Search products with caching
   static searchProducts = withQueryCache(
-    async (query: string, filters: Record<string, unknown> = {}) => {
-      // const products = await db.product.findMany({
-      //   where: {
-      //     OR: [
-      //       { name_en: { contains: query, mode: 'insensitive' } },
-      //       { sku: { contains: query, mode: 'insensitive' } }
-      //     ],
-      //     ...filters
-      //   }
-      // });
-      // return products;
-      return []; // Placeholder
+    async (query: string, filters: ProductFilterInput = {}) => {
+      return productService.getProducts({
+        ...normalizeFilters(filters),
+        search: query,
+      });
     },
     {
-      keyGenerator: (query: string, filters: Record<string, unknown>) => `products:search:${query}:${JSON.stringify(filters)}`,
+      keyGenerator: (query: string, filters: ProductFilterInput = {}) => `products:search:${query}:${JSON.stringify(filters)}`,
       ttl: 120000, // 2 minutes (shorter for search results)
-      tags: (query: string, filters: Record<string, unknown>) => ['products:search', 'products:list']
+      tags: (_query: string, _filters: ProductFilterInput = {}) => ['products:search', 'products:list']
     }
   );
 
@@ -170,7 +227,7 @@ export class CachedProductMutations {
   );
 
   static updateProduct = withCacheInvalidation(
-    async (id: string, _data: Record<string, unknown>) => {
+    async (_id: string, _data: Record<string, unknown>) => {
       // const product = await db.product.update({ where: { id }, data });
       // return product;
       return null; // Placeholder
@@ -182,7 +239,7 @@ export class CachedProductMutations {
   );
 
   static deleteProduct = withCacheInvalidation(
-    async (id: string) => {
+    async (_id: string) => {
       // const product = await db.product.delete({ where: { id } });
       // return product;
       return null; // Placeholder

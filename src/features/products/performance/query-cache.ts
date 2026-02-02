@@ -6,9 +6,9 @@ type CacheEntry<T> = {
 };
 
 type CacheOptions = {
-  ttl?: number;
-  tags?: string[];
-  keyPrefix?: string;
+  ttl?: number | undefined;
+  tags?: string[] | undefined;
+  keyPrefix?: string | undefined;
 };
 
 export class QueryCache {

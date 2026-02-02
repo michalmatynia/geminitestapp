@@ -32,7 +32,6 @@ export {
   type ProductWithImages,
   type PriceGroupWithDetails,
   type Catalog,
-  type PriceGroup,
   type ProductCategory,
   type ProductCategoryWithChildren,
   type ProductTag,

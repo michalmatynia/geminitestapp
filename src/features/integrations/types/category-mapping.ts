@@ -1,4 +1,4 @@
-import type { ProductCategory } from "@/features/products";
+import type { ProductCategoryDto } from "@/features/products";
 
 export type ExternalCategory = {
   id: string;
@@ -32,7 +32,7 @@ export type CategoryMapping = {
 
 export type CategoryMappingWithDetails = CategoryMapping & {
   externalCategory: ExternalCategory;
-  internalCategory: ProductCategory;
+  internalCategory: ProductCategoryDto;
 };
 
 // Types for Base.com API responses

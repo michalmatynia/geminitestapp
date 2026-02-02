@@ -9,12 +9,12 @@ type SharedModalProps = {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  footer?: React.ReactNode;
-  header?: React.ReactNode;
-  size?: "md" | "lg" | "xl";
-  showClose?: boolean;
-  contentClassName?: string;
-  bodyClassName?: string;
+  footer?: React.ReactNode | undefined;
+  header?: React.ReactNode | undefined;
+  size?: "md" | "lg" | "xl" | undefined;
+  showClose?: boolean | undefined;
+  contentClassName?: string | undefined;
+  bodyClassName?: string | undefined;
 };
 
 export function SharedModal({

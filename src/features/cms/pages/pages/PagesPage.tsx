@@ -228,12 +228,11 @@ export default function PagesPage(): React.ReactNode {
         </ul>
       </ListPanel>
 
-      <ConfirmDialog
-        open={!!pageToDelete}
-        onOpenChange={(open) => !open && setPageToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        title="Delete Page"
-        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
+              <ConfirmDialog
+                open={!!pageToDelete}
+                onOpenChange={(open: boolean) => !open && setPageToDelete(null)}
+                onConfirm={() => { void handleConfirmDelete(); }}
+                title="Delete Page"        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
       />

@@ -622,7 +622,7 @@ export default function ProductImageManager(): React.JSX.Element {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        disabled={!canConvertToBase64 || base64LoadingSlots[index]}
+                        disabled={Boolean(!canConvertToBase64 || !!base64LoadingSlots[index])}
                         onClick={() => void convertSlotToBase64(index)}
                       >
                         {base64LoadingSlots[index] ? "Converting..." : "Convert to Base64"}

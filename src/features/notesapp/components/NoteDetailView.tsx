@@ -6,6 +6,7 @@ import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
 import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from "@/shared/types/notes";
 import type { NoteDetailViewProps } from "@/features/notesapp/types/notes-ui";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 export function NoteDetailView({
   selectedNote,
@@ -328,6 +329,14 @@ export function NoteDetailView({
             </Button>
           </>
         )}
+        <div className="ml-auto">
+          <TriggerButtonBar
+            location="note_modal"
+            entityType="note"
+            entityId={selectedNote.id}
+            getEntityJson={() => selectedNote as unknown as Record<string, unknown>}
+          />
+        </div>
       </div>
 
       {isEditing ? (

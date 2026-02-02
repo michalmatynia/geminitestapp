@@ -5,6 +5,8 @@
  * Provides typed fetch wrappers with consistent error handling.
  */
 
+import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -160,6 +162,14 @@ async function apiPost<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
   });
 }
 
+async function apiPatch<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+  return apiFetch<T>(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
   return apiFetch<T>(url, { method: "DELETE" });
 }
@@ -220,6 +230,36 @@ export const dbApi = {
 export const settingsApi = {
   async list(): Promise<ApiResponse<SettingRecord[]>> {
     return apiFetch<SettingRecord[]>("/api/settings");
+  },
+};
+
+// ============================================================================
+// Trigger Buttons API
+// ============================================================================
+
+export const triggerButtonsApi = {
+  async list(): Promise<ApiResponse<AiTriggerButtonRecord[]>> {
+    return apiFetch<AiTriggerButtonRecord[]>("/api/ai-paths/trigger-buttons");
+  },
+
+  async create(payload: {
+    name: string;
+    iconId?: string | null;
+    locations: AiTriggerButtonRecord["locations"];
+    mode?: AiTriggerButtonRecord["mode"];
+  }): Promise<ApiResponse<AiTriggerButtonRecord>> {
+    return apiPost<AiTriggerButtonRecord>("/api/ai-paths/trigger-buttons", payload);
+  },
+
+  async update(
+    id: string,
+    patch: Partial<Pick<AiTriggerButtonRecord, "name" | "iconId" | "locations" | "mode">>
+  ): Promise<ApiResponse<AiTriggerButtonRecord>> {
+    return apiPatch<AiTriggerButtonRecord>(`/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`, patch);
+  },
+
+  async remove(id: string): Promise<ApiResponse<{ ok: true }>> {
+    return apiDelete<{ ok: true }>(`/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`);
   },
 };
 

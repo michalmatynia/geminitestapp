@@ -113,13 +113,13 @@ export interface ProductMetadataHookResult {
 }
 
 export interface UseProductMetadataProps {
-  product?: ProductWithImages;
-  initialCatalogId?: string;
-  initialCatalogIds?: string[];
-  initialCategoryIds?: string[];
-  initialTagIds?: string[];
-  setValue?: UseFormSetValue<ProductFormData>;
-  getValues?: UseFormGetValues<ProductFormData>;
+  product?: ProductWithImages | undefined;
+  initialCatalogId?: string | undefined;
+  initialCatalogIds?: string[] | undefined;
+  initialCategoryIds?: string[] | undefined;
+  initialTagIds?: string[] | undefined;
+  setValue?: UseFormSetValue<ProductFormData> | undefined;
+  getValues?: UseFormGetValues<ProductFormData> | undefined;
 }
 
 // Composite hook that combines all metadata functionality

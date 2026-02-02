@@ -1,10 +1,9 @@
 "use client";
 
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, SelectionBar } from "@/shared/ui";
-import { memo, useCallback, useMemo } from "react";
+import { DropdownMenuItem, SelectionBar } from "@/shared/ui";
+import { memo, useCallback } from "react";
 
-
-import { CheckSquare, Settings2, Trash2, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import type { ProductWithImages } from "@/features/products/types";
 import type { RowSelectionState } from "@tanstack/react-table";
 
@@ -36,9 +35,9 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
       getRowId={getRowId}
       rowSelection={rowSelection}
       setRowSelection={setRowSelection}
-      onSelectAllGlobal={onSelectAllGlobal}
-      loadingGlobal={loadingGlobal}
-      onDeleteSelected={onDeleteSelected}
+      {...(onSelectAllGlobal ? { onSelectAllGlobal } : {})}
+      {...(loadingGlobal !== undefined ? { loadingGlobal } : {})}
+      {...(onDeleteSelected ? { onDeleteSelected } : {})}
       className="mb-4"
       actions={
         <DropdownMenuItem

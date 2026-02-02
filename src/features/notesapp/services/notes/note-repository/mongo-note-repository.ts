@@ -212,11 +212,11 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
     const searchScope = filters.searchScope || "both";
 
     if (searchScope === "both") {
-      filter.$or = [{ title: regex }, { content: regex }] as Filter<NoteDocument>["$or"];
+      filter.$or = [{ title: regex }, { content: regex }];
     } else if (searchScope === "title") {
-      filter.title = regex as Filter<NoteDocument>["title"];
+      filter.title = regex;
     } else if (searchScope === "content") {
-      filter.content = regex as Filter<NoteDocument>["content"];
+      filter.content = regex;
     }
   }
 
@@ -260,8 +260,8 @@ export const mongoNoteRepository: NoteRepository = {
               name: "Default",
               color: "#3b82f6",
               defaultThemeId: null,
-              createdAt: now,
-              updatedAt: now,
+              createdAt: now.toISOString(),
+              updatedAt: now.toISOString(),
             };
             await collection.insertOne(doc);
             return doc as WithId<NotebookDocument>;
@@ -453,8 +453,8 @@ export const mongoNoteRepository: NoteRepository = {
       isArchived: data.isArchived ?? false,
       isFavorite: data.isFavorite ?? false,
       notebookId: resolvedNotebookId,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
       tags,
       categories,
       relationsFrom,
@@ -475,7 +475,7 @@ export const mongoNoteRepository: NoteRepository = {
       (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
 
     const setFields: Partial<NoteDocument> = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
     if (data.title !== undefined) setFields.title = data.title;
     if (data.content !== undefined) setFields.content = data.content;
@@ -627,8 +627,8 @@ export const mongoNoteRepository: NoteRepository = {
       name: data.name,
       color: data.color ?? "#3b82f6",
       notebookId: resolvedNotebookId,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
 
     await collection.insertOne(doc);
@@ -641,7 +641,7 @@ export const mongoNoteRepository: NoteRepository = {
 
     const updateDoc: UpdateFilter<TagDocument> = {
       $set: {
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
         ...(data.name !== undefined && { name: data.name }),
         ...(data.color !== undefined && { color: data.color }),
       },
@@ -665,7 +665,7 @@ export const mongoNoteRepository: NoteRepository = {
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const pullTags: UpdateFilter<NoteDocument> = {
-      $pull: { tags: { tagId: id } } as UpdateFilter<NoteDocument>["$pull"],
+      $pull: { tags: { tagId: id } },
     };
     await noteCollection.updateMany({ "tags.tagId": id } as Filter<NoteDocument>, pullTags);
     
@@ -840,7 +840,7 @@ export const mongoNoteRepository: NoteRepository = {
 
       // Remove category from all notes
       const pullCategories: UpdateFilter<NoteDocument> = {
-        $pull: { categories: { categoryId: id } } as UpdateFilter<NoteDocument>["$pull"],
+        $pull: { categories: { categoryId: id } },
       };
       await noteCollection.updateMany(
         { "categories.categoryId": id } as Filter<NoteDocument>,
@@ -877,8 +877,8 @@ export const mongoNoteRepository: NoteRepository = {
       name: data.name,
       color: data.color ?? "#3b82f6",
       defaultThemeId: data.defaultThemeId ?? null,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
     return toNotebookResponse(doc as WithId<NotebookDocument>);
@@ -889,7 +889,7 @@ export const mongoNoteRepository: NoteRepository = {
     const collection = db.collection<NotebookDocument>(notebookCollectionName);
     const updateDoc: UpdateFilter<NotebookDocument> = {
       $set: {
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
         ...(data.name !== undefined && { name: data.name }),
         ...(data.color !== undefined && { color: data.color }),
         ...(data.defaultThemeId !== undefined && { defaultThemeId: data.defaultThemeId }),
@@ -963,8 +963,8 @@ export const mongoNoteRepository: NoteRepository = {
       relatedNoteBackgroundColor:
         data.relatedNoteBackgroundColor ?? "#1f2937",
       relatedNoteTextColor: data.relatedNoteTextColor ?? "#e5e7eb",
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
     return toThemeResponse(doc as WithId<ThemeDocument>);
@@ -975,7 +975,7 @@ export const mongoNoteRepository: NoteRepository = {
     const collection = db.collection<ThemeDocument>(themeCollectionName);
     const updateDoc: UpdateFilter<ThemeDocument> = {
       $set: {
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
         ...(data.name !== undefined && { name: data.name }),
         ...(data.notebookId !== undefined && { notebookId: data.notebookId }),
         ...(data.textColor !== undefined && { textColor: data.textColor }),

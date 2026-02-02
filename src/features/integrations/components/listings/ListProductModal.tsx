@@ -21,6 +21,7 @@ import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
+  type ExportToBaseVariables,
 } from "@/features/integrations/hooks/useProductListingMutations";
 
 type ListProductModalProps = {
@@ -84,21 +85,20 @@ export function ListProductModal({
 
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
 
-  const exportToBase = async (options?: {
-    imageBase64Mode?: "base-only" | "full-data-uri";
-    imageTransform?: ImageTransformOptions | null;
-  }): Promise<void> => {
-    const exportData: any = {
-      connectionId: selectedConnectionId,
-      inventoryId: selectedInventoryId,
-      exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
-    };
-    if (selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
-    if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
-    if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
-    
-    const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
-
+      const exportToBase = async (options?: {
+        imageBase64Mode?: "base-only" | "full-data-uri";
+        imageTransform?: ImageTransformOptions | null;
+      }): Promise<void> => {
+        const exportData: ExportToBaseVariables = {
+          connectionId: selectedConnectionId || "",
+          inventoryId: selectedInventoryId || "",
+          exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
+        };
+        if (selectedTemplateId && selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
+        if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
+        if (options?.imageTransform) exportData.imageTransform = options.imageTransform;
+        
+        const payloadRes = await exportToBaseMutation.mutateAsync(exportData);
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
     }

@@ -69,7 +69,7 @@ export function LanguageModal({
         data: {
           code: form.code.trim(),
           name: form.name.trim(),
-          nativeName: form.nativeName.trim() || undefined,
+          nativeName: form.nativeName.trim() || null,
           countryIds: selectedCountryIds,
         },
       });

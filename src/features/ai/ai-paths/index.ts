@@ -3,3 +3,4 @@ export * from "./lib";
 export * from "./pages/AdminAiPathsDeadLetterPage";
 export * from "./pages/AdminAiPathsJobsPage";
 export * from "./pages/AdminAiPathsPage";
+export * from "./pages/AdminAiPathsTriggerButtonsPage";

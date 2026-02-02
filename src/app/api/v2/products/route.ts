@@ -3,6 +3,7 @@ import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHa
 import type { ApiVersion } from '@/features/products/api';
 import { withSecurity } from '@/features/products/security';
 import { CachedProductService } from '@/features/products/performance';
+import { productService } from '@/features/products/server';
 
 // Versioned products API handler
 async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {
@@ -33,10 +34,10 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
   
   try {
-    const products = await CachedProductService.getProducts({
+    const products = await productService.getProducts({
       ...filters,
-      offset: (page - 1) * limit,
-      limit
+      page: String(page),
+      pageSize: String(limit),
     });
 
     if (!products || products.length === 0) {
@@ -88,7 +89,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
     }
 
     // Check for duplicate SKU
-    const existing = await CachedProductService.getProductById(sku);
+    const existing = await CachedProductService.getProductBySku(sku);
     if (existing) {
       return StandardErrors.duplicateResource('sku', sku)
         .withMeta(version, '/api/products', 'POST')

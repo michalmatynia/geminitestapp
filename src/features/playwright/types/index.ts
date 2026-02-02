@@ -24,6 +24,6 @@ export type PlaywrightPersona = {
   name: string;
   description?: string | null;
   settings: PlaywrightSettings;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };

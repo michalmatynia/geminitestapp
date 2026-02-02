@@ -11,11 +11,11 @@ interface SelectionBarProps<T> {
   rowSelection: Record<string, boolean>;
   setRowSelection: (selection: Record<string, boolean>) => void;
   onSelectAllGlobal?: () => Promise<void>;
-  loadingGlobal?: boolean;
-  actions?: React.ReactNode;
-  onDeleteSelected?: () => Promise<void>;
-  className?: string;
-  label?: string;
+  loadingGlobal?: boolean | undefined;
+  actions?: React.ReactNode | undefined;
+  onDeleteSelected?: () => Promise<void> | undefined;
+  className?: string | undefined;
+  label?: string | undefined;
 }
 
 export function SelectionBar<T>({

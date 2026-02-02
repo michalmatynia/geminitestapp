@@ -21,6 +21,7 @@ import {
   useUpdateListingInventoryIdMutation,
   useExportToBaseMutation,
   useSyncBaseImagesMutation,
+  type ExportToBaseVariables,
 } from "@/features/integrations/hooks/useProductListingMutations";
 
 type ProductListingsModalProps = {
@@ -504,7 +505,7 @@ export function ProductListingsModal({
     }
     const templateId: string | undefined = getLatestTemplateId(listing) ?? undefined;
     
-    const exportData: any = {
+    const exportData: ExportToBaseVariables = {
       connectionId: listing.connectionId,
       inventoryId,
       exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform)
@@ -537,7 +538,7 @@ export function ProductListingsModal({
       throw new Error("External Base.com product ID is missing.");
     }
     
-    const exportData: any = {
+    const exportData: ExportToBaseVariables = {
       connectionId: listing.connectionId,
       inventoryId,
       imagesOnly: true,
@@ -622,39 +623,38 @@ export function ProductListingsModal({
   const loading: boolean = loadingListings;
 
   return (
-    <AppModal
-      open={true}
-      onOpenChange={(open) => !open && onClose()}
-      title={`Integrations - ${productName}`}
-    >
-      <ModalShell title={`Integrations - ${productName}`} onClose={onClose}>
-        <ConfirmDialog
-        open={!!listingToDelete}
-        onOpenChange={(open) => !open && setListingToDelete(null)}
-        onConfirm={() => listingToDelete && handleDeleteFromBase(listingToDelete)}
-        title="Delete from Base.com"
-        description="Delete this product from Base.com? This cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-      />
-      <ConfirmDialog
-        open={!!listingToPurge}
-        onOpenChange={(open) => !open && setListingToPurge(null)}
-        onConfirm={() => listingToPurge && handlePurgeListing(listingToPurge)}
-        title="Remove History"
-        description="Remove this integration connection and its history? This will NOT delete the product from the marketplace."
-        confirmText="Remove"
-        variant="destructive"
-      />
-      <ConfirmDialog
-        open={isSyncImagesConfirmOpen}
-        onOpenChange={setIsSyncImagesConfirmOpen}
-        onConfirm={handleSyncBaseImages}
-        title="Sync Images from Base.com"
-        description="Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots."
-        confirmText="Sync Images"
-      />
-      <div className="space-y-4">
+          <AppModal
+            open={true}
+            onOpenChange={(open: boolean) => !open && onClose()}
+            title={`Integrations - ${productName}`}
+          >
+            <ModalShell title={`Integrations - ${productName}`} onClose={onClose}>
+              <ConfirmDialog
+              open={!!listingToDelete}
+              onOpenChange={(open: boolean) => !open && setListingToDelete(null)}
+              onConfirm={() => { if (listingToDelete) void handleDeleteFromBase(listingToDelete); }}
+              title="Delete from Base.com"
+              description="Delete this product from Base.com? This cannot be undone."
+              confirmText="Delete"
+              variant="destructive"
+            />
+            <ConfirmDialog
+              open={!!listingToPurge}
+              onOpenChange={(open: boolean) => !open && setListingToPurge(null)}
+              onConfirm={() => { if (listingToPurge) void handlePurgeListing(listingToPurge); }}
+              title="Remove History"
+              description="Remove this integration connection and its history? This will NOT delete the product from the marketplace."
+              confirmText="Remove"
+              variant="destructive"
+            />
+            <ConfirmDialog
+              open={isSyncImagesConfirmOpen}
+              onOpenChange={(open: boolean) => setIsSyncImagesConfirmOpen(open)}
+              onConfirm={() => { void handleSyncBaseImages(); }}
+              title="Sync Images from Base.com"
+              description="Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots."
+              confirmText="Sync Images"
+            />      <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading listings...</p>
         ) : combinedError ? (

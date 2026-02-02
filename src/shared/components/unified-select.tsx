@@ -13,20 +13,20 @@ import { cn } from "@/shared/utils";
 export interface SelectOption {
   value: string;
   label: string;
-  description?: string;
-  disabled?: boolean;
+  description?: string | undefined;
+  disabled?: boolean | undefined;
 }
 
 interface UnifiedSelectProps {
   value: string;
   onValueChange: (value: string) => void;
   options: SelectOption[];
-  placeholder?: string;
-  className?: string;
-  triggerClassName?: string;
-  contentClassName?: string;
-  disabled?: boolean;
-  ariaLabel?: string;
+  placeholder?: string | undefined;
+  className?: string | undefined;
+  triggerClassName?: string | undefined;
+  contentClassName?: string | undefined;
+  disabled?: boolean | undefined;
+  ariaLabel?: string | undefined;
 }
 
 export function UnifiedSelect({
@@ -54,12 +54,14 @@ export function UnifiedSelect({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className={contentClassName}>
-          {options.map((option) => (
-            <SelectItem 
-              key={option.value} 
-              value={option.value}
-              disabled={option.disabled}
-            >
+          {options
+            .filter((option) => option.value && option.value.trim() !== "")
+            .map((option) => (
+              <SelectItem 
+                key={option.value} 
+                value={option.value}
+                disabled={option.disabled}
+              >
               <div className="flex flex-col">
                 <span>{option.label}</span>
                 {option.description && (

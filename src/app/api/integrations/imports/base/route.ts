@@ -206,11 +206,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
       );
 
-      const listItems = (allBaseIds as string[]).map((id: string) => ({
-        id,
-        exists: existingIds.has(id),
-      }));
-
+              const listItems = allBaseIds.map((id: string) => ({
+                id,
+                exists: existingIds.has(id),
+              }));
       const filteredItems = data.uniqueOnly
         ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
         : listItems;

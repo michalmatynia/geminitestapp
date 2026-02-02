@@ -18,9 +18,9 @@ export type ResolvedError = {
   expected: boolean;
   critical: boolean;
   retryable: boolean;
-  retryAfterMs?: number;
+  retryAfterMs?: number | undefined;
   meta?: Record<string, unknown> | undefined;
-  cause?: unknown;
+  cause?: unknown | undefined;
 };
 
 type ResolveOptions = {
@@ -44,9 +44,9 @@ export const resolveError = (
     expected: boolean;
     critical: boolean;
     retryable: boolean;
-    retryAfterMs?: number;
+    retryAfterMs?: number | undefined;
     meta?: Record<string, unknown> | undefined;
-    cause?: unknown;
+    cause?: unknown | undefined;
   }): ResolvedError => ({
     errorId,
     message: appError.message,

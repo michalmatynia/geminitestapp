@@ -2,6 +2,8 @@
 
 /* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 
+import * as React from "react";
+
 import {
   Button,
   Input,
@@ -57,7 +59,7 @@ export function PriceGroupModal({
         isDefault: priceGroup.isDefault,
         groupId: priceGroup.groupId,
         name: priceGroup.name,
-        description: priceGroup.description,
+        description: priceGroup.description ?? "",
         currencyId: priceGroup.currencyId,
         groupType: priceGroup.groupType,
         basePriceField: priceGroup.basePriceField,
@@ -96,13 +98,13 @@ export function PriceGroupModal({
 
     try {
       await saveMutation.mutateAsync({
-        id: priceGroup?.id,
+        ...(priceGroup?.id ? { id: priceGroup.id } : {}),
         data: {
           ...form,
           groupId: form.groupId.trim(),
           name: form.name.trim(),
           description: form.description.trim(),
-          sourceGroupId: form.sourceGroupId || undefined,
+          sourceGroupId: form.sourceGroupId || null,
           groupType: form.groupType,
         },
       });

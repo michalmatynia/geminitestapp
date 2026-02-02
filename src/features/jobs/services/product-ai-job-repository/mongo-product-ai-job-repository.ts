@@ -35,6 +35,7 @@ const toRecord = (doc: JobDocument): ProductAiJobRecord => ({
   result: doc.result ?? null,
   errorMessage: doc.errorMessage ?? null,
   createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt ?? doc.createdAt,
   startedAt: doc.startedAt ?? null,
   finishedAt: doc.finishedAt ?? null,
 });

@@ -136,9 +136,7 @@ const getImageSupportStatus = (url: string, mimetype?: string | null): {
   if (normalizedMime) {
     return {
       supported: isSupportedImageMime(normalizedMime),
-      reason: isSupportedImageMime(normalizedMime)
-        ? undefined
-        : `unsupported_mimetype:${normalizedMime}`,
+      ...(isSupportedImageMime(normalizedMime) ? {} : { reason: `unsupported_mimetype:${normalizedMime}` }),
       normalizedMime,
       extension: null,
     };
@@ -730,7 +728,7 @@ const getProductValue = (
   }
 
   // Direct field access
-  return (product as Record<string, unknown>)[sourceKey];
+  return (product as unknown as Record<string, unknown>)[sourceKey];
 };
 
 /**

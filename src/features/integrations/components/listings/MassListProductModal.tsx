@@ -9,7 +9,7 @@ import type { CapturedLog } from "@/features/integrations/services/exports/log-c
 
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
-import { useGenericExportToBaseMutation, useGenericCreateListingMutation } from "../../hooks/useProductListingMutations";
+import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from "../../hooks/useProductListingMutations";
 import { BaseListingSettings } from "./BaseListingSettings";
 import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
 
@@ -85,13 +85,13 @@ export function MassListProductModal({
         
         try {
             if (isBaseComIntegration) {
-                const exportData: any = {
+                const exportData: ExportToBaseVariables & { productId: string } = {
                   productId,
-                  connectionId: selectedConnectionId,
-                  inventoryId: selectedInventoryId,
+                  connectionId: selectedConnectionId || "",
+                  inventoryId: selectedInventoryId || "",
                   allowDuplicateSku,
                 };
-                if (selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
+                if (selectedTemplateId && selectedTemplateId !== "none") exportData.templateId = selectedTemplateId;
                 
                 const result = await exportMutation.mutateAsync(exportData);
         

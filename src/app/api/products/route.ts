@@ -17,13 +17,15 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const filters = Object.fromEntries(searchParams.entries());
 
   try {
-    // Use cached service for better performance
-    const products = await CachedProductService.getProducts(filters);
-    
-    performanceMonitor.record('cache.hit', 1, { operation: 'getProducts' });
+    // Read directly from the product service.
+    // Why: this route is the source of truth for the admin list and must never
+    // return stale empty cache entries.
+    const products = await productService.getProducts(filters);
+
+    performanceMonitor.record('db.query', 1, { operation: 'getProducts' });
     return NextResponse.json(products);
   } catch (error) {
-    performanceMonitor.record('cache.miss', 1, { operation: 'getProducts' });
+    performanceMonitor.record('db.error', 1, { operation: 'getProducts' });
     
     await ErrorSystem.captureException(error, {
       service: "api/products",
@@ -62,9 +64,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       req.headers.get("x-idempotency-key");
     const skuField = formData.get("sku");
     if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
-      const existing = await CachedProductService.getProductById(skuField.trim());
+      const existing = await CachedProductService.getProductBySku(skuField.trim());
       if (existing) {
-        return NextResponse.json({ ...(existing as Record<string, unknown>), idempotent: true });
+        return NextResponse.json({
+          ...((existing as unknown) as Record<string, unknown>),
+          idempotent: true,
+        });
       }
     }
     

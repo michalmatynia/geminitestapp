@@ -4,12 +4,12 @@ export type AppErrorCode = string;
 export type AppErrorOptions = {
   code: string;
   httpStatus: number;
-  meta?: Record<string, unknown>;
-  expected?: boolean;
-  critical?: boolean;
-  retryable?: boolean;
-  retryAfterMs?: number;
-  cause?: unknown;
+  meta?: Record<string, unknown> | undefined;
+  expected?: boolean | undefined;
+  critical?: boolean | undefined;
+  retryable?: boolean | undefined;
+  retryAfterMs?: number | undefined;
+  cause?: unknown | undefined;
 };
 
 export const AppErrorCodes = {
@@ -51,12 +51,12 @@ export const AppErrorCodes = {
 export class AppError extends Error {
   code: AppErrorCode;
   httpStatus: number;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, unknown> | undefined;
   expected: boolean;
   critical: boolean;
   retryable: boolean;
-  retryAfterMs?: number;
-  override cause?: unknown;
+  retryAfterMs?: number | undefined;
+  override cause?: unknown | undefined;
 
   constructor(message: string, options: AppErrorOptions) {
     super(message);

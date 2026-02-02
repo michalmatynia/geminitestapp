@@ -160,6 +160,12 @@ export default function Menu(): React.ReactNode {
         >
           Canvas
         </Link>
+        <Link
+          href="/admin/ai-paths/trigger-buttons"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Trigger Buttons
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu title="Jobs" icon={<ActivityIcon />} href="/admin/products/jobs">
         <Link

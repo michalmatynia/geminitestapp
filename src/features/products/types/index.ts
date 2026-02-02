@@ -10,7 +10,8 @@ export type {
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto,
-  ProductCategoryDto
+  ProductCategoryDto,
+  ProductCategoryDto as ProductCategory
 } from "@/shared/dtos";
 
 export type {

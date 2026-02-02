@@ -131,7 +131,7 @@ export function CatalogModal({
 
     try {
       await saveMutation.mutateAsync({
-        id: catalog?.id,
+        ...(catalog?.id ? { id: catalog.id } : {}),
         data: {
           name,
           description: form.description.trim(),

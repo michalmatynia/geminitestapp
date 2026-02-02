@@ -1,11 +1,11 @@
 "use client";
 
-import { Input, Label, Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, SearchInput, SelectionBar } from "@/shared/ui";
-import { memo, useCallback, useMemo } from "react";
+import { Input, Label, Button, DropdownMenuItem, SearchInput, SelectionBar } from "@/shared/ui";
+import { memo, useCallback } from "react";
 
 
 
-import { X, CheckSquare, Settings2, Trash2, Store } from "lucide-react";
+import { X, Store } from "lucide-react";
 
 import type { ProductWithImages } from "@/features/products/types";
 import type { RowSelectionState } from "@tanstack/react-table";
@@ -199,9 +199,9 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
       getRowId={getRowId}
       rowSelection={rowSelection}
       setRowSelection={setRowSelection}
-      onSelectAllGlobal={onSelectAllGlobal}
-      loadingGlobal={loadingGlobal}
-      onDeleteSelected={onDeleteSelected}
+      {...(onSelectAllGlobal ? { onSelectAllGlobal } : {})}
+      {...(loadingGlobal !== undefined ? { loadingGlobal } : {})}
+      {...(onDeleteSelected ? { onDeleteSelected } : {})}
       className="border-t pt-3"
       actions={
         <DropdownMenuItem

@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
+import type { Tag } from "@prisma/client";
 import type {
   TagRecord,
   TagCreateInput,
@@ -11,27 +12,42 @@ export const getAllTags = async (
 ): Promise<TagRecord[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
-  return prisma.tag.findMany({
+  const tags = await prisma.tag.findMany({
     where: { notebookId: resolvedNotebookId },
     orderBy: { name: "asc" },
   });
+  return tags.map((tag: Tag) => ({
+    ...tag,
+    createdAt: tag.createdAt.toISOString(),
+    updatedAt: tag.updatedAt.toISOString(),
+  }));
 };
 
 export const getTagById = async (id: string): Promise<TagRecord | null> => {
-  return prisma.tag.findUnique({ where: { id } });
+  const tag = await prisma.tag.findUnique({ where: { id } });
+  return tag ? {
+    ...tag,
+    createdAt: tag.createdAt.toISOString(),
+    updatedAt: tag.updatedAt.toISOString(),
+  } : null;
 };
 
 export const createTag = async (data: TagCreateInput): Promise<TagRecord> => {
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
-  return prisma.tag.create({
+  const tag = await prisma.tag.create({
     data: {
       name: data.name,
       ...(data.color !== undefined && { color: data.color }),
       notebook: { connect: { id: resolvedNotebookId } },
     },
   });
+  return {
+    ...tag,
+    createdAt: tag.createdAt.toISOString(),
+    updatedAt: tag.updatedAt.toISOString(),
+  };
 };
 
 export const updateTag = async (
@@ -39,13 +55,18 @@ export const updateTag = async (
   data: TagUpdateInput
 ): Promise<TagRecord | null> => {
   try {
-    return await prisma.tag.update({
+    const tag = await prisma.tag.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.color !== undefined && { color: data.color }),
       },
     });
+    return {
+      ...tag,
+      createdAt: tag.createdAt.toISOString(),
+      updatedAt: tag.updatedAt.toISOString(),
+    };
   } catch {
     return null;
   }

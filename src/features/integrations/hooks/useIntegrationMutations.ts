@@ -209,7 +209,7 @@ export function useAllegroApiRequest(): UseMutationResult<
         status: payload.status ?? res.status,
         statusText: payload.statusText ?? "",
         data: payload.data,
-        refreshed: payload.refreshed,
+        ...(payload.refreshed !== undefined && { refreshed: payload.refreshed }),
       };
     },
   });

@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
+import type { Notebook } from "@prisma/client";
 import type {
   NotebookRecord,
   NotebookCreateInput,
@@ -29,29 +30,48 @@ export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
     data: { notebookId: notebook.id },
   });
 
-  return notebook;
+  return {
+    ...notebook,
+    createdAt: notebook.createdAt.toISOString(),
+    updatedAt: notebook.updatedAt.toISOString(),
+  };
 };
 
 export const getAllNotebooks = async (): Promise<NotebookRecord[]> => {
   await getOrCreateDefaultNotebook();
-  return prisma.notebook.findMany({ orderBy: { createdAt: "asc" } });
+  const notebooks = await prisma.notebook.findMany({ orderBy: { createdAt: "asc" } });
+  return notebooks.map((nb: Notebook) => ({
+    ...nb,
+    createdAt: nb.createdAt.toISOString(),
+    updatedAt: nb.updatedAt.toISOString(),
+  }));
 };
 
 export const getNotebookById = async (
   id: string
 ): Promise<NotebookRecord | null> => {
-  return prisma.notebook.findUnique({ where: { id } });
+  const notebook = await prisma.notebook.findUnique({ where: { id } });
+  return notebook ? {
+    ...notebook,
+    createdAt: notebook.createdAt.toISOString(),
+    updatedAt: notebook.updatedAt.toISOString(),
+  } : null;
 };
 
 export const createNotebook = async (
   data: NotebookCreateInput
 ): Promise<NotebookRecord> => {
-  return prisma.notebook.create({
+  const notebook = await prisma.notebook.create({
     data: {
       name: data.name,
       ...(data.color !== undefined && { color: data.color }),
     },
   });
+  return {
+    ...notebook,
+    createdAt: notebook.createdAt.toISOString(),
+    updatedAt: notebook.updatedAt.toISOString(),
+  };
 };
 
 export const updateNotebook = async (
@@ -59,7 +79,7 @@ export const updateNotebook = async (
   data: NotebookUpdateInput
 ): Promise<NotebookRecord | null> => {
   try {
-    return await prisma.notebook.update({
+    const notebook = await prisma.notebook.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -70,6 +90,11 @@ export const updateNotebook = async (
             : { defaultTheme: { disconnect: true } })),
       },
     });
+    return {
+      ...notebook,
+      createdAt: notebook.createdAt.toISOString(),
+      updatedAt: notebook.updatedAt.toISOString(),
+    };
   } catch {
     return null;
   }

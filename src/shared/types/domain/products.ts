@@ -54,6 +54,8 @@ export type CatalogRecord = Entity & {
   languageIds: string[];
 };
 
+export type Catalog = CatalogRecord;
+
 export type ProductRecord = Entity & {
   sku: string | null;
   baseProductId: string | null;
@@ -101,6 +103,74 @@ export type ProductWithImages = ProductRecord & {
   categories?: { categoryId: string }[];
   tags?: { tagId: string }[];
 };
+
+export type ProductCategory = Entity & {
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | null;
+  catalogId: string;
+};
+
+export type ProductCategoryWithChildren = ProductCategory & {
+  children: ProductCategoryWithChildren[];
+};
+
+export type ProductTag = {
+  id: string;
+  name: string;
+  color: string | null;
+  catalogId: string;
+};
+
+// DTO re-exports for consistency if needed, but here we define structural types
+export type ProductDto = ProductRecord & { id: string };
+export type ProductTagDto = ProductTag;
+export type CatalogDto = CatalogRecord & { id: string };
+export type PriceGroupDto = PriceGroupRecord & { id: string };
+export type ProductCategoryDto = ProductCategory;
+
+export interface CreateProductDto {
+  name: string;
+  description?: string;
+  price?: number;
+  published?: boolean;
+  categoryId?: string;
+  catalogId: string;
+  tags?: string[];
+}
+
+export interface UpdateProductDto {
+  name?: string;
+  description?: string;
+  price?: number;
+  published?: boolean;
+  categoryId?: string;
+  tags?: string[];
+}
+
+export interface CreateCategoryDto {
+  name: string;
+  description?: string;
+  color?: string;
+  parentId?: string;
+  catalogId: string;
+}
+
+export interface UpdateCategoryDto {
+  name?: string;
+  description?: string;
+  color?: string;
+  parentId?: string;
+}
+
+export interface CreateProductDraftInput extends Partial<CreateProductDto> {
+  sku: string;
+}
+
+export interface UpdateProductDraftInput extends Partial<UpdateProductDto> {
+  sku?: string;
+}
 
 export type ProductAiJobType = 'description' | 'translation' | 'tags' | 'categories' | 'parameters';
 

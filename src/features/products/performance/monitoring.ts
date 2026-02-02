@@ -2,7 +2,7 @@ type PerformanceMetric = {
   name: string;
   value: number;
   timestamp: number;
-  tags?: Record<string, string>;
+  tags?: Record<string, string> | undefined;
 };
 
 type CacheMetrics = {
@@ -82,10 +82,10 @@ export class PerformanceMonitor {
     return {
       count: values.length,
       avg: sum / values.length,
-      min: values[0],
-      max: values[values.length - 1],
-      p95: values[Math.floor(values.length * 0.95)],
-      p99: values[Math.floor(values.length * 0.99)]
+      min: values[0] ?? 0,
+      max: values[values.length - 1] ?? 0,
+      p95: values[Math.floor(values.length * 0.95)] ?? 0,
+      p99: values[Math.floor(values.length * 0.99)] ?? 0
     };
   }
 

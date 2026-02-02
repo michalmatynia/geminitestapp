@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { NoteForm } from "./NoteForm";
 import type { CreateNoteModalProps } from "@/features/notesapp/types/notes-ui";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 export function CreateNoteModal({
   isOpen,
@@ -23,7 +24,7 @@ export function CreateNoteModal({
   if (!isOpen) return null;
 
   const header = (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-4">
         <Button
           onClick={(): void => {
@@ -37,13 +38,16 @@ export function CreateNoteModal({
         </Button>
         <h2 className="text-2xl font-bold text-white">Create Note</h2>
       </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
+      <div className="flex items-center gap-2">
+        <TriggerButtonBar location="note_modal" entityType="note" />
+        <Button
+          type="button"
+          onClick={onClose}
+          className="min-w-[100px] border border-white/20 hover:border-white/40"
+        >
+          Close
+        </Button>
+      </div>
     </div>
   );
 

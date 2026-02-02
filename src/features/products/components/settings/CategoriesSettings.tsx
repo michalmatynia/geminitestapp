@@ -376,7 +376,10 @@ export function CategoriesSettings({
     try {
       await saveCategoryMutation.mutateAsync({
         id: draggedCatId,
-        data: { parentId: targetId, catalogId: selectedCatalogId || undefined },
+        data: {
+          parentId: targetId,
+          ...(selectedCatalogId ? { catalogId: selectedCatalogId } : {})
+        },
       });
 
       toast("Category moved successfully", { variant: "success" });

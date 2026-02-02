@@ -39,6 +39,10 @@ export function useProducts(
     queryKey: ["products", filters],
     queryFn: () => getProducts(filters),
     enabled,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    networkMode: "always",
   });
 }
 
@@ -52,6 +56,10 @@ export function useProductsCount(
     queryKey: ["products-count", filters],
     queryFn: () => countProducts(filters),
     enabled,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    networkMode: "always",
   });
 }
 
@@ -215,6 +223,36 @@ export function useProductData({
     const total = countQuery.data || 0;
     return Math.ceil(total / pageSize);
   }, [countQuery.data, pageSize]);
+
+  // Keep pagination valid when filters change.
+  // Without this, switching catalog/filter while being on a high page can show an empty table.
+  const previousFiltersRef = useRef<string>("");
+  useEffect(() => {
+    const currentFiltersSignature = JSON.stringify({
+      search,
+      sku,
+      minPrice,
+      maxPrice,
+      startDate,
+      endDate,
+      catalogFilter,
+      pageSize,
+    });
+    if (
+      previousFiltersRef.current &&
+      previousFiltersRef.current !== currentFiltersSignature
+    ) {
+      setPage(1);
+    }
+    previousFiltersRef.current = currentFiltersSignature;
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
+
+  // Clamp page when current page no longer exists after count change.
+  useEffect(() => {
+    if (page > 1 && totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ["products"] });

@@ -380,7 +380,10 @@ export function AdminProductsPage(): React.JSX.Element {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Force fresh product queries on mount to avoid showing stale persisted caches.
+    void queryClient.invalidateQueries({ queryKey: ["products"] });
+    void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+  }, [queryClient]);
 
   useEffect(() => {
     if (!lastEditedId) return;

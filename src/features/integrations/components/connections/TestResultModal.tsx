@@ -33,12 +33,11 @@ export function TestResultModal({
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
   const footer = (
-    <Button
-      variant="outline"
-      onClick={() => navigator.clipboard.writeText(copyText)}
-      className="border border-white/20 hover:border-white/40"
-    >
-      Copy
+          <Button
+            variant="outline"
+            onClick={() => { void navigator.clipboard.writeText(copyText); }}
+            className="border border-white/20 hover:border-white/40"
+          >      Copy
     </Button>
   );
 

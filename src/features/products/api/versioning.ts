@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import type { ProductWithImages } from '@/shared/types/domain/products';
 
 export type ApiVersion = 'v1' | 'v2' | 'v3';
 
@@ -42,16 +43,16 @@ export class ApiVersionManager {
     return this.DEPRECATED_VERSIONS.includes(version);
   }
 
-  static getVersionMeta(version: ApiVersion) {
-    const meta: any = {};
-    
+  static getVersionMeta(version: ApiVersion): VersionedResponse<unknown>['meta'] {
     if (this.isVersionDeprecated(version)) {
-      meta.deprecated = true;
-      meta.deprecationDate = this.getDeprecationDate(version);
-      meta.migrationGuide = `/docs/migration/${version}-to-${this.CURRENT_VERSION}`;
+      return {
+        deprecated: true,
+        deprecationDate: this.getDeprecationDate(version),
+        migrationGuide: `/docs/migration/${version}-to-${this.CURRENT_VERSION}`,
+      };
     }
 
-    return meta;
+    return undefined;
   }
 
   private static extractVersionFromPath(url: string): ApiVersion | null {
@@ -86,7 +87,10 @@ export class ApiVersionManager {
 
 // Version-specific transformers
 export class ProductTransformer {
-  static transformForVersion<T>(data: T, version: ApiVersion): any {
+  static transformForVersion<T extends Partial<ProductWithImages> & Record<string, unknown>>(
+    data: T,
+    version: ApiVersion
+  ): unknown {
     switch (version) {
       case 'v1':
         return this.transformToV1(data);
@@ -99,7 +103,7 @@ export class ProductTransformer {
     }
   }
 
-  private static transformToV1(data: any): any {
+  private static transformToV1(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
     // V1 format - legacy structure
     return {
       id: data.id,
@@ -114,7 +118,7 @@ export class ProductTransformer {
     };
   }
 
-  private static transformToV2(data: any): any {
+  private static transformToV2(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
     // V2 format - current structure with multilingual support
     return {
       id: data.id,
@@ -162,7 +166,7 @@ export class ProductTransformer {
     };
   }
 
-  private static transformToV3(data: any): any {
+  private static transformToV3(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
     // V3 format - future structure with enhanced features
     return {
       ...this.transformToV2(data),
@@ -213,9 +217,9 @@ export function createVersionedResponse<T>(
 
 // Version middleware
 export function withApiVersioning(
-  handler: (req: NextRequest, version: ApiVersion, ...args: any[]) => Promise<Response>
+  handler: (req: NextRequest, version: ApiVersion, ...args: unknown[]) => Promise<Response>
 ) {
-  return async (req: NextRequest, ...args: any[]): Promise<Response> => {
+  return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     const version = ApiVersionManager.extractVersion(req);
 
     // Check if version is supported

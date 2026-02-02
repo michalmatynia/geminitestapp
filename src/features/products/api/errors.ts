@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 
 export type ErrorCode = 
   | 'VALIDATION_ERROR'
@@ -19,7 +18,7 @@ export type ErrorDetail = {
   field?: string;
   message: string;
   code: string;
-  value?: any;
+  value?: unknown;
 };
 
 export type ApiError = {
@@ -126,12 +125,12 @@ export class StandardErrors {
       .withDocumentation('/docs/permissions');
   }
 
-  static rateLimited(retryAfter: number = 60): ApiErrorBuilder {
+  static rateLimited(_retryAfter: number = 60): ApiErrorBuilder {
     return new ApiErrorBuilder('RATE_LIMITED', 'Rate limit exceeded')
       .withDocumentation('/docs/rate-limits');
   }
 
-  static duplicateResource(field: string, value: any): ApiErrorBuilder {
+  static duplicateResource(field: string, value: unknown): ApiErrorBuilder {
     return new ApiErrorBuilder('DUPLICATE_RESOURCE', 'Resource already exists')
       .withDetails([{
         field,
@@ -247,9 +246,9 @@ export const ErrorStatusCodes: Record<ErrorCode, number> = {
 
 // Middleware for consistent error handling
 export function withErrorHandling(
-  handler: (...args: any[]) => Promise<Response>
+  handler: (...args: unknown[]) => Promise<Response>
 ) {
-  return async (...args: any[]): Promise<Response> => {
+  return async (...args: unknown[]): Promise<Response> => {
     try {
       return await handler(...args);
     } catch (error) {

@@ -7,6 +7,7 @@ import {
   Package,
 } from "lucide-react";
 import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 
 import type { Catalog } from "@/features/products/types";
@@ -108,7 +109,10 @@ export const ProductListHeader = memo(function ProductListHeader({
             })}
           </div>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <TriggerButtonBar location="product_list" entityType="product" />
+        </div>
       </div>
 
       {/* Controls section */}
@@ -116,9 +120,9 @@ export const ProductListHeader = memo(function ProductListHeader({
         <Pagination
           page={page}
           totalPages={totalPages}
-          setPage={setPage}
+          onPageChange={setPage}
           pageSize={pageSize}
-          setPageSize={setPageSize}
+          onPageSizeChange={setPageSize}
           pageSizeOptions={[12, 24, 48, 96]}
           showPageSize
         />

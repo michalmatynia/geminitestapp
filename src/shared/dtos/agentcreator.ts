@@ -14,7 +14,7 @@ export interface AgentDto extends Entity {
   enabled: boolean;
 }
 
-export interface AgentRunDto extends BaseEntity {
+export interface AgentRunDto extends Entity {
   agentId: string;
   status: Status;
   input: Record<string, unknown>;

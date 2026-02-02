@@ -6,7 +6,7 @@ import type {
   ThemeCreateInput,
   ThemeUpdateInput,
 } from "@/shared/types/notes";
-import { Prisma } from "@prisma/client";
+import { Prisma, type Theme } from "@prisma/client";
 import { getOrCreateDefaultNotebook } from "./notebook-impl";
 
 export const getAllThemes = async (
@@ -14,14 +14,24 @@ export const getAllThemes = async (
 ): Promise<ThemeRecord[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
-  return prisma.theme.findMany({
+  const themes = await prisma.theme.findMany({
     where: { notebookId: resolvedNotebookId },
     orderBy: { name: "asc" },
   });
+  return themes.map((theme: Theme) => ({
+    ...theme,
+    createdAt: theme.createdAt.toISOString(),
+    updatedAt: theme.updatedAt.toISOString(),
+  }));
 };
 
 export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
-  return prisma.theme.findUnique({ where: { id } });
+  const theme = await prisma.theme.findUnique({ where: { id } });
+  return theme ? {
+    ...theme,
+    createdAt: theme.createdAt.toISOString(),
+    updatedAt: theme.updatedAt.toISOString(),
+  } : null;
 };
 
 export const createTheme = async (
@@ -63,9 +73,14 @@ export const createTheme = async (
     }),
   };
 
-  return prisma.theme.create({
+  const theme = await prisma.theme.create({
     data: createData,
   });
+  return {
+    ...theme,
+    createdAt: theme.createdAt.toISOString(),
+    updatedAt: theme.updatedAt.toISOString(),
+  };
 };
 
 export const updateTheme = async (
@@ -108,10 +123,15 @@ export const updateTheme = async (
         relatedNoteTextColor: data.relatedNoteTextColor,
       }),
     };
-    return await prisma.theme.update({
+    const theme = await prisma.theme.update({
       where: { id },
       data: updateData,
     });
+    return {
+      ...theme,
+      createdAt: theme.createdAt.toISOString(),
+      updatedAt: theme.updatedAt.toISOString(),
+    };
   } catch {
     return null;
   }

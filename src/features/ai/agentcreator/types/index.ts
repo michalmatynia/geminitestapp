@@ -28,6 +28,6 @@ export type AgentPersona = {
   name: string;
   description?: string | null;
   settings: AgentPersonaSettings;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };

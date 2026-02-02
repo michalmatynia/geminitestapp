@@ -32,7 +32,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const languagesReady = filteredLanguages.length > 0;
 
   const { generate, generating } = useDescriptionGeneration({
-    productId: product?.id,
+    ...(product?.id ? { productId: product.id } : {}),
     onSuccess: (description: string) => {
       setValue("description_en", description);
     },

@@ -4,7 +4,7 @@ import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, ThemeRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
 import { useQuery, useQueries, UseQueryResult } from "@tanstack/react-query";
 
@@ -237,7 +237,7 @@ export function NoteForm({
   }, [note?.id, note?.content, resetHistory]);
 
   // Use provided theme or fall back to dark mode theme
-  const effectiveTheme = folderTheme ?? FALLBACK_THEME;
+  const effectiveTheme = (folderTheme ?? FALLBACK_THEME) as ThemeRecord;
   const hasCustomColor: boolean = color !== "#ffffff";
   const contentBackground: string = hasCustomColor
     ? color

@@ -9,6 +9,7 @@ import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";
 import type { NoteListViewProps } from "@/features/notesapp/types/notes-ui";
 import type { NoteWithRelations, ThemeRecord } from "@/shared/types/notes";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
 
@@ -102,7 +103,8 @@ export function NoteListView({
               triggerClassName="h-8 w-32 text-xs bg-gray-800 border-border text-gray-300"
             />
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <TriggerButtonBar location="note_list" entityType="note" />
             <Pagination
               page={page}
               totalPages={totalPages}

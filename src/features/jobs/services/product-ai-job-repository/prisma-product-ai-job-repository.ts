@@ -18,6 +18,7 @@ const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({
   result: (job.result as Record<string, unknown>) ?? null,
   errorMessage: job.errorMessage ?? null,
   createdAt: job.createdAt,
+  updatedAt: job.updatedAt,
   startedAt: job.startedAt ?? null,
   finishedAt: job.finishedAt ?? null,
 });

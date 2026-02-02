@@ -512,9 +512,9 @@ export function useNoteData({
   const filters = useMemo(() => ({
     search: searchQuery,
     searchScope,
-    isPinned: filterPinned,
-    isArchived: filterArchived,
-    isFavorite: filterFavorite,
+    ...(filterPinned !== undefined && { isPinned: filterPinned }),
+    ...(filterArchived !== undefined && { isArchived: filterArchived }),
+    ...(filterFavorite !== undefined && { isFavorite: filterFavorite }),
     tagIds: filterTagIds,
     categoryIds: selectedFolderId ? [selectedFolderId] : [],
     notebookId: selectedNotebookId,

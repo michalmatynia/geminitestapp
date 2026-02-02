@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState, useRef } from "react"
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
 
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
-import type { ProductCategory, Catalog } from "@/features/products";
+import type { ProductCategoryDto, Catalog } from "@/features/products";
 
 import { useCatalogs } from "@/features/products/hooks/useCatalogQueries";
 import { useProductCategories } from "@/features/products/hooks/useCategoryQueries";
@@ -241,7 +241,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               disabled={internalCategoriesLoading || !selectedCatalogId}
             >
               <option value="">— Not mapped —</option>
-              {internalCategories.map((ic: ProductCategory) => (
+              {internalCategories.map((ic: ProductCategoryDto) => (
                 <option key={ic.id} value={ic.id}>
                   {ic.name}
                 </option>

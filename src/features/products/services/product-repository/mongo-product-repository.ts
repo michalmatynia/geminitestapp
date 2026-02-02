@@ -87,6 +87,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {
   const filter: Filter<ProductDocument> = {};
+  const andConditions: Filter<ProductDocument>[] = [];
 
   if (filters.sku) {
     filter.sku = { $regex: filters.sku, $options: "i" };
@@ -97,17 +98,19 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
     // If a specific language is selected, only search in that language's name field
     if (filters.searchLanguage) {
       // searchLanguage is like "name_en", "name_pl", "name_de"
-      filter.$or = [{ [filters.searchLanguage]: regex }];
+      andConditions.push({ $or: [{ [filters.searchLanguage]: regex }] });
     } else {
       // Search all language fields
-      filter.$or = [
-        { name_en: regex },
-        { name_pl: regex },
-        { name_de: regex },
-        { description_en: regex },
-        { description_pl: regex },
-        { description_de: regex },
-      ];
+      andConditions.push({
+        $or: [
+          { name_en: regex },
+          { name_pl: regex },
+          { name_de: regex },
+          { description_en: regex },
+          { description_pl: regex },
+          { description_de: regex },
+        ],
+      });
     }
   }
 
@@ -133,10 +136,41 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 
   if (filters.catalogId) {
     if (filters.catalogId === "unassigned") {
-      filter.catalogs = { $size: 0 };
+      // Backward compatibility:
+      // older documents may store catalog relation in different fields/shapes.
+      andConditions.push({
+        $or: [
+          { catalogs: { $exists: false } },
+          { catalogs: { $size: 0 } },
+          { catalogIds: { $exists: false } },
+          { catalogIds: { $size: 0 } },
+          { catalogId: { $exists: false } },
+          { catalogId: null as unknown as string },
+          { catalogId: "" },
+        ],
+      });
     } else {
-      filter.catalogs = { $elemMatch: { catalogId: filters.catalogId } };
+      // Support multiple historical schemas:
+      // - catalogs: [{ catalogId: string, ... }]
+      // - catalogs: [{ id: string, ... }]
+      // - catalogs: string[]
+      // - catalogIds: string[]
+      // - catalogId: string
+      andConditions.push({
+        $or: [
+          { catalogs: { $elemMatch: { catalogId: filters.catalogId } } },
+          { catalogs: { $elemMatch: { id: filters.catalogId } } },
+          { catalogIds: filters.catalogId },
+          { catalogId: filters.catalogId },
+        ],
+      });
     }
+  }
+
+  if (andConditions.length === 1) {
+    Object.assign(filter, andConditions[0]!);
+  } else if (andConditions.length > 1) {
+    filter.$and = andConditions;
   }
 
   return filter;

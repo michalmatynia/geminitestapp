@@ -100,12 +100,12 @@ export function useSaveCatalogMutation(): UseMutationResult<Catalog, Error, { id
   });
 }
 
-export function useSaveCategoryMutation(): UseMutationResult<ProductCategory, Error, { id?: string; data: Partial<ProductCategory> }> {
+export function useSaveCategoryMutation(): UseMutationResult<ProductCategory, Error, { id: string | undefined; data: Partial<ProductCategory> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<ProductCategory> }) =>
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
       id ? api.updateCategory(id, data) : api.createCategory(data),
-    onSuccess: (_: ProductCategory, variables: { id?: string; data: Partial<ProductCategory> }) => {
+    onSuccess: (_: ProductCategory, variables: { id: string | undefined; data: Partial<ProductCategory> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.categories(catalogId) });
     },
@@ -122,12 +122,12 @@ export function useDeleteCategoryMutation(): UseMutationResult<void, Error, { id
   });
 }
 
-export function useSaveTagMutation(): UseMutationResult<ProductTag, Error, { id?: string; data: Partial<ProductTag> }> {
+export function useSaveTagMutation(): UseMutationResult<ProductTag, Error, { id: string | undefined; data: Partial<ProductTag> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<ProductTag> }) =>
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
       id ? api.updateTag(id, data) : api.createTag(data),
-    onSuccess: (_: ProductTag, variables: { id?: string; data: Partial<ProductTag> }) => {
+    onSuccess: (_: ProductTag, variables: { id: string | undefined; data: Partial<ProductTag> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.tags(catalogId) });
     },
@@ -144,12 +144,12 @@ export function useDeleteTagMutation(): UseMutationResult<void, Error, { id: str
   });
 }
 
-export function useSaveParameterMutation(): UseMutationResult<ProductParameter, Error, { id?: string; data: Partial<ProductParameter> }> {
+export function useSaveParameterMutation(): UseMutationResult<ProductParameter, Error, { id: string | undefined; data: Partial<ProductParameter> }> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id?: string; data: Partial<ProductParameter> }) =>
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
       id ? api.updateParameter(id, data) : api.createParameter(data),
-    onSuccess: (_: ProductParameter, variables: { id?: string; data: Partial<ProductParameter> }) => {
+    onSuccess: (_: ProductParameter, variables: { id: string | undefined; data: Partial<ProductParameter> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void queryClient.invalidateQueries({ queryKey: productSettingsKeys.parameters(catalogId) });
     },

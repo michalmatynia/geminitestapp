@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-// import { imageUrlGenerator, type ImageFormat, type ImageSize } from '../image-optimizer';
-
-// Temporary types until image-optimizer is implemented
-type ImageFormat = 'webp' | 'jpeg' | 'png';
-type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+import { imageUrlGenerator, type ImageFormat, type ImageSize } from './index';
 
 type OptimizedImageProps = {
   imageId: string;
@@ -28,11 +24,11 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
   const [format, setFormat] = useState<ImageFormat>('webp');
   const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [_hasError, setHasError] = useState(false);
 
   useEffect(() => {
     // Detect best format based on browser support
-    const detectFormat = () => {
+    const detectFormat = (): ImageFormat => {
       if (typeof window === 'undefined') return 'webp';
       
       const canvas = document.createElement('canvas');
@@ -72,10 +68,11 @@ export function OptimizedImage({
   };
 
   const responsive = imageUrlGenerator.generateResponsive(imageId, format);
+  const src = size !== 'medium' ? imageUrlGenerator.generate(imageId, size, format) : responsive.src;
 
   return (
     <img
-      src={responsive.src}
+      src={src}
       srcSet={responsive.srcSet}
       sizes={responsive.sizes}
       alt={alt}
@@ -98,24 +95,21 @@ type ProductImageGalleryProps = {
 
 export function ProductImageGallery({ images, className }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-
-  const handleImageLoad = (index: number) => {
-    setLoadedImages(prev => new Set([...prev, index]));
-  };
 
   if (!images.length) return null;
+
+  const currentImage = images[selectedIndex];
+  if (!currentImage) return null;
 
   return (
     <div className={className}>
       {/* Main image */}
       <div className="main-image">
         <OptimizedImage
-          imageId={images[selectedIndex].id}
-          alt={images[selectedIndex].alt}
+          imageId={currentImage.id}
+          alt={currentImage.alt}
           size="large"
           priority={selectedIndex === 0}
-          onLoad={() => handleImageLoad(selectedIndex)}
         />
       </div>
 
@@ -132,7 +126,6 @@ export function ProductImageGallery({ images, className }: ProductImageGalleryPr
                 imageId={image.id}
                 alt={image.alt}
                 size="thumbnail"
-                onLoad={() => handleImageLoad(index)}
               />
             </button>
           ))}

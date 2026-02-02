@@ -144,8 +144,8 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           color: r.internalCategory.color,
           parentId: r.internalCategory.parentId,
           catalogId: r.internalCategory.catalogId,
-          createdAt: r.internalCategory.createdAt,
-          updatedAt: r.internalCategory.updatedAt,
+          createdAt: r.internalCategory.createdAt.toISOString(),
+          updatedAt: r.internalCategory.updatedAt.toISOString(),
         },
       }));
     },

@@ -1,11 +1,11 @@
 // Query-related hooks
-export { useInfiniteQuery } from './useInfiniteQuery';
+export { useInfiniteQueryWithPagination, useFlattenedInfiniteData } from './useInfiniteQuery';
 export { useQueryPersistence } from './useQueryPersistence';
-export { useStreamingQueries } from './useStreamingQueries';
+export { useStreamingQuery, useWebSocketQuery, useSmartPolling } from './useStreamingQueries';
 export { useQueryDiagnostics } from './useQueryDiagnostics';
-export { useQueryErrorHandling } from './useQueryErrorHandling';
-export { useAdvancedQueries } from './useAdvancedQueries';
-export { useSearchQueries } from './useSearchQueries';
+export { useGlobalQueryErrorHandler, useResilientQuery, useCircuitBreakerQuery } from './useQueryErrorHandling';
+export { useDependentQueries, useParallelQueries, useConditionalQuery } from './useAdvancedQueries';
+export { useSearchQuery, useAutocomplete, usePaginatedSearch, useSearchSuggestions } from './useSearchQueries';
 export { useRealtimeQuery } from './useRealtimeQuery';
 export { useQueryLifecycle } from './useQueryLifecycle';
 export { useQueryMiddleware } from './useQueryMiddleware';

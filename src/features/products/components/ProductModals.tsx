@@ -16,6 +16,7 @@ import {
 } from "@/features/products/context/ProductFormContext";
 import type { ProductWithImages } from "@/features/products/types";
 import type { ProductDraft } from "@/features/products/types/drafts";
+import { TriggerButtonBar } from "@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar";
 
 interface ProductModalsProps {
   isCreateOpen: boolean;
@@ -186,11 +187,21 @@ function ProductFormModal({
   title: string;
   submitButtonText: string;
 }): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading } =
+  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product } =
     useProductFormContext();
 
+  const getEntityJson = (): Record<string, unknown> => {
+    const values = getValues() as unknown as Record<string, unknown>;
+    const base = (product ?? {}) as unknown as Record<string, unknown>;
+    return {
+      ...base,
+      ...values,
+      ...(product?.id ? { id: product.id } : {}),
+    };
+  };
+
   const header = (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-4">
         <Button
           onClick={() => void handleSubmit()}
@@ -201,13 +212,21 @@ function ProductFormModal({
         </Button>
         <h2 className="text-2xl font-bold text-white">{title}</h2>
       </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
+      <div className="flex items-center gap-2">
+        <TriggerButtonBar
+          location="product_modal"
+          entityType="product"
+          entityId={product?.id ?? null}
+          getEntityJson={getEntityJson}
+        />
+        <Button
+          type="button"
+          onClick={onClose}
+          className="min-w-[100px] border border-white/20 hover:border-white/40"
+        >
+          Close
+        </Button>
+      </div>
     </div>
   );
 

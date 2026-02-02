@@ -30,8 +30,8 @@ export function useDependentQueries<T1, T2, T3>(
   });
 
   const third = useQuery({
-    queryKey: thirdQuery ? [...thirdQuery.queryKey, second.data] : [],
-    queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : undefined,
+    queryKey: thirdQuery ? [...thirdQuery.queryKey, second.data] : ["__empty_third__"],
+    queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as any),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
   });
 

@@ -90,14 +90,14 @@ export class RateLimiter {
     const realIP = req.headers.get('x-real-ip');
     
     if (forwarded) {
-      return forwarded.split(',')[0].trim();
+      return forwarded.split(',')[0]?.trim() || 'unknown';
     }
     
     if (realIP) {
       return realIP;
     }
     
-    return req.ip || 'unknown';
+    return (req as any).ip || 'unknown';
   }
 
   cleanup(): void {

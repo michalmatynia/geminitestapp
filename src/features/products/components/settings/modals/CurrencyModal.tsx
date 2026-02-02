@@ -7,7 +7,6 @@ import {
   useToast,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
-import { countryCodeOptions } from "@/shared/constants/internationalization";
 import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 interface CurrencyModalProps {
@@ -39,7 +38,6 @@ export function CurrencyModal({
         symbol: currency.symbol ?? "",
       });
     } else {
-      const def = countryCodeOptions[0];
       setForm({ code: "PLN", name: "Polish Zloty", symbol: "zł" });
     }
   }, [currency]);

@@ -292,41 +292,39 @@ function DatabasePreviewPageInner(): React.JSX.Element {
                 className="scale-90 origin-right"
               />
             </div>
-          </div>
-// ...
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">
-              Raw Backup List
-            </h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(): void => { void navigator.clipboard.writeText(content); }}
-              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-            >
-              Copy
-            </Button>
-          </div>
-
-          <p className="mt-3 text-xs text-gray-500">
-            Rows are extracted from a temporary restore of the backup.
-          </p>
-        </SectionPanel>
-
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">
-              Raw Backup List
-            </h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigator.clipboard.writeText(content)}
-              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-            >
-              Copy
-            </Button>
-          </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-white">
+                          Raw Backup List
+                        </h2>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(): void => { void navigator.clipboard.writeText(content); }}
+                          className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+          
+                      <p className="mt-3 text-xs text-gray-500">
+                        Rows are extracted from a temporary restore of the backup.
+                      </p>
+                    </SectionPanel>
+          
+                    <div className="rounded-lg border border-border bg-card p-5">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-white">
+                          Raw Backup List
+                        </h2>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { void navigator.clipboard.writeText(content); }}
+                          className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
+                        >
+                          Copy
+                        </Button>          </div>
           <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}
           </pre>

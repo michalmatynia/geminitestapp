@@ -1,10 +1,10 @@
 "use client";
 
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SectionPanel, SharedModal, EmptyState, ConfirmDialog, SearchInput } from "@/shared/ui";
-import { Suspense, useMemo, useState, useCallback, useSyncExternalStore } from "react";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SectionPanel, SharedModal, ConfirmDialog, SearchInput } from "@/shared/ui";
+import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
+import { RefreshCcw, Trash2 } from "lucide-react";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";
@@ -14,6 +14,7 @@ import {
   useDeleteProductAiJobMutation, 
   useClearProductAiJobsMutation 
 } from "@/features/jobs/hooks/useJobMutations";
+import { JobTable, type JobRowData } from "./JobTable";
 
 type JobMeta = {
   payload: Record<string, unknown> | null;
@@ -133,16 +134,16 @@ export default function ProductAiJobsPanel({
 
     return {
       payload,
-      graph,
-      context,
-      entityType,
-      entityId,
-      pathName,
-      pathId,
-      nodeTitle,
-      source,
-      displayEntity,
-      subEntity,
+      ...(graph !== undefined && { graph }),
+      ...(context !== undefined && { context }),
+      ...(entityType !== undefined && { entityType }),
+      ...(entityId !== undefined && { entityId }),
+      ...(pathName !== undefined && { pathName }),
+      ...(pathId !== undefined && { pathId }),
+      ...(nodeTitle !== undefined && { nodeTitle }),
+      ...(source !== undefined && { source }),
+      displayEntity: displayEntity ?? "",
+      ...(subEntity !== undefined && { subEntity }),
     };
   };
 
@@ -206,15 +207,6 @@ export default function ProductAiJobsPanel({
     ].some((val: string | null | undefined) => val && String(val).toLowerCase().includes(searchStr));
   });
 
-  const formatTime = useCallback(
-    (value?: string | Date | null): string => {
-      if (!value) return "—";
-      const date = new Date(value);
-      return isMounted ? date.toLocaleTimeString() : date.toISOString().slice(11, 19);
-    },
-    [isMounted],
-  );
-
   if (!isMounted) {
     return (
       <div className="container mx-auto py-10">
@@ -256,103 +248,31 @@ export default function ProductAiJobsPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <table className="w-full text-left text-sm text-gray-300">
-          <thead className="bg-gray-900 text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-4 py-3">Entity</th>
-              <th className="px-4 py-3">Type / ID</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Timing</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredJobs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-10">
-                  <EmptyState
-                    title={isLoading ? "Loading jobs..." : "No jobs found"}
-                    description={isLoading ? "Please wait while we fetch the job list." : "No AI jobs match your search criteria or none have been created yet."}
-                    className="border-none p-0"
-                  />
-                </td>
-              </tr>
-            ) : (
-              filteredJobs.map((job: ProductAiJob) => {
-                const meta = getJobMeta(job);
-                return (
-                  <tr key={job.id} className="hover:bg-card/50">
-                  <td className="px-4 py-4">
-                    <div className="font-medium text-white">{meta.displayEntity}</div>
-                    {meta.subEntity && (
-                      <div className="text-xs text-gray-500">{meta.subEntity}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="text-xs font-mono">{job.type}</div>
-                    <div className="text-[10px] text-gray-600">{job.id}</div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
-                      ${job.status === "completed" ? "bg-green-500/10 text-green-400" :
-                        job.status === "failed" ? "bg-red-500/10 text-red-400" :
-                        job.status === "running" ? "bg-blue-500/10 text-blue-400" :
-                        job.status === "cancelled" ? "bg-gray-500/10 text-gray-400" :
-                        "bg-yellow-500/10 text-yellow-400"}`}>
-                      {job.status.toUpperCase()}
-                    </span>
-                    {job.errorMessage && (
-                      <div className="mt-1 max-w-[200px] truncate text-[10px] text-red-400" title={job.errorMessage}>
-                        {job.errorMessage}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-xs">
-                    <div>Created: {formatTime(job.createdAt)}</div>
-                    {job.finishedAt && (
-                      <div className="text-gray-500">Finished: {formatTime(job.finishedAt)}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                        onClick={(): void => setSelectedJob(job)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {(job.status === "pending" || job.status === "running") && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-yellow-500 hover:text-yellow-400"
-                          onClick={(): void => { void cancelJob(job.id); }}
-                          disabled={actionMutation.isPending && actionMutation.variables?.jobId === job.id}
-                        >
-                          {actionMutation.isPending && actionMutation.variables?.jobId === job.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-400"
-                        onClick={(): void => { void deleteJob(job.id); }}
-                        disabled={deleteMutation.isPending && deleteMutation.variables === job.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <JobTable
+        data={filteredJobs.map((job: ProductAiJob): JobRowData => {
+          const meta = getJobMeta(job);
+          return {
+            id: job.id,
+            type: job.type,
+            status: job.status as JobRowData["status"],
+            entityName: meta.displayEntity,
+            entitySubText: meta.subEntity,
+            productId: job.productId || undefined,
+            createdAt: job.createdAt,
+            finishedAt: job.finishedAt,
+            errorMessage: job.errorMessage,
+          };
+        })}
+        isLoading={isLoading}
+        onViewDetails={(id: string): void => {
+          const job = filteredJobs.find((j: ProductAiJob) => j.id === id);
+          if (job) setSelectedJob(job);
+        }}
+        {...(cancelJob ? { onCancel: (id: string): void => { void cancelJob(id); } } : {})}
+        {...(deleteJob ? { onDelete: (id: string): void => { void deleteJob(id); } } : {})}
+        {...(actionMutation.isPending ? { isCancelling: (id: string): boolean => actionMutation.isPending && actionMutation.variables?.jobId === id } : {})}
+        {...(deleteMutation.isPending ? { isDeleting: (id: string): boolean => deleteMutation.isPending && deleteMutation.variables === id } : {})}
+      />
     </>
   );
 
@@ -402,8 +322,8 @@ export default function ProductAiJobsPanel({
 
       <ConfirmDialog
         open={isClearCompletedConfirmOpen}
-        onOpenChange={setIsClearCompletedConfirmOpen}
-        onConfirm={handleClearCompleted}
+        onOpenChange={(open: boolean): void => setIsClearCompletedConfirmOpen(open)}
+        onConfirm={(): void => { void handleClearCompleted(); }}
         title="Clear Completed Jobs"
         description="Are you sure you want to delete all completed, failed, and cancelled jobs? This action cannot be undone."
         confirmText="Clear Finished"
@@ -412,8 +332,8 @@ export default function ProductAiJobsPanel({
 
       <ConfirmDialog
         open={isClearAllConfirmOpen}
-        onOpenChange={setIsClearAllConfirmOpen}
-        onConfirm={handleClearAllJobs}
+        onOpenChange={(open: boolean): void => setIsClearAllConfirmOpen(open)}
+        onConfirm={(): void => { void handleClearAllJobs(); }}
         title="Delete All AI Jobs"
         description="Are you sure you want to delete ALL AI jobs, including those currently running or pending? This action cannot be undone."
         confirmText="Delete All"

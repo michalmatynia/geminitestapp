@@ -15,6 +15,7 @@ import type {
   AiNode,
   Edge,
   NodeConfig,
+  NodeDefinition,
   ParserSampleState,
   PathConfig,
   PathDebugSnapshot,
@@ -37,12 +38,16 @@ import {
   palette,
   safeStringify,
   sanitizeEdges,
+  TRIGGER_INPUT_PORTS,
+  TRIGGER_OUTPUT_PORTS,
   triggers,
+  triggerButtonsApi,
 } from "@/features/ai/ai-paths/lib";
 import {
   parseRuntimeState,
   serializePathConfigs,
 } from "../AiPathsSettingsUtils";
+import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
 type AiPathsSettingsStateOptions = {
   activeTab: "canvas" | "paths" | "docs" | "queue";
@@ -109,6 +114,42 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
+
+  const triggerButtonsQuery = useQuery({
+    queryKey: ["ai-paths", "trigger-buttons"],
+    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
+      const result = await triggerButtonsApi.list();
+      if (!result.ok) return [];
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    staleTime: 10_000,
+  });
+
+  const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
+    const buttons = triggerButtonsQuery.data ?? [];
+    if (buttons.length === 0) return palette;
+
+    const usedTitles = new Set<string>(palette.map((node) => node.title));
+    const derived: NodeDefinition[] = [];
+
+    buttons.forEach((button: AiTriggerButtonRecord) => {
+      const baseTitle = `Trigger: ${button.name}`;
+      const title = usedTitles.has(baseTitle)
+        ? `${baseTitle} (${button.id.slice(0, 6)})`
+        : baseTitle;
+      usedTitles.add(title);
+      derived.push({
+        type: "trigger",
+        title,
+        description: `User trigger button (${button.id}).`,
+        inputs: TRIGGER_INPUT_PORTS,
+        outputs: TRIGGER_OUTPUT_PORTS,
+        config: { trigger: { event: button.id } },
+      });
+    });
+
+    return [...palette, ...derived];
+  }, [triggerButtonsQuery.data]);
 
   // Parser sample fetching mutation
   const fetchParserSampleMutation = useMutation({
@@ -1035,7 +1076,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     selectedNodeId,
     dragState,
     selectedEdgeId,
-    palette,
+    palette: paletteWithTriggerButtons,
     paletteCollapsed,
     setPaletteCollapsed,
     expandedPaletteGroups,

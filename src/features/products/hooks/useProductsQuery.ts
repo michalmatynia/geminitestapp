@@ -37,8 +37,10 @@ export function useProducts(
     queryKey: ["products", filters],
     queryFn: () => getProducts(filters),
     enabled,
-    staleTime: 1000 * 60 * 2, // 2 minutes for products
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
+    networkMode: "always",
   });
 }
 
@@ -52,6 +54,10 @@ export function useProductsCount(
     queryKey: ["products-count", filters],
     queryFn: () => countProducts(filters),
     enabled,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    networkMode: "always",
   });
 }
 

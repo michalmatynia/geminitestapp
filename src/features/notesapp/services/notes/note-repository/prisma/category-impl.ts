@@ -60,7 +60,29 @@ export const getCategoryTree = async (
       .filter((cat: CategoryTreeRecord) => cat.parentId === parentId)
       .map((cat: CategoryTreeRecord): CategoryWithChildren => ({
         ...cat,
-        notes: cat.notes.map((nc: CategoryTreeRecord["notes"][number]) => nc.note),
+        notes: cat.notes.map((nc: CategoryTreeRecord["notes"][number]) => ({
+          ...nc.note,
+          createdAt: nc.note.createdAt.toISOString(),
+          updatedAt: nc.note.updatedAt.toISOString(),
+          tags: nc.note.tags.map((t: CategoryTreeRecord["notes"][number]["note"]["tags"][number]) => ({
+            ...t,
+            assignedAt: t.assignedAt,
+            tag: {
+              ...t.tag,
+              createdAt: t.tag.createdAt.toISOString(),
+              updatedAt: t.tag.updatedAt.toISOString(),
+            },
+          })),
+          categories: nc.note.categories.map((c: CategoryTreeRecord["notes"][number]["note"]["categories"][number]) => ({
+            ...c,
+            assignedAt: c.assignedAt,
+            category: {
+              ...c.category,
+              createdAt: c.category.createdAt,
+              updatedAt: c.category.updatedAt,
+            },
+          })),
+        })),
         children: buildTree(cat.id),
       }));
   };

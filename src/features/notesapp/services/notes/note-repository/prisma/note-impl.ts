@@ -10,6 +10,95 @@ import type {
 } from "@/shared/types/notes";
 import { getOrCreateDefaultNotebook } from "./notebook-impl";
 
+const noteInclude = {
+  tags: { include: { tag: true } },
+  categories: { include: { category: true } },
+  relationsFrom: {
+    include: {
+      targetNote: { select: { id: true, title: true, color: true } },
+    },
+  },
+  relationsTo: {
+    include: {
+      sourceNote: { select: { id: true, title: true, color: true } },
+    },
+  },
+  files: { orderBy: { slotIndex: "asc" } },
+} as const;
+
+type NotePrismaResult = Prisma.NoteGetPayload<{
+  include: typeof noteInclude;
+}>;
+
+const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
+  id: note.id,
+  title: note.title,
+  content: note.content,
+  editorType: note.editorType,
+  color: note.color,
+  isPinned: note.isPinned,
+  isArchived: note.isArchived,
+  isFavorite: note.isFavorite,
+  notebookId: note.notebookId,
+  createdAt: note.createdAt.toISOString(),
+  updatedAt: note.updatedAt.toISOString(),
+  tags: note.tags.map((t: NotePrismaResult["tags"][number]) => ({
+    noteId: t.noteId,
+    tagId: t.tagId,
+    assignedAt: t.assignedAt,
+    tag: {
+      id: t.tag.id,
+      name: t.tag.name,
+      color: t.tag.color,
+      notebookId: t.tag.notebookId,
+      createdAt: t.tag.createdAt.toISOString(),
+      updatedAt: t.tag.updatedAt.toISOString(),
+    },
+  })),
+  categories: note.categories.map((c: NotePrismaResult["categories"][number]) => ({
+    noteId: c.noteId,
+    categoryId: c.categoryId,
+    assignedAt: c.assignedAt,
+    category: {
+      id: c.category.id,
+      name: c.category.name,
+      description: c.category.description,
+      color: c.category.color,
+      parentId: c.category.parentId,
+      notebookId: c.category.notebookId,
+      themeId: c.category.themeId,
+      sortIndex: c.category.sortIndex,
+      createdAt: c.category.createdAt,
+      updatedAt: c.category.updatedAt,
+    },
+  })),
+  relationsFrom: note.relationsFrom.map((r: NotePrismaResult["relationsFrom"][number]) => ({
+    sourceNoteId: r.sourceNoteId,
+    targetNoteId: r.targetNoteId,
+    assignedAt: r.assignedAt,
+    targetNote: r.targetNote,
+  })),
+  relationsTo: note.relationsTo.map((r: NotePrismaResult["relationsTo"][number]) => ({
+    sourceNoteId: r.sourceNoteId,
+    targetNoteId: r.targetNoteId,
+    assignedAt: r.assignedAt,
+    sourceNote: r.sourceNote,
+  })),
+  files: note.files.map((f: NotePrismaResult["files"][number]) => ({
+    id: f.id,
+    noteId: f.noteId,
+    slotIndex: f.slotIndex,
+    filename: f.filename,
+    filepath: f.filepath,
+    mimetype: f.mimetype,
+    size: f.size,
+    width: f.width,
+    height: f.height,
+    createdAt: f.createdAt,
+    updatedAt: f.updatedAt,
+  })),
+});
+
 export const getAll = async (
   filters: NoteFilters
 ): Promise<NoteWithRelations[]> => {
@@ -56,56 +145,33 @@ export const getAll = async (
 
   const notes = await prisma.note.findMany({
     where,
-    include: {
-      tags: { include: { tag: true } },
-      categories: { include: { category: true } },
-      relationsFrom: {
-        include: {
-          targetNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      relationsTo: {
-        include: {
-          sourceNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      files: { orderBy: { slotIndex: "asc" } },
-    },
+    include: noteInclude,
     orderBy: { updatedAt: "desc" },
   });
 
   if (filters.truncateContent) {
-    return notes.map((note: NoteWithRelations) => ({
-      ...note,
-      content:
-        note.content.length > 300
-          ? note.content.slice(0, 300) + "..."
-          : note.content,
-    }));
+    return notes.map((note: NotePrismaResult) => {
+      const converted = convertNote(note);
+      return {
+        ...converted,
+        content:
+          converted.content.length > 300
+            ? converted.content.slice(0, 300) + "..."
+            : converted.content,
+      };
+    });
   }
 
-  return notes;
+  return notes.map(convertNote);
 };
 
 export const getById = async (id: string): Promise<NoteWithRelations | null> => {
-  return prisma.note.findUnique({
+  const note = await prisma.note.findUnique({
     where: { id },
-    include: {
-      tags: { include: { tag: true } },
-      categories: { include: { category: true } },
-      relationsFrom: {
-        include: {
-          targetNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      relationsTo: {
-        include: {
-          sourceNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      files: { orderBy: { slotIndex: "asc" } },
-    },
+    include: noteInclude,
   });
+
+  return note ? convertNote(note) : null;
 };
 
 export const create = async (
@@ -148,24 +214,12 @@ export const create = async (
     };
   }
 
-  return prisma.note.create({
+  const note = await prisma.note.create({
     data: createData,
-    include: {
-      tags: { include: { tag: true } },
-      categories: { include: { category: true } },
-      relationsFrom: {
-        include: {
-          targetNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      relationsTo: {
-        include: {
-          sourceNote: { select: { id: true, title: true, color: true } },
-        },
-      },
-      files: { orderBy: { slotIndex: "asc" } },
-    },
+    include: noteInclude,
   });
+
+  return convertNote(note);
 };
 
 export const update = async (
@@ -213,25 +267,12 @@ export const update = async (
   }
 
   try {
-    return await prisma.note.update({
+    const note = await prisma.note.update({
       where: { id },
       data: updateData,
-      include: {
-        tags: { include: { tag: true } },
-        categories: { include: { category: true } },
-        relationsFrom: {
-          include: {
-            targetNote: { select: { id: true, title: true, color: true } },
-          },
-        },
-        relationsTo: {
-          include: {
-            sourceNote: { select: { id: true, title: true, color: true } },
-          },
-        },
-        files: { orderBy: { slotIndex: "asc" } },
-      },
+      include: noteInclude,
     });
+    return convertNote(note);
   } catch {
     return null;
   }

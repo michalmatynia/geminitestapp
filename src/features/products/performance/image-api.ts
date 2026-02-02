@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { imageOptimizer, imageUrlGenerator, type ImageFormat, type ImageSize } from '../image-optimizer';
-
-// Temporary types until image-optimizer is implemented
-type ImageFormat = 'webp' | 'jpeg' | 'png';
-type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+import { imageOptimizer, type ImageFormat, type ImageSize, type OptimizedImageResult, type OptimizationOptions } from './index';
 
 // GET /api/products/images/[id]/[size].[format]
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string; size: string; format: string } }
-) {
+): Promise<NextResponse> {
   try {
     const { id, size, format } = params;
     const url = new URL(req.url);
@@ -37,7 +33,7 @@ export async function GET(
     });
 
     const optimizedImage = optimizedImages.find(
-      img => img.format === format && img.size === size
+      (img: OptimizedImageResult) => img.format === format && img.size === size
     );
 
     if (!optimizedImage) {
@@ -45,7 +41,7 @@ export async function GET(
     }
 
     // Set caching headers
-    const response = new NextResponse(optimizedImage.buffer);
+    const response = new NextResponse(new Uint8Array(optimizedImage.buffer));
     response.headers.set('Content-Type', `image/${format}`);
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     response.headers.set('Content-Length', optimizedImage.fileSize.toString());
@@ -59,9 +55,10 @@ export async function GET(
 }
 
 // POST /api/products/images/optimize
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const { images, options } = await req.json();
+    const body = await req.json() as { images: string[]; options?: OptimizationOptions };
+    const { images, options } = body;
     
     if (!Array.isArray(images)) {
       return NextResponse.json({ error: 'Images must be an array' }, { status: 400 });
@@ -74,7 +71,7 @@ export async function POST(req: NextRequest) {
           return {
             index,
             success: true,
-            images: optimized.map(img => ({
+            images: optimized.map((img: OptimizedImageResult) => ({
               format: img.format,
               size: img.size,
               width: img.width,
@@ -102,17 +99,17 @@ export async function POST(req: NextRequest) {
 }
 
 // Helper functions
-async function getOriginalImage(id: string): Promise<Buffer | null> {
+async function getOriginalImage(_id: string): Promise<Buffer | null> {
   // This would fetch from your database or file storage
   // const imageRecord = await db.imageFile.findUnique({ where: { id } });
   // if (imageRecord?.data) {
   //   return Buffer.from(imageRecord.data, 'base64');
   // }
-  return null; // Placeholder
+  return Promise.resolve(null); // Placeholder
 }
 
-function getSizeConfig(size: ImageSize, quality: number) {
-  const configs = {
+function getSizeConfig(size: ImageSize, quality: number): { width: number; height?: number; quality: number } {
+  const configs: Record<ImageSize, { width: number; height?: number; quality: number }> = {
     thumbnail: { width: 150, height: 150, quality },
     small: { width: 300, quality },
     medium: { width: 600, quality },

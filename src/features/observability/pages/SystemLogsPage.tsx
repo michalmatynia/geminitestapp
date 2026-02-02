@@ -521,7 +521,7 @@ export default function SystemLogsPage(): React.JSX.Element {
               <Pagination
                 page={page}
                 totalPages={totalPages}
-                setPage={setPage}
+                onPageChange={setPage}
                 className="scale-90 origin-right"
               />
             </div>

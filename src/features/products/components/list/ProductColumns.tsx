@@ -3,7 +3,7 @@
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge } from "@/shared/ui";
 import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
-import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
+import { ArrowUpDown, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
@@ -16,15 +16,11 @@ import type { QueryClient } from "@tanstack/react-query";
 import { EditableCell } from "@/features/products/components/EditableCell";
 import { ProductImageCell } from "@/features/products/components/cells/ProductImageCell";
 import type { ProductWithImages } from "@/features/products/types";
-import { delay } from "@/shared/utils";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;
 
 type ProductNameKey = "name_en" | "name_pl" | "name_de";
-
-// ✅ Use the real toast function type from your hook (no more variant mismatch)
-type ToastFn = ReturnType<typeof useToast>["toast"];
 
 /**
  * Calculates the price for a product in the specified currency.
@@ -151,12 +147,14 @@ interface ColumnActionsProps {
   row: Row<ProductWithImages>;
   onProductEditClick?: ((row: ProductWithImages) => void) | undefined;
   onProductDeleteClick?: ((row: ProductWithImages) => void) | undefined;
+  setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>> | undefined;
 }
 
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
   onProductEditClick,
   onProductDeleteClick,
+  setRefreshTrigger,
 }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
   const router = useRouter();
@@ -191,7 +189,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       const duplicated: { id?: string } = (await res.json()) as { id?: string };
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["products-count"] });
-      setRefreshTrigger((prev: number): number => prev + 1);
+      setRefreshTrigger?.((prev: number): number => prev + 1);
 
       if (duplicated.id) {
         toast("Product duplicated.", { variant: "success" });
@@ -601,23 +599,27 @@ export const getProductColumns = (
       const meta: {
             onProductEditClick?: (p: ProductWithImages) => void;
             onProductDeleteClick?: (p: ProductWithImages) => void;
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             queryClient?: QueryClient;
           } | undefined = table.options.meta as
         | {
             onProductEditClick?: (p: ProductWithImages) => void;
             onProductDeleteClick?: (p: ProductWithImages) => void;
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             queryClient?: QueryClient;
           }
         | undefined;
 
       const onProductEditClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductEditClick;
       const onProductDeleteClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductDeleteClick;
+      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
 
       return (
         <ActionsCell
           row={row}
           onProductEditClick={onProductEditClick}
           onProductDeleteClick={onProductDeleteClick}
+          setRefreshTrigger={setRefreshTrigger}
         />
       );
     },

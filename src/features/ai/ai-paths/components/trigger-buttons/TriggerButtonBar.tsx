@@ -65,14 +65,14 @@ export function TriggerButtonBar({
   });
 
   useEffect(() => {
-    setToggleMap(readToggleMap());
+    setToggleMap((_prev) => readToggleMap());
   }, []);
 
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];
     return all
       .filter((button: AiTriggerButtonRecord) => button.locations.includes(location))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a: AiTriggerButtonRecord, b: AiTriggerButtonRecord) => a.name.localeCompare(b.name));
   }, [triggerButtonsQuery.data, location]);
 
   if (buttons.length === 0) return null;

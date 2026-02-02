@@ -15,8 +15,10 @@ import type {
   UpdateProductInput,
 } from "@/features/products/types/services/product-repository";
 
-type ProductDocument = ProductRecord & {
+type ProductDocument = Omit<ProductRecord, "createdAt" | "updatedAt"> & {
   _id: string;
+  createdAt: Date;
+  updatedAt: Date;
   images?: ProductWithImages["images"];
   catalogs?: ProductWithImages["catalogs"];
 };
@@ -49,8 +51,8 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
+  updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
   images: Array.isArray(doc.images) ? doc.images : [],
   catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
 });
@@ -81,8 +83,8 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
+  updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
 });
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {

@@ -110,8 +110,8 @@ const toImageFileRecord = (imageFile: {
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
   tags: imageFile.tags ?? [],
-  createdAt: imageFile.createdAt,
-  updatedAt: imageFile.updatedAt,
+  createdAt: imageFile.createdAt.toISOString(),
+  updatedAt: imageFile.updatedAt.toISOString(),
 });
 
 const toCatalogRecord = (catalog: {
@@ -132,8 +132,8 @@ const toCatalogRecord = (catalog: {
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-  createdAt: catalog.createdAt,
-  updatedAt: catalog.updatedAt,
+  createdAt: catalog.createdAt.toISOString(),
+  updatedAt: catalog.updatedAt.toISOString(),
   languageIds: catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],
   priceGroupIds: Array.isArray(catalog.priceGroupIds)
     ? catalog.priceGroupIds
@@ -194,8 +194,8 @@ const toProductRecord = (product: {
   parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
-  createdAt: product.createdAt,
-  updatedAt: product.updatedAt,
+  createdAt: product.createdAt.toISOString(),
+  updatedAt: product.updatedAt.toISOString(),
 });
 
 export const prismaProductRepository: ProductRepository = {

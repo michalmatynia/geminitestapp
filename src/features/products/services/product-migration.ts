@@ -134,8 +134,8 @@ const toImageFileRecord = (imageFile: ImageFileInput): ImageFileRecord => ({
   width: imageFile.width ?? null,
   height: imageFile.height ?? null,
   tags: imageFile.tags ?? [],
-  createdAt: imageFile.createdAt,
-  updatedAt: imageFile.updatedAt,
+  createdAt: imageFile.createdAt.toISOString(),
+  updatedAt: imageFile.updatedAt.toISOString(),
 });
 
 const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
@@ -145,8 +145,8 @@ const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-  createdAt: catalog.createdAt,
-  updatedAt: catalog.updatedAt,
+  createdAt: catalog.createdAt.toISOString(),
+  updatedAt: catalog.updatedAt.toISOString(),
   languageIds: Array.isArray(catalog.languageIds)
     ? catalog.languageIds
     : catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],

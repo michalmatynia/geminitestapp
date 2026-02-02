@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 
 import { Button, Checkbox, DataTable, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, useToast } from "@/shared/ui";
 import { PRODUCT_ICON_MAP, PRODUCT_ICONS } from "@/shared/constants/product-icons";
 import { Settings2, Trash2 } from "lucide-react";
 import type { AiTriggerButtonLocation, AiTriggerButtonMode, AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
-import { triggerButtonsApi } from "@/features/ai/ai-paths/lib";
+import type { AiNode, PathConfig, PathMeta } from "@/features/ai/ai-paths/lib";
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
+
+type PathAttachment = { id: string; name: string };
 
 type TriggerButtonDraft = {
   id?: string;
@@ -41,6 +45,7 @@ const normalizeDraft = (record?: AiTriggerButtonRecord | null): TriggerButtonDra
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
@@ -54,6 +59,156 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
     staleTime: 10_000,
   });
+
+  const pathsQuery = useQuery({
+    queryKey: ["ai-paths", "path-configs"],
+    queryFn: async (): Promise<Array<{ id: string; name: string; nodes: AiNode[] }>> => {
+      type PrefsResponse = {
+        aiPathsPathConfigs?: Record<string, unknown> | string | null;
+        aiPathsPathIndex?: Array<{ id?: string } | unknown> | null;
+      };
+
+      const tryBuildFromConfigs = (
+        configs: Record<string, PathConfig>,
+        order: string[]
+      ): Array<{ id: string; name: string; nodes: AiNode[] }> => {
+        const list: PathConfig[] = order.length
+          ? order
+              .map((id: string) => configs[id])
+              .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+          : Object.values(configs);
+        return list
+          .filter((config: PathConfig) => typeof config?.id === "string" && config.id.trim().length > 0)
+          .map((config: PathConfig) => {
+            const id = config.id.trim();
+            const name =
+              typeof config.name === "string" && config.name.trim().length > 0
+                ? config.name.trim()
+                : `Path ${id.slice(0, 6)}`;
+            const nodes: AiNode[] = Array.isArray(config.nodes) ? (config.nodes as AiNode[]) : [];
+            return { id, name, nodes };
+          });
+      };
+
+      // 1) Prefer user preferences (fast + already per-user).
+      try {
+        const prefsRes = await fetch("/api/user/preferences", { cache: "no-store" });
+        if (prefsRes.ok) {
+          const prefs = (await prefsRes.json()) as PrefsResponse;
+          const order: string[] = Array.isArray(prefs.aiPathsPathIndex)
+            ? prefs.aiPathsPathIndex
+                .map((item: { id?: string } | unknown) =>
+                  typeof item === "object" && item !== null && "id" in item
+                    ? ((item as { id?: unknown }).id as string | undefined)
+                    : undefined
+                )
+                .filter((id: string | undefined): id is string => typeof id === "string" && id.trim().length > 0)
+                .map((id: string) => id.trim())
+            : [];
+
+          let configs: Record<string, PathConfig> = {};
+          const rawConfigs = prefs.aiPathsPathConfigs;
+          if (typeof rawConfigs === "string" && rawConfigs.trim()) {
+            try {
+              const parsed = JSON.parse(rawConfigs) as Record<string, PathConfig>;
+              configs = parsed && typeof parsed === "object" ? parsed : {};
+            } catch {
+              configs = {};
+            }
+          } else if (rawConfigs && typeof rawConfigs === "object") {
+            configs = rawConfigs as unknown as Record<string, PathConfig>;
+          }
+
+          const fromPrefs = Object.keys(configs).length > 0 ? tryBuildFromConfigs(configs, order) : [];
+          if (fromPrefs.length > 0) return fromPrefs;
+        }
+      } catch {
+        // ignore; fall back to settings below
+      }
+
+      // 2) Fallback: settings snapshot (shared storage).
+      try {
+        const settingsRes = await fetch("/api/settings", { cache: "no-store" });
+        if (!settingsRes.ok) return [];
+        const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
+        const map = new Map<string, string>(
+          settings
+            .filter((item) => typeof item?.key === "string" && typeof item?.value === "string")
+            .map((item) => [item.key, item.value])
+        );
+        const indexRaw = map.get(PATH_INDEX_KEY);
+        if (!indexRaw) return [];
+        let metas: PathMeta[] = [];
+        try {
+          const parsed = JSON.parse(indexRaw) as unknown;
+          metas = Array.isArray(parsed) ? (parsed as PathMeta[]) : [];
+        } catch {
+          metas = [];
+        }
+        const configs: Record<string, PathConfig> = {};
+        metas.forEach((meta: PathMeta) => {
+          if (!meta?.id) return;
+          const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+          if (!configRaw) return;
+          try {
+            const parsed = JSON.parse(configRaw) as PathConfig;
+            configs[meta.id] = parsed;
+          } catch {
+            // ignore invalid configs
+          }
+        });
+        const order = metas
+          .map((meta: PathMeta) => meta?.id)
+          .filter((id: string | undefined): id is string => typeof id === "string" && id.trim().length > 0)
+          .map((id: string) => id.trim());
+        return tryBuildFromConfigs(configs, order);
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 10_000,
+  });
+
+  const attachmentsByTriggerId = useMemo(() => {
+    const paths = pathsQuery.data ?? [];
+    const map = new Map<string, Map<string, string>>();
+    paths.forEach((path) => {
+      const nodes = Array.isArray(path.nodes) ? path.nodes : [];
+      nodes.forEach((node: AiNode) => {
+        if (node.type !== "trigger") return;
+        const eventId = node.config?.trigger?.event;
+        if (!eventId) return;
+        const byPath = map.get(eventId) ?? new Map<string, string>();
+        byPath.set(path.id, path.name);
+        map.set(eventId, byPath);
+      });
+    });
+
+    const result = new Map<string, PathAttachment[]>();
+    map.forEach((byPath, eventId) => {
+      const list: PathAttachment[] = Array.from(byPath.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      result.set(eventId, list);
+    });
+    return result;
+  }, [pathsQuery.data]);
+
+  const openAiPath = useCallback(
+    async (pathId: string): Promise<void> => {
+      try {
+        await fetch("/api/user/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ aiPathsActivePathId: pathId }),
+        });
+      } catch {
+        // ignore; still navigate
+      }
+      router.push("/admin/ai-paths");
+    },
+    [router]
+  );
 
   const createMutation = useMutation({
     mutationFn: async (payload: Omit<TriggerButtonDraft, "id">): Promise<AiTriggerButtonRecord> => {
@@ -112,7 +267,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       {
         id: "name",
         header: "Name",
-        cell: ({ row }) => {
+        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
           const iconId = row.original.iconId;
           const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
           return (
@@ -131,10 +286,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       {
         id: "locations",
         header: "Locations",
-        cell: ({ row }) => (
+        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <div className="text-xs text-gray-300">
             {row.original.locations
-              .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o) => o.value === value)?.label ?? value)
+              .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o: { value: AiTriggerButtonLocation; label: string }) => o.value === value)?.label ?? value)
               .join(", ")}
           </div>
         ),
@@ -142,16 +297,43 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       {
         accessorKey: "mode",
         header: "Mode",
-        cell: ({ row }) => (
+        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <span className="text-xs text-gray-300">
-            {MODE_OPTIONS.find((o) => o.value === row.original.mode)?.label ?? row.original.mode}
+            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === row.original.mode)?.label ?? row.original.mode}
           </span>
         ),
       },
       {
+        id: "paths",
+        header: "Used in Paths",
+        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
+          const usedIn = attachmentsByTriggerId.get(row.original.id) ?? [];
+          if (usedIn.length === 0) {
+            return <span className="text-xs text-gray-500">Not used</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {usedIn.map((path: PathAttachment) => (
+                <Button
+                  key={path.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[11px]"
+                  title={`Open path: ${path.id}`}
+                  onClick={() => void openAiPath(path.id)}
+                >
+                  {path.name}
+                </Button>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         id: "actions",
-        header: "",
-        cell: ({ row }) => (
+        header: (): React.ReactNode => "",
+        cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
@@ -179,7 +361,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         ),
       },
     ];
-  }, [deleteMutation]);
+  }, [attachmentsByTriggerId, deleteMutation, openAiPath]);
 
   const openCreate = (): void => {
     setDraft(normalizeDraft(null));
@@ -218,7 +400,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           title="Trigger Buttons"
           actions={
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => void triggerButtonsQuery.refetch()}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void triggerButtonsQuery.refetch();
+                  void pathsQuery.refetch();
+                }}
+              >
                 Refresh
               </Button>
               <Button onClick={openCreate}>New Trigger Button</Button>
@@ -329,6 +517,35 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             </div>
           </div>
 
+          {draft.id ? (
+            <div className="space-y-2">
+              <Label>Used in AI Paths</Label>
+              {((): React.JSX.Element => {
+                const usedIn = attachmentsByTriggerId.get(draft.id ?? "") ?? [];
+                if (usedIn.length === 0) {
+                  return <div className="text-xs text-gray-500">Not used in any path yet.</div>;
+                }
+                return (
+                  <div className="flex flex-wrap gap-1">
+                    {usedIn.map((path) => (
+                      <Button
+                        key={path.id}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() => void openAiPath(path.id)}
+                        title={`Open path: ${path.id}`}
+                      >
+                        {path.name}
+                      </Button>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+
           <div className="flex items-center justify-end gap-2">
             <Button variant="outline" onClick={() => setEditorOpen(false)} disabled={saving}>
               Cancel
@@ -342,4 +559,3 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     </div>
   );
 }
-

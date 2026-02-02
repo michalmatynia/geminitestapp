@@ -9,26 +9,22 @@ import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
 import { TRIGGER_EVENTS, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
 
-type TriggerNodeConfigSectionProps = {
-  selectedNode: AiNode;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-};
+// Query for trigger buttons (always called)
+const useTriggerButtonsQuery = () => useQuery({
+  queryKey: ["ai-paths", "trigger-buttons"],
+  queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
+    const result = await triggerButtonsApi.list();
+    if (!result.ok) return [];
+    return Array.isArray(result.data) ? result.data : [];
+  },
+  staleTime: 10_000,
+});
 
 export function TriggerNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: TriggerNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "trigger") return null;
-
-  const triggerButtonsQuery = useQuery({
-    queryKey: ["ai-paths", "trigger-buttons"],
-    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.list();
-      if (!result.ok) return [];
-      return Array.isArray(result.data) ? result.data : [];
-    },
-    staleTime: 10_000,
-  });
+  const triggerButtonsQuery = useTriggerButtonsQuery();
 
   const triggerEventOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -42,6 +38,9 @@ export function TriggerNodeConfigSection({
     });
     return Array.from(byId.values());
   }, [triggerButtonsQuery.data]);
+
+  if (selectedNode.type !== "trigger") return null;
+
 
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? "path_generate_description",

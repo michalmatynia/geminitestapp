@@ -126,12 +126,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   });
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
-    const buttons = triggerButtonsQuery.data ?? [];
-    if (buttons.length === 0) return palette;
-
-    const usedTitles = new Set<string>(palette.map((node) => node.title));
-    const derived: NodeDefinition[] = [];
-
+          const buttons = triggerButtonsQuery.data ?? [];
+          if (buttons.length === 0) return palette;
+    
+          const usedTitles = new Set<string>(palette.map((node: NodeDefinition) => node.title));
+          const derived: NodeDefinition[] = [];
     buttons.forEach((button: AiTriggerButtonRecord) => {
       const baseTitle = `Trigger: ${button.name}`;
       const title = usedTitles.has(baseTitle)

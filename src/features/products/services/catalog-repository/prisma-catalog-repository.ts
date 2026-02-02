@@ -26,8 +26,8 @@ const toRecord = (catalog: {
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-  createdAt: catalog.createdAt,
-  updatedAt: catalog.updatedAt,
+  createdAt: catalog.createdAt.toISOString(),
+  updatedAt: catalog.updatedAt.toISOString(),
   // Sort by position to ensure correct ordering
   languageIds: catalog.languages
     ?.sort((a: { languageId: string; position: number }, b: { languageId: string; position: number }) => a.position - b.position)

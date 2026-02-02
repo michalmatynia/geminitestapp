@@ -33,7 +33,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
 
     const result = await generateProductDescription({
-      productData: productData as ProductFormData,
+      productData: productData ? (productData as ProductFormData) : { name_en: "" }, // Provide a default or handle appropriately
       imageUrls,
       visionOutputEnabled: body.visionOutputEnabled,
       generationOutputEnabled: body.generationOutputEnabled

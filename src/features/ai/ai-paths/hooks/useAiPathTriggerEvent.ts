@@ -28,9 +28,9 @@ type TriggerEventEntityType = "product" | "note" | "custom";
 
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
-  triggerLabel?: string | null;
+  triggerLabel?: string | null | undefined;
   entityType: TriggerEventEntityType;
-  entityId?: string | null;
+  entityId?: string | null | undefined;
   getEntityJson?: () => Record<string, unknown> | null;
   event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent;
   source?: { tab?: string; location?: string; page?: string } | null;
@@ -130,9 +130,9 @@ const loadPathConfigsFromSettings = async (): Promise<{
 const buildTriggerContext = (args: {
   triggerNode: AiNode;
   triggerEventId: string;
-  triggerLabel?: string | null;
+  triggerLabel?: string | null | undefined;
   entityType: TriggerEventEntityType;
-  entityId?: string | null;
+  entityId?: string | null | undefined;
   entityJson?: Record<string, unknown> | null;
   event?: React.MouseEvent;
   pathInfo?: { id?: string; name?: string } | null;
@@ -149,10 +149,8 @@ const buildTriggerContext = (args: {
         pageY: nativeEvent.pageY,
         screenX: nativeEvent.screenX,
         screenY: nativeEvent.screenY,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        offsetX: "offsetX" in (nativeEvent as any) ? (nativeEvent as any).offsetX : undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        offsetY: "offsetY" in (nativeEvent as any) ? (nativeEvent as any).offsetY : undefined,
+        offsetX: (nativeEvent as MouseEvent).offsetX,
+        offsetY: (nativeEvent as MouseEvent).offsetY,
         button: nativeEvent.button,
         buttons: nativeEvent.buttons,
         altKey: nativeEvent.altKey,

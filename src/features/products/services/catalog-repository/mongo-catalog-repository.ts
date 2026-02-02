@@ -33,8 +33,8 @@ const toRecord = (doc: WithId<CatalogDocument>): CatalogRecord => ({
   isDefault: doc.isDefault,
   defaultLanguageId: doc.defaultLanguageId ?? null,
   defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
   languageIds: Array.isArray(doc.languageIds) ? doc.languageIds : [],
   priceGroupIds: Array.isArray(doc.priceGroupIds) ? doc.priceGroupIds : [],
 });

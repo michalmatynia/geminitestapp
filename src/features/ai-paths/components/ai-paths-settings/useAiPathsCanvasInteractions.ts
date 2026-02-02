@@ -23,6 +23,7 @@ type UseAiPathsCanvasInteractionsArgs = {
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   edges: Edge[];
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  isPathLocked: boolean;
   selectedNodeId: string | null;
   setSelectedNodeId: (value: string | null) => void;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
@@ -77,6 +78,7 @@ export function useAiPathsCanvasInteractions({
   setNodes,
   edges,
   setEdges,
+  isPathLocked,
   selectedNodeId,
   setSelectedNodeId,
   clearRuntimeInputsForEdges,
@@ -108,6 +110,16 @@ export function useAiPathsCanvasInteractions({
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const lastDropTimerRef = useRef<number | null>(null);
+  const lockedToastAtRef = useRef<number>(0);
+
+  const notifyLocked = useCallback((): void => {
+    const now = Date.now();
+    if (now - lockedToastAtRef.current < 800) return;
+    lockedToastAtRef.current = now;
+    toast("This path is locked. Unlock it to edit nodes or connections.", {
+      variant: "info",
+    });
+  }, [toast]);
 
   useEffect((): void | (() => void) => {
     if (!lastDrop) return;
@@ -160,6 +172,10 @@ export function useAiPathsCanvasInteractions({
 
   const handleRemoveEdge = useCallback(
     (edgeId: string): void => {
+      if (isPathLocked) {
+        notifyLocked();
+        return;
+      }
       setEdges((prev: Edge[]): Edge[] => {
         const target = prev.find((edge: Edge): boolean => edge.id === edgeId) ?? null;
         if (!target) return prev;
@@ -171,11 +187,15 @@ export function useAiPathsCanvasInteractions({
         setSelectedEdgeId(null);
       }
     },
-    [clearRuntimeInputsForEdges, selectedEdgeId, setEdges]
+    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges]
   );
 
   const handleDisconnectPort = useCallback(
     (direction: "input" | "output", nodeId: string, port: string): void => {
+      if (isPathLocked) {
+        notifyLocked();
+        return;
+      }
       setEdges((prev: Edge[]): Edge[] => {
         const shouldRemove = (edge: Edge): boolean =>
           direction === "input"
@@ -193,7 +213,7 @@ export function useAiPathsCanvasInteractions({
         return remaining;
       });
     },
-    [clearRuntimeInputsForEdges, selectedEdgeId, setEdges]
+    [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges]
   );
 
   const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -207,6 +227,10 @@ export function useAiPathsCanvasInteractions({
 
   const handleDeleteSelectedNode = useCallback((): void => {
     if (!selectedNodeId) return;
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
     const targetNode = nodes.find((node: AiNode): boolean => node.id === selectedNodeId);
     const label = targetNode?.title || "this node";
     const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
@@ -223,7 +247,16 @@ export function useAiPathsCanvasInteractions({
       return remaining;
     });
     setSelectedNodeId(null);
-  }, [nodes, selectedNodeId, clearRuntimeInputsForEdges, setEdges, setNodes, setSelectedNodeId]);
+  }, [
+    nodes,
+    selectedNodeId,
+    clearRuntimeInputsForEdges,
+    isPathLocked,
+    notifyLocked,
+    setEdges,
+    setNodes,
+    setSelectedNodeId,
+  ]);
 
   useEffect((): void | (() => void) => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -363,6 +396,10 @@ export function useAiPathsCanvasInteractions({
 
   const handleReconnectInput = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string): void => {
+      if (isPathLocked) {
+        notifyLocked();
+        return;
+      }
       if (connecting) return;
       let edgeToMove: Edge | null = null;
       for (let index = edges.length - 1; index >= 0; index -= 1) {
@@ -396,7 +433,18 @@ export function useAiPathsCanvasInteractions({
       setConnecting({ fromNodeId: edgeToMove.from, fromPort: edgeToMove.fromPort, start });
       setConnectingPos(nextPos);
     },
-    [connecting, edges, nodes, selectedEdgeId, view, getPortPosition, clearRuntimeInputsForEdges, setEdges]
+    [
+      clearRuntimeInputsForEdges,
+      connecting,
+      edges,
+      getPortPosition,
+      isPathLocked,
+      nodes,
+      notifyLocked,
+      selectedEdgeId,
+      setEdges,
+      view,
+    ]
   );
 
   // Create a stable key based only on edge-relevant node data (position, ports)
@@ -466,6 +514,7 @@ export function useAiPathsCanvasInteractions({
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
   ): void => {
+    if (isPathLocked) return;
     event.stopPropagation();
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);
@@ -544,6 +593,11 @@ export function useAiPathsCanvasInteractions({
     event: React.DragEvent<HTMLDivElement>,
     node: NodeDefinition
   ): void => {
+    if (isPathLocked) {
+      event.preventDefault();
+      notifyLocked();
+      return;
+    }
     event.dataTransfer.effectAllowed = "copy";
     const payload = JSON.stringify(node);
     event.dataTransfer.setData("application/x-ai-node", payload);
@@ -553,6 +607,10 @@ export function useAiPathsCanvasInteractions({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
     event.stopPropagation();
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
@@ -629,6 +687,10 @@ export function useAiPathsCanvasInteractions({
     node: AiNode,
     port: string
   ): void => {
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
     event.stopPropagation();
     const start = getPortPosition(node, port, "output");
     setConnecting({ fromNodeId: node.id, fromPort: port, start });
@@ -640,14 +702,13 @@ export function useAiPathsCanvasInteractions({
     node: AiNode,
     port: string
   ): void => {
-    console.log('handleCompleteConnection called:', { node: node.type, port, connecting });
-    event.stopPropagation();
-    if (!connecting) {
-      console.log('No connecting state');
+    if (isPathLocked) {
+      notifyLocked();
       return;
     }
+    event.stopPropagation();
+    if (!connecting) return;
     if (connecting.fromNodeId === node.id && connecting.fromPort === port) {
-      console.log('Same node/port, canceling connection');
       setConnecting(null);
       setConnectingPos(null);
       return;
@@ -655,7 +716,6 @@ export function useAiPathsCanvasInteractions({
 
     const fromNode = nodes.find((n: AiNode): boolean => n.id === connecting.fromNodeId);
     if (!fromNode) {
-      console.log('From node not found:', connecting.fromNodeId);
       setConnecting(null);
       setConnectingPos(null);
       return;
@@ -668,21 +728,12 @@ export function useAiPathsCanvasInteractions({
       port
     );
 
-    console.log('Validation result:', validation);
-
     if (!validation.valid) {
       toast(validation.message ?? "Invalid connection.", { variant: "error" });
       setConnecting(null);
       setConnectingPos(null);
       return;
     }
-
-    console.log('Creating edge:', {
-      from: connecting.fromNodeId,
-      to: node.id,
-      fromPort: connecting.fromPort,
-      toPort: port
-    });
 
     setEdges((prev: Edge[]): Edge[] => [
       ...prev,

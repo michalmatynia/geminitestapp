@@ -467,6 +467,7 @@ export type PathConfig = {
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;
+  isLocked?: boolean;
   parserSamples?: Record<string, ParserSampleState>;
   updaterSamples?: Record<string, UpdaterSampleState>;
   runtimeState?: RuntimeState | string | null;

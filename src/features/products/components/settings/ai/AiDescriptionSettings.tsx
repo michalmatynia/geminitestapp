@@ -2,15 +2,8 @@
 
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox } from "@/shared/ui";
 import { useState, useEffect } from "react";
-
-
-
-
-
-
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
-
-
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 
 const STATIC_VISION_MODELS = [
@@ -82,6 +75,24 @@ export function AiDescriptionSettings(): React.JSX.Element {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResultData | null>(null);
   const [queuing, setQueuing] = useState(false);
+
+  // Use TanStack Query hooks
+  const { data: settingsMap, isLoading: settingsLoading } = useSettingsMap();
+  const { mutateAsync: updateSettingMutateAsync } = useUpdateSetting();
+
+  useEffect(() => {
+    if (settingsMap && !settingsLoading) {
+      setImageAnalysisModel(settingsMap.get("ai_vision_model") || "gpt-4o");
+      setVisionInputPrompt(settingsMap.get("ai_vision_user_prompt") || "Analyze these product images...");
+      setVisionOutputPrompt(settingsMap.get("ai_vision_prompt") || "");
+      setVisionOutputEnabled(settingsMap.get("ai_vision_output_enabled") === "true");
+      setDescriptionGenerationModel(settingsMap.get("ai_description_model") || "gpt-4o");
+      setGenerationInputPrompt(settingsMap.get("ai_description_user_prompt") || "Generate a product description...");
+      setGenerationOutputPrompt(settingsMap.get("ai_description_prompt") || "");
+      setGenerationOutputEnabled(settingsMap.get("ai_description_output_enabled") === "true");
+      setLoading(false);
+    }
+  }, [settingsMap, settingsLoading]);
 
   useEffect(() => {
     const loadData = async (): Promise<void> => {
@@ -288,12 +299,9 @@ export function AiDescriptionSettings(): React.JSX.Element {
         { key: "ai_description_test_product_id", value: testProductId },
       ];
 
+      // Use TanStack Query mutation for settings updates
       for (const payload of payloads) {
-        await fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        await updateSettingMutateAsync(payload);
       }
 
       // Also save to dedicated MongoDB collection

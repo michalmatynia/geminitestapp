@@ -1,6 +1,9 @@
-import { SectionHeader, SectionPanel } from "@/shared/ui";
+"use client";
+
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, Button, SectionHeader, SectionPanel, useToast } from "@/shared/ui";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
+import { useSyncAllBaseImagesMutation } from "../../hooks/useIntegrationMutations";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +23,25 @@ const marketplaces = [
 ];
 
 export default function MarketplacesPage(): React.JSX.Element {
+  const { toast } = useToast();
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
+
+  const syncMutation = useSyncAllBaseImagesMutation();
+
+  const handleSyncBaseImages = async (): Promise<void> => {
+    try {
+      await syncMutation.mutateAsync();
+      toast("Base.com image sync queued.", { variant: "success" });
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "Failed to enqueue Base.com image sync",
+        { variant: "error" }
+      );
+    } finally {
+      setShowSyncConfirm(false);
+    }
+  };
+
   return (
     <SectionPanel className="p-6">
       <SectionHeader
@@ -44,6 +66,46 @@ export default function MarketplacesPage(): React.JSX.Element {
           </Link>
         ))}
       </div>
+
+      <div className="mt-6 rounded-md border border-border bg-gray-900 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-white">Base.com image sync</h3>
+            <p className="text-sm text-gray-400">
+              Queue a job to sync all Base.com image URLs into product image links.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowSyncConfirm(true)}
+            disabled={syncMutation.isPending}
+          >
+            {syncMutation.isPending ? "Queueing..." : "Sync all Base images"}
+          </Button>
+        </div>
+      </div>
+
+      <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync Base.com images for all listings?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will enqueue a background job to pull image URLs from Base.com for every listing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleSyncBaseImages()}
+            disabled={syncMutation.isPending}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Queue Sync
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SectionPanel>
   );
 }

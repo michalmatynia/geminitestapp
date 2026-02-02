@@ -58,7 +58,9 @@
       ]
     },
     "types": [
-      "vitest/globals"
+      "vitest/globals",
+      "react-error-boundary",
+      "@tanstack/react-query-devtools"
     ]
   },
   "include": [

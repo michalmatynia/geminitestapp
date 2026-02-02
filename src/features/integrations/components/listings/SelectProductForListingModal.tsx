@@ -1,7 +1,6 @@
 "use client";
 import { Button, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox, useToast } from "@/shared/ui";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 
 import type { ProductWithImages } from "@/features/products";
 import type {
@@ -17,6 +16,7 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { isImageExportError } from "./utils";
 import { useProducts } from "@/features/products/hooks/useProductsQuery";
+import { useGenericExportToBaseMutation, useGenericCreateListingMutation } from "../../hooks/useProductListingMutations";
 
 type SelectProductForListingModalProps = {
   integrationId: string;
@@ -33,7 +33,6 @@ export default function SelectProductForListingModal({
 }: SelectProductForListingModalProps): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   const { data: products = [] } = useProducts({ pageSize: 1000 });
@@ -65,39 +64,12 @@ export default function SelectProductForListingModal({
   const [logsOpen, setLogsOpen] = useState(false);
   const imageRetryPresets = useImageRetryPresets();
 
+  const exportMutation = useGenericExportToBaseMutation();
+  const createListingMutation = useGenericCreateListingMutation();
+
   const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
     (c: { id: string; name: string }) => c.id === selectedConnectionId
   )?.name || "";
-
-  const exportMutation = useMutation({
-    mutationFn: async ({ productId, payload }: { productId: string; payload: Record<string, unknown> }): Promise<{ logs?: CapturedLog[] }> => {
-      const res = await fetch(`/api/integrations/products/${productId}/export-to-base`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = (await res.json()) as { error?: string; logs?: CapturedLog[] };
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to export product");
-      }
-      return data;
-    }
-  });
-
-  const createListingMutation = useMutation({
-    mutationFn: async ({ productId, payload }: { productId: string; payload: Record<string, unknown> }): Promise<unknown> => {
-      const res = await fetch(`/api/integrations/products/${productId}/listings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to create listing");
-      }
-      return res.json() as Promise<unknown>;
-    }
-  });
 
   const handleSubmit = async (): Promise<void> => {
     if (!selectedProductId) {
@@ -116,7 +88,6 @@ export default function SelectProductForListingModal({
     }
 
     try {
-      setSubmitting(true);
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
@@ -128,17 +99,15 @@ export default function SelectProductForListingModal({
           templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
           allowDuplicateSku,
         };
-        const result = await exportMutation.mutateAsync({ productId: selectedProductId, payload });
+        const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
         if (result.logs) setExportLogs(result.logs);
         toast("Product exported to Base.com", { variant: "success" });
         onSuccess();
       } else {
         await createListingMutation.mutateAsync({
           productId: selectedProductId,
-          payload: {
-            integrationId: selectedIntegrationId,
-            connectionId: selectedConnectionId,
-          }
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
         });
         toast("Product listing created", { variant: "success" });
         onSuccess();
@@ -151,8 +120,6 @@ export default function SelectProductForListingModal({
           setExportLogs(errWithLogs.logs);
         }
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -161,7 +128,6 @@ export default function SelectProductForListingModal({
       return;
     }
     try {
-      setSubmitting(true);
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
@@ -176,14 +142,12 @@ export default function SelectProductForListingModal({
         exportImagesAsBase64: true,
       };
 
-      const result = await exportMutation.mutateAsync({ productId: selectedProductId, payload });
+      const result = await exportMutation.mutateAsync({ productId: selectedProductId, ...payload });
       if (result.logs) setExportLogs(result.logs);
       toast("Product exported with new image settings", { variant: "success" });
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to export product");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -211,12 +175,13 @@ export default function SelectProductForListingModal({
           <Button
             onClick={(): void => { void handleSubmit(); }}
             disabled={
-              submitting ||
+              exportMutation.isPending ||
+              createListingMutation.isPending ||
               !selectedProductId ||
               (isBaseComIntegration && !selectedInventoryId)
             }
           >
-            {submitting
+            {exportMutation.isPending || createListingMutation.isPending
               ? isBaseComIntegration
                 ? "Exporting..."
                 : "Listing..."
@@ -240,7 +205,7 @@ export default function SelectProductForListingModal({
                         variant="secondary"
                         size="sm"
                         className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
-                        disabled={submitting}
+                        disabled={exportMutation.isPending || createListingMutation.isPending}
                       >
                         Retry image export
                       </Button>

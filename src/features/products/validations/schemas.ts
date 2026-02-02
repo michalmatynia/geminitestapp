@@ -5,8 +5,19 @@ const trimmedString = z.string().trim();
 const optionalTrimmedString = trimmedString.optional();
 const nullishTrimmedString = trimmedString.nullish();
 
-const positiveNumber = z.number().int().positive();
-const optionalPositiveNumber = positiveNumber.optional();
+const optionalNonNegativeInt = z.preprocess((value: unknown) => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? undefined : value;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isNaN(parsed) ? value : parsed;
+  }
+  return value;
+}, z.number().int().min(0).optional());
 
 // Array validation helpers
 const stringArray = z.array(z.string()).default([]);
@@ -48,17 +59,17 @@ const productBaseSchema = z.object({
   description_de: nullishTrimmedString,
   
   // Pricing and supplier
-  price: optionalPositiveNumber,
+  price: optionalNonNegativeInt,
   supplierName: nullishTrimmedString,
   supplierLink: nullishTrimmedString,
   priceComment: nullishTrimmedString,
   
   // Inventory and dimensions
-  stock: optionalPositiveNumber,
-  sizeLength: optionalPositiveNumber,
-  sizeWidth: optionalPositiveNumber,
-  weight: optionalPositiveNumber,
-  length: optionalPositiveNumber,
+  stock: optionalNonNegativeInt,
+  sizeLength: optionalNonNegativeInt,
+  sizeWidth: optionalNonNegativeInt,
+  weight: optionalNonNegativeInt,
+  length: optionalNonNegativeInt,
   
   // Media and metadata
   imageLinks: imageUrlArray.optional(),

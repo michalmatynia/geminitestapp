@@ -196,13 +196,13 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   <span>Position:</span>
                   <span className="font-mono text-gray-300 capitalize">{position}</span>
                 </p>
-                <p className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center justify-between text-xs text-gray-400">
                   <span>Accent:</span>
-                  <div className="flex items-center gap-1">
-                    <div className={`size-2 rounded-full ${accentColor}`} />
+                  <span className="flex items-center gap-1">
+                    <span className={`size-2 rounded-full ${accentColor}`} aria-hidden="true" />
                     <span className="font-mono text-gray-300 capitalize">{accent}</span>
-                  </div>
-                </p>
+                  </span>
+                </div>
               </div>
             </div>
 

@@ -20,19 +20,19 @@ export class RateLimiter {
 
   constructor(config: RateLimitConfig) {
     this.config = {
-      keyGenerator: (req: NextRequest) => this.getClientIP(req),
+      keyGenerator: (req: NextRequest): string => this.getClientIP(req),
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
       ...config
     };
   }
 
-  checkLimit(req: NextRequest): {
+  async checkLimit(req: NextRequest): Promise<{
     allowed: boolean;
     remaining: number;
     resetTime: number;
     totalHits: number;
-  } {
+  }> {
     const key = this.config.keyGenerator(req);
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
@@ -169,8 +169,8 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
     status?: number;
     message?: string;
   }> => {
-    const result = limiter.checkLimit(req);
-    const config = (limiter as unknown as { config: RateLimitConfig }).config;
+    const result = await limiter.checkLimit(req);
+    const config = (limiter as unknown as { config: Required<RateLimitConfig> }).config;
     
     const headers = {
       'X-RateLimit-Limit': config.maxRequests.toString(),

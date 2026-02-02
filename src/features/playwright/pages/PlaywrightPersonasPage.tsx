@@ -2,11 +2,13 @@
 
 import { ItemLibrary, useToast } from "@/shared/ui";
 import Link from "next/link";
+import type { SetStateAction } from "react";
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
 import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from "@/features/playwright/hooks/usePlaywrightPersonas";
 import type {
   PlaywrightPersona,
+  PlaywrightSettings,
 } from "@/features/playwright/types";
 
 export function PlaywrightPersonasPage(): React.JSX.Element {
@@ -94,11 +96,14 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         }
         return tags;
       }}
-      renderExtraFields={(draft: Partial<PlaywrightPersona>, onChange: (updates: Partial<PlaywrightPersona>) => void) => (
+      renderExtraFields={(draft: Partial<PlaywrightPersona>, onChange: (updates: Partial<PlaywrightPersona>) => void): React.JSX.Element => (
         <PlaywrightSettingsForm
           settings={draft.settings || buildPlaywrightSettings()}
-          setSettings={(newSettings: any) => {
-            const nextSettings = typeof newSettings === 'function' ? newSettings(draft.settings || buildPlaywrightSettings()) : newSettings;
+          setSettings={(newSettings: SetStateAction<PlaywrightSettings>): void => {
+            const current = draft.settings || buildPlaywrightSettings();
+            const nextSettings = typeof newSettings === 'function' 
+              ? (newSettings as (prev: PlaywrightSettings) => PlaywrightSettings)(current) 
+              : newSettings;
             onChange({ settings: nextSettings });
           }}
           showSave={false}

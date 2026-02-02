@@ -225,42 +225,34 @@ export function SectionNodeItem({
   };
 
   return (
-    <div
-      draggable
-      onDragStart={(e: React.DragEvent) => {
-        e.stopPropagation();
-        e.dataTransfer.setData("sectionId", section.id);
-        e.dataTransfer.setData("sectionType", section.type);
-        e.dataTransfer.setData("sectionZone", section.zone);
-        e.dataTransfer.setData("sectionIndex", sectionIndex.toString());
-        e.dataTransfer.effectAllowed = "move";
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "0.4";
-        setDraggedSectionId(section.id);
-        setDraggedSectionType(section.type);
-        setDraggedSectionIndex(sectionIndex);
-        setDraggedSectionZone(section.zone);
-      }}
-      onDragEnd={(e: React.DragEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "1";
-        setDraggedSectionId(null);
-        setDraggedSectionType(null);
-        setDraggedSectionIndex(null);
-        setDraggedSectionZone(null);
-      }}
-      className="group/section cursor-grab active:cursor-grabbing"
-    >
+    <div className="group/section">
       <div
         role="button"
         tabIndex={0}
-        draggable={false}
+        draggable
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(section.id);
           }
+        }}
+        onDragStart={(e: React.DragEvent) => {
+          e.dataTransfer.setData("sectionId", section.id);
+          e.dataTransfer.setData("sectionType", section.type);
+          e.dataTransfer.setData("sectionZone", section.zone);
+          e.dataTransfer.setData("sectionIndex", sectionIndex.toString());
+          e.dataTransfer.effectAllowed = "move";
+          setDraggedSectionId(section.id);
+          setDraggedSectionType(section.type);
+          setDraggedSectionIndex(sectionIndex);
+          setDraggedSectionZone(section.zone);
+        }}
+        onDragEnd={() => {
+          setDraggedSectionId(null);
+          setDraggedSectionType(null);
+          setDraggedSectionIndex(null);
+          setDraggedSectionZone(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
@@ -324,7 +316,6 @@ export function SectionNodeItem({
               onConvertSectionToBlock(dragSectionId, section.id, section.blocks.length);
             } else if (section.type === "Grid") {
               if (CONVERTIBLE_SECTION_TYPES.includes(dragSectionType ?? "") && !dropPosition) {
-                // Section dropped on a Grid — route to first column
                 const firstColumn =
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
                   gridColumns.find((b: BlockInstance) => b.type === "Column");
@@ -336,7 +327,6 @@ export function SectionNodeItem({
                 onDropSection(dragSectionId, targetIndex);
               }
             } else {
-              // Section drop — insert at this section's position
               const targetIndex = dropPosition === "below" ? sectionIndex + 1 : sectionIndex;
               onDropSection(dragSectionId, targetIndex);
             }
@@ -365,7 +355,6 @@ export function SectionNodeItem({
                   fromParent || undefined
                 );
               } else {
-                // Block dropped on a Grid — route to first column
                 const firstColumn =
                   gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === "Column") ??
                   gridColumns.find((b: BlockInstance) => b.type === "Column");
@@ -391,7 +380,6 @@ export function SectionNodeItem({
                 fromParent || undefined
               );
             } else {
-              // Block drop
               onDropBlock(draggedBlockId, fromSection, section.id, section.blocks.length);
             }
             setDraggedBlockId(null);
@@ -400,7 +388,7 @@ export function SectionNodeItem({
             setDraggedFromParentBlockId(null);
           }
         }}
-        className={`relative flex w-full items-center gap-2 rounded px-2 py-2 text-sm font-medium transition ${
+        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium transition active:cursor-grabbing ${
           isSectionDragOver
             ? "bg-purple-600/30 text-purple-200 ring-1 ring-purple-500/50"
             : isDragOver
@@ -412,8 +400,8 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/section:opacity-100 active:cursor-grabbing" />
-        <div className="shrink-0">
+        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/section:opacity-100" />
+        <div className="shrink-0" draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
           {canToggle ? (
             <div
               role="button"
@@ -449,7 +437,11 @@ export function SectionNodeItem({
         {isDragOver && (
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
-        <div className={`flex items-center gap-0.5 transition ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}>
+        <div
+          className={`flex items-center gap-0.5 transition ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
+          draggable={false}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+        >
           <button
             type="button"
             onClick={(e: React.MouseEvent) => {
@@ -1228,44 +1220,36 @@ function SectionBlockNodeItem({
   const blockLabel = resolveBlockLabel(block, block.type);
 
   return (
-    <div
-      draggable
-      onDragStart={(e: React.DragEvent) => {
-        e.stopPropagation();
-        e.dataTransfer.setData("blockId", block.id);
-        e.dataTransfer.setData("text/plain", block.id);
-        e.dataTransfer.setData("blockType", block.type);
-        e.dataTransfer.setData("fromSectionId", sectionId);
-        e.dataTransfer.setData("fromColumnId", columnId ?? "");
-        e.dataTransfer.setData("fromParentBlockId", "");
-        e.dataTransfer.effectAllowed = "move";
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "0.4";
-        setDraggedBlockId(block.id);
-        setDraggedFromSectionId(sectionId);
-        setDraggedFromColumnId(columnId);
-        setDraggedFromParentBlockId(null);
-      }}
-      onDragEnd={(e: React.DragEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "1";
-        setDraggedBlockId(null);
-        setDraggedFromSectionId(null);
-        setDraggedFromColumnId(null);
-        setDraggedFromParentBlockId(null);
-      }}
-      className="group/sblock cursor-grab active:cursor-grabbing"
-    >
+    <div className="group/sblock">
       <div
         role="button"
         tabIndex={0}
-        draggable={false}
+        draggable
         onClick={() => onSelect(block.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(block.id);
           }
+        }}
+        onDragStart={(e: React.DragEvent) => {
+          e.dataTransfer.setData("blockId", block.id);
+          e.dataTransfer.setData("text/plain", block.id);
+          e.dataTransfer.setData("blockType", block.type);
+          e.dataTransfer.setData("fromSectionId", sectionId);
+          e.dataTransfer.setData("fromColumnId", columnId ?? "");
+          e.dataTransfer.setData("fromParentBlockId", "");
+          e.dataTransfer.effectAllowed = "move";
+          setDraggedBlockId(block.id);
+          setDraggedFromSectionId(sectionId);
+          setDraggedFromColumnId(columnId);
+          setDraggedFromParentBlockId(null);
+        }}
+        onDragEnd={() => {
+          setDraggedBlockId(null);
+          setDraggedFromSectionId(null);
+          setDraggedFromColumnId(null);
+          setDraggedFromParentBlockId(null);
         }}
         onDragOver={(e: React.DragEvent) => {
           const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? "");
@@ -1317,7 +1301,6 @@ function SectionBlockNodeItem({
             return;
           }
           if (dragId && dragId !== block.id) {
-            // Drop element into this section-type block
             onDropBlockToColumn(
               dragId,
               fromSection,
@@ -1337,7 +1320,7 @@ function SectionBlockNodeItem({
             setDraggedSectionId(null);
           }
         }}
-        className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition ${
+        className={`flex w-full cursor-grab items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium transition active:cursor-grabbing ${
           isDragOver
             ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
             : isSelected
@@ -1347,10 +1330,11 @@ function SectionBlockNodeItem({
             : "text-gray-300 hover:bg-muted/40"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 cursor-grab text-gray-600 opacity-0 group-hover/sblock:opacity-100 active:cursor-grabbing" />
+        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/sblock:opacity-100" />
         <div
           role="button"
           tabIndex={-1}
+          draggable={false}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onToggleExpand(block.id);
@@ -1361,6 +1345,7 @@ function SectionBlockNodeItem({
               onToggleExpand(block.id);
             }
           }}
+          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
           className="shrink-0"
         >
           {isExpanded ? (
@@ -1375,9 +1360,11 @@ function SectionBlockNodeItem({
           <span className="text-[10px] text-emerald-300">Drop here</span>
         )}
         {!isTextAtom && (
-          <ColumnBlockPicker
-            onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
-          />
+          <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
+            <ColumnBlockPicker
+              onSelect={(elemType: string) => onAddElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+            />
+          </div>
         )}
       </div>
 
@@ -1464,9 +1451,17 @@ function BlockNodeItem({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       draggable
+      onClick={() => onSelect(block.id)}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(block.id);
+        }
+      }}
       onDragStart={(e: React.DragEvent) => {
-        e.stopPropagation();
         e.dataTransfer.setData("blockId", block.id);
         e.dataTransfer.setData("text/plain", block.id);
         e.dataTransfer.setData("blockType", block.type);
@@ -1474,16 +1469,12 @@ function BlockNodeItem({
         e.dataTransfer.setData("fromColumnId", columnId ?? "");
         e.dataTransfer.setData("fromParentBlockId", parentBlockId ?? "");
         e.dataTransfer.effectAllowed = "move";
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "0.4";
         setDraggedBlockId(block.id);
         setDraggedFromSectionId(sectionId);
         if (setDraggedFromColumnId) setDraggedFromColumnId(columnId ?? null);
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(parentBlockId ?? null);
       }}
-      onDragEnd={(e: React.DragEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "1";
+      onDragEnd={() => {
         setDraggedBlockId(null);
         setDraggedFromSectionId(null);
         if (setDraggedFromColumnId) setDraggedFromColumnId(null);
@@ -1550,36 +1541,22 @@ function BlockNodeItem({
         if (setDraggedFromColumnId) setDraggedFromColumnId(null);
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
-      className="group cursor-grab active:cursor-grabbing"
+      className={`group flex w-full cursor-grab items-center gap-1.5 rounded px-2 py-1.5 text-sm transition active:cursor-grabbing ${
+        isDragOver
+          ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
+          : isSelected
+          ? "bg-blue-600/80 text-white"
+          : isDragging
+          ? "opacity-40 text-gray-400"
+          : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
+      }`}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        draggable={false}
-        onClick={() => onSelect(block.id)}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onSelect(block.id);
-          }
-        }}
-        className={`flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-          isDragOver
-            ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
-            : isSelected
-            ? "bg-blue-600/80 text-white"
-            : isDragging
-            ? "opacity-40 text-gray-400"
-            : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
-        }`}
-      >
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
-        <Icon className="size-3.5 shrink-0" />
-        <span className="truncate">{blockLabel}</span>
-        {isDragOver && (
-          <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
-        )}
-      </div>
+      <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
+      <Icon className="size-3.5 shrink-0" />
+      <span className="truncate">{blockLabel}</span>
+      {isDragOver && (
+        <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
+      )}
     </div>
   );
 }

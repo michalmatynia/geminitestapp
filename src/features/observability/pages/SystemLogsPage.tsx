@@ -112,15 +112,15 @@ export default function SystemLogsPage(): React.JSX.Element {
   const rebuildIndexesMutation = useRebuildIndexesMutation();
 
   useEffect(() => {
-    if (logsQuery.error) toast((logsQuery.error).message, { variant: "error" });
+    if (logsQuery.error) toast(logsQuery.error.message, { variant: "error" });
   }, [logsQuery.error, toast]);
 
   useEffect(() => {
-    if (metricsQuery.error) toast((metricsQuery.error).message, { variant: "error" });
+    if (metricsQuery.error) toast(metricsQuery.error.message, { variant: "error" });
   }, [metricsQuery.error, toast]);
 
   useEffect(() => {
-    if (mongoDiagnosticsQuery.error) toast((mongoDiagnosticsQuery.error).message, { variant: "error" });
+    if (mongoDiagnosticsQuery.error) toast(mongoDiagnosticsQuery.error.message, { variant: "error" });
   }, [mongoDiagnosticsQuery.error, toast]);
 
   const logs = useMemo(() => logsQuery.data?.logs ?? [], [logsQuery.data]);
@@ -167,11 +167,13 @@ export default function SystemLogsPage(): React.JSX.Element {
   };
 
   const getContextValue = (context: unknown, path: string): unknown => {
-    if (!context || typeof context !== "object") return null;
-    return path.split(".").reduce<unknown>((acc: unknown, key: string): unknown => {
-      if (!acc || typeof acc !== "object") return null;
-      return (acc as Record<string, unknown>)[key] ?? null;
-    }, context);
+    if (!context || typeof context !== "object" || Array.isArray(context)) return null;
+    let current: unknown = context;
+    for (const key of path.split(".")) {
+      if (!current || typeof current !== "object" || Array.isArray(current)) return null;
+      current = (current as Record<string, unknown>)[key];
+    }
+    return current ?? null;
   };
 
   const levels = metrics?.levels ?? { error: 0, warn: 0, info: 0 };
@@ -540,11 +542,10 @@ export default function SystemLogsPage(): React.JSX.Element {
                   <div key={log.id} className="px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <StatusBadge
-                          status={log.level}
-                          variant={(log.level === "warn" ? "warning" : log.level) as any}
-                        />
-                        <span className="text-xs text-gray-400">
+                                                  <StatusBadge
+                                                  status={log.level}
+                                                  variant={log.level === "warn" ? "warning" : log.level as "info" | "success" | "warning" | "error"}
+                                                />                        <span className="text-xs text-gray-400">
                           {formatTimestamp(log.createdAt)}
                         </span>
                       </div>

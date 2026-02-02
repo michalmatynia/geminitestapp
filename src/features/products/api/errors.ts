@@ -245,19 +245,28 @@ export const ErrorStatusCodes: Record<ErrorCode, number> = {
 };
 
 // Middleware for consistent error handling
-export function withErrorHandling(
-  handler: (...args: any[]) => Promise<Response>
+export function withErrorHandling<T extends unknown[]>(
+  handler: (...args: T) => Promise<Response>
 ) {
-  return async (...args: unknown[]): Promise<Response> => {
+  return async (...args: T): Promise<Response> => {
     try {
-      return await handler(...(args as any[]));
-    } catch (error) {
+      return await handler(...args);
+    } catch (error: unknown) {
       console.error('API Error:', error);
       
       // Generate request ID for tracking
       const requestId = crypto.randomUUID();
       
-      return createVersionedErrorResponse(error as Error, 500, requestId);
+      // Ensure error is an instance of Error or ApiErrorBuilder for createVersionedErrorResponse
+      if (error instanceof ApiErrorBuilder) {
+        return createVersionedErrorResponse(error, 500, requestId);
+      } else if (error instanceof Error) {
+        return createVersionedErrorResponse(error, 500, requestId);
+      } else {
+        // Fallback for unexpected error types
+        const genericError = new Error("An unknown error occurred");
+        return createVersionedErrorResponse(genericError, 500, requestId);
+      }
     }
   };
 }

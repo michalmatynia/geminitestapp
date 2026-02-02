@@ -4,69 +4,10 @@ I need the button to lock the paths but also to activate or deactivate them.
 
  I also need a way of grouping paths.
 
-Each button can only be connected to one Path. I need a Path button manager, where I can see if the button has an assigned path or not. Where I can rename them. change their type (they could be on/OFF buttons).
+I need a Path button manager, where I can see if the button has an assigned path or not. Where I can rename them. change their type (they could be on/OFF buttons).
 
 Auth Users drops a error
 
-
-## Error Type
-Console Error
-
-## Error Message
-In HTML, <div> cannot be a descendant of <p>.
-This will cause a hydration error.
-
-  ...
-    <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
-      <RedirectBoundary>
-        <RedirectErrorBoundary router={{...}}>
-          <InnerLayoutRouter url="/admin/set..." tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} ...>
-            <SegmentViewNode type="page" pagePath="(admin)/ad...">
-              <SegmentTrieNode>
-              <Page>
-                <AdminNotificationsSettingsPage>
-                  <div className="container ...">
-                    <SectionHeader>
-                    <div className="grid gap-6...">
-                      <div>
-                      <div>
-                        <SectionPanel className="sticky top...">
-                          <div className="rounded-lg...">
-                            <h2>
-                            <div>
-                            <div className="mt-4 space...">
-                              <p>
-                              <div className="space-y-1">
-                                <p>
->                               <p className="flex items-center justify-between text-xs text-gray-400">
-                                  <span>
-                                  <div className="flex items...">
->                                   <div className="size-2 rounded-full bg-emerald-500">
-                                    ...
-                            ...
-            ...
-          ...
-
-
-
-    at createConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2199:71)
-    at handleConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2980:54)
-    at console.error (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:3124:57)
-    at validateDOMNesting (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:1963:372)
-    at completeWork (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:6937:25)
-    at runWithFiberInDEV (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
-    at completeUnitOfWork (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:9627:23)
-    at performUnitOfWork (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:9564:28)
-    at workLoopConcurrentByScheduler (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:9558:58)
-    at renderRootConcurrent (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:9541:71)
-    at performWorkOnRoot (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:9068:150)
-    at performWorkOnRootViaSchedulerTask (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10230:9)
-    at MessagePort.performWorkUntilDeadline (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_compiled_a0e4c7b4._.js:2647:64)
-    at div (<anonymous>:null:null)
-    at AdminNotificationsSettingsPage (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/src_features_26eb68eb._.js:2800:267)
-    at Page (about://React/Server/file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/.next/dev/server/chunks/ssr/%5Broot-of-the-server%5D__fe37ed06._.js?233:45:263)
-
-Next.js version: 16.1.6 (Turbopack)
 
 
 *When I create a product, when I upload an image and then resort it, the image starts flickering.

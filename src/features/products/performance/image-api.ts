@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { imageOptimizer, type ImageFormat, type ImageSize, type OptimizedImageResult, type OptimizationOptions } from './index';
+import { imageOptimizer } from './image-optimizer';
+import type { OptimizedImageResult, OptimizationOptions } from './image-optimizer';
+import type { ImageFormat, ImageSize } from './image-url-generator';
 
 // GET /api/products/images/[id]/[size].[format]
 export async function GET(
@@ -41,7 +43,12 @@ export async function GET(
     }
 
     // Set caching headers
-    const response = new NextResponse(new Uint8Array(optimizedImage.buffer));
+    const body = new Uint8Array(
+      optimizedImage.buffer.buffer,
+      optimizedImage.buffer.byteOffset,
+      optimizedImage.buffer.byteLength
+    );
+    const response = new NextResponse(body as unknown as BodyInit);
     response.headers.set('Content-Type', `image/${format}`);
     response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     response.headers.set('Content-Length', optimizedImage.fileSize.toString());

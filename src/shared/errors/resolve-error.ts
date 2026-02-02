@@ -18,9 +18,9 @@ export type ResolvedError = {
   expected: boolean;
   critical: boolean;
   retryable: boolean;
-  retryAfterMs?: number | undefined;
-  meta?: Record<string, unknown> | undefined;
-  cause?: unknown | undefined;
+  retryAfterMs?: number;
+  meta?: Record<string, unknown>;
+  cause?: unknown;
 };
 
 type ResolveOptions = {

@@ -90,9 +90,6 @@ function PageBuilderInner(): React.ReactNode {
         {/* Left panel: Component tree / Theme settings */}
         <div
           ref={leftPanelRef}
-          onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
-            event.stopPropagation();
-          }}
           className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
             state.leftPanelCollapsed ? "w-0 opacity-0 -translate-x-2 pointer-events-none" : "w-72 opacity-100 translate-x-0"
           }`}
@@ -197,9 +194,6 @@ function PageBuilderInner(): React.ReactNode {
         {/* Right panel: Settings */}
         <div
           ref={rightPanelRef}
-          onPointerDown={(event: React.PointerEvent<HTMLDivElement>) => {
-            event.stopPropagation();
-          }}
           className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
             state.rightPanelCollapsed ? "w-0 opacity-0 translate-x-2 pointer-events-none" : "w-80 opacity-100 translate-x-0"
           }`}

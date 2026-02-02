@@ -559,6 +559,14 @@ export const handleDatabase: NodeHandler = async ({
     if (next.entityType === undefined && simulationEntityType) {
       next.entityType = simulationEntityType;
     }
+    if (next.value === undefined) {
+      const fallbackValue =
+        (typeof next.entityId === "string" && next.entityId.trim() ? next.entityId : undefined) ??
+        (typeof next.productId === "string" && next.productId.trim() ? next.productId : undefined);
+      if (fallbackValue) {
+        next.value = fallbackValue;
+      }
+    }
     return next;
   };
   const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
@@ -831,9 +839,16 @@ export const handleDatabase: NodeHandler = async ({
         productId: resolvedInputs.productId,
         entityType: resolvedInputs.entityType,
       };
-      const buildUpdatesFromMappings = (): { updates: Record<string, unknown>; primaryTarget: string } => {
+      const buildUpdatesFromMappings = (): {
+        updates: Record<string, unknown>;
+        primaryTarget: string;
+        missingSourcePorts: string[];
+      } => {
         const fallbackTarget: string =
           dbConfig.mappings?.[0]?.targetPath ?? "content_en";
+        const fallbackSourcePort: string = node.inputs.includes("result")
+          ? "result"
+          : "content_en";
         const mappings: UpdaterMapping[] =
           dbConfig.mappings && dbConfig.mappings.length > 0
             ? dbConfig.mappings
@@ -841,7 +856,7 @@ export const handleDatabase: NodeHandler = async ({
               [
                 {
                   targetPath: fallbackTarget,
-                  sourcePort: resolvedInputs.result ? "result" : "content_en",
+                  sourcePort: fallbackSourcePort,
                 },
               ];
         const trimStrings: boolean = dbConfig.trimStrings ?? false;
@@ -852,9 +867,11 @@ export const handleDatabase: NodeHandler = async ({
           (typeof value === "string" && (value).trim() === "") ||
           (Array.isArray(value) && (value as unknown[]).length === 0);
         const updates: Record<string, unknown> = {};
+        const requiredSourcePorts: Set<string> = new Set<string>();
         mappings.forEach((mapping: UpdaterMapping): void => {
           const sourcePort: string = mapping.sourcePort;
           if (!sourcePort) return;
+          requiredSourcePorts.add(sourcePort);
           const sourceValue: unknown = resolvedInputs[sourcePort];
           if (sourceValue === undefined) return;
           let value: unknown = coerceInput(sourceValue);
@@ -886,16 +903,53 @@ export const handleDatabase: NodeHandler = async ({
             updates[mapping.targetPath] = value;
           }
         });
+        const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
+          (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
+        );
         return {
           updates,
           primaryTarget:
             mappings.find((m: UpdaterMapping): boolean => !!m.targetPath)?.targetPath ?? fallbackTarget,
+          missingSourcePorts,
         };
       };
 
-      const parsedUpdate: unknown = updateTemplate
-        ? parseJsonTemplate(updateTemplate)
-        : null;
+      const { updates, primaryTarget, missingSourcePorts } = buildUpdatesFromMappings();
+      const extractMissingTemplatePorts = (template: string): string[] => {
+        const missing: Set<string> = new Set<string>();
+        const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([^\]]+)\s*\]/g;
+        let match: RegExpExecArray | null = tokenRegex.exec(template);
+        while (match) {
+          const token: string = (match[1] ?? match[2] ?? "").trim();
+          if (token) {
+            const rootPort: string = token.split(".")[0]?.trim() ?? "";
+            if (
+              rootPort &&
+              rootPort !== "value" &&
+              rootPort !== "current" &&
+              resolvedInputs[rootPort] === undefined
+            ) {
+              missing.add(rootPort);
+            }
+          }
+          match = tokenRegex.exec(template);
+        }
+        return Array.from(missing);
+      };
+      const missingTemplatePorts: string[] = updateTemplate
+        ? extractMissingTemplatePorts(updateTemplate)
+        : [];
+      if (
+        !updateTemplate &&
+        Object.keys(updates).length === 0 &&
+        missingSourcePorts.length > 0
+      ) {
+        return prevOutputs;
+      }
+      if (missingTemplatePorts.length > 0) {
+        return prevOutputs;
+      }
+      const parsedUpdate: unknown = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
       if (
         updateTemplate &&
         (!parsedUpdate ||
@@ -909,7 +963,6 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      const { updates, primaryTarget } = buildUpdatesFromMappings();
       const updateDoc: unknown = parsedUpdate ?? updates;
       if (
         !updateDoc ||
@@ -1243,13 +1296,16 @@ export const handleDatabase: NodeHandler = async ({
 
   if (operation === "update") {
     const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
+    const fallbackSourcePort: string = node.inputs.includes("result")
+      ? "result"
+      : "content_en";
     const mappings: UpdaterMapping[] =
       dbConfig.mappings && dbConfig.mappings.length > 0
         ? dbConfig.mappings
         : [
             {
               targetPath: fallbackTarget,
-              sourcePort: resolvedInputs.result ? "result" : "content_en",
+              sourcePort: fallbackSourcePort,
             },
           ];
     const trimStrings: boolean = dbConfig.trimStrings ?? false;
@@ -1260,9 +1316,11 @@ export const handleDatabase: NodeHandler = async ({
       (typeof value === "string" && (value).trim() === "") ||
       (Array.isArray(value) && (value as unknown[]).length === 0);
     const updates: Record<string, unknown> = {};
+    const requiredSourcePorts: Set<string> = new Set<string>();
     mappings.forEach((mapping: UpdaterMapping) => {
       const sourcePort = mapping.sourcePort;
       if (!sourcePort) return;
+      requiredSourcePorts.add(sourcePort);
       const sourceValue = resolvedInputs[sourcePort];
       if (sourceValue === undefined) return;
       let value: unknown = coerceInput(sourceValue);
@@ -1293,6 +1351,16 @@ export const handleDatabase: NodeHandler = async ({
         updates[mapping.targetPath] = value;
       }
     });
+    const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
+      (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
+    );
+    const hasUpdates = Object.keys(updates).length > 0;
+    if (!hasUpdates && missingSourcePorts.length > 0) {
+      return prevOutputs;
+    }
+    if (!hasUpdates) {
+      return prevOutputs;
+    }
     const updateStrategy = dbConfig.updateStrategy ?? "one";
     const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
     const idField = dbConfig.idField ?? "entityId";
@@ -1311,7 +1379,6 @@ export const handleDatabase: NodeHandler = async ({
       updates,
       mappings,
     };
-    const hasUpdates = Object.keys(updates).length > 0;
     const needsEntityId = entityType !== "custom";
     let updateResult: unknown = updates;
 
@@ -1342,19 +1409,7 @@ export const handleDatabase: NodeHandler = async ({
         };
         executed.updater.add(node.id);
       } else if (hasUpdates && !hasQuery && !executed.updater.has(node.id)) {
-        reportAiPathsError(
-          new Error("Database update many missing query"),
-          { action: "updateMany", nodeId: node.id },
-          "Database update many missing query:",
-        );
-        toast("Update many requires a query filter.", { variant: "error" });
-        updateResult = {
-          error: "missing_query",
-          updates,
-          query,
-          collection: queryPayload.collection,
-        };
-        executed.updater.add(node.id);
+        return prevOutputs;
       } else if (hasUpdates && hasQuery && !executed.updater.has(node.id)) {
         if (dryRun) {
           updateResult = {
@@ -1402,25 +1457,11 @@ export const handleDatabase: NodeHandler = async ({
         }
       }
     } else {
-      if (
-        hasUpdates &&
-        needsEntityId &&
-        !entityId &&
-        !executed.updater.has(node.id)
-      ) {
-        reportAiPathsError(
-          new Error("Database update missing entity id"),
-          { action: "updateEntity", nodeId: node.id },
-          "Database update missing entity id:",
-        );
-        toast("Database update node needs an entity ID input.", {
-          variant: "error",
-        });
-        executed.updater.add(node.id);
+      if (needsEntityId && !entityId) {
+        return prevOutputs;
       }
 
       if (
-        hasUpdates &&
         (!needsEntityId || entityId) &&
         !executed.updater.has(node.id)
       ) {

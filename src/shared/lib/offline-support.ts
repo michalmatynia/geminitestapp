@@ -21,7 +21,7 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
   void restorePromise
     .then(() => {
       const cache = queryClient.getQueryCache();
-      cache.getAll().forEach((query: { queryKey: unknown }) => {
+      cache.getAll().forEach((query) => {
         if (!Array.isArray(query.queryKey)) {
           cache.remove(query);
         }

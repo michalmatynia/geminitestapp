@@ -54,6 +54,10 @@ export const loggingMiddleware: QueryMiddleware = {
     console.log(`✅ Query success: ${JSON.stringify(query.queryKey)}`, data);
   },
   onQueryError: (query: Query, error: Error): void => {
+    const message = error?.message?.trim() || "";
+    if (!message || ["{}", "[]", "[object Object]"].includes(message)) {
+      return;
+    }
     console.error(`❌ Query error: ${JSON.stringify(query.queryKey)}`, error);
   },
 };

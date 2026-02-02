@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, AppModal, ModalShell, SectionHeader, SectionPanel } from "@/shared/ui";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
@@ -70,10 +70,20 @@ export default function ProductAiJobsPanel({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
+  const isMounted = useSyncExternalStore(
+    (): (() => void) => (): void => {},
+    (): boolean => true,
+    (): boolean => false
+  );
 
   // Queries
   const jobsQuery = useProductAiJobs("all");
-  const jobs = useMemo(() => jobsQuery.data?.jobs || [], [jobsQuery.data]);
+  const jobs = useMemo(
+    () => (isMounted ? jobsQuery.data?.jobs || [] : []),
+    [isMounted, jobsQuery.data],
+  );
+  const isFetching = isMounted ? jobsQuery.isFetching : true;
+  const isLoading = isMounted ? jobsQuery.isLoading : true;
 
   // Mutations
   const actionMutation = useProductAiJobMutation();
@@ -196,6 +206,15 @@ export default function ProductAiJobsPanel({
     ].some((val: string | null | undefined) => val && String(val).toLowerCase().includes(searchStr));
   });
 
+  const formatTime = useCallback(
+    (value?: string | Date | null): string => {
+      if (!value) return "—";
+      const date = new Date(value);
+      return isMounted ? date.toLocaleTimeString() : date.toISOString().slice(11, 19);
+    },
+    [isMounted],
+  );
+
   const aiContent = (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -206,8 +225,8 @@ export default function ProductAiJobsPanel({
           className="max-w-md bg-gray-900 border-border text-white"
         />
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={(): void => { void jobsQuery.refetch(); }} disabled={jobsQuery.isFetching}>
-            <RefreshCcw className={`mr-2 h-4 w-4 ${jobsQuery.isFetching ? "animate-spin" : ""}`} />
+          <Button variant="outline" size="sm" onClick={(): void => { void jobsQuery.refetch(); }} disabled={isFetching}>
+            <RefreshCcw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button variant="destructive" size="sm" onClick={(): void => { void clearCompleted(); }} disabled={clearMutation.isPending}>
@@ -236,7 +255,7 @@ export default function ProductAiJobsPanel({
             {filteredJobs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                  {jobsQuery.isLoading ? "Loading jobs..." : "No jobs found."}
+                  {isLoading ? "Loading jobs..." : "No jobs found."}
                 </td>
               </tr>
             ) : (
@@ -270,9 +289,9 @@ export default function ProductAiJobsPanel({
                     )}
                   </td>
                   <td className="px-4 py-4 text-xs">
-                    <div>Created: {new Date(job.createdAt).toLocaleTimeString()}</div>
+                    <div>Created: {formatTime(job.createdAt)}</div>
                     {job.finishedAt && (
-                      <div className="text-gray-500">Finished: {new Date(job.finishedAt).toLocaleTimeString()}</div>
+                      <div className="text-gray-500">Finished: {formatTime(job.finishedAt)}</div>
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">

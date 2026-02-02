@@ -33,12 +33,19 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
   };
 };
 
-export const createPathMeta = (config: PathConfig): PathMeta => ({
-  id: config.id,
-  name: config.name,
-  createdAt: config.updatedAt,
-  updatedAt: config.updatedAt,
-});
+export const createPathMeta = (config: PathConfig): PathMeta => {
+  const fallbackName = `Path ${config.id.slice(0, 6)}`;
+  const resolvedName =
+    typeof config.name === "string" && config.name.trim().length > 0
+      ? config.name.trim()
+      : fallbackName;
+  return {
+    id: config.id,
+    name: resolvedName,
+    createdAt: config.updatedAt,
+    updatedAt: config.updatedAt,
+  };
+};
 
 export const createAiDescriptionPath = (id: string): PathConfig => {
   const now = new Date().toISOString();

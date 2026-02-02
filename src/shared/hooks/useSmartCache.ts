@@ -170,10 +170,30 @@ export function useCacheWarming(): {
   }, [queryClient]);
 
   const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
+    const resolveWarmCatalogId = async (): Promise<string | null> => {
+      try {
+        const catalogsRes = await fetch("/api/catalogs");
+        if (!catalogsRes.ok) return null;
+        const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
+        if (!Array.isArray(catalogs) || catalogs.length === 0) return null;
+        return catalogs[0]?.id ?? null;
+      } catch {
+        return null;
+      }
+    };
+
     const frequentQueries = [
       {
         queryKey: ['products', 'categories'],
-        queryFn: async (): Promise<any> => await fetch('/api/products/categories').then((r: Response) => r.json()),
+        queryFn: async (): Promise<any> => {
+          const catalogId = await resolveWarmCatalogId();
+          if (!catalogId) return [];
+          const response = await fetch(
+            `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+          );
+          if (!response.ok) return [];
+          return response.json();
+        },
       },
       {
         queryKey: ['settings', 'global'],

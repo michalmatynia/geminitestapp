@@ -376,15 +376,11 @@ export function ParserNodeConfigSection({
     commitMappingsImmediate({ ...draftMappings, images: detected });
     toast(`Image field detected: ${detected}`, { variant: "success" });
   };
-  const imageEntryIndex = React.useMemo(
-    () =>
-      entries.findIndex(([key]: [string, string]) =>
-        key.toLowerCase().includes("image")
-      ),
-    [entries]
-  );
-
   if (!isParserNode) return null;
+
+  const imageEntryIndex = entries.findIndex(([key]: [string, string]) =>
+    key.toLowerCase().includes("image")
+  );
 
   return (
     <div className="space-y-4">

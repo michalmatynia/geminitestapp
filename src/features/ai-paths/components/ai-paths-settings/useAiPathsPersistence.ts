@@ -555,23 +555,60 @@ export function useAiPathsPersistence({
           }
         }
 
-        setPaths(metas);
+        const normalizeMetaName = (name: unknown, pathId: string): string => {
+          if (typeof name === "string" && name.trim().length > 0) {
+            return name.trim();
+          }
+          const configName = configs[pathId]?.name;
+          if (typeof configName === "string" && configName.trim().length > 0) {
+            return configName.trim();
+          }
+          return `Path ${pathId.slice(0, 6)}`;
+        };
+        const normalizedMetas: PathMeta[] = metas.map((meta: PathMeta): PathMeta => {
+          const config = configs[meta.id];
+          const fallbackTimestamp = config?.updatedAt ?? new Date().toISOString();
+          const normalizedName = normalizeMetaName(meta.name, meta.id);
+          if (config && (!config.name || config.name.trim().length === 0)) {
+            configs[meta.id] = { ...config, name: normalizedName };
+          }
+          return {
+            ...meta,
+            name: normalizedName,
+            createdAt: meta.createdAt || fallbackTimestamp,
+            updatedAt: meta.updatedAt || fallbackTimestamp,
+          };
+        });
+        if (stableStringify(normalizedMetas) !== stableStringify(metas)) {
+          try {
+            await updateSettingsBulkMutation.mutateAsync([
+              { key: PATH_INDEX_KEY, value: JSON.stringify(normalizedMetas) },
+            ]);
+            await updatePreferencesMutation.mutateAsync({
+              aiPathsPathIndex: normalizedMetas,
+            });
+          } catch (error) {
+            console.warn("[AI Paths] Failed to persist normalized path names.", error);
+          }
+        }
+
+        setPaths(normalizedMetas);
         setPathConfigs(configs);
         const initialConfigsHash = buildPathConfigsHash(configs);
         lastPathSavePayloadRef.current = stableStringify({
-          aiPathsPathIndex: metas,
+          aiPathsPathIndex: normalizedMetas,
           aiPathsPathConfigs: initialConfigsHash,
         });
         if (preferredGroups !== null) {
           setExpandedPaletteGroups(new Set(preferredGroups));
         }
-        const firstPathCandidate = metas[0]?.id ?? Object.keys(configs)[0] ?? "default";
+        const firstPathCandidate = normalizedMetas[0]?.id ?? Object.keys(configs)[0] ?? "default";
         const firstPath =
           preferredPathId && configs[preferredPathId] ? preferredPathId : firstPathCandidate;
         const firstConfigForSettings = configs[firstPath];
         if (firstConfigForSettings) {
           lastSettingsPayloadRef.current = stableStringify({
-            index: metas,
+            index: normalizedMetas,
             configId: firstPath,
             config: normalizeConfigForHash(sanitizePathConfig(firstConfigForSettings)),
           });

@@ -12,9 +12,18 @@ interface ErrorHandlingConfig {
   onError?: (error: Error, queryKey: unknown[]) => void;
 }
 
+const NOISE_MESSAGES = new Set(["{}", "[]", "[object Object]"]);
+
+const isMeaningfulMessage = (message: string): boolean => {
+  const trimmed = message.trim();
+  if (!trimmed) return false;
+  if (NOISE_MESSAGES.has(trimmed)) return false;
+  return true;
+};
+
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message?.trim() || "";
-  if (typeof error === "string") return error;
+  if (typeof error === "string") return error.trim();
   if (error && typeof error === "object") {
     const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
       if (value === null || value === undefined) return false;
@@ -32,7 +41,7 @@ const getErrorMessage = (error: unknown): string => {
 
 const shouldLogError = (error: unknown): boolean => {
   if (!error) return false;
-  if (error instanceof Error) return Boolean(error.message?.trim());
+  if (error instanceof Error) return isMeaningfulMessage(error.message || "");
   if (typeof error === "object") {
     const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
       if (value === null || value === undefined) return false;
@@ -46,7 +55,7 @@ const shouldLogError = (error: unknown): boolean => {
 
 const isEmptyError = (error: unknown): boolean => {
   if (!error) return true;
-  if (error instanceof Error) return !error.message?.trim();
+  if (error instanceof Error) return !isMeaningfulMessage(error.message || "");
   if (typeof error === "object") {
     return Object.keys(error as Record<string, unknown>).length === 0;
   }
@@ -55,12 +64,27 @@ const isEmptyError = (error: unknown): boolean => {
 
 const hasMeaningfulError = (error: unknown): boolean => {
   if (!error) return false;
-  if (error instanceof Error) return Boolean(error.message?.trim());
-  if (typeof error === "string") return error.trim().length > 0;
+  if (error instanceof Error) return isMeaningfulMessage(error.message || "");
+  if (typeof error === "string") return isMeaningfulMessage(error);
   if (typeof error === "object") {
     return shouldLogError(error);
   }
   return true;
+};
+
+const getLoggableError = (error: unknown): unknown => {
+  if (!error) return undefined;
+  if (error instanceof Error) {
+    return isMeaningfulMessage(error.message || "") ? error : undefined;
+  }
+  if (typeof error === "string") {
+    return isMeaningfulMessage(error) ? error : undefined;
+  }
+  if (typeof error === "object") {
+    const keys = Object.keys(error as Record<string, unknown>);
+    return keys.length > 0 ? error : undefined;
+  }
+  return undefined;
 };
 
 // Global error handler for queries
@@ -76,8 +100,20 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         const error = event.query.state.error as unknown;
         const queryKey = event.query.queryKey;
 
+        if (
+          !error ||
+          (typeof error === "object" &&
+            !Array.isArray(error) &&
+            Object.keys(error as Record<string, unknown>).length === 0)
+        ) {
+          return;
+        }
+
         // Log error
         const message = getErrorMessage(error);
+        if (!isMeaningfulMessage(message)) {
+          return;
+        }
         const isErrorLike =
           error instanceof Error ||
           typeof error === "string" ||
@@ -93,7 +129,12 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           shouldLogError(error) &&
           message
         ) {
-          console.error("Query error:", { message, error, queryKey });
+          const logPayload: Record<string, unknown> = { message, queryKey };
+          const loggableError = getLoggableError(error);
+          if (loggableError !== undefined) {
+            logPayload.error = loggableError;
+          }
+          console.error("Query error:", logPayload);
         }
 
         // Show toast notification

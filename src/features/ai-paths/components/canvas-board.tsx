@@ -683,14 +683,10 @@ export function CanvasBoard({
               triggerConnected.has(edgeMeta.to);
             const edgeClass = `transition-all duration-150 ${
               isSelected
-                ? "text-blue-400"
-                : isSchemaConnection
-                  ? "text-yellow-400/70 group-hover:text-cyan-300/80"
-                  : isManualConnector
-                    ? "text-amber-400/65 group-hover:text-amber-300/80"
-                    : isActivePath
-                      ? "text-sky-400/60 group-hover:text-sky-300/80"
-                      : "text-slate-400/45 group-hover:text-blue-400/70"
+                ? "text-sky-300"
+                : isActivePath || isFlowing
+                  ? "text-sky-400/80 group-hover:text-sky-300/90"
+                  : "text-sky-400/55 group-hover:text-sky-300/80"
             }`;
             const arrowSize = isSelected ? 9 : 8;
             const arrowWidth = isSelected ? 6 : 5;
@@ -717,7 +713,6 @@ export function CanvasBoard({
                   d={edge.path}
                   className={edgeClass}
                   strokeWidth={isSelected ? 2.5 : 1.6}
-                  strokeDasharray={isManualConnector ? "5 4" : isSchemaConnection ? "3 3" : undefined}
                   stroke="currentColor"
                   fill="none"
                   style={{ pointerEvents: "none" }}
@@ -755,10 +750,9 @@ export function CanvasBoard({
             return (
               <path
                 d={path}
-                stroke="rgba(148,163,184,0.7)"
+                stroke="rgba(56,189,248,0.55)"
                 strokeWidth="1.6"
                 fill="none"
-                strokeDasharray="4 3"
               />
             );
           })() : null}

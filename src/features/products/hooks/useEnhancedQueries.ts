@@ -42,7 +42,15 @@ export function useEnhancedProducts(): ReturnType<typeof useNormalizedQuery> {
       'product-categories',
       ['products', 'categories'],
       async () => {
-        const res = await fetch('/api/products/categories');
+        const catalogsRes = await fetch("/api/catalogs");
+        if (!catalogsRes.ok) return [];
+        const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
+        const catalogId = Array.isArray(catalogs) ? catalogs[0]?.id : undefined;
+        if (!catalogId) return [];
+        const res = await fetch(
+          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+        );
+        if (!res.ok) return [];
         return res.json();
       },
       { priority: 'medium', delay: 2000 }

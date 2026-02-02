@@ -41,6 +41,7 @@ export function AdminProductsPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
@@ -369,6 +370,10 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [searchParams]);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!lastEditedId) return;
     if (data.length === 0) return;
     const target = document.querySelector(`[data-row-id="${lastEditedId}"]`);
@@ -379,9 +384,10 @@ export function AdminProductsPage(): React.JSX.Element {
     }
   }, [data, lastEditedId]);
 
+  const tableSkeletonRows = isMounted ? pageSize : 12;
   const tableSkeleton = useMemo(
-    () => <ProductTableSkeleton rows={pageSize} />,
-    [pageSize]
+    () => <ProductTableSkeleton rows={tableSkeletonRows} />,
+    [tableSkeletonRows]
   );
 
   const handleProductsTableRender = useCallback<ProfilerOnRenderCallback>(
@@ -436,7 +442,7 @@ export function AdminProductsPage(): React.JSX.Element {
         setStartDate={setStartDate}
         endDate={endDate || ""}
         setEndDate={setEndDate}
-        data={data}
+        data={isMounted ? data : []}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
         onSelectAllGlobal={handleSelectAllGlobal}
@@ -455,7 +461,7 @@ export function AdminProductsPage(): React.JSX.Element {
         integrationBadgeIds={integrationBadgeIds}
         integrationBadgeStatuses={integrationBadgeStatuses}
         getRowId={getRowId}
-        isLoading={isLoading}
+        isLoading={!isMounted || isLoading}
         skeletonRows={tableSkeleton}
       />
       <ProductModals

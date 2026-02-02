@@ -46,6 +46,18 @@ export function useOptimisticProductUpdate(): UseMutationResult<
 
 // Hook for warming up product-related caches
 export function useProductCacheWarmup(productId?: string): void {
+  const resolveWarmCatalogId = async (): Promise<string | null> => {
+    try {
+      const catalogsRes = await fetch("/api/catalogs");
+      if (!catalogsRes.ok) return null;
+      const catalogs = (await catalogsRes.json()) as Array<{ id?: string }>;
+      if (!Array.isArray(catalogs) || catalogs.length === 0) return null;
+      return catalogs[0]?.id ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   useCacheWarmup([
     {
       queryKey: ["products"],
@@ -59,9 +71,13 @@ export function useProductCacheWarmup(productId?: string): void {
     {
       queryKey: ["products", "categories"],
       queryFn: async (): Promise<unknown> => {
-        const res = await fetch("/api/products/categories");
-        const result = await res.json();
-        return result;
+        const catalogId = await resolveWarmCatalogId();
+        if (!catalogId) return [];
+        const res = await fetch(
+          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+        );
+        if (!res.ok) return [];
+        return res.json();
       },
       priority: "medium" as const,
     },

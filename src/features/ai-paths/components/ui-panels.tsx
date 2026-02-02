@@ -69,11 +69,11 @@ export function PathsTabPanel({
                     className="cursor-pointer text-left text-sm text-white transition hover:text-gray-200"
                     onClick={(): void => onEditPath(path.id)}
                   >
-                    {path.name}
+                    {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
                   </button>
                 </TableCell>
                 <TableCell className="text-xs text-gray-400">
-                  {new Date(path.updatedAt).toLocaleString()}
+                  {path.updatedAt ? new Date(path.updatedAt).toLocaleString() : "—"}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">

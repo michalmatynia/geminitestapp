@@ -19,7 +19,10 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
 
   const performSync = useCallback(async (): Promise<void> => {
     await queryClient.refetchQueries({
-      predicate: (query: { queryKey: unknown; isStale: () => boolean }) => Array.isArray(query.queryKey) && query.isStale(),
+      predicate: (query: { queryKey: unknown; isStale: () => boolean; options?: { queryFn?: unknown } }) =>
+        Array.isArray(query.queryKey) &&
+        query.isStale() &&
+        typeof query.options?.queryFn === "function",
     });
     if (isOnline) {
       await processQueue();
@@ -57,12 +60,21 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     if (!enabled || !isOnline) return (): void => {};
 
     const syncCriticalData = (): void => {
+      const canRefetch = (query: { queryKey: unknown; options?: { queryFn?: unknown } }): boolean =>
+        Array.isArray(query.queryKey) && typeof query.options?.queryFn === "function";
+
       // Sync job statuses
-      void queryClient.refetchQueries({ queryKey: ["jobs"] });
+      void queryClient.refetchQueries({
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "jobs",
+      });
       // Sync user preferences
-      void queryClient.refetchQueries({ queryKey: ["user-preferences"] });
+      void queryClient.refetchQueries({
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "user-preferences",
+      });
       // Sync settings
-      void queryClient.refetchQueries({ queryKey: ["settings"] });
+      void queryClient.refetchQueries({
+        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown } }) => canRefetch(query) && Array.isArray(query.queryKey) && query.queryKey[0] === "settings",
+      });
       
       setLastSync(new Date());
     };

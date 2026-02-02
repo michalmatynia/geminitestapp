@@ -95,6 +95,31 @@ export const formatPortDataTypes = (types: PortDataType[]): string => {
 export const getValueTypeLabel = (value: unknown): string => {
   if (value === undefined) return "undefined";
   if (value === null) return "null";
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const recordHintKeys = [
+      "entityId",
+      "entityType",
+      "productId",
+      "context",
+      "entity",
+      "product",
+      "id",
+      "sku",
+      "name",
+      "title",
+      "createdAt",
+      "updatedAt",
+    ];
+    const imageKeyPattern =
+      /(image|img|photo|picture|media|gallery|url|src|file|path|thumb|preview)/i;
+    const hasRecordHint = recordHintKeys.some((key: string) => key in record);
+    const keys = Object.keys(record);
+    const hasNonImageKey = keys.some((key: string) => !imageKeyPattern.test(key));
+    if (hasRecordHint || (keys.length > 3 && hasNonImageKey)) {
+      return "object";
+    }
+  }
   if (isImageLikeValue(value)) return "image";
   if (Array.isArray(value)) return "array";
   if (typeof value === "string") return "string";

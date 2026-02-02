@@ -5,6 +5,28 @@ const trimmedString = z.string().trim();
 const optionalTrimmedString = trimmedString.optional();
 const nullishTrimmedString = trimmedString.nullish();
 
+function tryParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function jsonToValue(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  // We only attempt JSON parse for payloads that look like JSON.
+  if (
+    (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+    (trimmed.startsWith("{") && trimmed.endsWith("}"))
+  ) {
+    return tryParseJson(trimmed);
+  }
+  return value;
+}
+
 const optionalNonNegativeInt = z.preprocess((value: unknown) => {
   if (value === undefined || value === null) return undefined;
   if (typeof value === "number") {
@@ -20,7 +42,7 @@ const optionalNonNegativeInt = z.preprocess((value: unknown) => {
 }, z.number().int().min(0).optional());
 
 // Array validation helpers
-const stringArray = z.array(z.string()).default([]);
+const stringArray = z.preprocess(jsonToValue, z.array(z.string()).default([]));
 const imageUrlArray = stringArray.transform((urls: string[]) => 
   urls.filter((url: string) => url && !url.startsWith("data:"))
 );
@@ -34,7 +56,7 @@ const parameterValueSchema = z.object({
   value: z.string().nullish(),
 });
 
-const parametersArray = z.array(parameterValueSchema).default([]);
+const parametersArray = z.preprocess(jsonToValue, z.array(parameterValueSchema).default([]));
 
 // Core product schema
 const productBaseSchema = z.object({

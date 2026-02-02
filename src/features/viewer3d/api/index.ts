@@ -93,3 +93,26 @@ export async function fetchTags(): Promise<string[]> {
   if (!response.ok) return [];
   return response.json() as Promise<string[]>;
 }
+
+export async function reindexAssets3DFromDisk(): Promise<{
+  diskFiles: number;
+  supportedFiles: number;
+  existingRecords: number;
+  created: number;
+  skipped: number;
+  createdIds: string[];
+}> {
+  const response = await fetch(`${API_BASE}/reindex`, { method: "POST" });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Failed to reindex 3D assets");
+  }
+  return response.json() as Promise<{
+    diskFiles: number;
+    supportedFiles: number;
+    existingRecords: number;
+    created: number;
+    skipped: number;
+    createdIds: string[];
+  }>;
+}

@@ -65,7 +65,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                   <SelectValue placeholder="Select a font set" />
                 </SelectTrigger>
                 <SelectContent>
-                  {APP_FONT_SETS.map((set) => (
+                  {APP_FONT_SETS.map((set: { id: AppFontSetId; name: string; description: string; heading: string; body: string }) => (
                     <SelectItem key={set.id} value={set.id}>
                       <div>
                         <p className="font-medium">{set.name}</p>

@@ -44,19 +44,19 @@ export class ValidationApplication {
     results: Array<{ index: number; result: ValidationResult<unknown> }>;
     summary: { total: number; successful: number; failed: number };
   }> {
-    const validator = context === 'create' 
+    const validator: IValidator<unknown> = context === 'create' 
       ? this.productCreateValidator 
       : this.productUpdateValidator;
 
     const results = await Promise.all(
-      products.map(async (product: unknown, index: number) => ({
+      products.map(async (product: unknown, index: number): Promise<{ index: number; result: ValidationResult<unknown> }> => ({
         index,
         result: await validator.validate(product)
       }))
     );
 
-    const successful = results.filter((r: { index: number; result: ValidationResult<unknown> }) => r.result.success).length;
-    const failed = results.length - successful;
+    const successful: number = results.filter((r: { index: number; result: ValidationResult<unknown> }) => r.result.success).length;
+    const failed: number = results.length - successful;
 
     return {
       results,

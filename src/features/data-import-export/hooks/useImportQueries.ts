@@ -79,11 +79,23 @@ export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, {
   
   return useMutation({
     mutationFn: async ({ endpoint, data }: { endpoint: string; data: unknown }): Promise<unknown> => {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      if (!endpoint || !endpoint.startsWith("/api/")) {
+        throw new Error(`Invalid preference endpoint: ${String(endpoint)}`);
+      }
+
+      let res: Response;
+      try {
+        res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } catch (error) {
+        // Usually indicates a network-level problem (server down, request aborted) or an invalid URL.
+        throw new Error(
+          `Failed to reach ${endpoint}: ${error instanceof Error ? error.message : "network error"}`
+        );
+      }
       if (!res.ok) throw new Error("Failed to save preference");
       return res.json();
     },

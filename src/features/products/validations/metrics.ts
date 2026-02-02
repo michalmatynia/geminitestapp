@@ -9,7 +9,7 @@ type ValidationMetric = {
 
 class ValidationMetrics {
   private metrics: ValidationMetric[] = [];
-  private readonly maxMetrics = 1000;
+  private readonly maxMetrics: number = 1000;
 
   record(metric: Omit<ValidationMetric, 'timestamp'>): void {
     this.metrics.push({
@@ -30,8 +30,8 @@ class ValidationMetrics {
     commonErrors: Array<{ field: string; count: number }>;
     performanceByValidation: Record<string, { count: number; avgDuration: number; successRate: number }>;
   } {
-    const cutoff = Date.now() - timeWindowMs;
-    const recentMetrics = this.metrics.filter(m => m.timestamp > cutoff);
+    const cutoff: number = Date.now() - timeWindowMs;
+    const recentMetrics: ValidationMetric[] = this.metrics.filter((m: ValidationMetric) => m.timestamp > cutoff);
 
     if (recentMetrics.length === 0) {
       return {
@@ -43,38 +43,38 @@ class ValidationMetrics {
       };
     }
 
-    const totalValidations = recentMetrics.length;
-    const successfulValidations = recentMetrics.filter(m => m.success).length;
-    const successRate = successfulValidations / totalValidations;
-    const averageDuration = recentMetrics.reduce((sum, m) => sum + m.duration, 0) / totalValidations;
+    const totalValidations: number = recentMetrics.length;
+    const successfulValidations: number = recentMetrics.filter((m: ValidationMetric) => m.success).length;
+    const successRate: number = successfulValidations / totalValidations;
+    const averageDuration: number = recentMetrics.reduce((sum: number, m: ValidationMetric) => sum + m.duration, 0) / totalValidations;
 
     // Aggregate field errors
     const fieldErrorCounts: Record<string, number> = {};
-    recentMetrics.forEach(metric => {
-      Object.entries(metric.fieldErrors).forEach(([field, count]) => {
+    recentMetrics.forEach((metric: ValidationMetric) => {
+      Object.entries(metric.fieldErrors).forEach(([field, count]: [string, number]) => {
         fieldErrorCounts[field] = (fieldErrorCounts[field] || 0) + count;
       });
     });
 
-    const commonErrors = Object.entries(fieldErrorCounts)
-      .map(([field, count]) => ({ field, count }))
-      .sort((a, b) => b.count - a.count)
+    const commonErrors: { field: string; count: number }[] = Object.entries(fieldErrorCounts)
+      .map(([field, count]: [string, number]) => ({ field, count }))
+      .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
       .slice(0, 10);
 
     // Performance by validation type
     const performanceByValidation: Record<string, { count: number; avgDuration: number; successRate: number }> = {};
-    recentMetrics.forEach(metric => {
+    recentMetrics.forEach((metric: ValidationMetric) => {
       if (!performanceByValidation[metric.name]) {
         performanceByValidation[metric.name] = { count: 0, avgDuration: 0, successRate: 0 };
       }
       performanceByValidation[metric.name]!.count++;
     });
 
-    Object.keys(performanceByValidation).forEach(name => {
-      const nameMetrics = recentMetrics.filter(m => m.name === name);
+    Object.keys(performanceByValidation).forEach((name: string) => {
+      const nameMetrics: ValidationMetric[] = recentMetrics.filter((m: ValidationMetric) => m.name === name);
       const stats = performanceByValidation[name]!;
-      stats.avgDuration = nameMetrics.reduce((sum, m) => sum + m.duration, 0) / nameMetrics.length;
-      stats.successRate = nameMetrics.filter(m => m.success).length / nameMetrics.length;
+      stats.avgDuration = nameMetrics.reduce((sum: number, m: ValidationMetric) => sum + m.duration, 0) / nameMetrics.length;
+      stats.successRate = nameMetrics.filter((m: ValidationMetric) => m.success).length / nameMetrics.length;
     });
 
     return {
@@ -97,24 +97,24 @@ class ValidationMetrics {
 
 export const validationMetrics = new ValidationMetrics();
 
-export function withMetrics<T extends (...args: any[]) => Promise<any>>(
+export function withMetrics<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   name: string
 ): T {
-  return (async (...args: Parameters<T>) => {
+  return (async (...args: Parameters<T>): Promise<unknown> => {
     const start = performance.now();
     let success = false;
     let errorCount = 0;
     const fieldErrors: Record<string, number> = {};
 
     try {
-      const result = await fn(...args);
+      const result = (await fn(...args)) as { success: boolean; errors?: Array<{ field: string }> };
       success = true;
       
       // If result has validation errors, count them
       if (result && !result.success && result.errors) {
         errorCount = result.errors.length;
-        result.errors.forEach((error: any) => {
+        result.errors.forEach((error: { field: string }) => {
           fieldErrors[error.field] = (fieldErrors[error.field] || 0) + 1;
         });
       }

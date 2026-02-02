@@ -40,7 +40,6 @@ const EMPTY_CREATE = { name: "", email: "", password: "", roleId: "none", verifi
 export default function AuthUsersPage(): React.JSX.Element {
   const { toast } = useToast();
   const [users, setUsers] = useState<AuthUserSummary[]>([]);
-  const [provider, setProvider] = useState<"mongodb">("mongodb");
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
   const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
   const [search, setSearch] = useState("");
@@ -73,6 +72,9 @@ export default function AuthUsersPage(): React.JSX.Element {
   const userSecurityQuery = useAuthUserSecurity(editingUser?.id);
   const loading = authUsersQuery.isPending || settingsQuery.isPending;
   const loadingSecurity = userSecurityQuery.isPending;
+  const provider = authUsersQuery.data?.provider ?? "mongodb";
+  const rolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles) ?? null;
+  const userRolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles) ?? null;
 
   useEffect(() => {
     if (!authUsersQuery.error) return;
@@ -92,11 +94,9 @@ export default function AuthUsersPage(): React.JSX.Element {
   }, [userSecurityQuery.error]);
 
   useEffect(() => {
-    if (authUsersQuery.data) {
-      setUsers(authUsersQuery.data.users ?? []);
-      setProvider(authUsersQuery.data.provider ?? "mongodb");
-    }
-  }, [authUsersQuery.data]);
+    if (!authUsersQuery.data) return;
+    setUsers(authUsersQuery.data.users ?? []);
+  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt]);
 
   useEffect(() => {
     if (!settingsQuery.data) return;
@@ -113,7 +113,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     setRoles(storedRoles);
     setUserRoles(storedUserRoles);
     setDirtyRoles(false);
-  }, [settingsQuery.data]);
+  }, [settingsQuery.data, rolesSettingRaw, userRolesSettingRaw]);
 
   const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();

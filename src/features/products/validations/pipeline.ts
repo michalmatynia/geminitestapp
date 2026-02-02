@@ -2,7 +2,7 @@ import type { ValidationError } from "./validators";
 import { validateWithConfig } from "./config";
 import { z } from "zod";
 
-export type ValidationStep<T = any> = {
+export type ValidationStep<T = unknown> = {
   name: string;
   validator: (data: T) => Promise<ValidationError[]> | ValidationError[];
   optional?: boolean;
@@ -16,7 +16,7 @@ export type PipelineResult<T> = {
   stepResults: Record<string, { success: boolean; errors: ValidationError[] }>;
 };
 
-export class ValidationPipeline<T = any> {
+export class ValidationPipeline<T = unknown> {
   private steps: ValidationStep<T>[] = [];
   private middleware: Array<(data: T) => Promise<T> | T> = [];
 
@@ -58,7 +58,7 @@ export class ValidationPipeline<T = any> {
     for (const step of this.steps) {
       // Check dependencies
       if (step.dependsOn) {
-        const dependenciesMet = step.dependsOn.every(dep => 
+        const dependenciesMet = step.dependsOn.every((dep: string) => 
           stepResults[dep]?.success !== false
         );
         if (!dependenciesMet) {
@@ -113,9 +113,9 @@ export class ValidationPipeline<T = any> {
 }
 
 // Pre-built pipelines
-export function createProductValidationPipeline(): ValidationPipeline {
-  return new ValidationPipeline()
-    .addMiddleware((data: any) => {
+export function createProductValidationPipeline(): ValidationPipeline<Record<string, unknown>> {
+  return new ValidationPipeline<Record<string, unknown>>()
+    .addMiddleware((data: Record<string, unknown>): Record<string, unknown> => {
       // Normalize data
       if (typeof data.price === "string") {
         data.price = parseFloat(data.price) || undefined;
@@ -127,25 +127,25 @@ export function createProductValidationPipeline(): ValidationPipeline {
     })
     .addStep({
       name: "schema_validation",
-      validator: async (data) => {
+      validator: async (data: Record<string, unknown>): Promise<ValidationError[]> => {
         const { productCreateSchema } = await import("./schemas");
         const result = productCreateSchema.safeParse(data);
         return result.success ? [] : result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
-          code: err.code,
+          code: String(err.code),
           severity: 'high'
         }));
       }
     })
     .addStep({
       name: "business_rules",
-      validator: (data) => validateWithConfig(data, z.any()),
+      validator: (data: Record<string, unknown>): ValidationError[] => validateWithConfig(data, z.any()),
       dependsOn: ["schema_validation"]
     })
     .addStep({
       name: "duplicate_check",
-      validator: async (data) => {
+      validator: async (data: Record<string, unknown>): Promise<ValidationError[]> => {
         // This would typically check against database
         if (data.sku === "DUPLICATE") {
           return [{
@@ -155,36 +155,36 @@ export function createProductValidationPipeline(): ValidationPipeline {
             severity: 'medium'
           }];
         }
-        return [];
+        return Promise.resolve([]);
       },
       dependsOn: ["schema_validation"]
     });
 }
 
-export function createProductUpdatePipeline(): ValidationPipeline {
-  return new ValidationPipeline()
-    .addMiddleware((data: any) => {
+export function createProductUpdatePipeline(): ValidationPipeline<Record<string, unknown>> {
+  return new ValidationPipeline<Record<string, unknown>>()
+    .addMiddleware((data: Record<string, unknown>): Record<string, unknown> => {
       // Remove undefined values for updates
       return Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== undefined)
+        Object.entries(data).filter(([_, value]: [string, unknown]) => value !== undefined)
       );
     })
     .addStep({
       name: "schema_validation",
-      validator: async (data) => {
+      validator: async (data: Record<string, unknown>): Promise<ValidationError[]> => {
         const { productUpdateSchema } = await import("./schemas");
         const result = productUpdateSchema.safeParse(data);
         return result.success ? [] : result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
-          code: err.code,
+          code: String(err.code),
           severity: 'high'
         }));
       }
     })
     .addStep({
       name: "business_rules",
-      validator: (data) => validateWithConfig(data, z.any()),
+      validator: (data: Record<string, unknown>): ValidationError[] => validateWithConfig(data, z.any()),
       dependsOn: ["schema_validation"],
       optional: true
     });

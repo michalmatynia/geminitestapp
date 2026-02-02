@@ -227,9 +227,7 @@ export function SectionNodeItem({
   return (
     <div className="group/section">
       <div
-        role="button"
-        tabIndex={0}
-        draggable
+        draggable={true}
         onClick={() => onSelect(section.id)}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -238,6 +236,34 @@ export function SectionNodeItem({
           }
         }}
         onDragStart={(e: React.DragEvent) => {
+          console.log("SectionNodeItem DRAG START:", section.type, section.id, "isFileSection:", isFileSection);
+          // Create a custom drag image to ensure it's visible
+          const target = e.currentTarget as HTMLElement;
+          const rect = target.getBoundingClientRect();
+          console.log("Drag element rect:", rect.width, "x", rect.height);
+
+          // Clone the element for drag image to avoid any CSS issues
+          const clone = target.cloneNode(true) as HTMLElement;
+          clone.style.position = "absolute";
+          clone.style.top = "-9999px";
+          clone.style.left = "-9999px";
+          clone.style.width = `${rect.width}px`;
+          clone.style.opacity = "0.8";
+          clone.style.backgroundColor = "#1e293b";
+          clone.style.borderRadius = "4px";
+          clone.style.pointerEvents = "none";
+          document.body.appendChild(clone);
+          e.dataTransfer.setDragImage(clone, 10, 10);
+
+          // Clean up clone after drag starts
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              if (clone.parentNode) {
+                document.body.removeChild(clone);
+              }
+            }, 0);
+          });
+
           e.dataTransfer.setData("sectionId", section.id);
           e.dataTransfer.setData("sectionType", section.type);
           e.dataTransfer.setData("sectionZone", section.zone);
@@ -248,7 +274,17 @@ export function SectionNodeItem({
           setDraggedSectionIndex(sectionIndex);
           setDraggedSectionZone(section.zone);
         }}
-        onDragEnd={() => {
+        onDrag={(e: React.DragEvent) => {
+          // This fires continuously during drag - if drag is working, this should log
+          if (e.clientX !== 0 || e.clientY !== 0) {
+            // Only log occasionally to avoid spam
+            if (Math.random() < 0.01) {
+              console.log("DRAGGING:", section.type, "at", e.clientX, e.clientY);
+            }
+          }
+        }}
+        onDragEnd={(e: React.DragEvent) => {
+          console.log("SectionNodeItem DRAG END:", section.type, section.id, "dropEffect:", e.dataTransfer.dropEffect);
           setDraggedSectionId(null);
           setDraggedSectionType(null);
           setDraggedSectionIndex(null);
@@ -388,7 +424,8 @@ export function SectionNodeItem({
             setDraggedFromParentBlockId(null);
           }
         }}
-        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium transition active:cursor-grabbing ${
+        style={{ touchAction: "none", WebkitUserDrag: "element" } as React.CSSProperties}
+        className={`relative flex w-full cursor-grab items-center gap-2 rounded px-2 py-2 text-sm font-medium transition select-none active:cursor-grabbing ${
           isSectionDragOver
             ? "bg-purple-600/30 text-purple-200 ring-1 ring-purple-500/50"
             : isDragOver
@@ -400,55 +437,52 @@ export function SectionNodeItem({
             : "text-gray-200 hover:bg-muted/50"
         }`}
       >
-        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/section:opacity-100" />
-        <div className="shrink-0" draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-          {canToggle ? (
-            <div
-              role="button"
-              tabIndex={-1}
-              onClick={(e: React.MouseEvent) => {
+        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover/section:opacity-100 pointer-events-none" />
+        {canToggle ? (
+          <div
+            role="button"
+            tabIndex={-1}
+            className="shrink-0"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onToggleExpand(section.id);
+            }}
+            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
                 e.stopPropagation();
                 onToggleExpand(section.id);
-              }}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation();
-                  onToggleExpand(section.id);
-                }
-              }}
-            >
-              {isExpanded ? (
-                <ChevronDown className="size-3.5" />
-              ) : (
-                <ChevronRight className="size-3.5" />
-              )}
-            </div>
-          ) : (
-            <span className="block size-3.5" />
-          )}
-        </div>
-        <Icon className="size-4 shrink-0" />
-        <span className="flex-1 truncate text-left">
+              }
+            }}
+          >
+            {isExpanded ? (
+              <ChevronDown className="size-3.5" />
+            ) : (
+              <ChevronRight className="size-3.5" />
+            )}
+          </div>
+        ) : (
+          <span className="block size-3.5 shrink-0 pointer-events-none" />
+        )}
+        <Icon className="size-4 shrink-0 pointer-events-none" />
+        <span className="flex-1 truncate text-left pointer-events-none">
           {resolveNodeLabel(section.type, section.settings["label"])}
         </span>
         {isSectionDragOver && (
-          <span className="text-[10px] text-purple-300">Move here</span>
+          <span className="text-[10px] text-purple-300 pointer-events-none">Move here</span>
         )}
         {isDragOver && (
-          <span className="text-[10px] text-emerald-300">Drop here</span>
+          <span className="text-[10px] text-emerald-300 pointer-events-none">Drop here</span>
         )}
-        <div
-          className={`flex items-center gap-0.5 transition ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
-          draggable={false}
-          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-        >
+        <div className={`flex items-center gap-0.5 transition pointer-events-none ${isSelected ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}>
           <button
             type="button"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onToggleSectionVisibility(section.id, !isHidden);
             }}
-            className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10"
+            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            className="rounded p-0.5 text-gray-300 hover:text-white hover:bg-foreground/10 pointer-events-auto"
             title={isHidden ? "Show section" : "Hide section"}
           >
             {isHidden ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
@@ -459,7 +493,8 @@ export function SectionNodeItem({
               e.stopPropagation();
               onRemoveSection(section.id);
             }}
-            className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20"
+            onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            className="rounded p-0.5 text-gray-300 hover:text-red-200 hover:bg-red-500/20 pointer-events-auto"
             title="Delete section"
           >
             <Trash2 className="size-3" />

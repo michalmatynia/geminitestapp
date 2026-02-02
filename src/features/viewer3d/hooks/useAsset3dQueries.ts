@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { fetchAssets3D, fetchCategories, fetchTags } from "@/features/viewer3d/api";
+import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from "@/features/viewer3d/api";
 import type { Asset3DListFilters, Asset3DRecord } from "@/features/viewer3d/types";
 
 export const asset3dKeys = {
@@ -77,6 +77,27 @@ export function useUpdateAsset3DMutation(): UseMutationResult<Asset3DRecord, Err
     onSuccess: (data: Asset3DRecord) => {
       void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
       void queryClient.invalidateQueries({ queryKey: asset3dKeys.detail(data.id) });
+    },
+  });
+}
+
+export function useReindexAssets3DMutation(): UseMutationResult<
+  {
+    diskFiles: number;
+    supportedFiles: number;
+    existingRecords: number;
+    created: number;
+    skipped: number;
+    createdIds: string[];
+  },
+  Error,
+  void
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => reindexAssets3DFromDisk(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
     },
   });
 }

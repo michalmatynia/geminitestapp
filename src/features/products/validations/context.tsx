@@ -63,7 +63,7 @@ export function ValidationProvider({ children }: { children: ReactNode }): React
 
 export function useValidationContext(): ValidationContextState & {
   setGlobalErrors: (errors: ValidationError[]) => void;
-  setFieldValidation: (field: string, isValid: boolean, message?: string) => void;
+  setFieldValidation: (field: string, isValid: boolean, message?: string  ) => void;
   clearFieldValidation: (field: string) => void;
   setValidating: (isValidating: boolean) => void;
   reset: () => void;
@@ -79,7 +79,7 @@ export function useValidationContext(): ValidationContextState & {
     ...state,
     setGlobalErrors: (errors: ValidationError[]): void => 
       dispatch({ type: "SET_GLOBAL_ERRORS", errors }),
-    setFieldValidation: (field: string, isValid: boolean, message?: string): void =>
+    setFieldValidation: (field: string, isValid: boolean, message?: string  ): void =>
       dispatch({ type: "SET_FIELD_VALIDATION", field, isValid, message }),
     clearFieldValidation: (field: string): void =>
       dispatch({ type: "CLEAR_FIELD_VALIDATION", field }),

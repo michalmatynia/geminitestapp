@@ -130,7 +130,9 @@ export function ProductFormProvider({
   initialSku?: string | undefined;
   initialCatalogId?: string | undefined;
 }): React.ReactNode {
-  const formSchema = product || requireSku ? productUpdateSchema : productCreateSchema;
+  // product: edit mode -> update schema
+  // requireSku: create mode -> create schema; draft mode can allow update schema (SKU optional)
+  const formSchema = product || !requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
     defaultValues: {
@@ -332,8 +334,23 @@ export function ProductFormProvider({
         });
 
         if (!response.ok) {
-          const errorData = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(errorData.error || "Failed to update product");
+          const errorData = (await response.json().catch(() => ({}))) as {
+            error?: string;
+            details?: unknown;
+          };
+          let message = errorData.error || "Failed to update product";
+          if (Array.isArray(errorData.details) && errorData.details.length > 0) {
+            const detailMessages = (errorData.details as Array<{ field?: unknown; message?: unknown }>)
+              .slice(0, 3)
+              .map((d) => {
+                const field = typeof d.field === "string" && d.field ? d.field : "field";
+                const msg = typeof d.message === "string" && d.message ? d.message : "invalid";
+                return `${field}: ${msg}`;
+              })
+              .join(", ");
+            if (detailMessages) message = `${message} (${detailMessages})`;
+          }
+          throw new Error(message);
         }
         savedProduct = (await response.json()) as ProductWithImages;
       } else {

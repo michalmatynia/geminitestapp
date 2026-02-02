@@ -24,7 +24,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Asset3DPreviewModal } from "../components/Asset3DPreviewModal";
-import { useAssets3D, useAsset3DCategories, useAsset3DTags } from "../hooks/useAsset3dQueries";
+import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from "../hooks/useAsset3dQueries";
 import type { Asset3DRecord } from "../types";
 import { cn } from "@/shared/utils";
 
@@ -49,6 +49,7 @@ export function Asset3DListPage(): React.JSX.Element {
   );
 
   const assetsQuery = useAssets3D(filters);
+  const reindexMutation = useReindexAssets3DMutation();
   const categoriesQuery = useAsset3DCategories();
   const tagsQuery = useAsset3DTags();
 
@@ -193,6 +194,22 @@ export function Asset3DListPage(): React.JSX.Element {
               ? "Try adjusting your filters"
               : "No 3D assets available"}
           </p>
+
+          {!searchQuery && !selectedCategory && selectedTags.length === 0 ? (
+            <Button
+              variant="outline"
+              className="mt-6"
+              disabled={reindexMutation.isPending}
+              onClick={() =>
+                void reindexMutation
+                  .mutateAsync()
+                  .then(() => assetsQuery.refetch())
+                  .catch(() => {})
+              }
+            >
+              {reindexMutation.isPending ? "Reindexing..." : "Reindex local uploads"}
+            </Button>
+          ) : null}
         </div>
       )}
 

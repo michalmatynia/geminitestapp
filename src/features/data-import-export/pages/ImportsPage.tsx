@@ -111,6 +111,7 @@ export default function ImportsPage(): React.JSX.Element {
   const [isBaseConnected, setIsBaseConnected] = useState(false);
   const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
+  const lastSavedImportTemplateId = useRef<string | null>(null);
   const lastSavedImportActiveTemplateId = useRef<string | null>(null);
 
   const hasInitializedCatalog = useRef(false);
@@ -267,6 +268,8 @@ export default function ImportsPage(): React.JSX.Element {
   // Auto-save some preferences
   useEffect(() => {
     if (importTemplateId) {
+      if (lastSavedImportTemplateId.current === importTemplateId) return;
+      lastSavedImportTemplateId.current = importTemplateId;
       savePreferenceMutation.mutate({
         endpoint: "/api/integrations/imports/base/last-template",
         data: { templateId: importTemplateId },

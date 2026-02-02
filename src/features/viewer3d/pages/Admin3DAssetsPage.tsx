@@ -36,6 +36,7 @@ import {
   useAsset3DCategories, 
   useAsset3DTags,
   useDeleteAsset3DMutation,
+  useReindexAssets3DMutation,
   asset3dKeys
 } from "../hooks/useAsset3dQueries";
 import type { Asset3DRecord } from "../types";
@@ -68,6 +69,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   const categoriesQuery = useAsset3DCategories();
   const tagsQuery = useAsset3DTags();
   const deleteMutation = useDeleteAsset3DMutation();
+  const reindexMutation = useReindexAssets3DMutation();
 
   const assets = assetsQuery.data ?? [];
   const loading = assetsQuery.isPending;
@@ -300,10 +302,27 @@ export function Admin3DAssetsPage(): React.JSX.Element {
               : "Upload your first .glb or .gltf file"}
           </p>
           {!hasActiveFilters && (
-            <Button className="mt-4" onClick={() => setShowUploader(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Asset
-            </Button>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={() => setShowUploader(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Asset
+              </Button>
+              <Button
+                variant="outline"
+                disabled={reindexMutation.isPending}
+                onClick={() =>
+                  void reindexMutation
+                    .mutateAsync()
+                    .then(() => assetsQuery.refetch())
+                    .catch((err) => {
+                      alert(err instanceof Error ? err.message : "Failed to reindex assets");
+                    })
+                }
+              >
+                <RefreshCw className={cn("mr-2 h-4 w-4", reindexMutation.isPending && "animate-spin")} />
+                {reindexMutation.isPending ? "Reindexing..." : "Reindex local uploads"}
+              </Button>
+            </div>
           )}
         </div>
       )}

@@ -1,0 +1,341 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/pages/AdminTypographySettingsPage.tsx
+  68:39  error  Expected set to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+   99:6  warning  React Hook useEffect has a missing dependency: 'authUsersQuery.data'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  116:6  warning  React Hook useEffect has a missing dependency: 'settingsQuery.data'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentTreeNodeItem.tsx
+   230:9   error  Unknown property 'tabI' found         react/no-unknown-property
+   231:9   error  Unknown property 'raggable' found     react/no-unknown-property
+   232:9   error  Unknown property '   onMous' found    react/no-unknown-property
+   233:9   error  Unknown property ': React' found      react/no-unknown-property
+   234:9   error  Unknown property 'revent de' found    react/no-unknown-property
+   240:9   error  Unknown property '    }}
+    ' found  react/no-unknown-property
+   251:9   error  Unknown property 'ransfer.e' found    react/no-unknown-property
+   257:9   error  Unknown property 'tionZone(s' found   react/no-unknown-property
+   292:9   error  Unknown property '           ' found  react/no-unknown-property
+   298:9   error  Unknown property 'Leave=' found       react/no-unknown-property
+   391:9   error  Unknown property 'ction.blo' found    react/no-unknown-property
+   404:14  error  Unknown property 'lected
+  ' found    react/no-unknown-property
+   404:35  error  Unknown property '"bg-blue-' found    react/no-unknown-property
+   404:53  error  Unknown property 'white"
+    ' found  react/no-unknown-property
+   407:15  error  Unknown property 'hrin' found         react/no-unknown-property
+   408:15  error  Unknown property 'y-0 grou' found     react/no-unknown-property
+   409:15  error  Unknown property 'ity-100' found      react/no-unknown-property
+   413:15  error  Unknown property '
+        ' found    react/no-unknown-property
+   427:19  error  Unknown property '       >
+' found    react/no-unknown-property
+   431:15  error  Unknown property '         ' found    react/no-unknown-property
+   435:17  error  Unknown property 'iv>
+     ' found    react/no-unknown-property
+   438:17  error  Unknown property '   {resol' found    react/no-unknown-property
+   441:11  error  Unknown property 'ctionDrag' found    react/no-unknown-property
+   442:11  error  Unknown property ' <span cl' found    react/no-unknown-property
+   443:11  error  Unknown property '] text-emer' found  react/no-unknown-property
+   446:13  error  Unknown property 'r ga' found         react/no-unknown-property
+   447:13  error  Unknown property 'elected' found      react/no-unknown-property
+   451:13  error  Unknown property 'tion()}
+ ' found    react/no-unknown-property
+   452:13  error  Unknown property '.Mous' found        react/no-unknown-property
+   457:13  error  Unknown property 'te h' found         react/no-unknown-property
+   458:13  error  Unknown property '
+      ' found      react/no-unknown-property
+   462:13  error  Unknown property 'sName="si' found    react/no-unknown-property
+   463:13  error  Unknown property '    o' found        react/no-unknown-property
+   472:14  error  Unknown property 'text-red-' found    react/no-unknown-property
+   539:18  error  Unknown property '         ' found    react/no-unknown-property
+   542:18  error  Unknown property 'ectionToC' found    react/no-unknown-property
+   543:20  error  Unknown property '      />
+' found    react/no-unknown-property
+   570:13  error  Unknown property '    ' found         react/no-unknown-property
+   571:13  error  Unknown property 'BlockId' found      react/no-unknown-property
+   575:13  error  Unknown property '      ))}' found    react/no-unknown-property
+   584:14  error  Unknown property '/40 hover' found    react/no-unknown-property
+   685:9   error  Unknown property ' row' found         react/no-unknown-property
+   686:9   error  Unknown property ' [isDrag' found     react/no-unknown-property
+   687:9   error  Unknown property 'agOver]' found      react/no-unknown-property
+   691:9   error  Unknown property 'wIndex + ' found    react/no-unknown-property
+   698:9   error  Unknown property '      }}
+ ' found   react/no-unknown-property
+   708:9   error  Unknown property '("text/plai' found  react/no-unknown-property
+   712:9   error  Unknown property '  e.st' found       react/no-unknown-property
+   762:9   error  Unknown property '   );
+   ' found    react/no-unknown-property
+   771:11  error  Unknown property '    ' found         react/no-unknown-property
+   772:11  error  Unknown property 'd-600/30' found     react/no-unknown-property
+   773:11  error  Unknown property '0 ring-' found      react/no-unknown-property
+   777:11  error  Unknown property 'ver:bg-mu' found    react/no-unknown-property
+   783:11  error  Unknown property 'ow.id);
+ ' found    react/no-unknown-property
+   788:15  error  Unknown property '         ' found    react/no-unknown-property
+   790:11  error  Unknown property 'vron' found         react/no-unknown-property
+   791:11  error  Unknown property '-3" /> ' found      react/no-unknown-property
+   795:11  error  Unknown property 'flex-1 tr' found    react/no-unknown-property
+   796:11  error  Unknown property '     ' found        react/no-unknown-property
+   801:11  error  Unknown property 'd, r' found         react/no-unknown-property
+   802:11  error  Unknown property '
+      ' found      react/no-unknown-property
+   807:11  error  Unknown property 'utton>
+ ' found     react/no-unknown-property
+   808:11  error  Unknown property 'pe="butto' found    react/no-unknown-property
+   809:11  error  Unknown property '     ' found        react/no-unknown-property
+   816:14  error  Unknown property 'y-40"
+   ' found    react/no-unknown-property
+   992:7   error  Unknown property '  }
+    i' found    react/no-unknown-property
+   993:7   error  Unknown property 'onId && dra' found  react/no-unknown-property
+   997:7   error  Unknown property 'column.blo' found   react/no-unknown-property
+   998:7   error  Unknown property 'raggedSecti' found  react/no-unknown-property
+  1002:7   error  Unknown property '     e' found       react/no-unknown-property
+  1003:7   error  Unknown property '}}
+      ' found    react/no-unknown-property
+  1006:9   error  Unknown property 'f (e' found         react/no-unknown-property
+  1007:9   error  Unknown property 'tains(e.' found     react/no-unknown-property
+  1008:9   error  Unknown property ' as Nod' found      react/no-unknown-property
+  1012:9   error  Unknown property 'ver ? "ro' found    react/no-unknown-property
+  1019:9   error  Unknown property '   }}
+    ' found   react/no-unknown-property
+  1020:9   error  Unknown property 'dEvent) => ' found  react/no-unknown-property
+  1024:9   error  Unknown property '      ' found       react/no-unknown-property
+  1025:9   error  Unknown property 'ragOver={' found    react/no-unknown-property
+  1034:11  error  Unknown property 'r
+  ' found         react/no-unknown-property
+  1035:11  error  Unknown property 'ald-600/' found     react/no-unknown-property
+  1036:11  error  Unknown property '200 rin' found      react/no-unknown-property
+  1040:11  error  Unknown property ':bg-muted' found    react/no-unknown-property
+  1046:11  error  Unknown property 'id);
+    ' found    react/no-unknown-property
+  1055:15  error  Unknown property '     >
+  ' found    react/no-unknown-property
+  1057:17  error  Unknown property '        <' found    react/no-unknown-property
+  1060:11  error  Unknown property 'ame=' found         react/no-unknown-property
+  1061:11  error  Unknown property '/>
+    ' found      react/no-unknown-property
+  1066:11  error  Unknown property '  <butto' found     react/no-unknown-property
+  1067:11  error  Unknown property '"
+       ' found    react/no-unknown-property
+  1068:11  error  Unknown property 'Colum' found        react/no-unknown-property
+  1079:11  error  Unknown property 's classNa' found    react/no-unknown-property
+  1080:11  error  Unknown property 'lockPicker' found   react/no-unknown-property
+  1081:11  error  Unknown property 'tring) => o' found  react/no-unknown-property
+  1085:11  error  Unknown property 'r/30 p' found       react/no-unknown-property
+  1139:15  error  Unknown property '          ' found   react/no-unknown-property
+  1140:15  error  Unknown property 'mParentBloc' found  react/no-unknown-property
+  1144:15  error  Unknown property ' onDra' found       react/no-unknown-property
+  1145:15  error  Unknown property '         ' found    react/no-unknown-property
+  1223:10  error  Unknown property 'x;
+  cons' found    react/no-unknown-property
+  1225:9   error  Unknown property 'tate(fal' found     react/no-unknown-property
+  1226:9   error  Unknown property 'isDraggin' found    react/no-unknown-property
+  1227:9   error  Unknown property 'Id === bloc' found  react/no-unknown-property
+  1231:9   error  Unknown property 'assName' found      react/no-unknown-property
+  1235:9   error  Unknown property 'eEvent) =' found    react/no-unknown-property
+  1241:9   error  Unknown property '         on' found  react/no-unknown-property
+  1255:9   error  Unknown property '    e.dat' found    react/no-unknown-property
+  1261:9   error  Unknown property 'entBlockId' found   react/no-unknown-property
+  1274:9   error  Unknown property '           ' found  react/no-unknown-property
+  1278:9   error  Unknown property '  e.st' found       react/no-unknown-property
+  1330:9   error  Unknown property 'raggedSec' found    react/no-unknown-property
+  1342:11  error  Unknown property '    ' found         react/no-unknown-property
+  1343:11  error  Unknown property '300 hove' found     react/no-unknown-property
+  1344:11  error  Unknown property '       }`' found    react/no-unknown-property
+  1345:11  error  Unknown property 'GripVer' found      react/no-unknown-property
+  1349:11  error  Unknown property 'ne" />
+  ' found    react/no-unknown-property
+  1355:11  error  Unknown property '.id);
+     ' found  react/no-unknown-property
+  1356:11  error  Unknown property '
+        ' found    react/no-unknown-property
+  1365:15  error  Unknown property ' pointer-' found    react/no-unknown-property
+  1365:33  error  Unknown property 'ne" />
+  ' found    react/no-unknown-property
+  1367:17  error  Unknown property '        <' found    react/no-unknown-property
+  1367:35  error  Unknown property 'gable={fa' found    react/no-unknown-property
+  1370:16  error  Unknown property '-left poi' found    react/no-unknown-property
+  1370:34  error  Unknown property 'ts-none">{b' found  react/no-unknown-property
+  1379:14  error  Unknown property 'mnBlockPi' found    react/no-unknown-property
+  1461:7   error  Unknown property 'const Ic' found     react/no-unknown-property
+  1462:7   error  Unknown property 'ICONS[blo' found    react/no-unknown-property
+  1463:7   error  Unknown property 'x;
+  const ' found  react/no-unknown-property
+  1467:7   error  Unknown property 'ckLabel' found      react/no-unknown-property
+  1471:7   error  Unknown property '={(e: Rea' found    react/no-unknown-property
+  1477:7   error  Unknown property 'opPropagati' found  react/no-unknown-property
+  1491:7   error  Unknown property '.id);
+   ' found    react/no-unknown-property
+  1497:7   error  Unknown property ') => {
+   ' found   react/no-unknown-property
+  1506:7   error  Unknown property 'ansfer.getD' found  react/no-unknown-property
+  1510:7   error  Unknown property 'ault()' found       react/no-unknown-property
+  1558:7   error  Unknown property '     }
+  ' found    react/no-unknown-property
+  1570:13  error  Unknown property '40 hover:' found    react/no-unknown-property
+  1570:31  error  Unknown property '-300"
+   ' found    react/no-unknown-property
+  1572:15  error  Unknown property '-hover:op' found    react/no-unknown-property
+  1572:33  error  Unknown property ' pointer-' found    react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+  242:25  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  251:25  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/security/rate-limiting.ts
+  30:3  error  Async method 'checkLimit' has no 'await' expression  @typescript-eslint/require-await
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/batch.ts
+  117:97  error  'value' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/external.ts
+  213:56  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  214:46  error  Unsafe argument of type `any` assigned to a parameter of type `ExternalValidationProvider`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/metrics.ts
+   12:3   error  Expected maxMetrics to have a type annotation           @typescript-eslint/typedef
+   34:47  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   47:56  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   49:51  error  Expected sum to have a type annotation                  @typescript-eslint/typedef
+   49:56  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   53:27  error  Expected metric to have a type annotation               @typescript-eslint/typedef
+   54:51  error  Expected a type annotation                              @typescript-eslint/typedef
+   60:13  error  Expected a type annotation                              @typescript-eslint/typedef
+   61:14  error  Expected a to have a type annotation                    @typescript-eslint/typedef
+   61:17  error  Expected b to have a type annotation                    @typescript-eslint/typedef
+   66:27  error  Expected metric to have a type annotation               @typescript-eslint/typedef
+   73:50  error  Expected name to have a type annotation                 @typescript-eslint/typedef
+   74:48  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   76:47  error  Expected sum to have a type annotation                  @typescript-eslint/typedef
+   76:52  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   77:46  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+  100:49  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  100:67  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  111:13  error  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  115:29  error  Unsafe member access .success on an `any` value         @typescript-eslint/no-unsafe-member-access
+  115:47  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  116:9   error  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  116:29  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  117:9   error  Unsafe call of an `any` typed value                     @typescript-eslint/no-unsafe-call
+  117:16  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  117:39  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  118:23  error  Computed name [error.field] resolves to an `any` value  @typescript-eslint/no-unsafe-member-access
+  118:29  error  Unsafe member access .field on an `any` value           @typescript-eslint/no-unsafe-member-access
+  118:51  error  Computed name [error.field] resolves to an `any` value  @typescript-eslint/no-unsafe-member-access
+  118:57  error  Unsafe member access .field on an `any` value           @typescript-eslint/no-unsafe-member-access
+  122:7   error  Unsafe return of a value of type `any`                  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/pipeline.ts
+    5:32  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   19:37  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   61:54  error  Expected dep to have a type annotation                                                                          @typescript-eslint/typedef
+  118:27  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  120:23  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  121:14  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  121:33  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                          @typescript-eslint/no-unsafe-argument
+  121:38  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  123:23  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  124:14  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  124:31  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                          @typescript-eslint/no-unsafe-argument
+  124:36  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  126:7   error  Unsafe return of a value of type `any`                                                                          @typescript-eslint/no-unsafe-return
+  130:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  143:19  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  143:47  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                         @typescript-eslint/no-unsafe-argument
+  148:7   error  Async method 'validator' has no 'await' expression                                                              @typescript-eslint/require-await
+  148:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  150:18  error  Unsafe member access .sku on an `any` value                                                                     @typescript-eslint/no-unsafe-member-access
+  166:27  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  169:24  error  Unsafe argument of type `any` assigned to a parameter of type `{ [s: string]: unknown; } | ArrayLike<unknown>`  @typescript-eslint/no-unsafe-argument
+  169:38  error  Expected a type annotation                                                                                      @typescript-eslint/typedef
+  174:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  187:19  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  187:47  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                         @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/streaming.ts
+    9:10  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   21:3   error  Expected streams to have a type annotation                              @typescript-eslint/typedef
+   22:3   error  Expected timers to have a type annotation                               @typescript-eslint/typedef
+   36:3   error  Async method 'streamValidation' has no 'await' expression               @typescript-eslint/require-await
+   38:26  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   39:23  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   51:30  error  Promise returned in function argument where a void return was expected  @typescript-eslint/no-misused-promises
+   73:33  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+   83:31  error  Expected resolve to have a type annotation                              @typescript-eslint/typedef
+  158:8   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  158:8   error  Missing return type on function                                         @typescript-eslint/explicit-module-boundary-types
+  165:26  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  166:23  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  167:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  171:31  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  175:22  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  190:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  190:11  error  Expected controller to have a type annotation                           @typescript-eslint/typedef
+  193:53  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  207:22  error  Expected stream to have a type annotation                               @typescript-eslint/typedef
+  211:19  error  Expected stream to have a type annotation                               @typescript-eslint/typedef
+  223:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/validators-enhanced.ts
+   24:28  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   43:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:30  error  Unsafe member access .received on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   44:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   44:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   44:30  error  Unsafe member access .expected on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  104:28  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+  108:23  error  Unsafe argument of type `any` assigned to a parameter of type `ValidationError`         @typescript-eslint/no-unsafe-argument
+  108:57  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  112:14  error  'configError' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+  163:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  167:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  176:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  180:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  213:70  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  253:39  error  Expected a type annotation                                                              @typescript-eslint/typedef
+  262:63  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  272:40  error  Expected e to have a type annotation                                                    @typescript-eslint/typedef
+  275:36  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/validators-old.ts
+   24:28  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   43:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:30  error  Unsafe member access .received on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   44:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   44:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   44:30  error  Unsafe member access .expected on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  104:28  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+  108:23  error  Unsafe argument of type `any` assigned to a parameter of type `ValidationError`         @typescript-eslint/no-unsafe-argument
+  108:57  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  112:14  error  'configError' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+  163:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  167:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  176:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  180:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  213:70  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  253:39  error  Expected a type annotation                                                              @typescript-eslint/typedef
+  262:63  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  272:40  error  Expected e to have a type annotation                                                    @typescript-eslint/typedef
+  275:36  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/item-library.tsx
+  188:19  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  209:43  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/constants/typography.ts
+  82:37  error  Expected set to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts
+  12:11  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+  59:20  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/resolve-error.ts
+  49:13  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+✖ 273 problems (271 errors, 2 warnings)
+

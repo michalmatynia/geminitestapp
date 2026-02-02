@@ -17,7 +17,7 @@ type OptimizedImageProps = {
 export function OptimizedImage({
   imageId,
   alt,
-  imageSize = 'medium',
+  size = 'medium',
   className,
   priority = false,
   onLoad,

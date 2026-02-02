@@ -6,7 +6,7 @@ export type ValidationStream = {
   progress: number;
   currentField?: string | undefined;
   errors: ValidationError[];
-  data?: any;
+  data?: unknown;
 };
 
 export type StreamValidationOptions = {
@@ -18,8 +18,8 @@ export type StreamValidationOptions = {
 };
 
 class ValidationStreamer {
-  private streams = new Map<string, ValidationStream>();
-  private timers = new Map<string, NodeJS.Timeout>();
+  private streams: Map<string, ValidationStream> = new Map<string, ValidationStream>();
+  private timers: Map<string, NodeJS.Timeout> = new Map<string, NodeJS.Timeout>();
 
   createStream(id: string, _options: StreamValidationOptions = {}): ValidationStream {
     const stream: ValidationStream = {
@@ -33,12 +33,12 @@ class ValidationStreamer {
     return stream;
   }
 
-  async streamValidation(
+  streamValidation(
     id: string,
-    data: Record<string, any>,
-    validator: (data: any) => Promise<{ success: boolean; errors: ValidationError[] }>,
+    data: Record<string, unknown>,
+    validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>,
     options: StreamValidationOptions = {}
-  ): Promise<void> {
+  ): void {
     const { debounceMs = 300, fields, onProgress, onComplete, onError } = options;
 
     // Clear existing timer
@@ -48,72 +48,74 @@ class ValidationStreamer {
     }
 
     // Debounce validation
-    const timer = setTimeout(async () => {
-      const stream = this.streams.get(id);
-      if (!stream) return;
+    const timer = setTimeout((): void => {
+      void (async (): Promise<void> => {
+        const stream: ValidationStream | undefined = this.streams.get(id);
+        if (!stream) return;
 
-      try {
-        stream.status = 'validating';
-        stream.progress = 0;
-        onProgress?.(stream);
+        try {
+          stream.status = 'validating';
+          stream.progress = 0;
+          onProgress?.(stream);
 
-        // Validate fields incrementally if specified
-        if (fields) {
-          const totalFields = fields.length;
-          const fieldErrors: ValidationError[] = [];
+          // Validate fields incrementally if specified
+          if (fields) {
+            const totalFields: number = fields.length;
+            const fieldErrors: ValidationError[] = [];
 
-          for (let i = 0; i < fields.length; i++) {
-            const field = fields[i];
-            if (field === undefined) continue;
-            
-            stream.currentField = field;
-            stream.progress = ((i + 1) / totalFields) * 100;
-            
-            // Validate individual field
-            const fieldData = { [field]: data[field] };
-            const result = await validator(fieldData);
-            
-            if (!result.success) {
-              fieldErrors.push(...result.errors);
+            for (let i: number = 0; i < fields.length; i++) {
+              const field: string | undefined = fields[i];
+              if (field === undefined) continue;
+              
+              stream.currentField = field;
+              stream.progress = ((i + 1) / totalFields) * 100;
+              
+              // Validate individual field
+              const fieldData: Record<string, unknown> = { [field]: data[field] };
+              const result = await validator(fieldData);
+              
+              if (!result.success) {
+                fieldErrors.push(...result.errors);
+              }
+
+              onProgress?.(stream);
+              
+              // Small delay to show progress
+              await new Promise((resolve: (value: void) => void) => setTimeout(resolve, 10));
             }
 
-            onProgress?.(stream);
-            
-            // Small delay to show progress
-            await new Promise(resolve => setTimeout(resolve, 10));
+            stream.errors = fieldErrors;
+            stream.status = fieldErrors.length > 0 ? 'error' : 'completed';
+          } else {
+            // Validate entire object
+            const result = await validator(data);
+            stream.errors = result.success ? [] : result.errors;
+            stream.status = result.success ? 'completed' : 'error';
+            stream.progress = 100;
           }
 
-          stream.errors = fieldErrors;
-          stream.status = fieldErrors.length > 0 ? 'error' : 'completed';
-        } else {
-          // Validate entire object
-          const result = await validator(data);
-          stream.errors = result.success ? [] : result.errors;
-          stream.status = result.success ? 'completed' : 'error';
-          stream.progress = 100;
-        }
+          stream.data = data;
+          stream.currentField = undefined;
 
-        stream.data = data;
-        stream.currentField = undefined;
+          if (stream.status === 'completed') {
+            onComplete?.(stream);
+          } else {
+            onError?.(stream);
+          }
 
-        if (stream.status === 'completed') {
-          onComplete?.(stream);
-        } else {
+        } catch (error: unknown) {
+          stream.status = 'error';
+          stream.errors = [{
+            field: 'stream',
+            message: error instanceof Error ? error.message : 'Stream validation failed',
+            code: 'stream_error',
+            severity: 'high'
+          }];
           onError?.(stream);
         }
 
-      } catch (error) {
-        stream.status = 'error';
-        stream.errors = [{
-          field: 'stream',
-          message: error instanceof Error ? error.message : 'Stream validation failed',
-          code: 'stream_error',
-          severity: 'high'
-        }];
-        onError?.(stream);
-      }
-
-      this.timers.delete(id);
+        this.timers.delete(id);
+      })();
     }, debounceMs);
 
     this.timers.set(id, timer);
@@ -158,21 +160,26 @@ export const validationStreamer = new ValidationStreamer();
 export function useStreamValidation(
   id: string,
   options: StreamValidationOptions = {}
-) {
-  const stream = validationStreamer.getStream(id) || validationStreamer.createStream(id, options);
+): {
+  stream: ValidationStream;
+  startValidation: (data: Record<string, unknown>, validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>) => Promise<void>;
+  cancelValidation: () => void;
+  cleanup: () => void;
+} {
+  const stream: ValidationStream = validationStreamer.getStream(id) || validationStreamer.createStream(id, options);
 
-  const startValidation = async (
-    data: Record<string, any>,
-    validator: (data: any) => Promise<{ success: boolean; errors: ValidationError[] }>
-  ) => {
-    await validationStreamer.streamValidation(id, data, validator, options);
+  const startValidation = (
+    data: Record<string, unknown>,
+    validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>
+  ): void => {
+    validationStreamer.streamValidation(id, data, validator, options);
   };
 
-  const cancelValidation = () => {
+  const cancelValidation = (): void => {
     validationStreamer.cancelStream(id);
   };
 
-  const cleanup = () => {
+  const cleanup = (): void => {
     validationStreamer.cleanup(id);
   };
 
@@ -187,16 +194,16 @@ export function useStreamValidation(
 // Server-Sent Events for real-time validation updates
 export function createValidationSSE(streamId: string): ReadableStream {
   return new ReadableStream({
-    start(controller) {
-      const encoder = new TextEncoder();
+    start(controller: ReadableStreamDefaultController): void {
+      const encoder: TextEncoder = new TextEncoder();
       
-      const sendUpdate = (stream: ValidationStream) => {
-        const data = `data: ${JSON.stringify(stream)}\n\n`;
+      const sendUpdate = (stream: ValidationStream): void => {
+        const data: string = `data: ${JSON.stringify(stream)}\n\n`;
         controller.enqueue(encoder.encode(data));
       };
 
       // Send initial state
-      const stream = validationStreamer.getStream(streamId);
+      const stream: ValidationStream | undefined = validationStreamer.getStream(streamId);
       if (stream) {
         sendUpdate(stream);
       }
@@ -204,11 +211,11 @@ export function createValidationSSE(streamId: string): ReadableStream {
       // Set up listeners
       const options: StreamValidationOptions = {
         onProgress: sendUpdate,
-        onComplete: (stream) => {
+        onComplete: (stream: ValidationStream): void => {
           sendUpdate(stream);
           controller.close();
         },
-        onError: (stream) => {
+        onError: (stream: ValidationStream): void => {
           sendUpdate(stream);
           controller.close();
         }
@@ -220,7 +227,7 @@ export function createValidationSSE(streamId: string): ReadableStream {
       }
     },
 
-    cancel() {
+    cancel(): void {
       validationStreamer.cancelStream(streamId);
     }
   });

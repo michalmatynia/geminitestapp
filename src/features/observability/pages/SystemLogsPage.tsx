@@ -197,9 +197,9 @@ export default function SystemLogsPage(): React.JSX.Element {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    void logsQuery.refetch();
-                    void metricsQuery.refetch();
+                  onClick={async () => {
+                    await logsQuery.refetch();
+                    await metricsQuery.refetch();
                   }}
                   disabled={logsQuery.isFetching || metricsQuery.isFetching}
                 >
@@ -211,8 +211,8 @@ export default function SystemLogsPage(): React.JSX.Element {
                   size="sm"
                   className="gap-2"
                   disabled={logs.length === 0}
-                  onClick={() => {
-                    void navigator.clipboard.writeText(logsJson).then(() => {
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(logsJson).then(() => {
                       toast("Copied to clipboard", { variant: "success" });
                     });
                   }}
@@ -239,7 +239,9 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isClearLogsConfirmOpen}
               onOpenChange={setIsClearLogsConfirmOpen}
-              onConfirm={async (): Promise<void> => { await handleClearLogs(); }}
+              onConfirm={(): void => {
+                void handleClearLogs();
+              }}
               title="Clear System Logs"
               description="Are you sure you want to clear all system logs? This action cannot be undone."
               confirmText="Clear All"
@@ -248,7 +250,9 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isRebuildIndexesConfirmOpen}
               onOpenChange={setIsRebuildIndexesConfirmOpen}
-              onConfirm={async (): Promise<void> => { await handleRebuildMongoIndexes(); }}
+              onConfirm={(): void => {
+                void handleRebuildMongoIndexes();
+              }}
               title="Rebuild Indexes"
               description="This will scan AI Paths collections and create missing indexes. Proceed?"
               confirmText="Rebuild"
@@ -270,7 +274,7 @@ export default function SystemLogsPage(): React.JSX.Element {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => void mongoDiagnosticsQuery.refetch()}
+                    onClick={async () => { await mongoDiagnosticsQuery.refetch(); }}
                     disabled={mongoDiagnosticsQuery.isFetching}
                   >
                     Refresh

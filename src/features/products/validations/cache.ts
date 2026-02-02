@@ -33,7 +33,6 @@ class ValidationCache {
   private isExpired(entry: CacheEntry<unknown>): boolean {
     return Date.now() - entry.timestamp > entry.ttl;
   }
-// ...
   private evictExpired(): void {
     for (const [key, entry] of this.cache.entries()) {
       if (this.isExpired(entry)) {
@@ -92,7 +91,7 @@ class ValidationCache {
       return;
     }
 
-    const regex = new RegExp(pattern);
+    const regex: RegExp = new RegExp(pattern);
     for (const key of this.cache.keys()) {
       if (regex.test(key)) {
         this.cache.delete(key);

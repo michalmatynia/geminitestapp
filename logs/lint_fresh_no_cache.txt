@@ -1,0 +1,177 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/pages/ImportsPage.tsx
+  278:6  warning  React Hook useEffect has a missing dependency: 'savePreferenceMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  290:6  warning  React Hook useEffect has a missing dependency: 'savePreferenceMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+  242:25  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  251:25  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/security/rate-limiting.ts
+  30:3  error  Async method 'checkLimit' has no 'await' expression  @typescript-eslint/require-await
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/batch.ts
+  117:97  error  'value' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/cache.ts
+  95:15  error  Parsing error: The variable declaration of a 'for...of' statement cannot have a type annotation
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/external.ts
+  213:56  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  214:46  error  Unsafe argument of type `any` assigned to a parameter of type `ExternalValidationProvider`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/metrics.ts
+   12:3   error  Expected maxMetrics to have a type annotation           @typescript-eslint/typedef
+   34:47  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   47:56  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   49:51  error  Expected sum to have a type annotation                  @typescript-eslint/typedef
+   49:56  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   53:27  error  Expected metric to have a type annotation               @typescript-eslint/typedef
+   54:51  error  Expected a type annotation                              @typescript-eslint/typedef
+   60:13  error  Expected a type annotation                              @typescript-eslint/typedef
+   61:14  error  Expected a to have a type annotation                    @typescript-eslint/typedef
+   61:17  error  Expected b to have a type annotation                    @typescript-eslint/typedef
+   66:27  error  Expected metric to have a type annotation               @typescript-eslint/typedef
+   73:50  error  Expected name to have a type annotation                 @typescript-eslint/typedef
+   74:48  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   76:47  error  Expected sum to have a type annotation                  @typescript-eslint/typedef
+   76:52  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+   77:46  error  Expected m to have a type annotation                    @typescript-eslint/typedef
+  100:49  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  100:67  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  111:13  error  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  115:29  error  Unsafe member access .success on an `any` value         @typescript-eslint/no-unsafe-member-access
+  115:47  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  116:9   error  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  116:29  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  117:9   error  Unsafe call of an `any` typed value                     @typescript-eslint/no-unsafe-call
+  117:16  error  Unsafe member access .errors on an `any` value          @typescript-eslint/no-unsafe-member-access
+  117:39  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  118:23  error  Computed name [error.field] resolves to an `any` value  @typescript-eslint/no-unsafe-member-access
+  118:29  error  Unsafe member access .field on an `any` value           @typescript-eslint/no-unsafe-member-access
+  118:51  error  Computed name [error.field] resolves to an `any` value  @typescript-eslint/no-unsafe-member-access
+  118:57  error  Unsafe member access .field on an `any` value           @typescript-eslint/no-unsafe-member-access
+  122:7   error  Unsafe return of a value of type `any`                  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/pipeline.ts
+    5:32  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   19:37  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   61:54  error  Expected dep to have a type annotation                                                                          @typescript-eslint/typedef
+  118:27  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  120:23  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  121:14  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  121:33  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                          @typescript-eslint/no-unsafe-argument
+  121:38  error  Unsafe member access .price on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  123:23  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  124:14  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  124:31  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                          @typescript-eslint/no-unsafe-argument
+  124:36  error  Unsafe member access .stock on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  126:7   error  Unsafe return of a value of type `any`                                                                          @typescript-eslint/no-unsafe-return
+  130:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  143:19  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  143:47  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                         @typescript-eslint/no-unsafe-argument
+  148:7   error  Async method 'validator' has no 'await' expression                                                              @typescript-eslint/require-await
+  148:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  150:18  error  Unsafe member access .sku on an `any` value                                                                     @typescript-eslint/no-unsafe-member-access
+  166:27  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  169:24  error  Unsafe argument of type `any` assigned to a parameter of type `{ [s: string]: unknown; } | ArrayLike<unknown>`  @typescript-eslint/no-unsafe-argument
+  169:38  error  Expected a type annotation                                                                                      @typescript-eslint/typedef
+  174:25  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  187:19  error  Expected data to have a type annotation                                                                         @typescript-eslint/typedef
+  187:47  error  Unsafe argument of type `any` assigned to a parameter of type `Record<string, unknown>`                         @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/streaming.ts
+    9:10  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   21:3   error  Expected streams to have a type annotation                              @typescript-eslint/typedef
+   22:3   error  Expected timers to have a type annotation                               @typescript-eslint/typedef
+   36:3   error  Async method 'streamValidation' has no 'await' expression               @typescript-eslint/require-await
+   38:26  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   39:23  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+   51:30  error  Promise returned in function argument where a void return was expected  @typescript-eslint/no-misused-promises
+   73:33  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+   83:31  error  Expected resolve to have a type annotation                              @typescript-eslint/typedef
+  158:8   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  158:8   error  Missing return type on function                                         @typescript-eslint/explicit-module-boundary-types
+  165:26  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  166:23  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  167:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  171:31  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  175:22  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  190:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  190:11  error  Expected controller to have a type annotation                           @typescript-eslint/typedef
+  193:53  error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+  207:22  error  Expected stream to have a type annotation                               @typescript-eslint/typedef
+  211:19  error  Expected stream to have a type annotation                               @typescript-eslint/typedef
+  223:5   error  Missing return type on function                                         @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/validators-enhanced.ts
+   24:28  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   43:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:30  error  Unsafe member access .received on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   44:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   44:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   44:30  error  Unsafe member access .expected on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  104:28  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+  108:23  error  Unsafe argument of type `any` assigned to a parameter of type `ValidationError`         @typescript-eslint/no-unsafe-argument
+  108:57  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  112:14  error  'configError' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+  163:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  167:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  176:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  180:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  213:70  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  253:39  error  Expected a type annotation                                                              @typescript-eslint/typedef
+  262:63  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  272:40  error  Expected e to have a type annotation                                                    @typescript-eslint/typedef
+  275:36  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/validators-old.ts
+   24:28  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   43:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   43:30  error  Unsafe member access .received on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   44:7   error  Unsafe assignment of an `any` value                                                     @typescript-eslint/no-unsafe-assignment
+   44:25  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   44:30  error  Unsafe member access .expected on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  104:28  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+  108:23  error  Unsafe argument of type `any` assigned to a parameter of type `ValidationError`         @typescript-eslint/no-unsafe-argument
+  108:57  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  112:14  error  'configError' is defined but never used. Allowed unused caught errors must match /^_/u  @typescript-eslint/no-unused-vars
+  163:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  167:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  176:59  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  180:4   error  Expected data to have a type annotation                                                 @typescript-eslint/typedef
+  213:70  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  253:39  error  Expected a type annotation                                                              @typescript-eslint/typedef
+  262:63  error  Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  272:40  error  Expected e to have a type annotation                                                    @typescript-eslint/typedef
+  275:36  error  Expected error to have a type annotation                                                @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+  317:29  error  Expected err to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/utils/asset3dReindex.ts
+  22:11  error  Expected word to have a type annotation      @typescript-eslint/typedef
+  46:37  error  Expected entry to have a type annotation     @typescript-eslint/typedef
+  46:68  error  Expected entry to have a type annotation     @typescript-eslint/typedef
+  64:47  error  Expected row to have a type annotation       @typescript-eslint/typedef
+  66:37  error  Expected filename to have a type annotation  @typescript-eslint/typedef
+  79:52  error  Expected tx to have a type annotation        @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/components/item-library.tsx
+  188:19  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  209:43  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/constants/typography.ts
+  82:37  error  Expected set to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/app-error.ts
+  12:11  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+  59:20  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/errors/resolve-error.ts
+  49:13  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+✖ 140 problems (138 errors, 2 warnings)
+

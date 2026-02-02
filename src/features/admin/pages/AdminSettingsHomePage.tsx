@@ -11,6 +11,7 @@ import {
   Activity,
   MonitorPlay,
   RefreshCcw,
+  Type,
 } from "lucide-react";
 
 
@@ -33,6 +34,15 @@ const settings: SettingsOption[] = [
     icon: BellIcon,
     title: "Notifications",
     description: "Manage toast position, accent color, and preview behavior.",
+    color: "emerald",
+    bgColor: "bg-emerald-500/10",
+  },
+  {
+    id: "typography",
+    href: "/admin/settings/typography",
+    icon: Type,
+    title: "Typography",
+    description: "Choose which local font set the admin uses.",
     color: "emerald",
     bgColor: "bg-emerald-500/10",
   },

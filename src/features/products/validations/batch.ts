@@ -57,10 +57,10 @@ class BatchValidator {
     }
 
     // Process items in batches
-    for (let i = 0; i < items.length; i += concurrency) {
-      const batch = items.slice(i, i + concurrency);
-      const batchPromises = batch.map(async (item, batchIndex) => {
-        const actualIndex = i + batchIndex;
+    for (let i: number = 0; i < items.length; i += concurrency) {
+      const batch: unknown[] = items.slice(i, i + concurrency);
+      const batchPromises = batch.map(async (item: unknown, batchIndex: number) => {
+        const actualIndex: number = i + batchIndex;
         try {
           const result = await validator(item);
           return {
@@ -69,7 +69,7 @@ class BatchValidator {
             data: result.data,
             errors: result.errors
           };
-        } catch (error) {
+        } catch (error: unknown) {
           const validationError: ValidationError = {
             field: 'root',
             message: error instanceof Error ? error.message : 'Validation failed',
@@ -88,13 +88,13 @@ class BatchValidator {
       results.push(...batchResults);
 
       // Stop on first error if configured
-      if (stopOnFirstError && batchResults.some(r => !r.success)) {
+      if (stopOnFirstError && batchResults.some((r: BatchValidationResult<T>) => !r.success)) {
         break;
       }
     }
 
-    const successful = results.filter(r => r.success).length;
-    const failed = results.length - successful;
+    const successful: number = results.filter((r: BatchValidationResult<T>) => r.success).length;
+    const failed: number = results.length - successful;
 
     return {
       total: items.length,
@@ -107,14 +107,15 @@ class BatchValidator {
 
   private findDuplicates(items: unknown[], fields: string[]): ValidationError[] {
     const errors: ValidationError[] = [];
-    const seen = new Map<string, number[]>();
+    const seen: Map<string, number[]> = new Map<string, number[]>();
 
-    items.forEach((item, index) => {
+    items.forEach((item: unknown, index: number) => {
       if (typeof item === 'object' && item !== null) {
-        fields.forEach(field => {
-          const value = (item as any)[field];
+        fields.forEach((field: string) => {
+          const value: unknown = (item as Record<string, unknown>)[field];
           if (value !== undefined && value !== null) {
-            const key = `${field}:${value}`;
+            const valueStr: string = typeof value === 'object' ? JSON.stringify(value) : String(value as string | number | boolean);
+            const key: string = `${field}:${valueStr}`;
             if (!seen.has(key)) {
               seen.set(key, []);
             }
@@ -124,9 +125,11 @@ class BatchValidator {
       }
     });
 
-    seen.forEach((indices, key) => {
+    seen.forEach((indices: number[], key: string) => {
       if (indices.length > 1) {
-        const [field, value] = key.split(':', 2);
+        const parts: string[] = key.split(':');
+        const field: string = parts[0] || 'unknown';
+        const value: string = parts.slice(1).join(':');
         errors.push({
           field: 'batch',
           message: `Duplicate ${field} "${value}" found at indices: ${indices.join(', ')}`,
@@ -142,10 +145,10 @@ class BatchValidator {
   async validateProductsCreate(
     items: unknown[],
     options?: BatchValidationOptions
-  ): Promise<BatchValidationSummary<any>> {
-    return this.validateBatch(
+  ): Promise<BatchValidationSummary<unknown>> {
+    return this.validateBatch<unknown>(
       items,
-      async (item) => {
+      async (item: unknown) => {
         const result = await validateProductCreate(item);
         return {
           success: result.success,
@@ -160,10 +163,10 @@ class BatchValidator {
   async validateProductsUpdate(
     items: unknown[],
     options?: BatchValidationOptions
-  ): Promise<BatchValidationSummary<any>> {
-    return this.validateBatch(
+  ): Promise<BatchValidationSummary<unknown>> {
+    return this.validateBatch<unknown>(
       items,
-      async (item) => {
+      async (item: unknown) => {
         const result = await validateProductUpdate(item);
         return {
           success: result.success,

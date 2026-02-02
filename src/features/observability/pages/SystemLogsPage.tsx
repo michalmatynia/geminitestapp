@@ -237,7 +237,7 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isClearLogsConfirmOpen}
               onOpenChange={setIsClearLogsConfirmOpen}
-              onConfirm={async () => { await handleClearLogs(); }}
+              onConfirm={async (): Promise<void> => { await handleClearLogs(); }}
               title="Clear System Logs"
               description="Are you sure you want to clear all system logs? This action cannot be undone."
               confirmText="Clear All"
@@ -246,7 +246,7 @@ export default function SystemLogsPage(): React.JSX.Element {
             <ConfirmDialog
               open={isRebuildIndexesConfirmOpen}
               onOpenChange={setIsRebuildIndexesConfirmOpen}
-              onConfirm={async () => { await handleRebuildMongoIndexes(); }}
+              onConfirm={async (): Promise<void> => { await handleRebuildMongoIndexes(); }}
               title="Rebuild Indexes"
               description="This will scan AI Paths collections and create missing indexes. Proceed?"
               confirmText="Rebuild"

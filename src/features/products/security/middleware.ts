@@ -26,7 +26,7 @@ export class SecurityMiddleware {
     headers?: Record<string, string> | undefined;
     status?: number | undefined;
     message?: string | undefined;
-    sanitizedData?: unknown | undefined;
+    sanitizedData?: unknown;
   }> {
     const {
       enableRateLimit = true,
@@ -206,14 +206,14 @@ export function withSecurity(
   };
 }
 
-type FileUploadHandler = (req: NextRequest, files: SanitizedFile[], ...args: any[]) => Promise<Response>;
+type FileUploadHandler = (req: NextRequest, files: SanitizedFile[], ...args: unknown[]) => Promise<Response>;
 
 // File upload wrapper with security
 export function withFileUploadSecurity(
   handler: FileUploadHandler,
   config: SecurityConfig = {}
-) {
-  return async (req: NextRequest, ...args: any[]): Promise<Response> => {
+): (req: NextRequest, ...args: unknown[]) => Promise<Response> {
+  return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     try {
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
       

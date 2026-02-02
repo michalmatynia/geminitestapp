@@ -199,6 +199,8 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
 }
 
 // Cleanup task (run periodically)
-setInterval(() => {
-  Object.values(rateLimiters).forEach(limiter => limiter.cleanup());
-}, 5 * 60 * 1000); // Every 5 minutes
+if (typeof setInterval !== 'undefined') {
+  setInterval((): void => {
+    Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
+  }, 5 * 60 * 1000); // Every 5 minutes
+}

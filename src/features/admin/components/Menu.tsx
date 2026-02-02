@@ -340,6 +340,12 @@ export default function Menu(): React.ReactNode {
           Overview
         </Link>
         <Link
+          href="/admin/settings/typography"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Typography
+        </Link>
+        <Link
           href="/admin/settings/notifications"
           className="block hover:bg-gray-700 p-2 rounded"
         >

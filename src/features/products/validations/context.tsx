@@ -51,7 +51,7 @@ const ValidationContext = createContext<{
   dispatch: React.Dispatch<ValidationAction>;
 } | null>(null);
 
-export function ValidationProvider({ children }: { children: ReactNode }) {
+export function ValidationProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [state, dispatch] = useReducer(validationReducer, initialState);
 
   return (
@@ -61,7 +61,13 @@ export function ValidationProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useValidationContext() {
+export function useValidationContext(): ValidationContextState & {
+  setGlobalErrors: (errors: ValidationError[]) => void;
+  setFieldValidation: (field: string, isValid: boolean, message?: string) => void;
+  clearFieldValidation: (field: string) => void;
+  setValidating: (isValidating: boolean) => void;
+  reset: () => void;
+} {
   const context = useContext(ValidationContext);
   if (!context) {
     throw new Error("useValidationContext must be used within ValidationProvider");
@@ -71,14 +77,14 @@ export function useValidationContext() {
 
   return {
     ...state,
-    setGlobalErrors: (errors: ValidationError[]) => 
+    setGlobalErrors: (errors: ValidationError[]): void => 
       dispatch({ type: "SET_GLOBAL_ERRORS", errors }),
-    setFieldValidation: (field: string, isValid: boolean, message?: string) =>
+    setFieldValidation: (field: string, isValid: boolean, message?: string): void =>
       dispatch({ type: "SET_FIELD_VALIDATION", field, isValid, message }),
-    clearFieldValidation: (field: string) =>
+    clearFieldValidation: (field: string): void =>
       dispatch({ type: "CLEAR_FIELD_VALIDATION", field }),
-    setValidating: (isValidating: boolean) =>
+    setValidating: (isValidating: boolean): void =>
       dispatch({ type: "SET_VALIDATING", isValidating }),
-    reset: () => dispatch({ type: "RESET" }),
+    reset: (): void => dispatch({ type: "RESET" }),
   };
 }

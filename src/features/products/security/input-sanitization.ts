@@ -1,6 +1,6 @@
 // import DOMPurify from 'isomorphic-dompurify';
 
-type SanitizationOptions = {
+export type SanitizationOptions = {
   allowHtml?: boolean;
   maxLength?: number;
   allowedTags?: string[];

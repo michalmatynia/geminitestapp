@@ -99,7 +99,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
           {loading ? (
             <p className="text-gray-400">Loading memory…</p>
           ) : error ? (
-            <p className="text-rose-300">{(error as Error).message || String(error)}</p>
+            <p className="text-rose-300">{(error).message || String(error)}</p>
           ) : items.length === 0 ? (
             <p className="text-gray-400">No memory entries found.</p>
           ) : (

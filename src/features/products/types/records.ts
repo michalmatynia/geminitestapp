@@ -17,6 +17,8 @@ export type PriceGroupRecord = {
   name: string;
   description: string | null;
   currencyId: string;
+  currencyCode: string;
+  groupType: 'standard' | 'dependent';
   type: string;
   basePriceField: string;
   sourceGroupId: string | null;
@@ -28,7 +30,7 @@ export type PriceGroupRecord = {
 
 export type PriceGroupWithDetails = PriceGroupRecord & {
   currency: CurrencyRecord;
-  currencyCode?: string;
+  currencyCode: string;
 };
 
 export type CatalogRecord = {

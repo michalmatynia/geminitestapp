@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { parseCheckpoint, buildCheckpointState, persistCheckpoint } from "@/features/agent-runtime/memory/checkpoint";
-import { logAgentAudit } from "@/features/agent-runtime/audit";
+import { parseCheckpoint, buildCheckpointState, persistCheckpoint } from "@/features/ai/agent-runtime/memory/checkpoint";
+import { logAgentAudit } from "@/features/ai/agent-runtime/audit";
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {
@@ -9,7 +9,7 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
   logAgentAudit: vi.fn(),
 }));
 

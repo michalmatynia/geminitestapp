@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Label, Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui";
+import { Input, Label, Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, SearchInput, SelectionBar } from "@/shared/ui";
 import { memo, useCallback, useMemo } from "react";
 
 
@@ -77,11 +77,12 @@ export const ProductFilters = memo(function ProductFilters({
           <Label htmlFor="search-name" className="text-xs font-medium">
             Name
           </Label>
-          <Input
+          <SearchInput
             id="search-name"
             placeholder="Search by name..."
             value={search}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+            onClear={() => setSearch("")}
             className="h-8 text-sm"
           />
         </div>
@@ -91,11 +92,12 @@ export const ProductFilters = memo(function ProductFilters({
           <Label htmlFor="search-sku" className="text-xs font-medium">
             SKU
           </Label>
-          <Input
+          <SearchInput
             id="search-sku"
             placeholder="Search by SKU..."
             value={sku}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSku(e.target.value)}
+            onClear={() => setSku("")}
             className="h-8 text-sm"
           />
         </div>
@@ -189,132 +191,29 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
   onDeleteSelected,
   onAddToMarketplace,
 }: ProductSelectionActionsProps) {
-  const handleSelectAllGlobal = useCallback(async () => {
-    if (!onSelectAllGlobal) return;
-    try {
-      await onSelectAllGlobal();
-    } catch (error) {
-      console.error("Failed to select all products:", error);
-    }
-  }, [onSelectAllGlobal]);
-
-  const handleDeleteSelected = useCallback(async () => {
-    if (!onDeleteSelected) return;
-    try {
-      await onDeleteSelected();
-    } catch (error) {
-      console.error("Failed to delete selected products:", error);
-    }
-  }, [onDeleteSelected]);
-
-  const handleSelectPage = useCallback((): void => {
-    const newSelection = { ...rowSelection };
-    data.forEach((product: ProductWithImages) => {
-      newSelection[product.id] = true;
-    });
-    setRowSelection(newSelection);
-  }, [data, rowSelection, setRowSelection]);
-
-  const handleDeselectPage = useCallback((): void => {
-    const newSelection = { ...rowSelection };
-    data.forEach((product: ProductWithImages) => {
-      delete newSelection[product.id];
-    });
-    setRowSelection(newSelection);
-  }, [data, rowSelection, setRowSelection]);
-
-  const handleDeselectAll = useCallback((): void => {
-    setRowSelection({});
-  }, [setRowSelection]);
-
-  const selectedCount = useMemo(
-    () => Object.keys(rowSelection).filter((key: string) => rowSelection[key]).length,
-    [rowSelection]
-  );
-  const hasSelection = selectedCount > 0;
+  const getRowId = useCallback((p: ProductWithImages) => p.id, []);
 
   return (
-    <div className="flex flex-wrap gap-2 border-t pt-3 sm:gap-3">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <CheckSquare className="h-4 w-4" />
-            Selection
-            {selectedCount > 0 && (
-              <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-xs text-muted-foreground">
-                {selectedCount}
-              </span>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>On this Page</DropdownMenuLabel>
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={handleSelectPage}
-              className="cursor-pointer"
-            >
-              Select All on Page
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleDeselectPage}
-              className="cursor-pointer"
-            >
-              Deselect All on Page
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>On All Pages</DropdownMenuLabel>
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={() => void handleSelectAllGlobal()}
-              className="cursor-pointer"
-              disabled={!!loadingGlobal}
-            >
-              {loadingGlobal ? "Loading..." : "Select All Globally"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleDeselectAll}
-              className="cursor-pointer"
-            >
-              Deselect All
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={!hasSelection}
-          >
-            <Settings2 className="h-4 w-4" />
-            Actions
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuItem
-            onClick={() => {
-              if (onAddToMarketplace) onAddToMarketplace();
-            }}
-            className="cursor-pointer gap-2"
-          >
-            <Store className="h-4 w-4" />
-            Add to Marketplace
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => void handleDeleteSelected()}
-            className="cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Selected
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <SelectionBar
+      data={data}
+      getRowId={getRowId}
+      rowSelection={rowSelection}
+      setRowSelection={setRowSelection}
+      onSelectAllGlobal={onSelectAllGlobal}
+      loadingGlobal={loadingGlobal}
+      onDeleteSelected={onDeleteSelected}
+      className="border-t pt-3"
+      actions={
+        <DropdownMenuItem
+          onClick={() => {
+            if (onAddToMarketplace) onAddToMarketplace();
+          }}
+          className="cursor-pointer gap-2"
+        >
+          <Store className="h-4 w-4" />
+          Add to Marketplace
+        </DropdownMenuItem>
+      }
+    />
   );
 });

@@ -1,3 +1,5 @@
+import { Status } from './base-types';
+
 export type NodeType =
   | "trigger"
   | "simulation"
@@ -365,13 +367,7 @@ export type AiPathRunStatus =
   | "canceled"
   | "dead_lettered";
 
-export type AiPathNodeStatus =
-  | "pending"
-  | "running"
-  | "completed"
-  | "failed"
-  | "skipped"
-  | "blocked";
+export type AiPathNodeStatus = Status | "skipped" | "blocked";
 
 export type AiPathRunEventLevel = "info" | "warning" | "error";
 

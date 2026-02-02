@@ -1,22 +1,22 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { initializePlanState } from "@/features/agent-runtime/execution/plan";
-import * as llmPlanning from "@/features/agent-runtime/planning/llm";
-import * as checkpointModule from "@/features/agent-runtime/memory/checkpoint";
+import { initializePlanState } from "@/features/ai/agent-runtime/execution/plan";
+import * as llmPlanning from "@/features/ai/agent-runtime/planning/llm";
+import * as checkpointModule from "@/features/ai/agent-runtime/memory/checkpoint";
 
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
   logAgentAudit: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/memory/checkpoint", () => ({
+vi.mock("@/features/ai/agent-runtime/memory/checkpoint", () => ({
   persistCheckpoint: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/planning/llm", () => ({
+vi.mock("@/features/ai/agent-runtime/planning/llm", () => ({
   buildPlanWithLLM: vi.fn(),
   buildResumePlanReview: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/planning/utils", () => ({
+vi.mock("@/features/ai/agent-runtime/planning/utils", () => ({
     decideNextAction: vi.fn().mockReturnValue({ action: "tool" }),
     buildBranchStepsFromAlternatives: vi.fn().mockReturnValue([]),
 }));

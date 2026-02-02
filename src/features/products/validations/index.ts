@@ -1,126 +1,135 @@
-/* eslint-disable @typescript-eslint/typedef */
-import { z } from "zod";
+// Re-export schemas and types
+export {
+  productCreateSchema,
+  productUpdateSchema,
+  type ProductCreateInput,
+  type ProductUpdateInput,
+} from "./schemas";
 
-// Helper: preprocess empty strings to undefined, but keep invalid values to trigger schema errors
-const emptyStringToUndefined = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return undefined;
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return undefined;
-    const num = Number(trimmed);
-    return Number.isFinite(num) ? num : value;
-  }
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : value;
-  }
-  return value;
-}, z.number().int().optional());
+// Re-export enhanced validation utilities
+export {
+  validateProductCreate,
+  validateProductUpdate,
+  isValidProductCreate,
+  isValidProductUpdate,
+  isProductLike,
+  hasRequiredProductFields,
+  validateProductField,
+  validateProductFields,
+  getValidationSummary,
+  mergeValidationResults,
+  type ValidationResult,
+  type ValidationError,
+  type ValidationMetadata,
+} from "./validators";
 
-const optionalSku = z.preprocess(
-  (value) => {
-    if (value === null || value === undefined) return undefined;
-    if (typeof value === "string" && value.trim() === "") return undefined;
-    return value;
-  },
-  z.string().trim().min(1, { message: "SKU is required" }).optional(),
-);
+// Re-export middleware
+export {
+  validateProductCreateMiddleware,
+  validateProductUpdateMiddleware,
+  type ValidationMiddlewareOptions,
+} from "./middleware";
 
-const imageLinksSchema = z.preprocess((value: unknown): string[] => {
-  if (value === null || value === undefined) return [];
-  if (Array.isArray(value)) return value as string[];
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return [];
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) return parsed as string[];
-    } catch {
-      return trimmed
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean);
-    }
-  }
-  return [];
-}, z.array(z.string().trim())).transform((links: string[]) =>
-  links.map((link: string) => link.trim()).filter((link: string) => link && !link.startsWith("data:"))
-);
+// Re-export hooks
+export {
+  useProductCreateValidation,
+  useProductUpdateValidation,
+  type UseValidationOptions,
+  type ValidationState,
+} from "./hooks";
 
-const imageBase64sSchema = z.preprocess((value: unknown): string[] => {
-  if (value === null || value === undefined) return [];
-  if (Array.isArray(value)) return value as string[];
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return [];
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) return parsed as string[];
-    } catch {
-      return trimmed
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean);
-    }
-  }
-  return [];
-}, z.array(z.string().trim())).transform((links: string[]) =>
-  links.map((link: string) => link.trim()).filter((link: string) => link && link.startsWith("data:"))
-);
+// Re-export context
+export {
+  ValidationProvider,
+  useValidationContext,
+} from "./context";
 
-const parameterValueSchema = z.object({
-  parameterId: z.string().trim().min(1, "Parameter ID is required"),
-  value: z.string().optional().nullable(),
-});
+// Re-export utilities
+export {
+  createConditionalSchema,
+  validateFieldDependencies,
+  ValidationQueue,
+  getCachedValidation,
+  setCachedValidation,
+  withValidationMetrics,
+} from "./utils";
 
-const parametersSchema = z.preprocess((value: unknown): unknown[] => {
-  if (value === null || value === undefined) return [];
-  if (Array.isArray(value)) return value as unknown[];
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return [];
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) return parsed as unknown[];
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}, z.array(parameterValueSchema));
+// Re-export configuration
+export {
+  setValidationConfig,
+  getValidationConfig,
+  resetValidationConfig,
+  validateWithConfig,
+  type ValidationConfig,
+} from "./config";
 
-const productBaseSchema = z.object({
-  baseProductId: z.string().nullish(),
-  defaultPriceGroupId: z.string().nullish(),
-  ean: z.string().nullish(),
-  gtin: z.string().nullish(),
-  asin: z.string().nullish(),
-  name_en: z.string().nullish(),
-  name_pl: z.string().nullish(),
-  name_de: z.string().nullish(),
-  price: emptyStringToUndefined,
-  description_en: z.string().nullish(),
-  description_pl: z.string().nullish(),
-  description_de: z.string().nullish(),
-  supplierName: z.string().nullish(),
-  supplierLink: z.string().nullish(),
-  priceComment: z.string().nullish(),
-  stock: emptyStringToUndefined,
-  sizeLength: emptyStringToUndefined,
-  sizeWidth: emptyStringToUndefined,
-  weight: emptyStringToUndefined,
-  length: emptyStringToUndefined,
-  imageLinks: imageLinksSchema.optional(),
-  imageBase64s: imageBase64sSchema.optional(),
-  parameters: parametersSchema.optional(),
-});
+// Re-export decorators
+export {
+  ValidateInput,
+  ValidateProductCreate,
+  ValidateProductUpdate,
+  ValidationException,
+  ValidationResult as ValidationResultClass,
+} from "./decorators";
 
-export const productCreateSchema = productBaseSchema.extend({
-  sku: optionalSku,
-});
+// Re-export pipeline
+export {
+  ValidationPipeline,
+  createProductValidationPipeline,
+  createProductUpdatePipeline,
+  type ValidationStep,
+  type PipelineResult,
+} from "./pipeline";
 
-export const productUpdateSchema = productBaseSchema.extend({
-  sku: optionalSku,
-});
+// Re-export metrics
+export {
+  validationMetrics,
+  withMetrics,
+  getValidationHealth,
+} from "./metrics";
 
-export type ProductCreateData = z.infer<typeof productCreateSchema>;
-export type ProductUpdateData = z.infer<typeof productUpdateSchema>;
+// Re-export advanced features
+export {
+  validationCache,
+  withCache,
+} from "./cache";
+
+export {
+  batchValidator,
+  validateProductsBatch,
+  validateProductsUpdateBatch,
+  type BatchValidationResult,
+  type BatchValidationSummary,
+  type BatchValidationOptions,
+} from "./batch";
+
+export {
+  validationStreamer,
+  useStreamValidation,
+  createValidationSSE,
+  type ValidationStream,
+  type StreamValidationOptions,
+} from "./streaming";
+
+export {
+  externalValidationService,
+  validateWithExternalService,
+  VALIDATION_PROVIDERS,
+  type ExternalValidationProvider,
+  type ExternalValidationRequest,
+  type ExternalValidationResponse,
+} from "./external";
+
+export {
+  validationRuleEngine,
+  PRODUCT_VALIDATION_RULES,
+  type ValidationRule,
+  type RuleCondition,
+  type RuleAction,
+  type RuleExecutionContext,
+  type RuleExecutionResult,
+} from "./rules";
+
+// Legacy type aliases for backward compatibility
+export type ProductCreateData = ProductCreateInput;
+export type ProductUpdateData = ProductUpdateInput;

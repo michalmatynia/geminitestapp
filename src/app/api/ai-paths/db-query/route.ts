@@ -8,7 +8,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { internalError } from "@/shared/errors/app-error";
-import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai-paths/server";
+import { enforceAiPathsActionRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 
 const querySchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),

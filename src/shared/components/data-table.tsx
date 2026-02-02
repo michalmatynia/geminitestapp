@@ -2,6 +2,7 @@
 import React, { JSX, memo, useEffect, useMemo, useState } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { EmptyState } from "./empty-state";
 import {
   ColumnDef,
   flexRender,
@@ -218,9 +219,13 @@ export const DataTable = memo(function DataTable<TData>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center text-muted-foreground"
+                className="h-24 py-12"
               >
-                No results.
+                <EmptyState 
+                  title="No results" 
+                  description="Try adjusting your filters to find what you're looking for."
+                  className="border-none p-0"
+                />
               </TableCell>
             </TableRow>
           )}

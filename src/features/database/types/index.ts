@@ -1,5 +1,20 @@
-export type DatabaseType = "postgresql" | "mongodb";
+// Re-export DTOs as types for backward compatibility
+export type {
+  DatabaseInfoDto,
+  DatabaseBackupDto,
+  DatabaseRestoreDto,
+  CreateBackupDto,
+  DatabaseSchemaDto,
+  DatabaseTableDto,
+  DatabaseColumnDto,
+  DatabaseIndexDto,
+  DatabaseConstraintDto
+} from "@/shared/dtos";
 
+export type DatabaseType = "postgresql" | "mongodb";
+export type DatabasePreviewMode = "backup" | "current";
+
+// Legacy types for backward compatibility
 export type DatabaseInfo = {
   name: string;
   size: string;
@@ -28,8 +43,6 @@ export type DatabaseRestoreResponse = {
   stage?: string;
   backupName?: string;
 };
-
-export type DatabasePreviewMode = "backup" | "current";
 
 export type DatabasePreviewGroup = { type: string; objects: string[] };
 export type DatabasePreviewTable = { name: string; rowEstimate: number };

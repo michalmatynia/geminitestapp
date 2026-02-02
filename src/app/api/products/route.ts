@@ -5,6 +5,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
+import { validateProductCreateMiddleware } from "@/features/products/validations";
 
 /**
  * GET /api/products
@@ -33,7 +34,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 /**
  * POST /api/products
- * Creates a new product.
+ * Creates a new product with validation.
  */
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
@@ -43,6 +44,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       throw badRequestError("Invalid form data payload", { error });
     }
+
+    // Validate the form data
+    const validation = await validateProductCreateMiddleware(formData);
+    if (!validation.success) {
+      return validation.response;
+    }
+
     const idempotencyKey =
       req.headers.get("idempotency-key") ??
       req.headers.get("x-idempotency-key");

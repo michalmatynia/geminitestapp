@@ -1,7 +1,7 @@
 "use client";
 import React, { JSX, memo, useState } from "react";
 
-import { Button, useToast, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui";
+import { Button, useToast, ConfirmDialog } from "@/shared/ui";
 import { Table as ReactTable, Row } from "@tanstack/react-table";
 
 import { ProductWithImages } from "@/features/products/types";
@@ -154,48 +154,25 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       </div>
 
       {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete selected products?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {selectedCount} selected{" "}
-              {selectedCount === 1 ? "product" : "products"}? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handleMassDelete()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete selected products?"
+        description={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? "product" : "products"}? This action cannot be undone.`}
+        onConfirm={() => void handleMassDelete()}
+        confirmText="Delete"
+        variant="destructive"
+      />
 
-      <AlertDialog open={showBase64Confirm} onOpenChange={setShowBase64Confirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Generate Base64 images?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Create Base64-encoded image links for {selectedCount} selected{" "}
-              {selectedCount === 1 ? "product" : "products"}? This can be heavy for large images.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handleMassBase64()}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Convert
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showBase64Confirm}
+        onOpenChange={setShowBase64Confirm}
+        title="Generate Base64 images?"
+        description={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? "product" : "products"}? This can be heavy for large images.`}
+        onConfirm={() => void handleMassBase64()}
+        confirmText="Convert"
+        variant="success"
+      />
     </>
   );
 }) as <TData>(props: ProductTableFooterProps<TData>) => JSX.Element;

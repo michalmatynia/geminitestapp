@@ -1,9 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { prepareRunContext } from "@/features/agent-runtime/execution/context";
-import { detectLoopPattern, buildLoopGuardReview } from "@/features/agent-runtime/execution/loop-guard";
-import { resolveAgentPlanSettings, resolveAgentPreferences } from "@/features/agent-runtime/core/config";
-import { getBrowserContextSummary } from "@/features/agent-runtime/browsing/context";
+import { prepareRunContext } from "@/features/ai/agent-runtime/execution/context";
+import { detectLoopPattern, buildLoopGuardReview } from "@/features/ai/agent-runtime/execution/loop-guard";
+import { resolveAgentPlanSettings, resolveAgentPreferences } from "@/features/ai/agent-runtime/core/config";
+import { getBrowserContextSummary } from "@/features/ai/agent-runtime/browsing/context";
 
 // Mock external modules
 vi.mock("@/shared/lib/db/prisma", () => ({
@@ -15,17 +15,17 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
   logAgentAudit: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/memory", () => ({
+vi.mock("@/features/ai/agent-runtime/memory", () => ({
   addAgentMemory: vi.fn(),
   listAgentMemory: vi.fn(),
   listAgentLongTermMemory: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/core/config", () => ({
+vi.mock("@/features/ai/agent-runtime/core/config", () => ({
   DEFAULT_OLLAMA_MODEL: "llama3",
   DEBUG_CHATBOT: false,
   OLLAMA_BASE_URL: "http://localhost:11434",
@@ -33,11 +33,11 @@ vi.mock("@/features/agent-runtime/core/config", () => ({
   resolveAgentPreferences: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/browsing/context", () => ({
+vi.mock("@/features/ai/agent-runtime/browsing/context", () => ({
   getBrowserContextSummary: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/core/utils", () => ({
+vi.mock("@/features/ai/agent-runtime/core/utils", () => ({
   buildSelfImprovementPlaybook: vi.fn().mockReturnValue(null),
   jsonValueToRecord: vi.fn((val) => val),
 }));
@@ -59,7 +59,7 @@ describe("Agent Runtime - Execution", () => {
       
       const mockMemory = [{ content: "Session 1" }, { content: "Session 2" }];
 // Mock browser module
-      const { listAgentMemory, listAgentLongTermMemory } = await import("@/features/agent-runtime/memory");
+      const { listAgentMemory, listAgentLongTermMemory } = await import("@/features/ai/agent-runtime/memory");
       (listAgentMemory as any).mockResolvedValue(mockMemory);
       (listAgentLongTermMemory as any).mockResolvedValue([]);
 

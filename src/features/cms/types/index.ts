@@ -1,3 +1,15 @@
+// Re-export DTOs as types for backward compatibility
+export type {
+  CmsPageDto,
+  CmsSlugDto,
+  CmsThemeDto,
+  CmsDomainDto,
+  CreatePageDto,
+  UpdatePageDto,
+  CreateThemeDto,
+  UpdateThemeDto
+} from "@/shared/dtos";
+
 export type PageStatus = "draft" | "published" | "scheduled";
 
 export interface PageComponent {

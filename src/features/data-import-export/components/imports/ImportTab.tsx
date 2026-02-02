@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, Checkbox } from "@/shared/ui";
+import { Button, Input, Label, Checkbox, Pagination } from "@/shared/ui";
 import NextImage from "next/image";
 import type {
   CatalogOption,
@@ -348,20 +348,25 @@ export function ImportTab({
         </div>
 
         {importListStats ? (
-          <div className="mt-3 text-xs text-gray-400">
-            Total: {importListStats.total} · Existing:{" "}
-            {importListStats.existing} · Available:{" "}
-            {importListStats.available ?? importListStats.filtered} · Showing:{" "}
-            {importListStats.filtered} · Selected: {selectedImportCount}
-            {importListStats.skuDuplicates ? (
-              <span className="text-yellow-400">
-                {" "}
-                · SKU duplicates: {importListStats.skuDuplicates}
-              </span>
-            ) : null}
-            <span className="ml-2 text-gray-500">
-              · Page {importListStats.page ?? importListPage} of {importListStats.totalPages ?? 1}
-            </span>
+          <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+            <div>
+              Total: {importListStats.total} · Existing:{" "}
+              {importListStats.existing} · Available:{" "}
+              {importListStats.available ?? importListStats.filtered} · Showing:{" "}
+              {importListStats.filtered} · Selected: {selectedImportCount}
+              {importListStats.skuDuplicates ? (
+                <span className="text-yellow-400">
+                  {" "}
+                  · SKU duplicates: {importListStats.skuDuplicates}
+                </span>
+              ) : null}
+            </div>
+            <Pagination
+              page={importListPage}
+              totalPages={importListStats.totalPages ?? 1}
+              setPage={setImportListPage}
+              className="scale-90 origin-right"
+            />
           </div>
         ) : null}
 
@@ -499,23 +504,6 @@ export function ImportTab({
               : "No items loaded yet."}
           </p>
         )}
-
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <Button
-            variant="secondary"
-            disabled={loadingImportList || importListPage <= 1}
-            onClick={(): void => setImportListPage(Math.max(1, importListPage - 1))}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={loadingImportList || (importListStats?.totalPages ?? 1) <= importListPage}
-            onClick={(): void => setImportListPage(importListPage + 1)}
-          >
-            Next
-          </Button>
-        </div>
       </div>
 
       {lastResult ? (

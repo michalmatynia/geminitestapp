@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel, StatusBadge } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -32,44 +32,22 @@ type ListingRow = {
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
     case "pending":
-      return <Clock className="size-4 text-yellow-500" />;
+      return <Clock className="size-3" />;
     case "completed":
     case "success":
     case "listed":
-      return <CheckCircle className="size-4 text-green-500" />;
+      return <CheckCircle className="size-3" />;
     case "deleted":
     case "removed":
-      return <XCircle className="size-4 text-gray-400" />;
+      return <XCircle className="size-3" />;
     case "failed":
     case "error":
-      return <XCircle className="size-4 text-red-500" />;
+      return <XCircle className="size-3" />;
     case "processing":
     case "in_progress":
-      return <Loader2 className="size-4 animate-spin text-blue-500" />;
+      return <Loader2 className="size-3 animate-spin" />;
     default:
-      return <Clock className="size-4 text-gray-500" />;
-  }
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case "pending":
-      return "bg-yellow-900/20 text-yellow-300 border-yellow-900/50";
-    case "completed":
-    case "success":
-    case "listed":
-      return "bg-green-900/20 text-green-300 border-green-900/50";
-    case "deleted":
-    case "removed":
-      return "bg-card/40 text-gray-300 border-border";
-    case "failed":
-    case "error":
-      return "bg-red-900/20 text-red-300 border-red-900/50";
-    case "processing":
-    case "in_progress":
-      return "bg-blue-900/20 text-blue-300 border-blue-900/50";
-    default:
-      return "bg-gray-900/20 text-gray-300 border-gray-900/50";
+      return <Clock className="size-3" />;
   }
 };
 
@@ -342,14 +320,10 @@ export default function ProductListingJobsPanel({
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${getStatusColor(
-                              status
-                            )}`}
-                          >
-                            {getStatusIcon(status)}
-                            {status.toUpperCase()}
-                          </span>
+                          <StatusBadge 
+                            status={status} 
+                            icon={getStatusIcon(status)}
+                          />
                         </td>
                         <td className="px-4 py-4 text-xs">
                           {attempt?.exportedAt ? (
@@ -429,8 +403,11 @@ export default function ProductListingJobsPanel({
               <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
                 <div>
                   <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
-                  <div className="text-white font-medium">
-                    {selectedStatus || selectedListing.listing.status}
+                  <div className="mt-1">
+                    <StatusBadge 
+                      status={selectedStatus || selectedListing.listing.status} 
+                      icon={getStatusIcon(selectedStatus || selectedListing.listing.status)}
+                    />
                   </div>
                 </div>
                 <div>
@@ -621,7 +598,12 @@ export default function ProductListingJobsPanel({
                                 </div>
                                 <div>
                                   <div className="text-[10px] uppercase text-gray-500">Status</div>
-                                  <div>{event.status ?? "—"}</div>
+                                  <div className="mt-1">
+                                    <StatusBadge 
+                                      status={event.status ?? "success"} 
+                                      icon={getStatusIcon(event.status ?? "success")}
+                                    />
+                                  </div>
                                 </div>
                                 <div>
                                   <div className="text-[10px] uppercase text-gray-500">Inventory ID</div>

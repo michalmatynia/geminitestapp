@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Input } from "@/shared/ui";
+import { Button, Input, SearchInput, UnifiedSelect } from "@/shared/ui";
 
 import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
 import type { NotesFiltersProps } from "@/features/notesapp/types/notes-ui";
@@ -35,9 +35,7 @@ export function NotesFilters({
   return (
     <div className="flex-1">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <Input
-            type="text"
+          <SearchInput
             placeholder={
               selectedFolderId
                 ? `Search in ${
@@ -48,31 +46,32 @@ export function NotesFilters({
             }
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
+            onClear={() => setSearchQuery("")}
+            className="w-full rounded-lg border bg-gray-800 py-2 text-white placeholder-gray-400"
           />
         </div>
 
         <div className="mt-2 flex gap-2 items-center">
           <div className="relative">
-            <select
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-                const val = e.target.value;
+            <UnifiedSelect
+              value=""
+              onValueChange={(val: string) => {
                 if (val && !filterTagIds.includes(val)) {
                   setFilterTagIds([...filterTagIds, val]);
                 }
-                e.target.value = "";
               }}
-              className="rounded-lg border bg-gray-800 px-3 py-1 text-xs text-white"
-            >
-              <option value="">Filter by Tag...</option>
-              {tags
-                .filter((t: TagRecord) => !filterTagIds.includes(t.id))
-                .map((tag: TagRecord) => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-            </select>
+              options={[
+                { value: "", label: "Filter by Tag...", disabled: true },
+                ...tags
+                  .filter((t: TagRecord) => !filterTagIds.includes(t.id))
+                  .map((tag: TagRecord) => ({
+                    value: tag.id,
+                    label: tag.name,
+                  })),
+              ]}
+              triggerClassName="h-8 w-40 text-xs bg-gray-800 border-border text-gray-300"
+              placeholder="Filter by Tag..."
+            />
           </div>
           {filterTagIds.map((tagId: string) => {
             const tag = tags.find((t: TagRecord) => t.id === tagId);

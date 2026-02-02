@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
+import { chatbotSessionRepository } from "@/features/ai/chatbot/services/chatbot-session-repository";
 import { ObjectId } from "mongodb";
 
 // Hoist mocks

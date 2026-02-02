@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox } from "@/shared/ui";
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Checkbox } from "@/shared/ui";
 import { useState } from "react";
 
 import { logger } from "@/shared/utils/logger";
@@ -10,8 +10,9 @@ import type { CapturedLog } from "@/features/integrations/services/exports/log-c
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { useGenericExportToBaseMutation, useGenericCreateListingMutation } from "../../hooks/useProductListingMutations";
+import { BaseListingSettings } from "./BaseListingSettings";
+import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
 
-import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -123,9 +124,10 @@ export function MassListProductModal({
   const submitting = exportMutation.isPending || createListingMutation.isPending;
 
   return (
-    <ModalShell
-      title={`List ${productIds.length} Products to ${selectedIntegration?.name || "Marketplace"}`}
+    <SharedModal
+      open={true}
       onClose={onClose}
+      title={`List ${productIds.length} Products to ${selectedIntegration?.name || "Marketplace"}`}
       size="md"
       showClose={!submitting}
       footer={
@@ -175,92 +177,27 @@ export function MassListProductModal({
 
         {!submitting && (
             <>
-                <div className="rounded-md border bg-card/50 px-4 py-3">
-                <p className="text-sm text-gray-300">
-                    <span className="text-gray-500">Integration:</span>{" "}
-                    <span className="font-medium">{selectedIntegration?.name || "Loading..."}</span>
-                </p>
-                <p className="text-sm text-gray-300">
-                    <span className="text-gray-500">Account:</span>{" "}
-                    <span className="font-medium">{connectionName || "Loading..."}</span>
-                </p>
-                </div>
+                <IntegrationAccountSummary 
+                    integrationName={selectedIntegration?.name}
+                    connectionName={connectionName}
+                />
 
                 {loading ? (
                 <p className="text-sm text-gray-400">Loading details...</p>
                 ) : (
                 <>
                     {isBaseComIntegration && (
-                    <>
-                        <div className="space-y-2">
-                        <Label htmlFor="inventory">
-                            Base.com Inventory {loadingInventories && "(Loading...)"}
-                        </Label>
-                        <Select
-                            value={selectedInventoryId}
-                            onValueChange={setSelectedInventoryId}
-                            disabled={loadingInventories || inventories.length === 0}
-                        >
-                            <SelectTrigger id="inventory">
-                            <SelectValue placeholder="Select inventory..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                            {inventories
-                                .filter((inventory: BaseInventory): boolean => !!inventory.id)
-                                .map((inventory: BaseInventory) => (
-                                <SelectItem key={inventory.id} value={inventory.id}>
-                                    {inventory.name}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {inventories.length === 0 && !loadingInventories && (
-                            <p className="text-xs text-red-400">
-                            No inventories found. Please check your Base.com account.
-                            </p>
-                        )}
-                        </div>
-
-                        <div className="space-y-2">
-                        <Label htmlFor="template">Template (Optional)</Label>
-                        <Select
-                            value={selectedTemplateId}
-                            onValueChange={setSelectedTemplateId}
-                        >
-                            <SelectTrigger id="template">
-                            <SelectValue placeholder="No template (use defaults)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="none">No template</SelectItem>
-                            {templates
-                                .filter((template: Template): boolean => !!template.id)
-                                .map((template: Template) => (
-                                <SelectItem key={template.id} value={template.id}>
-                                    {template.name}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500">
-                            Templates define how product fields map to Base.com fields.
-                        </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-2">
-                        <Checkbox
-                            id="allowDuplicateSku"
-                            checked={allowDuplicateSku} 
-                            onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
-                            className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
+                        <BaseListingSettings
+                            inventories={inventories}
+                            selectedInventoryId={selectedInventoryId}
+                            onInventoryIdChange={setSelectedInventoryId}
+                            loadingInventories={loadingInventories}
+                            templates={templates}
+                            selectedTemplateId={selectedTemplateId}
+                            onTemplateIdChange={setSelectedTemplateId}
+                            allowDuplicateSku={allowDuplicateSku}
+                            onAllowDuplicateSkuChange={setAllowDuplicateSku}
                         />
-                        <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
-                            Allow duplicate SKUs
-                        </Label>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                        When unchecked, export will fail if the SKU already exists in the Base.com inventory.
-                        </p>
-                    </>
                     )}
                 </>
                 )}
@@ -276,7 +213,7 @@ export function MassListProductModal({
           </div>
         )}
       </div>
-    </ModalShell>
+    </SharedModal>
   );
 }
 

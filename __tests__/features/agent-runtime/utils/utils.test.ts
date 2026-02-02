@@ -10,7 +10,7 @@ import {
   parseCredentials,
   parseExtractionRequest,
   buildEvidenceSnippets,
-} from "@/features/agent-runtime/tools/utils";
+} from "@/features/ai/agent-runtime/tools/utils";
 
 describe("Agent Runtime - Utils", () => {
   describe("extractTargetUrl", () => {

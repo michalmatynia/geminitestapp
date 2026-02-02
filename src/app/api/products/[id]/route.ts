@@ -7,6 +7,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { ErrorSystem } from "@/features/observability/server";
+import { validateProductUpdateMiddleware } from "@/features/products/validations";
 
 /**
  * GET /api/products/[id]
@@ -44,7 +45,7 @@ async function GET_handler(
 
 /**
  * PUT /api/products/[id]
- * Updates an existing product.
+ * Updates an existing product with validation.
  */
 async function PUT_handler(
   req: NextRequest,
@@ -57,14 +58,22 @@ async function PUT_handler(
       throw badRequestError("Product id is required");
     }
     let formData: FormData;
-                try {
-                  formData = await req.formData();
-                } catch (error) {
-                  throw badRequestError("Invalid form data payload", {
-                    productId: id,
-                    error,
-                  });
-                }    const product = await productService.updateProduct(id, formData);
+    try {
+      formData = await req.formData();
+    } catch (error) {
+      throw badRequestError("Invalid form data payload", {
+        productId: id,
+        error,
+      });
+    }
+
+    // Validate the form data
+    const validation = await validateProductUpdateMiddleware(formData);
+    if (!validation.success) {
+      return validation.response;
+    }
+
+    const product = await productService.updateProduct(id, formData);
     if (!product) {
       throw notFoundError("Product not found", { productId: id });
     }

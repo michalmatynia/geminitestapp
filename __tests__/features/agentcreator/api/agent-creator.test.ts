@@ -18,7 +18,7 @@ vi.mock("@/features/jobs/server", () => ({
   startAgentQueue: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/server", () => ({
+vi.mock("@/features/ai/agent-runtime/server", () => ({
   logAgentAudit: vi.fn().mockResolvedValue(undefined),
 }));
 

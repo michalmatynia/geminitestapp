@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Textarea, Label } from "@/shared/ui";
+import { Button, Input, Textarea, Label, Alert } from "@/shared/ui";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
 
 
@@ -107,9 +107,9 @@ export function BaseApiConsole({
         </span>
       </div>
       {error && (
-        <div className="mt-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+        <Alert variant="error" className="mt-3 text-xs">
           {error}
-        </div>
+        </Alert>
       )}
       {response && (
         <div className="mt-3 rounded-md border border-border bg-card p-3">

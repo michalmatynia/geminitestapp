@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ChatInterface } from "@/features/chatbot/components/ChatInterface";
+import { ChatInterface } from "@/features/ai/chatbot/components/ChatInterface";
 import { ChatMessage } from "@/shared/types/chatbot";
 
 describe("ChatInterface", () => {

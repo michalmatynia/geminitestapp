@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { executePathRun } from "@/features/ai-paths/services/path-run-executor";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
-import { evaluateGraph } from "@/features/ai-paths/lib";
+import { executePathRun } from "@/features/ai/ai-paths/services/path-run-executor";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
+import { evaluateGraph } from "@/features/ai/ai-paths/lib";
 import prisma from "@/shared/lib/db/prisma";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
 
 // Mock evaluateGraph to avoid real runtime complexity
-vi.mock("@/features/ai-paths/lib", async () => {
-  const actual = await vi.importActual("@/features/ai-paths/lib");
+vi.mock("@/features/ai/ai-paths/lib", async () => {
+  const actual = await vi.importActual("@/features/ai/ai-paths/lib");
   return {
     ...actual,
     evaluateGraph: vi.fn(),

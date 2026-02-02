@@ -218,7 +218,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       },
       orderBy: [{ name: "asc" }],
     });
-    return NextResponse.json(groups as PriceGroupWithDetails[]);
+    return NextResponse.json(groups as unknown as PriceGroupWithDetails[]);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

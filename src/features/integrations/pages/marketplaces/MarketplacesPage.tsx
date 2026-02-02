@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, Button, SectionHeader, SectionPanel, useToast } from "@/shared/ui";
+import { Button, SectionHeader, SectionPanel, useToast, ConfirmDialog } from "@/shared/ui";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useSyncAllBaseImagesMutation } from "../../hooks/useIntegrationMutations";
@@ -86,26 +86,16 @@ export default function MarketplacesPage(): React.JSX.Element {
         </div>
       </div>
 
-      <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sync Base.com images for all listings?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will enqueue a background job to pull image URLs from Base.com for every listing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handleSyncBaseImages()}
-            disabled={syncMutation.isPending}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Queue Sync
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showSyncConfirm}
+        onOpenChange={setShowSyncConfirm}
+        title="Sync Base.com images for all listings?"
+        description="This will enqueue a background job to pull image URLs from Base.com for every listing."
+        onConfirm={() => void handleSyncBaseImages()}
+        confirmText="Queue Sync"
+        variant="success"
+        loading={syncMutation.isPending}
+      />
     </SectionPanel>
   );
 }

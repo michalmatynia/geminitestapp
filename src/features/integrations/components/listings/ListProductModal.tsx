@@ -14,8 +14,9 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 
 import { isImageExportError } from "./utils";
-import type { InventoryOption, Template } from "@/features/data-import-export/types/imports";
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
+import { BaseListingSettings } from "./BaseListingSettings";
+import { IntegrationAccountSummary } from "./IntegrationAccountSummary";
 
 import {
   useExportToBaseMutation,
@@ -78,6 +79,7 @@ export function ListProductModal({
   const selectedConnection = (selectedIntegration?.connections as IntegrationConnectionBasic[] || []).find(
     (connection: IntegrationConnectionBasic) => connection.id === selectedConnectionId
   );
+  const connectionName = selectedConnection?.name;
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
@@ -157,9 +159,10 @@ export function ListProductModal({
   );
 
   return (
-    <ModalShell
-      title={`List Product - ${productName}`}
+    <SharedModal
+      open={true}
       onClose={onClose}
+      title={`List Product - ${productName}`}
       size="md"
       showClose={false}
       footer={
@@ -249,20 +252,10 @@ export function ListProductModal({
         ) : (
           <>
             {hasPresetSelection ? (
-              <div className="rounded-md border border-border bg-card/60 px-4 py-3 text-sm text-gray-300">
-                <p>
-                  Marketplace:{" "}
-                  <span className="font-medium text-white">
-                    {selectedIntegration?.name || "Selected integration"}
-                  </span>
-                </p>
-                <p className="mt-1">
-                  Account:{" "}
-                  <span className="font-medium text-white">
-                    {selectedConnection?.name || "Selected account"}
-                  </span>
-                </p>
-              </div>
+              <IntegrationAccountSummary 
+                integrationName={selectedIntegration?.name}
+                connectionName={connectionName}
+              />
             ) : (
               <>
                 <div className="space-y-2">
@@ -316,76 +309,17 @@ export function ListProductModal({
             )}
 
             {isBaseComIntegration && selectedConnectionId && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="inventory">
-                    Base.com Inventory {loadingInventories && "(Loading...)"}
-                  </Label>
-                  <Select
-                    value={selectedInventoryId}
-                    onValueChange={setSelectedInventoryId}
-                    disabled={loadingInventories || inventories.length === 0}
-                  >
-                    <SelectTrigger id="inventory">
-                      <SelectValue placeholder="Select inventory..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {inventories
-                        .filter((inventory: InventoryOption): boolean => !!inventory.id)
-                        .map((inventory: InventoryOption) => (
-                          <SelectItem key={inventory.id} value={inventory.id}>
-                            {inventory.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {inventories.length === 0 && !loadingInventories && (
-                    <p className="text-xs text-red-400">
-                      No inventories found. Please check your Base.com account.
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="template">Template (Optional)</Label>
-                  <Select
-                    value={selectedTemplateId}
-                    onValueChange={setSelectedTemplateId}
-                  >
-                    <SelectTrigger id="template">
-                      <SelectValue placeholder="No template (use defaults)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No template</SelectItem>
-                      {templates
-                        .filter((template: Template): boolean => !!template.id)
-                        .map((template: Template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">
-                    Templates define how product fields map to Base.com fields.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 pt-2">
-                  <Checkbox
-                    id="allowDuplicateSku"
-                    checked={allowDuplicateSku} 
-                    onCheckedChange={(checked: boolean | "indeterminate"): void => setAllowDuplicateSku(Boolean(checked))}
-                    className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
-                  />
-                  <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
-                    Allow duplicate SKUs
-                  </Label>
-                </div>
-                <p className="text-xs text-gray-500">
-                  When unchecked, export will fail if the SKU already exists in the Base.com inventory.
-                </p>
-              </>
+              <BaseListingSettings
+                inventories={inventories}
+                selectedInventoryId={selectedInventoryId}
+                onInventoryIdChange={setSelectedInventoryId}
+                loadingInventories={loadingInventories}
+                templates={templates}
+                selectedTemplateId={selectedTemplateId}
+                onTemplateIdChange={setSelectedTemplateId}
+                allowDuplicateSku={allowDuplicateSku}
+                onAllowDuplicateSkuChange={setAllowDuplicateSku}
+              />
             )}
           </>
         )}
@@ -399,7 +333,7 @@ export function ListProductModal({
           </div>
         )}
       </div>
-    </ModalShell>
+    </SharedModal>
   );
 }
 

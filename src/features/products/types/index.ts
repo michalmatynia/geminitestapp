@@ -1,58 +1,26 @@
+import type { ProductCategoryDto } from "@/shared/dtos";
+
+// Re-export DTOs as types for backward compatibility
+export type {
+  ProductDto,
+  ProductTagDto as ProductTag,
+  CatalogDto,
+  PriceGroupDto,
+  CreateProductDto,
+  UpdateProductDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  ProductCategoryDto
+} from "@/shared/dtos";
+
+export type { ProductCategoryDto as ProductCategory };
+
 export type PriceGroupType = "standard" | "dependent";
-
-export type PriceGroup = {
-  id: string;
-  groupId: string;
-  name: string;
-  description: string;
-  currencyId: string;
-  currencyCode: string;
-  isDefault: boolean;
-  groupType: PriceGroupType;
-  basePriceField: string;
-  sourceGroupId?: string | null;
-  priceMultiplier: number;
-  addToPrice: number;
-};
-
-export type Catalog = {
-  id: string;
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  languageIds: string[];
-  defaultLanguageId?: string | null;
-  defaultPriceGroupId?: string | null;
-  priceGroupIds: string[];
-};
-
 export type ProductDbProvider = "prisma" | "mongodb";
 export type ProductMigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
 
-export type ProductCategory = {
-  id: string;
-  name: string;
-  description: string | null;
-  color: string | null;
-  parentId: string | null;
-  catalogId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type ProductCategoryWithChildren = ProductCategory & {
+export type ProductCategoryWithChildren = ProductCategoryDto & {
   children: ProductCategoryWithChildren[];
-};
-
-export type ProductTag = {
-  id: string;
-  name: string;
-  color: string | null;
-  catalogId: string;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type ProductParameter = {
@@ -106,6 +74,8 @@ export type {
   ProductCatalogRecord,
   ProductWithImages,
   PriceGroupWithDetails,
+  CatalogRecord as Catalog,
+  PriceGroupRecord as PriceGroup,
 } from "./records";
 
 export type { ProductFormData } from "./forms";

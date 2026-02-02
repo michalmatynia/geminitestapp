@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { evaluateGraph } from "@/features/ai-paths/lib/core/runtime/engine";
+import { evaluateGraph } from "@/features/ai/ai-paths/lib/core/runtime/engine";
 import type { AiNode } from "@/shared/types/ai-paths";
-import * as api from "@/features/ai-paths/lib/api";
+import * as api from "@/features/ai/ai-paths/lib/api";
 
 // Mock the entire API module
-vi.mock("@/features/ai-paths/lib/api", () => ({
+vi.mock("@/features/ai/ai-paths/lib/api", () => ({
   dbApi: {
     action: vi.fn(),
     query: vi.fn(),

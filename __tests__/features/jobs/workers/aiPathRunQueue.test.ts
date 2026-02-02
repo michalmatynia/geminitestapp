@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { processRun, computeBackoffMs } from "@/features/jobs/workers/aiPathRunQueue";
-import { executePathRun } from "@/features/ai-paths/services/path-run-executor";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { executePathRun } from "@/features/ai/ai-paths/services/path-run-executor";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 
-vi.mock("@/features/ai-paths/services/path-run-executor", () => ({
+vi.mock("@/features/ai/ai-paths/services/path-run-executor", () => ({
   executePathRun: vi.fn(),
 }));
 
-vi.mock("@/features/ai-paths/services/path-run-repository", () => ({
+vi.mock("@/features/ai/ai-paths/services/path-run-repository", () => ({
   getPathRunRepository: vi.fn(),
 }));
 

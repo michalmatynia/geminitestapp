@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { requireAiPathsAccess } from "@/features/ai-paths/server";
+import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 import { getAiPathRunQueueStatus, startAiPathRunQueue } from "@/features/jobs/server";
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

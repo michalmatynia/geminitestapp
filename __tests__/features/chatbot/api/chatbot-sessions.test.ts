@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, POST, DELETE, PATCH } from "@/app/api/chatbot/sessions/route";
-import { chatbotSessionRepository } from "@/features/chatbot/server";
+import { chatbotSessionRepository } from "@/features/ai/chatbot/server";
 
-vi.mock("@/features/chatbot/server", () => ({
+vi.mock("@/features/ai/chatbot/server", () => ({
   chatbotSessionRepository: {
     create: vi.fn(),
     findAll: vi.fn(),

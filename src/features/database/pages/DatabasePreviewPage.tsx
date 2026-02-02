@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Input, Label, SectionHeader, SectionPanel, Pagination, CopyButton } from "@/shared/ui";
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -72,15 +72,6 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const groups: DatabasePreviewGroup[] = useMemo(() => payload?.groups ?? [], [payload?.groups]);
   const tables: DatabasePreviewTable[] = payload?.tables ?? [];
   const tableRows: DatabasePreviewRow[] = useMemo(() => payload?.tableRows ?? [], [payload?.tableRows]);
-
-  const copyRaw = async (): Promise<void> => {
-    if (!content) return;
-    try {
-      await navigator.clipboard.writeText(content);
-    } catch {
-      // Ignore clipboard errors.
-    }
-  };
 
   const grouped = useMemo(
     () =>
@@ -283,44 +274,19 @@ function DatabasePreviewPageInner(): React.JSX.Element {
             </h2>
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>{tableRows.length} tables</span>
-              <div className="flex items-center gap-2">
-                <Label className="text-xs text-gray-400">Rows per table</Label>
-                <select
-                  value={pageSize}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
-                    setPage(1);
-                    setPageSize(Number(event.target.value));
-                  }}
-                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200"
-                >
-                  {[10, 20, 50, 100].map((size: number) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  onClick={(): void => setPage((prev: number) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
-                >
-                  Prev
-                </Button>
-                <span className="px-2">
-                  Page {page} / {maxPage}
-                </span>
-                <Button
-                  type="button"
-                  onClick={(): void => setPage((prev: number) => Math.min(maxPage, prev + 1))}
-                  disabled={page >= maxPage}
-                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
-                >
-                  Next
-                </Button>
-              </div>
+              <Pagination
+                page={page}
+                totalPages={maxPage}
+                setPage={setPage}
+                pageSize={pageSize}
+                setPageSize={(size) => {
+                  setPage(1);
+                  setPageSize(size);
+                }}
+                pageSizeOptions={[10, 20, 50, 100]}
+                showPageSize
+                className="scale-90 origin-right"
+              />
             </div>
           </div>
           {!loading && !error && tableRows.length === 0 && (
@@ -434,13 +400,13 @@ function DatabasePreviewPageInner(): React.JSX.Element {
             <h2 className="text-sm font-semibold text-white">
               Raw Backup List
             </h2>
-            <Button
-              type="button"
-              onClick={(): void => { void copyRaw(); }}
+            <CopyButton
+              value={content}
+              variant="outline"
+              size="sm"
+              showText
               className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
-            >
-              Copy
-            </Button>
+            />
           </div>
           <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}

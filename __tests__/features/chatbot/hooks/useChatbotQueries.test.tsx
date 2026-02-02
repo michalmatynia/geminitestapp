@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useChatbotSessions, useChatbotSession, useChatbotSettings, useChatbotModels } from "@/features/chatbot/hooks/useChatbotQueries";
-import * as chatbotApi from "@/features/chatbot/api";
+import { useChatbotSessions, useChatbotSession, useChatbotSettings, useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
+import * as chatbotApi from "@/features/ai/chatbot/api";
 
 
-vi.mock("@/features/chatbot/api", () => ({
+vi.mock("@/features/ai/chatbot/api", () => ({
   chatbotQueryKeys: {
     sessions: () => ["chatbot", "sessions"],
     session: (id: string) => ["chatbot", "session", id],

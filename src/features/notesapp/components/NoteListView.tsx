@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, ListPanel } from "@/shared/ui";
+import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect } from "@/shared/ui";
 
-import { Plus, Pin, Archive, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
 
 import { NotesFilters } from "./NotesFilters";
@@ -89,55 +89,30 @@ export function NoteListView({
           </h1>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Theme</span>
-            <select
-              value={selectedFolderThemeId}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => onThemeChange(e.target.value || null)}
-              className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-300"
-            >
-              <option value="">Default</option>
-              {themes.map((theme: ThemeRecord) => (
-                <option key={theme.id} value={theme.id}>
-                  {theme.name}
-                </option>
-              ))}
-            </select>
+            <UnifiedSelect
+              value={selectedFolderThemeId || ""}
+              onValueChange={(val: string) => onThemeChange(val || null)}
+              options={[
+                { value: "", label: "Default" },
+                ...themes.map((theme: ThemeRecord) => ({
+                  value: theme.id,
+                  label: theme.name,
+                })),
+              ]}
+              triggerClassName="h-8 w-32 text-xs bg-gray-800 border-border text-gray-300"
+            />
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-500">Page</span>
-            <Button
-              type="button"
-              onClick={(): void => setPage(Math.max(1, page - 1))}
-              disabled={page <= 1}
-              className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
-            >
-              Prev
-            </Button>
-            <span className="text-xs text-gray-300">
-              {page} / {totalPages}
-            </span>
-            <Button
-              type="button"
-              onClick={(): void => setPage(Math.min(totalPages, page + 1))}
-              disabled={page >= totalPages}
-              className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
-            >
-              Next
-            </Button>
-            <select
-              value={pageSize}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border"
-              aria-label="Notes per page"
-            >
-              {[12, 24, 48].map((size: number) => (
-                <option key={size} value={size}>
-                  {size} / page
-                </option>
-              ))}
-            </select>
+          <div className="ml-auto">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[12, 24, 48]}
+              showPageSize
+              variant="compact"
+            />
           </div>
         </div>
       }
@@ -214,9 +189,17 @@ export function NoteListView({
         {loading ? (
           <div className="text-center text-gray-400">Loading...</div>
         ) : sortedNotes.length === 0 ? (
-          <div className="rounded-lg border border-dashed border p-12 text-center text-gray-400">
-            No notes found. Create your first note!
-          </div>
+          <EmptyState
+            title="No notes found"
+            description="Create your first note to get started!"
+            icon={<FileText className="size-12" />}
+            action={
+              <Button onClick={onCreateNote}>
+                <Plus className="mr-2 size-4" />
+                Create Note
+              </Button>
+            }
+          />
         ) : (
           <div className={noteLayoutClassName}>
             {pagedNotes.map((note: NoteWithRelations) => (
@@ -237,29 +220,6 @@ export function NoteListView({
                 buildBreadcrumbPath={buildBreadcrumbPath}
               />
             ))}
-          </div>
-        )}
-        {sortedNotes.length > pageSize && (
-          <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
-            <Button
-              type="button"
-              onClick={(): void => setPage(Math.max(1, page - 1))}
-              disabled={page <= 1}
-              className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-            >
-              Previous
-            </Button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              type="button"
-              onClick={(): void => setPage(Math.min(totalPages, page + 1))}
-              disabled={page >= totalPages}
-              className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-            >
-              Next
-            </Button>
           </div>
         )}
     </ListPanel>

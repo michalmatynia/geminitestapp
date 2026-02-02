@@ -13,13 +13,13 @@ import {
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 
-type SettingRecord = { _id: string; key: string; value: string };
+import { MongoSettingRecord } from "@/shared/types/base-types";
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>("settings")
+    .collection<MongoSettingRecord>("settings")
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };

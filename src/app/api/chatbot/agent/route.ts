@@ -1,1 +1,1 @@
-export { AgentCreatorAgentGET as GET, AgentCreatorAgentPOST as POST, AgentCreatorAgentDELETE as DELETE } from "@/features/agentcreator/server";
+export { AgentCreatorAgentGET as GET, AgentCreatorAgentPOST as POST, AgentCreatorAgentDELETE as DELETE } from "@/features/ai/agentcreator/server";

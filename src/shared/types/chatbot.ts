@@ -1,4 +1,5 @@
 import type { ObjectId } from "mongodb";
+import { Status } from './common';
 
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -41,7 +42,7 @@ export interface ChatSessionDocument {
   settings?: ChatSession["settings"];
 }
 
-export type ChatbotJobStatus = "pending" | "running" | "completed" | "failed" | "canceled";
+export type ChatbotJobStatus = Status;
 
 export interface ChatbotJob {
   id: string;
@@ -192,7 +193,7 @@ export type TimelineEntry = {
 export type AgentPlanStep = {
   id: string;
   title: string;
-  status: "pending" | "running" | "completed" | "failed";
+  status: Status;
   snapshotId?: string | null;
   logCount?: number | null;
   dependsOn?: string[] | null;

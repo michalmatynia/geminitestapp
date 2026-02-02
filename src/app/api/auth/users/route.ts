@@ -4,7 +4,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { auth } from "@/features/auth/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, internalError } from "@/shared/errors/app-error";
-import type { AuthUserSummary } from "@/features/auth/server";
+import type { AuthUserSummary, AuthUserDto } from "@/features/auth/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -40,7 +40,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       .limit(500)
       .toArray();
 
-    const users: AuthUserSummary[] = docs.map((doc: MongoUserDoc) => ({
+    const users: AuthUserDto[] = docs.map((doc: MongoUserDoc) => ({
       id: doc._id.toString(),
       email: doc.email ?? null,
       name: doc.name ?? null,
@@ -49,6 +49,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         ? doc.emailVerified.toISOString()
         : null,
       provider,
+      createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
     }));
 
     return NextResponse.json({ provider, users });

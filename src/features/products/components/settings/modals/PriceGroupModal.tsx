@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import React from "react";
 import {
   Button,
   Input,
   Label,
-  AppModal,
-  ModalShell,
+  SharedModal,
   Checkbox,
   Textarea,
   RadioGroup,
@@ -143,150 +141,145 @@ export function PriceGroupModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={priceGroup ? "Edit Price Group" : "Create Price Group"}
+      header={header}
+      size="lg"
     >
-      <ModalShell
-        title={priceGroup ? "Edit Price Group" : "Create Price Group"}
-        onClose={onClose}
-        header={header}
-        size="lg"
-      >
-        <div className="space-y-4">
-          <Label className="flex items-center gap-2 text-sm text-gray-300">
-            <Checkbox
-              checked={form.isDefault}
-              onCheckedChange={(v) =>
-                setForm((p) => ({ ...p, isDefault: Boolean(v) }))
-              }
-            />
-            Set as default group
-          </Label>
+      <div className="space-y-4">
+        <Label className="flex items-center gap-2 text-sm text-gray-300">
+          <Checkbox
+            checked={form.isDefault}
+            onCheckedChange={(v) =>
+              setForm((p) => ({ ...p, isDefault: Boolean(v) }))
+            }
+          />
+          Set as default group
+        </Label>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="pg-name">Name</Label>
-              <Input
-                id="pg-name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, name: e.target.value }))
-                }
-                placeholder="e.g. Retail PLN"
-              />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="pg-name">Name</Label>
+            <Input
+              id="pg-name"
+              value={form.name}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, name: e.target.value }))
+              }
+              placeholder="e.g. Retail PLN"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pg-currency">Currency</Label>
+            <select
+              id="pg-currency"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+              value={form.currencyId}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, currencyId: e.target.value }))
+              }
+              disabled={loadingCurrencies}
+            >
+              {currencyOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.code} · {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pg-desc">Description</Label>
+          <Textarea
+            id="pg-desc"
+            value={form.description}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, description: e.target.value }))
+            }
+            placeholder="Optional description..."
+            rows={2}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Group Type</Label>
+          <RadioGroup
+            className="flex gap-4"
+            value={form.groupType}
+            onValueChange={(v) =>
+              setForm((p) => ({ ...p, groupType: v as PriceGroupType }))
+            }
+          >
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="standard" id="type-standard" />
+              <Label htmlFor="type-standard">Standard</Label>
             </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="dependent" id="type-dependent" />
+              <Label htmlFor="type-dependent">Dependent</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {form.groupType === "dependent" && (
+          <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pg-currency">Currency</Label>
+              <Label htmlFor="pg-source">Source Price Group</Label>
               <select
-                id="pg-currency"
+                id="pg-source"
                 className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
-                value={form.currencyId}
+                value={form.sourceGroupId}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, currencyId: e.target.value }))
+                  setForm((p) => ({ ...p, sourceGroupId: e.target.value }))
                 }
-                disabled={loadingCurrencies}
               >
-                {currencyOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.code} · {opt.name}
-                  </option>
-                ))}
+                <option value="">Select source...</option>
+                {priceGroups
+                  .filter((g) => g.id !== priceGroup?.id)
+                  .map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} ({g.groupId})
+                    </option>
+                  ))}
               </select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pg-desc">Description</Label>
-            <Textarea
-              id="pg-desc"
-              value={form.description}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, description: e.target.value }))
-              }
-              placeholder="Optional description..."
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Group Type</Label>
-            <RadioGroup
-              className="flex gap-4"
-              value={form.groupType}
-              onValueChange={(v) =>
-                setForm((p) => ({ ...p, groupType: v as PriceGroupType }))
-              }
-            >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="standard" id="type-standard" />
-                <Label htmlFor="type-standard">Standard</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="dependent" id="type-dependent" />
-                <Label htmlFor="type-dependent">Dependent</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {form.groupType === "dependent" && (
-            <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="pg-source">Source Price Group</Label>
-                <select
-                  id="pg-source"
-                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
-                  value={form.sourceGroupId}
+                <Label htmlFor="pg-mult">Price Multiplier</Label>
+                <Input
+                  id="pg-mult"
+                  type="number"
+                  step="0.01"
+                  value={form.priceMultiplier}
                   onChange={(e) =>
-                    setForm((p) => ({ ...p, sourceGroupId: e.target.value }))
+                    setForm((p) => ({
+                      ...p,
+                      priceMultiplier: Number(e.target.value),
+                    }))
                   }
-                >
-                  <option value="">Select source...</option>
-                  {priceGroups
-                    .filter((g) => g.id !== priceGroup?.id)
-                    .map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name} ({g.groupId})
-                      </option>
-                    ))}
-                </select>
+                />
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="pg-mult">Price Multiplier</Label>
-                  <Input
-                    id="pg-mult"
-                    type="number"
-                    step="0.01"
-                    value={form.priceMultiplier}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        priceMultiplier: Number(e.target.value),
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pg-add">Add To Price</Label>
-                  <Input
-                    id="pg-add"
-                    type="number"
-                    value={form.addToPrice}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        addToPrice: Number(e.target.value),
-                      }))
-                    }
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="pg-add">Add To Price</Label>
+                <Input
+                  id="pg-add"
+                  type="number"
+                  value={form.addToPrice}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      addToPrice: Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
             </div>
-          )}
-        </div>
-      </ModalShell>
-    </AppModal>
+          </div>
+        )}
+      </div>
+    </SharedModal>
   );
 }

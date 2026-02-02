@@ -5,14 +5,14 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { resumePathRun } from "@/features/ai-paths/services/path-run-service";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { resumePathRun } from "@/features/ai/ai-paths/services/path-run-service";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { startAiPathRunQueue } from "@/features/jobs/server";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
-} from "@/features/ai-paths/server";
+} from "@/features/ai/ai-paths/server";
 
 const requeueSchema = z.object({
   runIds: z.array(z.string().trim().min(1)).optional(),

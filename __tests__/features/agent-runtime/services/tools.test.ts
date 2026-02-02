@@ -1,10 +1,10 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { runAgentTool } from "@/features/agent-runtime/tools/index";
-import * as playwrightBrowser from "@/features/agent-runtime/tools/playwright/browser";
-import * as playwrightExtraction from "@/features/agent-runtime/tools/playwright/extraction";
-import * as llmTools from "@/features/agent-runtime/tools/llm";
-import * as searchTools from "@/features/agent-runtime/tools/search";
+import { runAgentTool } from "@/features/ai/agent-runtime/tools/index";
+import * as playwrightBrowser from "@/features/ai/agent-runtime/tools/playwright/browser";
+import * as playwrightExtraction from "@/features/ai/agent-runtime/tools/playwright/extraction";
+import * as llmTools from "@/features/ai/agent-runtime/tools/llm";
+import * as searchTools from "@/features/ai/agent-runtime/tools/search";
 
 // Mock internal modules
 vi.mock("fs", () => ({
@@ -31,14 +31,14 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/agent-runtime/tools/playwright/browser", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/playwright/browser", () => ({
   launchBrowser: vi.fn(),
   createBrowserContext: vi.fn(),
   captureSnapshot: vi.fn(),
   captureSessionContext: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/playwright/actions", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/playwright/actions", () => ({
   dismissConsent: vi.fn(),
   ensureLoginFormVisible: vi.fn(),
   checkForChallenge: vi.fn(),
@@ -46,11 +46,11 @@ vi.mock("@/features/agent-runtime/tools/playwright/actions", () => ({
   findFirstVisible: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/playwright/inventory", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/playwright/inventory", () => ({
   collectUiInventory: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/playwright/extraction", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/playwright/extraction", () => ({
   extractProductNames: vi.fn(),
   extractProductNamesFromSelectors: vi.fn(),
   extractEmailsFromDom: vi.fn(),
@@ -59,11 +59,11 @@ vi.mock("@/features/agent-runtime/tools/playwright/extraction", () => ({
   findProductListingUrls: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/search", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/search", () => ({
   fetchSearchResults: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/llm", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/llm", () => ({
   validateExtractionWithLLM: vi.fn(),
   normalizeExtractionItemsWithLLM: vi.fn(),
   inferSelectorsFromLLM: vi.fn(),
@@ -74,8 +74,8 @@ vi.mock("@/features/agent-runtime/tools/llm", () => ({
   decideSearchFirstWithLLM: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/tools/utils", async () => {
-    const actual = await vi.importActual("@/features/agent-runtime/tools/utils");
+vi.mock("@/features/ai/agent-runtime/tools/utils", async () => {
+    const actual = await vi.importActual("@/features/ai/agent-runtime/tools/utils");
     return {
         ...actual,
         loadRobotsTxt: vi.fn().mockResolvedValue({ ok: false }),

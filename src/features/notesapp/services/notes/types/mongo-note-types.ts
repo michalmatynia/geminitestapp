@@ -42,8 +42,10 @@ export type NoteDocument = Omit<NoteWithRelations, "tags" | "categories" | "rela
   relationsTo?: NoteRelationToEmbedded[];
 };
 
-export type TagDocument = TagRecord & { _id: string };
-export type CategoryDocument = CategoryRecord & { _id: string };
-export type NotebookDocument = NotebookRecord & { _id: string };
-export type NoteFileDocument = NoteFileRecord & { _id: string };
-export type ThemeDocument = ThemeRecord & { _id: string };
+import { MongoDocument } from "@/shared/types/base-types";
+
+export type TagDocument = MongoDocument<TagRecord>;
+export type CategoryDocument = MongoDocument<CategoryRecord>;
+export type NotebookDocument = MongoDocument<NotebookRecord>;
+export type NoteFileDocument = MongoDocument<NoteFileRecord>;
+export type ThemeDocument = MongoDocument<ThemeRecord>;

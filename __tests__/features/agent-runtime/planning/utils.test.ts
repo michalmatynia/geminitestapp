@@ -5,7 +5,7 @@ import {
   buildPlan, 
   decideNextAction,
   isExtractionStep
-} from "@/features/agent-runtime/planning/utils";
+} from "@/features/ai/agent-runtime/planning/utils";
 
 describe("Agent Runtime Planning Utils", () => {
   describe("parsePlanJson", () => {

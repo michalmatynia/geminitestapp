@@ -43,7 +43,7 @@ export const ErrorSystem = {
       // If it's an Agent Run, log to Agent Audit
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import("@/features/agent-runtime/server");
+          const { logAgentAudit } = await import("@/features/ai/agent-runtime/server");
           await logAgentAudit(context.runId, "error", message, {
             errorId: context.errorId || "unknown",
             ...context
@@ -75,7 +75,7 @@ export const ErrorSystem = {
 
       if (context.runId) {
          try {
-          const { logAgentAudit } = await import("@/features/agent-runtime/server");
+          const { logAgentAudit } = await import("@/features/ai/agent-runtime/server");
           await logAgentAudit(context.runId, "warning", message, context);
         } catch (auditError) {
           console.warn(`[ErrorSystem] Failed to log warning to Agent Audit:`, auditError);

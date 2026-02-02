@@ -6,7 +6,7 @@ import {
     inferSelectorsFromLLM,
     buildExtractionPlan,
     decideSearchFirstWithLLM
-} from "@/features/agent-runtime/tools/llm/index";
+} from "@/features/ai/agent-runtime/tools/llm/index";
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {

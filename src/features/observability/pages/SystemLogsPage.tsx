@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, CopyButton, StatusBadge, ConfirmDialog } from "@/shared/ui";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics } from "@/features/observability/hooks/useLogQueries";
@@ -78,6 +78,9 @@ export default function SystemLogsPage(): React.JSX.Element {
     return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
   });
 
+  const [isClearLogsConfirmOpen, setIsClearLogsConfirmOpen] = useState(false);
+  const [isRebuildIndexesConfirmOpen, setIsRebuildIndexesConfirmOpen] = useState(false);
+
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
@@ -126,12 +129,13 @@ export default function SystemLogsPage(): React.JSX.Element {
   const diagnostics = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.collections ?? [];
   const diagnosticsUpdatedAt = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
 
+  const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
+
   const totalPages: number = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [total, pageSize]);
 
-  const clearLogs = async (): Promise<void> => {
-    if (!window.confirm("Clear all system logs?")) return;
+  const handleClearLogs = async (): Promise<void> => {
     try {
       await clearLogsMutation.mutateAsync();
       toast("System logs cleared.", { variant: "success" });
@@ -142,8 +146,7 @@ export default function SystemLogsPage(): React.JSX.Element {
     }
   };
 
-  const rebuildMongoIndexes = async (): Promise<void> => {
-    if (!window.confirm("Rebuild missing Mongo indexes for AI Paths runtime?")) return;
+  const handleRebuildMongoIndexes = async (): Promise<void> => {
     try {
       const result = (await rebuildIndexesMutation.mutateAsync()) as { created?: unknown[] };
       const createdCount = result?.created?.length ?? 0;
@@ -158,22 +161,6 @@ export default function SystemLogsPage(): React.JSX.Element {
         variant: "error",
       });
     }
-  };
-
-  const exportLogs = async (): Promise<void> => {
-    try {
-      const payload = JSON.stringify(logs, null, 2);
-      await navigator.clipboard.writeText(payload);
-      toast("Logs copied to clipboard.", { variant: "success" });
-    } catch (_error: unknown) {
-      toast("Failed to copy logs.", { variant: "error" });
-    }
-  };
-
-  const levelStyles: Record<string, string> = {
-    error: "border-red-500/40 text-red-300 bg-red-500/10",
-    warn: "border-yellow-500/40 text-yellow-300 bg-yellow-500/10",
-    info: "border-blue-500/40 text-blue-300 bg-blue-500/10",
   };
 
   const getContextValue = (context: unknown, path: string): unknown => {
@@ -214,19 +201,18 @@ export default function SystemLogsPage(): React.JSX.Element {
                   <RefreshCcw className={`mr-2 h-4 w-4 ${(logsQuery.isFetching || metricsQuery.isFetching) ? "animate-spin" : ""}`} />
                   Refresh
                 </Button>
-                <Button
+                <CopyButton
+                  value={logsJson}
                   variant="outline"
                   size="sm"
-                  onClick={() => void exportLogs()}
+                  showText
+                  className="gap-2"
                   disabled={logs.length === 0}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Copy JSON
-                </Button>
+                />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void clearLogs()}
+                  onClick={() => setIsClearLogsConfirmOpen(true)}
                   className="border-red-500/40 text-red-200 hover:bg-red-500/10"
                   disabled={logs.length === 0 || clearLogsMutation.isPending}
                 >
@@ -238,39 +224,57 @@ export default function SystemLogsPage(): React.JSX.Element {
           />
         }
         alerts={
-          <SectionPanel className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-lg font-semibold text-white">Diagnostics</div>
-                <div className="text-xs text-gray-400">
-                  Mongo index status for AI Paths runtime collections.
+          <>
+            <ConfirmDialog
+              open={isClearLogsConfirmOpen}
+              onOpenChange={setIsClearLogsConfirmOpen}
+              onConfirm={handleClearLogs}
+              title="Clear System Logs"
+              description="Are you sure you want to clear all system logs? This action cannot be undone."
+              confirmText="Clear All"
+              variant="destructive"
+            />
+            <ConfirmDialog
+              open={isRebuildIndexesConfirmOpen}
+              onOpenChange={setIsRebuildIndexesConfirmOpen}
+              onConfirm={handleRebuildMongoIndexes}
+              title="Rebuild Indexes"
+              description="This will scan AI Paths collections and create missing indexes. Proceed?"
+              confirmText="Rebuild"
+            />
+            <SectionPanel className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-lg font-semibold text-white">Diagnostics</div>
+                  <div className="text-xs text-gray-400">
+                    Mongo index status for AI Paths runtime collections.
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>
+                    {diagnosticsUpdatedAt
+                      ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
+                      : "—"}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void mongoDiagnosticsQuery.refetch()}
+                    disabled={mongoDiagnosticsQuery.isFetching}
+                  >
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsRebuildIndexesConfirmOpen(true)}
+                    disabled={rebuildIndexesMutation.isPending}
+                    className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+                  >
+                    {rebuildIndexesMutation.isPending ? "Rebuilding..." : "Rebuild missing indexes"}
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>
-                  {diagnosticsUpdatedAt
-                    ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
-                    : "—"}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void mongoDiagnosticsQuery.refetch()}
-                  disabled={mongoDiagnosticsQuery.isFetching}
-                >
-                  Refresh
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void rebuildMongoIndexes()}
-                  disabled={rebuildIndexesMutation.isPending}
-                  className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
-                >
-                  {rebuildIndexesMutation.isPending ? "Rebuilding..." : "Rebuild missing indexes"}
-                </Button>
-              </div>
-            </div>
             {mongoDiagnosticsQuery.isLoading ? (
               <div className="text-sm text-gray-400">Loading diagnostics...</div>
             ) : diagnostics.length === 0 ? (
@@ -354,6 +358,7 @@ export default function SystemLogsPage(): React.JSX.Element {
               </div>
             )}
           </SectionPanel>
+          </>
         }
         filters={
           <SectionPanel>
@@ -507,7 +512,12 @@ export default function SystemLogsPage(): React.JSX.Element {
               <span>
                 Showing {logs.length} of {total} logs
               </span>
-              <span>Page {page} of {totalPages}</span>
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                className="scale-90 origin-right"
+              />
             </div>
             {logsQuery.isLoading ? (
               <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
@@ -521,13 +531,10 @@ export default function SystemLogsPage(): React.JSX.Element {
                   <div key={log.id} className="px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span
-                          className={`rounded border px-2 py-0.5 text-xs ${
-                            levelStyles[log.level] ?? "border text-gray-300"
-                          }`}
-                        >
-                          {log.level.toUpperCase()}
-                        </span>
+                        <StatusBadge
+                          status={log.level}
+                          variant={log.level === "warn" ? "warning" : log.level as any}
+                        />
                         <span className="text-xs text-gray-400">
                           {formatTimestamp(log.createdAt)}
                         </span>
@@ -612,26 +619,6 @@ export default function SystemLogsPage(): React.JSX.Element {
                 ))}
               </div>
             )}
-            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border"
-                disabled={page <= 1}
-                onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border"
-                disabled={page >= totalPages}
-                onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
-              >
-                Next
-              </Button>
-            </div>
           </div>
         </div>
       </ListPanel>

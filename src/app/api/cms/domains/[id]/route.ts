@@ -5,8 +5,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { deleteCmsDomain, setCmsDomainAlias } from "@/features/cms/services/cms-domain";
-
-type Params = { id: string };
+import { ApiParams } from "@/shared/types/base-types";
 
 const domainUpdateSchema = z.object({
   aliasOf: z.string().trim().min(1).nullable().optional(),
@@ -15,7 +14,7 @@ const domainUpdateSchema = z.object({
 async function PUT_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: Params
+  params: ApiParams
 ): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, domainUpdateSchema, {
@@ -39,7 +38,7 @@ async function PUT_handler(
 async function DELETE_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: Params
+  params: ApiParams
 ): Promise<Response> {
   try {
     await deleteCmsDomain(params.id);

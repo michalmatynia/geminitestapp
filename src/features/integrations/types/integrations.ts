@@ -1,3 +1,16 @@
+// Re-export DTOs as types for backward compatibility
+export type {
+  IntegrationDto,
+  IntegrationConnectionDto,
+  ProductListingDto,
+  CategoryMappingDto,
+  CreateIntegrationDto,
+  UpdateIntegrationDto,
+  CreateConnectionDto,
+  UpdateConnectionDto
+} from "@/shared/dtos";
+
+// Legacy types for backward compatibility
 export type IntegrationRecord = {
   id: string;
   name: string;

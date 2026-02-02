@@ -3,13 +3,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useChatbotLogic } from "@/features/chatbot/hooks/useChatbotLogic";
-import * as chatbotApi from "@/features/chatbot/api";
+import { useChatbotLogic } from "@/features/ai/chatbot/hooks/useChatbotLogic";
+import * as chatbotApi from "@/features/ai/chatbot/api";
 import { ToastProvider } from "@/shared/ui/toast";
 
 
 // Mock the APIs
-vi.mock("@/features/chatbot/api", () => ({
+vi.mock("@/features/ai/chatbot/api", () => ({
   fetchChatbotSessions: vi.fn(),
   fetchChatbotSession: vi.fn(),
   createChatbotSession: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock useAgentCreatorSettings
-vi.mock("@/features/agentcreator", () => ({
+vi.mock("@/features/ai/agentcreator", () => ({
   useAgentCreatorSettings: vi.fn(() => ({
     agentModeEnabled: false,
     setAgentModeEnabled: vi.fn(),

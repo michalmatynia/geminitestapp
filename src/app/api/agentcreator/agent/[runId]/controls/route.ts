@@ -1,1 +1,1 @@
-export { AgentCreatorAgentRunControlsPOST as POST } from "@/features/agentcreator/server";
+export { AgentCreatorAgentRunControlsPOST as POST } from "@/features/ai/agentcreator/server";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
+import { chatbotJobRepository } from "@/features/ai/chatbot/services/chatbot-job-repository";
 import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {

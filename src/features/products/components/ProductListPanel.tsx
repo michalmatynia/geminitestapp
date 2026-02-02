@@ -82,6 +82,7 @@ export type ProductListPanelProps = {
   priceGroups: PriceGroupWithDetails[];
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
+  onProductDeleteClick: (row: ProductWithImages) => void;
   onIntegrationsClick: (row: ProductWithImages) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;

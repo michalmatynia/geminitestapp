@@ -13,8 +13,7 @@ import {
   type AuthSecurityPolicy,
 } from "@/features/auth/utils/auth-security";
 import { logSystemEvent } from "@/features/observability/server";
-
-type SettingRecord = { _id: string; key: string; value: string };
+import { MongoSettingRecord } from "@/shared/types/base-types";
 
 type AttemptRecord = {
   _id: string;
@@ -51,7 +50,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
-    .collection<SettingRecord>("settings")
+    .collection<MongoSettingRecord>("settings")
     .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };

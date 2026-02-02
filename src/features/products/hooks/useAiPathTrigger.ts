@@ -14,19 +14,19 @@ import type {
 } from "@/shared/types/ai-paths";
 import {
   evaluateGraph,
-} from "@/features/ai-paths/lib/core/runtime/engine";
+} from "@/features/ai/ai-paths/lib/core/runtime/engine";
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
-} from "@/features/ai-paths/lib/core/constants";
+} from "@/features/ai/ai-paths/lib/core/constants";
 import {
   createDefaultPathConfig,
-} from "@/features/ai-paths/lib/core/utils/factory";
+} from "@/features/ai/ai-paths/lib/core/utils/factory";
 import {
   sanitizeEdges,
-} from "@/features/ai-paths/lib/core/utils/graph";
+} from "@/features/ai/ai-paths/lib/core/utils/graph";
 
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({

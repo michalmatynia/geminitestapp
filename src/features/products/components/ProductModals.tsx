@@ -1,5 +1,5 @@
 "use client";
-import { ModalShell, Button, AppModal } from "@/shared/ui";
+import { SharedModal, Button } from "@/shared/ui";
 import dynamic from "next/dynamic";
 
 const FileManager = dynamic(() => import("@/features/files/components/FileManager"), {
@@ -46,11 +46,142 @@ interface ProductModalsProps {
   onMassListSuccess?: () => void;
 }
 
-function ProductFormModalContent({ 
+export function ProductModals({
+  isCreateOpen,
+  initialSku,
+  createDraft,
+  initialCatalogId,
+  onCloseCreate,
+  onCreateSuccess,
+  editingProduct,
+  onCloseEdit,
+  onEditSuccess,
+  onEditSave,
+  integrationsProduct,
+  onCloseIntegrations,
+  onStartListing,
+  showListProductModal,
+  onCloseListProduct,
+  onListProductSuccess,
+  listProductPreset,
+  exportSettingsProduct,
+  onCloseExportSettings,
+  onListingsUpdated,
+  massListIntegration,
+  massListProductIds,
+  onCloseMassList,
+  onMassListSuccess,
+}: ProductModalsProps): React.JSX.Element {
+  return (
+    <>
+      {isCreateOpen && (
+        <ProductFormProvider
+          key={createDraft?.id ?? "create"}
+          onSuccess={onCreateSuccess}
+          initialSku={initialSku}
+          initialCatalogId={initialCatalogId ?? undefined}
+          draft={createDraft ?? undefined}
+        >
+          <ProductFormModal
+            open={isCreateOpen}
+            onClose={onCloseCreate}
+            title="Create Product"
+            submitButtonText="Create"
+          />
+        </ProductFormProvider>
+      )}
+
+      {editingProduct && (
+        <ProductFormProvider
+          product={editingProduct}
+          onSuccess={onEditSuccess}
+          onEditSave={onEditSave}
+        >
+          <ProductFormModal
+            open={!!editingProduct}
+            onClose={onCloseEdit}
+            title="Edit Product"
+            submitButtonText="Update"
+          />
+        </ProductFormProvider>
+      )}
+
+      <SharedModal
+        open={!!integrationsProduct && !showListProductModal}
+        onClose={onCloseIntegrations}
+        title="Product Listings"
+        size="md"
+      >
+        {integrationsProduct && (
+          <ProductListingsModal
+            product={integrationsProduct}
+            onClose={onCloseIntegrations}
+            onStartListing={onStartListing}
+            onListingsUpdated={onListingsUpdated}
+          />
+        )}
+      </SharedModal>
+
+      <SharedModal
+        open={!!integrationsProduct && showListProductModal}
+        onClose={onCloseListProduct}
+        title="List Product"
+        size="md"
+      >
+        {integrationsProduct && (
+          <ListProductModal
+            product={integrationsProduct}
+            onClose={onCloseListProduct}
+            onSuccess={onListProductSuccess}
+            initialIntegrationId={listProductPreset?.integrationId ?? null}
+            initialConnectionId={listProductPreset?.connectionId ?? null}
+          />
+        )}
+      </SharedModal>
+
+      <SharedModal
+        open={!!exportSettingsProduct && !!onCloseExportSettings}
+        onClose={() => onCloseExportSettings?.()}
+        title="Export Settings"
+        size="md"
+      >
+        {exportSettingsProduct && onCloseExportSettings && (
+          <ProductListingsModal
+            product={exportSettingsProduct}
+            onClose={onCloseExportSettings}
+            filterIntegrationSlug="baselinker"
+            onListingsUpdated={onListingsUpdated}
+          />
+        )}
+      </SharedModal>
+
+      <SharedModal
+        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
+        onClose={() => onCloseMassList?.()}
+        title="Mass List Products"
+        size="md"
+      >
+        {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
+          <MassListProductModal
+            integrationId={massListIntegration.integrationId}
+            connectionId={massListIntegration.connectionId}
+            productIds={massListProductIds}
+            onClose={onCloseMassList}
+            onSuccess={onMassListSuccess}
+          />
+        )}
+      </SharedModal>
+    </>
+  );
+}
+
+function ProductFormModal({ 
+  open,
   onClose, 
   title, 
   submitButtonText 
 }: { 
+  open: boolean;
   onClose: () => void;
   title: string;
   submitButtonText: string;
@@ -81,145 +212,17 @@ function ProductFormModalContent({
   );
 
   return (
-    <ModalShell title={title} onClose={onClose} header={header}>
+    <SharedModal 
+      open={open}
+      onClose={onClose}
+      title={title} 
+      header={header}
+    >
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm submitButtonText={submitButtonText} />
       )}
-    </ModalShell>
-  );
-}
-
-export function ProductModals({
-  isCreateOpen,
-  initialSku,
-  createDraft,
-  initialCatalogId,
-  onCloseCreate,
-  onCreateSuccess,
-  editingProduct,
-  onCloseEdit,
-  onEditSuccess,
-  onEditSave,
-  integrationsProduct,
-  onCloseIntegrations,
-  onStartListing,
-  showListProductModal,
-  onCloseListProduct,
-  onListProductSuccess,
-  listProductPreset,
-  exportSettingsProduct,
-  onCloseExportSettings,
-  onListingsUpdated,
-  massListIntegration,
-  massListProductIds,
-  onCloseMassList,
-  onMassListSuccess,
-}: ProductModalsProps): React.JSX.Element {
-  return (
-    <>
-      <AppModal
-        open={isCreateOpen}
-        onOpenChange={(open: boolean) => !open && onCloseCreate()}
-        title="Create Product"
-      >
-        <ProductFormProvider
-          key={createDraft?.id ?? "create"}
-          onSuccess={onCreateSuccess}
-          initialSku={initialSku}
-          initialCatalogId={initialCatalogId ?? undefined}
-          draft={createDraft ?? undefined}
-        >
-          <ProductFormModalContent
-            onClose={onCloseCreate}
-            title="Create Product"
-            submitButtonText="Create"
-          />
-        </ProductFormProvider>
-      </AppModal>
-
-      <AppModal
-        open={!!editingProduct}
-        onOpenChange={(open: boolean) => !open && onCloseEdit()}
-        title="Edit Product"
-      >
-        {editingProduct && (
-          <ProductFormProvider
-            product={editingProduct}
-            onSuccess={onEditSuccess}
-            onEditSave={onEditSave}
-          >
-            <ProductFormModalContent
-              onClose={onCloseEdit}
-              title="Edit Product"
-              submitButtonText="Update"
-            />
-          </ProductFormProvider>
-        )}
-      </AppModal>
-
-      <AppModal
-        open={!!integrationsProduct && !showListProductModal}
-        onOpenChange={(open: boolean) => !open && onCloseIntegrations()}
-        title="Product Listings"
-      >
-        {integrationsProduct && (
-          <ProductListingsModal
-            product={integrationsProduct}
-            onClose={onCloseIntegrations}
-            onStartListing={onStartListing}
-            onListingsUpdated={onListingsUpdated}
-          />
-        )}
-      </AppModal>
-
-      <AppModal
-        open={!!integrationsProduct && showListProductModal}
-        onOpenChange={(open: boolean) => !open && onCloseListProduct()}
-        title="List Product"
-      >
-        {integrationsProduct && (
-          <ListProductModal
-            product={integrationsProduct}
-            onClose={onCloseListProduct}
-            onSuccess={onListProductSuccess}
-            initialIntegrationId={listProductPreset?.integrationId ?? null}
-            initialConnectionId={listProductPreset?.connectionId ?? null}
-          />
-        )}
-      </AppModal>
-
-      <AppModal
-        open={!!exportSettingsProduct && !!onCloseExportSettings}
-        onOpenChange={(open: boolean) => !open && onCloseExportSettings?.()}
-        title="Export Settings"
-      >
-        {exportSettingsProduct && onCloseExportSettings && (
-          <ProductListingsModal
-            product={exportSettingsProduct}
-            onClose={onCloseExportSettings}
-            filterIntegrationSlug="baselinker"
-            onListingsUpdated={onListingsUpdated}
-          />
-        )}
-      </AppModal>
-
-      <AppModal
-        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
-        onOpenChange={(open: boolean) => !open && onCloseMassList?.()}
-        title="Mass List Products"
-      >
-        {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
-          <MassListProductModal
-            integrationId={massListIntegration.integrationId}
-            connectionId={massListIntegration.connectionId}
-            productIds={massListProductIds}
-            onClose={onCloseMassList}
-            onSuccess={onMassListSuccess}
-          />
-        )}
-      </AppModal>
-    </>
+    </SharedModal>
   );
 }

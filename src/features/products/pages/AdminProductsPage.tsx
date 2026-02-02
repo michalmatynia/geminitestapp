@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useToast } from "@/shared/ui";
+import { useToast, ConfirmDialog } from "@/shared/ui";
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
 import {
   useProductData,
@@ -263,6 +263,7 @@ export function AdminProductsPage(): React.JSX.Element {
   const [massListIntegration, setMassListIntegration] = useState<{ integrationId: string; connectionId: string } | null>(null);
   const [massListProductIds, setMassListProductIds] = useState<string[]>([]);
   const [isMassListing, setIsMassListing] = useState(false);
+  const [isMassDeleteConfirmOpen, setIsMassDeleteConfirmOpen] = useState(false);
 
   // State for integration selection modal
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
@@ -341,27 +342,20 @@ export function AdminProductsPage(): React.JSX.Element {
   }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, queryClient]);
 
   const handleMassDelete = useCallback(async () => {
-    logger.log("Mass delete initiated.");
     const selectedProductIds = Object.keys(rowSelection).filter(
       (id: string) => rowSelection[id]
     );
 
     if (selectedProductIds.length === 0) return;
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
-      )
-    ) {
-      try {
-        await bulkDeleteMutation.mutateAsync(selectedProductIds);
-        toast("Selected products deleted successfully.", { variant: "success" });
-        setRowSelection({});
-        setRefreshTrigger((prev: number) => prev + 1);
-      } catch (error) {
-        logger.error("Error during mass deletion:", error);
-        setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
-      }
+    try {
+      await bulkDeleteMutation.mutateAsync(selectedProductIds);
+      toast("Selected products deleted successfully.", { variant: "success" });
+      setRowSelection({});
+      setRefreshTrigger((prev: number) => prev + 1);
+    } catch (error) {
+      logger.error("Error during mass deletion:", error);
+      setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
     }
   }, [rowSelection, setActionError, toast, bulkDeleteMutation]);
 
@@ -409,6 +403,15 @@ export function AdminProductsPage(): React.JSX.Element {
   return (
     <>
       {isDebugOpen && <DebugPanel />}
+      <ConfirmDialog
+        open={isMassDeleteConfirmOpen}
+        onOpenChange={setIsMassDeleteConfirmOpen}
+        onConfirm={handleMassDelete}
+        title="Delete Products"
+        description={`Are you sure you want to delete ${Object.keys(rowSelection).filter(id => rowSelection[id]).length} selected products? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
       <ProductListPanel
         onCreateProduct={handleOpenCreate}
         onCreateFromDraft={handleCreateFromDraft}
@@ -447,7 +450,7 @@ export function AdminProductsPage(): React.JSX.Element {
         setRowSelection={setRowSelection}
         onSelectAllGlobal={handleSelectAllGlobal}
         loadingGlobal={loadingGlobalSelection}
-        onDeleteSelected={handleMassDelete}
+        onDeleteSelected={() => setIsMassDeleteConfirmOpen(true)}
         onAddToMarketplace={handleAddToMarketplace}
         handleProductsTableRender={handleProductsTableRender}
         tableColumns={columns}

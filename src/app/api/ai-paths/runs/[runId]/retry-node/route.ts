@@ -5,15 +5,15 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { retryPathRunNode } from "@/features/ai-paths/services/path-run-service";
+import { retryPathRunNode } from "@/features/ai/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { notFoundError } from "@/shared/errors/app-error";
 import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
-} from "@/features/ai-paths/server";
+} from "@/features/ai/ai-paths/server";
 
 const retrySchema = z.object({
   nodeId: z.string().trim().min(1),

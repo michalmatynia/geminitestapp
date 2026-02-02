@@ -1,5 +1,5 @@
 "use client";
-import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast } from "@/shared/ui";
+import { SharedModal, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, useToast, StatusBadge, ConfirmDialog } from "@/shared/ui";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -31,13 +31,6 @@ type ProductListingsModalProps = {
   onListingsUpdated?: (() => void) | undefined;
 };
 
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
-  active: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-  failed: "bg-red-500/20 text-red-300 border-red-500/40",
-  removed: "bg-gray-500/20 text-gray-300 border-gray-500/40",
-};
-
 export function ProductListingsModal({
   product,
   onClose,
@@ -56,6 +49,9 @@ export function ProductListingsModal({
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [listingToPurge, setListingToPurge] = useState<string | null>(null);
+  const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
   const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
   const { toast } = useToast();
 
@@ -397,7 +393,7 @@ export function ProductListingsModal({
             variant="outline"
             size="sm"
             disabled={!baseListing || syncingImages === baseListing.id}
-            onClick={(): void => { void handleSyncBaseImages(); }}
+            onClick={(): void => setIsSyncImagesConfirmOpen(true)}
             className="border-slate-500/40 text-slate-200 hover:bg-slate-500/10"
           >
             {syncingImages === baseListing?.id ? "Syncing..." : "Sync image URLs from Base.com"}
@@ -415,9 +411,6 @@ export function ProductListingsModal({
   const handleDeleteFromBase = async (listingId: string): Promise<void> => {
     const listing: ProductListingWithDetails | undefined = listings.find((item: ProductListingWithDetails): boolean => item.id === listingId);
     if (!listing) return;
-    if (!window.confirm("Delete this product from Base.com? This cannot be undone.")) {
-      return;
-    }
 
     try {
       setDeletingFromBase(listingId);
@@ -430,15 +423,13 @@ export function ProductListingsModal({
       setError(err instanceof Error ? err.message : "Failed to delete from Base.com");
     } finally {
       setDeletingFromBase(null);
+      setListingToDelete(null);
     }
   };
 
   const handlePurgeListing = async (listingId: string): Promise<void> => {
     const listing: ProductListingWithDetails | undefined = listings.find((item: ProductListingWithDetails): boolean => item.id === listingId);
     if (!listing) return;
-    if (!window.confirm("Remove this integration connection and its history?")) {
-      return;
-    }
 
     try {
       setPurgingListing(listingId);
@@ -448,6 +439,7 @@ export function ProductListingsModal({
       setError(err instanceof Error ? err.message : "Failed to remove listing history");
     } finally {
       setPurgingListing(null);
+      setListingToPurge(null);
     }
   };
 
@@ -480,9 +472,6 @@ export function ProductListingsModal({
       setError("Base.com listing not found for this product.");
       return;
     }
-    if (!window.confirm("Sync image URLs from Base.com into this product? This will overwrite image links by slot.")) {
-      return;
-    }
     try {
       setSyncingImages(baseListing.id);
       setError(null);
@@ -496,6 +485,7 @@ export function ProductListingsModal({
       setError(err instanceof Error ? err.message : "Failed to sync image URLs");
     } finally {
       setSyncingImages(null);
+      setIsSyncImagesConfirmOpen(false);
     }
   };
 
@@ -628,11 +618,38 @@ export function ProductListingsModal({
   const loading: boolean = loadingListings;
 
   return (
-    <ModalShell
-      title={`Integrations - ${productName}`}
+    <SharedModal
+      open={true}
       onClose={onClose}
+      title={`Integrations - ${productName}`}
       size="md"
     >
+      <ConfirmDialog
+        open={!!listingToDelete}
+        onOpenChange={(open) => !open && setListingToDelete(null)}
+        onConfirm={() => listingToDelete && handleDeleteFromBase(listingToDelete)}
+        title="Delete from Base.com"
+        description="Delete this product from Base.com? This cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={!!listingToPurge}
+        onOpenChange={(open) => !open && setListingToPurge(null)}
+        onConfirm={() => listingToPurge && handlePurgeListing(listingToPurge)}
+        title="Remove History"
+        description="Remove this integration connection and its history? This will NOT delete the product from the marketplace."
+        confirmText="Remove"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={isSyncImagesConfirmOpen}
+        onOpenChange={setIsSyncImagesConfirmOpen}
+        onConfirm={handleSyncBaseImages}
+        title="Sync Images from Base.com"
+        description="Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots."
+        confirmText="Sync Images"
+      />
       <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading listings...</p>
@@ -723,11 +740,7 @@ export function ProductListingsModal({
                         <span className="font-medium text-white">
                           {listing.integration.name}
                         </span>
-                        <span
-                          className={`rounded border px-2 py-0.5 text-xs ${statusColors[listing.status] || statusColors.pending}`}
-                        >
-                          {listing.status}
-                        </span>
+                        <StatusBadge status={listing.status} />
                       </div>
                       <p className="mt-1 text-xs text-gray-400">
                         Account: {listing.connection.name}
@@ -902,7 +915,7 @@ export function ProductListingsModal({
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={(): void => { void handleDeleteFromBase(listing.id); }}
+                              onClick={(): void => setListingToDelete(listing.id)}
                               disabled={deletingFromBase === listing.id}
                               className="border-red-500/40 text-red-300 hover:bg-red-500/10"
                             >
@@ -915,7 +928,7 @@ export function ProductListingsModal({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={(): void => { void handlePurgeListing(listing.id); }}
+                        onClick={(): void => setListingToPurge(listing.id)}
                         disabled={purgingListing === listing.id}
                         className="text-gray-400 hover:bg-muted/50 hover:text-red-400"
                       >
@@ -939,7 +952,7 @@ export function ProductListingsModal({
           </div>
         )}
       </div>
-    </ModalShell>
+    </SharedModal>
   );
 }
 

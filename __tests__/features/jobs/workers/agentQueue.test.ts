@@ -10,7 +10,7 @@ vi.mock("crypto", async (importOriginal) => {
 
 import { processAgentQueue, stopAgentQueue } from "@/features/jobs/workers/agentQueue";
 import prisma from "@/shared/lib/db/prisma";
-import { runAgentControlLoop, logAgentAudit } from "@/features/agent-runtime/server";
+import { runAgentControlLoop, logAgentAudit } from "@/features/ai/agent-runtime/server";
 
 vi.mock("@/shared/lib/db/prisma", () => {
   const mockChatbotAgentRun = {
@@ -29,7 +29,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
   };
 });
 
-vi.mock("@/features/agent-runtime/server", () => ({
+vi.mock("@/features/ai/agent-runtime/server", () => ({
   runAgentControlLoop: vi.fn(),
   logAgentAudit: vi.fn(),
 }));

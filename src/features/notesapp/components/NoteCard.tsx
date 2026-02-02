@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { BreadcrumbScroller, Button } from "@/shared/ui";
+import { BreadcrumbScroller, Button, CopyButton, Card, CardContent, CardFooter, CardHeader, Tag } from "@/shared/ui";
 
 import Image from "next/image";
-import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
+import { ChevronRight, Pin, Star } from "lucide-react";
 import type { ThemeRecord, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource, NoteFileRecord } from "@/shared/types/notes";
 import type { NoteCardProps } from "@/features/notesapp/types/notes-ui";
 
@@ -41,7 +41,6 @@ function NoteCardBase({
 }: NoteCardProps): React.JSX.Element {
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = theme ?? FALLBACK_THEME;
-  const [isCopied, setIsCopied] = React.useState<boolean>(false);
   const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(
@@ -120,19 +119,8 @@ function NoteCardBase({
     (file: NoteFileRecord) => file.mimetype?.startsWith("image/") && file.filepath
   );
 
-  const handleCopyCode = async (e: React.MouseEvent): Promise<void> => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(note.content);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err: unknown) {
-      console.error("Failed to copy code:", err);
-    }
-  };
-
   return (
-    <div
+    <Card
       key={note.id}
       draggable={enableDrag}
       onDragStart={
@@ -175,7 +163,8 @@ function NoteCardBase({
           : "cursor-pointer hover:shadow-md hover:brightness-90"
       }`}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <CardHeader className="p-4 pb-2">
+        <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">{note.title}</h3>
           {isCodeNote && (
@@ -186,104 +175,101 @@ function NoteCardBase({
         </div>
         <div className="flex items-center gap-2">
           {isCodeNote && (
-                          <Button
-                            type="button"
-                            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
-                            onClick={(e: React.MouseEvent): void => { void handleCopyCode(e); }}
-                            className={`transition-colors ${                isCopied
-                  ? "text-green-500"
-                  : "text-gray-500 hover:text-blue-500"
-              }`}
-              aria-label={isCopied ? "Copied!" : "Copy code"}
-              title={isCopied ? "Copied!" : "Copy code snippet"}
-            >
-              {isCopied ? <Check size={16} /> : <Copy size={16} />}
-            </Button>
+            <CopyButton 
+              value={note.content}
+              className="text-gray-500 hover:text-blue-500"
+            />
           )}
           <Button
-            type="button"
-            onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
-            onClick={(event: React.MouseEvent): void => {
-              event.stopPropagation();
-              onToggleFavorite(note);
-            }}
-            className="text-gray-500 hover:text-yellow-500"
-            aria-label={note.isFavorite ? "Unfavorite note" : "Favorite note"}
-            title={note.isFavorite ? "Remove favorite" : "Add favorite"}
-          >
-            <Star
-              size={16}
-              className={note.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500"
+              onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+              onClick={(event: React.MouseEvent): void => {
+                event.stopPropagation();
+                onToggleFavorite(note);
+              }}
+              aria-label={note.isFavorite ? "Unfavorite note" : "Favorite note"}
+              title={note.isFavorite ? "Remove favorite" : "Add favorite"}
+            >
+              <Star
+                size={16}
+                className={note.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
+              />
+            </Button>
+            {note.isPinned && <Pin size={16} className="text-blue-600" />}
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="p-4 pt-0">
+        {thumbnailFile && (
+          <div className="mb-3 overflow-hidden rounded-md border">
+            <Image
+              src={thumbnailFile.filepath}
+              alt={thumbnailFile.filename}
+              width={320}
+              height={180}
+              className="h-28 w-full object-cover"
+              sizes="(min-width: 1024px) 240px, 100vw"
             />
-          </Button>
-          {note.isPinned && <Pin size={16} className="text-blue-600" />}
+          </div>
+        )}
+        <div
+          className="mb-3 max-h-36 overflow-hidden text-sm prose prose-sm"
+          dangerouslySetInnerHTML={{ __html: contentHtml }}
+        />
+        <div className="flex flex-wrap gap-2">
+          {note.tags.map((nt: { tagId: string; tag: { color: string | null; name: string } }) => (
+            <Tag
+              key={nt.tagId}
+              color={nt.tag.color}
+              label={nt.tag.name}
+            />
+          ))}
         </div>
-      </div>
-      {thumbnailFile && (
-        <div className="mb-3 overflow-hidden rounded-md border border">
-          <Image
-            src={thumbnailFile.filepath}
-            alt={thumbnailFile.filename}
-            width={320}
-            height={180}
-            className="h-28 w-full object-cover"
-            sizes="(min-width: 1024px) 240px, 100vw"
-          />
-        </div>
-      )}
-      <div
-        className="mb-3 max-h-36 overflow-hidden text-sm prose prose-sm"
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
-      />
-      <div className="flex flex-wrap gap-2">
-        {note.tags.map((nt: { tagId: string; tag: { color: string | null; name: string } }) => (
-          <span
-            key={nt.tagId}
-            style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
-            className="rounded-full px-2 py-1 text-xs text-white"
-          >
-            {nt.tag.name}
-          </span>
-        ))}
-      </div>
-      {showTimestamps && (
-        <div className="mt-3 flex flex-col gap-0.5 text-[10px] text-gray-500">
-          <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-          <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
-        </div>
-      )}
-      {showBreadcrumbs && (
-        <div className={showTimestamps ? "mt-3" : "mt-2"}>
-          <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
-            {buildBreadcrumbPath(
-              note.categories[0]?.categoryId || null,
-              null,
-              folderTree
-            ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
-              <React.Fragment key={index}>
-                <Button
-                  onClick={(e: React.MouseEvent): void => {
-                    e.stopPropagation();
-                    if (crumb.id) { // Ensure id is not null before passing to onSelectFolder
-                      onSelectFolder(crumb.id);
-                    }
-                  }}
-                  className="cursor-pointer hover:underline whitespace-nowrap"
-                >
-                  {crumb.name}
-                </Button>
-                {index < array.length - 1 && (
-                  <ChevronRight size={10} className="flex-shrink-0" />
-                )}
-              </React.Fragment>
-            ))}
-          </BreadcrumbScroller>
-        </div>
-      )}
-      {showRelatedNotes &&
-        relatedNotes.length > 0 && (
-          <div className="mt-2">
-            <div className="flex flex-wrap gap-2">
+      </CardContent>
+
+      {(showTimestamps || showBreadcrumbs || (showRelatedNotes && relatedNotes.length > 0)) && (
+        <CardFooter className="flex flex-col items-stretch p-4 pt-0">
+          {showTimestamps && (
+            <div className="flex flex-col gap-0.5 text-[10px] text-gray-500">
+              <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
+              <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
+            </div>
+          )}
+          {showBreadcrumbs && (
+            <div className={showTimestamps ? "mt-3" : ""}>
+              <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
+                {buildBreadcrumbPath(
+                  note.categories[0]?.categoryId || null,
+                  null,
+                  folderTree
+                ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
+                  <React.Fragment key={index}>
+                    <Button
+                      variant="link"
+                      onClick={(e: React.MouseEvent): void => {
+                        e.stopPropagation();
+                        if (crumb.id) { 
+                          onSelectFolder(crumb.id);
+                        }
+                      }}
+                      className="h-auto p-0 text-xs text-inherit cursor-pointer hover:underline whitespace-nowrap"
+                    >
+                      {crumb.name}
+                    </Button>
+                    {index < array.length - 1 && (
+                      <ChevronRight size={10} className="flex-shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </BreadcrumbScroller>
+            </div>
+          )}
+          {showRelatedNotes && relatedNotes.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
               {relatedNotes
                 .filter((item: RelatedNote, index: number, array: RelatedNote[]) => array.findIndex((entry: RelatedNote) => entry.id === item.id) === index)
                 .slice(0, 4)
@@ -298,9 +284,10 @@ function NoteCardBase({
                   </div>
                 ))}
             </div>
-          </div>
-        )}
-    </div>
+          )}
+        </CardFooter>
+      )}
+    </Card>
   );
 }
 

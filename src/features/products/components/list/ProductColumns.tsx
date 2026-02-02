@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast } from "@/shared/ui";
+import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge } from "@/shared/ui";
 import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
 import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
@@ -149,44 +149,14 @@ function calculatePriceForCurrency(
 
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
   onProductEditClick?: ((row: ProductWithImages) => void) | undefined;
+  onProductDeleteClick?: ((row: ProductWithImages) => void) | undefined;
 }
-
-// Sends a DELETE request to delete a product and triggers refresh on success.
-const handleDelete = async (
-  id: string,
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
-  queryClient: QueryClient,
-  notify?: ToastFn
-): Promise<void> => {
-  if (!window.confirm("Are you sure you want to delete this product?")) return;
-
-  const res: Response = await fetch(`/api/products/${id}`, { method: "DELETE" });
-  if (res.ok) {
-    // Small delay to ensure DB consistency before refetch
-    await delay(500);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["products"] }),
-      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
-    ]);
-    setRefreshTrigger((prev: number): number => prev + 1);
-    return;
-  }
-
-  try {
-    console.error("Failed to delete product:", await res.json());
-  } catch {
-    console.error("Failed to delete product.");
-  }
-
-  notify?.("Failed to delete product.", { variant: "error" });
-};
 
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
-  setRefreshTrigger,
   onProductEditClick,
+  onProductDeleteClick,
 }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
   const router = useRouter();
@@ -270,7 +240,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
             className="text-destructive focus:text-destructive"
             onSelect={(event: Event): void => {
               event.preventDefault();
-              void handleDelete(product.id, setRefreshTrigger, queryClient, toast);
+              onProductDeleteClick?.(product);
             }}
           >
             Remove
@@ -594,15 +564,6 @@ export const getProductColumns = (
       const showMarketplaceBadge: boolean =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
       const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
-      const statusClasses: Record<string, string> = {
-        active: "text-emerald-300 ring-1 ring-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15",
-        pending: "text-amber-300 ring-1 ring-amber-500/25 bg-amber-500/10 hover:bg-amber-500/15",
-        failed: "text-rose-300 ring-1 ring-rose-500/25 bg-rose-500/10 hover:bg-rose-500/15",
-        removed: "text-gray-400 ring-1 ring-gray-500/20 bg-gray-500/10 hover:bg-gray-500/15",
-      };
-      const badgeClass: string =
-        statusClasses[status] ??
-        "text-slate-300 ring-1 ring-slate-500/20 bg-slate-500/10 hover:bg-slate-500/15";
 
       return (
         <div className="inline-flex items-center gap-1">
@@ -622,11 +583,11 @@ export const getProductColumns = (
               onClick={(): void => handleExportClick?.(product)}
               variant="ghost"
               size="icon"
-              className={`size-7 cursor-pointer rounded-full ${badgeClass}`}
+              className="p-0 h-auto w-auto"
               title={`Base.com status: ${status} - Click for export settings`}
               aria-label={`Base.com export settings - status: ${status}`}
             >
-              <Bold className="size-3.5" />
+              <StatusBadge status={status} className="h-7 min-w-[28px] px-1.5" />
             </Button>
           )}
         </div>
@@ -638,27 +599,25 @@ export const getProductColumns = (
     id: "actions",
     cell: ({ row, table }: { row: Row<ProductWithImages>; table: Table<ProductWithImages> }): React.JSX.Element | null => {
       const meta: {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             onProductEditClick?: (p: ProductWithImages) => void;
+            onProductDeleteClick?: (p: ProductWithImages) => void;
             queryClient?: QueryClient;
           } | undefined = table.options.meta as
         | {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             onProductEditClick?: (p: ProductWithImages) => void;
+            onProductDeleteClick?: (p: ProductWithImages) => void;
             queryClient?: QueryClient;
           }
         | undefined;
 
-      const setRefreshTrigger: React.Dispatch<React.SetStateAction<number>> | undefined = meta?.setRefreshTrigger;
       const onProductEditClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductEditClick;
-
-      if (!setRefreshTrigger) return null;
+      const onProductDeleteClick: ((p: ProductWithImages) => void) | undefined = meta?.onProductDeleteClick;
 
       return (
         <ActionsCell
           row={row}
-          setRefreshTrigger={setRefreshTrigger}
           onProductEditClick={onProductEditClick}
+          onProductDeleteClick={onProductDeleteClick}
         />
       );
     },

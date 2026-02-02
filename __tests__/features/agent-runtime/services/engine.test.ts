@@ -1,12 +1,12 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { runAgentControlLoop } from "@/features/agent-runtime/core/engine";
-import * as contextModule from "@/features/agent-runtime/execution/context";
-import * as planModule from "@/features/agent-runtime/execution/plan";
-import * as stepRunnerModule from "@/features/agent-runtime/execution/step-runner";
-import * as finalizeModule from "@/features/agent-runtime/execution/finalize";
-import * as browserModule from "@/features/agent-runtime/tools/playwright/browser";
-import * as memoryCheckpointModule from "@/features/agent-runtime/memory/checkpoint";
+import { runAgentControlLoop } from "@/features/ai/agent-runtime/core/engine";
+import * as contextModule from "@/features/ai/agent-runtime/execution/context";
+import * as planModule from "@/features/ai/agent-runtime/execution/plan";
+import * as stepRunnerModule from "@/features/ai/agent-runtime/execution/step-runner";
+import * as finalizeModule from "@/features/ai/agent-runtime/execution/finalize";
+import * as browserModule from "@/features/ai/agent-runtime/tools/playwright/browser";
+import * as memoryCheckpointModule from "@/features/ai/agent-runtime/memory/checkpoint";
 
 // Mock FS
 vi.mock("fs", () => ({
@@ -35,21 +35,21 @@ vi.mock("@/shared/lib/db/prisma", () => ({
 }));
 
 // Mock Browser
-vi.mock("@/features/agent-runtime/tools/playwright/browser", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/playwright/browser", () => ({
   launchBrowser: vi.fn(),
   createBrowserContext: vi.fn(),
 }));
 
 // Mock Internal Modules
-vi.mock("@/features/agent-runtime/execution/context");
-vi.mock("@/features/agent-runtime/execution/plan");
-vi.mock("@/features/agent-runtime/execution/step-runner");
-vi.mock("@/features/agent-runtime/execution/finalize");
-vi.mock("@/features/agent-runtime/memory/checkpoint");
-vi.mock("@/features/agent-runtime/memory/index", () => ({
+vi.mock("@/features/ai/agent-runtime/execution/context");
+vi.mock("@/features/ai/agent-runtime/execution/plan");
+vi.mock("@/features/ai/agent-runtime/execution/step-runner");
+vi.mock("@/features/ai/agent-runtime/execution/finalize");
+vi.mock("@/features/ai/agent-runtime/memory/checkpoint");
+vi.mock("@/features/ai/agent-runtime/memory/index", () => ({
   validateAndAddAgentLongTermMemory: vi.fn(),
 }));
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
     logAgentAudit: vi.fn(),
 }));
 vi.mock("@/features/observability/server", () => ({

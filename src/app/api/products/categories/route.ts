@@ -56,7 +56,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
           id: (rest as { id?: string }).id ?? fallbackId,
         };
       });
-      return NextResponse.json(normalized as ProductCategory[]);
+      return NextResponse.json(normalized as unknown as ProductCategory[]);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -67,7 +67,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       where: { catalogId },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(categories as ProductCategory[]);
+    return NextResponse.json(categories as unknown as ProductCategory[]);
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -122,7 +122,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         updatedAt: now,
       };
       await db.collection("product_categories").insertOne(category);
-      return NextResponse.json(category as ProductCategory, { status: 201 });
+      return NextResponse.json(category as unknown as ProductCategory, { status: 201 });
     }
 
     if (!process.env.DATABASE_URL) {
@@ -156,7 +156,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       },
     });
 
-    return NextResponse.json(category as ProductCategory, { status: 201 });
+    return NextResponse.json(category as unknown as ProductCategory, { status: 201 });
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

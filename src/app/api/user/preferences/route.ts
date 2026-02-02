@@ -5,7 +5,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { auth } from "@/features/auth/server";
-import { isAbortError } from "@/features/chatbot/utils";
+import { isAbortError } from "@/features/ai/chatbot/utils";
 
 export const runtime = "nodejs";
 

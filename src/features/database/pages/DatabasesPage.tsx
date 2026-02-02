@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel } from "@/shared/ui";
+import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog } from "@/shared/ui";
 import { useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -24,6 +24,7 @@ export default function DatabasesPage(): React.JSX.Element {
   const [logModalContent, setLogModalContent] = useState("");
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
+  const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -123,10 +124,14 @@ export default function DatabasesPage(): React.JSX.Element {
     }
   };
 
-  const handleDeleteRequest = async (backupName: string): Promise<void> => {
-    if (!window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) return;
+  const handleDeleteRequest = useCallback((backupName: string): void => {
+    setBackupToDelete(backupName);
+  }, []);
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!backupToDelete) return;
     try {
-      const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName });
+      const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName: backupToDelete });
       if (result.ok) {
         toast("Backup deleted successfully.", { variant: "success" });
       } else {
@@ -135,6 +140,8 @@ export default function DatabasesPage(): React.JSX.Element {
     } catch (error: unknown) {
       console.error("Error deleting backup:", error);
       toast("An error occurred during deletion.", { variant: "error" });
+    } finally {
+      setBackupToDelete(null);
     }
   };
 
@@ -188,6 +195,16 @@ export default function DatabasesPage(): React.JSX.Element {
           onConfirm={(t: boolean): void => { void handleRestoreConfirm(t); }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!backupToDelete}
+        onOpenChange={(open) => !open && setBackupToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Backup"
+        description={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
 
       {/* Tabs */}
       <div className="mb-6 border-b border">

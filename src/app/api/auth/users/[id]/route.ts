@@ -7,7 +7,7 @@ import { auth } from "@/features/auth/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
-import type { AuthUserSummary } from "@/features/auth/server";
+import type { AuthUserSummary, AuthUserDto } from "@/features/auth/server";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -102,7 +102,7 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
       throw notFoundError("User not found.");
     }
 
-    const payload: AuthUserSummary = {
+    const payload: AuthUserDto = {
       id: updated._id.toString(),
       email: updated.email ?? null,
       name: updated.name ?? null,
@@ -111,6 +111,8 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: 
         ? updated.emailVerified.toISOString()
         : null,
       provider,
+      createdAt: updated.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: updated.updatedAt?.toISOString() ?? new Date().toISOString(),
     };
     return NextResponse.json(payload);
   } catch (error) {

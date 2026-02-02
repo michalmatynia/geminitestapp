@@ -1,0 +1,47 @@
+import type { Entity, Status } from '@/shared/types/base-types';
+
+export interface JobDto extends Entity {
+  type: string;
+  status: Status;
+  progress: number;
+  data: Record<string, unknown>;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+}
+
+export interface ProductAiJobDto extends JobDto {
+  productId: string;
+  operation: 'generate_description' | 'optimize_images' | 'categorize' | 'tag_generation';
+  aiModel: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface CreateJobDto {
+  type: string;
+  data: Record<string, unknown>;
+  priority?: number;
+}
+
+export interface UpdateJobDto {
+  status?: JobStatus;
+  progress?: number;
+  result?: Record<string, unknown>;
+  error?: string;
+}
+
+export interface JobQueueStatsDto {
+  pending: number;
+  running: number;
+  completed: number;
+  failed: number;
+  total: number;
+}
+
+export interface CreateProductAiJobDto {
+  productId: string;
+  operation: 'generate_description' | 'optimize_images' | 'categorize' | 'tag_generation';
+  aiModel?: string;
+  parameters?: Record<string, unknown>;
+}

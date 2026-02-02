@@ -1,8 +1,8 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { finalizeAgentRun } from "@/features/agent-runtime/execution/finalize";
-import * as llmPlanning from "@/features/agent-runtime/planning/llm";
-import * as browserContextModule from "@/features/agent-runtime/browsing/context";
+import { finalizeAgentRun } from "@/features/ai/agent-runtime/execution/finalize";
+import * as llmPlanning from "@/features/ai/agent-runtime/planning/llm";
+import * as browserContextModule from "@/features/ai/agent-runtime/browsing/context";
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {
@@ -10,24 +10,24 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
   logAgentAudit: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/memory", () => ({
+vi.mock("@/features/ai/agent-runtime/memory", () => ({
   addAgentMemory: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/memory/checkpoint", () => ({
+vi.mock("@/features/ai/agent-runtime/memory/checkpoint", () => ({
   buildCheckpointState: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock("@/features/agent-runtime/planning/llm", () => ({
+vi.mock("@/features/ai/agent-runtime/planning/llm", () => ({
   verifyPlanWithLLM: vi.fn(),
   buildSelfImprovementReviewWithLLM: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/browsing/context", () => ({
+vi.mock("@/features/ai/agent-runtime/browsing/context", () => ({
   getBrowserContextSummary: vi.fn(),
 }));
 

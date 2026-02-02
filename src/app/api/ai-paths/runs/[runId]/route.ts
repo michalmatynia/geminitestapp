@@ -4,8 +4,8 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
-import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai-paths/server";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
+import { assertAiPathRunAccess, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 
 async function GET_handler(
   req: NextRequest,

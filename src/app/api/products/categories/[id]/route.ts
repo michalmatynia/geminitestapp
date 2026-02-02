@@ -227,7 +227,7 @@ async function PUT_handler(
       const updated = await db
         .collection<MongoCategory>("product_categories")
         .findOne({ id: params.id });
-      return NextResponse.json(updated as unknown as ProductCategory);
+      return NextResponse.json(updated as unknown as unknown as ProductCategory);
     }
 
     if (!process.env.DATABASE_URL) {
@@ -306,7 +306,7 @@ async function PUT_handler(
       },
     });
 
-    return NextResponse.json(category as ProductCategory);
+    return NextResponse.json(category as unknown as ProductCategory);
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,

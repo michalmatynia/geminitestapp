@@ -4,7 +4,7 @@ import type { IndexSpecification } from "mongodb";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { AI_PATHS_MONGO_INDEXES } from "@/features/ai-paths/services/path-run-repository/mongo-path-run-repository";
+import { AI_PATHS_MONGO_INDEXES } from "@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository";
 
 type IndexInfo = {
   name?: string;

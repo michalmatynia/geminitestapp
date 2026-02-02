@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import type { AiPathRunStatus } from "@/shared/types/ai-paths";
-import { requireAiPathsAccess } from "@/features/ai-paths/server";
+import { requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 
 const RUN_STATUSES: AiPathRunStatus[] = [
   "queued",

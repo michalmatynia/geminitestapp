@@ -3,7 +3,7 @@ import {
     jsonValueToRecord, 
     reminderList, 
     buildSelfImprovementPlaybook 
-} from "@/features/agent-runtime/core/utils";
+} from "@/features/ai/agent-runtime/core/utils";
 
 describe("Agent Runtime - Core Utils", () => {
   describe("jsonValueToRecord", () => {

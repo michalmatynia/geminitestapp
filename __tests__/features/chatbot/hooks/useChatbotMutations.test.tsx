@@ -6,11 +6,11 @@ import {
   useUpdateSessionTitle, 
   useDeleteChatbotSession,
   useSaveChatbotSettings 
-} from "@/features/chatbot/hooks/useChatbotMutations";
-import * as chatbotApi from "@/features/chatbot/api";
+} from "@/features/ai/chatbot/hooks/useChatbotMutations";
+import * as chatbotApi from "@/features/ai/chatbot/api";
 
 
-vi.mock("@/features/chatbot/api", () => ({
+vi.mock("@/features/ai/chatbot/api", () => ({
   chatbotQueryKeys: {
     sessions: () => ["chatbot", "sessions"],
     session: (id: string) => ["chatbot", "session", id],

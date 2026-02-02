@@ -1,9 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { runPlanStepLoop } from "@/features/agent-runtime/execution/step-runner";
-import * as toolsModule from "@/features/agent-runtime/tools/index";
-import * as llmPlanning from "@/features/agent-runtime/planning/llm";
-import * as auditGate from "@/features/agent-runtime/audit/gate";
+import { runPlanStepLoop } from "@/features/ai/agent-runtime/execution/step-runner";
+import * as toolsModule from "@/features/ai/agent-runtime/tools/index";
+import * as llmPlanning from "@/features/ai/agent-runtime/planning/llm";
+import * as auditGate from "@/features/ai/agent-runtime/audit/gate";
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {
@@ -14,26 +14,26 @@ vi.mock("@/shared/lib/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/features/agent-runtime/audit", () => ({
+vi.mock("@/features/ai/agent-runtime/audit", () => ({
   logAgentAudit: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/memory", () => ({
+vi.mock("@/features/ai/agent-runtime/memory", () => ({
   addAgentMemory: vi.fn(),
   validateAndAddAgentLongTermMemory: vi.fn().mockResolvedValue({ valid: true }),
 }));
 
-vi.mock("@/features/agent-runtime/memory/checkpoint", () => ({
+vi.mock("@/features/ai/agent-runtime/memory/checkpoint", () => ({
   persistCheckpoint: vi.fn().mockResolvedValue(undefined),
   buildCheckpointState: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock("@/features/agent-runtime/tools/index", () => ({
+vi.mock("@/features/ai/agent-runtime/tools/index", () => ({
   runAgentTool: vi.fn(),
   runAgentBrowserControl: vi.fn().mockResolvedValue({ ok: true, output: { snapshotId: "snap-2" } }),
 }));
 
-vi.mock("@/features/agent-runtime/planning/llm", () => ({
+vi.mock("@/features/ai/agent-runtime/planning/llm", () => ({
   buildPlanWithLLM: vi.fn(),
   buildAdaptivePlanReview: vi.fn().mockResolvedValue({ shouldReplan: false }),
   buildCheckpointBriefWithLLM: vi.fn(),
@@ -43,16 +43,16 @@ vi.mock("@/features/agent-runtime/planning/llm", () => ({
   summarizePlannerMemoryWithLLM: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/browsing/context", () => ({
+vi.mock("@/features/ai/agent-runtime/browsing/context", () => ({
   getBrowserContextSummary: vi.fn().mockResolvedValue({ url: "http://test.com" }),
 }));
 
-vi.mock("@/features/agent-runtime/audit/gate", () => ({
+vi.mock("@/features/ai/agent-runtime/audit/gate", () => ({
   requiresHumanApproval: vi.fn().mockReturnValue(false),
   evaluateApprovalGateWithLLM: vi.fn(),
 }));
 
-vi.mock("@/features/agent-runtime/execution/loop-guard", () => ({
+vi.mock("@/features/ai/agent-runtime/execution/loop-guard", () => ({
   detectLoopPattern: vi.fn().mockReturnValue(null),
   buildLoopGuardReview: vi.fn(),
 }));
@@ -133,7 +133,7 @@ describe("Agent Runtime - Step Runner", () => {
   });
 
   it("should detect loops and trigger loop guard", async () => {
-      const loopGuardModule = await import("@/features/agent-runtime/execution/loop-guard");
+      const loopGuardModule = await import("@/features/ai/agent-runtime/execution/loop-guard");
       (loopGuardModule.detectLoopPattern as any).mockReturnValue({ pattern: "repeat-same-step", reason: "Repeat" });
       (loopGuardModule.buildLoopGuardReview as any).mockResolvedValue({
           action: "replan",

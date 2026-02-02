@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
+import { AgentCreatorSettingsSection } from "@/features/ai/agentcreator/components/AgentCreatorSettingsSection";
 import { vi } from "vitest";
 
 describe("AgentCreatorSettingsSection Component", () => {

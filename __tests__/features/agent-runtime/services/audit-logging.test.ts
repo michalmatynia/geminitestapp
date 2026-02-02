@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/agent-runtime/audit/index";
+import { logAgentAudit } from "@/features/ai/agent-runtime/audit/index";
 
 vi.mock("@/shared/lib/db/prisma", () => ({
   default: {

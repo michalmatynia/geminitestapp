@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
+import { AgentCreatorSettingsSection } from "@/features/ai/agentcreator/components/AgentCreatorSettingsSection";
 
 describe("AgentCreatorSettingsSection", () => {
   const defaultProps = {

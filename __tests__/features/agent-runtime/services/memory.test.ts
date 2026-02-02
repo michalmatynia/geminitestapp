@@ -4,7 +4,7 @@ import {
   addAgentMemory,
   listAgentMemory,
   validateAgentLongTermMemory,
-} from "@/features/agent-runtime/memory/index";
+} from "@/features/ai/agent-runtime/memory/index";
 
 // Mock Prisma
 vi.mock("@/shared/lib/db/prisma", () => ({

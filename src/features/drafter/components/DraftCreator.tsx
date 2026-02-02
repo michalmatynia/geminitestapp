@@ -5,20 +5,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
 import type { CatalogRecord } from "@/features/products";
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
+import { PRODUCT_ICONS } from "@/shared/constants/product-icons";
 import {
-  Package,
-  ShoppingCart,
-  Tag,
-  Star,
-  Heart,
-  Zap,
-  Gift,
-  Truck,
-  DollarSign,
-  Award,
-  Box,
-  Sparkles,
-  type LucideIcon,
+  PlusIcon,
+  Edit2Icon,
+  TrashIcon,
+  CheckIcon,
+  XIcon,
 } from "lucide-react";
 import { useDraft, useCreateDraft, useUpdateDraft } from "@/features/drafter/hooks/useDrafts";
 import { useCatalogs } from "@/features/products/hooks/useProductMetadata";
@@ -301,22 +294,6 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
   const getParameterLabel = (parameter: ProductParameter): string =>
     parameter.name_en || parameter.name_pl || parameter.name_de || "Unnamed parameter";
 
-  // Available icons
-  const availableIcons: { id: string; icon: LucideIcon; label: string }[] = [
-    { id: "package", icon: Package, label: "Package" },
-    { id: "shopping-cart", icon: ShoppingCart, label: "Shopping Cart" },
-    { id: "tag", icon: Tag, label: "Tag" },
-    { id: "star", icon: Star, label: "Star" },
-    { id: "heart", icon: Heart, label: "Heart" },
-    { id: "zap", icon: Zap, label: "Lightning" },
-    { id: "gift", icon: Gift, label: "Gift" },
-    { id: "truck", icon: Truck, label: "Truck" },
-    { id: "dollar-sign", icon: DollarSign, label: "Dollar" },
-    { id: "award", icon: Award, label: "Award" },
-    { id: "box", icon: Box, label: "Box" },
-    { id: "sparkles", icon: Sparkles, label: "Sparkles" },
-  ];
-
   if (draftQuery.isLoading) {
     return (
       <div className="rounded-lg bg-card p-6">
@@ -384,8 +361,8 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="grid grid-cols-6 gap-2">
-                {availableIcons.map((item: { id: string; icon: LucideIcon; label: string }): React.JSX.Element => {
-                  const IconComponent: LucideIcon = item.icon;
+                {PRODUCT_ICONS.map((item): React.JSX.Element => {
+                  const IconComponent = item.icon;
                   return (
                     <Button
                       key={item.id}

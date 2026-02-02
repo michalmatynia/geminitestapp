@@ -10,11 +10,12 @@ import {
   SectionPanel,
   Switch,
   useToast,
+  ConfirmDialog,
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { useBackgroundSyncStatus } from "@/shared/providers/BackgroundSyncProvider";
-import { useOfflineSync } from "@/shared/hooks/useOfflineMutation";
-import { useOfflineQueueStatus, type OfflineQueueItem } from "@/shared/hooks/useOfflineQueueStatus";
+import { useOfflineSync } from "@/shared/hooks/offline";
+import { useOfflineQueueStatus, type OfflineQueueItem } from "@/shared/hooks/offline";
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: "background_sync_enabled",
@@ -52,6 +53,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
 
   const [enabled, setEnabled] = useState(storedEnabled);
   const [intervalSeconds, setIntervalSeconds] = useState(storedInterval);
+  const [isClearQueueConfirmOpen, setIsClearQueueConfirmOpen] = useState(false);
 
   useEffect(() => {
     setEnabled(storedEnabled);
@@ -92,7 +94,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   };
 
   const handleClearQueue = (): void => {
-    if (!window.confirm("Clear all offline queued mutations?")) return;
     offlineQueue.clear();
     toast("Offline queue cleared", { variant: "success" });
   };
@@ -108,6 +109,16 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           </Link>
         }
         className="mb-8"
+      />
+
+      <ConfirmDialog
+        open={isClearQueueConfirmOpen}
+        onOpenChange={setIsClearQueueConfirmOpen}
+        onConfirm={handleClearQueue}
+        title="Clear Offline Queue"
+        description="This will remove all pending mutations that haven't been synced to the server yet. This action cannot be undone."
+        confirmText="Clear All"
+        variant="destructive"
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -184,7 +195,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             <Button variant="outline" onClick={(): void => offlineQueue.refresh()}>
               Refresh
             </Button>
-            <Button variant="outline" className="text-red-200 hover:text-red-100" onClick={handleClearQueue}>
+            <Button variant="outline" className="text-red-200 hover:text-red-100" onClick={() => setIsClearQueueConfirmOpen(true)}>
               Clear Queue
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import prisma from "@/shared/lib/db/prisma";
-import { captureSessionContext, captureSnapshot } from "@/features/agent-runtime/tools/playwright/browser";
+import { captureSessionContext, captureSnapshot } from "@/features/ai/agent-runtime/tools/playwright/browser";
 import { promises as fs } from "fs";
 
 vi.mock("@/shared/lib/db/prisma", () => ({

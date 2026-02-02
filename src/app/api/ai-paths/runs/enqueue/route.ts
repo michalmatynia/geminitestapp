@@ -6,10 +6,10 @@ import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
-import { enqueuePathRun } from "@/features/ai-paths/services/path-run-service";
+import { enqueuePathRun } from "@/features/ai/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
 import type { AiNode, Edge } from "@/shared/types/ai-paths";
-import { enforceAiPathsRunRateLimit, requireAiPathsAccess } from "@/features/ai-paths/server";
+import { enforceAiPathsRunRateLimit, requireAiPathsAccess } from "@/features/ai/ai-paths/server";
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),

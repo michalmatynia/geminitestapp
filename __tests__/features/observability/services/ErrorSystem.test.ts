@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import { logger } from '@/shared/utils/logger';
-import { logAgentAudit } from '@/features/agent-runtime/server';
+import { logAgentAudit } from '@/features/ai/agent-runtime/server';
 
 // Mock dependencies
 vi.mock('@/shared/utils/logger', () => ({
@@ -12,7 +12,7 @@ vi.mock('@/shared/utils/logger', () => ({
   },
 }));
 
-vi.mock('@/features/agent-runtime/server', () => ({
+vi.mock('@/features/ai/agent-runtime/server', () => ({
   logAgentAudit: vi.fn(),
 }));
 

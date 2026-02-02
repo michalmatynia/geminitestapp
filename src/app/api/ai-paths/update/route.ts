@@ -16,7 +16,7 @@ import {
   enforceAiPathsActionRateLimit,
   ensureAiPathsPermission,
   requireAiPathsAccess,
-} from "@/features/ai-paths/server";
+} from "@/features/ai/ai-paths/server";
 
 const updateSchema = z.object({
   entityType: z.enum(["product", "note", "custom"]),

@@ -2,6 +2,7 @@
 import { Button, ListPanel, useToast, SectionHeader } from "@/shared/ui";
 import { useState } from "react";
 import { useDrafts, useDeleteDraft } from "@/features/drafter/hooks/useDrafts";
+import type { ProductDraft } from "@/features/products/types/drafts";
 
 import {
   PlusIcon,
@@ -9,62 +10,34 @@ import {
   TrashIcon,
   CheckIcon,
   XIcon,
-  Package,
-  ShoppingCart,
-  Tag,
-  Star,
-  Heart,
-  Zap,
-  Gift,
-  Truck,
-  DollarSign,
-  Award,
-  Box,
-  Sparkles,
 } from "lucide-react";
+import { PRODUCT_ICON_MAP } from "@/shared/constants/product-icons";
+import { ConfirmDialog } from "@/shared/ui";
 
 interface DraftListProps {
   onEdit: (id: string) => void;
   onCreateNew: () => void;
-  refreshTrigger?: number;
 }
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  package: Package,
-  "shopping-cart": ShoppingCart,
-  tag: Tag,
-  star: Star,
-  heart: Heart,
-  zap: Zap,
-  gift: Gift,
-  truck: Truck,
-  "dollar-sign": DollarSign,
-  award: Award,
-  box: Box,
-  sparkles: Sparkles,
-};
-
-import type { ProductDraft } from "@/features/products/types/drafts";
 
 export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.Element {
   const { data: drafts = [], isLoading: loading } = useDrafts();
   const deleteDraftMutation = useDeleteDraft();
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [draftToDelete, setDraftToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDelete = async (id: string): Promise<void> => {
-    const confirmed = window.confirm("Are you sure you want to delete this draft?");
-    if (!confirmed) return;
-
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!draftToDelete) return;
     try {
-      setDeleting(id);
-      await deleteDraftMutation.mutateAsync(id);
+      setDeleting(draftToDelete);
+      await deleteDraftMutation.mutateAsync(draftToDelete);
       toast("Draft deleted successfully", { variant: "success" });
     } catch (error) {
       console.error("Failed to delete draft:", error);
       toast("Failed to delete draft", { variant: "error" });
     } finally {
       setDeleting(null);
+      setDraftToDelete(null);
     }
   };
 
@@ -83,6 +56,15 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
         />
       }
     >
+      <ConfirmDialog
+        open={!!draftToDelete}
+        onOpenChange={(open) => !open && setDraftToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Draft"
+        description="Are you sure you want to delete this draft? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
       {loading ? (
         <p className="text-sm text-gray-400">Loading drafts...</p>
       ) : drafts.length === 0 ? (
@@ -104,7 +86,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                   <div className="flex items-center gap-3">
                     {draft.icon &&
                       ((): React.JSX.Element | null => {
-                        const IconComponent = iconMap[draft.icon];
+                        const IconComponent = PRODUCT_ICON_MAP[draft.icon];
                         return IconComponent ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400">
                             <IconComponent className="h-4 w-4" />
@@ -175,7 +157,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
                     Edit
                   </Button>
                   <Button
-                    onClick={() => void handleDelete(draft.id)}
+                    onClick={() => setDraftToDelete(draft.id)}
                     variant="outline"
                     size="sm"
                     disabled={deleting === draft.id}

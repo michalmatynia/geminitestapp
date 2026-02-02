@@ -1,8 +1,8 @@
 import "server-only";
 
 import type { AiPathRunRecord } from "@/shared/types/ai-paths";
-import { executePathRun } from "@/features/ai-paths/services/path-run-executor";
-import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
+import { executePathRun } from "@/features/ai/ai-paths/services/path-run-executor";
+import { getPathRunRepository } from "@/features/ai/ai-paths/services/path-run-repository";
 import { ErrorSystem } from "@/features/observability/services/error-system";
 
 let intervalId: NodeJS.Timeout | null = null;

@@ -15,8 +15,7 @@ import { AllegroApiConsole } from "./AllegroApiConsole";
 import { AllegroSettings } from "./AllegroSettings";
 import { BaselinkerSettings } from "./BaselinkerSettings";
 import { TestLogModal } from "./TestLogModal";
-import { TestErrorModal } from "./TestErrorModal";
-import { TestSuccessModal } from "./TestSuccessModal";
+import { TestResultModal } from "./TestResultModal";
 import { SessionModal } from "./SessionModal";
 
 
@@ -542,11 +541,12 @@ export function IntegrationModal({
           <TestLogModal selectedStep={selectedStep} onClose={onCloseTestLogModal} />
         )}
 
-        {showTestErrorModal && testError && (
-          <TestErrorModal
-            testError={testError}
-            testErrorMeta={
-              testErrorMeta
+        {(showTestErrorModal || showTestSuccessModal) && (testError || testSuccessMessage) && (
+          <TestResultModal
+            success={showTestSuccessModal}
+            message={showTestSuccessModal ? testSuccessMessage : testError}
+            meta={
+              !showTestSuccessModal && testErrorMeta
                 ? {
                     ...(testErrorMeta.errorId !== undefined && {
                       errorId: testErrorMeta.errorId,
@@ -560,14 +560,7 @@ export function IntegrationModal({
                   }
                 : null
             }
-            onClose={onCloseTestErrorModal}
-          />
-        )}
-
-        {showTestSuccessModal && testSuccessMessage && (
-          <TestSuccessModal
-            message={testSuccessMessage}
-            onClose={onCloseTestSuccessModal}
+            onClose={showTestSuccessModal ? onCloseTestSuccessModal : onCloseTestErrorModal}
           />
         )}
 

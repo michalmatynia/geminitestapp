@@ -1,11 +1,10 @@
+import React from "react";
 /* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 "use client";
 
-import React from "react";
 import {
-  ModalShell,
+  SharedModal,
   Button,
-  AppModal,
   Input,
   Label,
   Textarea,
@@ -223,252 +222,247 @@ export function CatalogModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={catalog ? "Edit Catalog" : "Create Catalog"}
+      header={header}
+      size="lg"
     >
-      <ModalShell
-        title={catalog ? "Edit Catalog" : "Create Catalog"}
-        onClose={onClose}
-        header={header}
-        size="lg"
-      >
-        <div className="space-y-6">
-          {error && (
-            <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
-              {error}
+      <div className="space-y-6">
+        {error && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="catalog-name">Name</Label>
+            <Input
+              id="catalog-name"
+              value={form.name}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, name: e.target.value }))
+              }
+              placeholder="e.g. Main Store"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="catalog-desc">Description</Label>
+            <Textarea
+              id="catalog-desc"
+              value={form.description}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, description: e.target.value }))
+              }
+              placeholder="Optional description..."
+              rows={2}
+            />
+          </div>
+          <Label className="flex items-center gap-2 text-gray-300">
+            <Checkbox
+              checked={form.isDefault}
+              onCheckedChange={(v) =>
+                setForm((p) => ({ ...p, isDefault: Boolean(v) }))
+              }
+            />
+            Set as default catalog
+          </Label>
+        </div>
+
+        <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
+          <Label className="text-sm font-semibold text-white">
+            Languages
+          </Label>
+          {languagesLoading ? (
+            <p className="text-xs text-gray-500">Loading languages...</p>
+          ) : languagesError ? (
+            <p className="text-xs text-red-400">{languagesError}</p>
+          ) : (
+            <div className="space-y-4">
+              <Input
+                placeholder="Search languages..."
+                value={languageQuery}
+                onChange={(e) => setLanguageQuery(e.target.value)}
+              />
+
+              <div className="space-y-1">
+                {selectedLanguageIds.length === 0 ? (
+                  <p className="text-xs text-gray-500">
+                    No languages selected.
+                  </p>
+                ) : (
+                  selectedLanguageIds.map((id, index) => {
+                    const lang = languages.find((l) => l.id === id);
+                    if (!lang) return null;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 w-4">
+                            {index + 1}.
+                          </span>
+                          <span>
+                            {lang.name} ({lang.code})
+                          </span>
+                          {id === defaultLanguageId && (
+                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => moveLanguage(id, "up")}
+                            disabled={index === 0}
+                          >
+                            ↑
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => moveLanguage(id, "down")}
+                            disabled={
+                              index === selectedLanguageIds.length - 1
+                            }
+                          >
+                            ↓
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-red-400"
+                            onClick={() => toggleLanguage(id)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
+                {availableLanguages.map((lang) => (
+                  <Button
+                    key={lang.id}
+                    variant="ghost"
+                    className="w-full justify-between h-8 px-2"
+                    onClick={() => toggleLanguage(lang.id)}
+                  >
+                    <span>
+                      {lang.name} ({lang.code})
+                    </span>
+                    <span className="text-gray-500">Add</span>
+                  </Button>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-400">
+                  Default language
+                </Label>
+                <select
+                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                  value={defaultLanguageId}
+                  onChange={(e) => setDefaultLanguageId(e.target.value)}
+                  disabled={selectedLanguageIds.length === 0}
+                >
+                  <option value="">Select default...</option>
+                  {selectedLanguageIds.map((id) => {
+                    const lang = languages.find((l) => l.id === id);
+                    return (
+                      <option key={id} value={id}>
+                        {lang?.name} ({lang?.code})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             </div>
           )}
+        </div>
 
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="catalog-name">Name</Label>
-              <Input
-                id="catalog-name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, name: e.target.value }))
-                }
-                placeholder="e.g. Main Store"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="catalog-desc">Description</Label>
-              <Textarea
-                id="catalog-desc"
-                value={form.description}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, description: e.target.value }))
-                }
-                placeholder="Optional description..."
-                rows={2}
-              />
-            </div>
-            <Label className="flex items-center gap-2 text-gray-300">
-              <Checkbox
-                checked={form.isDefault}
-                onCheckedChange={(v) =>
-                  setForm((p) => ({ ...p, isDefault: Boolean(v) }))
-                }
-              />
-              Set as default catalog
-            </Label>
-          </div>
-
-          <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
-            <Label className="text-sm font-semibold text-white">
-              Languages
-            </Label>
-            {languagesLoading ? (
-              <p className="text-xs text-gray-500">Loading languages...</p>
-            ) : languagesError ? (
-              <p className="text-xs text-red-400">{languagesError}</p>
-            ) : (
-              <div className="space-y-4">
-                <Input
-                  placeholder="Search languages..."
-                  value={languageQuery}
-                  onChange={(e) => setLanguageQuery(e.target.value)}
-                />
-
-                <div className="space-y-1">
-                  {selectedLanguageIds.length === 0 ? (
-                    <p className="text-xs text-gray-500">
-                      No languages selected.
-                    </p>
-                  ) : (
-                    selectedLanguageIds.map((id, index) => {
-                      const lang = languages.find((l) => l.id === id);
-                      if (!lang) return null;
-                      return (
-                        <div
-                          key={id}
-                          className="flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-500 w-4">
-                              {index + 1}.
-                            </span>
-                            <span>
-                              {lang.name} ({lang.code})
-                            </span>
-                            {id === defaultLanguageId && (
-                              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
-                                Default
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => moveLanguage(id, "up")}
-                              disabled={index === 0}
-                            >
-                              ↑
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => moveLanguage(id, "down")}
-                              disabled={
-                                index === selectedLanguageIds.length - 1
-                              }
-                            >
-                              ↓
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-red-400"
-                              onClick={() => toggleLanguage(id)}
-                            >
-                              ×
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
-                  {availableLanguages.map((lang) => (
+        <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
+          <Label className="text-sm font-semibold text-white">
+            Price Groups
+          </Label>
+          {loadingGroups ? (
+            <p className="text-xs text-gray-500">Loading groups...</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {catalogPriceGroupIds.map((id) => {
+                  const group = priceGroups.find((g) => g.id === id);
+                  return (
                     <Button
-                      key={lang.id}
-                      variant="ghost"
-                      className="w-full justify-between h-8 px-2"
-                      onClick={() => toggleLanguage(lang.id)}
+                      key={id}
+                      variant="secondary"
+                      className="h-7 rounded-full px-3 text-xs"
+                      onClick={() => togglePriceGroup(id)}
                     >
-                      <span>
-                        {lang.name} ({lang.code})
-                      </span>
-                      <span className="text-gray-500">Add</span>
+                      {group?.name ?? id}{" "}
+                      <span className="ml-1 text-gray-500">×</span>
                     </Button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">
-                    Default language
-                  </Label>
-                  <select
-                    className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
-                    value={defaultLanguageId}
-                    onChange={(e) => setDefaultLanguageId(e.target.value)}
-                    disabled={selectedLanguageIds.length === 0}
-                  >
-                    <option value="">Select default...</option>
-                    {selectedLanguageIds.map((id) => {
-                      const lang = languages.find((l) => l.id === id);
-                      return (
-                        <option key={id} value={id}>
-                          {lang?.name} ({lang?.code})
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
 
-          <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
-            <Label className="text-sm font-semibold text-white">
-              Price Groups
-            </Label>
-            {loadingGroups ? (
-              <p className="text-xs text-gray-500">Loading groups...</p>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
+              <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
+                {priceGroups.map((group) => (
+                  <Button
+                    key={group.id}
+                    variant="ghost"
+                    className="w-full justify-between h-8 px-2"
+                    onClick={() => togglePriceGroup(group.id)}
+                  >
+                    <span>
+                      {group.name} ({group.currencyCode})
+                    </span>
+                    <span>
+                      {catalogPriceGroupIds.includes(group.id)
+                        ? "Remove"
+                        : "Add"}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-400">
+                  Default price group
+                </Label>
+                <select
+                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
+                  value={catalogDefaultPriceGroupId}
+                  onChange={(e) =>
+                    setCatalogDefaultPriceGroupId(e.target.value)
+                  }
+                  disabled={catalogPriceGroupIds.length === 0}
+                >
+                  <option value="">Select default...</option>
                   {catalogPriceGroupIds.map((id) => {
                     const group = priceGroups.find((g) => g.id === id);
                     return (
-                      <Button
-                        key={id}
-                        variant="secondary"
-                        className="h-7 rounded-full px-3 text-xs"
-                        onClick={() => togglePriceGroup(id)}
-                      >
-                        {group?.name ?? id}{" "}
-                        <span className="ml-1 text-gray-500">×</span>
-                      </Button>
+                      <option key={id} value={id}>
+                        {group?.name}
+                      </option>
                     );
                   })}
-                </div>
-
-                <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
-                  {priceGroups.map((group) => (
-                    <Button
-                      key={group.id}
-                      variant="ghost"
-                      className="w-full justify-between h-8 px-2"
-                      onClick={() => togglePriceGroup(group.id)}
-                    >
-                      <span>
-                        {group.name} ({group.currencyCode})
-                      </span>
-                      <span>
-                        {catalogPriceGroupIds.includes(group.id)
-                          ? "Remove"
-                          : "Add"}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-400">
-                    Default price group
-                  </Label>
-                  <select
-                    className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
-                    value={catalogDefaultPriceGroupId}
-                    onChange={(e) =>
-                      setCatalogDefaultPriceGroupId(e.target.value)
-                    }
-                    disabled={catalogPriceGroupIds.length === 0}
-                  >
-                    <option value="">Select default...</option>
-                    {catalogPriceGroupIds.map((id) => {
-                      const group = priceGroups.find((g) => g.id === id);
-                      return (
-                        <option key={id} value={id}>
-                          {group?.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                </select>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </ModalShell>
-    </AppModal>
+      </div>
+    </SharedModal>
   );
 }

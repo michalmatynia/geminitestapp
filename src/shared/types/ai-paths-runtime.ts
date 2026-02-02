@@ -4,7 +4,7 @@ import type {
   RuntimePortValues,
 } from "./ai-paths";
 
-export type ToastFn = (message: string, options?: { variant?: "success" | "error" }) => void;
+export type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 export type NodeHandlerContext = {
   node: AiNode;

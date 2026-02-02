@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { buildPlanWithLLM, evaluatePlanWithLLM } from "@/features/agent-runtime/planning/llm";
+import { buildPlanWithLLM, evaluatePlanWithLLM } from "@/features/ai/agent-runtime/planning/llm";
 
 // Mock fetch for Ollama inside tests
 // global.fetch = vi.fn();

@@ -1,8 +1,8 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { addProblemSolutionMemory } from "@/features/agent-runtime/memory/context";
-import * as memoryModule from "@/features/agent-runtime/memory";
+import { addProblemSolutionMemory } from "@/features/ai/agent-runtime/memory/context";
+import * as memoryModule from "@/features/ai/agent-runtime/memory";
 
-vi.mock("@/features/agent-runtime/memory", () => ({
+vi.mock("@/features/ai/agent-runtime/memory", () => ({
   validateAndAddAgentLongTermMemory: vi.fn().mockResolvedValue({ skipped: false }),
 }));
 

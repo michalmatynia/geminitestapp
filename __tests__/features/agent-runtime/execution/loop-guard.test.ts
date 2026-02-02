@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectLoopPattern } from "@/features/agent-runtime/execution/loop-guard";
+import { detectLoopPattern } from "@/features/ai/agent-runtime/execution/loop-guard";
 
 describe("Agent Loop Guard", () => {
   describe("detectLoopPattern", () => {

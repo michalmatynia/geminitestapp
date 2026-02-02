@@ -1,16 +1,13 @@
-/* eslint-disable @typescript-eslint/typedef, @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
-"use client";
-
 import React from "react";
 import {
   Button,
   Input,
   Label,
-  AppModal,
-  ModalShell,
+  SharedModal,
   useToast,
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
+import { countryCodeOptions } from "@/shared/constants/internationalization";
 import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
 
 interface CurrencyModalProps {
@@ -29,7 +26,7 @@ export function CurrencyModal({
   const { toast } = useToast();
   const saveMutation = useSaveCurrencyMutation();
   const [form, setForm] = React.useState({
-    code: "PLN",
+    code: "",
     name: "",
     symbol: "",
   });
@@ -42,7 +39,8 @@ export function CurrencyModal({
         symbol: currency.symbol ?? "",
       });
     } else {
-      setForm({ code: "PLN", name: "", symbol: "" });
+      const def = countryCodeOptions[0];
+      setForm({ code: "PLN", name: "Polish Zloty", symbol: "zł" });
     }
   }, [currency]);
 
@@ -58,7 +56,7 @@ export function CurrencyModal({
         data: {
           code: form.code.trim().toUpperCase(),
           name: form.name.trim(),
-          symbol: form.symbol.trim() || undefined,
+          symbol: form.symbol.trim() || null,
         },
       });
 
@@ -97,55 +95,49 @@ export function CurrencyModal({
   );
 
   return (
-    <AppModal
+    <SharedModal
       open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={currency ? "Edit Currency" : "Add Currency"}
+      header={header}
+      size="md"
     >
-      <ModalShell
-        title={currency ? "Edit Currency" : "Add Currency"}
-        onClose={onClose}
-        header={header}
-        size="md"
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="curr-code">Code</Label>
-            <select
-              id="curr-code"
-              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
-              value={form.code}
-              onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
-            >
-              {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="curr-name">Name</Label>
-            <Input
-              id="curr-name"
-              value={form.name}
-              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              placeholder="e.g. Polish Zloty"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="curr-symbol">Symbol</Label>
-            <Input
-              id="curr-symbol"
-              value={form.symbol}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, symbol: e.target.value }))
-              }
-              placeholder="e.g. zł"
-            />
-          </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="currency-code">Code</Label>
+          <select
+            id="currency-code"
+            className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
+            value={form.code}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, code: e.target.value }));
+            }}
+          >
+            {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
         </div>
-      </ModalShell>
-    </AppModal>
+        <div className="space-y-2">
+          <Label htmlFor="currency-name">Name</Label>
+          <Input
+            id="currency-name"
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="currency-symbol">Symbol (optional)</Label>
+          <Input
+            id="currency-symbol"
+            value={form.symbol}
+            onChange={(e) => setForm((p) => ({ ...p, symbol: e.target.value }))}
+            placeholder="$"
+          />
+        </div>
+      </div>
+    </SharedModal>
   );
 }

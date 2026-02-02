@@ -55,8 +55,10 @@ export function ParserNodeConfigSection({
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
 
+  const isParserNode = selectedNode.type === "parser";
+
   React.useEffect((): void | (() => void) => {
-    if (selectedNode.type !== "parser") return;
+    if (!isParserNode) return;
     const nextMappings =
       selectedNode.config?.parser?.mappings ??
       createParserMappings(selectedNode.outputs ?? []);
@@ -70,12 +72,10 @@ export function ParserNodeConfigSection({
     };
   }, [
     selectedNode.id,
-    selectedNode.type,
+    isParserNode,
     selectedNode.config?.parser?.mappings,
     selectedNode.outputs,
   ]);
-
-  if (selectedNode.type !== "parser") return null;
 
   const parserConfig: ParserConfig = selectedNode.config?.parser ?? {
     mappings: createParserMappings(selectedNode.outputs),
@@ -383,6 +383,9 @@ export function ParserNodeConfigSection({
       ),
     [entries]
   );
+
+  if (!isParserNode) return null;
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-[11px] text-gray-300">

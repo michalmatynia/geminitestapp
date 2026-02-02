@@ -25,6 +25,7 @@ import {
   evaluateGraph,
   runsApi,
 } from "@/features/ai-paths/lib";
+import { extractImageUrls } from "@/features/ai-paths/lib/core/runtime/utils";
 import {
   DEFAULT_DB_QUERY,
   pollDatabaseQuery,
@@ -61,7 +62,7 @@ type UseAiPathsRuntimeArgs = {
 };
 
 type UseAiPathsRuntimeResult = {
-  handleRunSimulation: (simulationNode: AiNode, triggerEvent?: string) => void;
+  handleRunSimulation: (simulationNode: AiNode, triggerEvent?: string) => Promise<void>;
   handleFireTrigger: (triggerNode: AiNode, event?: React.MouseEvent) => void;
   handleFireTriggerPersistent: (
     triggerNode: AiNode,
@@ -95,6 +96,7 @@ export function useAiPathsRuntime({
   const pollInFlightRef = useRef<Set<string>>(new Set());
   const lastTriggerNodeIdRef = useRef<string | null>(null);
   const triggerContextRef = useRef<Record<string, unknown> | null>(null);
+  const pendingSimulationContextRef = useRef<Record<string, unknown> | null>(null);
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
@@ -445,15 +447,21 @@ export function useAiPathsRuntime({
 
   const runGraphForTrigger = async (
     triggerNode: AiNode,
-    event?: React.MouseEvent
+    event?: React.MouseEvent,
+    contextOverride?: Record<string, unknown>
   ): Promise<void> => {
     const triggerEvent =
       triggerNode.config?.trigger?.event ??
       TRIGGER_EVENTS[0]?.id ??
       "path_generate_description";
     lastTriggerNodeIdRef.current = triggerNode.id;
-    const triggerContext = buildTriggerContext(triggerNode, triggerEvent, event);
+    const triggerContext = {
+      ...buildTriggerContext(triggerNode, triggerEvent, event),
+      ...(pendingSimulationContextRef.current ?? {}),
+      ...(contextOverride ?? {}),
+    };
     triggerContextRef.current = triggerContext;
+    pendingSimulationContextRef.current = null;
     const result = await evaluateGraph({
       nodes,
       edges,
@@ -684,84 +692,106 @@ export function useAiPathsRuntime({
     );
   };
 
-  const handleRunSimulation = (simulationNode: AiNode, triggerEvent?: string): void => {
-    const entityId =
-      simulationNode.config?.simulation?.entityId?.trim() ||
-      simulationNode.config?.simulation?.productId?.trim();
-    const entityType =
-      normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? "product";
-    if (!entityId) {
-      toast("Enter an Entity ID in the simulation node.", { variant: "error" });
-      return;
-    }
-    let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
-    if (!triggerEvent) {
-      const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
-        if (
-          edge.from === simulationNode.id &&
-          (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-        ) {
-          return [edge.to];
+  const handleRunSimulation = useCallback(
+    async (simulationNode: AiNode, triggerEvent?: string): Promise<void> => {
+      const entityId =
+        simulationNode.config?.simulation?.entityId?.trim() ||
+        simulationNode.config?.simulation?.productId?.trim();
+      const entityType =
+        normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? "product";
+      if (!entityId) {
+        toast("Enter an Entity ID in the simulation node.", { variant: "error" });
+        return;
+      }
+      const entity = await fetchEntityByType(entityType, entityId);
+      const imageUrls = entity ? extractImageUrls(entity) : [];
+      const simulationContext: Record<string, unknown> = {
+        entityId,
+        entityType,
+        ...(entityType === "product" ? { productId: entityId } : {}),
+        ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
+        ...(entity ? { entity } : {}),
+      };
+      pendingSimulationContextRef.current = simulationContext;
+      let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
+      if (!triggerEvent) {
+        const connectedTriggerIds = edges.flatMap((edge: Edge): string[] => {
+          if (
+            edge.from === simulationNode.id &&
+            (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
+          ) {
+            return [edge.to];
+          }
+          if (
+            edge.to === simulationNode.id &&
+            (!edge.toPort || edge.toPort === "trigger")
+          ) {
+            return [edge.from];
+          }
+          return [];
+        });
+        const triggerNode = nodes.find(
+          (node: AiNode): boolean =>
+            node.type === "trigger" && connectedTriggerIds.includes(node.id)
+        );
+        if (triggerNode) {
+          eventName = triggerNode.config?.trigger?.event ?? eventName;
+          await runGraphForTrigger(triggerNode, undefined, simulationContext);
         }
+      }
+      dispatchTrigger(eventName, entityId, entityType);
+      if (!entity) {
+        toast(`No entity found for ${entityType} ${entityId}. Using fallback context.`, {
+          variant: "info",
+        });
+      }
+      toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {
+        variant: "success",
+      });
+    },
+    [edges, fetchEntityByType, nodes, runGraphForTrigger, toast]
+  );
+
+  const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
+    void (async (): Promise<void> => {
+      const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
+      const isScheduled = triggerEvent === "scheduled_run";
+      const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
         if (
-          edge.to === simulationNode.id &&
-          (!edge.toPort || edge.toPort === "trigger")
+          edge.to === triggerNode.id &&
+          (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
+          (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
         ) {
           return [edge.from];
         }
+        if (
+          edge.from === triggerNode.id &&
+          (!edge.fromPort || edge.fromPort === "trigger") &&
+          (!edge.toPort || edge.toPort === "trigger")
+        ) {
+          return [edge.to];
+        }
         return [];
       });
-      const triggerNode = nodes.find(
+      const simulationNodes = nodes.filter(
         (node: AiNode): boolean =>
-          node.type === "trigger" && connectedTriggerIds.includes(node.id)
+          node.type === "simulation" && connectedSimulationIds.includes(node.id)
       );
-      if (triggerNode) {
-        eventName = triggerNode.config?.trigger?.event ?? eventName;
-        void runGraphForTrigger(triggerNode);
-      }
-    }
-    dispatchTrigger(eventName, entityId, entityType);
-    toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {
-      variant: "success",
-    });
-  };
-
-  const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent): void => {
-    const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
-    const isScheduled = triggerEvent === "scheduled_run";
-    const connectedSimulationIds = edges.flatMap((edge: Edge): string[] => {
-      if (
-        edge.to === triggerNode.id &&
-        (!edge.toPort || edge.toPort === "context" || edge.toPort === "simulation") &&
-        (!edge.fromPort || edge.fromPort === "context" || edge.fromPort === "simulation")
-      ) {
-        return [edge.from];
-      }
-      if (
-        edge.from === triggerNode.id &&
-        (!edge.fromPort || edge.fromPort === "trigger") &&
-        (!edge.toPort || edge.toPort === "trigger")
-      ) {
-        return [edge.to];
-      }
-      return [];
-    });
-    const simulationNodes = nodes.filter(
-      (node: AiNode): boolean =>
-        node.type === "simulation" && connectedSimulationIds.includes(node.id)
-    );
-    if (simulationNodes.length === 0) {
-      if (!isScheduled) {
-        toast("Connect a Simulation node to the Trigger context input.", {
-          variant: "error",
-        });
+      if (simulationNodes.length === 0) {
+        if (!isScheduled) {
+          toast("Connect a Simulation node to the Trigger context input.", {
+            variant: "error",
+          });
+          return;
+        }
+        await runGraphForTrigger(triggerNode, event);
         return;
       }
-      void runGraphForTrigger(triggerNode, event);
-      return;
-    }
-    simulationNodes.forEach((node: AiNode) => handleRunSimulation(node, triggerEvent));
-    void runGraphForTrigger(triggerNode, event);
+      for (const node of simulationNodes) {
+        await handleRunSimulation(node, triggerEvent);
+      }
+      await runGraphForTrigger(triggerNode, event, pendingSimulationContextRef.current ?? undefined);
+    })();
   };
 
   const handleFireTriggerPersistent = async (

@@ -11,7 +11,7 @@ import { DB_COLLECTION_OPTIONS } from "@/features/ai-paths/lib";
 type SimulationNodeConfigSectionProps = {
   selectedNode: AiNode;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  handleRunSimulation: (node: AiNode) => void;
+  handleRunSimulation: (node: AiNode) => void | Promise<void>;
 };
 
 export function SimulationNodeConfigSection({

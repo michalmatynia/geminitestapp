@@ -20,7 +20,7 @@ type SimulationDialogProps = {
   onClose: () => void;
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  onRunSimulation: (node: AiNode) => void;
+  onRunSimulation: (node: AiNode) => void | Promise<void>;
 };
 
 export function SimulationDialog({

@@ -6,6 +6,7 @@ import {
   getPortDataTypes,
   isValueCompatibleWithTypes,
 } from "../utils";
+import { extractImageUrls } from "./utils";
 import { CACHEABLE_NODE_TYPE_SET } from "../constants";
 import type {
   AiNode,
@@ -382,14 +383,26 @@ export async function evaluateGraph({
         null;
       const entity =
         entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
+      const contextPayload: Record<string, unknown> = {
+        entityType,
+        entityId,
+        source: node.title,
+        timestamp: now,
+      };
+      if (entity) {
+        const imageUrls = extractImageUrls(entity);
+        if (imageUrls.length) {
+          contextPayload.images = imageUrls;
+          contextPayload.imageUrls = imageUrls;
+        }
+        contextPayload.entity = entity;
+        contextPayload.entityJson = entity;
+        if (entityType === "product") {
+          contextPayload.product = entity;
+        }
+      }
       outputs[node.id] = {
-        context: {
-          entityType,
-          entityId,
-          source: node.title,
-          timestamp: now,
-          entity,
-        },
+        context: contextPayload,
         entityId,
         entityType,
         productId: entityType === "product" ? entityId : undefined,

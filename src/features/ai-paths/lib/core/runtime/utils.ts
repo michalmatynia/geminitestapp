@@ -534,13 +534,32 @@ export const resolveContextPayload = async (
   const scopedEntity =
     scopeTarget === "entity" ? applyContextScope(rawEntity, contextConfig) : rawEntity;
   const entityForContext = scopeTarget === "context" ? rawEntity : scopedEntity;
+  const baseImages = Array.isArray(baseContext?.images)
+    ? (baseContext?.images as unknown[])
+    : null;
+  const extractedImages = extractImageUrls(entityForContext ?? rawEntity);
+  const resolvedImages =
+    baseImages && baseImages.length ? baseImages : extractedImages;
+  const baseContextRest = baseContext ? { ...baseContext } : {};
+  delete (baseContextRest as Record<string, unknown>).entity;
+  delete (baseContextRest as Record<string, unknown>).entityJson;
+  delete (baseContextRest as Record<string, unknown>).product;
+  delete (baseContextRest as Record<string, unknown>).images;
+  delete (baseContextRest as Record<string, unknown>).imageUrls;
+  delete (baseContextRest as Record<string, unknown>).role;
+  delete (baseContextRest as Record<string, unknown>).entityType;
+  delete (baseContextRest as Record<string, unknown>).entityId;
+  delete (baseContextRest as Record<string, unknown>).source;
+  delete (baseContextRest as Record<string, unknown>).timestamp;
+  delete (baseContextRest as Record<string, unknown>).productId;
   const context = {
-    ...(baseContext ?? {}),
     role,
     entityType,
     entityId,
     source: (baseContext?.source as string | undefined) ?? "context-filter",
     timestamp: (baseContext?.timestamp as string | undefined) ?? now,
+    ...(resolvedImages.length ? { images: resolvedImages, imageUrls: resolvedImages } : {}),
+    ...baseContextRest,
     entity: entityForContext,
     productId:
       entityType === "product"

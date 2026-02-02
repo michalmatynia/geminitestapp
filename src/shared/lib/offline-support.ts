@@ -9,11 +9,27 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
     storage: window.localStorage,
   });
 
-  void persistQueryClient({
+  const [, restorePromise] = persistQueryClient({
     queryClient,
     persister,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    dehydrateOptions: {
+      shouldDehydrateQuery: (query: { queryKey: unknown }) => Array.isArray(query.queryKey),
+    },
   });
+
+  void restorePromise
+    .then(() => {
+      const cache = queryClient.getQueryCache();
+      cache.getAll().forEach((query: { queryKey: unknown }) => {
+        if (!Array.isArray(query.queryKey)) {
+          cache.remove(query);
+        }
+      });
+    })
+    .catch(() => {
+      // Ignore restore errors; queries will rehydrate on next successful persist.
+    });
 }
 
 // Queries that should be cached offline

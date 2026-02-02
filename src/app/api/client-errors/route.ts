@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { ErrorSystem } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -22,12 +21,31 @@ const payloadSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   try {
-    const parsed = await parseJsonBody(req, payloadSchema, {
-      logPrefix: "client-errors.POST",
-    });
-    if (!parsed.ok) return parsed.response;
+    const rawBody = await req.text();
+    if (!rawBody) {
+      return NextResponse.json({ ok: true });
+    }
+    const trimmed = rawBody.trim();
+    let candidate: unknown = trimmed;
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        candidate = JSON.parse(trimmed) as unknown;
+      } catch {
+        candidate = { message: trimmed };
+      }
+    } else {
+      candidate = { message: trimmed };
+    }
 
-    const data = parsed.data;
+    const parsed = payloadSchema.safeParse(candidate);
+    const data = parsed.success
+      ? parsed.data
+      : {
+          message:
+            typeof candidate === "string"
+              ? candidate
+              : String((candidate as { message?: string })?.message ?? "Unknown client error"),
+        };
     
     // Log as a client error using the centralized ErrorSystem
     await ErrorSystem.captureException(new Error(data.message), {
@@ -39,7 +57,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       userAgent: data.userAgent,
       componentStack: data.componentStack,
       clientTimestamp: data.timestamp,
-      extra: data.context ?? null,
+      extra: parsed.success ? data.context ?? null : null,
     });
 
     return NextResponse.json({ ok: true });

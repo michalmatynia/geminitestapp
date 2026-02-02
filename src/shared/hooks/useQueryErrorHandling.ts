@@ -12,6 +12,57 @@ interface ErrorHandlingConfig {
   onError?: (error: Error, queryKey: unknown[]) => void;
 }
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message?.trim() || "";
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
+      if (value === null || value === undefined) return false;
+      if (typeof value === "string") return value.trim().length > 0;
+      return true;
+    });
+    if (entries.length > 0) {
+      return entries
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(", ");
+    }
+  }
+  return "";
+};
+
+const shouldLogError = (error: unknown): boolean => {
+  if (!error) return false;
+  if (error instanceof Error) return Boolean(error.message?.trim());
+  if (typeof error === "object") {
+    const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
+      if (value === null || value === undefined) return false;
+      if (typeof value === "string") return value.trim().length > 0;
+      return true;
+    });
+    return entries.length > 0;
+  }
+  return true;
+};
+
+const isEmptyError = (error: unknown): boolean => {
+  if (!error) return true;
+  if (error instanceof Error) return !error.message?.trim();
+  if (typeof error === "object") {
+    return Object.keys(error as Record<string, unknown>).length === 0;
+  }
+  return false;
+};
+
+const hasMeaningfulError = (error: unknown): boolean => {
+  if (!error) return false;
+  if (error instanceof Error) return Boolean(error.message?.trim());
+  if (typeof error === "string") return error.trim().length > 0;
+  if (typeof error === "object") {
+    return shouldLogError(error);
+  }
+  return true;
+};
+
 // Global error handler for queries
 export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): void {
   const queryClient = useQueryClient();
@@ -22,24 +73,45 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
       if (event.type === 'updated' && event.query.state.status === 'error') {
-        const error = event.query.state.error as Error;
+        const error = event.query.state.error as unknown;
         const queryKey = event.query.queryKey;
 
         // Log error
-        if (config.logErrors !== false) {
-          console.error('Query error:', { error, queryKey });
+        const message = getErrorMessage(error);
+        const isErrorLike =
+          error instanceof Error ||
+          typeof error === "string" ||
+          (error &&
+            typeof error === "object" &&
+            typeof (error as { message?: unknown }).message === "string" &&
+            Boolean((error as { message?: string }).message?.trim()));
+        if (!message || !isErrorLike || !hasMeaningfulError(error) || isEmptyError(error)) {
+          return;
+        }
+        if (
+          config.logErrors !== false &&
+          shouldLogError(error) &&
+          message
+        ) {
+          console.error("Query error:", { message, error, queryKey });
         }
 
         // Show toast notification
         if (config.showToast && toast) {
-          toast(error.message || "Something went wrong", { variant: "error" });
+          toast(message, { variant: "error" });
         }
 
         // Custom error handler
-        config.onError?.(error, queryKey as unknown[]);
+        config.onError?.(
+          error instanceof Error ? error : new Error(message),
+          queryKey as unknown[]
+        );
 
         // Auto-retry on network errors
-        if (config.retryOnError && isNetworkError(error)) {
+        if (
+          config.retryOnError &&
+          isNetworkError(error instanceof Error ? error : new Error(message))
+        ) {
           setTimeout((): void => {
             void queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
           }, 5000);

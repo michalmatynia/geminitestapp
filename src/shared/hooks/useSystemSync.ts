@@ -18,7 +18,9 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   const performSync = useCallback(async (): Promise<void> => {
-    await queryClient.refetchQueries({ stale: true });
+    await queryClient.refetchQueries({
+      predicate: (query: { queryKey: unknown; isStale: () => boolean }) => Array.isArray(query.queryKey) && query.isStale(),
+    });
     if (isOnline) {
       await processQueue();
     }

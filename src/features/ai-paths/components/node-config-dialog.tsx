@@ -62,7 +62,7 @@ type NodeConfigDialogProps = {
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
-  handleRunSimulation: (node: AiNode) => void;
+  handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode?: (nodeId: string) => void;
   onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi?: boolean;

@@ -114,7 +114,7 @@ const cleanupChatbotTemp = async (): Promise<void> => {
 
 
 
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
 
   const requestStart = Date.now();
 
@@ -132,17 +132,22 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
 
       const errorText = await res.text();
 
-      return createErrorResponse(
-
-        externalServiceError(
-
-          `Failed to load models: ${errorText || res.statusText}`
-
-        ),
-
-        { request: req, source: "chatbot.GET" }
-
-      );
+      if (DEBUG_CHATBOT) {
+        console.warn("[chatbot][models] Upstream error", {
+          status: res.status,
+          statusText: res.statusText,
+          errorText,
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+        });
+      }
+      return NextResponse.json({
+        models: [],
+        warning: {
+          code: "OLLAMA_UNAVAILABLE",
+          message: `Failed to load models: ${errorText || res.statusText}`,
+        },
+      });
 
     }
 
@@ -179,17 +184,17 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Re
   } catch (error) {
 
     const message =
-
       error instanceof Error ? error.message : "Failed to load models.";
-
-    return createErrorResponse(error, {
-
-      request: req,
-
-      source: "chatbot.GET",
-
-      fallbackMessage: message,
-
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][models] Upstream fetch failed", {
+        message,
+        durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
+      });
+    }
+    return NextResponse.json({
+      models: [],
+      warning: { code: "OLLAMA_UNAVAILABLE", message },
     });
 
   }

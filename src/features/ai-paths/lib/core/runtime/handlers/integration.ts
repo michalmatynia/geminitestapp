@@ -53,18 +53,19 @@ interface DbActionResult {
   matchedCount?: number;
 }
 
-export const handleTrigger: NodeHandler = ({ 
+export const handleTrigger: NodeHandler = async ({
   node,
   nodeInputs,
   triggerNodeId,
   triggerEvent,
   simulationEntityType,
   triggerContext,
+  fetchEntityCached,
   activePathId,
   resolvedEntity,
   fallbackEntityId,
   now,
-}: NodeHandlerContext): RuntimePortValues => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (triggerNodeId && node.id !== triggerNodeId) {
     return {};
   }
@@ -72,8 +73,13 @@ export const handleTrigger: NodeHandler = ({
     triggerEvent ?? node.config?.trigger?.event ?? "path_generate_description";
   const contextInput = (coerceInput(nodeInputs.context) ??
     coerceInput(nodeInputs.simulation)) as
-    | { entityId?: string; entityType?: string; productId?: string; entity?: unknown }
+    | { entityId?: string; entityType?: string; productId?: string; entity?: unknown; entityJson?: unknown; product?: unknown }
     | undefined;
+  const contextEntity =
+    (contextInput?.entity as Record<string, unknown> | undefined) ??
+    (contextInput?.entityJson as Record<string, unknown> | undefined) ??
+    (contextInput?.product as Record<string, unknown> | undefined) ??
+    null;
   const simulationInputId: string | null =
     contextInput?.entityId ?? contextInput?.productId ?? null;
   const simulationInputType: string | null =
@@ -81,6 +87,8 @@ export const handleTrigger: NodeHandler = ({
   const resolvedEntityId: string | null = simulationInputId ?? null;
   const resolvedEntityType: string | null = simulationInputType ?? null;
   const triggerExtras: Record<string, unknown> = (triggerContext as Record<string, unknown>) ?? {};
+  const triggerEntity =
+    triggerExtras.entity ?? triggerExtras.entityJson ?? triggerExtras.product ?? null;
   const triggerEntityId: string | null =
     typeof triggerExtras.entityId === "string"
       ? (triggerExtras.entityId)
@@ -93,6 +101,14 @@ export const handleTrigger: NodeHandler = ({
       : null;
   const effectiveEntityId: string | null = resolvedEntityId ?? triggerEntityId ?? null;
   const effectiveEntityType: string | null = resolvedEntityType ?? triggerEntityType ?? null;
+  let hydratedEntity: Record<string, unknown> | null =
+    resolvedEntity ??
+    contextEntity ??
+    (triggerEntity as Record<string, unknown> | null) ??
+    null;
+  if (!hydratedEntity && effectiveEntityId && effectiveEntityType) {
+    hydratedEntity = await fetchEntityCached(effectiveEntityType, effectiveEntityId);
+  }
   const resolvedContext: Record<string, unknown> = {
     ...(contextInput && typeof contextInput === "object" ? contextInput : {}),
     entityType: resolvedEntityType ?? triggerEntityType ?? contextInput?.entityType,
@@ -100,10 +116,19 @@ export const handleTrigger: NodeHandler = ({
     source: node.title,
     timestamp: now,
     entity:
-      resolvedEntity ??
-      contextInput?.entity ??
+      hydratedEntity ??
       buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
   };
+  if (hydratedEntity && typeof resolvedContext.entityJson === "undefined") {
+    resolvedContext.entityJson = hydratedEntity;
+  }
+  if (
+    hydratedEntity &&
+    effectiveEntityType === "product" &&
+    typeof resolvedContext.product === "undefined"
+  ) {
+    resolvedContext.product = hydratedEntity;
+  }
   return {
     trigger: true,
     triggerName: eventName,

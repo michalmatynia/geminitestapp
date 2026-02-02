@@ -197,7 +197,7 @@ export class StandardErrors {
 }
 
 // Error response helpers
-export function createErrorResponse(
+export function createVersionedErrorResponse(
   error: Error | ApiErrorBuilder,
   status: number = 500,
   requestId?: string
@@ -246,9 +246,9 @@ export const ErrorStatusCodes: Record<ErrorCode, number> = {
 
 // Middleware for consistent error handling
 export function withErrorHandling(
-  handler: (...args: unknown[]) => Promise<Response>
+  handler: (...args: any[]) => Promise<Response>
 ) {
-  return async (...args: unknown[]): Promise<Response> => {
+  return async (...args: any[]): Promise<Response> => {
     try {
       return await handler(...args);
     } catch (error) {
@@ -257,7 +257,7 @@ export function withErrorHandling(
       // Generate request ID for tracking
       const requestId = crypto.randomUUID();
       
-      return createErrorResponse(error as Error, 500, requestId);
+      return createVersionedErrorResponse(error as Error, 500, requestId);
     }
   };
 }

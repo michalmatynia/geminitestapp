@@ -3,8 +3,8 @@ import { ValidationError } from "./validators";
 export type RuleCondition = {
   field: string;
   operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin' | 'regex' | 'exists' | 'custom';
-  value?: any;
-  customFn?: (fieldValue: any, data: any) => boolean;
+  value?: unknown;
+  customFn?: (fieldValue: unknown, data: unknown) => boolean;
 };
 
 export type ValidationRule = {
@@ -16,7 +16,7 @@ export type ValidationRule = {
   conditions: RuleCondition[];
   conditionLogic: 'and' | 'or';
   actions: RuleAction[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 export type RuleAction = {
@@ -25,13 +25,13 @@ export type RuleAction = {
   message?: string;
   code?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
-  transformFn?: (value: any, data: any) => any;
-  customFn?: (data: any) => ValidationError[];
+  transformFn?: (value: unknown, data: unknown) => unknown;
+  customFn?: (data: unknown) => ValidationError[];
 };
 
 export type RuleExecutionContext = {
-  data: any;
-  metadata?: Record<string, any>;
+  data: unknown;
+  metadata?: Record<string, unknown>;
   skipRules?: string[];
 };
 
@@ -41,11 +41,11 @@ export type RuleExecutionResult = {
   conditionsMet: boolean;
   errors: ValidationError[];
   warnings: ValidationError[];
-  transformations: Record<string, any>;
+  transformations: Record<string, unknown>;
 };
 
 class ValidationRuleEngine {
-  private rules = new Map<string, ValidationRule>();
+  private rules: Map<string, ValidationRule> = new Map<string, ValidationRule>();
   private executionHistory: Array<{ timestamp: number; ruleId: string; result: RuleExecutionResult }> = [];
 
   addRule(rule: ValidationRule): void {
@@ -69,10 +69,10 @@ class ValidationRuleEngine {
   }
 
   getAllRules(): ValidationRule[] {
-    return Array.from(this.rules.values()).sort((a, b) => b.priority - a.priority);
+    return Array.from(this.rules.values()).sort((a: ValidationRule, b: ValidationRule) => b.priority - a.priority);
   }
 
-  private evaluateCondition(condition: RuleCondition, data: any): boolean {
+  private evaluateCondition(condition: RuleCondition, data: unknown): boolean {
     const fieldValue = this.getFieldValue(data, condition.field);
 
     switch (condition.operator) {
@@ -81,13 +81,13 @@ class ValidationRuleEngine {
       case 'ne':
         return fieldValue !== condition.value;
       case 'gt':
-        return fieldValue > condition.value;
+        return (fieldValue as number) > (condition.value as number);
       case 'gte':
-        return fieldValue >= condition.value;
+        return (fieldValue as number) >= (condition.value as number);
       case 'lt':
-        return fieldValue < condition.value;
+        return (fieldValue as number) < (condition.value as number);
       case 'lte':
-        return fieldValue <= condition.value;
+        return (fieldValue as number) <= (condition.value as number);
       case 'in':
         return Array.isArray(condition.value) && condition.value.includes(fieldValue);
       case 'nin':
@@ -103,28 +103,28 @@ class ValidationRuleEngine {
     }
   }
 
-  private getFieldValue(data: any, fieldPath: string): any {
-    return fieldPath.split('.').reduce((obj, key) => obj?.[key], data);
+  private getFieldValue(data: unknown, fieldPath: string): unknown {
+    return fieldPath.split('.').reduce((obj: unknown, key: string) => (obj as Record<string, unknown>)?.[key], data);
   }
 
-  private evaluateConditions(rule: ValidationRule, data: any): boolean {
+  private evaluateConditions(rule: ValidationRule, data: unknown): boolean {
     if (rule.conditions.length === 0) return true;
 
-    const results = rule.conditions.map(condition => this.evaluateCondition(condition, data));
+    const results = rule.conditions.map((condition: RuleCondition) => this.evaluateCondition(condition, data));
 
     return rule.conditionLogic === 'and' 
       ? results.every(Boolean)
       : results.some(Boolean);
   }
 
-  private executeActions(rule: ValidationRule, data: any): {
+  private executeActions(rule: ValidationRule, data: unknown): {
     errors: ValidationError[];
     warnings: ValidationError[];
-    transformations: Record<string, any>;
+    transformations: Record<string, unknown>;
   } {
     const errors: ValidationError[] = [];
     const warnings: ValidationError[] = [];
-    const transformations: Record<string, any> = {};
+    const transformations: Record<string, unknown> = {};
 
     for (const action of rule.actions) {
       switch (action.type) {
@@ -168,15 +168,15 @@ class ValidationRuleEngine {
   executeRules(context: RuleExecutionContext): {
     errors: ValidationError[];
     warnings: ValidationError[];
-    transformations: Record<string, any>;
+    transformations: Record<string, unknown>;
     results: RuleExecutionResult[];
   } {
     const allErrors: ValidationError[] = [];
     const allWarnings: ValidationError[] = [];
-    const allTransformations: Record<string, any> = {};
+    const allTransformations: Record<string, unknown> = {};
     const results: RuleExecutionResult[] = [];
 
-    const activeRules = this.getAllRules().filter(rule => 
+    const activeRules = this.getAllRules().filter((rule: ValidationRule) => 
       rule.active && !context.skipRules?.includes(rule.id)
     );
 
@@ -229,7 +229,7 @@ class ValidationRuleEngine {
     let history = this.executionHistory;
     
     if (ruleId) {
-      history = history.filter(entry => entry.ruleId === ruleId);
+      history = history.filter((entry: { ruleId: string }) => entry.ruleId === ruleId);
     }
 
     return history.slice(-limit);
@@ -240,7 +240,7 @@ class ValidationRuleEngine {
   }
 
   importRules(rules: ValidationRule[]): void {
-    rules.forEach(rule => this.addRule(rule));
+    rules.forEach((rule: ValidationRule) => this.addRule(rule));
   }
 }
 
@@ -309,6 +309,6 @@ export const PRODUCT_VALIDATION_RULES: ValidationRule[] = [
 ];
 
 // Initialize default rules
-PRODUCT_VALIDATION_RULES.forEach(rule => {
+PRODUCT_VALIDATION_RULES.forEach((rule: ValidationRule) => {
   validationRuleEngine.addRule(rule);
 });

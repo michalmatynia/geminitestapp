@@ -1,7 +1,7 @@
 import { JSX } from "react";
-import { AdminAiPathsTriggerButtonsPage } from "@/features/ai/ai-paths";
+import * as AiPaths from "@/features/ai/ai-paths";
 
 export default function Page(): JSX.Element {
-  return <AdminAiPathsTriggerButtonsPage />;
+  return <AiPaths.AdminAiPathsTriggerButtonsPage />;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button, Switch, useToast } from "@/shared/ui";
@@ -18,8 +18,6 @@ type TriggerButtonBarProps = {
   getEntityJson?: () => Record<string, unknown> | null;
   className?: string;
 };
-
-const TOGGLE_STORAGE_KEY = "aiPathsTriggerButtonToggles";
 
 const TOGGLE_STORAGE_KEY = "aiPathsTriggerButtonToggles";
 
@@ -66,10 +64,6 @@ export function TriggerButtonBar({
     staleTime: 10_000,
   });
 
-  useEffect(() => {
-    setToggleMap((prev) => readToggleMap());
-  }, [readToggleMap]);
-
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];
     return all
@@ -107,7 +101,7 @@ export function TriggerButtonBar({
                     triggerEventId: button.id,
                     triggerLabel: button.name,
                     entityType,
-                    entityId: entityId ?? null,
+                    entityId: entityId, // Pass directly as it's already string | null | undefined
                     ...(getEntityJson ? { getEntityJson } : {}),
                     source: { tab: entityType, location },
                     extras: { mode: "toggle", checked: nextChecked },
@@ -133,7 +127,7 @@ export function TriggerButtonBar({
                 triggerEventId: button.id,
                 triggerLabel: button.name,
                 entityType,
-                entityId: entityId ?? null,
+                entityId: entityId, // Pass directly as it's already string | null | undefined
                 ...(getEntityJson ? { getEntityJson } : {}),
                 event,
                 source: { tab: entityType, location },

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api';
-import type { ApiVersion } from '@/features/products/api';
+import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api/server';
+import type { ApiVersion } from '@/features/products/api/server';
 import { withSecurity } from '@/features/products/security';
 import { CachedProductService } from '@/features/products/performance';
 import { productService } from '@/features/products/server';

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai/ai-paths/lib";
 import { TRIGGER_EVENTS, triggerButtonsApi } from "@/features/ai/ai-paths/lib";

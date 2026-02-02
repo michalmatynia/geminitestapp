@@ -1,24 +1,9 @@
-// Product API functions
-export * from './products';
+// Client-safe Product API surface.
+//
+// IMPORTANT:
+// - Do NOT export server-only helpers (route-handler wrappers, NextRequest-based versioning, etc.) from here.
+// - Client components import from "@/features/products/api" and must remain bundle-safe.
 
-// API versioning
-export * from './versioning';
-
-// Error handling
-export * from './errors';
-
-// Re-export main utilities
-export { 
-  ApiVersionManager, 
-  ProductTransformer, 
-  createVersionedResponse, 
-  withApiVersioning 
-} from './versioning';
-
-export { 
-  ApiErrorBuilder, 
-  StandardErrors, 
-  createErrorResponse, 
-  withErrorHandling,
-  ErrorStatusCodes 
-} from './errors';
+export * from "./products";
+export * from "./settings";
+export * from "./errors";

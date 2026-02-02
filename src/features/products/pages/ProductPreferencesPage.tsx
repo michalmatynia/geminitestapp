@@ -21,7 +21,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
   const router = useRouter();
   const { preferences: savedPreferences, loading: prefsLoading } = useUserPreferences();
   const catalogsQuery = useCatalogs();
-  const catalogs = useMemo(() => (catalogsQuery.data || []) as Catalog[], [catalogsQuery.data]);
+  const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
   
   const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
   const updateMutation = useUpdateUserPreferencesMutation();

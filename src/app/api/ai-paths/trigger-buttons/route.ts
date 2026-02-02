@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { ObjectId } from "mongodb";
 
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -41,7 +42,7 @@ const createTriggerButtonSchema = z.object({
   mode: triggerButtonModeSchema.optional().default("click"),
 });
 
-type SettingDoc = { _id?: string; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
+type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
 
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;

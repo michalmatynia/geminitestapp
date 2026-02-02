@@ -1,14 +1,8 @@
+"use client";
+
 import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-
-
-
-
-
-
-
-
 
 import type { ChatbotSessionListItem } from "../types";
 import * as chatbotApi from "../api";

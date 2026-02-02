@@ -5,6 +5,10 @@ const nextConfig = {
   serverExternalPackages: [
     '@prisma/client',
     'bcrypt',
+    // Turbopack struggles to bundle Playwright assets (ttf/html) pulled via playwright-core internals.
+    // Keep Playwright external on the server bundle.
+    'playwright',
+    'playwright-core',
   ],
   turbopack: {},
   images: {

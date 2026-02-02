@@ -11,8 +11,8 @@ import {
 
 // Cache implementation
 export class ValidationCache implements IValidationCache {
-  private cache = new Map<string, { value: any; expires: number }>();
-  private readonly defaultTTL = 300000; // 5 minutes
+  private cache: Map<string, { value: unknown; expires: number }> = new Map<string, { value: unknown; expires: number }>();
+  private readonly defaultTTL: number = 300000; // 5 minutes
 
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
@@ -24,7 +24,7 @@ export class ValidationCache implements IValidationCache {
       return null;
     }
     
-    return entry.value;
+    return entry.value as T;
   }
 
   set<T>(key: string, value: T, ttl: number = this.defaultTTL): void {
@@ -66,7 +66,7 @@ export class ValidationCache implements IValidationCache {
 // Metrics implementation
 export class ValidationMetrics implements IValidationMetrics {
   private metrics: ValidationMetric[] = [];
-  private readonly maxMetrics = 1000;
+  private readonly maxMetrics: number = 1000;
 
   record(metric: ValidationMetric): void {
     this.metrics.push({
@@ -89,8 +89,8 @@ export class ValidationMetrics implements IValidationMetrics {
       };
     }
 
-    const successful = this.metrics.filter(m => m.success).length;
-    const totalDuration = this.metrics.reduce((sum, m) => sum + m.duration, 0);
+    const successful = this.metrics.filter((m: ValidationMetric) => m.success).length;
+    const totalDuration = this.metrics.reduce((sum: number, m: ValidationMetric) => sum + m.duration, 0);
 
     return {
       totalValidations: this.metrics.length,
@@ -102,7 +102,7 @@ export class ValidationMetrics implements IValidationMetrics {
 
 // Rule engine implementation
 export class ValidationRuleEngine implements IValidationRuleEngine {
-  private rules = new Map<string, ValidationRule>();
+  private rules: Map<string, ValidationRule> = new Map<string, ValidationRule>();
 
   addRule(rule: ValidationRule): void {
     this.rules.set(rule.id, rule);
@@ -113,21 +113,21 @@ export class ValidationRuleEngine implements IValidationRuleEngine {
   }
 
   executeRules(context: RuleExecutionContext): RuleExecutionResult {
-    const errors: any[] = [];
-    const warnings: any[] = [];
+    const errors: ValidationError[] = [];
+    const warnings: ValidationError[] = [];
     const rulesExecuted: string[] = [];
 
     // Get active rules, sorted by priority
-    const activeRules = Array.from(this.rules.values())
-      .filter(rule => rule.active && !context.skipRules?.includes(rule.id))
-      .sort((a, b) => b.priority - a.priority);
+    const activeRules: ValidationRule[] = Array.from(this.rules.values())
+      .filter((rule: ValidationRule) => rule.active && !context.skipRules?.includes(rule.id))
+      .sort((a: ValidationRule, b: ValidationRule) => b.priority - a.priority);
 
     for (const rule of activeRules) {
       try {
-        const ruleErrors = rule.execute(context.data);
+        const ruleErrors: ValidationError[] = rule.execute(context.data);
         
         // Separate errors and warnings based on severity
-        ruleErrors.forEach(error => {
+        ruleErrors.forEach((error: ValidationError) => {
           if (error.severity === 'low') {
             warnings.push(error);
           } else {
@@ -148,11 +148,13 @@ export class ValidationRuleEngine implements IValidationRuleEngine {
       }
     }
 
-    return {
+    const result: RuleExecutionResult = {
       errors,
       warnings,
       rulesExecuted
     };
+
+    return result;
   }
 }
 
@@ -170,7 +172,11 @@ export class InfrastructureFactory {
     return new ValidationRuleEngine();
   }
 
-  static createDependencies() {
+  static createDependencies(): {
+    cache: IValidationCache;
+    metrics: IValidationMetrics;
+    ruleEngine: IValidationRuleEngine;
+  } {
     return {
       cache: this.createCache(),
       metrics: this.createMetrics(),

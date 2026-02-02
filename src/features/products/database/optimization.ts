@@ -10,7 +10,7 @@ export type QueryPlan = {
 
 export class QueryOptimizer {
   // Optimized product queries with proper index usage
-  static getOptimizedQueries() {
+  static getOptimizedQueries(): Record<string, string> {
     return {
       // Use idx_products_sku for SKU lookups
       findBySku: `
@@ -99,19 +99,18 @@ export class QueryOptimizer {
   }
 
   // Query performance analysis
-  static async analyzeQuery(query: string, _params: any[] = []): Promise<QueryPlan> {
+  static async analyzeQuery(query: string, _params: unknown[] = []): Promise<QueryPlan> {
     // This would integrate with your database client
     // Example with PostgreSQL EXPLAIN ANALYZE
-    const _explainQuery = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query}`;
     
     // Placeholder implementation
-    return {
+    return Promise.resolve({
       query,
       executionTime: 0,
       indexesUsed: [],
       rowsScanned: 0,
       cost: 0
-    };
+    });
   }
 
   // Index usage recommendations
@@ -158,7 +157,7 @@ export class QueryOptimizer {
 
 // Database connection optimization
 export class ConnectionOptimizer {
-  static getPoolConfig() {
+  static getPoolConfig(): Record<string, string | number> {
     return {
       // Connection pool settings
       min: 2,
@@ -181,7 +180,7 @@ export class ConnectionOptimizer {
     };
   }
 
-  static getPerformanceSettings() {
+  static getPerformanceSettings(): Record<string, string | number | boolean> {
     return {
       // Memory settings
       shared_buffers: '256MB',

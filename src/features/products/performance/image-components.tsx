@@ -21,16 +21,11 @@ export function OptimizedImage({
   priority = false,
   onLoad,
   onError
-}: OptimizedImageProps) {
-  const [format, setFormat] = useState<ImageFormat>('webp');
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [_hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    // Detect best format based on browser support
-    const detectFormat = (): ImageFormat => {
-      if (typeof window === 'undefined') return 'webp';
-      
+}: OptimizedImageProps): React.JSX.Element {
+  const [format, setFormat] = useState<ImageFormat>((): ImageFormat => {
+    if (typeof window === 'undefined') return 'webp';
+    
+    try {
       const canvas = document.createElement('canvas');
       canvas.width = 1;
       canvas.height = 1;
@@ -44,19 +39,22 @@ export function OptimizedImage({
       if (canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0) {
         return 'webp';
       }
-      
-      return 'jpeg';
-    };
+    } catch {
+      // Ignore errors and fallback
+    }
+    
+    return 'jpeg';
+  });
+  
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [_hasError, setHasError] = useState(false);
 
-    setFormat(detectFormat());
-  }, []);
-
-  const handleLoad = () => {
+  const handleLoad = (): void => {
     setIsLoaded(true);
     onLoad?.();
   };
 
-  const handleError = () => {
+  const handleError = (): void => {
     setHasError(true);
     // Fallback to JPEG if WebP/AVIF fails
     if (format !== 'jpeg') {
@@ -93,7 +91,7 @@ type ProductImageGalleryProps = {
   className?: string;
 };
 
-export function ProductImageGallery({ images, className }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, className }: ProductImageGalleryProps): React.JSX.Element | null {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (!images.length) return null;
@@ -116,10 +114,10 @@ export function ProductImageGallery({ images, className }: ProductImageGalleryPr
       {/* Thumbnails */}
       {images.length > 1 && (
         <div className="thumbnails">
-          {images.map((image, index) => (
+          {images.map((image: { id: string; alt: string }, index: number) => (
             <button
               key={image.id}
-              onClick={() => setSelectedIndex(index)}
+              onClick={(): void => setSelectedIndex(index)}
               className={`thumbnail ${index === selectedIndex ? 'active' : ''}`}
             >
               <OptimizedImage
@@ -141,17 +139,17 @@ type LazyImageGridProps = {
   className?: string;
 };
 
-export function LazyImageGrid({ images, columns = 3, className }: LazyImageGridProps) {
+export function LazyImageGrid({ images, columns = 3, className }: LazyImageGridProps): React.JSX.Element {
   const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
+      (entries: IntersectionObserverEntry[]) => {
+        entries.forEach((entry: IntersectionObserverEntry) => {
           if (entry.isIntersecting) {
             const imageId = entry.target.getAttribute('data-image-id');
             if (imageId) {
-              setVisibleImages(prev => new Set([...prev, imageId]));
+              setVisibleImages((prev: Set<string>) => new Set([...prev, imageId]));
               observer.unobserve(entry.target);
             }
           }
@@ -161,9 +159,9 @@ export function LazyImageGrid({ images, columns = 3, className }: LazyImageGridP
     );
 
     const elements = document.querySelectorAll('[data-image-id]');
-    elements.forEach(el => observer.observe(el));
+    elements.forEach((el: Element) => observer.observe(el));
 
-    return () => observer.disconnect();
+    return (): void => observer.disconnect();
   }, [images]);
 
   return (
@@ -175,7 +173,7 @@ export function LazyImageGrid({ images, columns = 3, className }: LazyImageGridP
         gap: '1rem'
       }}
     >
-      {images.map((image) => (
+      {images.map((image: { id: string; alt: string }) => (
         <div
           key={image.id}
           data-image-id={image.id}

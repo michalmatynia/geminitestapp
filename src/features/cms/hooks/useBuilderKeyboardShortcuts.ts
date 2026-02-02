@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePageBuilder } from "./usePageBuilderContext";
+import type { PageBuilderAction } from "../types/page-builder";
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -75,13 +76,16 @@ export function useBuilderKeyboardShortcuts(): void {
             selectedColumnParentSection?.id ??
             selectedSection?.id;
           if (!targetSectionId) return;
-          const pasteAction: any = {
+          
+          const columnId = selectedParentColumn?.id ?? selectedColumn?.id;
+          const parentBlockId = selectedParentBlock?.id;
+
+          const pasteAction: PageBuilderAction = {
             type: "PASTE_BLOCK",
             sectionId: targetSectionId,
+            ...(columnId && { columnId }),
+            ...(parentBlockId && { parentBlockId }),
           };
-          const columnId = selectedParentColumn?.id ?? selectedColumn?.id;
-          if (columnId) pasteAction.columnId = columnId;
-          if (selectedParentBlock?.id) pasteAction.parentBlockId = selectedParentBlock.id;
           dispatch(pasteAction);
         }
         return;

@@ -9,7 +9,7 @@ export type ExternalValidationProvider = {
 };
 
 export type ExternalValidationRequest = {
-  data: any;
+  data: unknown;
   validationType: 'product_create' | 'product_update' | 'custom';
   rules?: string[];
 };
@@ -17,14 +17,14 @@ export type ExternalValidationRequest = {
 export type ExternalValidationResponse = {
   success: boolean;
   errors: ValidationError[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   provider: string;
 };
 
 class ExternalValidationService {
-  private providers = new Map<string, ExternalValidationProvider>();
-  private cache = new Map<string, { result: ExternalValidationResponse; timestamp: number }>();
-  private readonly CACHE_TTL = 300000; // 5 minutes
+  private providers: Map<string, ExternalValidationProvider> = new Map<string, ExternalValidationProvider>();
+  private cache: Map<string, { result: ExternalValidationResponse; timestamp: number }> = new Map<string, { result: ExternalValidationResponse; timestamp: number }>();
+  private readonly CACHE_TTL: number = 300000; // 5 minutes
 
   registerProvider(provider: ExternalValidationProvider): void {
     this.providers.set(provider.name, provider);
@@ -64,12 +64,12 @@ class ExternalValidationService {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const result = await response.json();
+        const result = (await response.json()) as Partial<ExternalValidationResponse>;
         
         return {
           success: result.success || false,
-          errors: result.errors || [],
-          metadata: result.metadata,
+          errors: (result.errors as ValidationError[]) || [],
+          metadata: result.metadata as Record<string, unknown>,
           provider: provider.name,
         };
 
@@ -78,7 +78,7 @@ class ExternalValidationService {
         
         if (attempt < retries) {
           // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          await new Promise((resolve: (value: void) => void) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
         }
       }
     }
@@ -147,11 +147,11 @@ class ExternalValidationService {
     strategy: 'all' | 'any' | 'majority' = 'any'
   ): Promise<ExternalValidationResponse> {
     const results = await Promise.all(
-      providerNames.map(name => this.validate(name, request))
+      providerNames.map((name: string) => this.validate(name, request))
     );
 
-    const successful = results.filter(r => r.success);
-    const allErrors = results.flatMap(r => r.errors);
+    const successful = results.filter((r: ExternalValidationResponse) => r.success);
+    const allErrors = results.flatMap((r: ExternalValidationResponse) => r.errors);
 
     let success: boolean;
     switch (strategy) {
@@ -172,7 +172,7 @@ class ExternalValidationService {
       metadata: {
         strategy,
         providers: providerNames,
-        results: results.map(r => ({ provider: r.provider, success: r.success }))
+        results: results.map((r: ExternalValidationResponse) => ({ provider: r.provider, success: r.success }))
       },
       provider: 'multi-provider',
     };
@@ -210,13 +210,13 @@ export const VALIDATION_PROVIDERS = {
 } as const;
 
 // Initialize default providers
-Object.values(VALIDATION_PROVIDERS).forEach(provider => {
+Object.values(VALIDATION_PROVIDERS).forEach((provider: any) => {
   externalValidationService.registerProvider(provider);
 });
 
 // Wrapper function for easy integration
 export async function validateWithExternalService(
-  data: any,
+  data: unknown,
   providers: string[] = ['business-rules'],
   strategy: 'all' | 'any' | 'majority' = 'any'
 ): Promise<ValidationError[]> {

@@ -87,7 +87,7 @@ export class ApiVersionManager {
 
 // Version-specific transformers
 export class ProductTransformer {
-  static transformForVersion<T extends Partial<ProductWithImages> & Record<string, unknown>>(
+  static transformForVersion<T extends ProductWithImages & Record<string, unknown>>(
     data: T,
     version: ApiVersion
   ): unknown {
@@ -188,13 +188,17 @@ export function createVersionedResponse<T>(
   version: ApiVersion,
   status: number = 200
 ): Response {
-  const transformedData = ProductTransformer.transformForVersion(data, version);
+  // Ensure that 'data' is treated as a generic object when passed to transformForVersion
+  // This cast is safe because transformForVersion handles a broad type that includes T
+  const transformedData = ProductTransformer.transformForVersion(data as Partial<ProductWithImages> & Record<string, unknown>, version);
+  
   const meta = ApiVersionManager.getVersionMeta(version);
 
   const response: VersionedResponse<typeof transformedData> = {
     version,
     data: transformedData,
-    ...(Object.keys(meta).length > 0 && { meta })
+    // Conditionally include meta only if it exists and has properties
+    ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
   };
 
   const headers: Record<string, string> = {
@@ -203,10 +207,14 @@ export function createVersionedResponse<T>(
   };
 
   // Add deprecation headers
-  if (ApiVersionManager.isVersionDeprecated(version)) {
+  if (ApiVersionManager.isVersionDeprecated(version) && meta) {
     headers['Deprecation'] = 'true';
-    headers['Sunset'] = meta.deprecationDate;
-    headers['Link'] = `<${meta.migrationGuide}>; rel="migration-guide"`;
+    if (meta.deprecationDate) { // Check if deprecationDate is explicitly defined
+      headers['Sunset'] = meta.deprecationDate;
+    }
+    if (meta.migrationGuide) { // Check if migrationGuide is explicitly defined
+      headers['Link'] = `<${meta.migrationGuide}>; rel="migration-guide"`;
+    }
   }
 
   return new Response(JSON.stringify(response), {

@@ -21,7 +21,7 @@ export function CurrencyModal({
   onClose,
   onSuccess,
   currency,
-}: CurrencyModalProps) {
+}: CurrencyModalProps): React.JSX.Element {
   const { toast } = useToast();
   const saveMutation = useSaveCurrencyMutation();
   const [form, setForm] = React.useState({
@@ -30,7 +30,7 @@ export function CurrencyModal({
     symbol: "",
   });
 
-  React.useEffect(() => {
+  React.useEffect((): void => {
     if (currency) {
       setForm({
         code: currency.code,
@@ -42,7 +42,7 @@ export function CurrencyModal({
     }
   }, [currency]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!form.code.trim() || !form.name.trim()) {
       toast("Required fields missing.", { variant: "error" });
       return;
@@ -66,11 +66,11 @@ export function CurrencyModal({
     }
   };
 
-  const header = (
+  const header: React.JSX.Element = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => {
+          onClick={(): void => {
             void handleSubmit();
           }}
           disabled={saveMutation.isPending}
@@ -107,11 +107,11 @@ export function CurrencyModal({
             id="currency-code"
             className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
             value={form.code}
-            onChange={(e) => {
-              setForm((p) => ({ ...p, code: e.target.value }));
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
+              setForm((p: typeof form) => ({ ...p, code: e.target.value }));
             }}
           >
-            {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
+            {["PLN", "EUR", "USD", "GBP", "SEK"].map((code: string) => (
               <option key={code} value={code}>
                 {code}
               </option>
@@ -123,7 +123,7 @@ export function CurrencyModal({
           <Input
             id="currency-name"
             value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setForm((p: typeof form) => ({ ...p, name: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
@@ -131,7 +131,7 @@ export function CurrencyModal({
           <Input
             id="currency-symbol"
             value={form.symbol}
-            onChange={(e) => setForm((p) => ({ ...p, symbol: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setForm((p: typeof form) => ({ ...p, symbol: e.target.value }))}
             placeholder="$"
           />
         </div>

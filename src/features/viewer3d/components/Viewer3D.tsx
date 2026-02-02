@@ -474,16 +474,16 @@ export function Viewer3D({
             >
               <Center>
                 <Bounds fit clip observe margin={1.2}>
-                  <Model3DErrorBoundary onError={onError}>
+                  <Model3DErrorBoundary {...(onError && { onError })}>
                     <Model3D
                       url={modelUrl}
                       {...(onLoad && { onLoad })}
                       {...(onError && { onError })}
                       castShadow={enableShadows}
                       receiveShadow={enableShadows}
-                      position={modelPosition}
-                      rotation={modelRotation}
-                      scale={modelScale}
+                      {...(modelPosition && { position: modelPosition })}
+                      {...(modelRotation && { rotation: modelRotation })}
+                      {...(modelScale && { scale: modelScale })}
                     />
                   </Model3DErrorBoundary>
                 </Bounds>
@@ -492,16 +492,16 @@ export function Viewer3D({
           ) : (
             <Center>
               <Bounds fit clip observe margin={1.2}>
-                <Model3DErrorBoundary onError={onError}>
+                <Model3DErrorBoundary {...(onError && { onError })}>
                   <Model3D
                     url={modelUrl}
                     {...(onLoad && { onLoad })}
                     {...(onError && { onError })}
                     castShadow={enableShadows}
                     receiveShadow={enableShadows}
-                    position={modelPosition}
-                    rotation={modelRotation}
-                    scale={modelScale}
+                    {...(modelPosition && { position: modelPosition })}
+                    {...(modelRotation && { rotation: modelRotation })}
+                    {...(modelScale && { scale: modelScale })}
                   />
                 </Model3DErrorBoundary>
               </Bounds>

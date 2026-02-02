@@ -70,15 +70,16 @@ class BatchValidator {
             errors: result.errors
           };
         } catch (error) {
+          const validationError: ValidationError = {
+            field: 'root',
+            message: error instanceof Error ? error.message : 'Validation failed',
+            code: 'validation_exception',
+            severity: 'critical'
+          };
           return {
             index: actualIndex,
             success: false,
-            errors: [{
-              field: 'root',
-              message: error instanceof Error ? error.message : 'Validation failed',
-              code: 'validation_exception',
-              severity: 'critical'
-            }]
+            errors: [validationError]
           };
         }
       });
@@ -146,7 +147,11 @@ class BatchValidator {
       items,
       async (item) => {
         const result = await validateProductCreate(item);
-        return result;
+        return {
+          success: result.success,
+          data: result.success ? result.data : undefined,
+          errors: result.success ? [] : result.errors
+        };
       },
       options
     );
@@ -160,7 +165,11 @@ class BatchValidator {
       items,
       async (item) => {
         const result = await validateProductUpdate(item);
-        return result;
+        return {
+          success: result.success,
+          data: result.success ? result.data : undefined,
+          errors: result.success ? [] : result.errors
+        };
       },
       { ...options, validateDuplicates: false } // Updates don't need duplicate checking
     );

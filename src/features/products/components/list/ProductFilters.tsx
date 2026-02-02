@@ -178,8 +178,8 @@ interface ProductSelectionActionsProps {
   setRowSelection?: (selection: RowSelectionState) => void;
   onSelectAllGlobal?: (() => Promise<void>) | undefined;
   loadingGlobal?: boolean | undefined;
-  onDeleteSelected?: () => Promise<void>;
-  onAddToMarketplace?: () => void;
+  onDeleteSelected?: (() => Promise<void>) | undefined;
+  onAddToMarketplace?: (() => void) | undefined;
 }
 
 export const ProductSelectionActions = memo(function ProductSelectionActions({

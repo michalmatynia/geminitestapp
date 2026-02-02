@@ -1,4 +1,4 @@
-import { ValidationApp } from "./core";
+import { ValidationApp, type ValidationResult, type ValidationError } from "./core";
 
 // Re-export core types for backward compatibility
 export type {
@@ -9,18 +9,18 @@ export type {
 } from "./core";
 
 // Main validation functions using the new architecture
-export const validateProductCreate = ValidationApp.validateProductCreate.bind(ValidationApp);
-export const validateProductUpdate = ValidationApp.validateProductUpdate.bind(ValidationApp);
-export const validateProductField = ValidationApp.validateProductField.bind(ValidationApp);
-export const validateProductFields = ValidationApp.validateProductFieldsBatch.bind(ValidationApp);
-export const validateProductsBatch = ValidationApp.validateProductsBatch.bind(ValidationApp);
+export const validateProductCreate: typeof ValidationApp.validateProductCreate = ValidationApp.validateProductCreate.bind(ValidationApp);
+export const validateProductUpdate: typeof ValidationApp.validateProductUpdate = ValidationApp.validateProductUpdate.bind(ValidationApp);
+export const validateProductField: typeof ValidationApp.validateProductField = ValidationApp.validateProductField.bind(ValidationApp);
+export const validateProductFields: typeof ValidationApp.validateProductFieldsBatch = ValidationApp.validateProductFieldsBatch.bind(ValidationApp);
+export const validateProductsBatch: typeof ValidationApp.validateProductsBatch = ValidationApp.validateProductsBatch.bind(ValidationApp);
 
 // Type guards
-export const isValidProductCreate = ValidationApp.isValidProductCreate.bind(ValidationApp);
-export const isValidProductUpdate = ValidationApp.isValidProductUpdate.bind(ValidationApp);
+export const isValidProductCreate: typeof ValidationApp.isValidProductCreate = ValidationApp.isValidProductCreate.bind(ValidationApp);
+export const isValidProductUpdate: typeof ValidationApp.isValidProductUpdate = ValidationApp.isValidProductUpdate.bind(ValidationApp);
 
 // Utility functions
-export function isProductLike(data: unknown): data is Record<string, any> {
+export function isProductLike(data: unknown): data is Record<string, unknown> {
   return data !== null && typeof data === 'object' && !Array.isArray(data);
 }
 
@@ -30,20 +30,20 @@ export function hasRequiredProductFields(data: unknown): boolean {
 }
 
 // Validation summary utilities
-export function getValidationSummary(result: any): {
+export function getValidationSummary(result: ValidationResult<unknown>): {
   isValid: boolean;
   errorCount: number;
   warningCount: number;
-  criticalErrors: any[];
-  fieldErrors: Record<string, any[]>;
+  criticalErrors: ValidationError[];
+  fieldErrors: Record<string, ValidationError[]>;
 } {
-  const errors = result.success ? [] : result.errors;
+  const errors = result.success ? [] : (result.errors || []);
   const warnings = result.warnings || [];
   
-  const criticalErrors = errors.filter((e: any) => e.severity === 'critical');
-  const fieldErrors: Record<string, any[]> = {};
+  const criticalErrors = errors.filter((e: ValidationError) => e.severity === 'critical');
+  const fieldErrors: Record<string, ValidationError[]> = {};
   
-  [...errors, ...warnings].forEach((error: any) => {
+  [...errors, ...warnings].forEach((error: ValidationError) => {
     if (!fieldErrors[error.field]) {
       fieldErrors[error.field] = [];
     }
@@ -59,17 +59,17 @@ export function getValidationSummary(result: any): {
   };
 }
 
-export function mergeValidationResults<T>(results: any[]): any {
-  const allErrors: any[] = [];
-  const allWarnings: any[] = [];
+export function mergeValidationResults<T>(results: ValidationResult<T>[]): ValidationResult<T[]> {
+  const allErrors: ValidationError[] = [];
+  const allWarnings: ValidationError[] = [];
   const validData: T[] = [];
-  let totalTime = 0;
+  let totalTime: number = 0;
   const allRules: string[] = [];
   
   for (const result of results) {
-    if (result.success) {
+    if (result.success && result.data !== undefined) {
       validData.push(result.data);
-    } else {
+    } else if (!result.success && result.errors) {
       allErrors.push(...result.errors);
     }
     
@@ -83,7 +83,7 @@ export function mergeValidationResults<T>(results: any[]): any {
     }
   }
   
-  const hasErrors = allErrors.length > 0;
+  const hasErrors: boolean = allErrors.length > 0;
   
   return {
     success: !hasErrors,

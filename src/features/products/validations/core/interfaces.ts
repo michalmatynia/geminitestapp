@@ -46,7 +46,7 @@ export type ValidationError = {
   message: string;
   code: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  context?: Record<string, any> | undefined;
+  context?: Record<string, unknown> | undefined;
 };
 
 export type ValidationMetadata = {
@@ -74,11 +74,11 @@ export type ValidationRule = {
   name: string;
   priority: number;
   active: boolean;
-  execute(data: any): ValidationError[];
+  execute(data: unknown): ValidationError[];
 };
 
 export type RuleExecutionContext = {
-  data: any;
+  data: unknown;
   skipRules?: string[];
 };
 

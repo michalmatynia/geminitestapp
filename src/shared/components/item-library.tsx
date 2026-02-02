@@ -2,7 +2,7 @@
 
 import { Button, Card, SectionHeader, SectionPanel, EmptyState, ConfirmDialog, SharedModal, Input, Label, Textarea } from "@/shared/ui";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState } from "react";
 
 export interface LibraryItem {
   id: string;

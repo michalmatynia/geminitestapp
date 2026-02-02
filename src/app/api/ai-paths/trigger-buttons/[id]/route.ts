@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { ObjectId, Filter } from "mongodb"; // Added imports
 
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
@@ -45,7 +46,7 @@ const updateTriggerButtonSchema = z
     message: "No updates provided",
   });
 
-type SettingDoc = { _id?: string; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
+type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
 
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
@@ -53,9 +54,19 @@ const canUsePrismaSettings = (): boolean =>
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
   const mongo = await getMongoDb();
+  // Using $or with both _id (ObjectId) and key (string) allows flexibility,
+  // but for _id, it must be an ObjectId type. If key is a string and not a valid ObjectId,
+  // it won't match _id fields. Assuming key can sometimes be a string _id.
+  const filter = {} as Filter<SettingDoc>;
+  if (ObjectId.isValid(key)) {
+    filter._id = new ObjectId(key);
+  } else {
+    filter.key = key;
+  }
+
   const doc = await mongo
     .collection<SettingDoc>(SETTINGS_COLLECTION)
-    .findOne({ $or: [{ key }, { _id: key }] });
+    .findOne(filter);
   const value = doc?.value;
   return typeof value === "string" ? value : null;
 };

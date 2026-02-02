@@ -2,11 +2,11 @@ import { z } from "zod";
 import { validateProductCreate, validateProductUpdate, type ValidationError } from "./validators";
 
 // Validation decorator for methods
-export function ValidateInput(schema: z.ZodSchema) {
-  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+export function ValidateInput(schema: z.ZodSchema): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor {
+  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+    const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]): Promise<unknown> {
       const [input] = args;
       const result = schema.safeParse(input);
       
@@ -14,7 +14,7 @@ export function ValidateInput(schema: z.ZodSchema) {
         const errors: ValidationError[] = result.error.issues.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
-          code: err.code,
+          code: String(err.code),
           severity: 'high'
         }));
         
@@ -29,11 +29,11 @@ export function ValidateInput(schema: z.ZodSchema) {
 }
 
 // Validation decorator for product creation
-export function ValidateProductCreate() {
-  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+export function ValidateProductCreate(): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor {
+  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+    const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]): Promise<unknown> {
       const [input] = args;
       const result = await validateProductCreate(input);
       
@@ -49,11 +49,11 @@ export function ValidateProductCreate() {
 }
 
 // Validation decorator for product updates
-export function ValidateProductUpdate() {
-  return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+export function ValidateProductUpdate(): (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor {
+  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+    const originalMethod = descriptor.value as (...args: unknown[]) => Promise<unknown>;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]): Promise<unknown> {
       const [input] = args;
       const result = await validateProductUpdate(input);
       
@@ -79,7 +79,7 @@ export class ValidationException extends Error {
     this.name = "ValidationException";
   }
 
-  toJSON() {
+  toJSON(): Record<string, unknown> {
     return {
       name: this.name,
       message: this.message,

@@ -274,9 +274,9 @@ export function AdminProductsPage(): React.JSX.Element {
     setIsMassListing(false);
   }, []);
 
-  const getRowId = useCallback((row: ProductWithImages) => row.id, []);
+  const getRowId = useCallback((row: ProductWithImages): string => row.id, []);
 
-  const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string) => {
+  const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string): void => {
     setShowIntegrationModal(false);
     if (isMassListing) {
        const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
@@ -423,17 +423,23 @@ export function AdminProductsPage(): React.JSX.Element {
       {isDebugOpen && <DebugPanel />}
       <ConfirmDialog
         open={isMassDeleteConfirmOpen}
-        onOpenChange={setIsMassDeleteConfirmOpen}
-        onConfirm={handleMassDelete}
+        onOpenChange={(open: boolean): void => setIsMassDeleteConfirmOpen(open)}
+        onConfirm={(): void => {
+          void handleMassDelete();
+        }}
         title="Delete Products"
-        description={`Are you sure you want to delete ${Object.keys(rowSelection).filter(id => rowSelection[id]).length} selected products? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${Object.keys(rowSelection).filter((id: string) => rowSelection[id]).length} selected products? This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
       />
       <ConfirmDialog
         open={!!productToDelete}
-        onOpenChange={(open) => !open && setProductToDelete(null)}
-        onConfirm={handleConfirmSingleDelete}
+        onOpenChange={(open: boolean): void => {
+          if (!open) setProductToDelete(null);
+        }}
+        onConfirm={(): void => {
+          void handleConfirmSingleDelete();
+        }}
         title="Delete Product"
         description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || "this product"}"? This action cannot be undone.`}
         confirmText="Delete"
@@ -475,9 +481,11 @@ export function AdminProductsPage(): React.JSX.Element {
         data={isMounted ? data : []}
         rowSelection={rowSelection}
         setRowSelection={setRowSelection}
-        onSelectAllGlobal={handleSelectAllGlobal}
+        onSelectAllGlobal={async (): Promise<void> => {
+          await handleSelectAllGlobal();
+        }}
         loadingGlobal={loadingGlobalSelection}
-        onDeleteSelected={async () => setIsMassDeleteConfirmOpen(true)}
+        onDeleteSelected={async (): Promise<void> => setIsMassDeleteConfirmOpen(true)}
         onAddToMarketplace={handleAddToMarketplace}
         handleProductsTableRender={handleProductsTableRender}
         tableColumns={columns}

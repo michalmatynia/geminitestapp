@@ -34,7 +34,7 @@ export function SharedModal({
       open={open}
       onOpenChange={(isOpen: boolean) => !isOpen && onClose()}
       title={title}
-      contentClassName={contentClassName}
+      {...(contentClassName && { contentClassName })}
     >
       <ModalShell
         title={title}
@@ -43,7 +43,7 @@ export function SharedModal({
         header={header}
         size={size}
         showClose={showClose}
-        bodyClassName={bodyClassName}
+        {...(bodyClassName && { bodyClassName })}
       >
         {children}
       </ModalShell>

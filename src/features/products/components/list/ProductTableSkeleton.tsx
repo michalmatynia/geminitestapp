@@ -9,7 +9,7 @@ export function ProductTableSkeleton({
 }: ProductTableSkeletonProps): React.JSX.Element {
   return (
     <>
-      {Array.from({ length: rows }).map((_, rowIndex: number) => (
+      {Array.from({ length: rows }).map((_: unknown, rowIndex: number) => (
         <TableRow key={rowIndex} className="border-border">
           {/* Checkbox column */}
           <TableCell>

@@ -39,14 +39,14 @@ describe("prismaProductRepository", () => {
   });
 
   it("should update a product", async () => {
-    const created = await prismaProductRepository.createProduct({ name_en: "Original" });
+    const created = await prismaProductRepository.createProduct({ name_en: "Original", sku: "SKU-UPDATE" });
     const updated = await prismaProductRepository.updateProduct(created.id, { name_en: "Updated" });
     
     expect(updated?.name_en).toBe("Updated");
   });
 
   it("should delete a product", async () => {
-    const created = await prismaProductRepository.createProduct({ name_en: "To Delete" });
+    const created = await prismaProductRepository.createProduct({ name_en: "To Delete", sku: "SKU-DELETE" });
     await prismaProductRepository.deleteProduct(created.id);
     
     const found = await prismaProductRepository.getProductById(created.id);
@@ -54,8 +54,8 @@ describe("prismaProductRepository", () => {
   });
 
   it("should find products with filters", async () => {
-    await prismaProductRepository.createProduct({ name_en: "Apple", price: 10 });
-    await prismaProductRepository.createProduct({ name_en: "Banana", price: 20 });
+    await prismaProductRepository.createProduct({ name_en: "Apple", price: 10, sku: "SKU-APPLE" });
+    await prismaProductRepository.createProduct({ name_en: "Banana", price: 20, sku: "SKU-BANANA" });
     
     const apple = await prismaProductRepository.getProducts({ search: "apple" });
     expect(apple.length).toBe(1);

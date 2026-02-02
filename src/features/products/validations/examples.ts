@@ -8,7 +8,7 @@ import {
 } from "@/features/products/validations";
 
 // Basic validation usage
-export async function basicValidationExample() {
+export async function basicValidationExample(): Promise<unknown> {
   const productData = {
     sku: "EXAMPLE-001",
     name_en: "Example Product",
@@ -27,7 +27,9 @@ export async function basicValidationExample() {
   }
 }
 
-// Export for use in other parts of the application
-export default {
+const examples = {
   basicValidationExample,
 };
+
+// Export for use in other parts of the application
+export default examples;

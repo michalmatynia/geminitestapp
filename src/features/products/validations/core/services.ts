@@ -88,8 +88,8 @@ export abstract class BaseValidationService<T> implements IValidator<T> {
 }
 
 // Product-specific validation services
-export class ProductCreateValidationService extends BaseValidationService<any> {
-  protected async performValidation(data: unknown, metadata: ValidationMetadata): Promise<ValidationResult<any>> {
+export class ProductCreateValidationService extends BaseValidationService<unknown> {
+  protected async performValidation(data: unknown, metadata: ValidationMetadata): Promise<ValidationResult<unknown>> {
     const startTime = performance.now();
     
     try {

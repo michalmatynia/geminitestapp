@@ -64,8 +64,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     queryKey: ["ai-paths", "path-configs"],
     queryFn: async (): Promise<Array<{ id: string; name: string; nodes: AiNode[] }>> => {
       type PrefsResponse = {
-        aiPathsPathConfigs?: Record<string, unknown> | string | null;
-        aiPathsPathIndex?: Array<{ id?: string } | unknown> | null;
+        aiPathsPathConfigs?: Record<string, unknown> | string | null | undefined;
+        aiPathsPathIndex?: Array<{ id?: string }> | null | undefined;
       };
 
       const tryBuildFromConfigs = (
@@ -96,7 +96,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         if (prefsRes.ok) {
           const prefs = (await prefsRes.json()) as PrefsResponse;
           const order: string[] = Array.isArray(prefs.aiPathsPathIndex)
-            ? prefs.aiPathsPathIndex
+            ? (prefs.aiPathsPathIndex as Array<{ id?: string }>)
                 .map((item: { id?: string }) =>
                   typeof item === "object" && item !== null && "id" in item
                     ? (item.id as string | undefined)
@@ -268,7 +268,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         id: "name",
         header: "Name",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const iconId = row.original.iconId;
+          const iconId = (row.original as AiTriggerButtonRecord).iconId;
           const Icon = iconId ? PRODUCT_ICON_MAP[iconId] : null;
           return (
             <div className="flex items-center gap-2">
@@ -276,8 +276,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 {Icon ? <Icon className="size-4 text-gray-200" /> : <Settings2 className="size-4 text-gray-500" />}
               </span>
               <div className="min-w-0">
-                <div className="truncate font-medium text-white">{row.original.name}</div>
-                <div className="truncate text-[11px] text-gray-400">{row.original.id}</div>
+                <div className="truncate font-medium text-white">{(row.original as AiTriggerButtonRecord).name}</div>
+                <div className="truncate text-[11px] text-gray-400">{(row.original as AiTriggerButtonRecord).id}</div>
               </div>
             </div>
           );
@@ -288,7 +288,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         header: "Locations",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <div className="text-xs text-gray-300">
-            {row.original.locations
+            {(row.original as AiTriggerButtonRecord).locations
               .map((value: AiTriggerButtonLocation) => LOCATION_OPTIONS.find((o: { value: AiTriggerButtonLocation; label: string }) => o.value === value)?.label ?? value)
               .join(", ")}
           </div>
@@ -299,7 +299,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         header: "Mode",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => (
           <span className="text-xs text-gray-300">
-            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === row.original.mode)?.label ?? row.original.mode}
+            {MODE_OPTIONS.find((o: { value: AiTriggerButtonMode; label: string }) => o.value === (row.original as AiTriggerButtonRecord).mode)?.label ?? (row.original as AiTriggerButtonRecord).mode}
           </span>
         ),
       },
@@ -307,7 +307,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         id: "paths",
         header: "Used in Paths",
         cell: ({ row }: { row: { original: AiTriggerButtonRecord } }): React.JSX.Element => {
-          const usedIn = attachmentsByTriggerId.get(row.original.id) ?? [];
+          const usedIn = attachmentsByTriggerId.get((row.original as AiTriggerButtonRecord).id) ?? [];
           if (usedIn.length === 0) {
             return <span className="text-xs text-gray-500">Not used</span>;
           }
@@ -339,7 +339,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               variant="outline"
               size="sm"
               onClick={() => {
-                setDraft(normalizeDraft(row.original));
+                setDraft(normalizeDraft(row.original as AiTriggerButtonRecord));
                 setEditorOpen(true);
               }}
             >
@@ -348,10 +348,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                const ok = confirm(`Delete trigger button \"${row.original.name}\"?`);
+              onClick={async () => {
+                const ok = confirm(`Delete trigger button \"${(row.original as AiTriggerButtonRecord).name}\"?`);
                 if (!ok) return;
-                void deleteMutation.mutateAsync(row.original.id);
+                await deleteMutation.mutateAsync((row.original as AiTriggerButtonRecord).id);
               }}
             >
               <Trash2 className="mr-1 size-3.5" />

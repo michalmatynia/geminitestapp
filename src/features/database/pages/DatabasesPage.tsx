@@ -2,19 +2,19 @@
 
 import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useState, useRef, useCallback } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
 import { RestoreModal } from "../components/RestoreModal";
-import type { DatabaseInfo, DatabaseType, DatabaseBackupResponse, DatabaseRestoreResponse } from "../types";
+import type { DatabaseInfo, DatabaseType } from "../types";
 import {
-  createDatabaseBackup,
-  fetchDatabaseBackups,
-  restoreDatabaseBackup,
-  uploadDatabaseBackup,
-  deleteDatabaseBackup,
-} from "../api";
+  useDatabaseBackups,
+  useCreateBackupMutation,
+  useRestoreBackupMutation,
+  useUploadBackupMutation,
+  useDeleteBackupMutation,
+} from "../hooks/useDatabaseQueries";
 
 
 export default function DatabasesPage(): React.JSX.Element {
@@ -27,58 +27,13 @@ export default function DatabasesPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const backupsQuery = useQuery({
-    queryKey: ["database-backups", activeTab],
-    queryFn: async (): Promise<DatabaseInfo[]> => fetchDatabaseBackups(activeTab),
-  });
+  const backupsQuery = useDatabaseBackups(activeTab);
   const data = backupsQuery.data ?? [];
 
-  const createBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType }>({
-    mutationFn: async ({ dbType }: { dbType: DatabaseType }): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> => createDatabaseBackup(dbType),
-    onSuccess: (_data: { ok: boolean; payload: DatabaseBackupResponse }, variables: { dbType: DatabaseType }): void => {
-      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
-    },
-  });
-
-  const restoreBackup = useMutation<{ ok: boolean; payload: DatabaseRestoreResponse }, Error, { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }>({
-    mutationFn: async ({
-      dbType,
-      backupName,
-      truncateBeforeRestore,
-    }: {
-      dbType: DatabaseType;
-      backupName: string;
-      truncateBeforeRestore: boolean;
-    }): Promise<{ ok: boolean; payload: DatabaseRestoreResponse }> =>
-      restoreDatabaseBackup(dbType, {
-        backupName,
-        truncateBeforeRestore,
-      }),
-    onSuccess: (
-      _data: { ok: boolean; payload: DatabaseRestoreResponse },
-      variables: { dbType: DatabaseType }
-    ): void => {
-      void queryClient.invalidateQueries({
-        queryKey: ["database-backups", variables.dbType],
-      });
-    },
-  });
-
-  const uploadBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType; file: File }>({
-    mutationFn: async ({ dbType, file }: { dbType: DatabaseType; file: File }): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> =>
-      uploadDatabaseBackup(dbType, file),
-    onSuccess: (_data: { ok: boolean; payload: DatabaseBackupResponse }, variables: { dbType: DatabaseType }): void => {
-      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
-    },
-  });
-
-  const deleteBackup = useMutation<{ ok: boolean; payload: DatabaseBackupResponse }, Error, { dbType: DatabaseType; backupName: string }>({ 
-    mutationFn: async ({ dbType, backupName }: { dbType: DatabaseType; backupName: string }): Promise<{ ok: boolean; payload: DatabaseBackupResponse }> =>
-      deleteDatabaseBackup(dbType, backupName),
-    onSuccess: (_data: { ok: boolean; payload: DatabaseBackupResponse }, variables: { dbType: DatabaseType }): void => {
-      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
-    },
-  });
+  const createBackup = useCreateBackupMutation();
+  const restoreBackup = useRestoreBackupMutation();
+  const uploadBackup = useUploadBackupMutation();
+  const deleteBackup = useDeleteBackupMutation();
 
   const openLogModal = useCallback((content: string): void => {
     setLogModalContent(content);
@@ -140,7 +95,7 @@ export default function DatabasesPage(): React.JSX.Element {
 
   const handleBackup = async (): Promise<void> => {
     try {
-      const result = await createBackup.mutateAsync({ dbType: activeTab });
+      const result = await createBackup.mutateAsync(activeTab);
       const { ok, payload } = result;
       const log = payload.log ?? "No log available.";
       if (ok) {

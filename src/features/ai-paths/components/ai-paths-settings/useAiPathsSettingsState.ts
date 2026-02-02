@@ -457,6 +457,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     clearRuntimeInputsForEdges,
     reportAiPathsError,
     toast,
+    isPathLocked: !activePathId,
   });
 
   const selectedNode = useMemo(

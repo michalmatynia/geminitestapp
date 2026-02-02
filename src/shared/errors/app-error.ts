@@ -1,4 +1,19 @@
-import { AppErrorCode, AppErrorOptions, AppErrorCodes } from "@/shared/types/errors";
+// import { AppErrorCode, AppErrorOptions, AppErrorCodes } from "@/shared/types/errors";
+
+// Temporary types until errors module is implemented
+type AppErrorCode = string;
+type AppErrorOptions = {
+  httpStatus?: number;
+  meta?: Record<string, unknown>;
+  expected?: boolean;
+  code?: string;
+};
+const AppErrorCodes = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  badRequest: 'BAD_REQUEST',
+} as const;
 
 export { AppErrorCodes };
 export type { AppErrorCode, AppErrorOptions };

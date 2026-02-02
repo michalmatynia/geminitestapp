@@ -15,7 +15,7 @@ import { useProductOperations } from "@/features/products/hooks/useProductOperat
 import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
-import { useProductListSync } from "@/shared/hooks/useBackgroundSync";
+// import { useProductListSync } from "@/shared/hooks/useBackgroundSync";
 import { 
   useProductCacheWarmup, 
   useProductPrefetch, 
@@ -45,6 +45,7 @@ export function AdminProductsPage(): React.JSX.Element {
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
+  const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
   const queryClient = useQueryClient();
 
   const { data: allDrafts = [] } = useDrafts();
@@ -359,6 +360,20 @@ export function AdminProductsPage(): React.JSX.Element {
     }
   }, [rowSelection, setActionError, toast, bulkDeleteMutation]);
 
+  const handleConfirmSingleDelete = useCallback(async () => {
+    if (!productToDelete) return;
+    try {
+      await bulkDeleteMutation.mutateAsync([productToDelete.id]);
+      toast("Product deleted successfully.", { variant: "success" });
+      setRefreshTrigger((prev: number) => prev + 1);
+    } catch (error) {
+      logger.error("Error deleting product:", error);
+      setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
+    } finally {
+      setProductToDelete(null);
+    }
+  }, [productToDelete, setActionError, toast, bulkDeleteMutation]);
+
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
   }, [searchParams]);
@@ -412,6 +427,15 @@ export function AdminProductsPage(): React.JSX.Element {
         confirmText="Delete"
         variant="destructive"
       />
+      <ConfirmDialog
+        open={!!productToDelete}
+        onOpenChange={(open) => !open && setProductToDelete(null)}
+        onConfirm={handleConfirmSingleDelete}
+        title="Delete Product"
+        description={`Are you sure you want to delete product "${productToDelete?.name_en || productToDelete?.name_pl || "this product"}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
       <ProductListPanel
         onCreateProduct={handleOpenCreate}
         onCreateFromDraft={handleCreateFromDraft}
@@ -459,6 +483,7 @@ export function AdminProductsPage(): React.JSX.Element {
         priceGroups={priceGroups}
         onProductNameClick={handleOpenEditModal}
         onProductEditClick={handleOpenEditModal}
+        onProductDeleteClick={setProductToDelete}
         onIntegrationsClick={handleOpenIntegrationsModal}
         onExportSettingsClick={handleOpenExportSettings}
         integrationBadgeIds={integrationBadgeIds}

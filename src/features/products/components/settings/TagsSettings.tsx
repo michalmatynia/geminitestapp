@@ -1,7 +1,7 @@
 "use client";
 
-import { useToast, Button, AppModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label } from "@/shared/ui";
-import { useState } from "react";
+import { useToast, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
+import { useState, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import type { Catalog, ProductTag } from "@/features/products/types";
@@ -38,6 +38,7 @@ export function TagsSettings({
     color: "#38bdf8",
     catalogId: "",
   });
+  const [tagToDelete, setTagToDelete] = useState<ProductTag | null>(null);
 
   const saveTagMutation = useSaveTagMutation();
   const deleteTagMutation = useDeleteTagMutation();
@@ -100,17 +101,22 @@ export function TagsSettings({
     }
   };
 
-  const handleDelete = async (tag: ProductTag): Promise<void> => {
-    const confirmed = window.confirm(`Delete tag "${tag.name}"?`);
-    if (!confirmed) return;
+  const handleDelete = useCallback((tag: ProductTag): void => {
+    setTagToDelete(tag);
+  }, []);
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!tagToDelete) return;
     try {
-      await deleteTagMutation.mutateAsync({ id: tag.id, catalogId: selectedCatalogId });
+      await deleteTagMutation.mutateAsync({ id: tagToDelete.id, catalogId: selectedCatalogId });
       toast("Tag deleted.", { variant: "success" });
       onRefresh();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to delete tag.";
       toast(message, { variant: "error" });
+    } finally {
+      setTagToDelete(null);
     }
   };
 
@@ -165,9 +171,16 @@ export function TagsSettings({
                 Loading tags...
               </div>
             ) : tags.length === 0 ? (
-              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-                No tags yet for this catalog. Create your first tag!
-              </div>
+              <EmptyState
+                title="No tags yet"
+                description="Tags help you categorize products within a catalog."
+                action={
+                  <Button onClick={openCreateModal} variant="outline">
+                    <Plus className="size-4 mr-2" />
+                    Create Your First Tag
+                  </Button>
+                }
+              />
             ) : (
               <div className="space-y-2">
                 {tags.map((tag: ProductTag) => (
@@ -194,7 +207,7 @@ export function TagsSettings({
                       </Button>
                       <Button
                         type="button"
-                        onClick={(): void => { void handleDelete(tag); }}
+                        onClick={(): void => handleDelete(tag)}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete tag"
                       >
@@ -210,108 +223,105 @@ export function TagsSettings({
       )}
 
       {!selectedCatalogId && catalogs.length === 0 && (
-        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-          No catalogs found. Please create a catalog first in the Catalogs section.
-        </div>
+        <EmptyState
+          title="No catalogs found"
+          description="Please create a catalog first in the Catalogs section before adding tags."
+        />
       )}
 
+      <ConfirmDialog
+        open={!!tagToDelete}
+        onOpenChange={(open) => !open && setTagToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Tag"
+        description={`Are you sure you want to delete tag "${tagToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
+
       {showModal && (
-        <AppModal
+        <SharedModal
           open={showModal}
-          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
+          onClose={(): void => setShowModal(false)}
           title={editingTag ? "Edit Tag" : "Create Tag"}
+          size="md"
         >
-          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                {editingTag ? "Edit Tag" : "Create Tag"}
-              </h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-gray-400">Name</Label>
+              <Input
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                value={formData.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: TagFormData) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Tag name"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Catalog</Label>
+              <select
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                value={formData.catalogId}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  setFormData((prev: TagFormData) => ({
+                    ...prev,
+                    catalogId: e.target.value,
+                  }))
+                }
+              >
+                {catalogs.map((catalog: Catalog) => (
+                  <option key={catalog.id} value={catalog.id}>
+                    {catalog.name}
+                    {catalog.isDefault ? " (Default)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Color</Label>
+              <div className="mt-2 flex items-center gap-3">
+                <Input
+                  type="color"
+                  className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
+                  value={formData.color}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                  }
+                />
+                <Input
+                  type="text"
+                  className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={formData.color}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                  }
+                  placeholder="#38bdf8"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4">
               <Button
-                className="text-sm text-gray-400 hover:text-white"
+                className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                 type="button"
                 onClick={(): void => setShowModal(false)}
               >
-                Close
+                Cancel
+              </Button>
+              <Button
+                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                type="button"
+                onClick={(): void => { void handleSave(); }}
+                disabled={saveTagMutation.isPending}
+              >
+                {saveTagMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-400">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: TagFormData) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="Tag name"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Catalog</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.catalogId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev: TagFormData) => ({
-                      ...prev,
-                      catalogId: e.target.value,
-                    }))
-                  }
-                >
-                  {catalogs.map((catalog: Catalog) => (
-                    <option key={catalog.id} value={catalog.id}>
-                      {catalog.name}
-                      {catalog.isDefault ? " (Default)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Color</Label>
-                <div className="mt-2 flex items-center gap-3">
-                  <Input
-                    type="color"
-                    className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
-                    value={formData.color}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
-                    }
-                  />
-                  <Input
-                    type="text"
-                    className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={formData.color}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
-                    }
-                    placeholder="#38bdf8"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <Button
-                  className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
-                  type="button"
-                  onClick={(): void => setShowModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                  type="button"
-                  onClick={(): void => { void handleSave(); }}
-                  disabled={saveTagMutation.isPending}
-                >
-                  {saveTagMutation.isPending ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </div>
           </div>
-        </AppModal>
+        </SharedModal>
       )}
     </div>
   );

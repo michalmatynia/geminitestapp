@@ -178,17 +178,17 @@ export function PagePreviewPanel(): React.ReactNode {
       ...page,
       showMenu: page.showMenu ?? true,
       status: page.status,
-      publishedAt: page.publishedAt,
-      seoTitle: page.seoTitle,
-      seoDescription: page.seoDescription,
-      seoOgImage: page.seoOgImage,
-      seoCanonical: page.seoCanonical,
-      robotsMeta: page.robotsMeta,
+      publishedAt: page.publishedAt || "",
+      seoTitle: page.seoTitle || "",
+      seoDescription: page.seoDescription || "",
+      seoOgImage: page.seoOgImage || "",
+      seoCanonical: page.seoCanonical || "",
+      robotsMeta: page.robotsMeta || "",
       components: state.sections.map((s: SectionInstance) => ({
         type: s.type,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
       })),
-      slugIds: page.slugIds,
+      ...(page.slugIds && { slugIds: page.slugIds }),
     };
 
     await updatePage.mutateAsync({
@@ -653,7 +653,7 @@ export function PagePreviewPanel(): React.ReactNode {
                               isInspecting={state.inspectorEnabled}
                               inspectorSettings={state.inspectorSettings}
                               hoveredNodeId={effectiveHoveredNodeId}
-                              colorSchemes={colorSchemes}
+                              colorSchemes={colorSchemes || {}}
                               mediaStyles={mediaStyles}
                               onSelect={handleSelectNode}
                               onHoverNode={handleHoverNode}

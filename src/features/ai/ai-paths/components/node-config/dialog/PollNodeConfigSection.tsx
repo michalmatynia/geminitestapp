@@ -131,7 +131,7 @@ export function PollNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Mode</Label>
         <Select
-          value={resolvedPollConfig.mode}
+          value={resolvedPollConfig.mode || ""}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as "job" | "database" })
           }

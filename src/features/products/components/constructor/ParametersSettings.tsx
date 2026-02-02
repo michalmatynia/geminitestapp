@@ -1,7 +1,7 @@
 "use client";
 
-import { useToast, Button, AppModal, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import { useState } from "react";
+import { useToast, Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
+import { useState, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import type { CatalogRecord } from "@/features/products/types";
@@ -34,6 +34,7 @@ export function ParametersSettings({
     name_de: "",
     catalogId: "",
   });
+  const [parameterToDelete, setParameterToDelete] = useState<ProductParameter | null>(null);
 
   const saveParameterMutation = useSaveParameterMutation();
   const deleteParameterMutation = useDeleteParameterMutation();
@@ -99,19 +100,22 @@ export function ParametersSettings({
     }
   };
 
-  const handleDelete = async (parameter: ProductParameter): Promise<void> => {
-    const confirmed = window.confirm(
-      `Delete parameter "${parameter.name_en}"?`
-    );
-    if (!confirmed) return;
+  const handleDelete = useCallback((parameter: ProductParameter): void => {
+    setParameterToDelete(parameter);
+  }, []);
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!parameterToDelete) return;
     try {
-      await deleteParameterMutation.mutateAsync({ id: parameter.id, catalogId: selectedCatalogId });
+      await deleteParameterMutation.mutateAsync({ id: parameterToDelete.id, catalogId: selectedCatalogId });
       toast("Parameter deleted.", { variant: "success" });
       onRefresh();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to delete parameter.";
       toast(message, { variant: "error" });
+    } finally {
+      setParameterToDelete(null);
     }
   };
 
@@ -168,9 +172,16 @@ export function ParametersSettings({
                 Loading parameters...
               </div>
             ) : parameters.length === 0 ? (
-              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-                No parameters yet for this catalog. Create your first parameter!
-              </div>
+              <EmptyState
+                title="No parameters yet"
+                description="Parameters allow you to define custom fields for products in this catalog."
+                action={
+                  <Button onClick={openCreateModal} variant="outline">
+                    <Plus className="size-4 mr-2" />
+                    Create Your First Parameter
+                  </Button>
+                }
+              />
             ) : (
               <div className="space-y-2">
                 {parameters.map((parameter: ProductParameter) => (
@@ -217,75 +228,80 @@ export function ParametersSettings({
       )}
 
       {!selectedCatalogId && catalogs.length === 0 && (
-        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-          No catalogs found. Please create a catalog first in the Catalogs section.
-        </div>
+        <EmptyState
+          title="No catalogs found"
+          description="Please create a catalog first in the Catalogs section before adding parameters."
+        />
       )}
 
-      {showModal && (
-        <AppModal
-          open={showModal}
-          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
-          title={editingParameter ? "Edit Parameter" : "Create Parameter"}
-        >
-          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                {editingParameter ? "Edit Parameter" : "Create Parameter"}
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm">Name (EN)</Label>
-                <Input
-                  value={formData.name_en}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: typeof formData) => ({
-                      ...prev,
-                      name_en: event.target.value,
-                    }))
-                  }
-                  placeholder="Parameter name in English"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Name (PL)</Label>
-                <Input
-                  value={formData.name_pl}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: typeof formData) => ({
-                      ...prev,
-                      name_pl: event.target.value,
-                    }))
-                  }
-                  placeholder="Optional"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Name (DE)</Label>
-                <Input
-                  value={formData.name_de}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: typeof formData) => ({
-                      ...prev,
-                      name_de: event.target.value,
-                    }))
-                  }
-                  placeholder="Optional"
-                />
-              </div>
-            </div>
+      <ConfirmDialog
+        open={!!parameterToDelete}
+        onOpenChange={(open) => !open && setParameterToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Parameter"
+        description={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
 
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={(): void => setShowModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={(): void => { void handleSave(); }} disabled={saveParameterMutation.isPending}>
-                {saveParameterMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+      {showModal && (
+        <SharedModal
+          open={showModal}
+          onClose={(): void => setShowModal(false)}
+          title={editingParameter ? "Edit Parameter" : "Create Parameter"}
+          size="md"
+        >
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">Name (EN)</Label>
+              <Input
+                value={formData.name_en}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: typeof formData) => ({
+                    ...prev,
+                    name_en: event.target.value,
+                  }))
+                }
+                placeholder="Parameter name in English"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Name (PL)</Label>
+              <Input
+                value={formData.name_pl}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: typeof formData) => ({
+                    ...prev,
+                    name_pl: event.target.value,
+                  }))
+                }
+                placeholder="Optional"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Name (DE)</Label>
+              <Input
+                value={formData.name_de}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: typeof formData) => ({
+                    ...prev,
+                    name_de: event.target.value,
+                  }))
+                }
+                placeholder="Optional"
+              />
             </div>
           </div>
-        </AppModal>
+
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="outline" onClick={(): void => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={(): void => { void handleSave(); }} disabled={saveParameterMutation.isPending}>
+              {saveParameterMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </SharedModal>
       )}
     </div>
   );

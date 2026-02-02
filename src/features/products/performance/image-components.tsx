@@ -1,0 +1,200 @@
+import { useState, useEffect } from 'react';
+// import { imageUrlGenerator, type ImageFormat, type ImageSize } from '../image-optimizer';
+
+// Temporary types until image-optimizer is implemented
+type ImageFormat = 'webp' | 'jpeg' | 'png';
+type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+
+type OptimizedImageProps = {
+  imageId: string;
+  alt: string;
+  size?: ImageSize;
+  className?: string;
+  priority?: boolean;
+  onLoad?: () => void;
+  onError?: () => void;
+};
+
+export function OptimizedImage({
+  imageId,
+  alt,
+  size = 'medium',
+  className,
+  priority = false,
+  onLoad,
+  onError
+}: OptimizedImageProps) {
+  const [format, setFormat] = useState<ImageFormat>('webp');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    // Detect best format based on browser support
+    const detectFormat = () => {
+      if (typeof window === 'undefined') return 'webp';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      
+      // Test AVIF support
+      if (canvas.toDataURL('image/avif').indexOf('data:image/avif') === 0) {
+        return 'avif';
+      }
+      
+      // Test WebP support
+      if (canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0) {
+        return 'webp';
+      }
+      
+      return 'jpeg';
+    };
+
+    setFormat(detectFormat());
+  }, []);
+
+  const handleLoad = () => {
+    setIsLoaded(true);
+    onLoad?.();
+  };
+
+  const handleError = () => {
+    setHasError(true);
+    // Fallback to JPEG if WebP/AVIF fails
+    if (format !== 'jpeg') {
+      setFormat('jpeg');
+      setHasError(false);
+    } else {
+      onError?.();
+    }
+  };
+
+  const responsive = imageUrlGenerator.generateResponsive(imageId, format);
+
+  return (
+    <img
+      src={responsive.src}
+      srcSet={responsive.srcSet}
+      sizes={responsive.sizes}
+      alt={alt}
+      className={className}
+      loading={priority ? 'eager' : 'lazy'}
+      onLoad={handleLoad}
+      onError={handleError}
+      style={{
+        opacity: isLoaded ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out'
+      }}
+    />
+  );
+}
+
+type ProductImageGalleryProps = {
+  images: Array<{ id: string; alt: string }>;
+  className?: string;
+};
+
+export function ProductImageGallery({ images, className }: ProductImageGalleryProps) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+
+  const handleImageLoad = (index: number) => {
+    setLoadedImages(prev => new Set([...prev, index]));
+  };
+
+  if (!images.length) return null;
+
+  return (
+    <div className={className}>
+      {/* Main image */}
+      <div className="main-image">
+        <OptimizedImage
+          imageId={images[selectedIndex].id}
+          alt={images[selectedIndex].alt}
+          size="large"
+          priority={selectedIndex === 0}
+          onLoad={() => handleImageLoad(selectedIndex)}
+        />
+      </div>
+
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="thumbnails">
+          {images.map((image, index) => (
+            <button
+              key={image.id}
+              onClick={() => setSelectedIndex(index)}
+              className={`thumbnail ${index === selectedIndex ? 'active' : ''}`}
+            >
+              <OptimizedImage
+                imageId={image.id}
+                alt={image.alt}
+                size="thumbnail"
+                onLoad={() => handleImageLoad(index)}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type LazyImageGridProps = {
+  images: Array<{ id: string; alt: string }>;
+  columns?: number;
+  className?: string;
+};
+
+export function LazyImageGrid({ images, columns = 3, className }: LazyImageGridProps) {
+  const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const imageId = entry.target.getAttribute('data-image-id');
+            if (imageId) {
+              setVisibleImages(prev => new Set([...prev, imageId]));
+              observer.unobserve(entry.target);
+            }
+          }
+        });
+      },
+      { rootMargin: '50px' }
+    );
+
+    const elements = document.querySelectorAll('[data-image-id]');
+    elements.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [images]);
+
+  return (
+    <div 
+      className={className}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${columns}, 1fr)`,
+        gap: '1rem'
+      }}
+    >
+      {images.map((image) => (
+        <div
+          key={image.id}
+          data-image-id={image.id}
+          style={{ aspectRatio: '1', backgroundColor: '#f0f0f0' }}
+        >
+          {visibleImages.has(image.id) && (
+            <OptimizedImage
+              imageId={image.id}
+              alt={image.alt}
+              size="medium"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

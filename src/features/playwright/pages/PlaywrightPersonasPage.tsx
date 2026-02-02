@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel, Card } from "@/shared/ui";
+import { Button, Input, Label, Textarea, useToast, SectionHeader, SectionPanel, Card, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from "@/features/playwright/utils/personas";
@@ -43,6 +43,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
   const [draftName, setDraftName] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftSettings, setDraftSettings] = useState<PlaywrightSettings>(buildPlaywrightSettings());
+  const [personaToDelete, setPersonaToDelete] = useState<PlaywrightPersona | null>(null);
 
   const sortedPersonas = useMemo((): PlaywrightPersona[] => {
     return [...personas].sort((a: PlaywrightPersona, b: PlaywrightPersona) => {
@@ -112,10 +113,13 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
     }
   };
 
-  const handleDeletePersona = async (persona: PlaywrightPersona): Promise<void> => {
-    const confirmed = window.confirm(`Delete persona "${persona.name}"?`);
-    if (!confirmed) return;
-    const next = personas.filter((item: PlaywrightPersona) => item.id !== persona.id);
+  const handleDeletePersona = useCallback((persona: PlaywrightPersona): void => {
+    setPersonaToDelete(persona);
+  }, []);
+
+  const handleConfirmDeletePersona = async (): Promise<void> => {
+    if (!personaToDelete) return;
+    const next = personas.filter((item: PlaywrightPersona) => item.id !== personaToDelete.id);
     
     try {
       await savePersonas({ personas: next });
@@ -124,6 +128,8 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to save personas.";
       toast(errorMessage, { variant: "error" });
+    } finally {
+      setPersonaToDelete(null);
     }
   };
 
@@ -160,13 +166,20 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       </SectionPanel>
 
       {loading ? (
-        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400">
           Loading personas...
         </div>
       ) : sortedPersonas.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
-          No personas yet. Create your first Playwright profile.
-        </div>
+        <EmptyState
+          title="No personas yet"
+          description="Create your first Playwright profile to centralize browser automation settings."
+          action={
+            <Button onClick={openCreate} variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              New Persona
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sortedPersonas.map((persona: PlaywrightPersona) => {
@@ -206,7 +219,7 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => void handleDeletePersona(persona)}
+                      onClick={() => handleDeletePersona(persona)}
                       disabled={saving}
                     >
                       <Trash2 className="mr-1 size-3" />
@@ -234,71 +247,76 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         </div>
       )}
 
-      <AppModal
-        open={modalOpen}
-        onOpenChange={(open: boolean) => !open && closeModal()}
-        title={editingId ? "Edit persona" : "New persona"}
-      >
-        <ModalShell
-          title={editingId ? "Edit persona" : "New persona"}
-          onClose={closeModal}
-          footer={
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeModal}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={() => void handleSavePersona()}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Save persona"}
-              </Button>
-            </>
-          }
-        >
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-200">
-                  Persona name
-                </Label>
-                <Input
-                  value={draftName}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
-                  placeholder="Example: Safe desktop headless"
-                />
-              </div>
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-200">
-                  Description
-                </Label>
-                <Textarea
-                  value={draftDescription}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setDraftDescription(event.target.value)
-                  }
-                  placeholder="Optional notes for this persona"
-                  className="min-h-[90px]"
-                />
-              </div>
-            </div>
+      <ConfirmDialog
+        open={!!personaToDelete}
+        onOpenChange={(open) => !open && setPersonaToDelete(null)}
+        onConfirm={handleConfirmDeletePersona}
+        title="Delete Persona"
+        description={`Are you sure you want to delete persona "${personaToDelete?.name}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
 
-            <PlaywrightSettingsForm
-              settings={draftSettings}
-              setSettings={setDraftSettings}
-              showSave={false}
-              title="Persona settings"
-              description="Tune browser behavior, timeouts, and automation pacing."
-            />
+      <SharedModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Edit persona" : "New persona"}
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleSavePersona()}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save persona"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                Persona name
+              </Label>
+              <Input
+                value={draftName}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
+                placeholder="Example: Safe desktop headless"
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                Description
+              </Label>
+              <Textarea
+                value={draftDescription}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setDraftDescription(event.target.value)
+                }
+                placeholder="Optional notes for this persona"
+                className="min-h-[90px]"
+              />
+            </div>
           </div>
-        </ModalShell>
-      </AppModal>
+
+          <PlaywrightSettingsForm
+            settings={draftSettings}
+            setSettings={setDraftSettings}
+            showSave={false}
+            title="Persona settings"
+            description="Tune browser behavior, timeouts, and automation pacing."
+          />
+        </div>
+      </SharedModal>
     </div>
   );
 }

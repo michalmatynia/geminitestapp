@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, useToast, SectionHeader, SectionPanel, Input } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useChatbotJobs } from "@/features/jobs/hooks/useJobQueries";
@@ -23,13 +23,11 @@ type ChatbotJob = {
 };
 
 export default function ChatbotJobsPage(): React.JSX.Element {
-  const { toast } = useToast();
   const [query, setQuery] = useState("");
 
   const jobsQuery = useChatbotJobs("all");
   
   const chatbotMutation = useChatbotJobMutation();
-  const deleteMutation = useDeleteChatbotJobMutation();
   const clearMutation = useClearChatbotJobsMutation();
 
   const jobs = useMemo(() => (jobsQuery.data as { jobs: ChatbotJob[] } | undefined)?.jobs || [], [jobsQuery.data]);
@@ -69,28 +67,6 @@ export default function ChatbotJobsPage(): React.JSX.Element {
     }
   };
 
-  const deleteJob = async (jobId: string, force: boolean = false): Promise<void> => {
-    try {
-      const confirmed = window.confirm("Delete this job permanently? This cannot be undone.");
-      if (!confirmed) return;
-      await deleteMutation.mutateAsync({ jobId, force });
-      toast("Job deleted", { variant: "success" });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Failed to delete job.", { variant: "error" });
-    }
-  };
-
-  const deleteCompletedJobs = async (): Promise<void> => {
-    try {
-      const confirmed = window.confirm("Delete all completed jobs? This cannot be undone.");
-      if (!confirmed) return;
-      await clearMutation.mutateAsync({ scope: "terminal" });
-      toast("Completed jobs deleted", { variant: "success" });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Failed to delete jobs.", { variant: "error" });
-    }
-  };
-
   return (
     <div className="container mx-auto py-10">
       <SectionHeader
@@ -125,7 +101,7 @@ export default function ChatbotJobsPage(): React.JSX.Element {
             <Button
               variant="destructive"
               size="sm"
-              onClick={(): void => { void deleteCompletedJobs(); }}
+              onClick={(): void => setIsBulkDeleteConfirmOpen(true)}
               disabled={clearMutation.isPending}
             >
               {clearMutation.isPending ? "Deleting jobs..." : "Delete completed jobs"}
@@ -135,9 +111,12 @@ export default function ChatbotJobsPage(): React.JSX.Element {
         {jobsQuery.isLoading ? (
           <p className="text-sm text-gray-400">Loading jobs...</p>
         ) : jobsQuery.error ? (
-          <p className="text-sm text-red-400">{(jobsQuery.error).message}</p>
+          <p className="text-sm text-red-400">{(jobsQuery.error as Error).message}</p>
         ) : filteredJobs.length === 0 ? (
-          <p className="text-sm text-gray-400">No jobs yet.</p>
+          <div className="text-center py-8">
+            <p className="text-gray-400">No jobs yet</p>
+            <p className="text-sm text-gray-500 mt-1">Chatbot jobs track background processing of AI messages.</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {filteredJobs.map((job: ChatbotJob) => (
@@ -201,18 +180,18 @@ export default function ChatbotJobsPage(): React.JSX.Element {
                       variant="destructive"
                       size="sm"
                       disabled={deleteMutation.isPending && deleteMutation.variables?.jobId === job.id}
-                      onClick={(): void => { void deleteJob(job.id); }}
+                      onClick={(): void => setJobToDelete({ id: job.id, force: false })}
                     >
-                      {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id ? "Deleting..." : "Delete"}
+                      {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id && jobToDelete?.id === job.id && !jobToDelete.force ? "Deleting..." : "Delete"}
                     </Button>
                     {job.status === "running" ? (
                       <Button
                         variant="destructive"
                         size="sm"
                         disabled={deleteMutation.isPending && deleteMutation.variables?.jobId === job.id}
-                        onClick={(): void => { void deleteJob(job.id, true); }}
+                        onClick={(): void => setJobToDelete({ id: job.id, force: true })}
                       >
-                        {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id
+                        {deleteMutation.isPending && deleteMutation.variables?.jobId === job.id && jobToDelete?.id === job.id && jobToDelete.force
                           ? "Deleting..."
                           : "Force delete"}
                       </Button>

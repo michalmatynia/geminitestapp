@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, AppModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Input, Textarea, Label } from "@/shared/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Input, Textarea, Label, SharedModal, EmptyState, ConfirmDialog } from "@/shared/ui";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ChevronRight,
@@ -237,6 +237,7 @@ export function CategoriesSettings({
     parentId: null,
     catalogId: "",
   });
+  const [categoryToDelete, setCategoryToDelete] = useState<ProductCategoryWithChildren | null>(null);
 
   const saveCategoryMutation = useSaveCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
@@ -309,22 +310,22 @@ export function CategoriesSettings({
     setShowModal(true);
   };
 
-  const handleDelete = async (category: ProductCategoryWithChildren): Promise<void> => {
-    const hasChildren: boolean = category.children.length > 0;
-    const message: string = hasChildren
-      ? `Delete category "${category.name}" and all its subcategories? This cannot be undone.`
-      : `Delete category "${category.name}"? This cannot be undone.`;
+  const handleDelete = useCallback((category: ProductCategoryWithChildren): void => {
+    setCategoryToDelete(category);
+  }, []);
 
-    if (!window.confirm(message)) return;
-
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!categoryToDelete) return;
     try {
-      await deleteCategoryMutation.mutateAsync({ id: category.id, catalogId: selectedCatalogId });
+      await deleteCategoryMutation.mutateAsync({ id: categoryToDelete.id, catalogId: selectedCatalogId });
       toast("Category deleted successfully", { variant: "success" });
       onRefresh();
     } catch (error) {
       const message: string =
         error instanceof Error ? error.message : "Failed to delete category";
       toast(message, { variant: "error" });
+    } finally {
+      setCategoryToDelete(null);
     }
   };
 
@@ -550,9 +551,16 @@ export function CategoriesSettings({
                 Loading categories...
               </div>
             ) : categories.length === 0 ? (
-              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-                No categories yet for this catalog. Create your first category!
-              </div>
+              <EmptyState
+                title="No categories yet"
+                description="Categories help you organize products into a hierarchical tree."
+                action={
+                  <Button onClick={(): void => handleOpenCreateModal(null)} variant="outline">
+                    <Plus className="size-4 mr-2" />
+                    Add Category
+                  </Button>
+                }
+              />
             ) : (
               <div
                 className="space-y-0.5 rounded-md border border-border bg-gray-900 p-2"
@@ -588,7 +596,7 @@ export function CategoriesSettings({
                     expandedIds={expandedIds}
                     onToggleExpand={handleToggleExpand}
                     onEdit={handleOpenEditModal}
-                    onDelete={(cat: ProductCategoryWithChildren): void => void handleDelete(cat)}
+                    onDelete={handleDelete}
                     onCreateChild={handleOpenCreateModal}
                     draggedId={draggedId}
                     onDragStart={setDraggedId}
@@ -604,163 +612,164 @@ export function CategoriesSettings({
       )}
 
       {!selectedCatalogId && catalogs.length === 0 && (
-        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
-          No catalogs found. Please create a catalog first in the Catalogs section.
-        </div>
+        <EmptyState
+          title="No catalogs found"
+          description="Please create a catalog first in the Catalogs section before adding categories."
+        />
       )}
+
+      <ConfirmDialog
+        open={!!categoryToDelete}
+        onOpenChange={(open) => !open && setCategoryToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Category"
+        description={
+          categoryToDelete?.children && categoryToDelete.children.length > 0
+            ? `Are you sure you want to delete category "${categoryToDelete.name}" and ALL its subcategories? This cannot be undone.`
+            : `Are you sure you want to delete category "${categoryToDelete?.name}"? This cannot be undone.`
+        }
+        confirmText="Delete"
+        variant="destructive"
+      />
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <AppModal
+        <SharedModal
           open={showModal}
-          onOpenChange={(open: boolean): void => { if (!open) setShowModal(false); }}
+          onClose={(): void => setShowModal(false)}
           title={editingCategory ? "Edit Category" : "Create Category"}
+          size="md"
         >
-          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                {editingCategory ? "Edit Category" : "Create Category"}
-              </h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs text-gray-400">Name</Label>
+              <Input
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                value={formData.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: CategoryFormData) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Category name"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Description</Label>
+              <Textarea
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                rows={3}
+                value={formData.description}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                  setFormData((prev: CategoryFormData) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="Optional description"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Catalog</Label>
+              <select
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                value={formData.catalogId}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
+                  const nextCatalogId: string = e.target.value;
+                  setFormData((prev: CategoryFormData) => ({
+                    ...prev,
+                    catalogId: nextCatalogId,
+                    parentId:
+                      prev.catalogId !== nextCatalogId ? null : prev.parentId,
+                  }));
+                  setModalCatalogId(nextCatalogId);
+                }}
+              >
+                {catalogs.map((catalog: Catalog): React.JSX.Element => (
+                  <option key={catalog.id} value={catalog.id}>
+                    {catalog.name}
+                    {catalog.isDefault ? " (Default)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Parent Category</Label>
+              <select
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                value={formData.parentId ?? ""}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  setFormData((prev: CategoryFormData) => ({
+                    ...prev,
+                    parentId: e.target.value ? e.target.value : null,
+                  }))
+                }
+                disabled={modalLoadingCategories}
+              >
+                <option value="">No parent (root)</option>
+                {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
+                  <option key={option.id} value={option.id}>
+                    {"|-- ".repeat(option.level)}
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+              {modalLoadingCategories && (
+                <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+              )}
+              {!modalLoadingCategories &&
+                modalCatalogId &&
+                parentOptions.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    No categories available in{" "}
+                    {modalCatalog?.name ?? "this catalog"}.
+                  </p>
+                )}
+            </div>
+
+            <div>
+              <Label className="text-xs text-gray-400">Color</Label>
+              <div className="mt-2 flex items-center gap-3">
+                <Input
+                  type="color"
+                  className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
+                  value={formData.color}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                  }
+                />
+                <Input
+                  type="text"
+                  className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={formData.color}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setFormData((prev: TagFormData) => ({ ...prev, color: e.target.value }))
+                  }
+                  placeholder="#10b981"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4">
               <Button
-                className="text-sm text-gray-400 hover:text-white"
+                className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                 type="button"
                 onClick={(): void => setShowModal(false)}
               >
-                Close
+                Cancel
+              </Button>
+              <Button
+                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                type="button"
+                onClick={(): void => { void handleSave(); }}
+                disabled={saveCategoryMutation.isPending}
+              >
+                {saveCategoryMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-400">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="Category name"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Description</Label>
-                <Textarea
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Optional description"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Catalog</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.catalogId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => {
-                    const nextCatalogId: string = e.target.value;
-                    setFormData((prev: CategoryFormData) => ({
-                      ...prev,
-                      catalogId: nextCatalogId,
-                      parentId:
-                        prev.catalogId !== nextCatalogId ? null : prev.parentId,
-                    }));
-                    setModalCatalogId(nextCatalogId);
-                  }}
-                >
-                  {catalogs.map((catalog: Catalog): React.JSX.Element => (
-                    <option key={catalog.id} value={catalog.id}>
-                      {catalog.name}
-                      {catalog.isDefault ? " (Default)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Parent Category</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={formData.parentId ?? ""}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setFormData((prev: CategoryFormData) => ({
-                      ...prev,
-                      parentId: e.target.value ? e.target.value : null,
-                    }))
-                  }
-                  disabled={modalLoadingCategories}
-                >
-                  <option value="">No parent (root)</option>
-                  {parentOptions.map((option: { id: string; name: string; level: number }): React.JSX.Element => (
-                    <option key={option.id} value={option.id}>
-                      {"|-- ".repeat(option.level)}
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                {modalLoadingCategories && (
-                  <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
-                )}
-                {!modalLoadingCategories &&
-                  modalCatalogId &&
-                  parentOptions.length === 0 && (
-                    <p className="mt-1 text-xs text-gray-500">
-                      No categories available in{" "}
-                      {modalCatalog?.name ?? "this catalog"}.
-                    </p>
-                  )}
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-400">Color</Label>
-                <div className="mt-2 flex items-center gap-3">
-                  <Input
-                    type="color"
-                    className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
-                    value={formData.color}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                    }
-                  />
-                  <Input
-                    type="text"
-                    className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={formData.color}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setFormData((prev: CategoryFormData) => ({ ...prev, color: e.target.value }))
-                    }
-                    placeholder="#10b981"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <Button
-                  className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
-                  type="button"
-                  onClick={(): void => setShowModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                  type="button"
-                  onClick={(): void => { void handleSave(); }}
-                  disabled={saveCategoryMutation.isPending}
-                >
-                  {saveCategoryMutation.isPending ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </div>
           </div>
-        </AppModal>
+        </SharedModal>
       )}
     </div>
   );

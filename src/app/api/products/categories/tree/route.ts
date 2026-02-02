@@ -73,6 +73,8 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
         .filter((cat: CategoryFromDb) => cat.parentId === parentId)
         .map((cat: CategoryFromDb) => ({
           ...cat,
+          createdAt: cat.createdAt.toISOString(),
+          updatedAt: cat.updatedAt.toISOString(),
           children: buildTree(cat.id),
         }));
     };

@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   validateProductsBatch,
-  validationStreamer,
-  createValidationSSE,
   externalValidationService,
   validationRuleEngine,
   validationCache,
   getValidationHealth,
-  type BatchValidationOptions,
-  type StreamValidationOptions,
 } from "@/features/products/validations";
 
 // POST /api/products/validation - Batch validation
 export async function POST(req: NextRequest) {
   try {
-    const { products, options }: {
+    const { products }: {
       products: unknown[];
-      options?: BatchValidationOptions;
     } = await req.json();
 
     if (!Array.isArray(products)) {
@@ -26,16 +21,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await validateProductsBatch(products, options);
+    const result = await validateProductsBatch(products, "create");
     
     return NextResponse.json({
       summary: {
-        total: result.total,
-        successful: result.successful,
-        failed: result.failed,
+        total: result.summary.total,
+        successful: result.summary.successful,
+        failed: result.summary.failed,
       },
       results: result.results,
-      globalErrors: result.globalErrors,
+      globalErrors: [],
     });
   } catch (error) {
     return NextResponse.json(

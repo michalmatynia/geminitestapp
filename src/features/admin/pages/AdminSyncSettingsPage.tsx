@@ -14,7 +14,7 @@ import {
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { useBackgroundSyncStatus } from "@/shared/providers/BackgroundSyncProvider";
-import { useOfflineSync } from "@/shared/hooks/offline";
+import { useOfflineSync } from "@/shared/hooks/offline/useOfflineMutation";
 import { useOfflineQueueStatus, type OfflineQueueItem } from "@/shared/hooks/offline";
 
 const BACKGROUND_SYNC_KEYS = {

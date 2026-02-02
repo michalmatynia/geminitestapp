@@ -99,15 +99,15 @@ export default function AgentMemoryPage(): React.JSX.Element {
                   className="rounded-md border border-border bg-card p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
-                    <span>Key: {item.memoryKey}</span>
+                    <span>Key: {(item as any).memoryKey || item.key}</span>
                     <span>Updated: {formatDate(item.updatedAt)}</span>
                   </div>
                   <p className="mt-2 text-sm text-white">
-                    {item.summary || item.content.slice(0, 240)}
+                    {(item as any).summary || (item as any).content?.slice(0, 240) || item.value.slice(0, 240)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-400">
-                    {item.tags?.length ? (
-                      item.tags.map((tagValue: string): React.JSX.Element => (
+                    {(item as any).tags?.length ? (
+                      (item as any).tags.map((tagValue: string): React.JSX.Element => (
                         <span
                           key={`${item.id}-${tagValue}`}
                           className="rounded-full border border-border bg-gray-900 px-2 py-[1px]"
@@ -118,12 +118,12 @@ export default function AgentMemoryPage(): React.JSX.Element {
                     ) : (
                       <span>No tags</span>
                     )}
-                    <span>Importance: {item.importance ?? "—"}</span>
-                    <span>Run: {item.runId ?? "—"}</span>
+                    <span>Importance: {(item as any).importance ?? "—"}</span>
+                    <span>Run: {(item as any).runId ?? "—"}</span>
                   </div>
                   <div className="mt-2 text-xs text-gray-500">
                     Created: {formatDate(item.createdAt)} · Last accessed:{" "}
-                    {formatDate(item.lastAccessedAt)}
+                    {formatDate((item as any).lastAccessedAt || item.updatedAt)}
                   </div>
                   <div className="mt-2">
                     <Button
@@ -146,16 +146,16 @@ export default function AgentMemoryPage(): React.JSX.Element {
                           Content
                         </p>
                         <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
-                          {item.content}
+                          {(item as any).content || item.value}
                         </pre>
                       </div>
-                      {item.metadata ? (
+                      {(item as any).metadata ? (
                         <div>
                           <p className="text-[10px] uppercase text-gray-500">
                             Metadata
                           </p>
                           <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
-                            {JSON.stringify(item.metadata, null, 2)}
+                            {JSON.stringify((item as any).metadata, null, 2)}
                           </pre>
                         </div>
                       ) : null}

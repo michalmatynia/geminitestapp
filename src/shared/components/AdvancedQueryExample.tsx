@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access */
 "use client";
 
-import { useDependentQueries, useParallelQueries, useConditionalQuery } from "@/shared/hooks/useAdvancedQueries";
-import { useAutocomplete, usePaginatedSearch } from "@/shared/hooks/useSearchQueries";
-import { useStreamingQuery, useWebSocketQuery } from "@/shared/hooks/useStreamingQueries";
-import { useAdaptiveQuery } from "@/shared/hooks/useSmartCache";
+// import { useDependentQueries, useParallelQueries, useConditionalQuery } from "@/shared/hooks/useAdvancedQueries";
+// import { useAutocomplete, usePaginatedSearch } from "@/shared/hooks/useSearchQueries";
+// import { useStreamingQuery, useWebSocketQuery } from "@/shared/hooks/useStreamingQueries";
+// import { useAdaptiveQuery } from "@/shared/hooks/useSmartCache";
 import { useState } from "react";
 
 // Example component showcasing advanced TanStack Query patterns

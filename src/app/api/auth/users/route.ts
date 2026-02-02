@@ -4,7 +4,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { auth } from "@/features/auth/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, internalError } from "@/shared/errors/app-error";
-import type { AuthUserSummary, AuthUserDto } from "@/features/auth/server";
+import type { AuthUserDto } from "@/shared/dtos/auth";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -17,6 +17,7 @@ type MongoUserDoc = {
   image?: string | null;
   emailVerified?: Date | null;
   createdAt?: Date | null;
+  updatedAt?: Date | null;
 };
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

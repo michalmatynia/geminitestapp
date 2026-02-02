@@ -4,13 +4,6 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
   ListPanel,
   SectionHeader,
   Select,
@@ -22,6 +15,10 @@ import {
   Label,
   Checkbox,
   Switch,
+  ConfirmDialog,
+  EmptyState,
+  SearchInput,
+  SharedModal,
 } from "@/shared/ui";
 import Link from "next/link";
 
@@ -36,6 +33,7 @@ import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
 import type { CmsDomain, Slug } from "@/features/cms/types";
+import { useCallback } from "react";
 
 export default function SlugsPage(): React.JSX.Element {
   const router = useRouter();
@@ -63,6 +61,7 @@ export default function SlugsPage(): React.JSX.Element {
   const zoningToggleValue = domainSettings.zoningEnabled;
   const [attachOpen, setAttachOpen] = useState(false);
   const [attachSelectedIds, setAttachSelectedIds] = useState<string[]>([]);
+  const [slugToDelete, setSlugToDelete] = useState<Slug | null>(null);
   const [attachSearch, setAttachSearch] = useState("");
   const [attachError, setAttachError] = useState("");
   const slugsQuery = useCmsSlugs(activeDomainId);
@@ -138,9 +137,18 @@ export default function SlugsPage(): React.JSX.Element {
     setAttachOpen(false);
   };
 
-  const handleDelete = async (id: string): Promise<void> => {
-    if (window.confirm("Remove this slug from the current zone? It will stay in other zones if assigned.")) {
-      await deleteSlug.mutateAsync({ id, domainId: activeDomainId });
+  const handleDelete = useCallback((slug: Slug): void => {
+    setSlugToDelete(slug);
+  }, []);
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!slugToDelete) return;
+    try {
+      await deleteSlug.mutateAsync({ id: slugToDelete.id, domainId: activeDomainId });
+    } catch (error) {
+      console.error("Failed to delete slug:", error);
+    } finally {
+      setSlugToDelete(null);
     }
   };
 
@@ -180,92 +188,21 @@ export default function SlugsPage(): React.JSX.Element {
                 ) : (
                   <span className="text-xs text-muted-foreground">Simple routing</span>
                 )}
-                <Dialog
+                {zoningEnabled ? (
+                  <Button variant="secondary" onClick={() => setAttachOpen(true)}>Attach Existing</Button>
+                ) : null}
+                <SharedModal
                   open={attachOpen}
-                  onOpenChange={(open: boolean): void => {
-                    setAttachOpen(open);
-                    if (!open) {
-                      setAttachSelectedIds([]);
-                      setAttachSearch("");
-                      setAttachError("");
-                    }
+                  onClose={(): void => {
+                    setAttachOpen(false);
+                    setAttachSelectedIds([]);
+                    setAttachSearch("");
+                    setAttachError("");
                   }}
-                >
-                  {zoningEnabled ? (
-                    <DialogTrigger asChild>
-                      <Button variant="secondary">Attach Existing</Button>
-                    </DialogTrigger>
-                  ) : null}
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Attach Existing Slug</DialogTitle>
-                      <DialogDescription>
-                        Link an existing slug to this zone without creating a new one.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label htmlFor="attach-search">Search</Label>
-                        <Input
-                          id="attach-search"
-                          value={attachSearch}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setAttachSearch(event.target.value)}
-                          placeholder="Search slugs..."
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label>Available slugs</Label>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <button
-                              type="button"
-                              className="hover:text-foreground"
-                              onClick={selectAllVisible}
-                            >
-                              Select all
-                            </button>
-                            <span>•</span>
-                            <button
-                              type="button"
-                              className="hover:text-foreground"
-                              onClick={clearSelection}
-                            >
-                              Clear
-                            </button>
-                          </div>
-                        </div>
-                        <div className="max-h-56 overflow-y-auto rounded-md border border-border/60 bg-background/40 p-2">
-                          {allSlugsQuery.isLoading ? (
-                            <p className="py-6 text-center text-sm text-muted-foreground">
-                              Loading slugs…
-                            </p>
-                          ) : availableAttachSlugs.length === 0 ? (
-                            <p className="py-6 text-center text-sm text-muted-foreground">
-                              No available slugs to attach.
-                            </p>
-                          ) : (
-                            <ul className="space-y-2">
-                              {availableAttachSlugs.map((slug: Slug) => (
-                                <li key={slug.id} className="flex items-center gap-2">
-                                  <Checkbox
-                                    checked={attachSelectedIds.includes(slug.id)}
-                                    onCheckedChange={() => toggleAttachSelection(slug.id)}
-                                  />
-                                  <span className="text-sm">/{slug.slug}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedAttachCount} selected
-                        </p>
-                        {attachError ? (
-                          <p className="text-sm text-red-500">{attachError}</p>
-                        ) : null}
-                      </div>
-                    </div>
-                    <DialogFooter>
+                  title="Attach Existing Slug"
+                  size="md"
+                  footer={
+                    <>
                       <Button
                         variant="secondary"
                         onClick={() => {
@@ -283,9 +220,73 @@ export default function SlugsPage(): React.JSX.Element {
                       >
                         Attach
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </>
+                  }
+                >
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="attach-search">Search</Label>
+                      <SearchInput
+                        id="attach-search"
+                        value={attachSearch}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setAttachSearch(event.target.value)}
+                        onClear={() => setAttachSearch("")}
+                        placeholder="Search slugs..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Available slugs</Label>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <button
+                            type="button"
+                            className="hover:text-foreground"
+                            onClick={selectAllVisible}
+                          >
+                            Select all
+                          </button>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            className="hover:text-foreground"
+                            onClick={clearSelection}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                      <div className="max-h-56 overflow-y-auto rounded-md border border-border/60 bg-background/40 p-2">
+                        {allSlugsQuery.isLoading ? (
+                          <p className="py-6 text-center text-sm text-muted-foreground">
+                            Loading slugs…
+                          </p>
+                        ) : availableAttachSlugs.length === 0 ? (
+                          <p className="py-6 text-center text-sm text-muted-foreground">
+                            No available slugs to attach.
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {availableAttachSlugs.map((slug: Slug) => (
+                              <li key={slug.id} className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={attachSelectedIds.includes(slug.id)}
+                                  onCheckedChange={() => toggleAttachSelection(slug.id)}
+                                />
+                                <span className="text-sm">/{slug.slug}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedAttachCount} selected
+                      </p>
+                      {attachError ? (
+                        <p className="text-sm text-red-500">{attachError}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </SharedModal>
                 <Button asChild>
                   <Link href={buildDomainHref("/admin/cms/slugs/create")}>Create Slug</Link>
                 </Button>
@@ -294,41 +295,70 @@ export default function SlugsPage(): React.JSX.Element {
           />
         }
       >
-        <ul>
-          {slugs.map((slug: Slug) => (
-            <li
-              key={slug.id}
-              className="flex justify-between items-center py-2 border-b border"
-            >
-              <Link href={buildDomainHref(`/admin/cms/slugs/${slug.id}/edit`)} className="flex flex-col">
-                <span className="hover:underline">
-                  /{slug.slug} {slug.isDefault && "(Default)"}
-                  {(canonicalDomain || sharedWithDomains.length > 0) ? (
-                    <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] text-foreground/70">
-                      Shared
+        {slugs.length === 0 ? (
+          <EmptyState
+            title="No slugs assigned"
+            description="Assign slugs to this domain to enable routing for your CMS pages."
+            action={
+              <div className="flex gap-2">
+                <Button onClick={() => setAttachOpen(true)} variant="outline">
+                  Attach Existing
+                </Button>
+                <Button asChild>
+                  <Link href={buildDomainHref("/admin/cms/slugs/create")}>
+                    Create New
+                  </Link>
+                </Button>
+              </div>
+            }
+          />
+        ) : (
+          <ul>
+            {slugs.map((slug: Slug) => (
+              <li
+                key={slug.id}
+                className="flex justify-between items-center py-2 border-b border"
+              >
+                <Link href={buildDomainHref(`/admin/cms/slugs/${slug.id}/edit`)} className="flex flex-col">
+                  <span className="hover:underline">
+                    /{slug.slug} {slug.isDefault && "(Default)"}
+                    {(canonicalDomain || sharedWithDomains.length > 0) ? (
+                      <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] text-foreground/70">
+                        Shared
+                      </span>
+                    ) : null}
+                  </span>
+                  {canonicalDomain ? (
+                    <span className="text-xs text-muted-foreground">
+                      Shared from {canonicalDomain.domain}
+                    </span>
+                  ) : sharedWithDomains.length > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      Shared with {sharedWithDomains.map((item: CmsDomain) => item.domain).join(", ")}
                     </span>
                   ) : null}
-                </span>
-                {canonicalDomain ? (
-                  <span className="text-xs text-muted-foreground">
-                    Shared from {canonicalDomain.domain}
-                  </span>
-                ) : sharedWithDomains.length > 0 ? (
-                  <span className="text-xs text-muted-foreground">
-                    Shared with {sharedWithDomains.map((item: CmsDomain) => item.domain).join(", ")}
-                  </span>
-                ) : null}
-              </Link>
-              <Button
-                variant="destructive"
-                onClick={() => void handleDelete(slug.id)}
-              >
-                Remove from zone
-              </Button>
-            </li>
-          ))}
-        </ul>
+                </Link>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(slug)}
+                >
+                  Remove from zone
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </ListPanel>
+
+      <ConfirmDialog
+        open={!!slugToDelete}
+        onOpenChange={(open) => !open && setSlugToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Remove Slug from Zone"
+        description="Are you sure you want to remove this slug from the current zone? It will stay in other zones if assigned."
+        confirmText="Remove"
+        variant="destructive"
+      />
     </div>
   );
 }

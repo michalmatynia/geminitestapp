@@ -1,3 +1,6 @@
+// Re-export core architecture
+export * from "./core";
+
 // Re-export schemas and types
 export {
   productCreateSchema,
@@ -16,11 +19,13 @@ export {
   hasRequiredProductFields,
   validateProductField,
   validateProductFields,
+  validateProductsBatch,
   getValidationSummary,
   mergeValidationResults,
   type ValidationResult,
   type ValidationError,
   type ValidationMetadata,
+  type FieldValidationResult,
 } from "./validators";
 
 // Re-export middleware
@@ -96,7 +101,7 @@ export {
 
 export {
   batchValidator,
-  validateProductsBatch,
+  validateProductsBatch as validateProductsBatchLegacy,
   validateProductsUpdateBatch,
   type BatchValidationResult,
   type BatchValidationSummary,

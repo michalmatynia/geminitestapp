@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useToast, Button, Input, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, ModalShell } from "@/shared/ui";
+import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, ModalShell, Input } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,13 +14,10 @@ import {
   useAgentSnapshots,
   useAgentLogs,
   useAgentAudits,
-  useDeleteAgentRunMutation,
-  useDeleteCompletedAgentRunsMutation,
 } from "../hooks/useAgentRunsQueries";
 
 
 export default function AgentRunsPage(): React.ReactElement {
-  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
     null
@@ -40,10 +37,6 @@ export default function AgentRunsPage(): React.ReactElement {
   const { data: agentAuditLogs = [] } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
 
   const agentSnapshot = agentSnapshots[0] ?? null;
-
-  // Mutations
-  const deleteMutation = useDeleteAgentRunMutation();
-  const bulkDeleteMutation = useDeleteCompletedAgentRunsMutation();
 
   const error = queryError instanceof Error ? queryError.message : (queryError || null);
 
@@ -85,42 +78,6 @@ export default function AgentRunsPage(): React.ReactElement {
         .includes(term)
     );
   }, [agentRuns, query]);
-
-  const deleteAgentRun = async (runId: string, force: boolean = false): Promise<void> => {
-    try {
-      const confirmed = window.confirm(
-        "Delete this agent run and its files permanently? This cannot be undone."
-      );
-      if (!confirmed) return;
-      
-      await deleteMutation.mutateAsync({ runId, force });
-      
-      if (selectedAgentRunId === runId) {
-        closeAgentModal();
-      }
-      toast("Agent run deleted", { variant: "success" });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete agent run.";
-      toast(message, { variant: "error" });
-    }
-  };
-
-  const deleteCompletedAgentRuns = async (): Promise<void> => {
-    try {
-      const confirmed = window.confirm(
-        "Delete all completed agent runs and their files? This cannot be undone."
-      );
-      if (!confirmed) return;
-      
-      await bulkDeleteMutation.mutateAsync();
-      toast("Completed agent runs deleted", { variant: "success" });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete agent runs.";
-      toast(message, { variant: "error" });
-    }
-  };
 
   const selectedAgentRun = useMemo(
     () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
@@ -250,16 +207,6 @@ export default function AgentRunsPage(): React.ReactElement {
             >
               {loading ? "Refreshing..." : "Refresh"}
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => void deleteCompletedAgentRuns()}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              {bulkDeleteMutation.isPending
-                ? "Deleting agent runs..."
-                : "Delete completed agent runs"}
-            </Button>
           </div>
         </div>
         {loading ? (
@@ -267,7 +214,10 @@ export default function AgentRunsPage(): React.ReactElement {
         ) : error ? (
           <p className="text-sm text-red-400">{error}</p>
         ) : filteredRuns.length === 0 ? (
-          <p className="text-sm text-gray-400">No runs yet.</p>
+          <div className="text-center py-8">
+            <p className="text-gray-400">No runs yet</p>
+            <p className="text-sm text-gray-500 mt-1">Agent runs track the browser automation steps performed by the AI.</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {filteredRuns.map((job: AiPathRunRecord) => (
@@ -312,24 +262,6 @@ export default function AgentRunsPage(): React.ReactElement {
                     >
                       View details
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={deleteMutation.isPending}
-                      onClick={() => void deleteAgentRun(job.id)}
-                    >
-                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                    </Button>
-                    {job.status === "running" ? (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={deleteMutation.isPending}
-                        onClick={() => void deleteAgentRun(job.id, true)}
-                      >
-                        {deleteMutation.isPending ? "Deleting..." : "Force delete"}
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -337,28 +269,25 @@ export default function AgentRunsPage(): React.ReactElement {
           </div>
         )}
       </SectionPanel>
+
       {selectedAgentRunId ? (
         <AppModal
           open={true}
           onOpenChange={(open: boolean) => !open && closeAgentModal()}
           title="Agent job details"
         >
-          <ModalShell
-            title="Agent job details"
-            onClose={closeAgentModal}
-            size="xl"
-          >
+          <ModalShell title="Agent job details" onClose={closeAgentModal}>
             <Tabs defaultValue="summary" className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-                <TabsTrigger value="dom">DOM</TabsTrigger>
-                <TabsTrigger value="steps">Steps</TabsTrigger>
-                <TabsTrigger value="logs">Logs</TabsTrigger>
-                <TabsTrigger value="context">Context</TabsTrigger>
-                <TabsTrigger value="elements">Elements</TabsTrigger>
-              </TabsList>
-              <TabsContent value="summary" className="mt-4 space-y-3">
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="dom">DOM</TabsTrigger>
+              <TabsTrigger value="steps">Steps</TabsTrigger>
+              <TabsTrigger value="logs">Logs</TabsTrigger>
+              <TabsTrigger value="context">Context</TabsTrigger>
+              <TabsTrigger value="elements">Elements</TabsTrigger>
+            </TabsList>
+            <TabsContent value="summary" className="mt-4 space-y-3">
                   {selectedAgentRun ? (
                     <div className="rounded-md border border-border bg-gray-900 p-3 text-xs text-gray-300">
                       <p className="text-[11px] text-gray-500">Run summary</p>

@@ -32,7 +32,7 @@ export function useAgentLogs(runId: string | null, options?: { refetchInterval?:
     queryKey: agentRunsKeys.logs(runId || ""),
     queryFn: () => api.getAgentLogs(runId!),
     enabled: !!runId,
-    refetchInterval: options?.refetchInterval,
+    refetchInterval: options?.refetchInterval || false,
   });
 }
 
@@ -41,7 +41,7 @@ export function useAgentAudits(runId: string | null, options?: { refetchInterval
     queryKey: agentRunsKeys.audits(runId || ""),
     queryFn: () => api.getAgentAudits(runId!),
     enabled: !!runId,
-    refetchInterval: options?.refetchInterval,
+    refetchInterval: options?.refetchInterval || false,
   });
 }
 

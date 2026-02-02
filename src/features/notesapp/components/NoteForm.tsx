@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, useToast, Input, Label } from "@/shared/ui";
+import { Button, useToast, Input, Label, Tag } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";

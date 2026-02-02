@@ -25,7 +25,7 @@ const toIsoString = (value?: Date | null): string | null => {
 const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   id: record.id,
   productId: record.productId,
-  status: record.status,
+  status: record.status === "canceled" ? "cancelled" : record.status,
   type: record.type,
   payload: record.payload,
   result: toJobResult(record.result),

@@ -1,7 +1,7 @@
 "use client";
 
-import { useToast } from "@/shared/ui";
-import { useEffect, useState, Suspense } from "react";
+import { useToast, ConfirmDialog } from "@/shared/ui";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -69,6 +69,7 @@ function IntegrationsContent(): React.JSX.Element {
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(
     null
   );
+  const [connectionToDelete, setConnectionToDelete] = useState<IntegrationConnection | null>(null);
   const [connectionForm, setConnectionForm] = useState({
     name: "",
     username: "",
@@ -381,15 +382,18 @@ function IntegrationsContent(): React.JSX.Element {
     }
   };
 
-  const handleDeleteConnection = async (connection: IntegrationConnection): Promise<void> => {
-    const confirmed = window.confirm(`Delete connection "${connection.name}"?`);
-    if (!confirmed) return;
+  const handleDeleteConnection = useCallback((connection: IntegrationConnection): void => {
+    setConnectionToDelete(connection);
+  }, []);
+
+  const handleConfirmDeleteConnection = async (): Promise<void> => {
+    if (!connectionToDelete) return;
     try {
       await deleteConnectionMutation.mutateAsync({
-        integrationId: connection.integrationId,
-        connectionId: connection.id,
+        integrationId: connectionToDelete.integrationId,
+        connectionId: connectionToDelete.id,
       });
-      if (editingConnectionId === connection.id) {
+      if (editingConnectionId === connectionToDelete.id) {
         setEditingConnectionId(null);
         setConnectionForm({ name: "", username: "", password: "" });
       }
@@ -397,6 +401,8 @@ function IntegrationsContent(): React.JSX.Element {
       const message =
         error instanceof Error ? error.message : "Failed to delete connection.";
       toast(message, { variant: "error" });
+    } finally {
+      setConnectionToDelete(null);
     }
   };
 
@@ -796,6 +802,15 @@ function IntegrationsContent(): React.JSX.Element {
 
   return (
     <div className="container mx-auto py-10">
+      <ConfirmDialog
+        open={!!connectionToDelete}
+        onOpenChange={(open) => !open && setConnectionToDelete(null)}
+        onConfirm={handleConfirmDeleteConnection}
+        title="Delete Connection"
+        description={`Are you sure you want to delete connection "${connectionToDelete?.name}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
       <IntegrationList
         integrations={integrations}
         onIntegrationClick={(def: (typeof integrationDefinitions)[number]): void => { void handleIntegrationClick(def); }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CopyButton, SharedModal } from "@/shared/ui";
+import { Button, AppModal } from "@/shared/ui";
 
 type TestResultModalProps = {
   success: boolean;

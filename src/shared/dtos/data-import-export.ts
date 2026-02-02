@@ -1,10 +1,10 @@
 // Use consolidated types
-import type { BaseEntity, JobStatus } from '@/shared/types/base';
+import type { Entity, Status } from '@/shared/types/core/base-types';
 
 // Data Import/Export DTOs
-export interface ImportJobDto extends BaseEntity {
+export interface ImportJobDto extends Entity {
   type: string;
-  status: JobStatus;
+  status: Status;
   progress: number;
   totalRecords: number;
   processedRecords: number;
@@ -15,9 +15,9 @@ export interface ImportJobDto extends BaseEntity {
   completedAt: string | null;
 }
 
-export interface ExportJobDto extends BaseEntity {
+export interface ExportJobDto extends Entity {
   type: string;
-  status: JobStatus;
+  status: Status;
   progress: number;
   totalRecords: number;
   processedRecords: number;

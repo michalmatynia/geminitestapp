@@ -56,13 +56,13 @@ const pollAgentRun = async (
     const run = response.data.run as AgentRunRecord | undefined;
     const status = run?.status ?? "";
     if (status === "completed") {
-      return { run, status };
+      return { run: run!, status };
     }
     if (status === "failed" || status === "stopped") {
       throw new Error(run?.errorMessage || "Agent run failed.");
     }
     if (status === "waiting_human") {
-      return { run, status };
+      return { run: run!, status };
     }
     if (attempt < maxAttempts - 1) {
       await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, intervalMs));

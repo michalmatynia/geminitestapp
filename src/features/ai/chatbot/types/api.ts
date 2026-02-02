@@ -1,5 +1,3 @@
-import { SettingRecord } from "@/shared/types/base-types";
-
 export type ChatbotSessionListItem = {
   id: string;
   title: string | null;

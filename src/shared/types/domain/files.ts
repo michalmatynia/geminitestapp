@@ -1,4 +1,4 @@
-import { Entity } from './base-types';
+import { Entity } from '../base-types';
 
 export type ImageFileRecord = Entity & {
   filename: string;

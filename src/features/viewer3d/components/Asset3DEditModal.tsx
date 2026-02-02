@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AppModal, Button, Input, Label } from "@/shared/ui";
+import {
+  Button,
+  Input,
+  Label,
+  AppModal,
+  ModalShell,
+  LoadingButton,
+} from "@/shared/ui";
 import { Save, X, Plus, Loader2 } from "lucide-react";
 import type { Asset3DRecord, Asset3DUpdateInput } from "../types";
 import { updateAsset3D } from "../api";
@@ -247,19 +254,13 @@ export function Asset3DEditModal({
           <Button variant="ghost" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={() => void handleSave()} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </>
-            )}
-          </Button>
+          <LoadingButton
+            onClick={() => { void handleSave(); }}
+            loading={isSaving}
+            loadingText="Saving..."
+          >
+            Save Changes
+          </LoadingButton>
         </div>
       </div>
     </AppModal>

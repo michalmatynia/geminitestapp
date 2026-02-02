@@ -7,10 +7,6 @@
  * and provides recommendations for consolidation.
  */
 
-const fs = require('fs');
-const path = require('path');
-const glob = require('glob');
-
 // Common patterns that indicate duplicate types
 const DUPLICATE_PATTERNS = [
   // Base entity patterns

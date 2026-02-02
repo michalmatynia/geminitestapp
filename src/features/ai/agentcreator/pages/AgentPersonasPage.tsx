@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel, Card } from "@/shared/ui";
+import { Button, Input, Label, Textarea, useToast, SectionHeader, SectionPanel, Card, AppModal, ModalShell } from "@/shared/ui";
 import { useChatbotModels } from "@/features/ai/chatbot/hooks/useChatbotQueries";
 import { DEFAULT_MODELS } from "@/features/ai/ai-paths/lib";
 import { AgentPersonaSettingsForm } from "@/features/ai/agentcreator/components/AgentPersonaSettingsForm";
 import { buildAgentPersonaSettings, createAgentPersonaId } from "@/features/ai/agentcreator/utils/personas";
 import { useAgentPersonas, useSaveAgentPersonasMutation } from "@/features/ai/agentcreator/hooks/useAgentPersonas";
 import type { AgentPersona, AgentPersonaSettings } from "@/features/ai/agentcreator/types";
+import { useCallback } from "react";
 
 const formatTimestamp = (value?: string): string => {
   if (!value) return "Not set";
@@ -64,6 +65,7 @@ export function AgentPersonasPage(): React.JSX.Element {
   const [draftSettings, setDraftSettings] = useState<AgentPersonaSettings>(
     buildAgentPersonaSettings()
   );
+  const [personaToDelete, setPersonaToDelete] = useState<AgentPersona | null>(null);
 
   const sortedPersonas = useMemo((): AgentPersona[] => {
     return [...personas].sort((a: AgentPersona, b: AgentPersona) => {
@@ -133,20 +135,9 @@ export function AgentPersonasPage(): React.JSX.Element {
     }
   };
 
-  const handleDeletePersona = async (persona: AgentPersona): Promise<void> => {
-    const confirmed = window.confirm(`Delete persona "${persona.name}"?`);
-    if (!confirmed) return;
-
-    const next = personas.filter((item: AgentPersona) => item.id !== persona.id);
-    try {
-      await savePersonas({ personas: next });
-      toast("Persona deleted.", { variant: "success" });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to save personas.";
-      toast(errorMessage, { variant: "error" });
-    }
-  };
+  const handleDeletePersona = useCallback((persona: AgentPersona): void => {
+    setPersonaToDelete(persona);
+  }, []);
 
   return (
     <div className="container mx-auto py-10 space-y-6">
@@ -181,12 +172,17 @@ export function AgentPersonasPage(): React.JSX.Element {
       </SectionPanel>
 
       {loading ? (
-        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400">
           Loading personas...
         </div>
       ) : sortedPersonas.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
-          No personas yet. Create your first agent model stack.
+        <div className="text-center py-8">
+          <p className="text-gray-400">No personas yet</p>
+          <p className="text-sm text-gray-500 mt-1">Create your first agent model stack to define models for each reasoning stage.</p>
+          <Button onClick={openCreate} variant="outline" className="mt-4">
+            <Plus className="size-4 mr-2" />
+            New Persona
+          </Button>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -224,7 +220,7 @@ export function AgentPersonasPage(): React.JSX.Element {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => void handleDeletePersona(persona)}
+                      onClick={() => handleDeletePersona(persona)}
                       disabled={saving}
                     >
                       <Trash2 className="mr-1 size-3" />
@@ -254,11 +250,11 @@ export function AgentPersonasPage(): React.JSX.Element {
 
       <AppModal
         open={modalOpen}
-        onOpenChange={(open: boolean) => !open && closeModal()}
+        onOpenChange={(open) => !open && closeModal()}
         title={editingId ? "Edit persona" : "New persona"}
       >
-        <ModalShell
-          title={editingId ? "Edit persona" : "New persona"}
+        <ModalShell 
+          title={editingId ? "Edit persona" : "New persona"} 
           onClose={closeModal}
           footer={(
             <>
@@ -271,41 +267,41 @@ export function AgentPersonasPage(): React.JSX.Element {
             </>
           )}
         >
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-200">
-                  Persona name
-                </Label>
-                <Input
-                  value={draftName}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
-                  placeholder="Example: Deep reasoning stack"
-                />
-              </div>
-              <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-200">
-                  Description
-                </Label>
-                <Textarea
-                  value={draftDescription}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setDraftDescription(event.target.value)
-                  }
-                  placeholder="Optional notes for this persona"
-                  className="min-h-[90px]"
-                />
-              </div>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                Persona name
+              </Label>
+              <Input
+                value={draftName}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
+                placeholder="Example: Deep reasoning stack"
+              />
             </div>
-
-            <AgentPersonaSettingsForm
-              settings={draftSettings}
-              onChange={setDraftSettings}
-              modelOptions={mergedModels}
-            />
+            <div>
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
+                Description
+              </Label>
+              <Textarea
+                value={draftDescription}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setDraftDescription(event.target.value)
+                }
+                placeholder="Optional notes for this persona"
+                className="min-h-[90px]"
+              />
+            </div>
           </div>
-        </ModalShell>
-      </AppModal>
+
+          <AgentPersonaSettingsForm
+            settings={draftSettings}
+            onChange={setDraftSettings}
+            modelOptions={mergedModels}
+          />
+        </div>
+      </ModalShell>
+    </AppModal>
     </div>
   );
 }

@@ -30,6 +30,15 @@ import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import { useThemeSettings } from "./ThemeSettingsContext";
 import type { ColorScheme } from "@/features/cms/types/theme-settings";
 import type { ImageFileRecord } from "@/shared/types/files";
+import {
+  ColorField,
+  NumberField,
+  RangeField,
+  SelectField,
+  CheckboxField,
+  TextField,
+  ImagePickerField,
+} from "./shared-fields";
 
 const FONT_FAMILY_OPTIONS: SettingsFieldOption[] = [
   { label: "Inter", value: "Inter, sans-serif" },
@@ -182,267 +191,207 @@ export function SettingsFieldRenderer({
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
-        {field.label}
-      </Label>
-
       {field.type === "text" && (
-        <Input
+        <TextField
+          label={field.label}
           value={(value as string) ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
-          className="text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          onChange={handleChange}
           disabled={isDisabled}
         />
       )}
 
       {field.type === "link" && (
-        <LinkField value={(value as string) ?? ""} onChange={handleChange} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <LinkField value={(value as string) ?? ""} onChange={handleChange} />
+        </>
       )}
 
       {field.type === "number" && (
-        <Input
-          type="number"
+        <NumberField
+          label={field.label}
           value={(value as number) ?? 0}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
-          className="text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          onChange={handleChange}
           disabled={isDisabled}
+          min={field.min}
+          max={field.max}
         />
       )}
 
       {field.type === "select" && (
-        <Select
+        <SelectField
+          label={field.label}
           value={(value as string) ?? ""}
-          onValueChange={(v: string): void => handleChange(v)}
-        >
-          <SelectTrigger className="w-full text-sm" disabled={isDisabled}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(field.options ?? []).map((opt: SettingsFieldOption) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={handleChange}
+          options={field.options ?? []}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "alignment" && (
-        <div className="grid grid-cols-3 gap-2">
-          {(field.options ?? [
-            { label: "Left", value: "left" },
-            { label: "Center", value: "center" },
-            { label: "Right", value: "right" },
-          ]).map((opt: SettingsFieldOption) => {
-            const currentValue = (value as string) ?? field.options?.[0]?.value ?? "left";
-            const isActive = currentValue === opt.value;
-            return (
-              <Button
-                key={opt.value}
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-pressed={isActive}
-                className={`w-full justify-center ${isActive ? "border-primary/60 bg-primary/10 text-primary" : "border-foreground/20"}`}
-                onClick={(): void => handleChange(opt.value)}
-                disabled={isDisabled}
-              >
-                {opt.label}
-              </Button>
-            );
-          })}
-        </div>
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <div className="grid grid-cols-3 gap-2">
+            {(field.options ?? [
+              { label: "Left", value: "left" },
+              { label: "Center", value: "center" },
+              { label: "Right", value: "right" },
+            ]).map((opt: SettingsFieldOption) => {
+              const currentValue = (value as string) ?? field.options?.[0]?.value ?? "left";
+              const isActive = currentValue === opt.value;
+              return (
+                <Button
+                  key={opt.value}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={isActive}
+                  className={`w-full justify-center ${isActive ? "border-primary/60 bg-primary/10 text-primary" : "border-foreground/20"}`}
+                  onClick={(): void => handleChange(opt.value)}
+                  disabled={isDisabled}
+                >
+                  {opt.label}
+                </Button>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {field.type === "radio" && (
-        <RadioGroup
-          value={(value as string) ?? ""}
-          onValueChange={(v: string): void => handleChange(v)}
-          className="space-y-1"
-        >
-          {(field.options ?? []).map((opt: SettingsFieldOption) => (
-            <div key={opt.value} className="flex items-center gap-2">
-              <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} disabled={isDisabled} />
-              <Label htmlFor={`${field.key}-${opt.value}`} className="text-sm text-gray-300 cursor-pointer">
-                {opt.label}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <RadioGroup
+            value={(value as string) ?? ""}
+            onValueChange={(v: string): void => handleChange(v)}
+            className="space-y-1"
+          >
+            {(field.options ?? []).map((opt: SettingsFieldOption) => (
+              <div key={opt.value} className="flex items-center gap-2">
+                <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} disabled={isDisabled} />
+                <Label htmlFor={`${field.key}-${opt.value}`} className="text-sm text-gray-300 cursor-pointer">
+                  {opt.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </>
       )}
 
       {field.type === "image" && (
-        <div className="space-y-2">
-          <div className="flex h-24 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30 relative">
-            {imageValue ? (
-              <NextImage src={imageValue} alt="Selected" className="object-cover" fill unoptimized />
-            ) : (
-              <span className="text-xs text-gray-500">No image</span>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 text-xs"
-              onClick={(): void => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-            >
-              <Upload className="mr-1.5 size-3" />
-              {uploadingImage ? "Uploading..." : imageValue ? "Replace image" : "Upload image"}
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleUploadImage(e); }}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 text-xs"
-              onClick={(): void => setMediaOpen(true)}
-            >
-              <FolderOpen className="mr-1.5 size-3" />
-              Browse
-            </Button>
-          </div>
-          {imageValue ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="w-full text-xs text-gray-400 hover:text-gray-200"
-              onClick={(): void => handleChange("")}
-            >
-              Clear image
-            </Button>
-          ) : null}
-          <MediaLibraryPanel
-            open={mediaOpen}
-            onOpenChange={setMediaOpen}
-            selectionMode="single"
-            onSelect={(filepaths: string[]): void => handleChange(filepaths[0] ?? "")}
-          />
-        </div>
+        <ImagePickerField
+          label={field.label}
+          value={imageValue}
+          onChange={handleChange}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "range" && (
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={field.min ?? 1}
-            max={field.max ?? 12}
-            value={(value as number) ?? field.min ?? 1}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(Number(e.target.value))}
-            className={`flex-1 accent-blue-500 ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
-            disabled={isDisabled}
-          />
-          <span className="w-8 text-center text-sm font-medium text-gray-300">
-            {(value as number) ?? field.min ?? 1}
-          </span>
-        </div>
+        <RangeField
+          label={field.label}
+          value={(value as number) ?? field.min ?? 1}
+          onChange={handleChange}
+          min={field.min ?? 1}
+          max={field.max ?? 12}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "color-scheme" && (
-        <Select
+        <SelectField
+          label={field.label}
           value={(value as string) ?? "scheme-1"}
-          onValueChange={(v: string): void => handleChange(v)}
-        >
-          <SelectTrigger className="w-full text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {colorSchemeOptions.map((opt: SettingsFieldOption) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={handleChange}
+          options={colorSchemeOptions}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "color" && (
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={(value as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
-            className="h-8 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5"
-          />
-          <Input
-            value={(value as string) ?? "#ffffff"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleChange(e.target.value)}
-            className="flex-1 text-sm font-mono"
-            maxLength={7}
-          />
-        </div>
+        <ColorField
+          label={field.label}
+          value={(value as string) ?? "#ffffff"}
+          onChange={handleChange}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "font-family" && (
-        ((): React.ReactNode => {
-          const fallback =
-            (typeof field.defaultValue === "string" && field.defaultValue.trim().length > 0
-              ? field.defaultValue
-              : theme.bodyFont) || "Inter, sans-serif";
-          const resolvedValue =
-            typeof value === "string" && value.trim().length > 0 ? value : fallback;
-          return (
-        <Select
-          value={resolvedValue}
-          onValueChange={(v: string): void => handleChange(v)}
-        >
-          <SelectTrigger className="w-full text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONT_FAMILY_OPTIONS.map((opt: SettingsFieldOption) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                <span style={{ fontFamily: opt.value }}>{opt.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-          );
-        })()
+        <SelectField
+          label={field.label}
+          value={((): string => {
+            const fallback =
+              (typeof field.defaultValue === "string" && field.defaultValue.trim().length > 0
+                ? field.defaultValue
+                : theme.bodyFont) || "Inter, sans-serif";
+            return typeof value === "string" && value.trim().length > 0 ? value : fallback;
+          })()}
+          onChange={handleChange}
+          options={FONT_FAMILY_OPTIONS}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "font-weight" && (
-        <Select
+        <SelectField
+          label={field.label}
           value={String((value as string | number) ?? "400")}
-          onValueChange={(v: string): void => handleChange(v)}
-        >
-          <SelectTrigger className="w-full text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONT_WEIGHT_OPTIONS.map((opt: SettingsFieldOption) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={handleChange}
+          options={FONT_WEIGHT_OPTIONS}
+          disabled={isDisabled}
+        />
       )}
 
       {field.type === "spacing" && (
-        <SpacingField value={value} onChange={handleChange} fieldKey={field.key} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <SpacingField value={value} onChange={handleChange} fieldKey={field.key} />
+        </>
       )}
 
       {field.type === "border" && (
-        <BorderField value={value} onChange={handleChange} fieldKey={field.key} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <BorderField value={value} onChange={handleChange} fieldKey={field.key} />
+        </>
       )}
 
       {field.type === "shadow" && (
-        <ShadowField value={value} onChange={handleChange} fieldKey={field.key} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <ShadowField value={value} onChange={handleChange} fieldKey={field.key} />
+        </>
       )}
 
       {field.type === "background" && (
-        <BackgroundField value={value} onChange={handleChange} fieldKey={field.key} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <BackgroundField value={value} onChange={handleChange} fieldKey={field.key} />
+        </>
       )}
 
       {field.type === "typography" && (
-        <TypographyField value={value} onChange={handleChange} fieldKey={field.key} />
+        <>
+          <Label className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {field.label}
+          </Label>
+          <TypographyField value={value} onChange={handleChange} fieldKey={field.key} />
+        </>
       )}
     </div>
   );

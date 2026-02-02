@@ -7,7 +7,7 @@ import { auth } from "@/features/auth/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
-import type { AuthUserSummary, AuthUserDto } from "@/features/auth/server";
+import type { AuthUserDto } from "@/shared/dtos/auth";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -25,6 +25,7 @@ type MongoUserDoc = {
   name?: string | null;
   image?: string | null;
   emailVerified?: Date | null;
+  createdAt?: Date | null;
   updatedAt?: Date | null;
 };
 

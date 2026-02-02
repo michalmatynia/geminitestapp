@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
-const now = new Date();
+const now = new Date().toISOString();
 
 const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations => ({
   id: "note-1",

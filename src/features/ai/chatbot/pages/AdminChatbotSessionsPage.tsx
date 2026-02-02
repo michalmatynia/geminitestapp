@@ -1,6 +1,4 @@
-"use client";
-
-import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel, ConfirmDialog, EmptyState, SearchInput } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -26,8 +24,24 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState<boolean>(false);
-  const [selectingAll, setSelectingAll] = useState<boolean>(false);
   const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
+  const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
+  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+
+  const clearSelection = () => setSelectedIds(new Set());
+  const selectAllVisible = () => setSelectedIds(new Set(filteredSessions.map(s => s.id)));
+  const selectAllMatching = () => setSelectedIds(new Set(filteredSessions.map(s => s.id)));
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   useEffect((): (() => void) => {
     let isMounted: boolean = true;
@@ -100,10 +114,6 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   };
 
   const deleteSession = async (session: ChatbotSessionListItem): Promise<void> => {
-    const confirmed: boolean = window.confirm(
-      `Delete "${session.title || `Session ${session.id.slice(0, 6)}`}"?`
-    );
-    if (!confirmed) return;
     setDeletingId(session.id);
     try {
       await chatbotApi.deleteChatbotSession(session.id);
@@ -125,68 +135,20 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       toast(message, { variant: "error" });
     } finally {
       setDeletingId(null);
+      setSessionToDelete(null);
     }
   };
 
-  const toggleSelected = (sessionId: string): void => {
-    setSelectedIds((prev: Set<string>): Set<string> => {
-      const next: Set<string> = new Set(prev);
-      if (next.has(sessionId)) {
-        next.delete(sessionId);
-      } else {
-        next.add(sessionId);
-      }
-      return next;
-    });
-  };
-
-  const clearSelection = (): void => {
-    setSelectedIds(new Set());
-  };
-
-  const selectAllVisible = (): void => {
-    setSelectedIds(new Set(filteredSessions.map((session: ChatbotSessionListItem): string => session.id)));
-    toast(
-      filteredSessions.length
-        ? `Selected ${filteredSessions.length} visible sessions`
-        : "No visible sessions to select"
-    );
-  };
-
-  const selectAllMatching = async (): Promise<void> => {
-    if (selectingAll) return;
-    setSelectingAll(true);
-    try {
-      const term: string = query.trim();
-      const ids: string[] = await chatbotApi.fetchChatbotSessionIds(
-        term || undefined
-      );
-      setSelectedIds(new Set(ids));
-      toast(
-        ids.length
-          ? `Selected ${ids.length} sessions`
-          : "No matching sessions found"
-      );
-    } catch (error: unknown) {
-      const message: string =
-        error instanceof Error ? error.message : "Failed to select sessions.";
-      setError(message);
-      toast(message, { variant: "error" });
-    } finally {
-      setSelectingAll(false);
+  const handleBulkDeleteClick = (): void => {
+    if (selectedIds.size === 0) return;
+    if (skipBulkConfirm) {
+      void bulkDelete();
+    } else {
+      setIsBulkDeleteConfirmOpen(true);
     }
   };
 
   const bulkDelete = async (): Promise<void> => {
-    if (selectedIds.size === 0) return;
-    if (!skipBulkConfirm) {
-      const confirmed: boolean = window.confirm(
-        `Delete ${selectedIds.size} selected session${
-          selectedIds.size === 1 ? "" : "s"
-        }?`
-      );
-      if (!confirmed) return;
-    }
     setBulkDeleting(true);
     try {
       await chatbotApi.deleteChatbotSessions(Array.from(selectedIds));
@@ -200,6 +162,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       toast(message, { variant: "error" });
     } finally {
       setBulkDeleting(false);
+      setIsBulkDeleteConfirmOpen(false);
     }
   };
 
@@ -228,20 +191,11 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
           showList ? (
             <SectionPanel>
               <div className="max-w-sm">
-                <Input
+                <SearchInput
                   placeholder="Search sessions..."
                   value={query}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-                  onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                    if (event.key === "Enter") {
-                      const value: string = query.trim();
-                      if (!value) {
-                        toast("Search cleared");
-                      } else {
-                        toast(`Searching “${value}”`);
-                      }
-                    }
-                  }}
+                  onClear={() => setQuery("")}
                   className="h-8 text-sm"
                 />
               </div>
@@ -257,7 +211,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                 size="sm"
                 onClick={selectAllVisible}
                 disabled={
-                  filteredSessions.length === 0 || bulkDeleting || selectingAll
+                  filteredSessions.length === 0 || bulkDeleting
                 }
               >
                 Select all visible
@@ -266,16 +220,16 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                 variant="outline"
                 size="sm"
                 onClick={() => { void selectAllMatching(); }}
-                disabled={bulkDeleting || selectingAll}
+                disabled={bulkDeleting}
               >
-                {selectingAll ? "Selecting..." : "Select all (all pages)"}
+                Select all (all pages)
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearSelection}
                 disabled={
-                  selectedIds.size === 0 || bulkDeleting || selectingAll
+                  selectedIds.size === 0 || bulkDeleting
                 }
               >
                 Clear selection
@@ -283,9 +237,9 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => { void bulkDelete(); }}
+                onClick={handleBulkDeleteClick}
                 disabled={
-                  selectedIds.size === 0 || bulkDeleting || selectingAll
+                  selectedIds.size === 0 || bulkDeleting
                 }
               >
                 {bulkDeleting ? "Removing..." : "Remove selected"}
@@ -296,7 +250,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                   onCheckedChange={(checked: boolean): void =>
                     setSkipBulkConfirm(Boolean(checked))
                   }
-                  disabled={bulkDeleting || selectingAll}
+                  disabled={bulkDeleting}
                 />
                 Skip confirmation
               </Label>
@@ -307,7 +261,15 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         {loading ? (
           <p className="text-sm text-gray-400">Loading sessions...</p>
         ) : error ? null : sessions.length === 0 ? (
-          <p className="text-sm text-gray-400">No sessions yet.</p>
+          <EmptyState
+            title="No sessions yet"
+            description="Start a chat with an agent to see your session history here."
+            action={
+              <Link href="/admin/chatbot">
+                <Button>Start Chatting</Button>
+              </Link>
+            }
+          />
         ) : (
           <div className="space-y-3">
             {filteredSessions.map((session: ChatbotSessionListItem): React.JSX.Element => (
@@ -372,7 +334,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
                     variant="destructive"
                     size="sm"
                     disabled={deletingId === session.id}
-                    onClick={() => { void deleteSession(session); }}
+                    onClick={() => setSessionToDelete(session)}
                   >
                     {deletingId === session.id ? "Removing..." : "Remove"}
                   </Button>
@@ -393,6 +355,26 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
           </div>
         )}
       </ListPanel>
+
+      <ConfirmDialog
+        open={!!sessionToDelete}
+        onOpenChange={(open) => !open && setSessionToDelete(null)}
+        onConfirm={() => sessionToDelete && deleteSession(sessionToDelete)}
+        title="Delete Session"
+        description={`Are you sure you want to delete session "${sessionToDelete?.title || 'this session'}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={isBulkDeleteConfirmOpen}
+        onOpenChange={setIsBulkDeleteConfirmOpen}
+        onConfirm={bulkDelete}
+        title="Delete Sessions"
+        description={`Are you sure you want to delete ${selectedIds.size} selected sessions? This action cannot be undone.`}
+        confirmText="Delete All"
+        variant="destructive"
+      />
     </div>
   );
 }

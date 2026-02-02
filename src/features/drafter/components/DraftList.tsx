@@ -1,5 +1,5 @@
 "use client";
-import { Button, ListPanel, useToast, SectionHeader } from "@/shared/ui";
+import { Button, ListPanel, useToast, SectionHeader, EmptyState } from "@/shared/ui";
 import { useState } from "react";
 import { useDrafts, useDeleteDraft } from "@/features/drafter/hooks/useDrafts";
 import type { ProductDraft } from "@/features/products/types/drafts";
@@ -68,12 +68,16 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
       {loading ? (
         <p className="text-sm text-gray-400">Loading drafts...</p>
       ) : drafts.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
-          <p className="mb-4 text-gray-400">No drafts yet</p>
-          <Button onClick={onCreateNew} variant="outline">
-            Create Your First Draft
-          </Button>
-        </div>
+        <EmptyState
+          title="No drafts yet"
+          description="Create your first product template to speed up product creation."
+          action={
+            <Button onClick={onCreateNew} variant="outline">
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Create Your First Draft
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-3">
           {drafts.map((draft: ProductDraft) => (

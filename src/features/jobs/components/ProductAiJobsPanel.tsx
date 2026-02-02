@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, AppModal, ModalShell, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, useToast, SectionHeader, SectionPanel, SharedModal, EmptyState, ConfirmDialog, SearchInput } from "@/shared/ui";
 import { Suspense, useMemo, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -70,6 +70,8 @@ export default function ProductAiJobsPanel({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
+  const [isClearCompletedConfirmOpen, setIsClearCompletedConfirmOpen] = useState(false);
+  const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
   const isMounted = useSyncExternalStore(
     (): (() => void) => (): void => {},
     (): boolean => true,
@@ -168,8 +170,7 @@ export default function ProductAiJobsPanel({
     }
   };
 
-  const clearCompleted = async (): Promise<void> => {
-    if (!window.confirm("Delete all completed jobs? This cannot be undone.")) return;
+  const handleClearCompleted = async (): Promise<void> => {
     try {
       await clearMutation.mutateAsync({ scope: "terminal" });
       toast("Jobs cleared", { variant: "success" });
@@ -178,8 +179,7 @@ export default function ProductAiJobsPanel({
     }
   };
 
-  const clearAllJobs = async (): Promise<void> => {
-    if (!window.confirm("Delete ALL AI jobs (including running/pending)?")) return;
+  const handleClearAllJobs = async (): Promise<void> => {
     try {
       await clearMutation.mutateAsync({ scope: "all" });
       toast("All jobs deleted", { variant: "success" });
@@ -233,10 +233,11 @@ export default function ProductAiJobsPanel({
   const aiContent = (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Input
+        <SearchInput
           placeholder="Search by ID, entity, path, or model..."
           value={query}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setQuery(e.target.value)}
+          onClear={() => setQuery("")}
           className="max-w-md bg-gray-900 border-border text-white"
         />
         <div className="flex gap-2">
@@ -244,11 +245,11 @@ export default function ProductAiJobsPanel({
             <RefreshCcw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button variant="destructive" size="sm" onClick={(): void => { void clearCompleted(); }} disabled={clearMutation.isPending}>
+          <Button variant="destructive" size="sm" onClick={(): void => setIsClearCompletedConfirmOpen(true)} disabled={clearMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear Finished
           </Button>
-          <Button variant="destructive" size="sm" onClick={(): void => { void clearAllJobs(); }} disabled={clearMutation.isPending}>
+          <Button variant="destructive" size="sm" onClick={(): void => setIsClearAllConfirmOpen(true)} disabled={clearMutation.isPending}>
             <Trash2 className="mr-2 h-4 w-4" />
             Clear All
           </Button>
@@ -269,8 +270,12 @@ export default function ProductAiJobsPanel({
           <tbody className="divide-y divide-border">
             {filteredJobs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                  {isLoading ? "Loading jobs..." : "No jobs found."}
+                <td colSpan={5} className="px-4 py-10">
+                  <EmptyState
+                    title={isLoading ? "Loading jobs..." : "No jobs found"}
+                    description={isLoading ? "Please wait while we fetch the job list." : "No AI jobs match your search criteria or none have been created yet."}
+                    className="border-none p-0"
+                  />
                 </td>
               </tr>
             ) : (
@@ -293,7 +298,7 @@ export default function ProductAiJobsPanel({
                       ${job.status === "completed" ? "bg-green-500/10 text-green-400" :
                         job.status === "failed" ? "bg-red-500/10 text-red-400" :
                         job.status === "running" ? "bg-blue-500/10 text-blue-400" :
-                        job.status === "canceled" ? "bg-gray-500/10 text-gray-400" :
+                        job.status === "cancelled" ? "bg-gray-500/10 text-gray-400" :
                         "bg-yellow-500/10 text-yellow-400"}`}>
                       {job.status.toUpperCase()}
                     </span>
@@ -395,317 +400,336 @@ export default function ProductAiJobsPanel({
         </div>
       )}
 
+      <ConfirmDialog
+        open={isClearCompletedConfirmOpen}
+        onOpenChange={setIsClearCompletedConfirmOpen}
+        onConfirm={handleClearCompleted}
+        title="Clear Completed Jobs"
+        description="Are you sure you want to delete all completed, failed, and cancelled jobs? This action cannot be undone."
+        confirmText="Clear Finished"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={isClearAllConfirmOpen}
+        onOpenChange={setIsClearAllConfirmOpen}
+        onConfirm={handleClearAllJobs}
+        title="Delete All AI Jobs"
+        description="Are you sure you want to delete ALL AI jobs, including those currently running or pending? This action cannot be undone."
+        confirmText="Delete All"
+        variant="destructive"
+      />
+
       {selectedJob && (
-        <AppModal
+        <SharedModal
           open={true}
-          onOpenChange={(open: boolean): void => { if (!open) setSelectedJob(null); }}
+          onClose={(): void => setSelectedJob(null)}
           title="Job Details"
+          size="xl"
         >
-          <ModalShell title="Job Details" onClose={(): void => setSelectedJob(null)} size="xl">
-            <div className="space-y-6 text-sm">
-              <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
-                  <div className="text-white font-medium">{selectedJob.status.toUpperCase()}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Type</div>
-                  <div className="text-white font-medium">{selectedJob.type}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Entity</div>
-                  <div className="text-white font-medium">
-                    {getJobMeta(selectedJob).displayEntity}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
-                  <div className="text-white font-mono text-xs">{selectedJob.id}</div>
+          <div className="space-y-6 text-sm">
+            <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
+                <div className="text-white font-medium">{selectedJob.status.toUpperCase()}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Type</div>
+                <div className="text-white font-medium">{selectedJob.type}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Entity</div>
+                <div className="text-white font-medium">
+                  {getJobMeta(selectedJob).displayEntity}
                 </div>
               </div>
+              <div>
+                <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
+                <div className="text-white font-mono text-xs">{selectedJob.id}</div>
+              </div>
+            </div>
 
-                <div className="rounded-md border border-border bg-card/40 p-4">
-                  <div className="text-gray-400 font-bold text-xs uppercase mb-3">
-                    Run Metadata
-                  </div>
-                  {((): React.ReactNode => {
-                    const meta = getJobMeta(selectedJob);
-                    const payload = (meta.payload ?? {}) as JobPayload;
-                    const modelId = payload.modelId;
-                    const temperature = payload.temperature;
-                    const maxTokens = payload.maxTokens;
-                    const vision = payload.vision;
-                    const imageUrls = payload.imageUrls;
-                    return (
-                      <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Source
-                          </div>
-                          <div className="text-white">
-                            {meta.source ?? "unknown"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Entity
-                          </div>
-                          <div className="text-white">
-                            {meta.entityType ?? "unknown"} · {meta.entityId ?? "n/a"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Path
-                          </div>
-                          <div className="text-white">
-                            {meta.pathName ?? meta.pathId ?? "n/a"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Node
-                          </div>
-                          <div className="text-white">
-                            {meta.nodeTitle ?? "n/a"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Model
-                          </div>
-                          <div className="text-white font-mono">{modelId ?? "n/a"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Tokens / Temp
-                          </div>
-                          <div className="text-white">
-                            {maxTokens ?? "n/a"} / {temperature ?? "n/a"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Vision
-                          </div>
-                          <div className="text-white">{vision ? "Yes" : "No"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] uppercase text-gray-500 font-bold">
-                            Images
-                          </div>
-                          <div className="text-white">
-                            {Array.isArray(imageUrls) ? imageUrls.length : 0}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+              <div className="rounded-md border border-border bg-card/40 p-4">
+                <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                  Run Metadata
                 </div>
-
-                {selectedJob.result && typeof selectedJob.result === 'object' && ((selectedJob.result as JobResult).visionModel || (selectedJob.result as JobResult).generationModel) && (
-                  <div className="rounded-md bg-card/50 border border-border p-4">
-                    <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {(selectedJob.result as JobResult).visionModel && (
-                        <div>
-                          <div className="text-blue-400 text-[10px] font-bold uppercase mb-1">Vision Model (Path 1)</div>
-                          <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).visionModel}</div>
-                          {(selectedJob.result as JobResult).visionOutputEnabled !== undefined && (
-                            <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {(selectedJob.result as JobResult).visionOutputEnabled ? "Enabled" : "Disabled"}
-                            </div>
-                          )}
+                {((): React.ReactNode => {
+                  const meta = getJobMeta(selectedJob);
+                  const payload = (meta.payload ?? {}) as JobPayload;
+                  const modelId = payload.modelId;
+                  const temperature = payload.temperature;
+                  const maxTokens = payload.maxTokens;
+                  const vision = payload.vision;
+                  const imageUrls = payload.imageUrls;
+                  return (
+                    <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Source
                         </div>
-                      )}
-                      {(selectedJob.result as JobResult).generationModel && (
-                        <div>
-                          <div className="text-purple-400 text-[10px] font-bold uppercase mb-1">Generation Model (Path 2)</div>
-                          <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).generationModel}</div>
-                          {(selectedJob.result as JobResult).generationOutputEnabled !== undefined && (
-                            <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {(selectedJob.result as JobResult).generationOutputEnabled ? "Enabled" : "Disabled"}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {selectedJob.errorMessage && (
-                  <div className="rounded-md border border-red-900/50 bg-red-950/20 p-4">
-                    <div className="text-red-400 font-bold text-[10px] uppercase mb-1">Error Message</div>
-                    <div className="text-red-200">{selectedJob.errorMessage}</div>
-                  </div>
-                )}
-
-                {selectedJob.type === "graph_model" && (
-                  <div className="rounded-md border border-border bg-card/40 p-4">
-                    <div className="text-gray-400 font-bold text-xs uppercase mb-3">
-                      Graph Model Inputs
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
-                        <div className="text-white text-sm font-mono">
-                          {(selectedJob.payload as JobPayload | null)?.modelId ||
-                            "Unknown"}
-                        </div>
-                        <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
-                          Vision Enabled
-                        </div>
-                        <div className="text-white text-sm">
-                          {(selectedJob.payload as JobPayload | null)?.vision
-                            ? "Yes"
-                            : "No"}
+                        <div className="text-white">
+                          {meta.source ?? "unknown"}
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
-                        {Array.isArray(
-                          (selectedJob.payload as JobPayload | null)?.imageUrls
-                        ) &&
-                        (selectedJob.payload as JobPayload | null)?.imageUrls
-                          ?.length ? (
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {(selectedJob.payload as JobPayload | null)?.imageUrls?.map(
-                              (url: string, index: number) => (
-                                <div key={`${url}-${index}`} className="truncate">
-                                  {url}
-                                </div>
-                              )
-                            )}
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Entity
+                        </div>
+                        <div className="text-white">
+                          {meta.entityType ?? "unknown"} · {meta.entityId ?? "n/a"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Path
+                        </div>
+                        <div className="text-white">
+                          {meta.pathName ?? meta.pathId ?? "n/a"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Node
+                        </div>
+                        <div className="text-white">
+                          {meta.nodeTitle ?? "n/a"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Model
+                        </div>
+                        <div className="text-white font-mono">{modelId ?? "n/a"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Tokens / Temp
+                        </div>
+                        <div className="text-white">
+                          {maxTokens ?? "n/a"} / {temperature ?? "n/a"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Vision
+                        </div>
+                        <div className="text-white">{vision ? "Yes" : "No"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">
+                          Images
+                        </div>
+                        <div className="text-white">
+                          {Array.isArray(imageUrls) ? imageUrls.length : 0}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {selectedJob.result && typeof selectedJob.result === 'object' && ((selectedJob.result as JobResult).visionModel || (selectedJob.result as JobResult).generationModel) && (
+                <div className="rounded-md bg-card/50 border border-border p-4">
+                  <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(selectedJob.result as JobResult).visionModel && (
+                      <div>
+                        <div className="text-blue-400 text-[10px] font-bold uppercase mb-1">Vision Model (Path 1)</div>
+                        <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).visionModel}</div>
+                        {(selectedJob.result as JobResult).visionOutputEnabled !== undefined && (
+                          <div className="text-gray-500 text-[10px] mt-1">
+                            Refinement: {(selectedJob.result as JobResult).visionOutputEnabled ? "Enabled" : "Disabled"}
                           </div>
-                        ) : (
-                          <div className="text-[11px] text-gray-500">No image URLs in payload.</div>
                         )}
                       </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
-                        {(selectedJob.payload as JobPayload | null)?.prompt ||
-                          "No prompt provided."}
-                      </pre>
-                    </div>
+                    )}
+                    {(selectedJob.result as JobResult).generationModel && (
+                      <div>
+                        <div className="text-purple-400 text-[10px] font-bold uppercase mb-1">Generation Model (Path 2)</div>
+                        <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).generationModel}</div>
+                        {(selectedJob.result as JobResult).generationOutputEnabled !== undefined && (
+                          <div className="text-gray-500 text-[10px] mt-1">
+                            Refinement: {(selectedJob.result as JobResult).generationOutputEnabled ? "Enabled" : "Disabled"}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              )}
 
-                {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in (selectedJob.result as object) ? (
-                  <div className="space-y-4">
-                    <div className="text-gray-400 font-bold text-xs uppercase mb-2">AI Processing Results</div>
+              {selectedJob.errorMessage && (
+                <div className="rounded-md border border-red-900/50 bg-red-950/20 p-4">
+                  <div className="text-red-400 font-bold text-[10px] uppercase mb-1">Error Message</div>
+                  <div className="text-red-200">{selectedJob.errorMessage}</div>
+                </div>
+              )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
+              {selectedJob.type === "graph_model" && (
+                <div className="rounded-md border border-border bg-card/40 p-4">
+                  <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                    Graph Model Inputs
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
+                      <div className="text-white text-sm font-mono">
+                        {(selectedJob.payload as JobPayload | null)?.modelId ||
+                          "Unknown"}
+                      </div>
+                      <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
+                        Vision Enabled
+                      </div>
+                      <div className="text-white text-sm">
+                        {(selectedJob.payload as JobPayload | null)?.vision
+                          ? "Yes"
+                          : "No"}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
+                      {Array.isArray(
+                        (selectedJob.payload as JobPayload | null)?.imageUrls
+                      ) &&
+                      (selectedJob.payload as JobPayload | null)?.imageUrls
+                        ?.length ? (
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                          {(selectedJob.result as JobResult).analysisInitial || (selectedJob.result as JobResult).analysis || 'N/A'}
+                          {(selectedJob.payload as JobPayload | null)?.imageUrls?.map(
+                            (url: string, index: number) => (
+                              <div key={`${url}-${index}`} className="truncate">
+                                {url}
+                              </div>
+                            )
+                          )}
                         </div>
-                      </div>
-
-                      {(selectedJob.result as JobResult).analysisFinal && (
-                        <div className="space-y-2">
-                          <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
-                            {(selectedJob.result as JobResult).analysisFinal}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
-                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                          {(selectedJob.result as JobResult).descriptionInitial || (selectedJob.result as JobResult).description || 'N/A'}
-                        </div>
-                      </div>
-
-                      {(selectedJob.result as JobResult).descriptionFinal && (
-                        <div className="space-y-2">
-                          <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
-                            {(selectedJob.result as JobResult).descriptionFinal}
-                          </div>
-                        </div>
+                      ) : (
+                        <div className="text-[11px] text-gray-500">No image URLs in payload.</div>
                       )}
                     </div>
                   </div>
-                ) : selectedJob.result && typeof selectedJob.result === 'object' && 'translations' in (selectedJob.result as object) ? (
-                  <div className="space-y-4">
-                    <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
+                  <div className="mt-4 space-y-2">
+                    <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
+                    <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
+                      {(selectedJob.payload as JobPayload | null)?.prompt ||
+                        "No prompt provided."}
+                    </pre>
+                  </div>
+                </div>
+              )}
 
-                    {(selectedJob.result as JobResult).translationModel && (
-                      <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
-                            <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).translationModel}</div>
-                          </div>
-                          {(selectedJob.result as JobResult).sourceLanguage && (
-                            <div>
-                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
-                              <div className="text-white text-sm">{(selectedJob.result as JobResult).sourceLanguage}</div>
-                            </div>
-                          )}
-                          {(selectedJob.result as JobResult).targetLanguages && (
-                            <div>
-                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
-                              <div className="text-white text-sm">{(selectedJob.result as JobResult).targetLanguages?.join(', ') || 'N/A'}</div>
-                            </div>
-                          )}
+              {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in (selectedJob.result as object) ? (
+                <div className="space-y-4">
+                  <div className="text-gray-400 font-bold text-xs uppercase mb-2">AI Processing Results</div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
+                      <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
+                        {(selectedJob.result as JobResult).analysisInitial || (selectedJob.result as JobResult).analysis || 'N/A'}
+                      </div>
+                    </div>
+
+                    {(selectedJob.result as JobResult).analysisFinal && (
+                      <div className="space-y-2">
+                        <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
+                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
+                          {(selectedJob.result as JobResult).analysisFinal}
                         </div>
                       </div>
                     )}
+                  </div>
 
-                    <div className="space-y-4">
-                      {(selectedJob.result as JobResult).translations && Object.entries((selectedJob.result as JobResult).translations!).map(([lang, trans]: [string, { name?: string; description?: string }]) => (
-                        <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
-                          <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Name</div>
-                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border">
-                                {trans.name || 'N/A'}
-                              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
+                      <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
+                        {(selectedJob.result as JobResult).descriptionInitial || (selectedJob.result as JobResult).description || 'N/A'}
+                      </div>
+                    </div>
+
+                    {(selectedJob.result as JobResult).descriptionFinal && (
+                      <div className="space-y-2">
+                        <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
+                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
+                          {(selectedJob.result as JobResult).descriptionFinal}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : selectedJob.result && typeof selectedJob.result === 'object' && 'translations' in (selectedJob.result as object) ? (
+                <div className="space-y-4">
+                  <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
+
+                  {(selectedJob.result as JobResult).translationModel && (
+                    <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
+                          <div className="text-white font-mono text-sm">{(selectedJob.result as JobResult).translationModel}</div>
+                        </div>
+                        {(selectedJob.result as JobResult).sourceLanguage && (
+                          <div>
+                            <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
+                            <div className="text-white text-sm">{(selectedJob.result as JobResult).sourceLanguage}</div>
+                          </div>
+                        )}
+                        {(selectedJob.result as JobResult).targetLanguages && (
+                          <div>
+                            <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
+                            <div className="text-white text-sm">{(selectedJob.result as JobResult).targetLanguages?.join(', ') || 'N/A'}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    {(selectedJob.result as JobResult).translations && Object.entries((selectedJob.result as JobResult).translations!).map(([lang, trans]: [string, { name?: string; description?: string }]) => (
+                      <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
+                        <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Name</div>
+                            <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border">
+                              {trans.name || 'N/A'}
                             </div>
-                            <div>
-                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Description</div>
-                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border max-h-32 overflow-auto whitespace-pre-wrap">
-                                {trans.description || 'N/A'}
-                              </div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Description</div>
+                            <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border max-h-32 overflow-auto whitespace-pre-wrap">
+                              {trans.description || 'N/A'}
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <div className="text-gray-500 uppercase text-[10px] font-bold">Payload (Input Config)</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
-                        {JSON.stringify(selectedJob.payload, null, 2)}
-                      </pre>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-gray-500 uppercase text-[10px] font-bold">Result (Output)</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
-                        {selectedJob.result ? JSON.stringify(selectedJob.result, null, 2) : "No result yet."}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-[10px] text-gray-600">
-                  Created: {new Date(selectedJob.createdAt).toLocaleString()} 
-                  {selectedJob.startedAt && ` | Started: ${new Date(selectedJob.startedAt).toLocaleString()}`}
-                  {selectedJob.finishedAt && ` | Finished: ${new Date(selectedJob.finishedAt).toLocaleString()}`}
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <div className="text-gray-500 uppercase text-[10px] font-bold">Payload (Input Config)</div>
+                    <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
+                      {JSON.stringify(selectedJob.payload, null, 2)}
+                    </pre>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-gray-500 uppercase text-[10px] font-bold">Result (Output)</div>
+                    <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
+                      {selectedJob.result ? JSON.stringify(selectedJob.result, null, 2) : "No result yet."}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              <div className="text-[10px] text-gray-600">
+                Created: {new Date(selectedJob.createdAt).toLocaleString()} 
+                {selectedJob.startedAt && ` | Started: ${new Date(selectedJob.startedAt).toLocaleString()}`}
+                {selectedJob.finishedAt && ` | Finished: ${new Date(selectedJob.finishedAt).toLocaleString()}`}
               </div>
-          </ModalShell>
-        </AppModal>
+            </div>
+        </SharedModal>
       )}
     </div>
   );

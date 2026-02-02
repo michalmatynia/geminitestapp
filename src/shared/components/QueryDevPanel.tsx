@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryPerformance } from "@/shared/hooks/useQueryPerformance";
-import { useQueryDiagnostics } from "@/shared/hooks/useQueryDiagnostics";
+// import { useQueryDiagnostics } from "@/shared/hooks/useQueryDiagnostics";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 

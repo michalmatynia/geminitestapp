@@ -3,7 +3,7 @@
 
 import { useNormalizedQuery, useComposedQuery } from "@/shared/hooks/useQueryComposition";
 import { useQueryScheduler, useBackgroundQueries } from "@/shared/hooks/useQueryScheduler";
-import { useAdaptiveQuery } from "@/shared/hooks/useSmartCache";
+// import { useAdaptiveQuery } from "@/shared/hooks/useSmartCache";
 import { useEffect } from "react";
 
 // Enhanced product queries with normalization and composition

@@ -2,7 +2,7 @@
 "use client";
 
 import { useOptimisticMutation } from "@/shared/hooks/useOptimisticMutation";
-import { useCacheWarmup, useSmartPrefetch } from "@/shared/hooks/useCacheWarmup";
+// import { useCacheWarmup, useSmartPrefetch } from "@/shared/hooks/useCacheWarmup";
 import { useQuerySync } from "@/shared/hooks/useQuerySync";
 import type { ProductWithImages } from "@/features/products/types";
 

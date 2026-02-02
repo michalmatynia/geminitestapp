@@ -1,8 +1,8 @@
 // Use consolidated types
-import type { BaseEntity, JobStatus } from '@/shared/types/base';
+import type { Entity, Status } from '@/shared/types/core/base-types';
 
 // Agent Creator DTOs
-export interface AgentDto extends BaseEntity {
+export interface AgentDto extends Entity {
   name: string;
   description: string | null;
   model: string;
@@ -16,7 +16,7 @@ export interface AgentDto extends BaseEntity {
 
 export interface AgentRunDto extends BaseEntity {
   agentId: string;
-  status: JobStatus;
+  status: Status;
   input: Record<string, unknown>;
   output: Record<string, unknown> | null;
   logs: AgentLogDto[];

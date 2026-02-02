@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, Label, SectionHeader, SectionPanel, Pagination, CopyButton } from "@/shared/ui";
+import { Button, Input, SectionHeader, SectionPanel, Pagination } from "@/shared/ui";
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import {

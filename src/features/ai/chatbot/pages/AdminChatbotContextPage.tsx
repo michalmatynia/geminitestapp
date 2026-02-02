@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Input, Textarea, ModalShell, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
+import type { ChatbotContextSegmentDto } from "@/shared/dtos/chatbot";
 import Link from "next/link";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -92,12 +93,12 @@ function ChatbotContextPageInner(): React.JSX.Element {
     let isMounted: boolean = true;
     const loadContext = async (): Promise<void> => {
       try {
-        const data: { key: string; value: string }[] = await chatbotApi.fetchSettings();
-        const storedItems: { key: string; value: string } | undefined = data.find(
-          (item: { key: string; value: string }): boolean => item.key === "chatbot_global_context_items"
+        const data = await chatbotApi.fetchSettings() as any[];
+        const storedItems = data.find(
+          (item): boolean => item.key === "chatbot_global_context_items"
         );
-        const storedActive: { key: string; value: string } | undefined = data.find(
-          (item: { key: string; value: string }): boolean => item.key === "chatbot_global_context_active"
+        const storedActive = data.find(
+          (item): boolean => item.key === "chatbot_global_context_active"
         );
         const storedLegacy: { key: string; value: string } | undefined = data.find(
           (item: { key: string; value: string }): boolean => item.key === "chatbot_global_context"
@@ -208,15 +209,15 @@ function ChatbotContextPageInner(): React.JSX.Element {
   const handlePdfUpload = async (file: File): Promise<void> => {
     setUploading(true);
     try {
-      const data: { segments: { title: string; content: string }[] } = await chatbotApi.uploadChatbotContextPdf(file);
+      const data: { segments: ChatbotContextSegmentDto[] } = await chatbotApi.uploadChatbotContextPdf(file);
       if (data.segments.length === 0) {
         toast("No text found in PDF.", { variant: "info" });
         return;
       }
       const now: string = new Date().toISOString();
-      const nextItems: ContextItem[] = data.segments.map((segment: { title: string; content: string }): ContextItem => ({
+      const nextItems: ContextItem[] = data.segments.map((segment): ContextItem => ({
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        title: segment.title,
+        title: `PDF Content ${segment.id}`,
         content: segment.content,
         tags: ["pdf"],
         source: "pdf" as const,

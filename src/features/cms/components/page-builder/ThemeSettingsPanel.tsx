@@ -23,6 +23,15 @@ import { useCmsThemes } from "@/features/cms/hooks/useCmsQueries";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
 import type { ColorScheme, ColorSchemeColors, ThemeSettings } from "@/features/cms/types/theme-settings";
 import type { CmsTheme } from "@/features/cms/types";
+import {
+  ColorField,
+  NumberField,
+  RangeField,
+  SelectField,
+  CheckboxField,
+  TextField,
+  ImagePickerField,
+} from "./shared-fields";
 
 const THEME_SECTIONS = [
   "Logo",
@@ -140,48 +149,8 @@ const applySavedThemePreset = (
 };
 
 // ---------------------------------------------------------------------------
-// Reusable field components
+// Reusable utilities
 // ---------------------------------------------------------------------------
-
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }): React.JSX.Element {
-  return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="flex items-center gap-2">
-        <label className="relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50">
-          <input type="color" value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
-          <div className="size-full rounded" style={{ backgroundColor: value }} />
-        </label>
-        <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} className="h-7 flex-1 bg-gray-800/40 text-xs" />
-      </div>
-    </div>
-  );
-}
-
-function NumberField({ label, value, onChange, suffix, min, max }: { label: string; value: number; onChange: (v: number) => void; suffix?: string; min?: number; max?: number }): React.JSX.Element {
-  return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="flex items-center gap-1.5">
-        <Input type="number" value={value} min={min} max={max} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))} className="h-7 flex-1 bg-gray-800/40 text-xs" />
-        {suffix && <span className="text-[10px] text-gray-500">{suffix}</span>}
-      </div>
-    </div>
-  );
-}
-
-function RangeField({ label, value, onChange, min, max, suffix, step }: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string; step?: number }): React.JSX.Element {
-  const safeValue = Number.isFinite(value) ? value : min;
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-        <span className="text-[11px] text-gray-300">{safeValue}{suffix}</span>
-      </div>
-      <input type="range" min={min} max={max} step={step} value={safeValue} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))} className="w-full accent-blue-500" />
-    </div>
-  );
-}
 
 function sanitizeRichText(value: string | null | undefined): string {
   if (!value) return "";
@@ -393,114 +362,6 @@ function MiniRichTextEditor({
           style={{ minHeight }}
         />
       </div>
-    </div>
-  );
-}
-
-function ImagePickerField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}): React.JSX.Element {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="space-y-2">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <div className="relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30">
-        {value ? (
-          <Image
-            src={value}
-            alt="Selected"
-            fill
-            sizes="320px"
-            className="object-cover"
-          />
-        ) : (
-          <span className="text-xs text-gray-500">No image</span>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => setOpen(true)}>
-          <Upload className="mr-1.5 size-3" />
-          {value ? "Replace image" : "Upload image"}
-        </Button>
-        <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => setOpen(true)}>
-          <FolderOpen className="mr-1.5 size-3" />
-          Browse
-        </Button>
-      </div>
-      {value ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="w-full text-xs text-gray-400 hover:text-gray-200"
-          onClick={() => onChange("")}
-        >
-          Clear image
-        </Button>
-      ) : null}
-      <MediaLibraryPanel
-        open={open}
-        onOpenChange={setOpen}
-        selectionMode="single"
-        onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? "")}
-      />
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  disabled = false,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-  disabled?: boolean;
-  placeholder?: string;
-}): React.JSX.Element {
-  return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger className="h-7 bg-gray-800/40 text-xs" disabled={disabled}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt: { label: string; value: string }): React.JSX.Element => (
-            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }): React.JSX.Element {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <Checkbox checked={checked} onCheckedChange={(v: boolean | "indeterminate"): void => onChange(v === true)} />
-      <span className="text-xs text-gray-300">{label}</span>
-    </label>
-  );
-}
-
-function TextField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }): React.JSX.Element {
-  return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-gray-500">{label}</Label>
-      <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)} placeholder={placeholder} className="h-7 bg-gray-800/40 text-xs" />
     </div>
   );
 }

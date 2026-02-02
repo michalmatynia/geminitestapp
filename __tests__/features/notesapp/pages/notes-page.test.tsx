@@ -17,7 +17,7 @@ import { NoteCreateData } from "@/features/notesapp/validations/notes";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const now = new Date();
+const now = new Date().toISOString();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,7 +140,7 @@ describe("Notes page UI", () => {
           children: [],
           notes: notes
             .filter((note) =>
-              note.categories.some((cat) => cat.categoryId === category.id)
+              note.categories.some((cat: any) => cat.categoryId === category.id)
             )
             .map((note) => ({
               id: note.id,
@@ -216,12 +216,12 @@ describe("Notes page UI", () => {
         }
         if (tagIds.length > 0 && tagIds[0]) {
           filtered = filtered.filter((note) =>
-            note.tags.some((tag) => tagIds.includes(tag.tagId))
+            note.tags.some((tag: any) => tagIds.includes(tag.tagId))
           );
         }
         if (categoryIds.length > 0 && categoryIds[0]) {
           filtered = filtered.filter((note) =>
-            note.categories.some((cat) => categoryIds.includes(cat.categoryId))
+            note.categories.some((cat: any) => categoryIds.includes(cat.categoryId))
           );
         }
         return HttpResponse.json(filtered);

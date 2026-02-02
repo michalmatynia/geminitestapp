@@ -8,6 +8,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  ConfirmDialog,
+  EmptyState,
+  StatusBadge,
 } from "@/shared/ui";
 import Link from "next/link";
 
@@ -17,14 +20,8 @@ import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/us
 import { CmsDomainSelector } from "@/features/cms/components/CmsDomainSelector";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms/types";
-import { useMemo, useState } from "react";
-import { Eye } from "lucide-react";
-
-const STATUS_BADGE_CLASSES: Record<PageStatus, string> = {
-  draft: "bg-gray-600/20 text-gray-400 border-gray-600/40",
-  published: "bg-green-600/20 text-green-400 border-green-600/40",
-  scheduled: "bg-amber-600/20 text-amber-400 border-amber-600/40",
-};
+import { useMemo, useState, useCallback } from "react";
+import { Eye, Plus } from "lucide-react";
 
 const STATUS_LABELS: Record<PageStatus, string> = {
   draft: "Draft",
@@ -51,6 +48,7 @@ export default function PagesPage(): React.ReactNode {
   const deletePage = useDeletePage();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
+  const [pageToDelete, setPageToDelete] = useState<PageSummary | null>(null);
 
   const pages = useMemo((): PageSummary[] => pagesQuery.data ?? [], [pagesQuery.data]);
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
@@ -63,9 +61,18 @@ export default function PagesPage(): React.ReactNode {
     return pages.filter((page: PageSummary) => (page.status ?? "draft") === statusFilter);
   }, [pages, statusFilter]);
 
-  const handleDelete = async (id: string): Promise<void> => {
-    if (window.confirm("Are you sure you want to delete this page?")) {
-      await deletePage.mutateAsync(id);
+  const handleDelete = useCallback((page: PageSummary): void => {
+    setPageToDelete(page);
+  }, []);
+
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!pageToDelete) return;
+    try {
+      await deletePage.mutateAsync(pageToDelete.id);
+    } catch (error) {
+      console.error("Failed to delete page:", error);
+    } finally {
+      setPageToDelete(null);
     }
   };
 
@@ -145,9 +152,7 @@ export default function PagesPage(): React.ReactNode {
                   <Link href={`/admin/cms/builder?pageId=${page.id}`}>
                     <span className="hover:underline">{page.name}</span>
                   </Link>
-                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE_CLASSES[status]}`}>
-                    {STATUS_LABELS[status]}
-                  </span>
+                  <StatusBadge status={status} />
                   {page.slugs.length > 0 && (
                     <span className="text-xs text-gray-500">
                       {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(", ")}
@@ -201,7 +206,7 @@ export default function PagesPage(): React.ReactNode {
                     <Eye className="mr-2 size-4" />
                     Preview
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => { void handleDelete(page.id); }}>
+                  <Button variant="destructive" size="sm" onClick={() => { handleDelete(page); }}>
                     Delete
                   </Button>
                 </div>
@@ -209,12 +214,33 @@ export default function PagesPage(): React.ReactNode {
             );
           })}
           {filteredPages.length === 0 && (
-            <li className="py-6 text-center text-sm text-gray-500">
-              No pages match this filter.
+            <li className="py-10">
+              <EmptyState
+                title="No pages match this filter"
+                description={statusFilter === "all" ? "Create your first page to get started with CMS." : "Try changing the status filter or create a new page."}
+                action={
+                  statusFilter === "all" && (
+                    <Button onClick={handleCreatePage} variant="outline">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Page
+                    </Button>
+                  )
+                }
+              />
             </li>
           )}
         </ul>
       </ListPanel>
+
+      <ConfirmDialog
+        open={!!pageToDelete}
+        onOpenChange={(open) => !open && setPageToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Page"
+        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }

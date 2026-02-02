@@ -93,11 +93,11 @@ export function ComponentTreePanel(): React.ReactNode {
         type: "MOVE_BLOCK_TO_COLUMN",
         blockId,
         fromSectionId,
-        fromColumnId,
-        fromParentBlockId,
+        ...(fromColumnId && { fromColumnId }),
+        ...(fromParentBlockId && { fromParentBlockId }),
         toSectionId,
         toColumnId,
-        toParentBlockId,
+        ...(toParentBlockId && { toParentBlockId }),
         toIndex,
       });
       setExpandedIds((prev: Set<string>) => {
@@ -117,8 +117,8 @@ export function ComponentTreePanel(): React.ReactNode {
         type: "MOVE_BLOCK_TO_SECTION",
         blockId,
         fromSectionId,
-        fromColumnId,
-        fromParentBlockId,
+        ...(fromColumnId && { fromColumnId }),
+        ...(fromParentBlockId && { fromParentBlockId }),
         toSectionId,
         toIndex,
       });
@@ -165,7 +165,12 @@ export function ComponentTreePanel(): React.ReactNode {
 
   const handleRemoveColumnFromRow = useCallback(
     (sectionId: string, columnId: string, rowId?: string) => {
-      dispatch({ type: "REMOVE_COLUMN_FROM_ROW", sectionId, columnId, rowId });
+      dispatch({ 
+        type: "REMOVE_COLUMN_FROM_ROW", 
+        sectionId, 
+        columnId, 
+        ...(rowId && { rowId })
+      });
     },
     [dispatch]
   );
@@ -191,7 +196,7 @@ export function ComponentTreePanel(): React.ReactNode {
         sectionId,
         toSectionId,
         toColumnId,
-        toParentBlockId,
+        ...(toParentBlockId && { toParentBlockId }),
         toIndex,
       });
       setExpandedIds((prev: Set<string>) => {

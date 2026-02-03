@@ -128,7 +128,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         `Embed: ${agent.embeddingModel || "—"}`,
         `KB: ${(agent.collectionIds ?? []).length}`,
       ]}
-      renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange) => (
+      renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange: (changes: Partial<AgentTeachingAgentRecord>) => void) => (
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

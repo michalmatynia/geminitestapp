@@ -8,7 +8,12 @@ import { Button, Checkbox, Input, Label, SectionHeader, SectionPanel, Select, Se
 import { PRODUCT_ICON_MAP, PRODUCT_ICONS } from "@/shared/constants/product-icons";
 import { cn } from "@/shared/utils";
 import { GripVertical, Settings2, Trash2 } from "lucide-react";
-import type { AiTriggerButtonLocation, AiTriggerButtonMode, AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
+import type {
+  AiTriggerButtonDisplay,
+  AiTriggerButtonLocation,
+  AiTriggerButtonMode,
+  AiTriggerButtonRecord,
+} from "@/shared/types/ai-trigger-buttons";
 import type { AiNode, PathConfig, PathMeta } from "@/features/ai/ai-paths/lib";
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from "@/features/ai/ai-paths/lib";
 
@@ -20,6 +25,7 @@ type TriggerButtonDraft = {
   iconId: string | null;
   locations: AiTriggerButtonLocation[];
   mode: AiTriggerButtonMode;
+  display: AiTriggerButtonDisplay;
 };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
@@ -34,12 +40,18 @@ const MODE_OPTIONS: Array<{ value: AiTriggerButtonMode; label: string }> = [
   { value: "toggle", label: "Toggle (On/Off)" },
 ];
 
+const DISPLAY_OPTIONS: Array<{ value: AiTriggerButtonDisplay; label: string }> = [
+  { value: "icon_label", label: "Icon + label" },
+  { value: "icon", label: "Icon only" },
+];
+
 const normalizeDraft = (record?: AiTriggerButtonRecord | null): TriggerButtonDraft => ({
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? "",
   iconId: record?.iconId ?? null,
   locations: record?.locations ?? ["product_modal"],
   mode: record?.mode ?? "click",
+  display: record?.display ?? "icon_label",
 });
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
@@ -249,6 +261,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         iconId: payload.iconId,
         locations: payload.locations,
         mode: payload.mode,
+        display: payload.display,
       });
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -318,6 +331,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       iconId: draft.iconId,
       locations: draft.locations,
       mode: draft.mode,
+      display: draft.display,
     });
   };
 
@@ -564,6 +578,30 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             </div>
             <div className="text-[11px] text-gray-400">
               Click an icon to select it. Click the selected icon again to clear.
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Display</Label>
+            <Select
+              value={draft.display}
+              onValueChange={(value: string): void =>
+                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select display" />
+              </SelectTrigger>
+              <SelectContent>
+                {DISPLAY_OPTIONS.map((option: { value: AiTriggerButtonDisplay; label: string }): React.JSX.Element => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-[11px] text-gray-400">
+              Icon only is useful for tight spaces (modal headers). Icon + label is clearer in lists.
             </div>
           </div>
 

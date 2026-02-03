@@ -26,6 +26,7 @@ const triggerButtonLocationSchema = z.enum([
 ]);
 
 const triggerButtonModeSchema = z.enum(["click", "toggle"]);
+const triggerButtonDisplaySchema = z.enum(["icon", "icon_label"]);
 
 const triggerButtonRecordSchema = z.object({
   id: z.string().min(1),
@@ -33,6 +34,7 @@ const triggerButtonRecordSchema = z.object({
   iconId: z.string().nullable(),
   locations: z.array(triggerButtonLocationSchema),
   mode: triggerButtonModeSchema,
+  display: triggerButtonDisplaySchema.optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 });
@@ -42,6 +44,7 @@ const createTriggerButtonSchema = z.object({
   iconId: z.string().trim().min(1).nullable().optional(),
   locations: z.array(triggerButtonLocationSchema).min(1),
   mode: triggerButtonModeSchema.optional().default("click"),
+  display: triggerButtonDisplaySchema.optional().default("icon_label"),
 });
 
 type SettingDoc = { _id?: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date };
@@ -143,6 +146,7 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
         iconId: data.iconId ?? null,
         locations: data.locations,
         mode: data.mode,
+        display: data.display ?? "icon_label",
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
       });
@@ -176,7 +180,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
     if (!parsed.ok) return parsed.response;
 
-    const { name, iconId, locations, mode } = parsed.data;
+    const { name, iconId, locations, mode, display } = parsed.data;
     const raw = await readTriggerButtonsRaw();
     const existing = parseTriggerButtons(raw);
     const normalizedName = name.trim();
@@ -196,6 +200,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       iconId: iconId ? iconId.trim() : null,
       locations,
       mode,
+      display,
       createdAt: now,
       updatedAt: now,
     };
@@ -221,4 +226,3 @@ export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
   { source: "ai-paths.trigger-buttons.POST" }
 );
-

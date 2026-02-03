@@ -46,7 +46,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         source: source.trim() || null,
         tags: tags
           .split(",")
-          .map((t) => t.trim())
+          .map((t: string) => t.trim())
           .filter(Boolean),
       });
       toast("Document embedded and saved.", { variant: "success" });
@@ -80,22 +80,22 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Title (optional)</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Product naming rules" />
+            <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} placeholder="e.g. Product naming rules" />
           </div>
           <div className="space-y-2">
             <Label>Source (optional)</Label>
-            <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="e.g. internal wiki / URL / note id" />
+            <Input value={source} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSource(e.target.value)} placeholder="e.g. internal wiki / URL / note id" />
           </div>
         </div>
         <div className="space-y-2">
           <Label>Tags (comma separated)</Label>
-          <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="pricing, listings, seo" />
+          <Input value={tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)} placeholder="pricing, listings, seo" />
         </div>
         <div className="space-y-2">
           <Label>Text to embed</Label>
           <Textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
             placeholder="Paste the original text you want the agent to learn from..."
             className="min-h-[160px]"
           />

@@ -26,6 +26,7 @@ const triggerButtonLocationSchema = z.enum([
 ]);
 
 const triggerButtonModeSchema = z.enum(["click", "toggle"]);
+const triggerButtonDisplaySchema = z.enum(["icon", "icon_label"]);
 
 const triggerButtonRecordSchema = z.object({
   id: z.string().min(1),
@@ -33,6 +34,7 @@ const triggerButtonRecordSchema = z.object({
   iconId: z.string().nullable(),
   locations: z.array(triggerButtonLocationSchema),
   mode: triggerButtonModeSchema,
+  display: triggerButtonDisplaySchema.optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 });
@@ -43,6 +45,7 @@ const updateTriggerButtonSchema = z
     iconId: z.string().trim().min(1).nullable().optional(),
     locations: z.array(triggerButtonLocationSchema).min(1).optional(),
     mode: triggerButtonModeSchema.optional(),
+    display: triggerButtonDisplaySchema.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "No updates provided",
@@ -157,6 +160,7 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
         iconId: data.iconId ?? null,
         locations: data.locations,
         mode: data.mode,
+        display: data.display ?? "icon_label",
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
       });
@@ -194,6 +198,7 @@ async function PATCH_handler(
       ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
       ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
       ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
+      ...(parsed.data.display ? { display: parsed.data.display } : {}),
       updatedAt: now,
     };
     const next = existing.slice();

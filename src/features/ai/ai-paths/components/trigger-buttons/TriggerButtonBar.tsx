@@ -106,6 +106,8 @@ export function TriggerButtonBar({
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       {buttons.map((button: AiTriggerButtonRecord) => {
         const Icon = button.iconId ? PRODUCT_ICON_MAP[button.iconId] : null;
+        const display = button.display ?? "icon_label";
+        const showLabel = display !== "icon";
         const runState = runStates[button.id];
         const isRunning = runState?.status === "running";
         const progress = isRunning ? Math.max(0, Math.min(1, runState?.progress ?? 0)) : 0;
@@ -121,7 +123,7 @@ export function TriggerButtonBar({
                 "relative flex items-center gap-2 overflow-hidden rounded-lg border border-border bg-card/40 px-2 py-1",
                 isRunning ? "cursor-wait" : null
               )}
-              title={button.id}
+              title={button.name}
             >
               {isRunning ? (
                 <span
@@ -132,17 +134,19 @@ export function TriggerButtonBar({
               ) : null}
               <span className="relative z-10 inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60">
                 {Icon ? (
-                  <Icon className="size-4 text-gray-200" />
+                  <Icon className="size-4 text-gray-200" style={{ opacity: textOpacity }} />
                 ) : (
-                  <Settings2 className="size-4 text-gray-500" />
+                  <Settings2 className="size-4 text-gray-500" style={{ opacity: textOpacity }} />
                 )}
               </span>
-              <span
-                className="relative z-10 max-w-[180px] truncate text-xs text-gray-200 transition-opacity duration-200 ease-linear"
-                style={{ opacity: textOpacity }}
-              >
-                {button.name}
-              </span>
+              {showLabel ? (
+                <span
+                  className="relative z-10 max-w-[180px] truncate text-xs text-gray-200 transition-opacity duration-200 ease-linear"
+                  style={{ opacity: textOpacity }}
+                >
+                  {button.name}
+                </span>
+              ) : null}
               <Switch
                 checked={checked}
                 disabled={isRunning}
@@ -219,8 +223,8 @@ export function TriggerButtonBar({
           <Button
             key={button.id}
             variant="outline"
-            size="sm"
-            title={button.id}
+            size={showLabel ? "sm" : "icon"}
+            title={button.name}
             disabled={isRunning}
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
               if (!button.id) {
@@ -287,7 +291,11 @@ export function TriggerButtonBar({
                 }
               })();
             }}
-            className={cn("relative gap-2 overflow-hidden text-gray-200", isRunning ? "cursor-wait" : null)}
+            className={cn(
+              "relative overflow-hidden text-gray-200",
+              showLabel ? "gap-2" : null,
+              isRunning ? "cursor-wait" : null
+            )}
           >
             {isRunning ? (
               <span
@@ -297,16 +305,18 @@ export function TriggerButtonBar({
               />
             ) : null}
             {Icon ? (
-              <Icon className="relative z-10 size-4" />
+              <Icon className="relative z-10 size-4" style={{ opacity: showLabel ? 1 : textOpacity }} />
             ) : (
-              <Settings2 className="relative z-10 size-4" />
+              <Settings2 className="relative z-10 size-4" style={{ opacity: showLabel ? 1 : textOpacity }} />
             )}
-            <span
-              className="relative z-10 max-w-[160px] truncate transition-opacity duration-200 ease-linear"
-              style={{ opacity: textOpacity }}
-            >
-              {button.name}
-            </span>
+            {showLabel ? (
+              <span
+                className="relative z-10 max-w-[160px] truncate transition-opacity duration-200 ease-linear"
+                style={{ opacity: textOpacity }}
+              >
+                {button.name}
+              </span>
+            ) : null}
           </Button>
         );
       })}

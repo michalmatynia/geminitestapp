@@ -26,6 +26,7 @@ const triggerButtonLocationSchema = z.enum([
 ]);
 
 const triggerButtonModeSchema = z.enum(["click", "toggle"]);
+const triggerButtonDisplaySchema = z.enum(["icon", "icon_label"]);
 
 const triggerButtonRecordSchema = z.object({
   id: z.string().min(1),
@@ -33,6 +34,7 @@ const triggerButtonRecordSchema = z.object({
   iconId: z.string().nullable(),
   locations: z.array(triggerButtonLocationSchema),
   mode: triggerButtonModeSchema,
+  display: triggerButtonDisplaySchema.optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 });
@@ -146,6 +148,7 @@ const parseTriggerButtons = (raw: string | null): AiTriggerButtonRecord[] => {
         iconId: data.iconId ?? null,
         locations: data.locations,
         mode: data.mode,
+        display: data.display ?? "icon_label",
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
       });
@@ -213,4 +216,3 @@ export const POST = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
   { source: "ai-paths.trigger-buttons.reorder.POST" }
 );
-

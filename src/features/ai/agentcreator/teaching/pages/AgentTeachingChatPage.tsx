@@ -158,7 +158,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             <Label>Message</Label>
             <Textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
               placeholder="Ask something that should be answered from your embedded knowledge…"
               className="min-h-[90px]"
               disabled={sending || !selectedAgentId}

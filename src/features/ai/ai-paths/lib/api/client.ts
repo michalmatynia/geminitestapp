@@ -245,6 +245,7 @@ export const triggerButtonsApi = {
   async create(payload: {
     name: string;
     iconId?: string | null;
+    display?: AiTriggerButtonRecord["display"];
     locations: AiTriggerButtonRecord["locations"];
     mode?: AiTriggerButtonRecord["mode"];
   }): Promise<ApiResponse<AiTriggerButtonRecord>> {
@@ -253,7 +254,7 @@ export const triggerButtonsApi = {
 
   async update(
     id: string,
-    patch: Partial<Pick<AiTriggerButtonRecord, "name" | "iconId" | "locations" | "mode">>
+    patch: Partial<Pick<AiTriggerButtonRecord, "name" | "iconId" | "locations" | "mode" | "display">>
   ): Promise<ApiResponse<AiTriggerButtonRecord>> {
     return apiPatch<AiTriggerButtonRecord>(`/api/ai-paths/trigger-buttons/${encodeURIComponent(id)}`, patch);
   },

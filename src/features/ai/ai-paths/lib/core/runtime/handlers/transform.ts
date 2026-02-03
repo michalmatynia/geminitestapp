@@ -456,7 +456,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   const groupedObject = Object.fromEntries(groupedMap.entries());
   const grouped =
     regexConfig.outputMode === "array"
-      ? Object.entries(groupedObject).map(([key, items]) => ({ key, items }))
+      ? Object.entries(groupedObject).map(([key, items]: [string, RegexMatchRecord[]]) => ({ key, items }))
       : groupedObject;
 
   return {
@@ -510,7 +510,7 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: No
   const prevAdvanceStamp = typeof prevOutputs.advanceStamp === "string" ? prevOutputs.advanceStamp : "";
 
   let index = prevItemsHash && prevItemsHash === itemsHash ? prevIndex : 0;
-  let lastAckHash = prevItemsHash && prevItemsHash === itemsHash ? prevLastAckHash : "";
+  const lastAckHash = prevItemsHash && prevItemsHash === itemsHash ? prevLastAckHash : "";
   const advanceStamp = prevItemsHash && prevItemsHash === itemsHash ? prevAdvanceStamp : "";
 
   // Clamp to sane bounds.

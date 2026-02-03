@@ -1,0 +1,23 @@
+__tests__/features/admin/pages/AdminFrontManagePage.test.tsx(2,24): error TS2307: Cannot find module '@/__tests__/test-utils' or its corresponding type declarations.
+__tests__/features/auth/pages/register-page.test.tsx(6,24): error TS2307: Cannot find module '@/__tests__/test-utils' or its corresponding type declarations.
+__tests__/features/cms/components/ComponentTreePanel.test.tsx(2,24): error TS2307: Cannot find module '@/__tests__/test-utils' or its corresponding type declarations.
+__tests__/features/drafter/components/DraftCreator.test.tsx(3,24): error TS2307: Cannot find module '@/__tests__/test-utils' or its corresponding type declarations.
+src/app/api/image-studio/run/route.ts(209,47): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(body: ImageEditParamsNonStreaming, options?: RequestOptions | undefined): APIPromise<ImagesResponse>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsNonStreaming'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsNonStreaming': image, prompt
+  Overload 2 of 3, '(body: ImageEditParamsStreaming, options?: RequestOptions | undefined): APIPromise<Stream<ImageEditStreamEvent>>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsStreaming'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsStreaming': stream, image, prompt
+  Overload 3 of 3, '(body: ImageEditParamsBase, options?: RequestOptions | undefined): APIPromise<ImagesResponse | Stream<ImageEditStreamEvent>>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsBase'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsBase': image, prompt
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(3,10): error TS6133: 'useEffect' is declared but its value is never read.
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(192,32): error TS2304: Cannot find name 'useCallback'.
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(216,25): error TS2304: Cannot find name 'useCallback'.
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(223,28): error TS2304: Cannot find name 'useCallback'.
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(229,25): error TS2304: Cannot find name 'useCallback'.
+src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx(235,22): error TS2304: Cannot find name 'useCallback'.
+src/shared/ui/data-table.tsx(36,13): error TS2428: All declarations of 'TableMeta' must have identical type parameters.
+vitest.setup.ts(226,61): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+vitest.setup.ts(231,57): error TS7006: Parameter 'rel' implicitly has an 'any' type.

@@ -580,6 +580,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     pathDescription,
     pathName,
     paths,
+    selectedNodeId,
+    configOpen,
     runtimeState,
     updaterSamples,
     normalizeDbNodePreset,
@@ -608,6 +610,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setPathName,
     setPaths,
     setRuntimeState,
+    setConfigOpen,
     setSelectedNodeId,
     setUpdaterSamples,
     toast,
@@ -696,6 +699,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       updaterSamples,
       runtimeState: nextRuntimeState,
       lastRunAt,
+      uiState: {
+        selectedNodeId,
+        configOpen,
+      },
     };
     setEdges([]);
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
@@ -737,6 +744,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       updaterSamples,
       runtimeState: nextRuntimeState,
       lastRunAt,
+      uiState: {
+        selectedNodeId,
+        configOpen,
+      },
     };
     setRuntimeState(nextRuntimeState);
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
@@ -876,6 +887,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setNodes(normalizedNodes);
     setEdges(sanitizeEdges(normalizedNodes, resetConfig.edges));
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+    setConfigOpen(Boolean(resetConfig.uiState?.configOpen) && Boolean(normalizedNodes[0]?.id));
     setPathName(resetConfig.name);
     setPathDescription(resetConfig.description);
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
@@ -906,6 +918,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       updaterSamples: {},
       runtimeState: { inputs: {}, outputs: {} },
       lastRunAt: null,
+      uiState: {
+        selectedNodeId: null,
+        configOpen: false,
+      },
     };
     const meta: PathMeta = {
       id,
@@ -928,6 +944,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setIsPathLocked(false);
     setIsPathActive(true);
     setSelectedNodeId(null);
+    setConfigOpen(false);
   };
 
   const handleCreateAiDescriptionPath = (): void => {
@@ -955,7 +972,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setLastRunAt(config.lastRunAt ?? null);
     setIsPathLocked(Boolean(config.isLocked));
     setIsPathActive(config.isActive !== false);
-    setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+    const preferredNodeId = config.uiState?.selectedNodeId ?? null;
+    const resolvedNodeId =
+      preferredNodeId && normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
+        ? preferredNodeId
+        : normalizedNodes[0]?.id ?? null;
+    setSelectedNodeId(resolvedNodeId);
+    setConfigOpen(Boolean(config.uiState?.configOpen) && Boolean(resolvedNodeId));
     toast("AI Description Path created.", { variant: "success" });
   };
 
@@ -982,7 +1005,9 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setLastRunAt(fallback.lastRunAt ?? null);
       setIsPathLocked(Boolean(fallback.isLocked));
       setIsPathActive(fallback.isActive !== false);
-      setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+      const fallbackNodeId = normalizedNodes[0]?.id ?? null;
+      setSelectedNodeId(fallbackNodeId);
+      setConfigOpen(Boolean(fallback.uiState?.configOpen) && Boolean(fallbackNodeId));
       toast("Cannot delete the last path. Reset to default instead.", {
         variant: "info",
       });
@@ -1008,7 +1033,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       setLastRunAt(nextConfig.lastRunAt ?? null);
       setIsPathLocked(Boolean(nextConfig.isLocked));
       setIsPathActive(nextConfig.isActive !== false);
-      setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+      const preferredNodeId = nextConfig.uiState?.selectedNodeId ?? null;
+      const resolvedNodeId =
+        preferredNodeId && normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
+          ? preferredNodeId
+          : normalizedNodes[0]?.id ?? null;
+      setSelectedNodeId(resolvedNodeId);
+      setConfigOpen(Boolean(nextConfig.uiState?.configOpen) && Boolean(resolvedNodeId));
     } else {
       setActivePathId(null);
     }
@@ -1049,7 +1080,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     setLastRunAt(config.lastRunAt ?? null);
     setIsPathLocked(Boolean(config.isLocked));
     setIsPathActive(config.isActive !== false);
-    setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+    const preferredNodeId = config.uiState?.selectedNodeId ?? null;
+    const resolvedNodeId =
+      preferredNodeId && normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
+        ? preferredNodeId
+        : normalizedNodes[0]?.id ?? null;
+    setSelectedNodeId(resolvedNodeId);
+    setConfigOpen(Boolean(config.uiState?.configOpen) && Boolean(resolvedNodeId));
   };
 
   const handleCopyDocsWiring = async (): Promise<void> => {

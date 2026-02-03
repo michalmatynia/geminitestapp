@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 204ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 170ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -15,3 +15,27 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 - Environments: .env
 
   Creating an optimized production build ...
+✓ Compiled successfully in 13.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/image-studio/run/route.ts:209:47
+Type error: No overload matches this call.
+  Overload 1 of 3, '(body: ImageEditParamsNonStreaming, options?: RequestOptions | undefined): APIPromise<ImagesResponse>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsNonStreaming'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsNonStreaming': image, prompt
+  Overload 2 of 3, '(body: ImageEditParamsStreaming, options?: RequestOptions | undefined): APIPromise<Stream<ImageEditStreamEvent>>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsStreaming'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsStreaming': stream, image, prompt
+  Overload 3 of 3, '(body: ImageEditParamsBase, options?: RequestOptions | undefined): APIPromise<ImagesResponse | Stream<ImageEditStreamEvent>>', gave the following error.
+    Argument of type 'Record<string, unknown>' is not assignable to parameter of type 'ImageEditParamsBase'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'ImageEditParamsBase': image, prompt
+
+[0m [90m 207 |[39m     }
+ [90m 208 |[39m
+[31m[1m>[22m[39m[90m 209 |[39m     [36mconst[39m response [33m=[39m [36mawait[39m client[33m.[39mimages[33m.[39medit(payload)[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 210 |[39m     [36mconst[39m images [33m=[39m response[33m.[39mdata [33m?[39m[33m?[39m [][33m;[39m
+ [90m 211 |[39m     [36mif[39m (images[33m.[39mlength [33m===[39m [35m0[39m) {
+ [90m 212 |[39m       [36mthrow[39m operationFailedError([32m"Image API returned no images."[39m)[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

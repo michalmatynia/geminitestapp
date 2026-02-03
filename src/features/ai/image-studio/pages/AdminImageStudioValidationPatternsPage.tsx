@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Copy, RefreshCcw } from "lucide-react";
 
@@ -15,16 +15,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
   Tooltip,
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { serializeSetting } from "@/shared/utils/settings-json";
+import { logClientError } from "@/features/observability";
 
 import {
   defaultImageStudioSettings,
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
+  parsePromptValidationRules,
   type PromptAutofixOperation,
   type PromptValidationRule,
   type PromptValidationSeverity,
@@ -32,11 +36,41 @@ import {
 
 type SeverityFilter = PromptValidationSeverity | "all";
 
+type RuleDraft = {
+  uid: string;
+  text: string;
+  parsed: PromptValidationRule | null;
+  error: string | null;
+};
+
 const SEVERITY_ORDER: Record<PromptValidationSeverity, number> = {
   error: 0,
   warning: 1,
   info: 2,
 };
+
+const createDraftId = (): string => `rule_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+const createRuleDraft = (rule: PromptValidationRule): RuleDraft => ({
+  uid: createDraftId(),
+  text: JSON.stringify(rule, null, 2),
+  parsed: rule,
+  error: null,
+});
+
+const createNewRule = (): PromptValidationRule => ({
+  kind: "regex",
+  id: `custom.rule.${Date.now()}`,
+  enabled: true,
+  severity: "warning",
+  title: "New validation rule",
+  description: null,
+  pattern: "^$",
+  flags: "mi",
+  message: "Update this rule with the intended pattern and message.",
+  similar: [],
+  autofix: { enabled: true, operations: [] },
+});
 
 const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === "error") return "Error";
@@ -101,34 +135,148 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
 export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
 
   const rawSettings = settingsQuery.data?.get(IMAGE_STUDIO_SETTINGS_KEY) ?? null;
   const studioSettings = useMemo(() => parseImageStudioSettings(rawSettings), [rawSettings]);
-  const rules = studioSettings.promptValidation.rules ?? defaultImageStudioSettings.promptValidation.rules;
 
   const [query, setQuery] = useState<string>("");
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
+  const [drafts, setDrafts] = useState<RuleDraft[]>([]);
+  const [draftsLoaded, setDraftsLoaded] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
 
-  const sortedRules = useMemo((): PromptValidationRule[] => {
-    const list = [...rules];
-    list.sort((a: PromptValidationRule, b: PromptValidationRule): number => {
-      const severityCompare = (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99);
+  // Derived state pattern for drafts initialization
+  const [prevRawSettings, setPrevRawSettings] = useState<string | null>(null);
+  if (rawSettings !== prevRawSettings && !draftsLoaded) {
+    setPrevRawSettings(rawSettings);
+    const settings = parseImageStudioSettings(rawSettings);
+    const rules = settings.promptValidation.rules ?? defaultImageStudioSettings.promptValidation.rules;
+    setDrafts(rules.map((rule: PromptValidationRule) => createRuleDraft(rule)));
+    setDraftsLoaded(true);
+    setSaveError(null);
+    setIsDirty(false);
+  }
+
+  const sortedDrafts = useMemo((): RuleDraft[] => {
+    const list = [...drafts];
+    list.sort((a: RuleDraft, b: RuleDraft): number => {
+      if (!a.parsed && !b.parsed) return 0;
+      if (!a.parsed) return 1;
+      if (!b.parsed) return -1;
+      const severityCompare = (SEVERITY_ORDER[a.parsed.severity] ?? 99) - (SEVERITY_ORDER[b.parsed.severity] ?? 99);
       if (severityCompare !== 0) return severityCompare;
-      return a.title.localeCompare(b.title);
+      return a.parsed.title.localeCompare(b.parsed.title);
     });
     return list;
-  }, [rules]);
+  }, [drafts]);
 
-  const filteredRules = useMemo((): PromptValidationRule[] => {
+  const filteredDrafts = useMemo((): RuleDraft[] => {
     const term = query.trim().toLowerCase();
-    return sortedRules.filter((rule: PromptValidationRule): boolean => {
+    return sortedDrafts.filter((draft: RuleDraft): boolean => {
+      const rule = draft.parsed;
+      if (!rule) {
+        if (severity !== "all") return false;
+        if (!term) return true;
+        return draft.text.toLowerCase().includes(term);
+      }
       if (!includeDisabled && !rule.enabled) return false;
       if (severity !== "all" && rule.severity !== severity) return false;
       if (!term) return true;
       return ruleSearchText(rule).includes(term);
     });
-  }, [includeDisabled, query, severity, sortedRules]);
+  }, [includeDisabled, query, severity, sortedDrafts]);
+
+  const handleRuleTextChange = useCallback((uid: string, nextText: string): void => {
+    setDrafts((prev: RuleDraft[]) =>
+      prev.map((draft: RuleDraft) => {
+        if (draft.uid !== uid) return draft;
+        try {
+          const parsed = JSON.parse(nextText) as unknown;
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return { ...draft, text: nextText, parsed: null, error: "Rule JSON must be an object." };
+          }
+          return { ...draft, text: nextText, parsed: parsed as PromptValidationRule, error: null };
+        } catch (error) {
+          return {
+            ...draft,
+            text: nextText,
+            parsed: null,
+            error: error instanceof Error ? error.message : "Invalid JSON.",
+          };
+        }
+      })
+    );
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleAddRule = useCallback((): void => {
+    const newRule = createNewRule();
+    setDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleRemoveRule = useCallback((uid: string): void => {
+    setDrafts((prev: RuleDraft[]) => prev.filter((draft: RuleDraft) => draft.uid !== uid));
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleRefresh = useCallback(async (): Promise<void> => {
+    setDraftsLoaded(false);
+    setSaveError(null);
+    await settingsQuery.refetch();
+  }, [settingsQuery]);
+
+  const handleSave = useCallback(async (): Promise<void> => {
+    const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
+    if (invalidJson.length > 0) {
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, { variant: "error" });
+      return;
+    }
+
+    const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
+    const invalidRuleIds: string[] = [];
+    parsedRules.forEach((rule: PromptValidationRule, index: number) => {
+      const result = parsePromptValidationRules(JSON.stringify([rule]));
+      if (!result.ok) invalidRuleIds.push(rule.id || `#${index + 1}`);
+    });
+    if (invalidRuleIds.length > 0) {
+      toast(`Invalid rule(s): ${invalidRuleIds.join(", ")}.`, { variant: "error" });
+      return;
+    }
+
+    const result = parsePromptValidationRules(JSON.stringify(parsedRules));
+    if (!result.ok) {
+      toast(result.error, { variant: "error" });
+      return;
+    }
+
+    try {
+      const currentSettings = parseImageStudioSettings(rawSettings);
+      const nextSettings = {
+        ...currentSettings,
+        promptValidation: {
+          ...currentSettings.promptValidation,
+          rules: result.rules,
+        },
+      };
+      await updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_SETTINGS_KEY,
+        value: serializeSetting(nextSettings),
+      });
+      setDrafts(result.rules.map((rule: PromptValidationRule) => createRuleDraft(rule)));
+      setIsDirty(false);
+      toast("Validation patterns saved.", { variant: "success" });
+    } catch (error) {
+      logClientError(error, { context: { source: "AdminImageStudioValidationPatternsPage", action: "saveRules" } });
+      toast("Failed to save rules.", { variant: "error" });
+    }
+  }, [drafts, rawSettings, toast, updateSetting]);
 
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {
@@ -150,10 +298,20 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
             <Button type="button" variant="outline" asChild>
               <Link href="/admin/image-studio">Back to Studio</Link>
             </Button>
+            <Button type="button" variant="outline" onClick={handleAddRule}>
+              Add rule
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={updateSetting.isPending || !isDirty}
+            >
+              {updateSetting.isPending ? "Saving..." : "Save changes"}
+            </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => void settingsQuery.refetch()}
+              onClick={() => void handleRefresh()}
               disabled={settingsQuery.isFetching}
               title="Reload settings"
             >
@@ -221,53 +379,75 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
         </div>
 
         <div className="mt-3 text-[11px] text-gray-400">
-          Showing <span className="text-gray-200">{filteredRules.length}</span> of{" "}
-          <span className="text-gray-200">{sortedRules.length}</span> rules
+          Showing <span className="text-gray-200">{filteredDrafts.length}</span> of{" "}
+          <span className="text-gray-200">{sortedDrafts.length}</span> rules
         </div>
       </SectionPanel>
 
       <div className="space-y-3">
-        {filteredRules.map((rule: PromptValidationRule) => {
-          const regexStatus =
-            rule.kind === "regex" ? compileRegex(rule.pattern, rule.flags) : null;
+        {saveError ? (
+          <div className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {saveError}
+          </div>
+        ) : null}
+        {filteredDrafts.map((draft: RuleDraft) => {
+          const rule = draft.parsed;
+          const regexStatus = rule && rule.kind === "regex" ? compileRegex(rule.pattern, rule.flags) : null;
           return (
-            <SectionPanel key={rule.id} variant="subtle">
+            <SectionPanel key={draft.uid} variant="subtle">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-sm font-medium text-gray-100">{rule.title}</div>
-                    <span
-                      className={cn(
-                        "rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                        getSeverityBadgeClasses(rule.severity)
-                      )}
-                    >
-                      {formatSeverityLabel(rule.severity)}
-                    </span>
-                    {!rule.enabled ? (
+                    <div className="text-sm font-medium text-gray-100">{rule?.title ?? "Invalid rule JSON"}</div>
+                    {rule ? (
+                      <span
+                        className={cn(
+                          "rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
+                          getSeverityBadgeClasses(rule.severity)
+                        )}
+                      >
+                        {formatSeverityLabel(rule.severity)}
+                      </span>
+                    ) : null}
+                    {rule && !rule.enabled ? (
                       <span className="rounded-full border border-gray-600/60 bg-gray-600/10 px-2 py-0.5 text-[10px] text-gray-300">
                         Disabled
                       </span>
                     ) : null}
-                    <span className="rounded-full border border-border bg-card/50 px-2 py-0.5 text-[10px] text-gray-300">
-                      {rule.kind}
-                    </span>
+                    {rule ? (
+                      <span className="rounded-full border border-border bg-card/50 px-2 py-0.5 text-[10px] text-gray-300">
+                        {rule.kind}
+                      </span>
+                    ) : null}
+                    {draft.error ? (
+                      <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">
+                        Invalid JSON
+                      </span>
+                    ) : null}
                   </div>
                   <div className="text-[11px] text-gray-400">
-                    <span className="text-gray-500">Rule ID:</span> {rule.id}
+                    <span className="text-gray-500">Rule ID:</span> {rule?.id ?? "—"}
                   </div>
-                  {rule.description ? (
+                  {rule?.description ? (
                     <div className="text-[11px] text-gray-400">{rule.description}</div>
                   ) : null}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRemoveRule(draft.uid)}
+                  >
+                    Remove
+                  </Button>
                   <Tooltip content="Copy rule JSON" side="bottom">
                     <Button
                       type="button"
                       size="icon"
                       variant="outline"
-                      onClick={() => void handleCopy(JSON.stringify(rule, null, 2), "Rule JSON")}
+                      onClick={() => void handleCopy(draft.text, "Rule JSON")}
                     >
                       <Copy className="size-4" />
                     </Button>
@@ -275,16 +455,29 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
                 </div>
               </div>
 
+              {draft.error ? (
+                <div className="mt-3 rounded border border-red-500/30 bg-red-500/10 p-2 text-[11px] text-red-200">
+                  {draft.error}
+                </div>
+              ) : null}
+
               <div className="mt-3 space-y-2">
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <div className="space-y-1">
                     <div className="text-[11px] text-gray-500">Message</div>
                     <div className="rounded-md border border-border bg-card/50 p-2 text-[12px] text-gray-200">
-                      {rule.message}
+                      {rule?.message ?? "—"}
                     </div>
                   </div>
 
-                  {rule.kind === "regex" ? (
+                  {!rule ? (
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Rule status</div>
+                      <div className="rounded-md border border-border bg-card/50 p-2 text-[12px] text-gray-200">
+                        Fix the JSON below to preview pattern details.
+                      </div>
+                    </div>
+                  ) : rule.kind === "regex" ? (
                     <div className="space-y-1">
                       <div className="flex items-center justify-between gap-2 text-[11px] text-gray-500">
                         <span>Pattern</span>
@@ -329,7 +522,7 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
 
                 <div className="space-y-1">
                   <div className="text-[11px] text-gray-500">Similar patterns (suggestions)</div>
-                  {rule.similar && rule.similar.length > 0 ? (
+                  {rule?.similar && rule.similar.length > 0 ? (
                     <div className="space-y-2">
                       {rule.similar.map((sim: { pattern: string; flags?: string | undefined; suggestion: string; comment?: string | null | undefined }, index: number) => (
                         <div
@@ -362,7 +555,7 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
 
                 <div className="space-y-1">
                   <div className="text-[11px] text-gray-500">Autofix operations</div>
-                  {rule.autofix?.enabled && rule.autofix.operations.length > 0 ? (
+                  {rule?.autofix?.enabled && rule.autofix.operations.length > 0 ? (
                     <div className="space-y-2">
                       {rule.autofix.operations.map((op: PromptAutofixOperation, index: number) => (
                         <div
@@ -390,6 +583,16 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
                     <div className="text-[11px] text-gray-500">None</div>
                   )}
                 </div>
+
+                <div className="space-y-1">
+                  <div className="text-[11px] text-gray-500">Rule JSON</div>
+                  <Textarea
+                    value={draft.text}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleRuleTextChange(draft.uid, e.target.value)}
+                    className="min-h-[180px] font-mono text-[11px]"
+                    placeholder="Paste JSON for this rule"
+                  />
+                </div>
               </div>
             </SectionPanel>
           );
@@ -398,4 +601,3 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
     </div>
   );
 }
-

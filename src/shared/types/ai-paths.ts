@@ -181,7 +181,7 @@ export type TemplateConfig = {
 
 export type RegexMatchMode = "first" | "all";
 export type RegexGroupOutputMode = "object" | "array";
-export type RegexMode = "group" | "extract";
+export type RegexMode = "group" | "extract" | "extract_json";
 
 export type RegexConfig = {
   pattern: string;
@@ -467,6 +467,11 @@ export type PathMeta = {
   updatedAt: string;
 };
 
+export type PathUiState = {
+  selectedNodeId?: string | null;
+  configOpen?: boolean;
+};
+
 export type PathConfig = {
   id: string;
   version: number;
@@ -482,6 +487,7 @@ export type PathConfig = {
   updaterSamples?: Record<string, UpdaterSampleState>;
   runtimeState?: RuntimeState | string | null;
   lastRunAt?: string | null;
+  uiState?: PathUiState;
 };
 
 export type PathDebugEntry = {

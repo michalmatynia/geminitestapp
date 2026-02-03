@@ -1,0 +1,18 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/image-studio/run/route.ts
+   44:19  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+  209:47  error    Unsafe argument of type `any` assigned to a parameter of type `ImageEditParamsNonStreaming`                                                                                                          @typescript-eslint/no-unsafe-argument
+  209:58  error    Unexpected any. Specify a different type                                                                                                                                                             @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+  114:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
+  556:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 561) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 7 problems (3 errors, 4 warnings)
+

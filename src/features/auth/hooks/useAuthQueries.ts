@@ -19,10 +19,11 @@ const authKeys = {
   userSecurity: (userId: string) => ["auth-user-security", userId] as const,
 };
 
-export function useAuthUsers(): UseQueryResult<AuthUsersResponse, Error> {
+export function useAuthUsers(enabled = true): UseQueryResult<AuthUsersResponse, Error> {
   return useQuery({
     queryKey: authKeys.users,
     queryFn: fetchAuthUsers,
+    enabled,
   });
 }
 

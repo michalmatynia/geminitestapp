@@ -20,6 +20,10 @@ type ScanState = {
   escaped: boolean;
 };
 
+type SegmentKind = "code" | "comment" | "single_string" | "double_string" | "template_string";
+
+type Segment = { kind: SegmentKind; text: string };
+
 const createScanState = (): ScanState => ({
   inSingle: false,
   inDouble: false,
@@ -31,6 +35,145 @@ const createScanState = (): ScanState => ({
 
 const isInString = (state: ScanState): boolean =>
   state.inSingle || state.inDouble || state.inTemplate;
+
+function segmentizeJsLikeText(input: string): Segment[] {
+  const state = createScanState();
+  const segments: Segment[] = [];
+  let kind: SegmentKind = "code";
+  let buf = "";
+
+  const flush = (): void => {
+    if (!buf) return;
+    segments.push({ kind, text: buf });
+    buf = "";
+  };
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index] ?? "";
+    const next = input[index + 1] ?? "";
+
+    if (kind === "comment") {
+      buf += char;
+      if (state.inLineComment) {
+        if (char === "\n") {
+          state.inLineComment = false;
+          flush();
+          kind = "code";
+        }
+      } else if (state.inBlockComment) {
+        if (char === "*" && next === "/") {
+          buf += next;
+          index += 1;
+          state.inBlockComment = false;
+          flush();
+          kind = "code";
+        }
+      }
+      continue;
+    }
+
+    if (kind === "single_string") {
+      buf += char;
+      if (!state.escaped && char === "'") {
+        state.inSingle = false;
+        flush();
+        kind = "code";
+      }
+      state.escaped = !state.escaped && char === "\\";
+      continue;
+    }
+
+    if (kind === "double_string") {
+      buf += char;
+      if (!state.escaped && char === '"') {
+        state.inDouble = false;
+        flush();
+        kind = "code";
+      }
+      state.escaped = !state.escaped && char === "\\";
+      continue;
+    }
+
+    if (kind === "template_string") {
+      buf += char;
+      if (!state.escaped && char === "`") {
+        state.inTemplate = false;
+        flush();
+        kind = "code";
+      }
+      state.escaped = !state.escaped && char === "\\";
+      continue;
+    }
+
+    // code
+    if (char === "/" && next === "/") {
+      flush();
+      kind = "comment";
+      state.inLineComment = true;
+      buf = "//";
+      index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      flush();
+      kind = "comment";
+      state.inBlockComment = true;
+      buf = "/*";
+      index += 1;
+      continue;
+    }
+    if (char === "'") {
+      flush();
+      kind = "single_string";
+      state.inSingle = true;
+      state.escaped = false;
+      buf = "'";
+      continue;
+    }
+    if (char === '"') {
+      flush();
+      kind = "double_string";
+      state.inDouble = true;
+      state.escaped = false;
+      buf = '"';
+      continue;
+    }
+    if (char === "`") {
+      flush();
+      kind = "template_string";
+      state.inTemplate = true;
+      state.escaped = false;
+      buf = "`";
+      continue;
+    }
+
+    buf += char;
+  }
+
+  flush();
+  return segments;
+}
+
+function normalizeParamsObject(rawObjectText: string): string {
+  const segments = segmentizeJsLikeText(rawObjectText);
+  const normalized = segments.map((segment: Segment) => {
+    if (segment.kind === "code") {
+      // Quote simple unquoted keys: { foo: 1 } -> { "foo": 1 }
+      return segment.text.replace(/(^|[{\s,])([A-Za-z_][A-Za-z0-9_]*)\s*:/g, "$1\"$2\":");
+    }
+    if (segment.kind === "single_string") {
+      const inner = segment.text.slice(1, -1);
+      // Best-effort safety: only convert simple single-quoted strings.
+      if (!inner || inner.includes("\n") || inner.includes("\r") || inner.includes("\\") || inner.includes('"')) {
+        return segment.text;
+      }
+      return `"${inner}"`;
+    }
+    return segment.text;
+  });
+
+  return normalized.join("");
+}
 
 function findMatchingBrace(input: string, startIndex: number): number {
   if (input[startIndex] !== "{") return -1;
@@ -232,9 +375,9 @@ function removeTrailingCommas(input: string): string {
 }
 
 export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
-  const match = /params\s*=\s*\{/.exec(prompt);
+  const match = /\bparams\b\s*[:=]\s*\{/i.exec(prompt);
   if (!match) {
-    return { ok: false, error: "Could not find `params = { ... }` in the prompt." };
+    return { ok: false, error: "Could not find `params = { ... }` (or `params: { ... }`) in the prompt." };
   }
 
   const objectStart = prompt.indexOf("{", match.index);
@@ -262,7 +405,23 @@ export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
       rawObjectText,
     };
   } catch {
-    return { ok: false, error: "Failed to parse params (expected JSON-like object with quoted keys/strings)." };
+    try {
+      const normalized = normalizeParamsObject(withoutComments);
+      const normalizedJson = removeTrailingCommas(normalized);
+      const parsed = JSON.parse(normalizedJson) as unknown;
+      if (!isObjectRecord(parsed)) {
+        return { ok: false, error: "Parsed params must be a JSON object." };
+      }
+      return {
+        ok: true,
+        params: parsed,
+        objectStart,
+        objectEnd: objectEndInclusive + 1,
+        rawObjectText,
+      };
+    } catch {
+      return { ok: false, error: "Failed to parse params (expected JSON-like object with quoted keys/strings)." };
+    }
   }
 }
 

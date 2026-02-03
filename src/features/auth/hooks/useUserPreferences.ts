@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 
 export interface UserPreferences {
   adminMenuCollapsed?: boolean | null;
+  adminMenuFavorites?: string[] | null;
+  adminMenuSectionColors?: Record<string, string> | null;
 }
 
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {

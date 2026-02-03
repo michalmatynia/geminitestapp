@@ -1,6 +1,7 @@
 import type {
   DbQueryConfig,
   PathConfig,
+  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
   AiNode,
@@ -97,9 +98,11 @@ export const buildPersistedRuntimeState = (
   state: RuntimeState,
   graphNodes: AiNode[]
 ): string => {
+  const historyLimit = 50;
   const nodeIds = new Set(graphNodes.map((node: AiNode) => node.id));
   const inputs: Record<string, RuntimePortValues> = {};
   const outputs: Record<string, RuntimePortValues> = {};
+  const history: Record<string, RuntimeHistoryEntry[]> = {};
   Object.entries(state.inputs ?? {}).forEach(([key, value]: [string, RuntimePortValues]) => {
     if (nodeIds.has(key)) {
       inputs[key] = value;
@@ -110,7 +113,18 @@ export const buildPersistedRuntimeState = (
       outputs[key] = value;
     }
   });
-  const safe = toJsonSafe({ inputs, outputs });
+  Object.entries(state.history ?? {}).forEach(([key, value]: [string, RuntimeHistoryEntry[]]) => {
+    if (!nodeIds.has(key)) return;
+    const trimmed = Array.isArray(value) ? value.slice(-historyLimit) : [];
+    if (trimmed.length > 0) {
+      history[key] = trimmed;
+    }
+  });
+  const payload: Record<string, unknown> = { inputs, outputs };
+  if (Object.keys(history).length > 0) {
+    payload.history = history;
+  }
+  const safe = toJsonSafe(payload);
   return safe ? JSON.stringify(safe) : "";
 };
 

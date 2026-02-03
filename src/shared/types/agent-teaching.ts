@@ -22,12 +22,12 @@ export type AgentTeachingId = string;
 /**
  * Record types for the database layer (optional, if we want to keep them separate from DTOs)
  */
-export interface AgentTeachingEmbeddingCollectionRecord extends AgentTeachingCollectionDto {}
+export type AgentTeachingEmbeddingCollectionRecord = AgentTeachingCollectionDto;
 
-export interface AgentTeachingEmbeddingDocumentListItem extends AgentTeachingDocumentDto {}
+export type AgentTeachingEmbeddingDocumentListItem = AgentTeachingDocumentDto;
 
-export interface AgentTeachingAgentRecord extends AgentTeachingAgentDto {}
+export type AgentTeachingAgentRecord = AgentTeachingAgentDto;
 
-export interface AgentTeachingChatSource extends AgentTeachingChatSourceDto {}
+export type AgentTeachingChatSource = AgentTeachingChatSourceDto;
 
 export type AgentTeachingEmbeddingDocumentMetadata = AgentTeachingDocumentMetadataDto;

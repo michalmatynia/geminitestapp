@@ -17,14 +17,16 @@ import {
   Plug,
   AppWindow,
   ChevronRightIcon,
+  StarIcon,
 } from "lucide-react";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { usePathname, useRouter } from "next/navigation";
+import { useUserPreferences } from "@/features/auth/hooks/useUserPreferences";
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { cn } from "@/shared/utils";
 
-type NavItem = {
+export type NavItem = {
   id: string;
   label: string;
   href?: string;
@@ -34,7 +36,64 @@ type NavItem = {
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   action?: () => void;
   children?: NavItem[];
+  sectionColor?: string;
 };
+
+export type AdminMenuColorOption = {
+  value: string;
+  label: string;
+  dot: string;
+  border: string;
+  text: string;
+};
+
+export const ADMIN_MENU_COLORS: AdminMenuColorOption[] = [
+  { value: "slate", label: "Slate", dot: "bg-slate-400", border: "border-slate-400/60", text: "text-slate-200" },
+  { value: "emerald", label: "Emerald", dot: "bg-emerald-400", border: "border-emerald-400/60", text: "text-emerald-200" },
+  { value: "blue", label: "Blue", dot: "bg-blue-400", border: "border-blue-400/60", text: "text-blue-200" },
+  { value: "amber", label: "Amber", dot: "bg-amber-400", border: "border-amber-400/60", text: "text-amber-200" },
+  { value: "violet", label: "Violet", dot: "bg-violet-400", border: "border-violet-400/60", text: "text-violet-200" },
+  { value: "cyan", label: "Cyan", dot: "bg-cyan-400", border: "border-cyan-400/60", text: "text-cyan-200" },
+  { value: "orange", label: "Orange", dot: "bg-orange-400", border: "border-orange-400/60", text: "text-orange-200" },
+  { value: "rose", label: "Rose", dot: "bg-rose-400", border: "border-rose-400/60", text: "text-rose-200" },
+];
+
+export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object.fromEntries(
+  ADMIN_MENU_COLORS.map((option) => [option.value, option])
+);
+
+export type FlattenedNavItem = {
+  id: string;
+  label: string;
+  href?: string;
+  keywords?: string[];
+  parents: string[];
+  item: NavItem;
+};
+
+export const flattenAdminNav = (items: NavItem[], parents: string[] = []): FlattenedNavItem[] => {
+  const entries: FlattenedNavItem[] = [];
+  items.forEach((item: NavItem) => {
+    const nextParents = [...parents, item.label];
+    if (item.href && (!item.children || item.children.length === 0)) {
+      entries.push({
+        id: item.id,
+        label: item.label,
+        href: item.href,
+        ...(item.keywords ? { keywords: item.keywords } : {}),
+        parents: parents,
+        item,
+      });
+    }
+    if (item.children && item.children.length > 0) {
+      entries.push(...flattenAdminNav(item.children, nextParents));
+    }
+  });
+  return entries;
+};
+
+export const getAdminMenuSections = (items: NavItem[]): Array<{ id: string; label: string }> =>
+  items.map((item: NavItem) => ({ id: item.id, label: item.label }));
 
 const OPEN_KEY = "adminMenuOpenIds.v2";
 
@@ -116,6 +175,23 @@ const collectActiveGroupIds = (items: NavItem[], pathname: string): Set<string> 
   return active;
 };
 
+const applySectionColors = (
+  items: NavItem[],
+  sectionColors: Record<string, string>,
+  parentColor?: string
+): NavItem[] =>
+  items.map((item: NavItem): NavItem => {
+    const resolvedColor = parentColor ?? sectionColors[item.id];
+    const children = item.children
+      ? applySectionColors(item.children, sectionColors, resolvedColor)
+      : undefined;
+    return {
+      ...item,
+      ...(resolvedColor ? { sectionColor: resolvedColor } : {}),
+      ...(children ? { children } : {}),
+    };
+  });
+
 function NavTree({
   items,
   depth,
@@ -140,6 +216,7 @@ function NavTree({
         // Only highlight leaf links (not folders). Folders get their "current" indicator via being open.
         const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
         const isOpen = !isCollapsed && hasChildren && (forcedOpenIds.has(item.id) || openIds.has(item.id));
+        const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
 
         const rowStyle: React.CSSProperties | undefined =
           isCollapsed
@@ -149,7 +226,8 @@ function NavTree({
               };
 
         const rowClassName = cn(
-          "group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer",
+          "group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer border-l-2",
+          sectionStyle ? sectionStyle.border : "border-transparent",
           active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
         );
 
@@ -164,11 +242,17 @@ function NavTree({
                       prefetch={false}
                       {...(item.onClick ? { onClick: item.onClick } : {})}
                       className={cn(
-                        "flex items-center justify-center rounded-md px-2 py-2 transition",
+                        "flex items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                        sectionStyle ? sectionStyle.border : "border-transparent",
                         active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
                       )}
                     >
-                      <span className="text-gray-200">{item.icon ?? <AppWindow className="size-4" />}</span>
+                      <span className="relative text-gray-200">
+                        {item.icon ?? <AppWindow className="size-4" />}
+                        {sectionStyle ? (
+                          <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
+                        ) : null}
+                      </span>
                       <span className="sr-only">{item.label}</span>
                     </Link>
                   ) : (
@@ -179,11 +263,17 @@ function NavTree({
                         if (!item.href && hasChildren) onToggleOpen(item.id);
                       }}
                       className={cn(
-                        "flex w-full items-center justify-center rounded-md px-2 py-2 transition",
+                        "flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2",
+                        sectionStyle ? sectionStyle.border : "border-transparent",
                         active ? "bg-gray-700/60 text-white" : "text-gray-200 hover:bg-gray-700/40"
                       )}
                     >
-                      <span className="text-gray-200">{item.icon ?? <AppWindow className="size-4" />}</span>
+                      <span className="relative text-gray-200">
+                        {item.icon ?? <AppWindow className="size-4" />}
+                        {sectionStyle ? (
+                          <span className={cn("absolute -right-1 -top-1 h-2 w-2 rounded-full", sectionStyle.dot)} />
+                        ) : null}
+                      </span>
                       <span className="sr-only">{item.label}</span>
                     </button>
                   )}
@@ -208,9 +298,18 @@ function NavTree({
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       {depth === 0 && item.icon ? (
-                        <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        <>
+                          {sectionStyle ? (
+                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                          ) : null}
+                          <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        </>
                       ) : depth > 0 ? (
-                        <span className="shrink-0 text-gray-600">•</span>
+                        sectionStyle ? (
+                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                        ) : (
+                          <span className="shrink-0 text-gray-600">•</span>
+                        )
                       ) : null}
 
                       <span className="min-w-0 truncate text-left">{item.label}</span>
@@ -234,9 +333,18 @@ function NavTree({
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       {depth === 0 && item.icon ? (
-                        <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        <>
+                          {sectionStyle ? (
+                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                          ) : null}
+                          <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        </>
                       ) : depth > 0 ? (
-                        <span className="shrink-0 text-gray-600">•</span>
+                        sectionStyle ? (
+                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                        ) : (
+                          <span className="shrink-0 text-gray-600">•</span>
+                        )
                       ) : null}
                       <span className="min-w-0 truncate">{item.label}</span>
                     </div>
@@ -252,9 +360,18 @@ function NavTree({
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       {depth === 0 && item.icon ? (
-                        <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        <>
+                          {sectionStyle ? (
+                            <span className={cn("h-2 w-2 rounded-full", sectionStyle.dot)} />
+                          ) : null}
+                          <span className="shrink-0 text-gray-200">{item.icon}</span>
+                        </>
                       ) : depth > 0 ? (
-                        <span className="shrink-0 text-gray-600">•</span>
+                        sectionStyle ? (
+                          <span className={cn("h-1.5 w-1.5 rounded-full", sectionStyle.dot)} />
+                        ) : (
+                          <span className="shrink-0 text-gray-600">•</span>
+                        )
                       ) : null}
                       <span className="min-w-0 truncate text-left">{item.label}</span>
                     </div>
@@ -282,6 +399,265 @@ function NavTree({
     </div>
   );
 }
+
+export const buildAdminNav = (handlers: {
+  onOpenChat: React.MouseEventHandler<HTMLAnchorElement>;
+  onCreatePageClick: () => void;
+}): NavItem[] => ([
+  {
+    id: "home",
+    label: "Admin",
+    href: "/admin",
+    icon: <HomeIcon className="size-4" />,
+    keywords: ["dashboard", "home"],
+  },
+  {
+    id: "workspace",
+    label: "Workspace",
+    icon: <AppWindow className="size-4" />,
+    children: [
+      { id: "workspace/front-manage", label: "Front Manage", href: "/admin/front-manage" },
+      { id: "workspace/import", label: "Import", href: "/admin/import" },
+      { id: "workspace/files", label: "Files", href: "/admin/files" },
+      { id: "workspace/databases", label: "Databases", href: "/admin/databases" },
+      { id: "workspace/app-embeds", label: "App Embeds", href: "/admin/app-embeds" },
+    ],
+  },
+  {
+    id: "commerce",
+    label: "Commerce",
+    href: "/admin/products",
+    icon: <PackageIcon className="size-4" />,
+    children: [
+      {
+        id: "commerce/products",
+        label: "Products",
+        href: "/admin/products",
+        children: [
+          { id: "commerce/products/all", label: "All Products", href: "/admin/products", exact: true },
+          { id: "commerce/products/drafts", label: "Drafts", href: "/admin/drafts" },
+          { id: "commerce/products/builder", label: "Builder", href: "/admin/products/builder" },
+          { id: "commerce/products/producers", label: "Producers", href: "/admin/products/producers" },
+          { id: "commerce/products/preferences", label: "Preferences", href: "/admin/products/preferences" },
+          { id: "commerce/products/settings", label: "Settings", href: "/admin/products/settings" },
+        ],
+      },
+      {
+        id: "commerce/assets",
+        label: "Assets",
+        href: "/admin/3d-assets",
+        children: [
+          { id: "commerce/assets/3d", label: "3D Assets", href: "/admin/3d-assets" },
+          { id: "commerce/assets/3d-list", label: "3D Asset List", href: "/admin/3d-assets/list" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "integrations",
+    label: "Integrations",
+    href: "/admin/integrations",
+    icon: <Plug className="size-4" />,
+    children: [
+      { id: "integrations/connections", label: "Connections", href: "/admin/integrations" },
+      { id: "integrations/add", label: "Add Integration", href: "/admin/integrations/add" },
+      { id: "integrations/imports", label: "Imports", href: "/admin/integrations/imports" },
+      {
+        id: "integrations/marketplaces",
+        label: "Marketplaces",
+        href: "/admin/integrations/marketplaces",
+        children: [
+          {
+            id: "integrations/marketplaces/allegro",
+            label: "Allegro",
+            href: "/admin/integrations/marketplaces/allegro",
+            children: [
+              { id: "integrations/marketplaces/allegro/connections", label: "Connections", href: "/admin/integrations/marketplaces/allegro/connections" },
+              { id: "integrations/marketplaces/allegro/listing-management", label: "Listing Management", href: "/admin/integrations/marketplaces/allegro/listing-management" },
+              { id: "integrations/marketplaces/allegro/listing-templates", label: "Listing Templates", href: "/admin/integrations/marketplaces/allegro/listing-templates" },
+              { id: "integrations/marketplaces/allegro/messages", label: "Messages", href: "/admin/integrations/marketplaces/allegro/messages" },
+              { id: "integrations/marketplaces/allegro/parameter-mapping", label: "Parameter Mapping", href: "/admin/integrations/marketplaces/allegro/parameter-mapping" },
+              { id: "integrations/marketplaces/allegro/shipping-price-management", label: "Shipping Price Management", href: "/admin/integrations/marketplaces/allegro/shipping-price-management" },
+            ],
+          },
+          { id: "integrations/marketplaces/category-mapper", label: "Category Mapper", href: "/admin/integrations/marketplaces/category-mapper" },
+          { id: "integrations/marketplaces/tradera", label: "Tradera", href: "/admin/integrations/tradera" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "jobs",
+    label: "Jobs",
+    href: "/admin/products/jobs",
+    icon: <WorkflowIcon className="size-4" />,
+    keywords: ["queue", "runner", "workers", "background", "tasks"],
+    children: [
+      { id: "jobs/products", label: "Product Jobs", href: "/admin/products/jobs" },
+      { id: "jobs/ai", label: "AI Jobs", href: "/admin/ai-paths/jobs" },
+      { id: "jobs/queue", label: "AI Queue", href: "/admin/ai-paths/queue" },
+      { id: "jobs/dead-letter", label: "Dead Letter", href: "/admin/ai-paths/dead-letter" },
+      { id: "jobs/chatbot", label: "Chatbot Jobs", href: "/admin/chatbot/jobs" },
+      { id: "jobs/listings", label: "Listing Jobs", href: "/admin/integrations/jobs" },
+    ],
+  },
+  {
+    id: "ai",
+    label: "AI",
+    href: "/admin/ai-paths",
+    icon: <GitBranchIcon className="size-4" />,
+    children: [
+      {
+        id: "ai/ai-paths",
+        label: "AI Paths",
+        href: "/admin/ai-paths",
+        children: [
+          { id: "ai/ai-paths/canvas", label: "Canvas", href: "/admin/ai-paths", exact: true },
+          { id: "ai/ai-paths/trigger-buttons", label: "Trigger Buttons", href: "/admin/ai-paths/trigger-buttons" },
+        ],
+      },
+      {
+        id: "ai/image-studio",
+        label: "Image Studio",
+        href: "/admin/image-studio",
+        keywords: ["images", "mask", "polygon", "relight", "studio"],
+        children: [
+          { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio/settings" },
+          { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio/validation-patterns" },
+        ],
+      },
+      {
+        id: "ai/agent-creator",
+        label: "Agent Creator",
+        href: "/admin/agentcreator",
+        children: [
+          {
+            id: "ai/agent-creator/learners",
+            label: "Learner Agents",
+            href: "/admin/agentcreator/teaching",
+            keywords: ["teaching", "embedding", "rag", "school"],
+            children: [
+              { id: "ai/agent-creator/learners/agents", label: "Agents", href: "/admin/agentcreator/teaching/agents" },
+              { id: "ai/agent-creator/learners/school", label: "Embedding School", href: "/admin/agentcreator/teaching/collections" },
+              { id: "ai/agent-creator/learners/chat", label: "Chat", href: "/admin/agentcreator/teaching/chat" },
+            ],
+          },
+          { id: "ai/agent-creator/personas", label: "Personas", href: "/admin/agentcreator/personas" },
+          { id: "ai/agent-creator/runs", label: "Runs", href: "/admin/agentcreator/runs" },
+        ],
+      },
+      {
+        id: "ai/chatbot",
+        label: "Chatbot",
+        href: "/admin/chatbot",
+        children: [
+          {
+            id: "ai/chatbot/chat",
+            label: "Chat",
+            href: "/admin/chatbot",
+            icon: <MessageCircleIcon className="size-4" />,
+            onClick: handlers.onOpenChat,
+          },
+          { id: "ai/chatbot/sessions", label: "Sessions", href: "/admin/chatbot/sessions" },
+          { id: "ai/chatbot/context", label: "Global Context", href: "/admin/chatbot/context" },
+          { id: "ai/chatbot/memory", label: "Memory", href: "/admin/chatbot/memory" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "content",
+    label: "Content",
+    href: "/admin/notes",
+    icon: <BookOpenIcon className="size-4" />,
+    children: [
+      {
+        id: "content/notes",
+        label: "Notes",
+        href: "/admin/notes",
+        icon: <StickyNoteIcon className="size-4" />,
+        children: [
+          { id: "content/notes/list", label: "Note List", href: "/admin/notes" },
+          { id: "content/notes/notebooks", label: "Notebooks", href: "/admin/notes/notebooks" },
+          { id: "content/notes/tags", label: "Tags", href: "/admin/notes/tags" },
+          { id: "content/notes/themes", label: "Themes", href: "/admin/notes/themes" },
+          { id: "content/notes/settings", label: "Settings", href: "/admin/notes/settings" },
+        ],
+      },
+      {
+        id: "content/cms",
+        label: "CMS",
+        href: "/admin/cms",
+        children: [
+          { id: "content/cms/pages", label: "Pages", href: "/admin/cms/pages" },
+          {
+            id: "content/cms/pages/create",
+            label: "Create Page",
+            keywords: ["new page"],
+            href: "/admin/cms/pages/create",
+            onClick: (event: React.MouseEvent<HTMLAnchorElement>): void => {
+              event.preventDefault();
+              handlers.onCreatePageClick();
+            },
+          },
+          { id: "content/cms/builder", label: "Page Builder", href: "/admin/cms/builder" },
+          { id: "content/cms/builder/settings", label: "Builder Settings", href: "/admin/cms/builder/settings" },
+          { id: "content/cms/zones", label: "Zones", href: "/admin/cms/zones" },
+          { id: "content/cms/slugs", label: "Slugs", href: "/admin/cms/slugs" },
+          { id: "content/cms/slugs/create", label: "Create Slug", href: "/admin/cms/slugs/create" },
+          { id: "content/cms/themes", label: "Themes", href: "/admin/cms/themes" },
+          { id: "content/cms/themes/create", label: "Create Theme", href: "/admin/cms/themes/create" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "system",
+    label: "System",
+    href: "/admin/settings",
+    icon: <SettingsIcon className="size-4" />,
+    children: [
+      {
+        id: "system/settings",
+        label: "Settings",
+        href: "/admin/settings",
+        children: [
+          { id: "system/settings/overview", label: "Overview", href: "/admin/settings" },
+          { id: "system/settings/ai", label: "AI API Settings", href: "/admin/settings/ai" },
+          { id: "system/settings/typography", label: "Typography", href: "/admin/settings/typography" },
+          { id: "system/settings/notifications", label: "Notifications", href: "/admin/settings/notifications" },
+          { id: "system/settings/playwright", label: "Playwright Personas", href: "/admin/settings/playwright" },
+          { id: "system/settings/logging", label: "Logging", href: "/admin/settings/logging" },
+          { id: "system/settings/recovery", label: "Transient Recovery", href: "/admin/settings/recovery" },
+          { id: "system/settings/sync", label: "Background Sync", href: "/admin/settings/sync" },
+          { id: "system/settings/database", label: "Database", href: "/admin/settings/database" },
+          { id: "system/settings/menu", label: "Admin Menu", href: "/admin/settings/menu" },
+        ],
+      },
+      {
+        id: "system/analytics",
+        label: "Analytics",
+        href: "/admin/analytics",
+        icon: <BarChart3Icon className="size-4" />,
+        keywords: ["page analytics", "traffic", "visitors", "referrers"],
+      },
+      { id: "system/logs", label: "System Logs", href: "/admin/system/logs", icon: <ActivityIcon className="size-4" /> },
+      {
+        id: "system/auth",
+        label: "Auth",
+        href: "/admin/auth",
+        icon: <ShieldIcon className="size-4" />,
+        children: [
+          { id: "system/auth/dashboard", label: "Dashboard", href: "/admin/auth/dashboard" },
+          { id: "system/auth/users", label: "Users", href: "/admin/auth/users" },
+          { id: "system/auth/permissions", label: "Permissions", href: "/admin/auth/permissions" },
+          { id: "system/auth/settings", label: "Settings", href: "/admin/auth/settings" },
+          { id: "system/auth/user-pages", label: "User Pages", href: "/admin/auth/user-pages" },
+        ],
+      },
+    ],
+  },
+]);
 
 export default function Menu(): React.ReactNode {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
@@ -376,268 +752,60 @@ export default function Menu(): React.ReactNode {
     router.push("/admin/cms/pages/create");
   }, [router, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
-  const nav: NavItem[] = useMemo(() => ([
-    {
-      id: "home",
-      label: "Admin",
-      href: "/admin",
-      icon: <HomeIcon className="size-4" />,
-      keywords: ["dashboard", "home"],
-    },
-    {
-      id: "workspace",
-      label: "Workspace",
-      icon: <AppWindow className="size-4" />,
-      children: [
-        { id: "workspace/front-manage", label: "Front Manage", href: "/admin/front-manage" },
-        { id: "workspace/import", label: "Import", href: "/admin/import" },
-        { id: "workspace/files", label: "Files", href: "/admin/files" },
-        { id: "workspace/databases", label: "Databases", href: "/admin/databases" },
-        { id: "workspace/app-embeds", label: "App Embeds", href: "/admin/app-embeds" },
-      ],
-    },
-    {
-      id: "commerce",
-      label: "Commerce",
-      href: "/admin/products",
-      icon: <PackageIcon className="size-4" />,
-      children: [
-            {
-              id: "commerce/products",
-              label: "Products",
-              href: "/admin/products",
-              children: [
-                { id: "commerce/products/all", label: "All Products", href: "/admin/products", exact: true },
-                { id: "commerce/products/drafts", label: "Drafts", href: "/admin/drafts" },
-                { id: "commerce/products/builder", label: "Builder", href: "/admin/products/builder" },
-                { id: "commerce/products/producers", label: "Producers", href: "/admin/products/producers" },
-                { id: "commerce/products/preferences", label: "Preferences", href: "/admin/products/preferences" },
-                { id: "commerce/products/settings", label: "Settings", href: "/admin/products/settings" },
-          ],
-        },
-        {
-          id: "commerce/assets",
-          label: "Assets",
-          href: "/admin/3d-assets",
-          children: [
-            { id: "commerce/assets/3d", label: "3D Assets", href: "/admin/3d-assets" },
-            { id: "commerce/assets/3d-list", label: "3D Asset List", href: "/admin/3d-assets/list" },
-          ],
-        },
-      ],
-    },
-    {
-      id: "integrations",
-      label: "Integrations",
-      href: "/admin/integrations",
-      icon: <Plug className="size-4" />,
-      children: [
-        { id: "integrations/connections", label: "Connections", href: "/admin/integrations" },
-        { id: "integrations/add", label: "Add Integration", href: "/admin/integrations/add" },
-        { id: "integrations/imports", label: "Imports", href: "/admin/integrations/imports" },
-        {
-          id: "integrations/marketplaces",
-          label: "Marketplaces",
-          href: "/admin/integrations/marketplaces",
-          children: [
-            {
-              id: "integrations/marketplaces/allegro",
-              label: "Allegro",
-              href: "/admin/integrations/marketplaces/allegro",
-              children: [
-                { id: "integrations/marketplaces/allegro/connections", label: "Connections", href: "/admin/integrations/marketplaces/allegro/connections" },
-                { id: "integrations/marketplaces/allegro/listing-management", label: "Listing Management", href: "/admin/integrations/marketplaces/allegro/listing-management" },
-                { id: "integrations/marketplaces/allegro/listing-templates", label: "Listing Templates", href: "/admin/integrations/marketplaces/allegro/listing-templates" },
-                { id: "integrations/marketplaces/allegro/messages", label: "Messages", href: "/admin/integrations/marketplaces/allegro/messages" },
-                { id: "integrations/marketplaces/allegro/parameter-mapping", label: "Parameter Mapping", href: "/admin/integrations/marketplaces/allegro/parameter-mapping" },
-                { id: "integrations/marketplaces/allegro/shipping-price-management", label: "Shipping Price Management", href: "/admin/integrations/marketplaces/allegro/shipping-price-management" },
-              ],
-            },
-            { id: "integrations/marketplaces/category-mapper", label: "Category Mapper", href: "/admin/integrations/marketplaces/category-mapper" },
-            { id: "integrations/marketplaces/tradera", label: "Tradera", href: "/admin/integrations/tradera" },
-          ],
-        },
-      ],
-    },
-    {
-      id: "jobs",
-      label: "Jobs",
-      href: "/admin/products/jobs",
-      icon: <WorkflowIcon className="size-4" />,
-      keywords: ["queue", "runner", "workers", "background", "tasks"],
-      children: [
-        { id: "jobs/products", label: "Product Jobs", href: "/admin/products/jobs" },
-        { id: "jobs/ai", label: "AI Jobs", href: "/admin/ai-paths/jobs" },
-        { id: "jobs/queue", label: "AI Queue", href: "/admin/ai-paths/queue" },
-        { id: "jobs/dead-letter", label: "Dead Letter", href: "/admin/ai-paths/dead-letter" },
-        { id: "jobs/chatbot", label: "Chatbot Jobs", href: "/admin/chatbot/jobs" },
-        { id: "jobs/listings", label: "Listing Jobs", href: "/admin/integrations/jobs" },
-      ],
-    },
-    {
-      id: "ai",
-      label: "AI",
-      href: "/admin/ai-paths",
-      icon: <GitBranchIcon className="size-4" />,
-      children: [
-        {
-          id: "ai/ai-paths",
-          label: "AI Paths",
-          href: "/admin/ai-paths",
-          children: [
-            { id: "ai/ai-paths/canvas", label: "Canvas", href: "/admin/ai-paths", exact: true },
-            { id: "ai/ai-paths/trigger-buttons", label: "Trigger Buttons", href: "/admin/ai-paths/trigger-buttons" },
-          ],
-        },
-        {
-          id: "ai/image-studio",
-          label: "Image Studio",
-          href: "/admin/image-studio",
-          keywords: ["images", "mask", "polygon", "relight", "studio"],
-          children: [
-            { id: "ai/image-studio/settings", label: "Settings", href: "/admin/image-studio/settings" },
-            { id: "ai/image-studio/validation-patterns", label: "Validation Patterns", href: "/admin/image-studio/validation-patterns" },
-          ],
-        },
-        {
-          id: "ai/agent-creator",
-          label: "Agent Creator",
-          href: "/admin/agentcreator",
-          children: [
-            {
-              id: "ai/agent-creator/learners",
-              label: "Learner Agents",
-              href: "/admin/agentcreator/teaching",
-              keywords: ["teaching", "embedding", "rag", "school"],
-              children: [
-                { id: "ai/agent-creator/learners/agents", label: "Agents", href: "/admin/agentcreator/teaching/agents" },
-                { id: "ai/agent-creator/learners/school", label: "Embedding School", href: "/admin/agentcreator/teaching/collections" },
-                { id: "ai/agent-creator/learners/chat", label: "Chat", href: "/admin/agentcreator/teaching/chat" },
-              ],
-            },
-            { id: "ai/agent-creator/personas", label: "Personas", href: "/admin/agentcreator/personas" },
-            { id: "ai/agent-creator/runs", label: "Runs", href: "/admin/agentcreator/runs" },
-          ],
-        },
-        {
-          id: "ai/chatbot",
-          label: "Chatbot",
-          href: "/admin/chatbot",
-          children: [
-            {
-              id: "ai/chatbot/chat",
-              label: "Chat",
-              href: "/admin/chatbot",
-              icon: <MessageCircleIcon className="size-4" />,
-              onClick: handleOpenChat,
-            },
-            { id: "ai/chatbot/sessions", label: "Sessions", href: "/admin/chatbot/sessions" },
-            { id: "ai/chatbot/context", label: "Global Context", href: "/admin/chatbot/context" },
-            { id: "ai/chatbot/memory", label: "Memory", href: "/admin/chatbot/memory" },
-          ],
-        },
-      ],
-    },
-    {
-      id: "content",
-      label: "Content",
-      href: "/admin/notes",
-      icon: <BookOpenIcon className="size-4" />,
-      children: [
-        {
-          id: "content/notes",
-          label: "Notes",
-          href: "/admin/notes",
-          icon: <StickyNoteIcon className="size-4" />,
-          children: [
-            { id: "content/notes/list", label: "Note List", href: "/admin/notes" },
-            { id: "content/notes/notebooks", label: "Notebooks", href: "/admin/notes/notebooks" },
-            { id: "content/notes/tags", label: "Tags", href: "/admin/notes/tags" },
-            { id: "content/notes/themes", label: "Themes", href: "/admin/notes/themes" },
-            { id: "content/notes/settings", label: "Settings", href: "/admin/notes/settings" },
-          ],
-        },
-        {
-          id: "content/cms",
-          label: "CMS",
-          href: "/admin/cms",
-          children: [
-            { id: "content/cms/pages", label: "Pages", href: "/admin/cms/pages" },
-            {
-              id: "content/cms/pages/create",
-              label: "Create Page",
-              keywords: ["new page"],
-              href: "/admin/cms/pages/create",
-              onClick: (event: React.MouseEvent<HTMLAnchorElement>): void => {
-                event.preventDefault();
-                handleCreatePageClick();
-              },
-            },
-            { id: "content/cms/builder", label: "Page Builder", href: "/admin/cms/builder" },
-            { id: "content/cms/builder/settings", label: "Builder Settings", href: "/admin/cms/builder/settings" },
-            { id: "content/cms/zones", label: "Zones", href: "/admin/cms/zones" },
-            { id: "content/cms/slugs", label: "Slugs", href: "/admin/cms/slugs" },
-            { id: "content/cms/slugs/create", label: "Create Slug", href: "/admin/cms/slugs/create" },
-            { id: "content/cms/themes", label: "Themes", href: "/admin/cms/themes" },
-            { id: "content/cms/themes/create", label: "Create Theme", href: "/admin/cms/themes/create" },
-          ],
-        },
-      ],
-    },
-    {
-      id: "system",
-      label: "System",
-      href: "/admin/settings",
-      icon: <SettingsIcon className="size-4" />,
-      children: [
-        {
-          id: "system/settings",
-          label: "Settings",
-          href: "/admin/settings",
-          children: [
-            { id: "system/settings/overview", label: "Overview", href: "/admin/settings" },
-            { id: "system/settings/ai", label: "AI API Settings", href: "/admin/settings/ai" },
-            { id: "system/settings/typography", label: "Typography", href: "/admin/settings/typography" },
-            { id: "system/settings/notifications", label: "Notifications", href: "/admin/settings/notifications" },
-            { id: "system/settings/playwright", label: "Playwright Personas", href: "/admin/settings/playwright" },
-            { id: "system/settings/logging", label: "Logging", href: "/admin/settings/logging" },
-            { id: "system/settings/recovery", label: "Transient Recovery", href: "/admin/settings/recovery" },
-            { id: "system/settings/sync", label: "Background Sync", href: "/admin/settings/sync" },
-            { id: "system/settings/database", label: "Database", href: "/admin/settings/database" },
-          ],
-        },
-        {
-          id: "system/analytics",
-          label: "Analytics",
-          href: "/admin/analytics",
-          icon: <BarChart3Icon className="size-4" />,
-          keywords: ["page analytics", "traffic", "visitors", "referrers"],
-        },
-        { id: "system/logs", label: "System Logs", href: "/admin/system/logs", icon: <ActivityIcon className="size-4" /> },
-        {
-          id: "system/auth",
-          label: "Auth",
-          href: "/admin/auth",
-          icon: <ShieldIcon className="size-4" />,
-          children: [
-            { id: "system/auth/dashboard", label: "Dashboard", href: "/admin/auth/dashboard" },
-            { id: "system/auth/users", label: "Users", href: "/admin/auth/users" },
-            { id: "system/auth/permissions", label: "Permissions", href: "/admin/auth/permissions" },
-            { id: "system/auth/settings", label: "Settings", href: "/admin/auth/settings" },
-            { id: "system/auth/user-pages", label: "User Pages", href: "/admin/auth/user-pages" },
-          ],
-        },
-      ],
-    },
-  ]), [handleCreatePageClick, handleOpenChat]);
+  const { data: preferences } = useUserPreferences();
+  const favoriteIds = useMemo(
+    () => (preferences?.adminMenuFavorites ?? []).filter((id): id is string => typeof id === "string" && id.length > 0),
+    [preferences]
+  );
+  const sectionColors = preferences?.adminMenuSectionColors ?? {};
+
+  const nav = useMemo(
+    () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),
+    [handleCreatePageClick, handleOpenChat]
+  );
+
+  const navWithColors = useMemo(
+    () => applySectionColors(nav, sectionColors),
+    [nav, sectionColors]
+  );
+
+  const favoriteItems = useMemo((): NavItem[] => {
+    if (favoriteIds.length === 0) return [];
+    const flattened = flattenAdminNav(navWithColors);
+    const byId = new Map(flattened.map((entry: FlattenedNavItem) => [entry.id, entry.item]));
+    const seen = new Set<string>();
+    const items: NavItem[] = [];
+    favoriteIds.forEach((id: string) => {
+      if (seen.has(id)) return;
+      const item = byId.get(id);
+      if (!item) return;
+      const { children, ...rest } = item;
+      items.push(rest);
+      seen.add(id);
+    });
+    return items;
+  }, [favoriteIds, navWithColors]);
+
+  const navWithFavorites = useMemo((): NavItem[] => {
+    if (favoriteItems.length === 0) return navWithColors;
+    return [
+      {
+        id: "favorites",
+        label: "Favorites",
+        icon: <StarIcon className="size-4" />,
+        children: favoriteItems,
+      },
+      ...navWithColors,
+    ];
+  }, [favoriteItems, navWithColors]);
 
   const normalizedQuery = normalizeText(deferredQuery);
-  const filteredNav = useMemo(() => filterTree(nav, normalizedQuery), [nav, normalizedQuery]);
+  const filteredNav = useMemo(() => filterTree(navWithFavorites, normalizedQuery), [navWithFavorites, normalizedQuery]);
   const autoOpenIds = useMemo(
-    () => (normalizedQuery ? collectGroupIds(filteredNav) : collectActiveGroupIds(nav, pathname)),
-    [filteredNav, nav, normalizedQuery, pathname]
+    () => (normalizedQuery ? collectGroupIds(filteredNav) : collectActiveGroupIds(navWithFavorites, pathname)),
+    [filteredNav, navWithFavorites, normalizedQuery, pathname]
   );
-  const allGroupIds = useMemo(() => collectGroupIds(nav), [nav]);
+  const allGroupIds = useMemo(() => collectGroupIds(navWithFavorites), [navWithFavorites]);
 
   const [lastPathnameForClosed, setLastPathnameForClosed] = useState(pathname);
   if (pathname !== lastPathnameForClosed) {
@@ -666,7 +834,11 @@ export default function Menu(): React.ReactNode {
     return open;
   }, [autoOpenIds, closedAutoIds, normalizedQuery, userOpenIds]);
 
-  const forcedOpenIds = useMemo(() => new Set<string>(), []);
+  const forcedOpenIds = useMemo(() => {
+    const forced = new Set<string>();
+    if (favoriteItems.length > 0) forced.add("favorites");
+    return forced;
+  }, [favoriteItems.length]);
   const isAnyFolderOpen = effectiveOpenIds.size > 0;
 
   const handleToggleAllFolders = useCallback((): void => {

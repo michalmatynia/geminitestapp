@@ -12,6 +12,7 @@ import {
   MonitorPlay,
   RefreshCcw,
   Type,
+  Palette,
 } from "lucide-react";
 
 
@@ -45,6 +46,15 @@ const settings: SettingsOption[] = [
     description: "Choose which local font set the admin uses.",
     color: "emerald",
     bgColor: "bg-emerald-500/10",
+  },
+  {
+    id: "menu",
+    href: "/admin/settings/menu",
+    icon: Palette,
+    title: "Admin Menu",
+    description: "Pin favorites and color-code sections in the sidebar.",
+    color: "cyan",
+    bgColor: "bg-cyan-500/10",
   },
   {
     id: "ai",

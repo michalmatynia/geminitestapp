@@ -18,7 +18,7 @@ import {
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type { AiNode, Edge, NodeConfig, RegexConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
-import { renderTemplate } from "@/features/ai/ai-paths/lib";
+import { parseJsonSafe, renderTemplate } from "@/features/ai/ai-paths/lib";
 
 type RegexCandidate = {
   pattern: string;
@@ -207,6 +207,16 @@ const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): s
   return stringifyRegexSelection(selected);
 };
 
+const parseRegexExtractedJson = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(parseRegexExtractedJson);
+  if (value && typeof value === "object") return value;
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const parsed = parseJsonSafe(trimmed);
+  return parsed === undefined ? value : parsed;
+};
+
 type RegexNodeConfigSectionProps = {
   selectedNode: AiNode;
   nodes: AiNode[];
@@ -329,6 +339,8 @@ export function RegexNodeConfigSection({
 
   const preview = React.useMemo(() => {
     const mode = regexConfig.mode ?? "group";
+    const isExtractMode = mode === "extract" || mode === "extract_json";
+    const shouldParse = mode === "extract_json";
     const includeUnmatched = regexConfig.includeUnmatched ?? true;
     const unmatchedKey = (regexConfig.unmatchedKey ?? "__unmatched__").trim() || "__unmatched__";
     const matchMode = regexConfig.matchMode ?? "first";
@@ -370,7 +382,9 @@ export function RegexNodeConfigSection({
                   Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
                 ) as Record<string, string>)
               : null;
-          const extracted = resolveRegexSelection(match, groupBy);
+          const extracted = shouldParse
+            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+            : resolveRegexSelection(match, groupBy);
           const record: RegexPreviewRecord = {
             input,
             match: match[0] ?? null,
@@ -425,7 +439,9 @@ export function RegexNodeConfigSection({
               Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
             ) as Record<string, string>)
           : null;
-      const extracted = resolveRegexSelection(match, groupBy);
+      const extracted = shouldParse
+        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+        : resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,
         match: match[0] ?? null,
@@ -452,7 +468,7 @@ export function RegexNodeConfigSection({
     return {
       matches,
       grouped,
-      extracted: mode === "extract" ? extracted : null,
+      extracted: isExtractMode ? extracted : null,
     };
   }, [regexConfig, regexValidation, sampleLines]);
 
@@ -596,6 +612,7 @@ export function RegexNodeConfigSection({
 
   if (!isRegexNode) return null;
   const regexMode = regexConfig.mode ?? "group";
+  const isExtractMode = regexMode === "extract" || regexMode === "extract_json";
 
   return (
     <div className="space-y-6">
@@ -664,6 +681,7 @@ export function RegexNodeConfigSection({
               <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="group">Group matches</SelectItem>
                 <SelectItem value="extract">Extract value</SelectItem>
+                <SelectItem value="extract_json">Extract JSON/object</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -706,7 +724,7 @@ export function RegexNodeConfigSection({
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <Label className="text-xs text-gray-400">
-              {regexMode === "extract" ? "Extract By" : "Group By"}
+              {isExtractMode ? "Extract By" : "Group By"}
             </Label>
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
@@ -714,14 +732,19 @@ export function RegexNodeConfigSection({
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateRegex({ groupBy: event.target.value })
               }
-              placeholder={regexMode === "extract" ? "match | 1 | amount | groups | captures" : "match | 1 | prefix"}
+              placeholder={isExtractMode ? "match | 1 | amount | groups | captures" : "match | 1 | prefix"}
             />
             <p className="mt-1 text-[11px] text-gray-500">
-              {regexMode === "extract" ? (
+              {isExtractMode ? (
                 <>
                   Use <span className="text-gray-300">match</span>, a capture index, a named group,{" "}
                   <span className="text-gray-300">groups</span> (named-group object), or{" "}
                   <span className="text-gray-300">captures</span> (captures array).
+                  {regexMode === "extract_json" ? (
+                    <span className="mt-1 block text-gray-400">
+                      Extract JSON parses the selected value when possible.
+                    </span>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -745,7 +768,7 @@ export function RegexNodeConfigSection({
               <div>
                 <div className="text-[11px] text-gray-300">Include unmatched</div>
                 <div className="text-[11px] text-gray-500">
-                  {regexMode === "extract"
+                  {isExtractMode
                     ? "Keep non-matching inputs in matches with the fallback key."
                     : "Keep non-matching inputs under a group key."}
                 </div>
@@ -806,10 +829,10 @@ export function RegexNodeConfigSection({
           </div>
           <div className="rounded-md border border-border bg-card/50 p-3">
             <div className="text-[11px] text-gray-300">
-              {regexMode === "extract" ? "Extracted Value (value port)" : "Grouped Output"}
+              {isExtractMode ? "Extracted Value (value port)" : "Grouped Output"}
             </div>
             <pre className="mt-2 max-h-48 overflow-auto rounded bg-card/70 p-2 text-[11px] text-gray-200 whitespace-pre-wrap break-all">
-              {JSON.stringify(regexMode === "extract" ? preview.extracted : preview.grouped, null, 2)}
+              {JSON.stringify(isExtractMode ? preview.extracted : preview.grouped, null, 2)}
             </pre>
           </div>
         </div>

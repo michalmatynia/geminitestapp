@@ -11,6 +11,7 @@ import type {
   PathConfig,
   PathDebugEntry,
   PathDebugSnapshot,
+  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
   UpdaterSampleState,
@@ -1017,6 +1018,8 @@ export function useAiPathsRuntime({
         const sourceInputs = prev.inputs[sourceNodeId] ?? {};
         const sourceOutputs = prev.outputs[sourceNodeId] ?? {};
         const aiOutputs = prev.outputs[aiNode.id] ?? {};
+        const now = new Date().toISOString();
+        const historyLimit = 50;
 
         // For database nodes, store result in queryCallback (both input and output)
         // For prompt nodes, store result in the result input (so it shows in the Result Input field)
@@ -1036,6 +1039,46 @@ export function useAiPathsRuntime({
                 ? { ...sourceInputs, regexCallback: result }
               : sourceInputs;
 
+        const nextHistory: Record<string, RuntimeHistoryEntry[]> = prev.history
+          ? { ...prev.history }
+          : {};
+        const pushHistory = (
+          node: AiNode,
+          inputs: RuntimePortValues,
+          outputs: RuntimePortValues
+        ): void => {
+          const entry: RuntimeHistoryEntry = {
+            timestamp: now,
+            pathId: activePathId ?? null,
+            pathName: pathName ?? null,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: "completed",
+            inputs,
+            outputs,
+          };
+          const existing = nextHistory[node.id] ? [...nextHistory[node.id]!] : [];
+          existing.push(entry);
+          if (existing.length > historyLimit) {
+            existing.splice(0, existing.length - historyLimit);
+          }
+          nextHistory[node.id] = existing;
+        };
+        pushHistory(sourceNode, updatedSourceInputs, updatedSourceOutputs);
+        pushHistory(aiNode, {
+          prompt: payload.prompt,
+          modelId: modelConfig.modelId,
+          temperature: modelConfig.temperature,
+          maxTokens: modelConfig.maxTokens,
+          vision: modelConfig.vision,
+        }, {
+          ...aiOutputs,
+          result,
+          jobId: enqueueData.jobId,
+          status: "completed",
+        });
+
         return {
           ...prev,
           inputs: {
@@ -1052,6 +1095,7 @@ export function useAiPathsRuntime({
               status: "completed",
             },
           },
+          ...(Object.keys(nextHistory).length > 0 ? { history: nextHistory } : {}),
         };
       });
       toast("AI response received.", { variant: "success" });

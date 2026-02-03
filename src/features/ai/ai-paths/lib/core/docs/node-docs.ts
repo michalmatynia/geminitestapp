@@ -153,7 +153,8 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     {
       path: "regex.mode",
-      description: "group = emit grouped matches; extract = emit selected capture on value output.",
+      description:
+        "group = emit grouped matches; extract = emit selected capture on value output; extract_json = extract and parse JSON when possible.",
       defaultValue: "group",
     },
     {

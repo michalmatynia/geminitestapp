@@ -1,5 +1,5 @@
 import { DtoBase } from '../types/base';
-import type { Status } from './common';
+import type { Status } from '../types/common';
 
 /**
  * DTO for a single chat message
@@ -125,7 +125,7 @@ export interface SendMessageDto {
 /**
  * DTO for updating chatbot settings
  */
-export interface UpdateChatbotSettingsDto extends Partial<ChatbotSettingsDto> {}
+export type UpdateChatbotSettingsDto = Partial<ChatbotSettingsDto>;
 
 /**
  * DTO for chatbot debug state

@@ -47,7 +47,7 @@ const RELATION_MAP: Record<string, Record<string, { model: string; junction?: { 
   catalog: {
     products: { model: "product", junction: { table: "productCatalog", field: "product", foreignKey: "productId" } },
     languages: { model: "language", junction: { table: "catalogLanguage", field: "language", foreignKey: "languageId" } },
-    categories: { model: "category", junction: { table: "productCategory" } },
+    categories: { model: "category", junction: { table: "productCategory", field: "category", foreignKey: "categoryId" } },
     tags: { model: "productTag" },
     priceGroups: { model: "priceGroup" },
   },
@@ -223,12 +223,16 @@ vi.mock("@/shared/lib/db/prisma", () => {
       } else if (modelName === 'note' && key === 'relationsFrom') {
         newItem.relationsFrom = getStore('noteRelation').filter(nr => nr.sourceNoteId === item.id);
         if (include.relationsFrom.include) {
-          newItem.relationsFrom = newItem.relationsFrom.map(rel => applyInclude(rel, include.relationsFrom.include, 'noteRelation', getStore));
+          newItem.relationsFrom = newItem.relationsFrom.map((rel: Record<string, unknown>) =>
+            applyInclude(rel, include.relationsFrom.include, 'noteRelation', getStore)
+          );
         }
       } else if (modelName === 'note' && key === 'relationsTo') {
         newItem.relationsTo = getStore('noteRelation').filter(nr => nr.targetNoteId === item.id);
         if (include.relationsTo.include) {
-          newItem.relationsTo = newItem.relationsTo.map(rel => applyInclude(rel, include.relationsTo.include, 'noteRelation', getStore));
+          newItem.relationsTo = newItem.relationsTo.map((rel: Record<string, unknown>) =>
+            applyInclude(rel, include.relationsTo.include, 'noteRelation', getStore)
+          );
         }
       } else if (modelName === 'category' && key === 'notes') {
         // Specific handling for category.notes (many-to-many through noteCategory)
@@ -359,7 +363,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       });
 
       data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-      return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
+      return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name, getStore);
     }),
     updateMany: vi.fn().mockImplementation(async (args) => {
       const data = getStore(name);
@@ -402,7 +406,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
       if (index !== -1) {
         const updateData = { ...args.update };
         data[index] = { ...data[index], ...updateData, updatedAt: new Date() };
-        return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name);
+        return applyInclude({ ...(MODEL_DEFAULTS[name] || {}), ...data[index] }, args?.include, name, getStore);
       } else {
         const createData = { ...args.create };
         if (args.where) {
@@ -421,7 +425,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
           updatedAt: new Date(),
         };
         data.push(newItem);
-        return applyInclude(newItem, args?.include, name);
+        return applyInclude(newItem, args?.include, name, getStore);
       }
     }),
     count: vi.fn().mockImplementation(async (args) => {

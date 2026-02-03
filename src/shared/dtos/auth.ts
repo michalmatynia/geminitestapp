@@ -81,6 +81,8 @@ export interface UserPreferencesDto extends DtoBase {
   aiPathsPathIndex: JsonValue | null;
   aiPathsPathConfigs: JsonValue | null;
   adminMenuCollapsed: boolean;
+  adminMenuFavorites: string[];
+  adminMenuSectionColors: Record<string, string>;
   cmsLastPageId: string | null;
   cmsActiveDomainId: string | null;
   cmsThemeOpenSections: string[];
@@ -101,6 +103,8 @@ export interface UpdateUserPreferencesDto {
   aiPathsPathIndex?: JsonValue | null;
   aiPathsPathConfigs?: JsonValue | null;
   adminMenuCollapsed?: boolean;
+  adminMenuFavorites?: string[];
+  adminMenuSectionColors?: Record<string, string>;
   cmsLastPageId?: string | null;
   cmsActiveDomainId?: string | null;
   cmsThemeOpenSections?: string[];

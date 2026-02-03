@@ -327,8 +327,17 @@ export async function getAnalyticsSummary(input: {
     sessions,
     topPages: result?.topPages ?? [],
     topReferrers: result?.topReferrers ?? [],
+    topEventNames: [],
     topLanguages: result?.topLanguages ?? [],
     topCountries: result?.topCountries ?? [],
+    topRegions: [],
+    topCities: [],
+    topBrowsers: [],
+    topOs: [],
+    topDevices: [],
+    topUtmSources: [],
+    topUtmMediums: [],
+    topUtmCampaigns: [],
     recent: (result?.recent ?? []).map(toEventDto),
   };
 }

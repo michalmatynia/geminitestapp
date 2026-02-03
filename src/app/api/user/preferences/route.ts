@@ -26,6 +26,8 @@ const updatePreferencesSchema = z.object({
   aiPathsPathIndex: z.array(z["unknown"]()).optional().nullable(),
   aiPathsPathConfigs: z.union([z.record(z.string(), z["unknown"]()), z.string()]).optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
+  adminMenuFavorites: z.array(z.string()).optional().nullable(),
+  adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
   cmsLastPageId: z.string().optional().nullable(),
   cmsActiveDomainId: z.string().optional().nullable(),
   cmsThemeOpenSections: z.array(z.string()).optional().nullable(),
@@ -56,6 +58,8 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
         aiPathsPathIndex: null,
         aiPathsPathConfigs: null,
         adminMenuCollapsed: false,
+        adminMenuFavorites: [],
+        adminMenuSectionColors: {},
         cmsLastPageId: null,
         cmsActiveDomainId: null,
         cmsThemeOpenSections: [],
@@ -112,6 +116,8 @@ async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise
     if (parsed.aiPathsPathIndex !== undefined) partial.aiPathsPathIndex = parsed.aiPathsPathIndex ?? null;
     if (parsed.aiPathsPathConfigs !== undefined) partial.aiPathsPathConfigs = parsed.aiPathsPathConfigs ?? null;
     if (parsed.adminMenuCollapsed !== undefined) partial.adminMenuCollapsed = parsed.adminMenuCollapsed;
+    if (parsed.adminMenuFavorites !== undefined) partial.adminMenuFavorites = parsed.adminMenuFavorites ?? [];
+    if (parsed.adminMenuSectionColors !== undefined) partial.adminMenuSectionColors = parsed.adminMenuSectionColors ?? {};
     if (parsed.cmsLastPageId !== undefined) partial.cmsLastPageId = parsed.cmsLastPageId;
     if (parsed.cmsActiveDomainId !== undefined) partial.cmsActiveDomainId = parsed.cmsActiveDomainId;
     if (parsed.cmsThemeOpenSections !== undefined) partial.cmsThemeOpenSections = parsed.cmsThemeOpenSections ?? [];

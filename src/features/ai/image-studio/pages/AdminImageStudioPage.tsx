@@ -26,6 +26,7 @@ type Point = { x: number; y: number }; // normalized 0..1
 type StudioProjectsResponse = { projects: string[] };
 type StudioAssetsResponse = { assets: ImageFileRecord[] };
 type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
+type StudioRunResponse = { outputs: ImageFileRecord[] };
 
 function safeJsonStringify(value: unknown): string {
   try {
@@ -766,6 +767,56 @@ export function AdminImageStudioPage(): React.JSX.Element {
       studioSettings,
     };
   }, [projectId, selectedAsset, maskPoints, maskClosed, generatedPrompt, promptText, paramsState, studioSettings]);
+
+  const runMutation = useMutation({
+    mutationFn: async (): Promise<StudioRunResponse> => {
+      if (!projectId) throw new Error("Select a project first.");
+      if (!selectedAsset) throw new Error("Select an image asset first.");
+      const prompt = (generatedPrompt || promptText || "").trim();
+      if (!prompt) throw new Error("Prompt is required.");
+
+      const payload = {
+        projectId,
+        asset: { id: selectedAsset.id, filepath: selectedAsset.filepath },
+        mask: maskClosed && maskPoints.length >= 3
+          ? { type: "polygon", points: maskPoints, closed: true }
+          : null,
+        prompt,
+        extractedParams: paramsState,
+        studioSettings,
+      };
+
+      const res = await fetch("/api/image-studio/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json().catch(() => null)) as StudioRunResponse | { error?: string } | null;
+      if (!res.ok) {
+        throw new Error((data && "error" in data && data.error) || "Run failed");
+      }
+      return (data ?? { outputs: [] }) as StudioRunResponse;
+    },
+    onSuccess: async (data: StudioRunResponse): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "projects"] });
+      const outputs = data.outputs ?? [];
+      if (outputs.length > 0) {
+        const output = outputs[0]!;
+        setSelectedAssetId(output.id);
+        const prefix = `/uploads/studio/${projectId}/`;
+        const relative = output.filepath.startsWith(prefix) ? output.filepath.slice(prefix.length) : "";
+        const parts = relative.split("/").filter(Boolean);
+        if (parts.length > 1) {
+          setSelectedFolder(parts.slice(0, -1).join("/"));
+        }
+      }
+      toast(`Run complete. ${outputs.length} image(s) added.`, { variant: "success" });
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Run failed.", { variant: "error" });
+    },
+  });
 
   return (
     <div className="container mx-auto max-w-none space-y-6 py-10">
@@ -1689,7 +1740,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
               value={promptText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPromptText(e.target.value)}
               className="h-40 font-mono text-[11px]"
-              placeholder="Paste your prompt here. It must include `params = { ... }` with JSON-like content (quoted keys/strings)."
+              placeholder="Paste your prompt here. It must include `params = { ... }` (JSON-like; comments/unquoted keys ok)."
             />
             {promptValidationIssues.length > 0 ? (
               <div className="space-y-2 rounded border border-border bg-gray-900/30 p-2">
@@ -1802,20 +1853,29 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
           <div className="flex items-center justify-between gap-2">
             <div className="text-[11px] text-gray-400">
-              Payload preview (for future AI run endpoint)
+              Payload preview (used for Image Studio run)
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard
-                  .writeText(safeJsonStringify(runPayload))
-                  .then(() => toast("Copied payload to clipboard.", { variant: "success" }))
-                  .catch(() => toast("Failed to copy payload.", { variant: "error" }));
-              }}
-            >
-              Copy payload
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => void runMutation.mutateAsync()}
+                disabled={runMutation.isPending || !projectId || !selectedAsset || !(generatedPrompt || promptText).trim()}
+              >
+                {runMutation.isPending ? "Running..." : "Run edit"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(safeJsonStringify(runPayload))
+                    .then(() => toast("Copied payload to clipboard.", { variant: "success" }))
+                    .catch(() => toast("Failed to copy payload.", { variant: "error" }));
+                }}
+              >
+                Copy payload
+              </Button>
+            </div>
           </div>
         </SectionPanel>
       </div>

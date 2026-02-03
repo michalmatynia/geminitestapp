@@ -34,12 +34,13 @@ export function PromptNodeConfigSection({
   const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
     template: "",
   };
-  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
   const resolvedPrompt = React.useMemo((): string => {
     if (selectedNode.type !== "prompt") return "";
-    const { promptOutput } = buildPromptOutput(promptConfig, runtimeInputs);
+    const config = selectedNode.config?.prompt ?? { template: "" };
+    const inputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const { promptOutput } = buildPromptOutput(config, inputs);
     return promptOutput;
-  }, [selectedNode.type, promptConfig, runtimeInputs]);
+  }, [selectedNode.type, selectedNode.id, selectedNode.config?.prompt, runtimeState.inputs]);
 
   if (selectedNode.type !== "prompt") return null;
   const handleInsertPlaceholder = (placeholder: string): void => {

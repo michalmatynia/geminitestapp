@@ -38,7 +38,7 @@ export function StatusBadge({
   
   return (
     <Badge
-      variant={resolvedVariant as any}
+      variant={resolvedVariant}
       className={cn(
         "gap-1 text-[10px] uppercase tracking-wider",
         className

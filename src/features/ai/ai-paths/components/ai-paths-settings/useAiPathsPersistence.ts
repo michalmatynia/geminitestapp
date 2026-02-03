@@ -36,6 +36,7 @@ import {
   triggers,
 } from "@/features/ai/ai-paths/lib";
 import {
+  buildPersistedRuntimeState,
   parseRuntimeState,
   sanitizePathConfig,
   serializePathConfigs,
@@ -62,6 +63,8 @@ type UseAiPathsPersistenceArgs = {
   pathDescription: string;
   pathName: string;
   paths: PathMeta[];
+  selectedNodeId: string | null;
+  configOpen: boolean;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
@@ -98,6 +101,7 @@ type UseAiPathsPersistenceArgs = {
   setPathName: (value: string) => void;
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
+  setConfigOpen: (value: boolean) => void;
   setSelectedNodeId: (value: string | null) => void;
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   toast: ToastFn;
@@ -134,6 +138,8 @@ export function useAiPathsPersistence({
   pathDescription,
   pathName,
   paths,
+  selectedNodeId,
+  configOpen,
   runtimeState,
   updaterSamples,
   normalizeDbNodePreset,
@@ -162,6 +168,7 @@ export function useAiPathsPersistence({
   setPathName,
   setPaths,
   setRuntimeState,
+  setConfigOpen,
   setSelectedNodeId,
   setUpdaterSamples,
   toast,
@@ -251,6 +258,8 @@ export function useAiPathsPersistence({
   const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
   const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const currentLastRunAtRef = useRef<string | null>(null);
+  const currentSelectedNodeIdRef = useRef<string | null>(null);
+  const currentConfigOpenRef = useRef(false);
 
   const syncNodesRef = useCallback((next: AiNode[]): void => {
     currentNodesRef.current = next;
@@ -635,7 +644,14 @@ export function useAiPathsPersistence({
         setLastRunAt(activeConfig.lastRunAt ?? null);
         setIsPathLocked(Boolean(activeConfig.isLocked));
         setIsPathActive(activeConfig.isActive !== false);
-        setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+        const preferredNodeId = activeConfig.uiState?.selectedNodeId ?? null;
+        const resolvedNodeId =
+          preferredNodeId && normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
+            ? preferredNodeId
+            : normalizedNodes[0]?.id ?? null;
+        setSelectedNodeId(resolvedNodeId);
+        const shouldOpenConfig = Boolean(activeConfig.uiState?.configOpen) && Boolean(resolvedNodeId);
+        setConfigOpen(shouldOpenConfig);
         if (loadedLastError?.message === "Failed to load AI Paths settings") {
           setLastError(null);
           void persistLastError(null);
@@ -711,10 +727,16 @@ export function useAiPathsPersistence({
         trigger: activeTrigger,
         isLocked: isPathLocked,
         isActive: isPathActive,
+        uiState: {
+          selectedNodeId,
+          configOpen,
+        },
         nodes: [...nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
         edges: [...edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
         parserSamples,
         updaterSamples,
+        runtimeState: buildPersistedRuntimeState(runtimeState, nodes),
+        lastRunAt,
       }),
     [
       activePathId,
@@ -723,10 +745,14 @@ export function useAiPathsPersistence({
       activeTrigger,
       isPathLocked,
       isPathActive,
+      selectedNodeId,
+      configOpen,
       nodes,
       edges,
       parserSamples,
       updaterSamples,
+      runtimeState,
+      lastRunAt,
     ]
   );
 
@@ -746,6 +772,10 @@ export function useAiPathsPersistence({
       updaterSamples,
       runtimeState,
       lastRunAt,
+      uiState: {
+        selectedNodeId,
+        configOpen,
+      },
     }),
     [
       activePathId,
@@ -760,6 +790,8 @@ export function useAiPathsPersistence({
       updaterSamples,
       runtimeState,
       lastRunAt,
+      selectedNodeId,
+      configOpen,
     ]
   );
 
@@ -899,6 +931,8 @@ export function useAiPathsPersistence({
     pathName,
     saving,
     updaterSamples,
+    runtimeState,
+    lastRunAt,
     buildPathSnapshot,
     persistPathConfig,
   ]);
@@ -940,6 +974,12 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     currentLastRunAtRef.current = lastRunAt;
   }, [lastRunAt]);
+  useEffect((): void => {
+    currentSelectedNodeIdRef.current = selectedNodeId;
+  }, [selectedNodeId]);
+  useEffect((): void => {
+    currentConfigOpenRef.current = configOpen;
+  }, [configOpen]);
 
   // Save immediately when page is about to unload or tab loses focus
   useEffect((): void | (() => void) => {
@@ -988,6 +1028,10 @@ export function useAiPathsPersistence({
         updaterSamples: currentUpdaterSamplesRef.current,
         runtimeState: currentRuntimeStateRef.current,
         lastRunAt: currentLastRunAtRef.current,
+        uiState: {
+          selectedNodeId: currentSelectedNodeIdRef.current,
+          configOpen: currentConfigOpenRef.current,
+        },
       };
       const currentPaths = currentPathsRef.current;
       const nextPaths = currentPaths.map((path: PathMeta): PathMeta =>

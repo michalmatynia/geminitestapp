@@ -324,6 +324,16 @@ const resolveRegexSelection = (
   return safeStringify(candidate);
 };
 
+const parseRegexExtractedJson = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(parseRegexExtractedJson);
+  if (value && typeof value === "object") return value;
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const parsed = parseJsonSafe(trimmed);
+  return parsed === undefined ? value : parsed;
+};
+
 const resolveGroupKey = (
   match: RegExpExecArray,
   groupBy: string | undefined
@@ -356,6 +366,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   const pattern = (regexConfig.pattern ?? "").trim();
   const flags = normalizeRegexFlags(regexConfig.flags);
   const mode = regexConfig.mode ?? "group";
+  const isExtractMode = mode === "extract" || mode === "extract_json";
   const matchMode = regexConfig.matchMode ?? "first";
   const groupBy = regexConfig.groupBy ?? "match";
   const includeUnmatched = regexConfig.includeUnmatched ?? true;
@@ -376,7 +387,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     return {
       grouped: regexConfig.outputMode === "array" ? [] : {},
       matches: [],
-      ...(mode === "extract" ? { value: null } : {}),
+      ...(isExtractMode ? { value: null } : {}),
       ...(aiPrompt ? { aiPrompt } : {}),
     };
   }
@@ -388,7 +399,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     return {
       grouped: regexConfig.outputMode === "array" ? [] : {},
       matches: [],
-      ...(mode === "extract" ? { value: null } : {}),
+      ...(isExtractMode ? { value: null } : {}),
       ...(aiPrompt ? { aiPrompt } : {}),
     };
   }
@@ -417,7 +428,10 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
                 Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
               ) as Record<string, string>)
             : null;
-        const extracted = resolveRegexSelection(match, groupBy);
+        const extracted =
+          mode === "extract_json"
+            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+            : resolveRegexSelection(match, groupBy);
         const record: RegexMatchRecord = {
           input,
           match: match[0] ?? null,
@@ -475,7 +489,10 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
             Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
           ) as Record<string, string>)
         : null;
-    const extracted = resolveRegexSelection(match, groupBy);
+    const extracted =
+      mode === "extract_json"
+        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+        : resolveRegexSelection(match, groupBy);
     const record: RegexMatchRecord = {
       input,
       match: match[0] ?? null,
@@ -503,7 +520,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   return {
     grouped,
     matches,
-    ...(mode === "extract" ? { value: extractedValue } : {}),
+    ...(isExtractMode ? { value: extractedValue } : {}),
     ...(aiPrompt ? { aiPrompt } : {}),
   };
 };

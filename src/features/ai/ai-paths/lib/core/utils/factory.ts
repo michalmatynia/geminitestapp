@@ -32,6 +32,10 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
     updaterSamples: {},
     runtimeState: { inputs: {}, outputs: {} },
     lastRunAt: null,
+    uiState: {
+      selectedNodeId: initialNodes[0]?.id ?? null,
+      configOpen: false,
+    },
   };
 };
 
@@ -203,5 +207,9 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     updaterSamples: {},
     runtimeState: { inputs: {}, outputs: {} },
     lastRunAt: null,
+    uiState: {
+      selectedNodeId: nodes[0]?.id ?? null,
+      configOpen: false,
+    },
   };
 };

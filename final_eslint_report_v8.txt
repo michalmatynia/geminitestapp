@@ -1,0 +1,48 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/[jobId]/route.ts
+  78:54  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  79:34  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  91:32  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/chatbot/jobs/route.ts
+  116:46  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
+  34:9  warning  The 'promptConfig' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. To fix this, wrap the initialization of 'promptConfig' in its own useMemo() Hook                                           react-hooks/exhaustive-deps
+  37:9  warning  The 'runtimeInputs' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'runtimeInputs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+  113:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
+  555:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 560) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'editingUser?.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/dtos/chatbot.ts
+    1:19  error  'NamedDto' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  128:18  error  An interface declaring no members is equivalent to its supertype            @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/BackgroundSyncProvider.tsx
+  6:1  error  '@/shared/ui/QueryDevPanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/agent-teaching.ts
+  25:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  27:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  29:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  31:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/user-preferences.ts
+  9:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/status-badge.tsx
+  41:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 21 problems (15 errors, 6 warnings)
+

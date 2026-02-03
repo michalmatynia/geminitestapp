@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from "@/shared/ui";
 import { logClientError } from "@/features/observability";
+import { useSession } from "next-auth/react";
 
 import {
   AUTH_SETTINGS_KEYS,
@@ -54,25 +55,32 @@ export default function AuthUsersPage(): React.JSX.Element {
   const [mockStatus, setMockStatus] = useState<"idle" | "success" | "error">("idle");
   const [mockMessage, setMockMessage] = useState("");
   const [mockOpen, setMockOpen] = useState(false);
-  const authUsersQuery = useAuthUsers();
+  const { data: session } = useSession();
+  const canReadUsers = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes("auth.users.read")
+  );
+  const authUsersQuery = useAuthUsers(canReadUsers);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const updateAuthUserMutation = useUpdateAuthUser();
   const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
   const registerUserMutation = useRegisterUser();
   const mockSignInMutation = useMockSignIn();
-  const userSecurityQuery = useAuthUserSecurity(editingUser?.id);
-  const loading = authUsersQuery.isPending || settingsQuery.isPending;
-  const loadingSecurity = userSecurityQuery.isPending;
+  const canManageSecurity = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes("auth.users.write")
+  );
+  const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
+  const loading = (canReadUsers && authUsersQuery.isPending) || settingsQuery.isPending;
+  const loadingSecurity = canManageSecurity && userSecurityQuery.isPending;
   const provider = authUsersQuery.data?.provider ?? "mongodb";
   const rolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles) ?? null;
   const userRolesSettingRaw = settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles) ?? null;
 
   useEffect(() => {
-    if (!authUsersQuery.error) return;
+    if (!authUsersQuery.error || !canReadUsers) return;
     logClientError(authUsersQuery.error, { context: { source: "AuthUsersPage", action: "loadUsers" } });
     toast("Failed to load users", { variant: "error" });
-  }, [authUsersQuery.error, toast]);
+  }, [authUsersQuery.error, toast, canReadUsers]);
 
   useEffect(() => {
     if (!settingsQuery.error) return;
@@ -81,14 +89,18 @@ export default function AuthUsersPage(): React.JSX.Element {
   }, [settingsQuery.error, toast]);
 
   useEffect(() => {
-    if (!userSecurityQuery.error) return;
+    if (!userSecurityQuery.error || !canManageSecurity) return;
     logClientError(userSecurityQuery.error, { context: { source: "AuthUsersPage", action: "loadSecurityProfile", userId: editingUser?.id } });
-  }, [userSecurityQuery.error]);
+  }, [userSecurityQuery.error, editingUser?.id, canManageSecurity]);
 
   useEffect(() => {
+    if (!canReadUsers) {
+      setUsers([]);
+      return;
+    }
     if (!authUsersQuery.data) return;
     setUsers(authUsersQuery.data.users ?? []);
-  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt]);
+  }, [authUsersQuery.data, authUsersQuery.dataUpdatedAt, canReadUsers]);
 
   useEffect(() => {
     if (!settingsQuery.data) return;
@@ -193,10 +205,12 @@ export default function AuthUsersPage(): React.JSX.Element {
           .map((entry: string) => entry.trim())
           .filter(Boolean),
       };
-      await updateAuthUserSecurityMutation.mutateAsync({
-        userId: editingUser.id,
-        input: securityPayload,
-      });
+      if (canManageSecurity) {
+        await updateAuthUserSecurityMutation.mutateAsync({
+          userId: editingUser.id,
+          input: securityPayload,
+        });
+      }
       setUsers((prev: AuthUserSummary[]) =>
         prev.map((user: AuthUserSummary) => (user.id === updated.id ? updated : user))
       );
@@ -209,7 +223,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   };
 
   const handleDisableMfa = async (): Promise<void> => {
-    if (!editingUser) return;
+    if (!editingUser || !canManageSecurity) return;
     try {
       await updateAuthUserSecurityMutation.mutateAsync({
         userId: editingUser.id,
@@ -319,6 +333,15 @@ export default function AuthUsersPage(): React.JSX.Element {
       setMockMessage("Sign-in failed. Check server logs.");
     }
   };
+
+  if (!canReadUsers) {
+    return (
+      <SectionPanel className="p-6 text-sm text-amber-300">
+        You don&apos;t have permission to view user accounts. Ask an admin to grant
+        `auth.users.read` or elevate your account.
+      </SectionPanel>
+    );
+  }
 
   return (
     <>
@@ -492,10 +515,17 @@ export default function AuthUsersPage(): React.JSX.Element {
               {loadingSecurity ? (
                 <div className="text-xs text-gray-500">Loading security profile...</div>
               ) : null}
+              {!canManageSecurity ? (
+                <div className="text-xs text-amber-300">
+                  You don&apos;t have permission to view or edit security controls.
+                </div>
+              ) : null}
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-disabled"
-                  checked={editDisabled} onCheckedChange={(checked: boolean | "indeterminate") => setEditDisabled(Boolean(checked))}
+                  checked={editDisabled}
+                  onCheckedChange={(checked: boolean | "indeterminate") => setEditDisabled(Boolean(checked))}
+                  disabled={!canManageSecurity}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
@@ -505,7 +535,9 @@ export default function AuthUsersPage(): React.JSX.Element {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="edit-banned"
-                  checked={editBanned} onCheckedChange={(checked: boolean | "indeterminate") => setEditBanned(Boolean(checked))}
+                  checked={editBanned}
+                  onCheckedChange={(checked: boolean | "indeterminate") => setEditBanned(Boolean(checked))}
+                  disabled={!canManageSecurity}
                   className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-banned" className="text-xs text-gray-300">
@@ -520,6 +552,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                   id="edit-allowed-ips"
                   value={editAllowedIps}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setEditAllowedIps(event.target.value)}
+                  disabled={!canManageSecurity}
                   className="min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white"
                   placeholder="One IP per line or comma-separated"
                 />
@@ -533,6 +566,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                   variant="outline"
                   size="sm"
                   onClick={() => void handleDisableMfa()}
+                  disabled={!canManageSecurity}
                 >
                   Disable MFA
                 </Button>

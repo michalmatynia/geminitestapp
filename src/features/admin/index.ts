@@ -4,4 +4,5 @@ export * from "./layout/AdminLayout";
 export * from "./pages/AdminFrontManagePage";
 export * from "./pages/AdminNotificationsSettingsPage";
 export * from "./pages/AdminSettingsHomePage";
+export * from "./pages/AdminMenuSettingsPage";
 export * from "./pages/AdminTypographySettingsPage";

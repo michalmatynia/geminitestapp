@@ -38,6 +38,9 @@
       "@/*": [
         "./src/*"
       ],
+      "@/__tests__/*": [
+        "./__tests__/*"
+      ],
       "gsap/ScrollTrigger": [
         "./node_modules/gsap/types/scroll-trigger.d.ts"
       ],

@@ -32,6 +32,7 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   bundle: "object",
   value: "any",
   result: "any",
+  sources: "array",
   valid: "boolean",
   errors: "array",
   query: ["object", "string"],

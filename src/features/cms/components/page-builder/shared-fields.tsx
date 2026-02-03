@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Button } from "@/shared/ui";
+import React, { useRef, useState } from "react";
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, Button, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import NextImage from "next/image";
-import { Upload, FolderOpen } from "lucide-react";
+import { Upload, FolderOpen, Loader2 } from "lucide-react";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
+import { useUploadCmsMedia } from "../../hooks/useCmsQueries";
 
 interface FieldProps<T> {
   label?: string;
@@ -22,6 +23,28 @@ export function ImagePickerField({
   disabled,
 }: FieldProps<string>): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadMutation = useUploadCmsMedia();
+  const { toast } = useToast();
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const result = await uploadMutation.mutateAsync(file);
+      if (result.filepath) {
+        onChange(result.filepath);
+        toast("Image uploaded successfully.", { variant: "success" });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      toast(message, { variant: "error" });
+    }
+  };
+
+  const isUploading = uploadMutation.isPending;
 
   return (
     <div className="space-y-2">
@@ -43,15 +66,27 @@ export function ImagePickerField({
         ) : (
           <span className="text-xs text-gray-500">No image</span>
         )}
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <Loader2 className="size-6 animate-spin text-white" />
+          </div>
+        )}
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => { void handleFileUpload(e); }}
+      />
       <div className="grid grid-cols-2 gap-2">
         <Button
           type="button"
           size="sm"
           variant="outline"
           className="text-xs"
-          onClick={(): void => setOpen(true)}
-          disabled={disabled}
+          onClick={(): void => fileInputRef.current?.click()}
+          disabled={disabled || isUploading}
         >
           <Upload className="mr-1.5 size-3" />
           {value ? "Replace" : "Upload"}
@@ -62,7 +97,7 @@ export function ImagePickerField({
           variant="outline"
           className="text-xs"
           onClick={(): void => setOpen(true)}
-          disabled={disabled}
+          disabled={disabled || isUploading}
         >
           <FolderOpen className="mr-1.5 size-3" />
           Browse
@@ -75,7 +110,7 @@ export function ImagePickerField({
           variant="ghost"
           className="w-full text-xs text-gray-400 hover:text-gray-200"
           onClick={(): void => onChange("")}
-          disabled={disabled}
+          disabled={disabled || isUploading}
         >
           Clear image
         </Button>

@@ -6,8 +6,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const maxDuration = 300; // 5 minutes for large uploads
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === "object" && entry !== null && "arrayBuffer" in entry && "size" in entry;
@@ -32,15 +31,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     if (files.length === 0) {
       throw badRequestError("No file provided");
-    }
-
-    for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
-        throw badRequestError("File size exceeds 10MB limit", {
-          size: file.size,
-          maxSize: MAX_FILE_SIZE,
-        });
-      }
     }
 
     const uploads = await Promise.all(

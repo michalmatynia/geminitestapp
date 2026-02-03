@@ -67,6 +67,7 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   ImageElement: ImageIcon,
   Button: MousePointerClick,
   Column: Columns,
+  Block: Box,
   ImageWithText: Layers,
   RichText: FileText,
   Hero: LayoutTemplate,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -75,17 +75,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     staleTime: 10_000,
   });
 
-  useEffect(() => {
-    // Only update if data has changed to prevent unnecessary re-renders
-    if (triggerButtonsQuery.data) {
-      setOrderedRows(prevOrderedRows => {
-        if (JSON.stringify(prevOrderedRows) === JSON.stringify(triggerButtonsQuery.data)) {
-          return prevOrderedRows;
-        }
-        return triggerButtonsQuery.data;
-      });
-    }
-  }, [triggerButtonsQuery.data]);
+  // Keep orderedRows in sync with query data using adjustment during render pattern
+  const [lastData, setLastData] = useState<AiTriggerButtonRecord[] | undefined>(triggerButtonsQuery.data);
+  if (triggerButtonsQuery.data !== lastData) {
+    setLastData(triggerButtonsQuery.data);
+    setOrderedRows(triggerButtonsQuery.data ?? []);
+  }
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],

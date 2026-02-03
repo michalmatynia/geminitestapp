@@ -2,6 +2,7 @@ import {
   coerceInput,
   coerceInputArray,
   formatRuntimeValue,
+  hashRuntimeValue,
   renderTemplate,
 } from "../../utils";
 import {
@@ -55,6 +56,7 @@ export const handleModel: NodeHandler = async ({
   allInputs,
   edges,
   nodes,
+  nodeById,
   activePathId,
   simulationEntityType,
   simulationEntityId,
@@ -71,7 +73,7 @@ export const handleModel: NodeHandler = async ({
     .filter((edge: Edge) => edge.to === node.id && edge.toPort === "prompt")
     .map((edge: Edge): PromptCandidate => ({
       edge,
-      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
+      fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "prompt"],
     }))
     .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === "prompt");
@@ -139,7 +141,7 @@ export const handleModel: NodeHandler = async ({
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== node.id) return false;
     if (edge.fromPort && edge.fromPort !== "jobId") return false;
-    const targetNode = nodes.find((item: AiNode) => item.id === edge.to);
+    const targetNode = nodeById?.get(edge.to) ?? nodes.find((item: AiNode) => item.id === edge.to);
     return targetNode?.type === "poll";
   });
   const waitPreference = modelConfig.waitForResult;
@@ -161,7 +163,7 @@ export const handleModel: NodeHandler = async ({
     .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === "images")
     .map((edge: Edge): PromptCandidate => ({
       edge,
-      fromNode: nodes.find((item: AiNode) => item.id === edge.from),
+      fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
       value: allOutputs[edge.from]?.[edge.fromPort ?? "images"],
     }))
     .find(
@@ -198,6 +200,22 @@ export const handleModel: NodeHandler = async ({
     },
   };
   const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);
+  const payloadHash = hashRuntimeValue(payload);
+
+  // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
+  // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
+  // or iterator auto-continue.
+  const prevJobId = typeof prevOutputs.jobId === "string" ? prevOutputs.jobId.trim() : "";
+  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>).payloadHash === "string"
+    ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
+    : "";
+  const prevDebugPayloadHash =
+    (prevOutputs as Record<string, unknown>).debugPayload !== undefined
+      ? hashRuntimeValue((prevOutputs as Record<string, unknown>).debugPayload)
+      : "";
+  if (prevJobId && (prevPayloadHash === payloadHash || prevDebugPayloadHash === payloadHash)) {
+    return { ...prevOutputs, payloadHash };
+  }
   let enqueuedJobId: string | undefined;
   try {
     const enqueueResult = await aiJobsApi.enqueue({
@@ -216,6 +234,7 @@ export const handleModel: NodeHandler = async ({
         jobId: enqueueResult.data.jobId,
         status: "queued",
         debugPayload: payload,
+        payloadHash,
       };
     }
     const result = await pollGraphJob(enqueueResult.data.jobId);
@@ -224,6 +243,7 @@ export const handleModel: NodeHandler = async ({
       jobId: enqueueResult.data.jobId,
       status: "completed",
       debugPayload: payload,
+      payloadHash,
     };
   } catch (error) {
     reportAiPathsError(
@@ -238,6 +258,7 @@ export const handleModel: NodeHandler = async ({
       jobId: enqueuedJobId,
       status: "failed",
       debugPayload: payload,
+      payloadHash,
     };
   }
 };

@@ -15,7 +15,7 @@ export function useTeachingAgents(): UseQueryResult<AgentTeachingAgentRecord[], 
     queryKey: agentTeachingKeys.agents(),
     queryFn: async (): Promise<AgentTeachingAgentRecord[]> => {
       const res = await fetch("/api/agentcreator/teaching/agents");
-      if (!res.ok) throw new Error("Failed to load teaching agents.");
+      if (!res.ok) throw new Error("Failed to load learner agents.");
       const data = (await res.json()) as { agents?: AgentTeachingAgentRecord[] };
       return data.agents ?? [];
     },
@@ -55,7 +55,7 @@ export function useUpsertTeachingAgentMutation(): UseMutationResult<
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Failed to save teaching agent.");
+        throw new Error(data?.error || "Failed to save learner agent.");
       }
       const data = (await res.json()) as { agent?: AgentTeachingAgentRecord };
       if (!data.agent) throw new Error("Missing agent in response.");
@@ -78,7 +78,7 @@ export function useDeleteTeachingAgentMutation(): UseMutationResult<
       const res = await fetch(`/api/agentcreator/teaching/agents/${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || "Failed to delete teaching agent.");
+        throw new Error(data?.error || "Failed to delete learner agent.");
       }
     },
     onSuccess: () => {

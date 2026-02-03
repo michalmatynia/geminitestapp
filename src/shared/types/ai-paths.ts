@@ -23,6 +23,7 @@ export type NodeType =
   | "prompt"
   | "model"
   | "agent"
+  | "learner_agent"
   | "database"
   | "db_schema"
   | "viewer"
@@ -63,6 +64,12 @@ export type AgentConfig = {
   personaId?: string;
   promptTemplate?: string;
   waitForResult?: boolean;
+};
+
+export type LearnerAgentConfig = {
+  agentId: string;
+  promptTemplate?: string;
+  includeSources?: boolean;
 };
 
 export type UpdaterMapping = {
@@ -344,6 +351,7 @@ export type NodeConfig = {
   prompt?: PromptConfig;
   model?: ModelConfig;
   agent?: AgentConfig;
+  learnerAgent?: LearnerAgentConfig;
   database?: DatabaseConfig;
   runtime?: NodeRuntimeConfig;
 };

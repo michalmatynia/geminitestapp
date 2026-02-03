@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 
@@ -19,38 +19,21 @@ export default function ProductFormGeneral(): React.JSX.Element {
     setGenerationError,
     product,
     imageSlots,
-    selectedCatalogIds,
   } = useProductFormContext();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const { toast } = useToast();
 
   const [translating, setTranslating] = useState<boolean>(false);
-  const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
-  const allValues = watch();
-  const hasCatalogs = selectedCatalogIds.length > 0;
-  const languagesReady = filteredLanguages.length > 0;
-
-  const { generate, generating } = useDescriptionGeneration({
-    ...(product?.id ? { productId: product.id } : {}),
-    onSuccess: (description: string) => {
-      setValue("description_en", description);
-    },
-    onError: (error: string) => {
-      setGenerationError(error);
-    },
-  });
-
-  const { handlePathGenerateDescription: runPathTrigger } = useAiPathTrigger();
-
-  useEffect((): void => {
+  const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">(() => {
     const vals = getValues();
-    if (vals.asin) {
-      setIdentifierType("asin");
-    } else if (vals.gtin) {
-      setIdentifierType("gtin");
-    }
-  }, [getValues]);
+    if (vals.asin) return "asin";
+    if (vals.gtin) return "gtin";
+    return "ean";
+  });
+  const allValues = watch();
+  const hasCatalogs = (filteredLanguages ?? []).length > 0;
+  const languagesReady = (filteredLanguages ?? []).length > 0;
 
   const handleGenerateDescription = async (): Promise<void> => {
     logger.log("Generating description...");

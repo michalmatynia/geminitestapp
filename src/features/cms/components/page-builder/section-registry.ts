@@ -56,7 +56,7 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero", "Block"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 // Row can contain columns and also elements/blocks directly (not just inside columns)

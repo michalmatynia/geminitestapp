@@ -12,6 +12,7 @@ export type NodeHandlerContext = {
   prevOutputs: RuntimePortValues;
   edges: Edge[];
   nodes: AiNode[];
+  nodeById?: Map<string, AiNode> | undefined;
   activePathId: string | null;
   triggerNodeId: string | undefined;
   triggerEvent: string | undefined;

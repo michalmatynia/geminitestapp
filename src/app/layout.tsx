@@ -10,6 +10,7 @@ import ClientErrorReporter from "@/features/observability";
 import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 import { AppFontProvider } from "@/shared/providers/AppFontProvider";
+import PageAnalyticsTracker from "@/features/analytics/components/PageAnalyticsTracker";
 
 import "./fonts.css";
 import "./globals.css";
@@ -40,6 +41,9 @@ export default function RootLayout({
                 >
                   <Suspense fallback={null}>
                     <ClientErrorReporter />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <PageAnalyticsTracker />
                   </Suspense>
                   {children}
                 </ThemeProvider>

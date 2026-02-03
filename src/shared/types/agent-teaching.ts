@@ -35,8 +35,11 @@ export type AgentTeachingAgentRecord = {
   embeddingModel: string;
   systemPrompt: string;
   collectionIds: AgentTeachingId[];
+  temperature: number;
+  maxTokens: number;
   retrievalTopK: number;
   retrievalMinScore: number;
+  maxDocsPerCollection: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -48,4 +51,3 @@ export type AgentTeachingChatSource = {
   text: string;
   metadata: AgentTeachingEmbeddingDocumentMetadata | null;
 };
-

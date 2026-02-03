@@ -18,8 +18,11 @@ const updateAgentSchema = z.object({
   embeddingModel: z.string().trim().min(1).optional(),
   systemPrompt: z.string().optional(),
   collectionIds: z.array(z.string().trim().min(1)).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).max(8000).optional(),
   retrievalTopK: z.number().int().min(1).max(50).optional(),
   retrievalMinScore: z.number().min(-1).max(1).optional(),
+  maxDocsPerCollection: z.number().int().min(10).max(2000).optional(),
 });
 
 type Params = { agentId: string };
@@ -50,15 +53,18 @@ async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<
       ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
       ...(data.systemPrompt !== undefined ? { systemPrompt: data.systemPrompt } : {}),
       ...(data.collectionIds !== undefined ? { collectionIds: data.collectionIds } : {}),
+      ...(data.temperature !== undefined ? { temperature: data.temperature } : {}),
+      ...(data.maxTokens !== undefined ? { maxTokens: data.maxTokens } : {}),
       ...(data.retrievalTopK !== undefined ? { retrievalTopK: data.retrievalTopK } : {}),
       ...(data.retrievalMinScore !== undefined ? { retrievalMinScore: data.retrievalMinScore } : {}),
+      ...(data.maxDocsPerCollection !== undefined ? { maxDocsPerCollection: data.maxDocsPerCollection } : {}),
     });
     return NextResponse.json({ agent });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
       source: "agentcreator.teaching.agents.PATCH",
-      fallbackMessage: "Failed to update teaching agent.",
+      fallbackMessage: "Failed to update learner agent.",
     });
   }
 }
@@ -76,7 +82,7 @@ async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise
     return createErrorResponse(error, {
       request: req,
       source: "agentcreator.teaching.agents.DELETE",
-      fallbackMessage: "Failed to delete teaching agent.",
+      fallbackMessage: "Failed to delete learner agent.",
     });
   }
 }
@@ -90,4 +96,3 @@ export const DELETE = apiHandler(
   async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
   { source: "agentcreator.teaching.agents.DELETE" }
 );
-

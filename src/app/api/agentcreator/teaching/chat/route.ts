@@ -42,7 +42,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     return createErrorResponse(error, {
       request: req,
       source: "agentcreator.teaching.chat.POST",
-      fallbackMessage: "Failed to run teaching chat.",
+      fallbackMessage: "Failed to run learner chat.",
     });
   }
 }

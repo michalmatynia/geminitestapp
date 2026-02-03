@@ -85,11 +85,11 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10 space-y-6">
       <SectionHeader
-        title="Embedding Collections"
-        description="Store original text + embedding vectors. Collections can be attached to teaching agents."
+        title="Embedding School"
+        description="Store original text + embedding vectors. Collections can be attached to learner agents."
         eyebrow={(
           <Link href="/admin/agentcreator/teaching" className="text-blue-300 hover:text-blue-200">
-            ← Back to teaching
+            ← Back to learners
           </Link>
         )}
         actions={(
@@ -137,7 +137,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
                   </div>
                 </TableCell>
                 <TableCell className="text-xs text-gray-300">{collection.embeddingModel}</TableCell>
-                <TableCell className="text-xs text-gray-300">{usedByCount(collection.id)} agent(s)</TableCell>
+                <TableCell className="text-xs text-gray-300">{usedByCount(collection.id)} learner(s)</TableCell>
                 <TableCell className="text-xs text-gray-400">
                   {collection.updatedAt ? new Date(collection.updatedAt).toLocaleString() : "—"}
                 </TableCell>
@@ -190,12 +190,16 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         variant="destructive"
         onConfirm={(): void => {
           if (!itemToDelete) return;
-          void remove({ id: itemToDelete.id })
-            .then((): void => toast("Collection deleted.", { variant: "success" }))
-            .catch((error: unknown): void =>
-              toast(error instanceof Error ? error.message : "Failed to delete collection.", { variant: "error" })
-            )
-            .finally((): void => setItemToDelete(null));
+          void (async (): Promise<void> => {
+            try {
+              await remove({ id: itemToDelete.id });
+              toast("Collection deleted.", { variant: "success" });
+            } catch (error) {
+              toast(error instanceof Error ? error.message : "Failed to delete collection.", { variant: "error" });
+            } finally {
+              setItemToDelete(null);
+            }
+          })();
         }}
       />
 
@@ -209,7 +213,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             <Button type="button" variant="outline" onClick={closeModal} disabled={saving || deleting}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSave} disabled={saving || deleting || !draft.name?.trim()}>
+            <Button type="button" onClick={() => void handleSave()} disabled={saving || deleting || !draft.name?.trim()}>
               {saving ? "Saving..." : "Save"}
             </Button>
           </>
@@ -221,7 +225,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             <Input
               value={draft.name ?? ""}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setDraft((prev) => ({ ...prev, name: event.target.value }))
+                setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, name: event.target.value }))
               }
               placeholder="Collection name"
             />
@@ -231,7 +235,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             <Textarea
               value={draft.description ?? ""}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                setDraft((prev) => ({ ...prev, description: event.target.value }))
+                setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, description: event.target.value }))
               }
               placeholder="Optional description"
               className="min-h-[90px]"
@@ -241,7 +245,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             <Label>Embedding model</Label>
             <Select
               value={draft.embeddingModel ?? ""}
-              onValueChange={(value: string): void => setDraft((prev) => ({ ...prev, embeddingModel: value }))}
+              onValueChange={(value: string): void => setDraft((prev: Partial<AgentTeachingEmbeddingCollectionRecord>): Partial<AgentTeachingEmbeddingCollectionRecord> => ({ ...prev, embeddingModel: value }))}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select embedding model" />
@@ -263,4 +267,3 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
     </div>
   );
 }
-

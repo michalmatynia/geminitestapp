@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import React from "react";
 import { Button, ConfirmDialog, Input, Label, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast } from "@/shared/ui";
 import { Trash2 } from "lucide-react";
-import type { AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from "@/shared/types/agent-teaching";
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from "@/shared/types/agent-teaching";
 import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useTeachingCollections } from "../hooks/useAgentTeaching";
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
@@ -28,6 +28,12 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   const [source, setSource] = React.useState("");
   const [tags, setTags] = React.useState("");
   const [docToDelete, setDocToDelete] = React.useState<AgentTeachingEmbeddingDocumentListItem | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchTopK, setSearchTopK] = React.useState(8);
+  const [searchMinScore, setSearchMinScore] = React.useState(0.15);
+  const [searching, setSearching] = React.useState(false);
+  const [searchResults, setSearchResults] = React.useState<AgentTeachingChatSource[]>([]);
+  const [searchError, setSearchError] = React.useState<string | null>(null);
 
   const isLoading = loadingCollections || loadingDocs;
 
@@ -56,6 +62,39 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
       setTags("");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to add document.", { variant: "error" });
+    }
+  };
+
+  const handleSearch = async (): Promise<void> => {
+    if (!collectionId) return;
+    const queryText = searchQuery.trim();
+    if (!queryText) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const res = await fetch(
+        `/api/agentcreator/teaching/collections/${encodeURIComponent(collectionId)}/search`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            queryText,
+            topK: searchTopK,
+            minScore: searchMinScore,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Search failed.");
+      }
+      const data = (await res.json()) as { sources?: AgentTeachingChatSource[] };
+      setSearchResults(Array.isArray(data.sources) ? data.sources : []);
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : "Search failed.");
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -107,6 +146,100 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
           <div className="text-[11px] text-gray-500">
             This stores both the text and the embedding vector in MongoDB.
           </div>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel className="p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-white">Search the embedding school</div>
+            <div className="text-[11px] text-gray-500">
+              Embed a query and preview which documents would be retrieved.
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => void handleSearch()}
+            disabled={searching || !collectionId || !searchQuery.trim()}
+          >
+            {searching ? "Searching..." : "Search"}
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="md:col-span-2 space-y-2">
+            <Label>Query</Label>
+            <Textarea
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSearchQuery(e.target.value)}
+              placeholder="Ask something you expect the learner agent to answer from this collection..."
+              className="min-h-[90px]"
+              disabled={searching || !collectionId}
+            />
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Top K</Label>
+              <Input
+                type="number"
+                min={1}
+                max={50}
+                value={String(searchTopK)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTopK(Number(e.target.value))}
+                disabled={searching || !collectionId}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Min score</Label>
+              <Input
+                type="number"
+                min={-1}
+                max={1}
+                step={0.01}
+                value={String(searchMinScore)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchMinScore(Number(e.target.value))}
+                disabled={searching || !collectionId}
+              />
+            </div>
+          </div>
+        </div>
+
+        {searchError ? (
+          <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200">
+            {searchError}
+          </div>
+        ) : null}
+
+        <div className="rounded-md border border-border bg-card/30 p-3">
+          <div className="text-sm font-semibold text-white">Top matches</div>
+          {searchResults.length === 0 ? (
+            <div className="mt-2 text-sm text-gray-400">
+              {searching ? "Searching…" : "No matches yet. Run a search."}
+            </div>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {searchResults.map((src: AgentTeachingChatSource) => (
+                <div key={src.documentId} className="rounded-md border border-border bg-card/50 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-gray-300">
+                      [doc:{src.documentId}] • score {src.score.toFixed(3)}
+                    </div>
+                    {src.metadata?.title ? (
+                      <div className="text-[11px] text-gray-500">
+                        {src.metadata.title}
+                      </div>
+                    ) : null}
+                  </div>
+                  {src.metadata?.source ? (
+                    <div className="mt-1 text-[11px] text-gray-500">Source: {src.metadata.source}</div>
+                  ) : null}
+                  <div className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
+                    {src.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </SectionPanel>
 
@@ -189,4 +322,3 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
     </div>
   );
 }
-

@@ -1,18 +1,20 @@
 import {
   coerceInput,
   formatRuntimeValue,
+  hashRuntimeValue,
   parseJsonSafe,
 } from "../../utils";
 import { buildPromptOutput, coercePayloadObject } from "../utils";
 import type { RuntimePortValues } from "@/shared/types/ai-paths";
 import type { NodeHandler, NodeHandlerContext } from "@/shared/types/ai-paths-runtime";
 import type { AgentPersona } from "@/features/ai/agentcreator/types";
+import type { ChatMessage } from "@/shared/types/chatbot";
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from "@/features/ai/agentcreator/constants/personas";
 import type { AgentEnqueuePayload } from "../../../api";
-import { agentApi, settingsApi } from "../../../api";
+import { agentApi, learnerAgentsApi, settingsApi } from "../../../api";
 
 type AgentRunRecord = {
   id?: string;
@@ -223,6 +225,108 @@ export const handleAgent: NodeHandler = async ({
         personaName: persona?.name ?? null,
         model: settings.executorModel ?? null,
       },
+    };
+  }
+};
+
+export const handleLearnerAgent: NodeHandler = async ({
+  node,
+  nodeInputs,
+  prevOutputs,
+  skipAiJobs,
+  executed,
+  toast,
+  reportAiPathsError,
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  if (node.type !== "learner_agent") return prevOutputs;
+  if (skipAiJobs) {
+    return prevOutputs;
+  }
+
+  const learnerConfig = node.config?.learnerAgent ?? {
+    agentId: "",
+    promptTemplate: "",
+    includeSources: true,
+  };
+
+  const agentId = learnerConfig.agentId?.trim();
+  if (!agentId) return prevOutputs;
+
+  const template = learnerConfig.promptTemplate?.trim();
+  const promptFromTemplate = template
+    ? buildPromptOutput({ template }, nodeInputs).promptOutput
+    : "";
+  const rawPrompt =
+    template?.length
+      ? promptFromTemplate
+      : coerceInput(nodeInputs.prompt) ??
+        coerceInput(nodeInputs.value) ??
+        coerceInput(nodeInputs.result) ??
+        coerceInput(nodeInputs.bundle) ??
+        coerceInput(nodeInputs.context) ??
+        coerceInput(nodeInputs.entityJson) ??
+        coerceInput(nodeInputs.title) ??
+        coerceInput(nodeInputs.content_en);
+
+  const prompt =
+    typeof rawPrompt === "string"
+      ? rawPrompt.trim()
+      : formatRuntimeValue(rawPrompt);
+
+  if (!prompt || prompt === "—") {
+    return prevOutputs;
+  }
+
+  const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+  const payload = { agentId, messages };
+  const payloadHash = hashRuntimeValue(payload);
+  const prevPayloadHash =
+    typeof (prevOutputs as Record<string, unknown>).payloadHash === "string"
+      ? ((prevOutputs as Record<string, unknown>).payloadHash as string)
+      : "";
+  if (prevPayloadHash && prevPayloadHash === payloadHash) {
+    return prevOutputs;
+  }
+
+  if (executed.ai.has(node.id)) return prevOutputs;
+
+  try {
+    const response = await learnerAgentsApi.chat(payload);
+    if (!response.ok) {
+      throw new Error(response.error || "Learner agent chat failed.");
+    }
+    executed.ai.add(node.id);
+
+    const includeSources = learnerConfig.includeSources !== false;
+    return {
+      result: response.data.message,
+      sources: includeSources ? response.data.sources : [],
+      status: "completed",
+      bundle: {
+        agentId,
+        message: response.data.message,
+        sources: includeSources ? response.data.sources : [],
+      },
+      payloadHash,
+    };
+  } catch (error) {
+    reportAiPathsError(
+      error,
+      { action: "learnerAgent", nodeId: node.id, agentId },
+      "Learner agent node failed:"
+    );
+    toast("Learner agent failed.", { variant: "error" });
+    executed.ai.add(node.id);
+    return {
+      result: "",
+      sources: [],
+      status: "failed",
+      bundle: {
+        agentId,
+        status: "failed",
+        error: error instanceof Error ? error.message : "Learner agent failed",
+      },
+      payloadHash,
     };
   }
 };

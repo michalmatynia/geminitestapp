@@ -17,8 +17,11 @@ const createAgentSchema = z.object({
   embeddingModel: z.string().trim().min(1),
   systemPrompt: z.string().optional().default(""),
   collectionIds: z.array(z.string().trim().min(1)).optional().default([]),
+  temperature: z.number().min(0).max(2).optional().default(0.2),
+  maxTokens: z.number().int().min(1).max(8000).optional().default(800),
   retrievalTopK: z.number().int().min(1).max(50).optional().default(6),
   retrievalMinScore: z.number().min(-1).max(1).optional().default(0.15),
+  maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -29,7 +32,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     return createErrorResponse(error, {
       request: req,
       source: "agentcreator.teaching.agents.GET",
-      fallbackMessage: "Failed to fetch teaching agents.",
+      fallbackMessage: "Failed to fetch learner agents.",
     });
   }
 }
@@ -49,15 +52,18 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       embeddingModel: data.embeddingModel,
       systemPrompt: data.systemPrompt,
       collectionIds: data.collectionIds,
+      temperature: data.temperature,
+      maxTokens: data.maxTokens,
       retrievalTopK: data.retrievalTopK,
       retrievalMinScore: data.retrievalMinScore,
+      maxDocsPerCollection: data.maxDocsPerCollection,
     });
     return NextResponse.json({ agent });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
       source: "agentcreator.teaching.agents.POST",
-      fallbackMessage: "Failed to create teaching agent.",
+      fallbackMessage: "Failed to create learner agent.",
     });
   }
 }

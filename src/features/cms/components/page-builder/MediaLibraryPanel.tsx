@@ -18,8 +18,6 @@ interface MediaLibraryPanelProps {
   autoConfirmSelection?: boolean;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
 export function MediaLibraryPanel({
   open,
   onOpenChange,
@@ -51,10 +49,6 @@ export function MediaLibraryPanel({
       const list = Array.from(files);
       const uploaded: ImageFileRecord[] = [];
       for (const file of list) {
-        if (file.size > MAX_FILE_SIZE) {
-          toast(`File ${file.name} exceeds 10MB limit`, { variant: "error" });
-          continue;
-        }
         const result = await uploadMutation.mutateAsync(file);
         uploaded.push(result);
       }
@@ -107,7 +101,7 @@ export function MediaLibraryPanel({
             className="hidden"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => { void handleUpload(e); }}
           />
-          <p className="text-xs text-gray-500">Max 10MB per file</p>
+          <p className="text-xs text-gray-500">Supported formats: images</p>
         </div>
 
         <div className="mt-4 rounded border border-border/40 bg-gray-900 flex-1 overflow-auto">

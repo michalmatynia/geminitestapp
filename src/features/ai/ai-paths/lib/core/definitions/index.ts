@@ -2,6 +2,8 @@ import type { NodeDefinition } from "@/shared/types/ai-paths";
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
+  LEARNER_AGENT_INPUT_PORTS,
+  LEARNER_AGENT_OUTPUT_PORTS,
   BUNDLE_INPUT_PORTS,
   CONTEXT_INPUT_PORTS,
   DATABASE_INPUT_PORTS,
@@ -254,6 +256,20 @@ export const palette: NodeDefinition[] = [
     description: "Runs a selected model.",
     inputs: ["prompt", "images"],
     outputs: MODEL_OUTPUT_PORTS,
+  },
+  {
+    type: "learner_agent",
+    title: "Learner Agent",
+    description: "Answer using connected embedding collections (RAG).",
+    inputs: LEARNER_AGENT_INPUT_PORTS,
+    outputs: LEARNER_AGENT_OUTPUT_PORTS,
+    config: {
+      learnerAgent: {
+        agentId: "",
+        promptTemplate: "",
+        includeSources: true,
+      },
+    },
   },
   {
     type: "agent",

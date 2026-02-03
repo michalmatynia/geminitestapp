@@ -32,7 +32,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
 
   const handleSend = async (): Promise<void> => {
     if (!selectedAgentId) {
-      toast("Select a teaching agent first.", { variant: "error" });
+      toast("Select a learner agent first.", { variant: "error" });
       return;
     }
     const content = input.trim();
@@ -68,23 +68,23 @@ export function AgentTeachingChatPage(): React.JSX.Element {
   return (
     <div className="container mx-auto py-10 space-y-6">
       <SectionHeader
-        title="Teaching Chat"
-        description="Chat with a teaching agent. The response is generated with retrieved embedded sources."
+        title="Learner Chat"
+        description="Chat with a learner agent. The response is generated with retrieved embedded sources."
         eyebrow={(
           <Link href="/admin/agentcreator/teaching" className="text-blue-300 hover:text-blue-200">
-            ← Back to teaching
+            ← Back to learners
           </Link>
         )}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <SectionPanel className="p-4 lg:col-span-1 space-y-4">
-          <div className="text-sm font-semibold text-white">Teaching Agents</div>
+          <div className="text-sm font-semibold text-white">Learner Agents</div>
           {loadingAgents ? (
             <div className="text-sm text-gray-400">Loading agents…</div>
           ) : agents.length === 0 ? (
             <div className="text-sm text-gray-400">
-              No teaching agents yet. Create one first.
+              No learner agents yet. Create one first.
             </div>
           ) : (
             <div className="space-y-2">

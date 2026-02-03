@@ -76,7 +76,7 @@ const extractRegexLiteral = (value: string): { pattern: string; flags: string } 
       escaped = false;
       continue;
     }
-    if (ch === "\\") {
+    if (ch === '\\') {
       pattern += ch;
       escaped = true;
       continue;
@@ -169,12 +169,11 @@ const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): s
   }
   const groups =
     match.groups && typeof match.groups === "object"
-      ? (match.groups as Record<string, unknown>)
+      ? (match.groups as Record<string, string | undefined>)
       : null;
   const candidate = groups ? groups[key] : undefined;
   if (typeof candidate === "string") return candidate;
-  if (candidate === undefined || candidate === null) return null;
-  return String(candidate);
+  return null;
 };
 
 type RegexNodeConfigSectionProps = {
@@ -198,22 +197,25 @@ export function RegexNodeConfigSection({
 }: RegexNodeConfigSectionProps): React.JSX.Element | null {
   const { toast } = useToast();
 
-  if (selectedNode.type !== "regex") return null;
+  const isRegexNode = selectedNode.type === "regex";
 
-  const regexConfig: RegexConfig = selectedNode.config?.regex ?? {
-    pattern: "",
-    flags: "g",
-    matchMode: "first",
-    groupBy: "match",
-    outputMode: "object",
-    includeUnmatched: true,
-    unmatchedKey: "__unmatched__",
-    splitLines: true,
-    sampleText: "",
-    aiPrompt: "",
-  };
+  const regexConfig = React.useMemo((): RegexConfig => {
+    return (isRegexNode ? selectedNode.config?.regex : undefined) ?? {
+      pattern: "",
+      flags: "g",
+      matchMode: "first",
+      groupBy: "match",
+      outputMode: "object",
+      includeUnmatched: true,
+      unmatchedKey: "__unmatched__",
+      splitLines: true,
+      sampleText: "",
+      aiPrompt: "",
+    };
+  }, [isRegexNode, selectedNode.config?.regex]);
 
   const updateRegex = (patch: Partial<RegexConfig>): void => {
+    if (!isRegexNode) return;
     updateSelectedNodeConfig({
       regex: {
         ...regexConfig,
@@ -305,8 +307,12 @@ export function RegexNodeConfigSection({
     }
 
     const compiled = regexValidation.regex;
+    const nonGlobalRegex = compiled && matchMode === "first" && compiled.flags.includes("g")
+      ? new RegExp(compiled.source, compiled.flags.replace("g", ""))
+      : compiled;
+
     sampleLines.forEach((input: string) => {
-      if (matchMode === "all") {
+      if (matchMode === "all" && compiled) {
         const flagsWithG = compiled.flags.includes("g") ? compiled.flags : `${compiled.flags}g`;
         const regexAll = new RegExp(compiled.source, flagsWithG);
         let found = false;
@@ -317,7 +323,7 @@ export function RegexNodeConfigSection({
           const groups =
             match.groups && typeof match.groups === "object"
               ? (Object.fromEntries(
-                  Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, String(v ?? "")])
+                  Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
                 ) as Record<string, string>)
               : null;
           const record: RegexPreviewRecord = {
@@ -349,8 +355,7 @@ export function RegexNodeConfigSection({
         return;
       }
 
-      compiled.lastIndex = 0;
-      const match = compiled.exec(input);
+      const match = nonGlobalRegex ? nonGlobalRegex.exec(input) : null;
       if (!match) {
         if (!includeUnmatched) return;
         const record: RegexPreviewRecord = {
@@ -369,7 +374,7 @@ export function RegexNodeConfigSection({
       const groups =
         match.groups && typeof match.groups === "object"
           ? (Object.fromEntries(
-              Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, String(v ?? "")])
+              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
             ) as Record<string, string>)
           : null;
       const record: RegexPreviewRecord = {
@@ -387,7 +392,7 @@ export function RegexNodeConfigSection({
     const groupedObject = Object.fromEntries(groupedMap.entries());
     const grouped =
       regexConfig.outputMode === "array"
-        ? Object.entries(groupedObject).map(([key, items]) => ({ key, items }))
+        ? Object.entries(groupedObject).map(([key, items]: [string, RegexPreviewRecord[]]) => ({ key, items }))
         : groupedObject;
 
     return { matches, grouped };
@@ -412,7 +417,7 @@ export function RegexNodeConfigSection({
             onClick={() => {
               const candidateText =
                 selectedSnippetIndex >= 0 && codeSnippets[selectedSnippetIndex]
-                  ? codeSnippets[selectedSnippetIndex]!
+                  ? codeSnippets[selectedSnippetIndex]
                   : pendingAiRegex;
               const candidate = parseRegexCandidate(candidateText);
               if (!candidate) {
@@ -515,7 +520,7 @@ export function RegexNodeConfigSection({
     try {
       return JSON.stringify(sampleSource, null, 2);
     } catch {
-      return String(sampleSource);
+      return String(sampleSource as any);
     }
   }, [sampleSource]);
 
@@ -530,6 +535,8 @@ export function RegexNodeConfigSection({
     };
     return renderTemplate(template, context, sampleTextForAi);
   }, [regexConfig, sampleLines, sampleTextForAi]);
+
+  if (!isRegexNode) return null;
 
   return (
     <div className="space-y-6">

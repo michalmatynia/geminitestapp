@@ -47,10 +47,10 @@ export async function runTeachingChat(params: {
 }): Promise<{ message: string; sources: AgentTeachingChatSource[] }> {
   const agent = await getTeachingAgentById(params.agentId);
   if (!agent) {
-    throw new Error("Teaching agent not found.");
+    throw new Error("Learner agent not found.");
   }
 
-  const lastUserMessage = [...params.messages].reverse().find((m) => m.role === "user");
+  const lastUserMessage = [...params.messages].reverse().find((m: ChatMessage): boolean => m.role === "user");
   const queryText = lastUserMessage?.content?.trim() ?? "";
   if (!queryText) {
     throw new Error("Missing user message.");
@@ -58,7 +58,7 @@ export async function runTeachingChat(params: {
 
   const embeddingModel = agent.embeddingModel?.trim();
   if (!embeddingModel) {
-    throw new Error("Teaching agent has no embedding model configured.");
+    throw new Error("Learner agent has no embedding model configured.");
   }
 
   const queryEmbedding = await generateOllamaEmbedding({
@@ -72,12 +72,21 @@ export async function runTeachingChat(params: {
     topK: agent.retrievalTopK ?? 5,
     minScore: agent.retrievalMinScore ?? 0,
     embeddingModel,
+    maxDocsPerCollection: agent.maxDocsPerCollection ?? 400,
   });
 
   const systemPrompt = buildRagSystemPrompt({
     basePrompt: agent.systemPrompt ?? "",
     sources,
   });
+
+  const temperature = typeof agent.temperature === "number" ? agent.temperature : 0.2;
+  const maxTokens = typeof agent.maxTokens === "number" ? agent.maxTokens : 0;
+  const ollamaOptions: Record<string, unknown> = { temperature };
+  if (Number.isFinite(maxTokens) && maxTokens > 0) {
+    // Ollama option name for generation length.
+    ollamaOptions.num_predict = Math.round(maxTokens);
+  }
 
   const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
     method: "POST",
@@ -91,7 +100,7 @@ export async function runTeachingChat(params: {
           .filter((m: ChatMessage) => m.role !== "system")
           .map((m: ChatMessage) => ({ role: m.role, content: m.content })),
       ],
-      options: { temperature: 0.2 },
+      options: ollamaOptions,
     }),
   });
   if (!res.ok) {

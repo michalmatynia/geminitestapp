@@ -6,6 +6,8 @@
  */
 
 import type { AiTriggerButtonRecord } from "@/shared/types/ai-trigger-buttons";
+import type { ChatMessage } from "@/shared/types/chatbot";
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from "@/shared/types/agent-teaching";
 
 // ============================================================================
 // Types
@@ -279,6 +281,25 @@ export const agentApi = {
 
   async poll(runId: string): Promise<ApiResponse<{ run?: unknown }>> {
     return apiFetch<{ run?: unknown }>(`/api/agentcreator/agent/${encodeURIComponent(runId)}`);
+  },
+};
+
+// ============================================================================
+// Learner Agents API (RAG)
+// ============================================================================
+
+export const learnerAgentsApi = {
+  async listAgents(): Promise<ApiResponse<AgentTeachingAgentRecord[]>> {
+    const response = await apiFetch<{ agents?: AgentTeachingAgentRecord[] }>("/api/agentcreator/teaching/agents");
+    if (!response.ok) return response;
+    return { ok: true, data: response.data.agents ?? [] };
+  },
+
+  async chat(payload: {
+    agentId: string;
+    messages: ChatMessage[];
+  }): Promise<ApiResponse<{ message: string; sources: AgentTeachingChatSource[] }>> {
+    return apiPost<{ message: string; sources: AgentTeachingChatSource[] }>("/api/agentcreator/teaching/chat", payload);
   },
 };
 

@@ -68,8 +68,11 @@ export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> 
     embeddingModel: doc.embeddingModel,
     systemPrompt: doc.systemPrompt,
     collectionIds: Array.isArray(doc.collectionIds) ? doc.collectionIds : [],
+    temperature: typeof doc.temperature === "number" ? doc.temperature : 0.2,
+    maxTokens: typeof doc.maxTokens === "number" ? doc.maxTokens : 800,
     retrievalTopK: typeof doc.retrievalTopK === "number" ? doc.retrievalTopK : 5,
     retrievalMinScore: typeof doc.retrievalMinScore === "number" ? doc.retrievalMinScore : 0,
+    maxDocsPerCollection: typeof doc.maxDocsPerCollection === "number" ? doc.maxDocsPerCollection : 400,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }));
@@ -88,8 +91,11 @@ export async function getTeachingAgentById(agentId: string): Promise<AgentTeachi
     embeddingModel: doc.embeddingModel,
     systemPrompt: doc.systemPrompt,
     collectionIds: Array.isArray(doc.collectionIds) ? doc.collectionIds : [],
+    temperature: typeof doc.temperature === "number" ? doc.temperature : 0.2,
+    maxTokens: typeof doc.maxTokens === "number" ? doc.maxTokens : 800,
     retrievalTopK: typeof doc.retrievalTopK === "number" ? doc.retrievalTopK : 5,
     retrievalMinScore: typeof doc.retrievalMinScore === "number" ? doc.retrievalMinScore : 0,
+    maxDocsPerCollection: typeof doc.maxDocsPerCollection === "number" ? doc.maxDocsPerCollection : 400,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -111,8 +117,11 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
     embeddingModel: typeof input.embeddingModel === "string" && input.embeddingModel.trim() ? input.embeddingModel.trim() : (existing?.embeddingModel ?? ""),
     systemPrompt: typeof input.systemPrompt === "string" ? input.systemPrompt : (existing?.systemPrompt ?? ""),
     collectionIds: Array.isArray(input.collectionIds) ? input.collectionIds : (existing?.collectionIds ?? []),
+    temperature: typeof input.temperature === "number" ? input.temperature : (existing?.temperature ?? 0.2),
+    maxTokens: typeof input.maxTokens === "number" ? input.maxTokens : (existing?.maxTokens ?? 800),
     retrievalTopK: typeof input.retrievalTopK === "number" ? input.retrievalTopK : (existing?.retrievalTopK ?? 5),
     retrievalMinScore: typeof input.retrievalMinScore === "number" ? input.retrievalMinScore : (existing?.retrievalMinScore ?? 0),
+    maxDocsPerCollection: typeof input.maxDocsPerCollection === "number" ? input.maxDocsPerCollection : (existing?.maxDocsPerCollection ?? 400),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -127,8 +136,11 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
         embeddingModel: next.embeddingModel,
         systemPrompt: next.systemPrompt,
         collectionIds: next.collectionIds,
+        temperature: next.temperature,
+        maxTokens: next.maxTokens,
         retrievalTopK: next.retrievalTopK,
         retrievalMinScore: next.retrievalMinScore,
+        maxDocsPerCollection: next.maxDocsPerCollection,
         updatedAt: now,
       },
       $setOnInsert: { createdAt: next.createdAt },
@@ -238,7 +250,7 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
     db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).countDocuments({ collectionId }),
   ]);
 
-  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc) => ({
+  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, "embedding">) => ({
     id: doc._id,
     collectionId: doc.collectionId,
     text: doc.text,
@@ -294,10 +306,19 @@ export async function deleteEmbeddingDocument(documentId: string): Promise<boole
   return result.deletedCount > 0;
 }
 
+type RetrievalDocumentItem = {
+  id: string;
+  collectionId: string;
+  text: string;
+  embedding: number[];
+  embeddingModel: string;
+  metadata: AgentTeachingEmbeddingDocumentMetadata | null;
+};
+
 export async function listEmbeddingDocumentsForRetrieval(params: {
   collectionIds: string[];
   limitPerCollection?: number;
-}): Promise<Array<{ id: string; collectionId: string; text: string; embedding: number[]; embeddingModel: string; metadata: AgentTeachingEmbeddingDocumentMetadata | null }>> {
+}): Promise<Array<RetrievalDocumentItem>> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const ids = params.collectionIds.filter((id: string) => id.trim().length > 0);
@@ -312,7 +333,7 @@ export async function listEmbeddingDocumentsForRetrieval(params: {
     .limit(limit * Math.max(1, ids.length))
     .toArray();
 
-  return docs.map((doc: DocumentDoc) => ({
+  return docs.map((doc: DocumentDoc): RetrievalDocumentItem => ({
     id: doc._id,
     collectionId: doc.collectionId,
     text: doc.text,

@@ -67,6 +67,16 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
     }
 
     try {
+      const temperatureRaw = typeof draft.temperature === "number" ? draft.temperature : 0.2;
+      const temperature = Number.isFinite(temperatureRaw) ? Math.max(0, Math.min(temperatureRaw, 2)) : 0.2;
+      const maxTokensRaw = typeof draft.maxTokens === "number" ? draft.maxTokens : 800;
+      const maxTokens = Number.isFinite(maxTokensRaw) ? Math.max(1, Math.round(maxTokensRaw)) : 800;
+      const maxDocsPerCollectionRaw =
+        typeof draft.maxDocsPerCollection === "number" ? draft.maxDocsPerCollection : 400;
+      const maxDocsPerCollection = Number.isFinite(maxDocsPerCollectionRaw)
+        ? Math.max(10, Math.min(Math.round(maxDocsPerCollectionRaw), 2000))
+        : 400;
+
       await upsert({
         ...(draft.id ? { id: draft.id } : {}),
         name,
@@ -75,13 +85,16 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         embeddingModel,
         systemPrompt: draft.systemPrompt ?? "",
         collectionIds: selectedCollectionIds,
+        temperature,
+        maxTokens,
         retrievalTopK: typeof draft.retrievalTopK === "number" ? draft.retrievalTopK : 6,
         retrievalMinScore:
           typeof draft.retrievalMinScore === "number" ? draft.retrievalMinScore : 0.15,
+        maxDocsPerCollection,
       });
-      toast(draft.id ? "Teaching agent updated." : "Teaching agent created.", { variant: "success" });
+      toast(draft.id ? "Learner agent updated." : "Learner agent created.", { variant: "success" });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to save teaching agent.", { variant: "error" });
+      toast(error instanceof Error ? error.message : "Failed to save learner agent.", { variant: "error" });
       throw error;
     }
   };
@@ -89,9 +102,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
   const handleDelete = async (agent: AgentTeachingAgentRecord): Promise<void> => {
     try {
       await remove({ id: agent.id });
-      toast("Teaching agent deleted.", { variant: "success" });
+      toast("Learner agent deleted.", { variant: "success" });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to delete teaching agent.", { variant: "error" });
+      toast(error instanceof Error ? error.message : "Failed to delete learner agent.", { variant: "error" });
       throw error;
     }
   };
@@ -100,9 +113,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
 
   return (
     <ItemLibrary<AgentTeachingAgentRecord>
-      title="Teaching Agents"
+      title="Learner Agents"
       description="Agents that answer using connected embedding collections (RAG)."
-      entityName="Teaching Agent"
+      entityName="Learner Agent"
       items={agents}
       isLoading={isLoading}
       isSaving={saving}
@@ -110,7 +123,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       onDelete={handleDelete}
       backLink={(
         <Link href="/admin/agentcreator/teaching" className="text-blue-300 hover:text-blue-200">
-          ← Back to teaching
+          ← Back to learners
         </Link>
       )}
       buildDefaultItem={() => ({
@@ -120,13 +133,17 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         embeddingModel: embeddingModels[0] ?? "",
         systemPrompt: "",
         collectionIds: [],
+        temperature: 0.2,
+        maxTokens: 800,
         retrievalTopK: 6,
         retrievalMinScore: 0.15,
+        maxDocsPerCollection: 400,
       })}
       renderItemTags={(agent: AgentTeachingAgentRecord) => [
         `LLM: ${agent.llmModel || "—"}`,
         `Embed: ${agent.embeddingModel || "—"}`,
         `KB: ${(agent.collectionIds ?? []).length}`,
+        `Temp: ${(typeof agent.temperature === "number" ? agent.temperature : 0.2).toFixed(2)}`,
       ]}
       renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange: (changes: Partial<AgentTeachingAgentRecord>) => void) => (
         <div className="space-y-6">
@@ -184,6 +201,57 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
               placeholder="Optional instructions (tone, scope, rules)..."
               className="min-h-[120px]"
             />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Temperature</Label>
+              <Input
+                type="number"
+                min={0}
+                max={2}
+                step={0.05}
+                value={String(draft.temperature ?? 0.2)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange({ temperature: Number(event.target.value) })
+                }
+              />
+              <div className="text-[11px] text-gray-500">
+                Higher = more creative, lower = more deterministic.
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Max tokens</Label>
+              <Input
+                type="number"
+                min={1}
+                max={8000}
+                value={String(draft.maxTokens ?? 800)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange({ maxTokens: Number(event.target.value) })
+                }
+              />
+              <div className="text-[11px] text-gray-500">
+                Response length limit (Ollama: num_predict).
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Max docs scanned per collection</Label>
+            <Input
+              type="number"
+              min={10}
+              max={2000}
+              value={String(draft.maxDocsPerCollection ?? 400)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                onChange({ maxDocsPerCollection: Number(event.target.value) })
+              }
+            />
+            <div className="text-[11px] text-gray-500">
+              Limits retrieval scan size (higher = better recall, lower = faster).
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

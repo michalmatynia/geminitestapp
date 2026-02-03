@@ -27,6 +27,7 @@ import { DelayNodeConfigSection } from "./node-config/dialog/DelayNodeConfigSect
 import { GateNodeConfigSection } from "./node-config/dialog/GateNodeConfigSection";
 import { HttpNodeConfigSection } from "./node-config/dialog/HttpNodeConfigSection";
 import { AgentNodeConfigSection } from "./node-config/dialog/AgentNodeConfigSection";
+import { LearnerAgentNodeConfigSection } from "./node-config/dialog/LearnerAgentNodeConfigSection";
 import { MapperNodeConfigSection } from "./node-config/dialog/MapperNodeConfigSection";
 import { MathNodeConfigSection } from "./node-config/dialog/MathNodeConfigSection";
 import { ModelNodeConfigSection } from "./node-config/dialog/ModelNodeConfigSection";
@@ -256,6 +257,10 @@ export function NodeConfigDialog({
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
               />
               <AgentNodeConfigSection
+                selectedNode={selectedNode}
+                updateSelectedNodeConfig={updateSelectedNodeConfig}
+              />
+              <LearnerAgentNodeConfigSection
                 selectedNode={selectedNode}
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
               />

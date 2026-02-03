@@ -860,7 +860,7 @@ export function basePageBuilderReducer(
     case "ADD_BLOCK_TO_COLUMN": {
       const blockDef = getBlockDefinition(action.blockType);
       if (!blockDef) return state;
-      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block", TEXT_ATOM_BLOCK_TYPE].includes(action.blockType);
+      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block", TEXT_ATOM_BLOCK_TYPE, "Carousel"].includes(action.blockType);
       const isTextAtom = action.blockType === TEXT_ATOM_BLOCK_TYPE;
       const baseSettings = { ...blockDef.defaultSettings };
       const textAtomBlocks = isTextAtom
@@ -1358,6 +1358,82 @@ export function basePageBuilderReducer(
         };
       });
       return { ...state, sections: updatedSections };
+    }
+
+    case "ADD_CAROUSEL_FRAME": {
+      const frameDef = getBlockDefinition("CarouselFrame");
+      if (!frameDef) return state;
+      const newFrame: BlockInstance = {
+        id: uid(),
+        type: "CarouselFrame",
+        settings: { ...frameDef.defaultSettings },
+        blocks: [],
+      };
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
+              pb.id === action.carouselId ? { ...pb, blocks: [...(pb.blocks ?? []), newFrame] } : pb
+            ),
+          })),
+        };
+      });
+      return { ...state, sections: updatedSections, selectedNodeId: newFrame.id };
+    }
+
+    case "REMOVE_CAROUSEL_FRAME": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
+              pb.id === action.carouselId
+                ? { ...pb, blocks: (pb.blocks ?? []).filter((f: BlockInstance) => f.id !== action.frameId) }
+                : pb
+            ),
+          })),
+        };
+      });
+      return {
+        ...state,
+        sections: updatedSections,
+        selectedNodeId: state.selectedNodeId === action.frameId ? null : state.selectedNodeId,
+      };
+    }
+
+    case "ADD_ELEMENT_TO_CAROUSEL_FRAME": {
+      const elemDef = getBlockDefinition(action.elementType);
+      if (!elemDef) return state;
+      const newElem: BlockInstance = {
+        id: uid(),
+        type: action.elementType,
+        settings: { ...elemDef.defaultSettings },
+      };
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
+            ...col,
+            blocks: (col.blocks ?? []).map((carousel: BlockInstance) =>
+              carousel.id === action.carouselId
+                ? {
+                    ...carousel,
+                    blocks: (carousel.blocks ?? []).map((frame: BlockInstance) =>
+                      frame.id === action.frameId ? { ...frame, blocks: [...(frame.blocks ?? []), newElem] } : frame
+                    ),
+                  }
+                : carousel
+            ),
+          })),
+        };
+      });
+      return { ...state, sections: updatedSections, selectedNodeId: newElem.id };
     }
 
     case "REORDER_SECTIONS": {

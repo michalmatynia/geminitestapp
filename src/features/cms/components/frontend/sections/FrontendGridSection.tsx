@@ -6,10 +6,11 @@ import { getSectionContainerClass, getSectionStyles, getTextAlign, type ColorSch
 import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { FrontendImageWithTextBlock } from "./FrontendImageWithTextBlock";
 import { FrontendHeroBlock } from "./FrontendHeroBlock";
+import { FrontendCarousel } from "./FrontendCarousel";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 
 // Section-type blocks that need special rendering inside columns
-const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom"]);
+const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"]);
 
 interface FrontendGridSectionProps {
   settings: Record<string, unknown>;
@@ -192,16 +193,41 @@ function renderBackgroundImageLayer(settings?: Record<string, unknown>): React.R
   );
 }
 
+// Helper to check if an ImageElement is in background mode for a specific target
+function isBackgroundModeImage(block: BlockInstance, target: "grid" | "row" | "column"): boolean {
+  if (block.type !== "ImageElement") return false;
+  const backgroundTarget = (block.settings?.["backgroundTarget"] as string) || "none";
+  return backgroundTarget === target;
+}
+
+// Collect all ImageElements from a block tree that have a specific background target
+function collectBackgroundImages(blocks: BlockInstance[], target: "grid" | "row" | "column"): BlockInstance[] {
+  const result: BlockInstance[] = [];
+  for (const block of blocks) {
+    if (isBackgroundModeImage(block, target)) {
+      result.push(block);
+    }
+    // Also check children for grid backgrounds (they could be nested in rows/columns)
+    if (target === "grid" && block.blocks) {
+      result.push(...collectBackgroundImages(block.blocks, target));
+    }
+  }
+  return result;
+}
+
 export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: FrontendGridSectionProps): React.ReactNode {
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === "Row");
   const directColumns = blocks.filter((b: BlockInstance) => b.type === "Column");
-  const gridImageBlocks = blocks.filter((b: BlockInstance) => b.type === "ImageElement");
+  // Legacy: ImageElements directly in grid that don't have background mode set
+  const gridImageBlocks = blocks.filter((b: BlockInstance) => b.type === "ImageElement" && !isBackgroundModeImage(b, "grid") && !isBackgroundModeImage(b, "row") && !isBackgroundModeImage(b, "column"));
+  // New: Collect all ImageElements with backgroundTarget: "grid" from entire block tree
+  const gridBackgroundModeImages = collectBackgroundImages(blocks, "grid");
   const sectionGap = (settings["gap"] as string) || "medium";
   const sectionGapClass = getGapClass(sectionGap);
   const gridBackgroundSettings = settings["backgroundImage"] as Record<string, unknown> | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
-  const hasGridBackgroundLayers = gridImageBlocks.length > 0;
+  const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
   const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
 
   const rowsToRender: BlockInstance[] =
@@ -215,12 +241,18 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
 
   return (
     <section style={sectionStyles} className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
-      {hasGridBackgroundLayers &&
-        gridImageBlocks.map((block: BlockInstance) => (
-          <Fragment key={`grid-background-${block.id}`}>
-            {renderBackgroundImageLayer(block.settings)}
-          </Fragment>
-        ))}
+      {/* Legacy: ImageElements directly in grid without background mode */}
+      {gridImageBlocks.map((block: BlockInstance) => (
+        <Fragment key={`grid-background-${block.id}`}>
+          {renderBackgroundImageLayer(block.settings)}
+        </Fragment>
+      ))}
+      {/* New: ImageElements with backgroundTarget: "grid" */}
+      {gridBackgroundModeImages.map((block: BlockInstance) => (
+        <Fragment key={`grid-bg-mode-${block.id}`}>
+          {renderBackgroundImageLayer(block.settings)}
+        </Fragment>
+      ))}
       {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
       <div className="relative z-10">
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
@@ -231,6 +263,9 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               // If no children at all, skip
               if (rowChildren.length === 0) return null;
 
+              // Collect row background mode images from this row's children
+              const rowBackgroundModeImages = collectBackgroundImages(rowChildren, "row");
+
               const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
               const rowGapClass = getGapClass(rowGapValue);
               const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
@@ -239,7 +274,9 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               const rowHeightStyle =
                 rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
               const rowBackgroundSettings = row.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
-              const hasRowBackground = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+              const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+              const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
+              const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
 
               // Direction setting: horizontal (side by side) or vertical (stacked)
               const direction = (row.settings?.["direction"] as string) || "horizontal";
@@ -251,7 +288,13 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
                   className={`relative ${hasRowBackground ? "overflow-hidden" : ""}`}
                   style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                 >
-                  {hasRowBackground && renderBackgroundImageLayer(rowBackgroundSettings)}
+                  {/* Row background mode images */}
+                  {rowBackgroundModeImages.map((block: BlockInstance) => (
+                    <Fragment key={`row-bg-mode-${block.id}`}>
+                      {renderBackgroundImageLayer(block.settings)}
+                    </Fragment>
+                  ))}
+                  {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
                   <div
                     className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row flex-wrap"} ${rowGapClass}`}
                     style={{
@@ -260,6 +303,12 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
                   >
                     {/* Render all children in order, handling columns and direct elements */}
                     {rowChildren.map((child: BlockInstance) => {
+                      // Skip ImageElements that are in background mode (grid or row)
+                      if (child.type === "ImageElement") {
+                        const bgTarget = (child.settings?.["backgroundTarget"] as string) || "none";
+                        if (bgTarget === "grid" || bgTarget === "row") return null;
+                      }
+
                       if (child.type === "Column") {
                         // Columns get flex-1 to share space equally when horizontal
                         return (
@@ -319,13 +368,25 @@ function ColumnRenderer({
   rowHeight?: number | undefined;
 }): React.ReactNode {
   const children = column.blocks ?? [];
+
+  // Collect column background mode images
+  const columnBackgroundModeImages = children.filter((b: BlockInstance) => isBackgroundModeImage(b, "column"));
+  // Filter out all background mode images from regular rendering
+  const contentChildren = children.filter((b: BlockInstance) => {
+    if (b.type !== "ImageElement") return true;
+    const bgTarget = (b.settings?.["backgroundTarget"] as string) || "none";
+    return bgTarget === "none";
+  });
+
   const animConfig = column.settings["gsapAnimation"] as GsapAnimationConfig | undefined;
-  const isSingleBlock = children.length === 1;
+  const isSingleBlock = contentChildren.length === 1;
   const columnHeightMode = (column.settings["heightMode"] as string) || "inherit";
   const columnHeight = (column.settings["height"] as number) || 0;
   const shouldStretch = isSingleBlock && (columnHeightMode === "fixed" || rowHeightMode === "fixed");
   const columnBackgroundSettings = column.settings["backgroundImage"] as Record<string, unknown> | undefined;
-  const hasColumnBackground = Boolean((columnBackgroundSettings?.["src"] as string) || "");
+  const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.["src"] as string) || "");
+  const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
+  const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
   const columnStyle: React.CSSProperties = {};
   if (columnHeightMode === "fixed" && columnHeight > 0) {
     columnStyle.height = `${columnHeight}px`;
@@ -336,14 +397,20 @@ function ColumnRenderer({
   return (
     <GsapAnimationWrapper config={animConfig}>
       <div className={`relative ${hasColumnBackground ? "overflow-hidden" : ""}`} style={columnStyle}>
-        {hasColumnBackground && renderBackgroundImageLayer(columnBackgroundSettings)}
+        {/* Column background mode images */}
+        {columnBackgroundModeImages.map((block: BlockInstance) => (
+          <Fragment key={`col-bg-mode-${block.id}`}>
+            {renderBackgroundImageLayer(block.settings)}
+          </Fragment>
+        ))}
+        {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings)}
         <div className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : "gap-4"}`}>
-          {children.map((block: BlockInstance, blockIndex: number) => {
+          {contentChildren.map((block: BlockInstance, blockIndex: number) => {
             const minHeight = getBlockMinHeight(block.type);
             const wrapperStyle: React.CSSProperties = {
               ...(shouldStretch ? { height: "100%" } : { minHeight: `${minHeight}px` }),
               position: "relative",
-              zIndex: children.length - blockIndex,
+              zIndex: contentChildren.length - blockIndex,
             };
             if (SECTION_BLOCK_TYPES.has(block.type)) {
               return (
@@ -485,6 +552,15 @@ function SectionBlockRenderer({
           ) : (
             <span className="text-sm text-gray-400">Text atoms</span>
           )}
+        </div>
+      </GsapAnimationWrapper>
+    );
+  }
+  if (block.type === "Carousel") {
+    return (
+      <GsapAnimationWrapper config={animConfig}>
+        <div className={stretchClass} style={stretchStyle}>
+          <FrontendCarousel settings={block.settings} blocks={children} />
         </div>
       </GsapAnimationWrapper>
     );

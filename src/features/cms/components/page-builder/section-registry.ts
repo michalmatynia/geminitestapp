@@ -56,11 +56,14 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero", "Block"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero", "Block", "Carousel"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 // Row can contain columns and also elements/blocks directly (not just inside columns)
-export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement", "TextAtom", "Button", "Image", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "Hero", "ImageWithText", "RichText", "Block", "Model3D"];
+export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement", "TextAtom", "Button", "Image", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "Hero", "ImageWithText", "RichText", "Block", "Model3D", "Carousel"];
+
+// Content blocks that can be placed inside a CarouselFrame
+export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "Block", "Button", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon"];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
   Row: {
@@ -215,6 +218,179 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       ...paddingFields(),
       ...marginFields(),
       ...sectionStyleFields(),
+    ],
+  },
+  Carousel: {
+    type: "Carousel",
+    label: "Carousel",
+    icon: "GalleryHorizontal",
+    allowedBlockTypes: ["CarouselFrame"],
+    defaultSettings: {
+      frameCount: 3,
+      autoPlay: true,
+      autoPlaySpeed: 5000,
+      loop: true,
+      showNavigation: true,
+      showIndicators: true,
+      transitionType: "slide",
+      transitionDuration: 500,
+      pauseOnHover: true,
+      heightMode: "auto",
+      height: 400,
+    },
+    settingsSchema: [
+      { key: "frameCount", label: "Number of frames", type: "range", defaultValue: 3, min: 1, max: 10 },
+      {
+        key: "autoPlay",
+        label: "Auto play",
+        type: "select",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      { key: "autoPlaySpeed", label: "Auto play speed (ms)", type: "range", defaultValue: 5000, min: 1000, max: 15000 },
+      {
+        key: "loop",
+        label: "Loop",
+        type: "select",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "showNavigation",
+        label: "Show arrows",
+        type: "select",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "showIndicators",
+        label: "Show indicators",
+        type: "select",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "transitionType",
+        label: "Transition type",
+        type: "select",
+        options: [
+          { label: "Slide", value: "slide" },
+          { label: "Fade", value: "fade" },
+          { label: "None", value: "none" },
+        ],
+        defaultValue: "slide",
+      },
+      { key: "transitionDuration", label: "Transition duration (ms)", type: "range", defaultValue: 500, min: 100, max: 2000 },
+      {
+        key: "pauseOnHover",
+        label: "Pause on hover",
+        type: "select",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        defaultValue: "true",
+      },
+      {
+        key: "heightMode",
+        label: "Height mode",
+        type: "select",
+        options: [
+          { label: "Auto (fit content)", value: "auto" },
+          { label: "Fixed", value: "fixed" },
+        ],
+        defaultValue: "auto",
+      },
+      { key: "height", label: "Fixed height (px)", type: "range", defaultValue: 400, min: 100, max: 800 },
+    ],
+  },
+  CarouselFrame: {
+    type: "CarouselFrame",
+    label: "Carousel Frame",
+    icon: "Frame",
+    allowedBlockTypes: CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES,
+    defaultSettings: {
+      backgroundColor: "",
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      contentAlignment: "center",
+      verticalAlignment: "center",
+      // Animation settings for this frame
+      animationType: "fade-in",
+      animationDuration: 500,
+      animationDelay: 0,
+      animationEasing: "ease-out",
+    },
+    settingsSchema: [
+      { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+      {
+        key: "contentAlignment",
+        label: "Content alignment",
+        type: "select",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+        defaultValue: "center",
+      },
+      {
+        key: "verticalAlignment",
+        label: "Vertical alignment",
+        type: "select",
+        options: [
+          { label: "Top", value: "top" },
+          { label: "Center", value: "center" },
+          { label: "Bottom", value: "bottom" },
+        ],
+        defaultValue: "center",
+      },
+      ...paddingFields(),
+      {
+        key: "animationType",
+        label: "Content animation",
+        type: "select",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Fade in", value: "fade-in" },
+          { label: "Slide up", value: "slide-up" },
+          { label: "Slide down", value: "slide-down" },
+          { label: "Slide left", value: "slide-left" },
+          { label: "Slide right", value: "slide-right" },
+          { label: "Zoom in", value: "zoom-in" },
+          { label: "Zoom out", value: "zoom-out" },
+        ],
+        defaultValue: "fade-in",
+      },
+      { key: "animationDuration", label: "Animation duration (ms)", type: "range", defaultValue: 500, min: 100, max: 2000 },
+      { key: "animationDelay", label: "Animation delay (ms)", type: "range", defaultValue: 0, min: 0, max: 2000 },
+      {
+        key: "animationEasing",
+        label: "Animation easing",
+        type: "select",
+        options: [
+          { label: "Linear", value: "linear" },
+          { label: "Ease", value: "ease" },
+          { label: "Ease in", value: "ease-in" },
+          { label: "Ease out", value: "ease-out" },
+          { label: "Ease in-out", value: "ease-in-out" },
+        ],
+        defaultValue: "ease-out",
+      },
     ],
   },
   Heading: {
@@ -390,6 +566,9 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       transparencyDirection: "bottom",
       transparencyStrength: 0,
       imageShadow: { x: 0, y: 0, blur: 0, spread: 0, color: "#00000000" },
+      // Background mode settings
+      backgroundMode: "none",
+      backgroundTarget: "none",
     },
     settingsSchema: [
       { key: "src", label: "Image", type: "image" },
@@ -1460,4 +1639,123 @@ export function getRowAllowedBlockTypes(): BlockDefinition[] {
 
 export function isBlockTypeAllowedInRow(blockType: string): boolean {
   return ROW_ALLOWED_BLOCK_TYPES.includes(blockType);
+}
+
+// ---------------------------------------------------------------------------
+// ImageElement Background Mode Settings
+// ---------------------------------------------------------------------------
+// When an ImageElement is in background mode, show these settings instead of regular image settings
+
+export const IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS: SettingsField[] = [
+  { key: "src", label: "Image", type: "image" },
+  { key: "alt", label: "Alt text", type: "text", defaultValue: "" },
+  {
+    key: "objectFit",
+    label: "Fit mode",
+    type: "select",
+    options: [
+      { label: "Cover (fill container)", value: "cover" },
+      { label: "Contain (fit inside)", value: "contain" },
+      { label: "Fill (stretch)", value: "fill" },
+      { label: "None", value: "none" },
+    ],
+    defaultValue: "cover",
+  },
+  {
+    key: "objectPosition",
+    label: "Position",
+    type: "select",
+    options: [
+      { label: "Center", value: "center" },
+      { label: "Top", value: "top" },
+      { label: "Bottom", value: "bottom" },
+      { label: "Left", value: "left" },
+      { label: "Right", value: "right" },
+      { label: "Top left", value: "top-left" },
+      { label: "Top right", value: "top-right" },
+      { label: "Bottom left", value: "bottom-left" },
+      { label: "Bottom right", value: "bottom-right" },
+    ],
+    defaultValue: "center",
+  },
+  { key: "opacity", label: "Opacity", type: "range", defaultValue: 100, min: 0, max: 100 },
+  { key: "blur", label: "Blur (px)", type: "range", defaultValue: 0, min: 0, max: 20 },
+  { key: "grayscale", label: "Grayscale (%)", type: "range", defaultValue: 0, min: 0, max: 100 },
+  { key: "brightness", label: "Brightness (%)", type: "range", defaultValue: 100, min: 0, max: 200 },
+  { key: "contrast", label: "Contrast (%)", type: "range", defaultValue: 100, min: 0, max: 200 },
+  { key: "scale", label: "Scale (%)", type: "range", defaultValue: 100, min: 50, max: 200 },
+  {
+    key: "overlayType",
+    label: "Overlay",
+    type: "select",
+    options: [
+      { label: "None", value: "none" },
+      { label: "Solid", value: "solid" },
+      { label: "Gradient", value: "gradient" },
+    ],
+    defaultValue: "none",
+  },
+  { key: "overlayColor", label: "Overlay color", type: "color", defaultValue: "#000000" },
+  { key: "overlayOpacity", label: "Overlay opacity (%)", type: "range", defaultValue: 0, min: 0, max: 100 },
+  { key: "overlayGradientFrom", label: "Gradient from", type: "color", defaultValue: "#000000" },
+  { key: "overlayGradientTo", label: "Gradient to", type: "color", defaultValue: "#ffffff" },
+  {
+    key: "overlayGradientDirection",
+    label: "Gradient direction",
+    type: "select",
+    options: [
+      { label: "Top", value: "to-top" },
+      { label: "Bottom", value: "to-bottom" },
+      { label: "Left", value: "to-left" },
+      { label: "Right", value: "to-right" },
+      { label: "Top left", value: "to-top-left" },
+      { label: "Top right", value: "to-top-right" },
+      { label: "Bottom left", value: "to-bottom-left" },
+      { label: "Bottom right", value: "to-bottom-right" },
+    ],
+    defaultValue: "to-bottom",
+  },
+  {
+    key: "transparencyMode",
+    label: "Transparency",
+    type: "select",
+    options: [
+      { label: "None", value: "none" },
+      { label: "Gradient", value: "gradient" },
+    ],
+    defaultValue: "none",
+  },
+  {
+    key: "transparencyDirection",
+    label: "Transparency direction",
+    type: "select",
+    options: [
+      { label: "Top", value: "top" },
+      { label: "Bottom", value: "bottom" },
+      { label: "Left", value: "left" },
+      { label: "Right", value: "right" },
+      { label: "Top left", value: "top-left" },
+      { label: "Top right", value: "top-right" },
+      { label: "Bottom left", value: "bottom-left" },
+      { label: "Bottom right", value: "bottom-right" },
+    ],
+    defaultValue: "bottom",
+  },
+  { key: "transparencyStrength", label: "Transparency strength (%)", type: "range", defaultValue: 0, min: 0, max: 100 },
+];
+
+export type ImageBackgroundTarget = "none" | "grid" | "row" | "column";
+
+export function getImageBackgroundTargetOptions(
+  hasGrid: boolean,
+  hasRow: boolean,
+  hasColumn: boolean
+): { label: string; value: ImageBackgroundTarget }[] {
+  const options: { label: string; value: ImageBackgroundTarget }[] = [
+    { label: "None (regular image)", value: "none" },
+  ];
+  if (hasColumn) options.push({ label: "Column background", value: "column" });
+  if (hasRow) options.push({ label: "Row background", value: "row" });
+  if (hasGrid) options.push({ label: "Grid background", value: "grid" });
+  return options;
 }

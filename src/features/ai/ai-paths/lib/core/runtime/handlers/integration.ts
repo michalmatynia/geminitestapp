@@ -207,6 +207,21 @@ export const handleNotification: NodeHandler = ({
         return prevOutputs;
       }
     }
+    const template = promptSourceNode.config?.prompt?.template ?? "";
+    const templateNeedsCurrentValue =
+      /{{\s*(result|value|current)\b[^}]*}}|\[\s*(result|value|current)\b[^\]]*\]/.test(template);
+    if (templateNeedsCurrentValue) {
+      const currentValue =
+        coerceInput(promptSourceInputs.result) ??
+        coerceInput(promptSourceInputs.value);
+      const hasCurrentValue =
+        currentValue !== undefined &&
+        currentValue !== null &&
+        (typeof currentValue !== "string" || currentValue.trim().length > 0);
+      if (!hasCurrentValue) {
+        return prevOutputs;
+      }
+    }
     const derivedPrompt: { promptOutput: string; imagesValue: unknown } = buildPromptOutput(
       promptSourceNode.config?.prompt,
       promptSourceInputs,

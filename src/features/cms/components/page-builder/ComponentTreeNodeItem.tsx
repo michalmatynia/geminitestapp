@@ -31,6 +31,8 @@ import {
   AppWindow,
   Plus,
   Folder,
+  Lock,
+  Frame,
   type LucideIcon,
 } from "lucide-react";
 import type { SectionInstance, BlockInstance, PageZone } from "../../types/page-builder";
@@ -77,9 +79,11 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   SocialLinks: Share2,
   Icon: Smile,
   AppEmbed: AppWindow,
+  Carousel: GalleryHorizontal,
+  CarouselFrame: Frame,
 };
 
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"];
 const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {
@@ -145,6 +149,7 @@ interface SectionNodeItemProps {
   draggedSectionZone: PageZone | null;
   setDraggedSectionZone: (zone: PageZone | null) => void;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
 export function SectionNodeItem({
@@ -188,6 +193,7 @@ export function SectionNodeItem({
   draggedSectionZone,
   setDraggedSectionZone,
   onDropSectionToColumn,
+  onRemoveBlock,
 }: SectionNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === section.id;
   const isFileSection =
@@ -492,6 +498,7 @@ export function SectionNodeItem({
                 onDropBlockToColumn={onDropBlockToColumn}
                 onDropBlockToRow={onDropBlockToRow}
                 onAddElementToNestedBlock={onAddElementToNestedBlock}
+                onRemoveBlock={onRemoveBlock}
                 expandedIds={expandedIds}
                 onToggleExpand={onToggleExpand}
                 draggedBlockId={draggedBlockId}
@@ -523,6 +530,7 @@ export function SectionNodeItem({
                 onDropBlockToColumn={onDropBlockToColumn}
                 onAddElementToNestedBlock={onAddElementToNestedBlock}
                 onRemoveColumnFromRow={onRemoveColumnFromRow}
+                onRemoveBlock={onRemoveBlock}
                 rowColumnCount={gridColumns.length}
                 expandedIds={expandedIds}
                 onToggleExpand={onToggleExpand}
@@ -561,6 +569,7 @@ export function SectionNodeItem({
                   onDropBlock={onDropBlock}
                   onDropBlockToSection={onDropBlockToSection}
                   onDropBlockToColumn={onDropBlockToColumn}
+                  onRemoveBlock={onRemoveBlock}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
                   draggedBlockType={draggedBlockType}
@@ -601,6 +610,7 @@ export function SectionNodeItem({
               onSelect={onSelect}
               onDropBlock={onDropBlock}
               onDropBlockToSection={onDropBlockToSection}
+              onRemoveBlock={onRemoveBlock}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
               draggedBlockType={draggedBlockType}
@@ -653,6 +663,7 @@ interface RowNodeItemProps {
   setDraggedSectionId: (id: string | null) => void;
   draggedSectionType: string | null;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
 function RowNodeItem({
@@ -685,6 +696,7 @@ function RowNodeItem({
   setDraggedSectionId,
   draggedSectionType,
   onDropSectionToColumn,
+  onRemoveBlock,
 }: RowNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === row.id;
   const isExpanded = expandedIds.has(row.id);
@@ -866,6 +878,7 @@ function RowNodeItem({
                   onDropBlockToColumn={onDropBlockToColumn}
                   onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onRemoveColumnFromRow={onRemoveColumnFromRow}
+                  onRemoveBlock={onRemoveBlock}
                   rowId={row.id}
                   rowColumnCount={columns.length}
                   expandedIds={expandedIds}
@@ -899,6 +912,7 @@ function RowNodeItem({
                 onSelect={onSelect}
                 onDropBlock={() => {}}
                 onDropBlockToColumn={onDropBlockToColumn}
+                onRemoveBlock={onRemoveBlock}
                 draggedBlockId={draggedBlockId}
                 setDraggedBlockId={setDraggedBlockId}
                 draggedBlockType={draggedBlockType}
@@ -950,6 +964,7 @@ interface ColumnNodeItemProps {
   setDraggedSectionId: (id: string | null) => void;
   draggedSectionType: string | null;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
 function ColumnNodeItem({
@@ -980,6 +995,7 @@ function ColumnNodeItem({
   setDraggedSectionId,
   draggedSectionType,
   onDropSectionToColumn,
+  onRemoveBlock,
 }: ColumnNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === column.id;
   const isExpanded = expandedIds.has(column.id);
@@ -1155,6 +1171,7 @@ function ColumnNodeItem({
                   onSelect={onSelect}
                   onAddElementToNestedBlock={onAddElementToNestedBlock}
                   onDropBlockToColumn={onDropBlockToColumn}
+                  onRemoveBlock={onRemoveBlock}
                   expandedIds={expandedIds}
                   onToggleExpand={onToggleExpand}
                   draggedBlockId={draggedBlockId}
@@ -1183,6 +1200,7 @@ function ColumnNodeItem({
                   onSelect={onSelect}
                   onDropBlock={() => {}}
                   onDropBlockToColumn={onDropBlockToColumn}
+                  onRemoveBlock={onRemoveBlock}
                   draggedBlockId={draggedBlockId}
                   setDraggedBlockId={setDraggedBlockId}
                   draggedBlockType={draggedBlockType}
@@ -1248,6 +1266,7 @@ interface SectionBlockNodeItemProps {
   setDraggedSectionId: (id: string | null) => void;
   draggedSectionType: string | null;
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
 function SectionBlockNodeItem({
@@ -1275,6 +1294,7 @@ function SectionBlockNodeItem({
   setDraggedSectionId,
   draggedSectionType,
   onDropSectionToColumn,
+  onRemoveBlock,
 }: SectionBlockNodeItemProps): React.ReactNode {
   const isSelected = selectedNodeId === block.id;
   const isExpanded = expandedIds.has(block.id);
@@ -1438,6 +1458,20 @@ function SectionBlockNodeItem({
             />
           </div>
         )}
+        {/* Delete button for section-type blocks */}
+        {onRemoveBlock && !isDragOver && (
+          <button
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onRemoveBlock(sectionId, block.id, columnId);
+            }}
+            className="p-0.5 rounded opacity-0 group-hover/sblock:opacity-100 hover:bg-red-500/20 hover:text-red-300 text-gray-500 transition-opacity"
+            title="Remove block"
+          >
+            <Trash2 className="size-3" />
+          </button>
+        )}
       </div>
 
       {isExpanded && hasChildren && (
@@ -1454,6 +1488,7 @@ function SectionBlockNodeItem({
               onSelect={onSelect}
               onDropBlock={() => {}}
               onDropBlockToColumn={onDropBlockToColumn}
+              onRemoveBlock={onRemoveBlock}
               draggedBlockId={draggedBlockId}
               setDraggedBlockId={setDraggedBlockId}
               draggedBlockType={draggedBlockType}
@@ -1487,6 +1522,7 @@ interface BlockNodeItemProps {
   onDropBlock: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
   onDropBlockToColumn?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
   onDropBlockToSection?: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
   draggedBlockId: string | null;
   setDraggedBlockId: (id: string | null) => void;
   draggedBlockType?: string | null;
@@ -1510,6 +1546,7 @@ function BlockNodeItem({
   onDropBlock,
   onDropBlockToColumn,
   onDropBlockToSection,
+  onRemoveBlock,
   draggedBlockId,
   setDraggedBlockId,
   draggedBlockType: _draggedBlockType,
@@ -1527,11 +1564,16 @@ function BlockNodeItem({
   const isDragging = draggedBlockId === block.id;
   const blockLabel = resolveBlockLabel(block, block.type);
 
+  // Check if this is an ImageElement in background mode (locked/immovable)
+  const isBackgroundMode = block.type === "ImageElement" &&
+    (block.settings?.["backgroundTarget"] as string || "none") !== "none";
+  const backgroundTarget = (block.settings?.["backgroundTarget"] as string) || "none";
+
   return (
     <div
       role="button"
       tabIndex={0}
-      draggable
+      draggable={!isBackgroundMode}
       onClick={() => onSelect(block.id)}
       onKeyDown={(e: React.KeyboardEvent) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -1625,21 +1667,48 @@ function BlockNodeItem({
         if (setDraggedFromColumnId) setDraggedFromColumnId(null);
         if (setDraggedFromParentBlockId) setDraggedFromParentBlockId(null);
       }}
-      className={`group flex w-full cursor-grab items-center gap-1.5 rounded px-2 py-1.5 text-sm transition active:cursor-grabbing ${
+      className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
+        isBackgroundMode ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
+      } ${
         isDragOver
           ? "bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50"
           : isSelected
           ? "bg-blue-600/80 text-white"
           : isDragging
           ? "opacity-40 text-gray-400"
+          : isBackgroundMode
+          ? "text-gray-500 hover:bg-muted/20"
           : "text-gray-400 hover:bg-muted/40 hover:text-gray-300"
       }`}
     >
-      <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
+      {isBackgroundMode ? (
+        <span title={`Locked as ${backgroundTarget} background`}>
+          <Lock className="size-3 shrink-0 text-amber-500" />
+        </span>
+      ) : (
+        <GripVertical className="size-3 shrink-0 text-gray-600 opacity-0 group-hover:opacity-100" />
+      )}
       <Icon className="size-3.5 shrink-0" />
       <span className="truncate">{blockLabel}</span>
+      {isBackgroundMode && (
+        <span className="ml-auto text-[9px] text-amber-500/70 uppercase">{backgroundTarget} bg</span>
+      )}
       {isDragOver && (
         <span className="ml-auto text-[10px] text-emerald-300">Insert here</span>
+      )}
+      {/* Delete button - visible on hover when selected or always visible on hover */}
+      {onRemoveBlock && !isDragOver && !isBackgroundMode && (
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onRemoveBlock(sectionId, block.id, columnId, parentBlockId);
+          }}
+          className="ml-auto p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-300 text-gray-500 transition-opacity"
+          title="Remove block"
+        >
+          <Trash2 className="size-3" />
+        </button>
       )}
     </div>
   );

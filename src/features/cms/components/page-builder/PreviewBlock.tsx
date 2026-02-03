@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useId, useCallback } from "react";
 import NextImage from "next/image";
 import { createPortal } from "react-dom";
-import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2 } from "lucide-react";
+import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
@@ -20,7 +20,7 @@ export type MediaReplaceTarget = {
 };
 
 // Section-type block types that get a richer preview
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"];
 
 const getGapClass = (gap?: string): string => {
   if (gap === "none") return "gap-0";
@@ -85,6 +85,28 @@ const unregisterInspectorTooltip = (id: string): void => {
 
 const getInspectorTooltipIndex = (id: string): number => inspectorTooltipOrder.indexOf(id);
 const STYLE_KEY_REGEX = /(color|padding|margin|radius|border|shadow|align|font|size|width|height|spacing|background|opacity)/i;
+
+// Helper to check if an ImageElement is in background mode for a specific target
+function isBackgroundModeImage(block: BlockInstance, target: "grid" | "row" | "column"): boolean {
+  if (block.type !== "ImageElement") return false;
+  const backgroundTarget = (block.settings?.["backgroundTarget"] as string) || "none";
+  return backgroundTarget === target;
+}
+
+// Collect all ImageElements from a block tree that have a specific background target
+function collectBackgroundImages(blocks: BlockInstance[], target: "grid" | "row" | "column"): BlockInstance[] {
+  const result: BlockInstance[] = [];
+  for (const block of blocks) {
+    if (isBackgroundModeImage(block, target)) {
+      result.push(block);
+    }
+    // Also check children for grid backgrounds (they could be nested in rows/columns)
+    if (target === "grid" && block.blocks) {
+      result.push(...collectBackgroundImages(block.blocks, target));
+    }
+  }
+  return result;
+}
 
 const formatSettingValue = (value: unknown): string => {
   if (value === null || value === undefined) return "";
@@ -578,12 +600,15 @@ export function PreviewSection({
   if (section.type === "Grid") {
     const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === "Row");
     const directColumns = section.blocks.filter((b: BlockInstance) => b.type === "Column");
-    const gridImageBlocks = section.blocks.filter((b: BlockInstance) => b.type === "ImageElement");
+    // Legacy: ImageElements directly in grid that don't have background mode set
+    const gridImageBlocks = section.blocks.filter((b: BlockInstance) => b.type === "ImageElement" && !isBackgroundModeImage(b, "grid") && !isBackgroundModeImage(b, "row") && !isBackgroundModeImage(b, "column"));
+    // New: Collect all ImageElements with backgroundTarget: "grid" from entire block tree
+    const gridBackgroundModeImages = collectBackgroundImages(section.blocks, "grid");
     const sectionGap = (section.settings["gap"] as string) || "medium";
     const sectionGapClass = getGapClass(sectionGap);
     const gridBackgroundSettings = section.settings["backgroundImage"] as Record<string, unknown> | undefined;
     const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
-    const hasGridBackgroundLayers = gridImageBlocks.length > 0;
+    const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
     const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
     const rowCount = rowBlocks.length > 0 ? rowBlocks.length : directColumns.length > 0 ? 1 : 0;
     const canRemoveRow = rowCount > 1;
@@ -632,12 +657,18 @@ export function PreviewSection({
           {renderSectionActions()}
           {divider}
           <div className={`relative ${hasGridBackground ? "overflow-hidden" : ""}`}>
-            {hasGridBackgroundLayers &&
-              gridImageBlocks.map((block: BlockInstance) => (
-                <React.Fragment key={`grid-background-${block.id}`}>
-                  {renderBackgroundImageLayer(block.settings, mediaStyles)}
-                </React.Fragment>
-              ))}
+            {/* Legacy: ImageElements directly in grid without background mode */}
+            {gridImageBlocks.map((block: BlockInstance) => (
+              <React.Fragment key={`grid-background-${block.id}`}>
+                {renderBackgroundImageLayer(block.settings, mediaStyles)}
+              </React.Fragment>
+            ))}
+            {/* New: ImageElements with backgroundTarget: "grid" */}
+            {gridBackgroundModeImages.map((block: BlockInstance) => (
+              <React.Fragment key={`grid-bg-mode-${block.id}`}>
+                {renderBackgroundImageLayer(block.settings, mediaStyles)}
+              </React.Fragment>
+            ))}
             {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
             <div className="relative z-10">
               {rowsToRender.length === 0 ? (
@@ -663,8 +694,12 @@ export function PreviewSection({
                       const rowHeight = (row.settings?.["height"] as number) || 0;
                       const rowHeightStyle =
                         rowHeightMode === "fixed" && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
+                      // Row background mode images
+                      const rowBackgroundModeImages = collectBackgroundImages(row.blocks ?? [], "row");
                       const rowBackgroundSettings = row.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
-                      const hasRowBackground = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+                      const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.["src"] as string) || "");
+                      const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
+                      const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
                       const rowContainer = (
                         <div
                           role={!virtual ? "button" : undefined}
@@ -686,7 +721,13 @@ export function PreviewSection({
                             isRowSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                           }`}
                         >
-                          {hasRowBackground && renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
+                          {/* Row background mode images */}
+                          {rowBackgroundModeImages.map((block: BlockInstance) => (
+                            <React.Fragment key={`row-bg-mode-${block.id}`}>
+                              {renderBackgroundImageLayer(block.settings, mediaStyles)}
+                            </React.Fragment>
+                          ))}
+                          {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
                           {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
                             <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm">
                               <button
@@ -724,8 +765,13 @@ export function PreviewSection({
                               } else if (rowHeightMode === "fixed" && rowHeight > 0) {
                                 columnStyle.height = "100%";
                               }
+                              // Column background mode images
+                              const columnBlocks = column.blocks ?? [];
+                              const columnBackgroundModeImages = columnBlocks.filter((b: BlockInstance) => isBackgroundModeImage(b, "column"));
                               const columnBackgroundSettings = column.settings?.["backgroundImage"] as Record<string, unknown> | undefined;
-                              const hasColumnBackground = Boolean((columnBackgroundSettings?.["src"] as string) || "");
+                              const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.["src"] as string) || "");
+                              const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
+                              const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
                               const columnTooltip = (
                                 <InspectorTooltip
                                   title="Column"
@@ -812,10 +858,21 @@ export function PreviewSection({
                                       isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                                     } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""}`}
                                   >
-                                    {hasColumnBackground && renderBackgroundImageLayer(columnBackgroundSettings, mediaStyles)}
+                                    {/* Column background mode images */}
+                                    {columnBackgroundModeImages.map((block: BlockInstance) => (
+                                      <React.Fragment key={`col-bg-mode-${block.id}`}>
+                                        {renderBackgroundImageLayer(block.settings, mediaStyles)}
+                                      </React.Fragment>
+                                    ))}
+                                    {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings, mediaStyles)}
                                     {(column.blocks ?? []).length > 0 && ((): React.ReactNode => {
-                                      const columnBlocks = column.blocks ?? [];
-                                      const isSingleBlock = columnBlocks.length === 1;
+                                      // Filter out background mode images from regular rendering
+                                      const contentBlocks = columnBlocks.filter((b: BlockInstance) => {
+                                        if (b.type !== "ImageElement") return true;
+                                        const bgTarget = (b.settings?.["backgroundTarget"] as string) || "none";
+                                        return bgTarget === "none";
+                                      });
+                                      const isSingleBlock = contentBlocks.length === 1;
                                       const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
                                       return (
                                         <div
@@ -823,7 +880,7 @@ export function PreviewSection({
                                             isInspecting ? "" : "pointer-events-none"
                                           }`}
                                         >
-                                          {columnBlocks.map((block: BlockInstance, blockIndex: number) => (
+                                          {contentBlocks.map((block: BlockInstance, blockIndex: number) => (
                                             <div
                                               key={block.id}
                                               className={shouldStretch ? "flex-1" : ""}
@@ -831,7 +888,7 @@ export function PreviewSection({
                                                 minHeight: `${getBlockMinHeight(block.type)}px`,
                                                 ...(shouldStretch ? { height: "100%" } : {}),
                                                 position: "relative",
-                                                zIndex: columnBlocks.length - blockIndex,
+                                                zIndex: contentBlocks.length - blockIndex,
                                               }}
                                             >
                                               <PreviewBlockItem
@@ -2107,6 +2164,24 @@ function PreviewBlockItem({
                   mediaStyles={mediaStyles}
                 />
               )}
+              {block.type === "Carousel" && (
+                <PreviewCarouselBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  stretch={stretch}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
             </div>
           </div>
           {canReplaceImage && (
@@ -3236,6 +3311,218 @@ function PreviewTextAtomBlock({
       ) : showEditorChrome ? (
         <div className="text-xs text-gray-600">Text atoms</div>
       ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Carousel preview (inside columns)
+// ---------------------------------------------------------------------------
+
+// Helper to parse boolean settings that may be boolean or string "true"/"false"
+const parseCarouselBoolSetting = (value: unknown, defaultValue: boolean = true): boolean => {
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return defaultValue;
+};
+
+function PreviewCarouselBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  inspectorSettings,
+  hoveredNodeId,
+  onSelect,
+  sectionId,
+  sectionType,
+  sectionZone,
+  columnId,
+  stretch = false,
+  onHoverNode,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === "CarouselFrame");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const transitionType = (block.settings["transitionType"] as string) || "slide";
+  const transitionDuration = (block.settings["transitionDuration"] as number) || 500;
+  const heightMode = (block.settings["heightMode"] as string) || "auto";
+  const fixedHeight = (block.settings["height"] as number) || 400;
+  const showNavigation = parseCarouselBoolSetting(block.settings["showNavigation"], true);
+  const showIndicators = parseCarouselBoolSetting(block.settings["showIndicators"], true);
+  const loop = parseCarouselBoolSetting(block.settings["loop"], true);
+
+  const frameCount = frames.length;
+
+  const goToNext = useCallback((): void => {
+    if (frameCount === 0) return;
+    if (!loop && currentIndex >= frameCount - 1) return;
+    setCurrentIndex((prev: number) => (prev + 1) % frameCount);
+  }, [frameCount, loop, currentIndex]);
+
+  const goToPrev = useCallback((): void => {
+    if (frameCount === 0) return;
+    if (!loop && currentIndex <= 0) return;
+    setCurrentIndex((prev: number) => (prev - 1 + frameCount) % frameCount);
+  }, [frameCount, loop, currentIndex]);
+
+  const goToIndex = useCallback((index: number): void => {
+    if (index === currentIndex) return;
+    setCurrentIndex(index);
+  }, [currentIndex]);
+
+  const stretchStyle = stretch ? { height: "100%" } : undefined;
+  const containerStyle: React.CSSProperties = {
+    ...(stretchStyle ?? {}),
+    ...(heightMode === "fixed" ? { height: `${fixedHeight}px` } : {}),
+  };
+
+  if (frameCount === 0) {
+    if (!showEditorChrome) return null;
+    return (
+      <div
+        className="flex items-center justify-center p-8 text-gray-400 border border-dashed border-gray-600 rounded"
+        style={containerStyle}
+      >
+        No carousel frames
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full overflow-hidden" style={containerStyle}>
+      {/* Frames container */}
+      <div
+        className="relative w-full h-full"
+        style={{
+          ...(transitionType === "slide"
+            ? {
+                display: "flex",
+                transform: `translateX(-${currentIndex * 100}%)`,
+                transition: `transform ${transitionDuration}ms ease-in-out`,
+              }
+            : {}),
+        }}
+      >
+        {frames.map((frame: BlockInstance, index: number) => {
+          const isActive = index === currentIndex;
+          const frameSettings = frame.settings ?? {};
+          const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
+          const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
+          const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+          const paddingTop = (frameSettings["paddingTop"] as number) || 0;
+          const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
+          const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
+          const paddingRight = (frameSettings["paddingRight"] as number) || 0;
+
+          const frameStyle: React.CSSProperties = {
+            backgroundColor: backgroundColor || undefined,
+            padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+            ...(transitionType === "slide"
+              ? { minWidth: "100%", flexShrink: 0 }
+              : {
+                  position: index === 0 ? "relative" : "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: transitionType === "fade" ? (isActive ? 1 : 0) : isActive ? 1 : 0,
+                  visibility: isActive ? "visible" : "hidden",
+                  transition: transitionType === "fade" ? `opacity ${transitionDuration}ms ease-in-out` : undefined,
+                }),
+          };
+
+          const alignmentClass =
+            contentAlignment === "center"
+              ? "items-center justify-center"
+              : contentAlignment === "right"
+                ? "items-end justify-end"
+                : "items-start justify-start";
+
+          const verticalAlignmentClass =
+            verticalAlignment === "center"
+              ? "justify-center"
+              : verticalAlignment === "bottom"
+                ? "justify-end"
+                : "justify-start";
+
+          const frameChildren = frame.blocks ?? [];
+
+          return (
+            <div
+              key={frame.id}
+              className={`flex flex-col ${alignmentClass} ${verticalAlignmentClass}`}
+              style={frameStyle}
+            >
+              {frameChildren.map((child: BlockInstance) => (
+                <PreviewBlockItem
+                  key={child.id}
+                  block={child}
+                  isSelected={selectedNodeId === child.id}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  contained
+                  selectedNodeId={selectedNodeId}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  parentBlockId={frame.id}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Navigation arrows */}
+      {showNavigation && frameCount > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={goToPrev}
+            disabled={!loop && currentIndex === 0}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            type="button"
+            onClick={goToNext}
+            disabled={!loop && currentIndex === frameCount - 1}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </>
+      )}
+
+      {/* Indicators */}
+      {showIndicators && frameCount > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          {frames.map((_: BlockInstance, index: number) => (
+            <button
+              key={index}
+              type="button"
+              onClick={(): void => goToIndex(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                index === currentIndex ? "bg-white" : "bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

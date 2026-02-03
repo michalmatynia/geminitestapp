@@ -1,8 +1,89 @@
-result does not enter the prompt node
+In the Grid, Row, Block Column I should be able to select Background colors as gradients or transparent gradients, consisting of 2 colors. I also want to be able to select the direction of the gradient.
+
+* CMS Builder - when I insert an image element into a Grid, Row Or column, I woul like an additional setting to apperar in my ImageElement. The one to attach the Image to a given Grid or Row or Column as Background Image, in that case, the Image becomes a background image of a given element and receives a different set of settings until it's unlocked from the Background image state.
+
+When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
+
+In CMS Builder Folder Tree, When I choose a Row, my pointer changes to Text Cursor, it should be a inger pointer instead
+
+I want to be able to apply GSAP Parallax effects unto my Blocks, elements, Images
+
+check - GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
+
+ate-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
+
+Per node Animation specs
+Element node: “animate me”
+Folder node: “animate my children as a group (stagger)”
+
+3) Compile specs into Scenes (not one timeline per element)
+This is the big performance / sanity win:
+	•	Scene A: “Intro” → one master timeline that plays on load
+	•	Scene B: “Scroll reveals” → ScrollTrigger instances (often batched)
+	•	Scene C: “Interactions” → hover/click handlers
+For many elements, batching scroll reveals is faster and simpler than making custom logic per element.
+
+
+Animation sequencers should have a cycle, where I can bundle together two or for animations, for example, Fade In and Fade Out. 
+
+
+Phase 1 (fast, high value)
+	•	Per node:
+	◦	Trigger: load / scroll / hover / click
+	◦	Effect: dropdown of registered effects
+	◦	Controls: duration, delay, ease, distance, stagger
+	◦	Order: list ordering + “overlap” slider that writes at as "-=0.2" etc.
+Phase 2 (true sequencer)
+	•	Visual timeline per scene (Intro scene is the main one)
+	•	Drag steps horizontally → writes at positions
+	•	Group tracks by folder nesting
+	•	Preview in an iframe of the page
+Don’t build a full After Effects clone
+You’ll spend ages. The sweet spot is:
+	•	a few scenes
+	•	a list-based editor
+	•		•	optional “advanced” field for at
+
+Folder structure: the best mapping
+Treat folders as “groups” and give them group effects:
+	•	Folder “Cards”:
+	◦	scope: children
+	◦	effect: staggerFadeUp
+	◦	vars: { stagger: 0.06 }
+	•	Element “Hero Title”:
+	◦	scope: self
+	◦	effect: splitTextRise (if you use SplitText)
+	•	Section “Features”:
+	◦	trigger: scroll
+	◦	effect: revealOnEnter
+This aligns perfectly with your CMS mental model.
+
+Two things that will save you pain
+A) Responsive + reduced motion
+Use gsap.matchMedia() so you can swap values for mobile/desktop and respect prefers-reduced-motion. In the CMS you can store variants, or just let runtime override based on media.
+B) Limit the allowed vars
+Don’t store raw GSAP configs from the CMS. Store a safe subset like:
+	•	duration, delay, ease, x/y, scale, rotation, stagger, start/end (for scroll)This prevents broken pages and avoids “animation injection”.
+
+Recommended “best way” in one sentence
+Build registered preset effects + store data specs on nodes + compile them into a small set of page scenes (intro/scroll/interactions) with proper cleanup.
+
+---
+
+--- AI - Paths
+AI-PAths result does not enter the prompt node
+
+--- Image Stuiod Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
+
+prompt formatter, validator and extractor. AI Based and programmatic, I also want ai to extract parameters but to teach  patterns for extraction to my formatter and validator. All of these patterns should be availabe to see in a separate Tabbed lists under Image studio sections
+AI Based mask creator ?
+GPT settings still not visible
 
 Address the draggable resortable list component from categories, make it a unifying component also for Trigger buttons
 Create a Category Modal should save on Enter keystroke
 I don't need a cancel Buttons in my Category List
+I want each project to have a separate folder tree
+
 
 
 Test If I can Put the Block in and Out the same for the Block
@@ -20,12 +101,8 @@ Unify Form component and and complex ZOD vallidators
 
 Admin Menu Favourites
 
-Attach itself to Background,  Backgroun Image Layering
 
 
-GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
-fdfd
-Reordering of Grids,
 
 App manager
 
@@ -57,7 +134,6 @@ In each product row, between a checkmark and an image I need a star that will ma
 
 Deep ANalytics
 
-Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
 
 * String  to Array Node,
 Iterator Node (will take object list take one send somewhere and wait for the callback confirmation and the move to the next object)
@@ -129,69 +205,6 @@ I would like to be able to click on B (Base.com connection icon) and have a sect
 —
 
 LATER - noteapp, mass imports
-
-
-Late-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
-
-Background image
-
-Per node Animation specs
-Element node: “animate me”
-Folder node: “animate my children as a group (stagger)”
-
-3) Compile specs into Scenes (not one timeline per element)
-This is the big performance / sanity win:
-	•	Scene A: “Intro” → one master timeline that plays on load
-	•	Scene B: “Scroll reveals” → ScrollTrigger instances (often batched)
-	•	Scene C: “Interactions” → hover/click handlers
-For many elements, batching scroll reveals is faster and simpler than making custom logic per element.
-
-
-Animation sequencers should have a cycle, where I can bundle together two or for animations, for example, Fade In and Fade Out. 
-
-
-Phase 1 (fast, high value)
-	•	Per node:
-	◦	Trigger: load / scroll / hover / click
-	◦	Effect: dropdown of registered effects
-	◦	Controls: duration, delay, ease, distance, stagger
-	◦	Order: list ordering + “overlap” slider that writes at as "-=0.2" etc.
-Phase 2 (true sequencer)
-	•	Visual timeline per scene (Intro scene is the main one)
-	•	Drag steps horizontally → writes at positions
-	•	Group tracks by folder nesting
-	•	Preview in an iframe of the page
-Don’t build a full After Effects clone
-You’ll spend ages. The sweet spot is:
-	•	a few scenes
-	•	a list-based editor
-	•		•	optional “advanced” field for at
-
-Folder structure: the best mapping
-Treat folders as “groups” and give them group effects:
-	•	Folder “Cards”:
-	◦	scope: children
-	◦	effect: staggerFadeUp
-	◦	vars: { stagger: 0.06 }
-	•	Element “Hero Title”:
-	◦	scope: self
-	◦	effect: splitTextRise (if you use SplitText)
-	•	Section “Features”:
-	◦	trigger: scroll
-	◦	effect: revealOnEnter
-This aligns perfectly with your CMS mental model.
-
-Two things that will save you pain
-A) Responsive + reduced motion
-Use gsap.matchMedia() so you can swap values for mobile/desktop and respect prefers-reduced-motion. In the CMS you can store variants, or just let runtime override based on media.
-B) Limit the allowed vars
-Don’t store raw GSAP configs from the CMS. Store a safe subset like:
-	•	duration, delay, ease, x/y, scale, rotation, stagger, start/end (for scroll)This prevents broken pages and avoids “animation injection”.
-
-Recommended “best way” in one sentence
-Build registered preset effects + store data specs on nodes + compile them into a small set of page scenes (intro/scroll/interactions) with proper cleanup.
-
----
 
 
 

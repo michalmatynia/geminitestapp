@@ -10,7 +10,7 @@ import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
 import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from "../../hooks/useCmsQueries";
 import { CmsDomainSelector } from "../CmsDomainSelector";
-import { getSectionDefinition, getBlockDefinition } from "./section-registry";
+import { getSectionDefinition, getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from "./section-registry";
 import { SettingsFieldRenderer } from "./SettingsFieldRenderer";
 import { AnimationConfigPanel } from "./AnimationConfigPanel";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
@@ -167,6 +167,23 @@ export function ComponentSettingsPanel(): React.ReactNode {
       ) ?? null
     );
   }, [selectedParentSection, selectedParentColumn]);
+
+  // ---------------------------------------------------------------------------
+  // Background mode for ImageElement
+  // ---------------------------------------------------------------------------
+  const isImageElementInContainer =
+    selectedBlock?.type === "ImageElement" &&
+    selectedParentSection?.type === "Grid" &&
+    !selectedParentBlock;
+  const currentBackgroundTarget = (selectedBlock?.settings?.["backgroundTarget"] as ImageBackgroundTarget) || "none";
+  const isInBackgroundMode = currentBackgroundTarget !== "none";
+  const backgroundTargetOptions = useMemo(() => {
+    if (!isImageElementInContainer) return [];
+    const hasGrid = selectedParentSection?.type === "Grid";
+    const hasRow = Boolean(selectedGridRow);
+    const hasColumn = Boolean(selectedParentColumn);
+    return getImageBackgroundTargetOptions(hasGrid, hasRow, hasColumn);
+  }, [isImageElementInContainer, selectedParentSection, selectedGridRow, selectedParentColumn]);
 
   // ---------------------------------------------------------------------------
   // Section settings handlers
@@ -843,23 +860,61 @@ export function ComponentSettingsPanel(): React.ReactNode {
                   )}
                 </div>
 
-                {renderFieldGroups(
-                  groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-                  rowSettingsForRender ?? selectedBlock.settings,
-                  handleBlockSettingChange,
-                  (field: SettingsField): SettingsField =>
-                    (selectedBlock.type === "AppEmbed" && field.key === "appId")
-                      ? { ...field, options: appEmbedOptions }
-                      : (isRowBlock && rowHeightMode === "inherit" && field.key === "height")
-                        ? { ...field, disabled: true }
-                        : field,
+                {/* Background mode selector for ImageElement in Grid containers */}
+                {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
+                  <div className="rounded border border-border/40 bg-gray-900/40 p-3 mb-4">
+                    <div className="text-xs font-semibold text-gray-200">Background Mode</div>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      Attach this image as a background to a container element.
+                    </p>
+                    <div className="mt-2">
+                      <select
+                        value={currentBackgroundTarget}
+                        onChange={(e): void => handleBlockSettingChange("backgroundTarget", e.target.value as ImageBackgroundTarget)}
+                        className="w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200"
+                      >
+                        {backgroundTargetOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {isInBackgroundMode && (
+                      <div className="mt-2 px-2 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded text-[11px] text-blue-300">
+                        This image is now a {currentBackgroundTarget} background. It will render behind the {currentBackgroundTarget} content.
+                      </div>
+                    )}
+                  </div>
                 )}
 
-                {isGridImageElement && (
+                {/* Show background mode settings when in background mode, otherwise regular settings */}
+                {isImageElementInContainer && isInBackgroundMode ? (
+                  renderFieldGroups(
+                    groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)),
+                    selectedBlock.settings,
+                    handleBlockSettingChange,
+                  )
+                ) : (
+                  renderFieldGroups(
+                    groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
+                    rowSettingsForRender ?? selectedBlock.settings,
+                    handleBlockSettingChange,
+                    (field: SettingsField): SettingsField =>
+                      (selectedBlock.type === "AppEmbed" && field.key === "appId")
+                        ? { ...field, options: appEmbedOptions }
+                        : (isRowBlock && rowHeightMode === "inherit" && field.key === "height")
+                          ? { ...field, disabled: true }
+                          : field,
+                  )
+                )}
+
+                {/* Keep the old "Make background" option for quick conversion (removes the element) */}
+                {isGridImageElement && !isInBackgroundMode && (
                   <div className="rounded border border-border/40 bg-gray-900/40 p-3">
-                    <div className="text-xs font-semibold text-gray-200">Make background</div>
+                    <div className="text-xs font-semibold text-gray-200">Convert to static background</div>
                     <p className="mt-1 text-[11px] text-gray-500">
-                      Move this image behind grid content while keeping its effects.
+                      Move this image into the container&apos;s background settings (removes this element).
                     </p>
                     <div className="mt-3 grid gap-2">
                       {selectedParentColumn && (
@@ -870,7 +925,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                           className="w-full text-xs"
                           disabled={!imageBackgroundSrc}
                         >
-                          Make column background
+                          Convert to column background
                         </Button>
                       )}
                       {selectedGridRow && (
@@ -881,7 +936,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                           className="w-full text-xs"
                           disabled={!imageBackgroundSrc}
                         >
-                          Make row background
+                          Convert to row background
                         </Button>
                       )}
                       <Button
@@ -891,7 +946,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                         className="w-full text-xs"
                         disabled={!imageBackgroundSrc}
                       >
-                        Make grid background
+                        Convert to grid background
                       </Button>
                       {!imageBackgroundSrc && (
                         <div className="text-[11px] text-gray-500">

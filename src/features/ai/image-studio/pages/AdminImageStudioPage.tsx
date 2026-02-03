@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { Folder, Image as ImageIcon, MousePointer2, Pentagon, RefreshCcw, Upload } from "lucide-react";
+import { Folder, Image as ImageIcon, MousePointer2, Pentagon, RefreshCcw, Settings, Upload } from "lucide-react";
 
 import type { ImageFileRecord } from "@/shared/types/files";
-import { extractParamsFromPrompt, flattenParams, setDeepValue } from "../utils/prompt-params";
-import type { ExtractParamsResult, ParamLeaf } from "../utils/prompt-params";
+import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
+import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { serializeSetting } from "@/shared/utils/settings-json";
+import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings } from "../utils/studio-settings";
 
 type ToolMode = "select" | "polygon";
 
@@ -325,6 +328,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+  const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
+  const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
+  const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
+    JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
+  );
+  const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
+
   const [projectId, setProjectId] = useState<string>("");
   const [newProjectId, setNewProjectId] = useState<string>("");
   const [selectedFolder, setSelectedFolder] = useState<string>("");
@@ -337,7 +350,34 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [promptText, setPromptText] = useState<string>("");
   const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
   const [paramsState, setParamsState] = useState<Record<string, unknown> | null>(null);
+  const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [promptSourceAtExtract, setPromptSourceAtExtract] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (settingsLoaded) return;
+    if (!settingsQuery.data) return;
+
+    const stored = parseImageStudioSettings(settingsQuery.data.get(IMAGE_STUDIO_SETTINGS_KEY));
+    const openaiModelFallback = settingsQuery.data.get("openai_model");
+
+    const hydrated: ImageStudioSettings =
+      openaiModelFallback && stored.targetAi.openai.model === defaultImageStudioSettings.targetAi.openai.model
+        ? {
+            ...stored,
+            targetAi: {
+              ...stored.targetAi,
+              openai: {
+                ...stored.targetAi.openai,
+                model: openaiModelFallback,
+              },
+            },
+          }
+        : stored;
+
+    setStudioSettings(hydrated);
+    setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setSettingsLoaded(true);
+  }, [settingsLoaded, settingsQuery.data]);
 
   useEffect(() => {
     const saved = localStorage.getItem("imageStudio.projectId") ?? "";
@@ -449,10 +489,109 @@ export function AdminImageStudioPage(): React.JSX.Element {
     [uploadMutation, selectedFolder]
   );
 
+  const runProgrammaticExtraction = useCallback((): void => {
+    const result = extractParamsFromPrompt(promptText);
+    setExtractResult(result);
+    if (!result.ok) {
+      setParamsState(null);
+      setParamSpecs(null);
+      setPromptSourceAtExtract(null);
+      toast(result.error, { variant: "error" });
+      return;
+    }
+    setParamsState(result.params);
+    setParamSpecs(inferParamSpecs(result.params, result.rawObjectText));
+    setPromptSourceAtExtract(promptText);
+    toast("Params extracted.", { variant: "success" });
+  }, [promptText, toast]);
+
+  const handleAdvancedOverridesChange = useCallback((raw: string): void => {
+    setAdvancedOverridesText(raw);
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed === null) {
+        setAdvancedOverridesError(null);
+        setStudioSettings((prev) => ({
+          ...prev,
+          targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, advanced_overrides: null } },
+        }));
+        return;
+      }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setAdvancedOverridesError("Must be a JSON object (or null).");
+        return;
+      }
+      setAdvancedOverridesError(null);
+      setStudioSettings((prev) => ({
+        ...prev,
+        targetAi: {
+          ...prev.targetAi,
+          openai: { ...prev.targetAi.openai, advanced_overrides: parsed as Record<string, unknown> },
+        },
+      }));
+    } catch {
+      setAdvancedOverridesError("Invalid JSON.");
+    }
+  }, []);
+
+  const saveStudioSettings = useCallback(async (): Promise<void> => {
+    if (advancedOverridesError) {
+      toast(`Settings not saved: ${advancedOverridesError}`, { variant: "error" });
+      return;
+    }
+
+    if (studioSettings.promptExtraction.mode === "gpt" && !studioSettings.promptExtraction.gpt.model.trim()) {
+      toast("Prompt extract model is required when prompt extraction mode is GPT.", { variant: "error" });
+      return;
+    }
+
+    if (!studioSettings.targetAi.openai.model.trim()) {
+      toast("Target AI model is required.", { variant: "error" });
+      return;
+    }
+
+    try {
+      await updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_SETTINGS_KEY,
+        value: serializeSetting(studioSettings),
+      });
+      toast("Image Studio settings saved.", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to save Image Studio settings:", error);
+      toast("Failed to save Image Studio settings.", { variant: "error" });
+    }
+  }, [advancedOverridesError, studioSettings, toast, updateSetting]);
+
+  const resetStudioSettings = useCallback((): void => {
+    setStudioSettings(defaultImageStudioSettings);
+    setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setAdvancedOverridesError(null);
+  }, []);
+
   const paramLeaves: ParamLeaf[] = useMemo(() => {
     if (!paramsState) return [];
     return flattenParams(paramsState).filter((leaf) => Boolean(leaf.path));
   }, [paramsState]);
+
+  const validationIssues: ParamIssue[] = useMemo(() => {
+    if (!paramsState || !paramSpecs) return [];
+    return validateImageStudioParams(paramsState, paramSpecs);
+  }, [paramsState, paramSpecs]);
+
+  const issuesByPath = useMemo(() => {
+    const map: Record<string, ParamIssue[]> = {};
+    validationIssues.forEach((issue) => {
+      map[issue.path] ??= [];
+      map[issue.path]!.push(issue);
+    });
+    return map;
+  }, [validationIssues]);
+
+  const validationSummary = useMemo(() => {
+    const errors = validationIssues.filter((i) => i.severity === "error").length;
+    const warnings = validationIssues.filter((i) => i.severity === "warning").length;
+    return { errors, warnings };
+  }, [validationIssues]);
 
   const generatedPrompt = useMemo(() => {
     if (!extractResult || !extractResult.ok || !paramsState || !promptSourceAtExtract) return "";
@@ -467,8 +606,9 @@ export function AdminImageStudioPage(): React.JSX.Element {
       mask: maskPoints.length > 0 ? { type: "polygon", points: maskPoints, closed: maskClosed } : null,
       prompt: generatedPrompt || promptText || null,
       extractedParams: paramsState,
+      studioSettings,
     };
-  }, [projectId, selectedAsset, maskPoints, maskClosed, generatedPrompt, promptText, paramsState]);
+  }, [projectId, selectedAsset, maskPoints, maskClosed, generatedPrompt, promptText, paramsState, studioSettings]);
 
   return (
     <div className="container mx-auto max-w-none space-y-6 py-10">
@@ -679,34 +819,648 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setSettingsOpen((prev) => !prev)}
+                title="Image Studio settings"
+              >
+                <Settings className="mr-2 size-4" />
+                Settings
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
-                  toast("AI extraction is coming next (this MVP supports programmatic params parsing).", { variant: "info" });
+                  if (!promptText.trim()) return;
+                  if (studioSettings.promptExtraction.mode === "programmatic") {
+                    runProgrammaticExtraction();
+                    return;
+                  }
+                  toast(
+                    `AI extraction is not wired yet. Selected model: ${studioSettings.promptExtraction.gpt.model}. (API key: /admin/settings/ai)`,
+                    { variant: "info" }
+                  );
                 }}
+                disabled={!promptText.trim()}
               >
                 AI extract
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const result = extractParamsFromPrompt(promptText);
-                  setExtractResult(result);
-                  if (!result.ok) {
-                    setParamsState(null);
-                    setPromptSourceAtExtract(null);
-                    toast(result.error, { variant: "error" });
-                    return;
-                  }
-                  setParamsState(result.params);
-                  setPromptSourceAtExtract(promptText);
-                  toast("Params extracted.", { variant: "success" });
-                }}
+                onClick={runProgrammaticExtraction}
                 disabled={!promptText.trim()}
               >
                 Extract params
               </Button>
             </div>
           </div>
+
+          {settingsOpen ? (
+            <div className="rounded border border-border bg-card/40 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs text-gray-300">Studio Settings</div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetStudioSettings}
+                    disabled={updateSetting.isPending}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => void saveStudioSettings()}
+                    disabled={updateSetting.isPending || Boolean(advancedOverridesError)}
+                  >
+                    {updateSetting.isPending ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+
+              {settingsQuery.isLoading && !settingsLoaded ? (
+                <div className="mt-2 text-xs text-gray-500">Loading settings…</div>
+              ) : null}
+
+              <div className="mt-3 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-400">Prompt Extraction</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Mode</div>
+                      <Select
+                        value={studioSettings.promptExtraction.mode}
+                        onValueChange={(value) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptExtraction: {
+                              ...prev.promptExtraction,
+                              mode: value === "gpt" ? "gpt" : "programmatic",
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="programmatic">Programmatic</SelectItem>
+                          <SelectItem value="gpt">GPT (AI)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Model</div>
+                      <Input
+                        value={studioSettings.promptExtraction.gpt.model}
+                        onChange={(e) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptExtraction: {
+                              ...prev.promptExtraction,
+                              gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
+                            },
+                          }))
+                        }
+                        className="h-8"
+                        placeholder="e.g. gpt-4o-mini"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Temperature</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.promptExtraction.gpt.temperature ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptExtraction: {
+                              ...prev.promptExtraction,
+                              gpt: { ...prev.promptExtraction.gpt, temperature: next },
+                            },
+                          }));
+                        }}
+                        className="h-8"
+                        min={0}
+                        max={2}
+                        step={0.1}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Top P</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.promptExtraction.gpt.top_p ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptExtraction: {
+                              ...prev.promptExtraction,
+                              gpt: { ...prev.promptExtraction.gpt, top_p: next },
+                            },
+                          }));
+                        }}
+                        className="h-8"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Max Output Tokens</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptExtraction: {
+                              ...prev.promptExtraction,
+                              gpt: { ...prev.promptExtraction.gpt, max_output_tokens: next },
+                            },
+                          }));
+                        }}
+                        className="h-8"
+                        min={1}
+                        step={1}
+                      />
+                    </div>
+                    <div className="text-[11px] text-gray-500">
+                      Stores config only; AI extraction endpoint is next.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-400">Target AI (OpenAI / GPT)</Label>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">API</div>
+                      <Select
+                        value={studioSettings.targetAi.openai.api}
+                        onValueChange={(value) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === "responses" ? "responses" : "images" } },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="images">Images</SelectItem>
+                          <SelectItem value="responses">Responses</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Model</div>
+                      <Input
+                        value={studioSettings.targetAi.openai.model}
+                        onChange={(e) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
+                          }))
+                        }
+                        className="h-8"
+                        placeholder={studioSettings.targetAi.openai.api === "images" ? "e.g. gpt-image-1" : "e.g. gpt-4o-mini"}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Temperature</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.temperature ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, temperature: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        min={0}
+                        max={2}
+                        step={0.1}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Top P</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.top_p ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, top_p: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Max Output Tokens</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.max_output_tokens ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, max_output_tokens: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        min={1}
+                        step={1}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Seed</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.seed ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, seed: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        step={1}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Presence Penalty</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.presence_penalty ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, presence_penalty: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        min={-2}
+                        max={2}
+                        step={0.1}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Frequency Penalty</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.targetAi.openai.frequency_penalty ?? ""}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const next = raw === "" ? null : Number(raw);
+                          if (raw !== "" && !Number.isFinite(next)) return;
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, frequency_penalty: next } },
+                          }));
+                        }}
+                        className="h-8"
+                        min={-2}
+                        max={2}
+                        step={0.1}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center gap-2 text-xs text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={studioSettings.targetAi.openai.stream}
+                        onChange={(e) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, stream: e.target.checked } },
+                          }))
+                        }
+                      />
+                      Stream
+                    </label>
+
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Tool Choice</div>
+                      <Select
+                        value={studioSettings.targetAi.openai.tool_choice ?? "__null__"}
+                        onValueChange={(value) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: {
+                              ...prev.targetAi,
+                              openai: { ...prev.targetAi.openai, tool_choice: value === "__null__" ? null : value === "none" ? "none" : "auto" },
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__null__">Default</SelectItem>
+                          <SelectItem value="auto">auto</SelectItem>
+                          <SelectItem value="none">none</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Reasoning Effort</div>
+                      <Select
+                        value={studioSettings.targetAi.openai.reasoning_effort ?? "__null__"}
+                        onValueChange={(value) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: {
+                              ...prev.targetAi,
+                              openai: {
+                                ...prev.targetAi.openai,
+                                reasoning_effort: value === "__null__" ? null : (value as ImageStudioSettings["targetAi"]["openai"]["reasoning_effort"]),
+                              },
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__null__">Default</SelectItem>
+                          <SelectItem value="low">low</SelectItem>
+                          <SelectItem value="medium">medium</SelectItem>
+                          <SelectItem value="high">high</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Response Format</div>
+                      <Select
+                        value={studioSettings.targetAi.openai.response_format ?? "__null__"}
+                        onValueChange={(value) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: {
+                              ...prev.targetAi,
+                              openai: {
+                                ...prev.targetAi.openai,
+                                response_format: value === "__null__" ? null : value === "json" ? "json" : "text",
+                              },
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__null__">Default</SelectItem>
+                          <SelectItem value="text">text</SelectItem>
+                          <SelectItem value="json">json</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">User (optional)</div>
+                      <Input
+                        value={studioSettings.targetAi.openai.user ?? ""}
+                        onChange={(e) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            targetAi: {
+                              ...prev.targetAi,
+                              openai: { ...prev.targetAi.openai, user: e.target.value.trim() ? e.target.value : null },
+                            },
+                          }))
+                        }
+                        className="h-8"
+                        placeholder="e.g. user_123"
+                      />
+                    </div>
+                    <div className="text-[11px] text-gray-500">
+                      Tip: store your API key at <span className="text-gray-300">/admin/settings/ai</span>.
+                    </div>
+                  </div>
+
+                  {studioSettings.targetAi.openai.api === "images" ? (
+                    <div className="space-y-2 rounded border border-border/60 bg-card/30 p-2">
+                      <div className="text-xs text-gray-400">Images API options</div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">Size</div>
+                          <Input
+                            value={studioSettings.targetAi.openai.image.size ?? ""}
+                            onChange={(e) =>
+                              setStudioSettings((prev) => ({
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    image: { ...prev.targetAi.openai.image, size: e.target.value.trim() ? e.target.value : null },
+                                  },
+                                },
+                              }))
+                            }
+                            className="h-8"
+                            placeholder="e.g. 1536x1024"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">Quality</div>
+                          <Select
+                            value={studioSettings.targetAi.openai.image.quality ?? "__null__"}
+                            onValueChange={(value) =>
+                              setStudioSettings((prev) => ({
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    image: {
+                                      ...prev.targetAi.openai.image,
+                                      quality: value === "__null__" ? null : value === "high" ? "high" : "standard",
+                                    },
+                                  },
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__null__">Default</SelectItem>
+                              <SelectItem value="standard">standard</SelectItem>
+                              <SelectItem value="high">high</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">Background</div>
+                          <Select
+                            value={studioSettings.targetAi.openai.image.background ?? "__null__"}
+                            onValueChange={(value) =>
+                              setStudioSettings((prev) => ({
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    image: {
+                                      ...prev.targetAi.openai.image,
+                                      background: value === "__null__" ? null : value === "transparent" ? "transparent" : "white",
+                                    },
+                                  },
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__null__">Default</SelectItem>
+                              <SelectItem value="white">white</SelectItem>
+                              <SelectItem value="transparent">transparent</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">Format</div>
+                          <Select
+                            value={studioSettings.targetAi.openai.image.format ?? "png"}
+                            onValueChange={(value) =>
+                              setStudioSettings((prev) => ({
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    image: { ...prev.targetAi.openai.image, format: value === "jpeg" ? "jpeg" : "png" },
+                                  },
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="png">png</SelectItem>
+                              <SelectItem value="jpeg">jpeg</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-gray-500">N</div>
+                          <Input
+                            type="number"
+                            value={studioSettings.targetAi.openai.image.n ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const next = raw === "" ? null : Number(raw);
+                              if (raw !== "" && (!Number.isFinite(next) || !Number.isInteger(next))) return;
+                              setStudioSettings((prev) => ({
+                                ...prev,
+                                targetAi: {
+                                  ...prev.targetAi,
+                                  openai: {
+                                    ...prev.targetAi.openai,
+                                    image: { ...prev.targetAi.openai.image, n: next },
+                                  },
+                                },
+                              }));
+                            }}
+                            className="h-8"
+                            min={1}
+                            step={1}
+                          />
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          For edits, keep <span className="text-gray-300">N=1</span>.
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-1">
+                    <div className="text-[11px] text-gray-500">Advanced Overrides (JSON)</div>
+                    <Textarea
+                      value={advancedOverridesText}
+                      onChange={(e) => handleAdvancedOverridesChange(e.target.value)}
+                      className="h-28 font-mono text-[11px]"
+                      placeholder='e.g. {"metadata":{"project":"milkbar-001"}}'
+                    />
+                    {advancedOverridesError ? (
+                      <div className="text-[11px] text-red-300">{advancedOverridesError}</div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Textarea
@@ -725,16 +1479,44 @@ export function AdminImageStudioPage(): React.JSX.Element {
             <div className="mt-2 h-full overflow-auto rounded border border-border bg-card/40 p-2">
               {paramsState ? (
                 <div className="space-y-3">
-                  {paramLeaves.map((leaf) => (
-                    <ParamRow
-                      key={leaf.path}
-                      leaf={leaf}
-                      onChange={(nextValue) => {
-                        if (!paramsState) return;
-                        setParamsState(setDeepValue(paramsState, leaf.path, nextValue));
-                      }}
-                    />
-                  ))}
+                  <div className="flex items-center justify-between gap-3 rounded border border-border bg-card/60 p-2 text-[11px]">
+                    <div className="text-gray-300">
+                      Validation:{" "}
+                      {validationSummary.errors === 0 && validationSummary.warnings === 0 ? (
+                        <span className="text-emerald-300">OK</span>
+                      ) : (
+                        <>
+                          {validationSummary.errors > 0 ? (
+                            <span className="text-red-300">{validationSummary.errors} error(s)</span>
+                          ) : (
+                            <span className="text-gray-400">0 errors</span>
+                          )}
+                          {" • "}
+                          {validationSummary.warnings > 0 ? (
+                            <span className="text-yellow-300">{validationSummary.warnings} warning(s)</span>
+                          ) : (
+                            <span className="text-gray-400">0 warnings</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div className="text-gray-500">Hints from inline comments are used for enums/ranges.</div>
+                  </div>
+                  {paramLeaves.map((leaf) => {
+                    const spec = paramSpecs?.[leaf.path];
+                    return (
+                      <ParamRow
+                        key={leaf.path}
+                        leaf={leaf}
+                        {...(spec ? { spec } : {})}
+                        issues={issuesByPath[leaf.path] ?? []}
+                        onChange={(nextValue) => {
+                          if (!paramsState) return;
+                          setParamsState(setDeepValue(paramsState, leaf.path, nextValue));
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-sm text-gray-400">Extract params to edit them as fields.</div>
@@ -777,19 +1559,46 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
 function ParamRow({
   leaf,
+  spec,
+  issues,
   onChange,
 }: {
   leaf: ParamLeaf;
+  spec?: ParamSpec;
+  issues: ParamIssue[];
   onChange: (value: unknown) => void;
 }): React.JSX.Element {
   const value = leaf.value;
+
+  const errors = issues.filter((i) => i.severity === "error");
+  const warnings = issues.filter((i) => i.severity === "warning");
+  const borderClass =
+    errors.length > 0 ? "border-red-500/60" : warnings.length > 0 ? "border-yellow-500/50" : "border-border";
+
   const isNumber = typeof value === "number" && Number.isFinite(value);
   const isBool = typeof value === "boolean";
   const isString = typeof value === "string";
-  const isSimpleSlider = isNumber && value >= 0 && value <= 1;
+
+  const kind: ParamSpec["kind"] = spec?.kind ?? (Array.isArray(value) ? "json" : isBool ? "boolean" : isNumber ? "number" : isString ? "string" : "json");
+
+  const uiKind: ParamSpec["kind"] =
+    (kind === "boolean" && !isBool) ||
+    (kind === "number" && !isNumber) ||
+    (kind === "enum" && !isString) ||
+    (kind === "string" && !isString) ||
+    (kind === "rgb" && !Array.isArray(value)) ||
+    (kind === "tuple2" && !Array.isArray(value))
+      ? "json"
+      : kind;
+
+  const canSlider =
+    uiKind === "number" &&
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    (spec && spec.min !== undefined && spec.max !== undefined ? Math.abs(spec.max - spec.min) <= 300 : value >= 0 && value <= 1);
 
   return (
-    <div className="rounded border border-border bg-card/60 p-2">
+    <div className={cn("rounded border bg-card/60 p-2", borderClass)}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate font-mono text-[11px] text-gray-200">{leaf.path}</div>
@@ -799,7 +1608,28 @@ function ParamRow({
         </div>
       </div>
 
-      {isBool ? (
+      {spec?.hint ? (
+        <div className="mb-2 text-[11px] text-gray-500">
+          Hint: <span className="text-gray-400">{spec.hint}</span>
+        </div>
+      ) : null}
+
+      {errors.length > 0 || warnings.length > 0 ? (
+        <div className="mb-2 space-y-1 text-[11px]">
+          {errors.map((issue) => (
+            <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-red-300">
+              {issue.message}
+            </div>
+          ))}
+          {warnings.map((issue) => (
+            <div key={`${issue.path}:${issue.code ?? issue.message}`} className="text-yellow-300">
+              {issue.message}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {uiKind === "boolean" && isBool ? (
         <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-200">
           <input
             type="checkbox"
@@ -810,16 +1640,35 @@ function ParamRow({
         </label>
       ) : null}
 
-      {isNumber ? (
+      {uiKind === "enum" && typeof value === "string" && spec?.enumOptions ? (
+        <Select value={value} onValueChange={(v) => onChange(v)}>
+          <SelectTrigger className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {spec.enumOptions.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+
+      {uiKind === "number" && isNumber ? (
         <div className="space-y-2">
-          {isSimpleSlider ? (
+          {canSlider ? (
             <input
               type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={value}
-              onChange={(e) => onChange(Number(e.target.value))}
+              min={spec?.min ?? 0}
+              max={spec?.max ?? 1}
+              step={spec?.step ?? 0.01}
+              value={Math.min(spec?.max ?? value, Math.max(spec?.min ?? value, value))}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (!Number.isFinite(next)) return;
+                onChange(next);
+              }}
               className="w-full"
             />
           ) : null}
@@ -831,12 +1680,65 @@ function ParamRow({
               if (!Number.isFinite(next)) return;
               onChange(next);
             }}
+            min={spec?.min}
+            max={spec?.max}
+            step={spec?.step}
             className="h-8"
           />
         </div>
       ) : null}
 
-      {isString ? (
+      {uiKind === "rgb" && Array.isArray(value) ? (
+        <div className="grid grid-cols-3 gap-2">
+          {["R", "G", "B"].map((label, index) => (
+            <div key={label} className="space-y-1">
+              <div className="text-[10px] text-gray-500">{label}</div>
+              <Input
+                type="number"
+                value={String(value[index] ?? "")}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  if (!Number.isFinite(next)) return;
+                  const nextRgb = [...value] as unknown[];
+                  nextRgb[index] = next;
+                  onChange(nextRgb);
+                }}
+                min={spec?.min ?? 0}
+                max={spec?.max ?? 255}
+                step={spec?.step ?? 1}
+                className="h-8"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {uiKind === "tuple2" && Array.isArray(value) ? (
+        <div className="grid grid-cols-2 gap-2">
+          {["X", "Y"].map((label, index) => (
+            <div key={label} className="space-y-1">
+              <div className="text-[10px] text-gray-500">{label}</div>
+              <Input
+                type="number"
+                value={String(value[index] ?? "")}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  if (!Number.isFinite(next)) return;
+                  const nextTuple = [...value] as unknown[];
+                  nextTuple[index] = next;
+                  onChange(nextTuple);
+                }}
+                min={spec?.min}
+                max={spec?.max}
+                step={spec?.step ?? 1}
+                className="h-8"
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {uiKind === "string" && isString ? (
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -844,7 +1746,7 @@ function ParamRow({
         />
       ) : null}
 
-      {!isBool && !isNumber && !isString ? (
+      {uiKind === "json" ? (
         <Textarea
           value={safeJsonStringify(value)}
           onChange={(e) => {

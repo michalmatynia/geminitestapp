@@ -3,9 +3,11 @@
 
 
 
-import { Button, Label, Textarea } from "@/shared/ui";
+import React from "react";
+
+import { Button, Label, Textarea, useToast } from "@/shared/ui";
 import type { AiNode, Edge, NodeConfig, PromptConfig, RuntimeState } from "@/features/ai/ai-paths/lib";
-import { createParserMappings, formatRuntimeValue } from "@/features/ai/ai-paths/lib";
+import { buildPromptOutput, createParserMappings, formatRuntimeValue } from "@/features/ai/ai-paths/lib";
 import { formatPlaceholderLabel } from "@/features/ai/ai-paths/utils/ui-utils";
 
 type PromptNodeConfigSectionProps = {
@@ -29,9 +31,16 @@ export function PromptNodeConfigSection({
 }: PromptNodeConfigSectionProps): React.JSX.Element | null {
   if (selectedNode.type !== "prompt") return null;
 
+  const { toast } = useToast();
+
   const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
     template: "",
   };
+  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const resolvedPrompt = React.useMemo((): string => {
+    const { promptOutput } = buildPromptOutput(promptConfig, runtimeInputs);
+    return promptOutput;
+  }, [promptConfig, runtimeInputs]);
   const handleInsertPlaceholder = (placeholder: string): void => {
     const current = promptConfig.template ?? "";
     const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";
@@ -164,9 +173,12 @@ export function PromptNodeConfigSection({
                     className="mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50"
                     disabled={sendingToAi}
                     onClick={() => {
-                      if (selectedNode?.id && promptConfig.template) {
-                        void onSendToAi(selectedNode.id, promptConfig.template);
+                      if (!onSendToAi) return;
+                      if (!resolvedPrompt.trim() || resolvedPrompt === "Prompt: (no template)") {
+                        toast("Resolved prompt is empty. Run the graph or provide inputs first.", { variant: "error" });
+                        return;
                       }
+                      void onSendToAi(selectedNode.id, resolvedPrompt);
                     }}
                   >
                     {sendingToAi ? "Sending..." : "Send to AI Model"}
@@ -189,6 +201,42 @@ export function PromptNodeConfigSection({
           </div>
         );
       })()}
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-xs text-gray-400">Resolved Prompt</Label>
+          <Button
+            type="button"
+            className="h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50 disabled:opacity-50"
+            onClick={() => {
+              if (!resolvedPrompt.trim()) {
+                toast("Resolved prompt is empty.", { variant: "error" });
+                return;
+              }
+              void navigator.clipboard
+                .writeText(resolvedPrompt)
+                .then(() => toast("Resolved prompt copied.", { variant: "success" }))
+                .catch(() => toast("Failed to copy.", { variant: "error" }));
+            }}
+            disabled={!resolvedPrompt.trim()}
+            title="Copy the resolved prompt (after placeholder substitution)"
+          >
+            Copy Resolved
+          </Button>
+        </div>
+        <Textarea
+          className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          value={resolvedPrompt}
+          readOnly
+          placeholder="Run the graph to resolve placeholders."
+        />
+        <p className="mt-1 text-[11px] text-gray-500">
+          Uses incoming ports (including <span className="text-gray-300">result</span>) to substitute placeholders.
+          Use <span className="text-gray-300">{`{{value}}`}</span> or{" "}
+          <span className="text-gray-300">{`{{result}}`}</span>.
+        </p>
+      </div>
+
       {(() : React.JSX.Element => {
         const resultValue = runtimeState.inputs[selectedNode.id]?.result
           ?? runtimeState.outputs[selectedNode.id]?.result;
@@ -198,6 +246,28 @@ export function PromptNodeConfigSection({
               ? resultValue
               : formatRuntimeValue(resultValue))
           : "";
+        const resultEdge = incomingEdges.find((edge: Edge) => edge.toPort === "result");
+        const resultSourceNode = resultEdge
+          ? nodes.find((node: AiNode) => node.id === resultEdge.from)
+          : null;
+        const resultSourcePort = resultEdge?.fromPort ?? null;
+        const resultSourcePollStatus =
+          resultSourceNode?.type === "poll"
+            ? (runtimeState.outputs[resultSourceNode.id]?.status as string | undefined)
+            : undefined;
+        const resultSourceModelHasPoll =
+          resultSourceNode?.type === "model"
+            ? edges.some((edge: Edge): boolean => {
+                if (edge.from !== resultSourceNode.id) return false;
+                if (edge.fromPort !== "jobId") return false;
+                const target = nodes.find((node: AiNode): boolean => node.id === edge.to);
+                return target?.type === "poll";
+              })
+            : false;
+        const resultSourceModelWaits =
+          resultSourceNode?.type === "model"
+            ? resultSourceNode.config?.model?.waitForResult !== false
+            : false;
 
         return (
           <div className="mt-4">
@@ -208,6 +278,26 @@ export function PromptNodeConfigSection({
               readOnly
               placeholder="No result received yet. Connect a node to the result input and run the graph."
             />
+            {!hasResult && resultSourceNode?.type === "model" && resultSourceModelHasPoll && !resultSourceModelWaits && resultSourcePort === "result" && (
+              <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                This Prompt is connected to <span className="text-amber-200">Model.result</span>, but that Model has a{" "}
+                <span className="text-amber-200">Poll</span> connected and{" "}
+                <span className="text-amber-200">Wait for result</span> is disabled, so the Model emits only{" "}
+                <span className="text-amber-200">jobId</span>. Connect{" "}
+                <span className="text-amber-200">Poll.result</span> instead, or enable{" "}
+                <span className="text-amber-200">Wait for result</span> on the Model node.
+              </div>
+            )}
+            {!hasResult && resultSourceNode?.type === "poll" && resultSourcePollStatus === "polling" && (
+              <div className="mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-[11px] text-sky-100">
+                Poll is still running. The <span className="text-sky-200">result</span> will populate when polling completes.
+              </div>
+            )}
+            {!hasResult && resultSourceNode?.type === "poll" && resultSourcePollStatus === "failed" && (
+              <div className="mt-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-100">
+                Poll failed. Check the Poll node output for an error, or verify the job/database query configuration.
+              </div>
+            )}
             <p className="mt-1 text-[11px] text-gray-500">
               Shows the value passed through the <span className="text-gray-300">result</span> input port.
             </p>

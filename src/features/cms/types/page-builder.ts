@@ -187,4 +187,7 @@ export type PageBuilderAction =
   | { type: "PASTE_BLOCK"; sectionId: string; columnId?: string; parentBlockId?: string }
   | { type: "DUPLICATE_SECTION"; sectionId: string }
   | { type: "INSERT_TEMPLATE_SECTION"; section: SectionInstance }
-  | { type: "SET_PAGE_THEME"; themeId: string | null };
+  | { type: "SET_PAGE_THEME"; themeId: string | null }
+  | { type: "ADD_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string }
+  | { type: "REMOVE_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string; frameId: string }
+  | { type: "ADD_ELEMENT_TO_CAROUSEL_FRAME"; sectionId: string; columnId: string; carouselId: string; frameId: string; elementType: string };

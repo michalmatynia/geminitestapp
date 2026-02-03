@@ -223,6 +223,37 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleRemoveBlock = useCallback(
+    (sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => {
+      if (parentBlockId && columnId) {
+        // Block inside a nested parent block
+        dispatch({
+          type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK",
+          sectionId,
+          columnId,
+          parentBlockId,
+          elementId: blockId,
+        });
+      } else if (columnId) {
+        // Block inside a column
+        dispatch({
+          type: "REMOVE_BLOCK_FROM_COLUMN",
+          sectionId,
+          columnId,
+          blockId,
+        });
+      } else {
+        // Direct block in section
+        dispatch({
+          type: "REMOVE_BLOCK",
+          sectionId,
+          blockId,
+        });
+      }
+    },
+    [dispatch]
+  );
+
   const handleDropSectionToColumn = useCallback(
     (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => {
       dispatch({
@@ -421,6 +452,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 onPromoteBlockToSection={handlePromoteBlockToSection}
                 showExtractPlaceholder={showExtractPlaceholder}
                 showSectionDropPlaceholder={showSectionDropPlaceholder}
+                onRemoveBlock={handleRemoveBlock}
               />
             );
           })
@@ -485,6 +517,7 @@ interface ZoneGroupProps {
   onPromoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
   showExtractPlaceholder: boolean;
   showSectionDropPlaceholder: boolean;
+  onRemoveBlock?: ((sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void) | undefined;
 }
 
 function ZoneGroup({
@@ -538,6 +571,7 @@ function ZoneGroup({
   onPromoteBlockToSection,
   showExtractPlaceholder,
   showSectionDropPlaceholder,
+  onRemoveBlock,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
 
@@ -659,6 +693,7 @@ function ZoneGroup({
                     setDraggedSectionZone={setDraggedSectionZone}
                     onDropSectionToColumn={onDropSectionToColumn}
                     onConvertSectionToBlock={onConvertSectionToBlock}
+                    onRemoveBlock={onRemoveBlock}
                   />
                 </React.Fragment>
               ))}

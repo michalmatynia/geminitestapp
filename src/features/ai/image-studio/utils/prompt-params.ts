@@ -461,8 +461,8 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
       const commentText = trimmed.slice(2).trim();
       if (!lastKeyPath) return;
       if (!looksLikeConstraintHint(commentText)) return;
-      commentsByPath[lastKeyPath] ??= [];
-      commentsByPath[lastKeyPath].push(commentText);
+      const list = (commentsByPath[lastKeyPath] ??= []);
+      list.push(commentText);
       return;
     }
 
@@ -486,8 +486,8 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
 
     const hint = (comment ?? "").trim();
     if (hint && looksLikeConstraintHint(hint)) {
-      commentsByPath[path] ??= [];
-      commentsByPath[path].push(hint);
+      const list = (commentsByPath[path] ??= []);
+      list.push(hint);
     }
 
     const afterColon = codeTrim.slice((keyMatch.index ?? 0) + keyMatch[0].length).trim();
@@ -530,11 +530,11 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
       specs[path] = {
         path,
         kind: "rgb",
-        hint,
         integer: true,
         min: 0,
         max: 255,
         step: 1,
+        ...(hint ? { hint } : {}),
       };
       return;
     }
@@ -543,31 +543,32 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
       specs[path] = {
         path,
         kind: "tuple2",
-        hint,
         integer: true,
         min: 1,
         step: 1,
+        ...(hint ? { hint } : {}),
       };
       return;
     }
 
     if (typeof value === "boolean") {
-      specs[path] = { path, kind: "boolean", hint };
+      specs[path] = { path, kind: "boolean", ...(hint ? { hint } : {}) };
       return;
     }
 
     if (typeof value === "number" && Number.isFinite(value)) {
       const constraint = hint ? parseNumericConstraintsFromHint(hint) : {};
       const integer = Number.isInteger(value) && (pathLower.includes("_px") || hint?.toLowerCase().includes("px") || false);
-      specs[path] = {
+      const spec: ParamSpec = {
         path,
         kind: "number",
-        hint,
         integer,
-        min: constraint.min,
-        max: constraint.max,
         step: inferNumberStep(value, constraint, integer),
+        ...(hint ? { hint } : {}),
       };
+      if (constraint.min !== undefined) spec.min = constraint.min;
+      if (constraint.max !== undefined) spec.max = constraint.max;
+      specs[path] = spec;
       return;
     }
 
@@ -576,18 +577,18 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
       specs[path] = {
         path,
         kind: enumOptions ? "enum" : "string",
-        hint,
+        ...(hint ? { hint } : {}),
         ...(enumOptions ? { enumOptions } : {}),
       };
       return;
     }
 
     if (Array.isArray(value)) {
-      specs[path] = { path, kind: "json", hint };
+      specs[path] = { path, kind: "json", ...(hint ? { hint } : {}) };
       return;
     }
 
-    specs[path] = { path, kind: "json", hint };
+    specs[path] = { path, kind: "json", ...(hint ? { hint } : {}) };
   });
 
   return specs;
@@ -690,11 +691,13 @@ export function validateParamsAgainstSpecs(
       if (spec.integer && value.some((v) => !Number.isInteger(v))) {
         issues.push({ path: spec.path, severity: "error", code: "integer", message: "RGB values must be integers." });
       }
-      if (spec.min !== undefined && value.some((v) => v < spec.min)) {
-        issues.push({ path: spec.path, severity: "error", code: "min", message: `RGB values must be >= ${spec.min}.` });
+      const min = spec.min;
+      if (min !== undefined && value.some((v) => v < min)) {
+        issues.push({ path: spec.path, severity: "error", code: "min", message: `RGB values must be >= ${min}.` });
       }
-      if (spec.max !== undefined && value.some((v) => v > spec.max)) {
-        issues.push({ path: spec.path, severity: "error", code: "max", message: `RGB values must be <= ${spec.max}.` });
+      const max = spec.max;
+      if (max !== undefined && value.some((v) => v > max)) {
+        issues.push({ path: spec.path, severity: "error", code: "max", message: `RGB values must be <= ${max}.` });
       }
       return;
     }
@@ -707,11 +710,13 @@ export function validateParamsAgainstSpecs(
       if (spec.integer && value.some((v) => !Number.isInteger(v))) {
         issues.push({ path: spec.path, severity: "error", code: "integer", message: "Values must be integers." });
       }
-      if (spec.min !== undefined && value.some((v) => v < spec.min)) {
-        issues.push({ path: spec.path, severity: "error", code: "min", message: `Values must be >= ${spec.min}.` });
+      const min = spec.min;
+      if (min !== undefined && value.some((v) => v < min)) {
+        issues.push({ path: spec.path, severity: "error", code: "min", message: `Values must be >= ${min}.` });
       }
-      if (spec.max !== undefined && value.some((v) => v > spec.max)) {
-        issues.push({ path: spec.path, severity: "error", code: "max", message: `Values must be <= ${spec.max}.` });
+      const max = spec.max;
+      if (max !== undefined && value.some((v) => v > max)) {
+        issues.push({ path: spec.path, severity: "error", code: "max", message: `Values must be <= ${max}.` });
       }
       return;
     }

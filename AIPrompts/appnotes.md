@@ -1,7 +1,6 @@
 When I click Generate PAth, the Connector inputs remain empty
  I also need a way of grouping paths.
 Ai paths node movement
-I cannot hightlight text in Product list, the finger pointer is too spread, also, the same for stock and price, I need a /cursor there
 
 * For my AI Paths Trigger Buttons that are Attachable to modals and lists, Trigger button text highilight is 30 % lowe when the button has never been triggered and successfully completed a path, when the button is launched it should have a steady color progression that's tied to runtime progress, and come to full highlight when Runtime is successfully completed.
 
@@ -18,19 +17,16 @@ Taking blocks from inside Columns Out
 
 Unable to upload image into ImageElement
 
-
 App manager
-
-
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
 Draft list should be reordered the same way as mapping parameters
 
+In Notes Folder Tree, when I drag folders around I see two indicators as to where to drop it, they seem to overlapt
+
 LATER - Loader as a separate feature
 LATER - ANalytics
-
-Link Note to Product? Why not, a special kind of Theme that has this linking field
 
 Notes App , Importing Mmarkdowns with file attachments
 
@@ -48,6 +44,12 @@ When I click on that button, add another button below called Advanced filters, w
 In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
 
 
+Deep ANalytics
+
+Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
+
+String  to Array Node,
+Iterator Node (will take object list take one send somewhere and wait for the callback confirmation and the move to the next object)
 
 * When I create a product, when I upload an image and then resort it, the image starts flickering.
 * The image slot menu has become bloated with options, make ti more elegant and clear
@@ -110,7 +112,7 @@ I would like to be able to click on B (Base.com connection icon) and have a sect
 
 —
 
-
+LATER - noteapp, mass imports
 
 
 Late-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder

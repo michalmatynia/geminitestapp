@@ -21,6 +21,9 @@ type ProductDocument = Omit<ProductRecord, "createdAt" | "updatedAt"> & {
   updatedAt: Date;
   images?: ProductWithImages["images"];
   catalogs?: ProductWithImages["catalogs"];
+  categories?: ProductWithImages["categories"];
+  tags?: ProductWithImages["tags"];
+  producers?: ProductWithImages["producers"];
 };
 
 const productCollectionName = "products";
@@ -51,10 +54,16 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
+  noteIds: Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
+    ? ((doc as unknown as { noteIds: string[] }).noteIds)
+    : [],
   createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
   images: Array.isArray(doc.images) ? doc.images : [],
   catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
+  categories: Array.isArray(doc.categories) ? doc.categories : [],
+  tags: Array.isArray(doc.tags) ? doc.tags : [],
+  producers: Array.isArray(doc.producers) ? doc.producers : [],
 });
 
 const toProductBase = (doc: ProductDocument): ProductRecord => ({
@@ -83,6 +92,9 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
   parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
+  noteIds: Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
+    ? ((doc as unknown as { noteIds: string[] }).noteIds)
+    : [],
   createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
   updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
 });
@@ -285,6 +297,7 @@ export const mongoProductRepository: ProductRepository = {
       parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || "" })) : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
+      noteIds: [],
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -433,6 +446,9 @@ export const mongoProductRepository: ProductRepository = {
       parameters: Array.isArray(existing.parameters) ? existing.parameters : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       imageBase64s: Array.isArray(existing.imageBase64s) ? existing.imageBase64s : [],
+      noteIds: Array.isArray((existing as unknown as { noteIds?: unknown }).noteIds)
+        ? ((existing as unknown as { noteIds: string[] }).noteIds)
+        : [],
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -564,6 +580,49 @@ export const mongoProductRepository: ProductRepository = {
       .updateOne(
         { $or: [{ _id: productId }, { id: productId }] },
         { $set: { tags: tagEntries, updatedAt: new Date() } }
+      );
+  },
+
+  async replaceProductProducers(productId: string, producerIds: string[]) {
+    const db = await getMongoDb();
+    if (producerIds.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          { $or: [{ _id: productId }, { id: productId }] },
+          { $set: { producers: [], updatedAt: new Date() } }
+        );
+      return;
+    }
+    const uniqueIds = Array.from(new Set(producerIds));
+    const producers = await db
+      .collection("product_producers")
+      .find({ id: { $in: uniqueIds } })
+      .toArray();
+    const now = new Date();
+    const producerEntries = producers.map((producer: Document) => ({
+      productId,
+      producerId: (producer as unknown as { id: string }).id,
+      assignedAt: now,
+    }));
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateOne(
+        { $or: [{ _id: productId }, { id: productId }] },
+        { $set: { producers: producerEntries, updatedAt: new Date() } }
+      );
+  },
+
+  async replaceProductNotes(productId: string, noteIds: string[]) {
+    const db = await getMongoDb();
+    const uniqueIds = Array.from(
+      new Set(noteIds.map((id: string) => id.trim()).filter((id: string) => id.length > 0)),
+    );
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateOne(
+        { $or: [{ _id: productId }, { id: productId }] },
+        { $set: { noteIds: uniqueIds, updatedAt: new Date() } },
       );
   },
 

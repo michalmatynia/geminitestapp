@@ -1253,7 +1253,7 @@ const getDefaultConfigForType = (
         temperature: 0.7,
         maxTokens: 800,
         vision: inputs.includes("images"),
-        waitForResult: false,
+        waitForResult: true,
       },
     };
   }

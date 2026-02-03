@@ -1,8 +1,4 @@
 
-> libapp2@0.1.0 lint
-> eslint .
-
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx
   203:36  error  Expected p to have a type annotation     @typescript-eslint/typedef
   360:40  error  Expected path to have a type annotation  @typescript-eslint/typedef

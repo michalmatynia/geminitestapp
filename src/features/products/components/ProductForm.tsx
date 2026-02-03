@@ -12,6 +12,7 @@ import ProductFormOther from "./form/ProductFormOther";
 import ProductFormImages from "./form/ProductFormImages";
 import ProductFormImportInfo from "./form/ProductFormImportInfo";
 import ProductFormParameters from "./form/ProductFormParameters";
+import ProductFormNoteLink from "./form/ProductFormNoteLink";
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -43,12 +44,13 @@ export default function ProductForm({
     <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className="relative min-h-[400px] pb-10">
       {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
           <TabsTrigger value="parameters">Parameters</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="import-info">Import Info</TabsTrigger>
+          <TabsTrigger value="note-link">Note Link</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-4">
           <ProductFormGeneral />
@@ -64,6 +66,9 @@ export default function ProductForm({
         </TabsContent>
         <TabsContent value="import-info" className="mt-4">
           <ProductFormImportInfo />
+        </TabsContent>
+        <TabsContent value="note-link" className="mt-4">
+          <ProductFormNoteLink />
         </TabsContent>
       </Tabs>
       {product?.id && (

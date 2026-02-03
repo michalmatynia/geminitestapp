@@ -20,8 +20,6 @@ import { CatalogsSettings } from "@/features/products/components/settings/catalo
 import { CategoriesSettings } from "@/features/products/components/settings/CategoriesSettings";
 import { TagsSettings } from "@/features/products/components/settings/TagsSettings";
 import { InternationalizationSettings } from "@/features/internationalization";
-import { AiDescriptionSettings } from "@/features/products/components/settings/ai/AiDescriptionSettings";
-import { AiTranslationSettings } from "@/features/products/components/settings/ai/AiTranslationSettings";
 
 // New Modals
 import { CatalogModal } from "@/features/products/components/settings/modals/CatalogModal";
@@ -245,8 +243,6 @@ export function ProductSettingsPage(): React.JSX.Element {
               }}
             />
           )}
-          {activeSection === "AI Description" && <AiDescriptionSettings />}
-          {activeSection === "AI Translation" && <AiTranslationSettings />}
         </SectionPanel>
       </div>
 

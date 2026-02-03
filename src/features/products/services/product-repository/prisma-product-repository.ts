@@ -166,6 +166,7 @@ const toProductRecord = (product: {
   parameters?: Prisma.JsonValue | null;
   imageLinks: string[];
   imageBase64s: string[];
+  noteIds?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
 }): ProductRecord => ({
@@ -194,6 +195,7 @@ const toProductRecord = (product: {
   parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
+  noteIds: Array.isArray(product.noteIds) ? product.noteIds : [],
   createdAt: product.createdAt.toISOString(),
   updatedAt: product.updatedAt.toISOString(),
 });
@@ -222,6 +224,9 @@ export const prismaProductRepository: ProductRepository = {
             }
           },
         },
+        categories: { select: { categoryId: true } },
+        tags: { select: { tagId: true } },
+        producers: { select: { producerId: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
@@ -244,6 +249,13 @@ export const prismaProductRepository: ProductRepository = {
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
+      })),
+      categories: product.categories.map((c: { categoryId: string }) => ({
+        categoryId: c.categoryId,
+      })),
+      tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
+      producers: product.producers.map((p: { producerId: string }) => ({
+        producerId: p.producerId,
       })),
     }));
   },
@@ -272,6 +284,9 @@ export const prismaProductRepository: ProductRepository = {
             }
           },
         },
+        categories: { select: { categoryId: true } },
+        tags: { select: { tagId: true } },
+        producers: { select: { producerId: true } },
       },
     });
     if (!product) return null;
@@ -291,6 +306,13 @@ export const prismaProductRepository: ProductRepository = {
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
         catalog: toCatalogRecord(entry.catalog),
+      })),
+      categories: product.categories.map((c: { categoryId: string }) => ({
+        categoryId: c.categoryId,
+      })),
+      tags: product.tags.map((t: { tagId: string }) => ({ tagId: t.tagId })),
+      producers: product.producers.map((p: { producerId: string }) => ({
+        producerId: p.producerId,
       })),
     };
   },
@@ -472,6 +494,32 @@ export const prismaProductRepository: ProductRepository = {
     if (validIds.length === 0) return;
     await prisma.productTagAssignment.createMany({
       data: validIds.map((tagId: string) => ({ productId, tagId })),
+    });
+  },
+
+  async replaceProductProducers(productId: string, producerIds: string[]) {
+    await prisma.productProducerAssignment.deleteMany({ where: { productId } });
+    if (producerIds.length === 0) return;
+    const uniqueIds = Array.from(new Set(producerIds));
+    const existing = await prisma.producer.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
+    if (validIds.length === 0) return;
+    await prisma.productProducerAssignment.createMany({
+      data: validIds.map((producerId: string) => ({ productId, producerId })),
+    });
+  },
+
+  async replaceProductNotes(productId: string, noteIds: string[]) {
+    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id && id.trim()))).map((id: string) =>
+      id.trim()
+    );
+    await prisma.product.update({
+      where: { id: productId },
+      data: { noteIds: uniqueIds },
     });
   },
 

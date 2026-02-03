@@ -81,6 +81,7 @@ export type ProductRecord = Entity & {
   parameters?: ProductParameterValue[];
   imageLinks: string[];
   imageBase64s: string[];
+  noteIds: string[];
 };
 
 export type ProductImageRecord = {
@@ -102,6 +103,7 @@ export type ProductWithImages = ProductRecord & {
   catalogs: ProductCatalogRecord[];
   categories?: { categoryId: string }[];
   tags?: { tagId: string }[];
+  producers?: { producerId: string }[];
 };
 
 export type ProductCategory = Entity & {
@@ -121,6 +123,11 @@ export type ProductTag = {
   name: string;
   color: string | null;
   catalogId: string;
+};
+
+export type Producer = Entity & {
+  name: string;
+  website: string | null;
 };
 
 // DTO re-exports for consistency if needed, but here we define structural types

@@ -12,6 +12,7 @@ import {
   useEffect,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/shared/ui";
 import {
   UseFormRegister,
   UseFormSetValue,
@@ -30,7 +31,7 @@ import type {
   ProductDraft,
 } from "@/features/products/types";
 import type { ImageFileSelection } from "@/shared/types/files";
-import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products/types";
+import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue, Producer } from "@/features/products/types";
 import {
   ProductImageSlot,
 } from "@/features/products/types/products-ui";
@@ -80,6 +81,13 @@ export interface ProductFormContextType {
   tagsLoading: boolean;
   selectedTagIds: string[];
   toggleTag: (tagId: string) => void;
+  producers: Producer[];
+  producersLoading: boolean;
+  selectedProducerIds: string[];
+  toggleProducer: (producerId: string) => void;
+  selectedNoteIds: string[];
+  toggleNote: (noteId: string) => void;
+  removeNote: (noteId: string) => void;
   parameters: ProductParameter[];
   parametersLoading: boolean;
   parameterValues: ProductParameterValue[];
@@ -165,6 +173,7 @@ export function ProductFormProvider({
     setValue,
     getValues,
   } = methods;
+  const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -207,6 +216,10 @@ export function ProductFormProvider({
     tagsLoading,
     selectedTagIds,
     toggleTag,
+    producers,
+    producersLoading,
+    selectedProducerIds,
+    toggleProducer,
     parameters,
     parametersLoading,
     filteredLanguages,
@@ -225,6 +238,28 @@ export function ProductFormProvider({
     setValue,
     getValues,
   });
+
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(
+    () => (Array.isArray(product?.noteIds) ? product.noteIds : [])
+  );
+
+  useEffect(() => {
+    setSelectedNoteIds(Array.isArray(product?.noteIds) ? product.noteIds : []);
+  }, [product?.id, product?.noteIds]);
+
+  const toggleNote = (noteId: string): void => {
+    const id = noteId.trim();
+    if (!id) return;
+    setSelectedNoteIds((prev: string[]) =>
+      prev.includes(id) ? prev.filter((n: string) => n !== id) : [...prev, id]
+    );
+  };
+
+  const removeNote = (noteId: string): void => {
+    const id = noteId.trim();
+    if (!id) return;
+    setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
+  };
 
   const normalizeParameterValues = (
     input?: ProductParameterValue[] | null
@@ -306,6 +341,20 @@ export function ProductFormProvider({
     selectedTagIds.forEach((tagId: string): void => {
       formData.append("tagIds", tagId);
     });
+    selectedProducerIds.forEach((producerId: string): void => {
+      formData.append("producerIds", producerId);
+    });
+    if (selectedProducerIds.length === 0) {
+      // Ensure update mode can clear previously assigned producers.
+      formData.append("producerIds", "");
+    }
+    selectedNoteIds.forEach((noteId: string): void => {
+      formData.append("noteIds", noteId);
+    });
+    if (selectedNoteIds.length === 0) {
+      // Ensure update mode can clear previously assigned note links.
+      formData.append("noteIds", "");
+    }
     const normalizedParameters = parameterValues
       .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
         parameterId: entry.parameterId?.trim(),
@@ -375,7 +424,13 @@ export function ProductFormProvider({
         successTimerRef.current = setTimeout(() => {
           setUploadSuccess(false);
         }, 3000);
+        // Product edit modal flow passes `onSuccess` which already shows a toast and closes the modal.
+        // Edit page flow doesn't pass `onSuccess`, so we show a toast here.
+        if (!onSuccess) {
+          toast("Product updated successfully.", { variant: "success" });
+        }
         onEditSave?.(savedProduct);
+        onSuccess?.();
         router.refresh();
       }
     } catch (error: unknown) {
@@ -426,6 +481,13 @@ export function ProductFormProvider({
           tagsLoading,
           selectedTagIds,
           toggleTag,
+          producers,
+          producersLoading,
+          selectedProducerIds,
+          toggleProducer,
+          selectedNoteIds,
+          toggleNote,
+          removeNote,
           parameters,
           parametersLoading,
           parameterValues,

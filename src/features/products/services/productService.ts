@@ -133,6 +133,8 @@ async function createProduct(
     const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
     const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
     const tagIds = normalizeTagIds(formData.getAll("tagIds"));
+    const producerIds = normalizeProducerIds(formData.getAll("producerIds"));
+    const noteIds = normalizeNoteIds(formData.getAll("noteIds"));
     await linkImagesToProduct(
       product.id,
       images,
@@ -142,6 +144,8 @@ async function createProduct(
     await updateProductCatalogs(product.id, catalogIds);
     await updateProductCategories(product.id, categoryIds);
     await updateProductTags(product.id, tagIds);
+    await updateProductProducers(product.id, producerIds);
+    await updateProductNotes(product.id, noteIds);
 
     return await getProductById(product.id);
   } catch (error) {
@@ -195,6 +199,14 @@ async function updateProduct(
     if (formData.has("tagIds")) {
       const tagIds = normalizeTagIds(formData.getAll("tagIds"));
       await updateProductTags(id, tagIds);
+    }
+    if (formData.has("producerIds")) {
+      const producerIds = normalizeProducerIds(formData.getAll("producerIds"));
+      await updateProductProducers(id, producerIds);
+    }
+    if (formData.has("noteIds")) {
+      const noteIds = normalizeNoteIds(formData.getAll("noteIds"));
+      await updateProductNotes(id, noteIds);
     }
 
     return await getProductById(updatedProduct.id);
@@ -406,6 +418,22 @@ function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
     .filter((entry: string): boolean => entry.length > 0);
 }
 
+function normalizeProducerIds(entries: FormDataEntryValue[]): string[] {
+  return entries
+    .map((entry: FormDataEntryValue): string =>
+      typeof entry === "string" ? entry.trim() : "",
+    )
+    .filter((entry: string): boolean => entry.length > 0);
+}
+
+function normalizeNoteIds(entries: FormDataEntryValue[]): string[] {
+  return entries
+    .map((entry: FormDataEntryValue): string =>
+      typeof entry === "string" ? entry.trim() : "",
+    )
+    .filter((entry: string): boolean => entry.length > 0);
+}
+
 async function updateProductCatalogs(
   productId: string,
   catalogIds: string[],
@@ -445,6 +473,22 @@ async function updateProductTags(
 ): Promise<void> {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductTags(productId, tagIds);
+}
+
+async function updateProductProducers(
+  productId: string,
+  producerIds: string[],
+): Promise<void> {
+  const productRepository = await resolveProductRepository();
+  await productRepository.replaceProductProducers(productId, producerIds);
+}
+
+async function updateProductNotes(
+  productId: string,
+  noteIds: string[],
+): Promise<void> {
+  const productRepository = await resolveProductRepository();
+  await productRepository.replaceProductNotes(productId, noteIds);
 }
 
 // Why: Temp path allows users to upload images before saving a product. Once a

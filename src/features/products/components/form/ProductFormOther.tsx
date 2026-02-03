@@ -10,7 +10,7 @@ import { useProductFormContext } from "@/features/products/context/ProductFormCo
 import { X } from "lucide-react";
 
 
-import { ProductFormData, CatalogRecord, ProductCategory, ProductTag, PriceGroupWithDetails } from "@/features/products/types";
+import { ProductFormData, CatalogRecord, ProductCategory, ProductTag, PriceGroupWithDetails, Producer } from "@/features/products/types";
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
@@ -34,6 +34,10 @@ export default function ProductFormOther(): React.JSX.Element {
     tagsLoading,
     selectedTagIds,
     toggleTag,
+    producers,
+    producersLoading,
+    selectedProducerIds,
+    toggleProducer,
     filteredPriceGroups,
     product,
   } = useProductFormContext();
@@ -56,6 +60,7 @@ export default function ProductFormOther(): React.JSX.Element {
   const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
   const [categoryQuery, setCategoryQuery] = useState("");
   const [tagQuery, setTagQuery] = useState("");
+  const [producerQuery, setProducerQuery] = useState("");
   const filteredCategories = useMemo(() => {
     const normalized = categoryQuery.trim().toLowerCase();
     if (!normalized) return categories;
@@ -68,6 +73,13 @@ export default function ProductFormOther(): React.JSX.Element {
     if (!normalized) return tags;
     return tags.filter((tag: ProductTag) => tag.name.toLowerCase().includes(normalized));
   }, [tags, tagQuery]);
+  const filteredProducers = useMemo(() => {
+    const normalized = producerQuery.trim().toLowerCase();
+    if (!normalized) return producers;
+    return producers.filter((producer: Producer) =>
+      producer.name.toLowerCase().includes(normalized)
+    );
+  }, [producers, producerQuery]);
 
   // Calculate prices for all price groups
   const priceGroupPrices = filteredPriceGroups.map((group: PriceGroupWithDetails) => {
@@ -396,6 +408,61 @@ export default function ProductFormOther(): React.JSX.Element {
                       onCheckedChange={() => toggleTag(tag.id)}
                     >
                       {tag.name}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="mb-4">
+        <Label className="mb-2 block">Producers</Label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full justify-between">
+              {selectedProducerIds.length > 0
+                ? `${selectedProducerIds.length} producer${selectedProducerIds.length === 1 ? '' : 's'} selected`
+                : "Select producers"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            {producersLoading ? (
+              <div className="p-2 text-sm text-muted-foreground">Loading...</div>
+            ) : producers.length === 0 ? (
+              <div className="p-2 text-sm text-muted-foreground">No producers found</div>
+            ) : (
+              <>
+                <div className="p-2">
+                  <div className="relative">
+                    <Input
+                      value={producerQuery}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => setProducerQuery(event.target.value)}
+                      placeholder="Search producers..."
+                      className="h-8 pr-8"
+                    />
+                    {producerQuery && (
+                      <Button
+                        type="button"
+                        onClick={() => setProducerQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
+                        aria-label="Clear producer search"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {filteredProducers.length === 0 ? (
+                  <div className="px-2 pb-2 text-sm text-muted-foreground">No matching producers</div>
+                ) : (
+                  filteredProducers.map((producer: Producer) => (
+                    <DropdownMenuCheckboxItem
+                      key={producer.id}
+                      checked={selectedProducerIds.includes(producer.id)}
+                      onCheckedChange={() => toggleProducer(producer.id)}
+                    >
+                      {producer.name}
                     </DropdownMenuCheckboxItem>
                   ))
                 )}

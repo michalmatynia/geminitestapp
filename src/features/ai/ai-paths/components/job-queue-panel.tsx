@@ -116,20 +116,9 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
   >({});
   const streamSourcesRef = React.useRef<Map<string, EventSource>>(new Map());
   const [pausedStreams, setPausedStreams] = React.useState<Set<string>>(new Set());
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
-    if (saved === "false") return false;
-    if (saved === "true") return true;
-    return true;
-  });
-  const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(() => {
-    if (typeof window === "undefined") return 5000;
-    const saved = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
-    const parsed = saved ? Number.parseInt(saved, 10) : NaN;
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    return 5000;
-  });
+  // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
+  const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
 
   const normalizedPathFilter = pathFilter.trim();
   const normalizedQuery = debouncedQuery.trim();
@@ -141,6 +130,17 @@ export function JobQueuePanel({ activePathId }: JobQueuePanelProps): React.JSX.E
     }, SEARCH_DEBOUNCE_MS);
     return (): void => clearTimeout(timer);
   }, [searchQuery]);
+
+  React.useEffect(() => {
+    const savedEnabled = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
+    const nextEnabled = savedEnabled === "false" ? false : true;
+    setAutoRefreshEnabled(nextEnabled);
+
+    const savedInterval = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
+    const parsed = savedInterval ? Number.parseInt(savedInterval, 10) : NaN;
+    const nextInterval = Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
+    setAutoRefreshInterval(nextInterval);
+  }, []);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;

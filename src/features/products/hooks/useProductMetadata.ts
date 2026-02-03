@@ -8,7 +8,8 @@ import type {
   ProductTag, 
   ProductParameter,
   PriceGroupWithDetails,
-  ProductWithImages
+  ProductWithImages,
+  Producer
 } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
 import type { UseFormSetValue, UseFormGetValues } from "react-hook-form";
@@ -18,6 +19,7 @@ export const productMetadataKeys = {
   catalogs: ["catalogs"] as const,
   categories: (catalogId: string) => ["categories", catalogId] as const,
   tags: (catalogId: string) => ["tags", catalogId] as const,
+  producers: ["producers"] as const,
   parameters: (catalogId: string) => ["parameters", catalogId] as const,
   languages: ["languages"] as const,
   priceGroups: ["price-groups"] as const,
@@ -55,6 +57,17 @@ export function useTags(catalogId: string): UseQueryResult<ProductTag[]> {
       return (await res.json()) as ProductTag[];
     },
     enabled: !!catalogId,
+  });
+}
+
+export function useProducers(): UseQueryResult<Producer[]> {
+  return useQuery({
+    queryKey: productMetadataKeys.producers,
+    queryFn: async (): Promise<Producer[]> => {
+      const res = await fetch("/api/products/producers");
+      if (!res.ok) throw new Error("Failed to load producers");
+      return (await res.json()) as Producer[];
+    },
   });
 }
 
@@ -106,6 +119,10 @@ export interface ProductMetadataHookResult {
   tagsLoading: boolean;
   selectedTagIds: string[];
   toggleTag: (tagId: string) => void;
+  producers: Producer[];
+  producersLoading: boolean;
+  selectedProducerIds: string[];
+  toggleProducer: (producerId: string) => void;
   parameters: ProductParameter[];
   parametersLoading: boolean;
   filteredLanguages: Language[];
@@ -133,6 +150,7 @@ export function useProductMetadata({
   const catalogsQuery = useCatalogs();
   const languagesQuery = useLanguages();
   const priceGroupsQuery = usePriceGroups();
+  const producersQuery = useProducers();
   // Initialize selections based on product or initial values
   const initialCatalogSelection = React.useMemo(() => {
     if (product?.catalogs) {
@@ -160,10 +178,18 @@ export function useProductMetadata({
     }
     return initialTagIds || [];
   }, [product, initialTagIds]);
+
+  const initialProducerSelection = React.useMemo(() => {
+    if (product?.producers) {
+      return product.producers.map((p: { producerId: string }) => p.producerId);
+    }
+    return [];
+  }, [product]);
   
   const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(initialCatalogSelection);
   const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>(initialCategorySelection);
   const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
+  const [selectedProducerIds, setSelectedProducerIds] = React.useState<string[]>(initialProducerSelection);
 
   const arraysEqual = (a: string[], b: string[]): boolean =>
     a.length === b.length && a.every((value: string, index: number) => value === b[index]);
@@ -179,6 +205,12 @@ export function useProductMetadata({
   React.useEffect(() => {
     setSelectedTagIds((prev: string[]) => (arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection));
   }, [initialTagSelection]);
+
+  React.useEffect(() => {
+    setSelectedProducerIds((prev: string[]) =>
+      arraysEqual(prev, initialProducerSelection) ? prev : initialProducerSelection
+    );
+  }, [initialProducerSelection]);
   
   const primaryCatalogId = selectedCatalogIds[0] || "";
   const categoriesQuery = useCategories(primaryCatalogId);
@@ -206,6 +238,14 @@ export function useProductMetadata({
       prev.includes(tagId) 
         ? prev.filter((id: string) => id !== tagId)
         : [...prev, tagId]
+    );
+  };
+
+  const toggleProducer = (producerId: string): void => {
+    setSelectedProducerIds((prev: string[]) =>
+      prev.includes(producerId)
+        ? prev.filter((id: string) => id !== producerId)
+        : [...prev, producerId]
     );
   };
 
@@ -269,6 +309,10 @@ export function useProductMetadata({
     tagsLoading: tagsQuery.isLoading,
     selectedTagIds,
     toggleTag,
+    producers: producersQuery.data || [],
+    producersLoading: producersQuery.isLoading,
+    selectedProducerIds,
+    toggleProducer,
     parameters: parametersQuery.data || [],
     parametersLoading: parametersQuery.isLoading,
     filteredLanguages,

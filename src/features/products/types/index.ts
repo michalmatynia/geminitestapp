@@ -25,6 +25,7 @@ export type {
   SyncDirection,
   IntegrationDbProvider,
   UserPreferences,
+  Producer,
 } from "@/shared/types/domain/products";
 
 export type ProductCategoryWithChildren = ProductCategoryDto & {

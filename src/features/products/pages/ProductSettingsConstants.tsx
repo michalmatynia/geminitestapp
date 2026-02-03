@@ -4,6 +4,4 @@ export const settingSections = [
   "Price Groups",
   "Catalogs",
   "Internationalization",
-  "AI Description",
-  "AI Translation",
 ] as const;

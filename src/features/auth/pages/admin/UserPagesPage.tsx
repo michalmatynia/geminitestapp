@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 
 
@@ -20,9 +20,15 @@ import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 export default function AuthUserPagesPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
+  const didNotifyErrorRef = useRef(false);
 
   useEffect(() => {
-    if (!settingsQuery.error) return;
+    if (!settingsQuery.error) {
+      didNotifyErrorRef.current = false;
+      return;
+    }
+    if (didNotifyErrorRef.current) return;
+    didNotifyErrorRef.current = true;
     console.error("Failed to load user page settings:", settingsQuery.error);
     toast("Failed to load user page settings", { variant: "error" });
   }, [settingsQuery.error, toast]);

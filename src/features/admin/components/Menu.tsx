@@ -124,6 +124,12 @@ export default function Menu(): React.ReactNode {
         >
           Settings
         </Link>
+        <Link
+          href="/admin/products/producers"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Producers
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Integrations"
@@ -168,12 +174,6 @@ export default function Menu(): React.ReactNode {
         </Link>
       </CollapsibleMenu>
       <CollapsibleMenu title="Jobs" icon={<ActivityIcon />} href="/admin/products/jobs">
-        <Link
-          href="/admin/products/jobs"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          All Jobs
-        </Link>
         <Link
           href="/admin/ai-paths/jobs"
           className="block hover:bg-gray-700 p-2 rounded"

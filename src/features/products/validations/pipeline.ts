@@ -117,11 +117,13 @@ export function createProductValidationPipeline(): ValidationPipeline<Record<str
   return new ValidationPipeline<Record<string, unknown>>()
     .addMiddleware((data: Record<string, unknown>): Record<string, unknown> => {
       // Normalize data
-      if (typeof data.price === "string") {
-        data.price = parseFloat(data.price) || undefined;
+      const price = data.price;
+      if (typeof price === "string") {
+        data.price = parseFloat(price) || undefined;
       }
-      if (typeof data.stock === "string") {
-        data.stock = parseInt(data.stock) || undefined;
+      const stock = data.stock;
+      if (typeof stock === "string") {
+        data.stock = parseInt(stock) || undefined;
       }
       return data;
     })
@@ -140,7 +142,10 @@ export function createProductValidationPipeline(): ValidationPipeline<Record<str
     })
     .addStep({
       name: "business_rules",
-      validator: (data: Record<string, unknown>): ValidationError[] => validateWithConfig(data, z.any()),
+      validator: async (data: Record<string, unknown>): Promise<ValidationError[]> => {
+        const { productCreateSchema } = await import("./schemas");
+        return validateWithConfig(data, productCreateSchema);
+      },
       dependsOn: ["schema_validation"]
     })
     .addStep({
@@ -166,7 +171,7 @@ export function createProductUpdatePipeline(): ValidationPipeline<Record<string,
     .addMiddleware((data: Record<string, unknown>): Record<string, unknown> => {
       // Remove undefined values for updates
       return Object.fromEntries(
-        Object.entries(data).filter(([_, value]: [string, unknown]) => value !== undefined)
+        Object.entries(data).filter(([, value]: [string, unknown]) => value !== undefined)
       );
     })
     .addStep({
@@ -184,7 +189,10 @@ export function createProductUpdatePipeline(): ValidationPipeline<Record<string,
     })
     .addStep({
       name: "business_rules",
-      validator: (data: Record<string, unknown>): ValidationError[] => validateWithConfig(data, z.any()),
+      validator: async (data: Record<string, unknown>): Promise<ValidationError[]> => {
+        const { productUpdateSchema } = await import("./schemas");
+        return validateWithConfig(data, productUpdateSchema);
+      },
       dependsOn: ["schema_validation"],
       optional: true
     });

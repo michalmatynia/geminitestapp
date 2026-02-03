@@ -65,7 +65,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   useEffect(() => {
     // The persisted order is the array order returned by the API/settings value.
-    setOrderedRows(triggerButtonsQuery.data ?? []);
+    if (triggerButtonsQuery.data) {
+      void Promise.resolve().then(() => setOrderedRows(triggerButtonsQuery.data ?? []));
+    }
   }, [triggerButtonsQuery.data]);
 
   const pathsQuery = useQuery({

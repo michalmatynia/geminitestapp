@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { usePathname } from "next/navigation";
@@ -132,10 +132,12 @@ export function AdminLayout({
   initialMenuCollapsed?: boolean;
 }): React.ReactNode {
   return (
-    <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
-      <NoteSettingsProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </NoteSettingsProvider>
-    </AdminLayoutProvider>
+    <SessionProvider>
+      <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+        <NoteSettingsProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </NoteSettingsProvider>
+      </AdminLayoutProvider>
+    </SessionProvider>
   );
 }

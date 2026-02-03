@@ -357,7 +357,7 @@ export function AiPathsSettingsView({
                       <SelectValue placeholder="Switch path" />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-gray-900">
-                      {groupPaths.map((path) => (
+                      {groupPaths.map((path: PathConfig) => (
                         <SelectItem key={path.id} value={path.id}>
                           {path.name}
                         </SelectItem>
@@ -385,7 +385,7 @@ export function AiPathsSettingsView({
             open={renameOpen}
             onClose={() => setRenameOpen(false)}
             title="Rename Path"
-            size="md"
+            size="sm"
             footer={
               <div className="flex w-full justify-end gap-2">
                 <Button
@@ -415,7 +415,7 @@ export function AiPathsSettingsView({
               </div>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="space-y-1">
                 <Label className="text-xs text-gray-400">Name</Label>
                 <Input
@@ -426,9 +426,6 @@ export function AiPathsSettingsView({
                   autoFocus
                 />
               </div>
-              {groupKey ? (
-                <div className="text-[11px] text-gray-500">Group: {groupKey}</div>
-              ) : null}
             </div>
           </SharedModal>
 
@@ -536,7 +533,7 @@ export function AiPathsSettingsView({
           paths={paths}
           pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
-          onSaveList={() => { void savePathIndex(paths); }}
+          onSaveList={(paths: PathConfig[]) => { void savePathIndex(paths); }}
           onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");

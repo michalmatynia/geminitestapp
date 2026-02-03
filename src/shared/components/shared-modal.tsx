@@ -11,7 +11,7 @@ type SharedModalProps = {
   children: React.ReactNode;
   footer?: React.ReactNode | undefined;
   header?: React.ReactNode | undefined;
-  size?: "md" | "lg" | "xl" | undefined;
+  size?: "sm" | "md" | "lg" | "xl" | undefined;
   showClose?: boolean | undefined;
   contentClassName?: string | undefined;
   bodyClassName?: string | undefined;

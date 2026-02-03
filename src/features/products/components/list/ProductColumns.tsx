@@ -347,11 +347,11 @@ export const getProductColumns = (
         <div>
           <span
             className={[
-              "inline-block w-full whitespace-normal break-words rounded",
-              "select-text cursor-text",
+              "inline whitespace-normal break-words",
+              "select-text",
+              handleNameClick ? "cursor-pointer hover:underline" : "cursor-text",
               "text-sm font-normal text-white/90",
-              "transition-colors hover:bg-foreground/5 hover:text-white/80",
-              "px-1 -mx-1",
+              "hover:text-white/80",
             ].join(" ")}
             onClick={(): void => {
               if (!handleNameClick) return;
@@ -367,9 +367,7 @@ export const getProductColumns = (
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
               <span
                 className={[
-                  "select-text cursor-text rounded",
-                  "transition-colors hover:bg-foreground/5 hover:text-gray-300",
-                  "px-1 -mx-1",
+                  "select-text cursor-text",
                 ].join(" ")}
               >
                 {product.sku}
@@ -576,10 +574,7 @@ export const getProductColumns = (
         meta?.integrationBadgeIds?.has(product.id) ?? false;
       const status: string = meta?.integrationBadgeStatuses?.get(product.id) ?? "not_started";
       const baseIcon = (
-        <span
-          aria-hidden="true"
-          className="inline-flex size-4 items-center justify-center rounded-sm border border-current/30 text-[9px] font-black leading-none"
-        >
+        <span aria-hidden="true" className="text-[11px] font-black leading-none">
           B
         </span>
       );
@@ -610,7 +605,7 @@ export const getProductColumns = (
                 status={status}
                 icon={baseIcon}
                 hideLabel
-                className="h-7 min-w-[34px] px-1.5"
+                className="size-7 rounded-full p-0"
                 title={`Base.com export status: ${status}`}
               />
             </Button>

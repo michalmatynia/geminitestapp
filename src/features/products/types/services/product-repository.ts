@@ -46,6 +46,14 @@ export type ProductRepository = {
     productId: string,
     tagIds: string[]
   ): Promise<void>;
+  replaceProductProducers(
+    productId: string,
+    producerIds: string[]
+  ): Promise<void>;
+  replaceProductNotes(
+    productId: string,
+    noteIds: string[]
+  ): Promise<void>;
   removeProductImage(productId: string, imageFileId: string): Promise<void>;
   countProductsByImageFileId(imageFileId: string): Promise<number>;
 };

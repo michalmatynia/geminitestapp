@@ -8,7 +8,7 @@ type ModalShellProps = {
   footer?: React.ReactNode | undefined;
   header?: React.ReactNode | undefined;
   bodyClassName?: string | undefined;
-  size?: "md" | "lg" | "xl" | undefined;
+  size?: "sm" | "md" | "lg" | "xl" | undefined;
   showClose?: boolean | undefined;
 };
 
@@ -23,11 +23,15 @@ export default function ModalShell({
   showClose = true,
 }: ModalShellProps) {
   const sizeClass =
-    size === "md"
+    size === "sm"
+      ? "max-w-lg md:min-w-[420px]"
+      : size === "md"
       ? "max-w-2xl md:min-w-[640px]"
       : size === "lg"
         ? "max-w-4xl md:min-w-[800px]"
         : "max-w-6xl md:min-w-[960px]";
+
+  const bodyHeightClass = size === "sm" ? "max-h-[50vh]" : "h-[80vh]";
 
   return (
     <div className={`w-full rounded-lg border bg-card p-6 ${sizeClass}`}>
@@ -48,7 +52,7 @@ export default function ModalShell({
         </div>
       )}
       <div
-        className={`h-[80vh] overflow-y-auto pr-2${bodyClassName ? ` ${bodyClassName}` : ""}`}
+        className={`${bodyHeightClass} overflow-y-auto pr-2${bodyClassName ? ` ${bodyClassName}` : ""}`}
       >
         {children}
       </div>

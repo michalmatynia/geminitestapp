@@ -2,7 +2,7 @@
 
 import { useQueryPerformance } from "@/shared/hooks/useQueryPerformance";
 import { useQueryDiagnostics } from "@/shared/hooks/query/useQueryDiagnostics";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/shared/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "./";
 import { useEffect, useMemo, useState } from "react";
 
 type QueryDevPanelProps = {

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast, StatusBadge } from "@/shared/ui";
-import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row, Table, Column } from "@tanstack/react-table";
 import { ArrowUpDown, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -15,7 +14,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { EditableCell } from "@/features/products/components/EditableCell";
 import { ProductImageCell } from "@/features/products/components/cells/ProductImageCell";
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages, PriceGroupForCalculation } from "@/features/products/types";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;

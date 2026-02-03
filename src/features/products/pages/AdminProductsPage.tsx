@@ -28,9 +28,10 @@ import DebugPanel from "@/features/products/components/DebugPanel";
 import type { ProductDraft } from "@/features/products/types/drafts";
 import type { ProductWithImages } from "@/features/products/types";
 import { logClientError } from "@/shared/utils/observability/client-error-logger";
-import { logger } from "@/shared/utils/logger";
 import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 import { getProducts } from "@/features/products/api";
+
+type RowSelectionState = Record<string, boolean>;
 
 const SelectIntegrationModal = dynamic<import("@/features/integrations/components/listings/SelectIntegrationModal").SelectIntegrationModalProps>(
   () => import("@/features/integrations/components/listings/SelectIntegrationModal"),

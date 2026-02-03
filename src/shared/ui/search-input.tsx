@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Input, Button } from "@/shared/ui";
+import { Input } from "./input";
+import { Button } from "./button";
 import { Search, X } from "lucide-react";
 import { cn } from "@/shared/utils";
 

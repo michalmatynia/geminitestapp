@@ -10,7 +10,7 @@ import type {
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto
-} from '../dtos';
+} from "../index";
 
 export type {
   ProductDto, 

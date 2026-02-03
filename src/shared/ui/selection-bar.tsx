@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo, useCallback } from "react";
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui";
+import { Button } from "./button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./dropdown-menu";
 import { CheckSquare, Settings2, Trash2 } from "lucide-react";
 import { cn } from "@/shared/utils";
 

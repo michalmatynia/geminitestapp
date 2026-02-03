@@ -10,7 +10,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui";
+} from "./alert-dialog";
 
 interface ConfirmDialogProps {
   open: boolean;

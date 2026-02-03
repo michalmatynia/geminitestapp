@@ -355,7 +355,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
 
   if (loading) return <div className="text-sm text-gray-400">Loading settings...</div>;
 
-  return (
+  return (<>
     <div className="space-y-8">
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -615,5 +615,5 @@ export function AiDescriptionSettings(): React.JSX.Element {
         </Button>
       </div>
     </div>
-  );
+</>);
 }

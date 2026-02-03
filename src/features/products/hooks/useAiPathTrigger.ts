@@ -2,8 +2,8 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/ui";
+import { logClientError } from "@/features/observability/utils/client-error-logger";
 import { logger } from "@/shared/utils/logger";
-import { logClientError } from "@/features/observability";
 import type {
   AiNode,
   PathConfig,

@@ -144,7 +144,7 @@ export function AiTranslationSettings(): React.JSX.Element {
 
 
 
-    return (
+    return (<>
 
 
 
@@ -436,7 +436,7 @@ export function AiTranslationSettings(): React.JSX.Element {
 
 
 
-    );
+  </>);
 
 
 

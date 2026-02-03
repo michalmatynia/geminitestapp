@@ -3,6 +3,7 @@
 
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
+import { logClientError } from "@/features/observability";
 
 interface StreamConfig {
   endpoint: string;
@@ -105,6 +106,7 @@ export function useWebSocketQuery<T>(
     };
 
     wsRef.current.onerror = (error: Event): void => {
+      logClientError(error, { context: { source: "WebSocketQuery", url: wsUrl, queryKey } });
       console.error('WebSocket error:', error);
       options?.onError?.(error);
     };

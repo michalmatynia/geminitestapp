@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 166ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 168ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -15,18 +15,56 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 - Environments: .env
 
   Creating an optimized production build ...
-✓ Compiled successfully in 11.7s
-  Running TypeScript ...
-Failed to compile.
 
-./src/features/products/pages/AdminProductsPage.tsx:31:1
-Type error: 'logger' is declared but its value is never read.
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./src/shared/providers/BackgroundSyncProvider.tsx:6:1
+Export QueryDevPanel doesn't exist in target module
+[0m [90m 4 |[39m [36mimport[39m { useSystemSync } [36mfrom[39m [32m"@/shared/hooks/sync/useSystemSync"[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { useSettingsMap } [36mfrom[39m [32m"@/shared/hooks/use-settings"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { [33mQueryDevPanel[39m } [36mfrom[39m [32m"@/shared/ui"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m type [33mBackgroundSyncContextValue[39m [33m=[39m {
+ [90m 9 |[39m   enabled[33m:[39m boolean[33m;[39m[0m
 
-[0m [90m 29 |[39m [36mimport[39m type { [33mProductWithImages[39m } [36mfrom[39m [32m"@/features/products/types"[39m[33m;[39m
- [90m 30 |[39m [36mimport[39m { logClientError } [36mfrom[39m [32m"@/shared/utils/observability/client-error-logger"[39m[33m;[39m
-[31m[1m>[22m[39m[90m 31 |[39m [36mimport[39m { logger } [36mfrom[39m [32m"@/shared/utils/logger"[39m[33m;[39m
- [90m    |[39m [31m[1m^[22m[39m
- [90m 32 |[39m [36mimport[39m { useDrafts[33m,[39m draftKeys } [36mfrom[39m [32m"@/features/drafter/hooks/useDrafts"[39m[33m;[39m
- [90m 33 |[39m [36mimport[39m { getProducts } [36mfrom[39m [32m"@/features/products/api"[39m[33m;[39m
- [90m 34 |[39m[0m
-Next.js build worker exited with code: 1 and signal: null
+The export QueryDevPanel was not found in module [project]/src/shared/ui/index.ts [app-client] (ecmascript).
+Did you mean to import SelectLabel?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  App Route:
+    ./src/shared/providers/BackgroundSyncProvider.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Server Component:
+    ./src/shared/providers/BackgroundSyncProvider.tsx
+    ./src/app/layout.tsx
+
+
+./src/shared/providers/BackgroundSyncProvider.tsx:6:1
+Export QueryDevPanel doesn't exist in target module
+[0m [90m 4 |[39m [36mimport[39m { useSystemSync } [36mfrom[39m [32m"@/shared/hooks/sync/useSystemSync"[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { useSettingsMap } [36mfrom[39m [32m"@/shared/hooks/use-settings"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { [33mQueryDevPanel[39m } [36mfrom[39m [32m"@/shared/ui"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m type [33mBackgroundSyncContextValue[39m [33m=[39m {
+ [90m 9 |[39m   enabled[33m:[39m boolean[33m;[39m[0m
+
+The export QueryDevPanel was not found in module [project]/src/shared/ui/index.ts [app-ssr] (ecmascript).
+Did you mean to import SelectLabel?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  App Route:
+    ./src/shared/providers/BackgroundSyncProvider.tsx
+    ./src/app/api/databases/restore/route.ts
+
+  Server Component:
+    ./src/shared/providers/BackgroundSyncProvider.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (./src/shared/providers/BackgroundSyncProvider.tsx:6:1)
+    at <unknown> (./src/shared/providers/BackgroundSyncProvider.tsx:6:1)

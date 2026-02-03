@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/shared/ui";
+import { Button } from "./button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import { Label } from "./label";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/utils";
 

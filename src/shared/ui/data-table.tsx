@@ -1,7 +1,7 @@
 "use client";
 import React, { JSX, memo, useEffect, useMemo, useState } from "react";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import { EmptyState } from "./empty-state";
 import {
   ColumnDef,

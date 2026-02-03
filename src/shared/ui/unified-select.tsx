@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui";
+} from "./select";
 import { cn } from "@/shared/utils";
 
 export interface SelectOption {

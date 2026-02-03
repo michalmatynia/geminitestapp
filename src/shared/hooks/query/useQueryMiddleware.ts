@@ -3,6 +3,7 @@
 
 import { useQueryClient, type Query } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { logClientError } from "@/features/observability";
 
 interface QueryMiddleware {
   name: string;
@@ -58,6 +59,13 @@ export const loggingMiddleware: QueryMiddleware = {
     if (!message || ["{}", "[]", "[object Object]"].includes(message)) {
       return;
     }
+    logClientError(error, { 
+      context: { 
+        source: "QueryMiddleware", 
+        queryKey: query.queryKey,
+        fetchStatus: query.state.fetchStatus
+      } 
+    });
     console.error(`❌ Query error: ${JSON.stringify(query.queryKey)}`, error);
   },
 };

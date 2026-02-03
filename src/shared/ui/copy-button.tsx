@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/shared/ui";
+import { Button } from "./button";
 import { Check, Copy } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";

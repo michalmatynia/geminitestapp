@@ -1,6 +1,15 @@
 "use client";
 
-import { Button, Card, SectionHeader, SectionPanel, EmptyState, ConfirmDialog, SharedModal, Input, Label, Textarea } from "@/shared/ui";
+import { Button } from "./button";
+import { Card } from "./card";
+import { SectionHeader } from "./section-header";
+import { SectionPanel } from "./section-panel";
+import { EmptyState } from "./empty-state";
+import { ConfirmDialog } from "./confirm-dialog";
+import { SharedModal } from "./shared-modal";
+import { Input } from "./input";
+import { Label } from "./label";
+import { Textarea } from "./textarea";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 

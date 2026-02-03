@@ -2,7 +2,7 @@
 
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
-import { Button } from "@/shared/ui";
+import { Button } from "./button";
 import { RefreshCw } from "lucide-react";
 
 function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {

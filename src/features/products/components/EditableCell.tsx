@@ -2,6 +2,7 @@
 
 import { Input, useToast } from "@/shared/ui";
 import { useState, useEffect, useRef, KeyboardEvent, memo } from "react";
+import { logClientError } from "@/features/observability";
 
 
 type EditableCellProps = {
@@ -70,7 +71,7 @@ export const EditableCell = memo(function EditableCell({
       setIsEditing(false);
       onUpdate();
     } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
+      logClientError(error, { context: { source: "EditableCell", action: "save", field, productId } });
       toast(error instanceof Error ? error.message : `Failed to update ${field}`, { variant: "error" });
       setEditValue(String(value ?? ""));
       setIsEditing(false);

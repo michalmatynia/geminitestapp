@@ -2,13 +2,7 @@
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
-
-
-
-
-
-
-
+import { logClientError } from "@/features/observability";
 
 import {
   AUTH_SETTINGS_KEYS,
@@ -34,7 +28,7 @@ export default function AuthPermissionsPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load permissions settings:", settingsQuery.error);
+    logClientError(settingsQuery.error, { context: { source: "AuthPermissionsPage", action: "loadSettings" } });
     toast("Failed to load permission settings", { variant: "error" });
   }, [settingsQuery.error, toast]);
 
@@ -211,7 +205,7 @@ function AuthPermissionsForm({
       setDirty(false);
       toast("Permission settings saved", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save permission settings:", error);
+      logClientError(error, { context: { source: "AuthPermissionsPage", action: "saveSettings" } });
       toast("Failed to save permission settings", { variant: "error" });
     }
   };

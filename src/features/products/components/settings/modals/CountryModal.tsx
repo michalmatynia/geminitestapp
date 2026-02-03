@@ -22,6 +22,7 @@ import type {
 } from "@/shared/types/internationalization";
 import { countryCodeOptions } from "@/shared/constants/internationalization";
 import { useSaveCountryMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
+import { logClientError } from "@/features/observability";
 
 interface CountryModalProps {
   isOpen: boolean;
@@ -82,7 +83,7 @@ export function CountryModal({
       toast("Country saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
-      console.error(err);
+      logClientError(err, { context: { source: "CountryModal", action: "saveCountry", countryId: country?.id } });
       toast("Failed to save country.", { variant: "error" });
     }
   };

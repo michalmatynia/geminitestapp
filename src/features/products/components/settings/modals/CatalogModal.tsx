@@ -22,6 +22,7 @@ import {
 import type { Catalog, PriceGroup } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
 import { useSaveCatalogMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 interface CatalogModalProps {
   isOpen: boolean;
@@ -153,7 +154,7 @@ export function CatalogModal({
       toast("Catalog saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
-      console.error(err);
+      logClientError(err, { context: { source: "CatalogModal", action: "saveCatalog", catalogId: catalog?.id } });
       setError(err instanceof Error ? err.message : "Failed to save catalog.");
     }
   };

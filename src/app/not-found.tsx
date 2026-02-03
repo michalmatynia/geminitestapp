@@ -1,5 +1,4 @@
 import { JSX } from "react";
-import { Button } from "@/shared/ui";
 import Link from "next/link";
 
 export default function NotFound(): JSX.Element {
@@ -9,9 +8,12 @@ export default function NotFound(): JSX.Element {
       <p className="max-w-md text-sm text-gray-400">
         We couldn&apos;t find the page you were looking for.
       </p>
-      <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
-        <Link href="/">Go Home</Link>
-      </Button>
+      <Link
+        href="/"
+        className="inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+      >
+        Go Home
+      </Link>
     </div>
   );
 }

@@ -1117,11 +1117,12 @@ export async function exportProductToBase(
     };
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "base-exporter", 
-        action: "exportProductToBase",
-        productId: product.id 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[base-exporter] Export failed",
+        error,
+        source: "base-exporter",
+        context: { action: "exportProductToBase", productId: product.id }
       });
     } catch (logError) {
       console.error("[base-exporter] Export failed (and logging failed)", error, logError);
@@ -1174,12 +1175,12 @@ export async function exportProductImagesToBase(
     };
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "base-exporter", 
-        action: "exportProductImagesToBase",
-        productId: product.id,
-        externalProductId
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[base-exporter] Image-only export failed",
+        error,
+        source: "base-exporter",
+        context: { action: "exportProductImagesToBase", productId: product.id, externalProductId }
       });
     } catch (logError) {
       console.error("[base-exporter] Image-only export failed (and logging failed)", error, logError);

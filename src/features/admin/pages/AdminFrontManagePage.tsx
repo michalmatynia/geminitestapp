@@ -4,6 +4,7 @@ import { Button, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import { SaveIcon } from "lucide-react";
 import Link from "next/link";
+import { logClientError } from "@/features/observability";
 
 
 import { cn } from "@/shared/utils";
@@ -75,7 +76,7 @@ function AdminFrontManageContent({
       });
       toast("Front page updated", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save front page setting:", error);
+      logClientError(error, { context: { source: "AdminFrontManagePage", action: "saveSettings" } });
       toast("Failed to save front page setting", { variant: "error" });
     }
   };

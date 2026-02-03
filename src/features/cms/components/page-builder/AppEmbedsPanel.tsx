@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Button, Checkbox, useToast } from "@/shared/ui";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { logClientError } from "@/features/observability";
 import { APP_EMBED_OPTIONS, APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
@@ -46,7 +47,7 @@ export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } =
       setUserEnabled(null); // Reset to follow server data after save
       toast("App embeds saved.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save app embeds:", error);
+      logClientError(error, { context: { source: "AppEmbedsPanel", action: "saveSettings" } });
       toast("Failed to save app embeds.", { variant: "error" });
     }
   };

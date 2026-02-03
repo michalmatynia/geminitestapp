@@ -89,19 +89,19 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
 
   const frameCount = frames.length;
 
-  const goToNext = useCallback(() => {
+  const goToNext = useCallback((): void => {
     if (frameCount === 0) return;
     if (!loop && currentIndex >= frameCount - 1) return;
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % frameCount);
+    setCurrentIndex((prev: number) => (prev + 1) % frameCount);
     setTimeout(() => setIsTransitioning(false), transitionDuration);
   }, [frameCount, loop, currentIndex, transitionDuration]);
 
-  const goToPrev = useCallback(() => {
+  const goToPrev = useCallback((): void => {
     if (frameCount === 0) return;
     if (!loop && currentIndex <= 0) return;
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + frameCount) % frameCount);
+    setCurrentIndex((prev: number) => (prev - 1 + frameCount) % frameCount);
     setTimeout(() => setIsTransitioning(false), transitionDuration);
   }, [frameCount, loop, currentIndex, transitionDuration]);
 
@@ -123,7 +123,7 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
     }
 
     intervalRef.current = setInterval(goToNext, autoPlaySpeed);
-    return () => {
+    return (): void => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -246,7 +246,7 @@ export function FrontendCarousel({ settings, blocks }: FrontendCarouselProps): R
       {/* Indicators */}
       {showIndicators && frameCount > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-          {frames.map((_, index: number) => (
+          {frames.map((_: BlockInstance, index: number) => (
             <button
               key={index}
               type="button"

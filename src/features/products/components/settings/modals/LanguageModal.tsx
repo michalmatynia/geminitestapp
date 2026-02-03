@@ -16,6 +16,7 @@ import type {
   CountryOption,
 } from "@/shared/types/internationalization";
 import { useSaveLanguageMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
+import { logClientError } from "@/features/observability";
 
 interface LanguageModalProps {
   isOpen: boolean;
@@ -77,7 +78,7 @@ export function LanguageModal({
       toast("Language saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
-      console.error(err);
+      logClientError(err, { context: { source: "LanguageModal", action: "saveLanguage", languageId: language?.id } });
       toast("Failed to save language.", { variant: "error" });
     }
   };

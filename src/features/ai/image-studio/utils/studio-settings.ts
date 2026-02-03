@@ -11,6 +11,24 @@ export type PromptValidationSimilarPattern = {
   comment?: string | null;
 };
 
+export type PromptAutofixOperation =
+  | {
+      kind: "replace";
+      pattern: string;
+      flags?: string | undefined;
+      replacement: string;
+      comment?: string | null;
+    }
+  | {
+      kind: "params_json";
+      comment?: string | null;
+    };
+
+export type PromptAutofixConfig = {
+  enabled: boolean;
+  operations: PromptAutofixOperation[];
+};
+
 export type PromptValidationRule =
   | {
       kind: "regex";
@@ -23,6 +41,7 @@ export type PromptValidationRule =
       flags: string;
       message: string;
       similar: PromptValidationSimilarPattern[];
+      autofix?: PromptAutofixConfig | undefined;
     }
   | {
       kind: "params_object";
@@ -33,6 +52,7 @@ export type PromptValidationRule =
       description: string | null;
       message: string;
       similar: PromptValidationSimilarPattern[];
+      autofix?: PromptAutofixConfig | undefined;
     };
 
 export type PromptValidationSettings = {
@@ -55,6 +75,15 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
       { pattern: "params\\s*:\\s*\\{", flags: "i", suggestion: "Use `params = {` (assignment) instead of `params: {`.", comment: null },
       { pattern: "parameters\\s*=\\s*\\{", flags: "i", suggestion: "Use `params = {` instead of `parameters = {`.", comment: null },
     ],
+    autofix: {
+      enabled: true,
+      operations: [
+        { kind: "replace", pattern: "\\bparam\\s*[:=]\\s*\\{", flags: "i", replacement: "params = {", comment: null },
+        { kind: "replace", pattern: "\\bparameters\\s*[:=]\\s*\\{", flags: "i", replacement: "params = {", comment: null },
+        { kind: "replace", pattern: "\\bparams\\s*[:=]\\s*\\{", flags: "i", replacement: "params = {", comment: "Normalizes casing/spaces so extraction can find `params = {`." },
+        { kind: "params_json", comment: "Attempts to convert the params object into strict JSON (quoted keys/strings)." },
+      ],
+    },
   },
   {
     kind: "regex",
@@ -70,6 +99,13 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
       { pattern: "^#+\\s*Role\\b", flags: "mi", suggestion: "Rename to `## ROLE`.", comment: null },
       { pattern: "^##\\s*ROL\\b", flags: "mi", suggestion: "Fix typo to `## ROLE`.", comment: null },
     ],
+    autofix: {
+      enabled: true,
+      operations: [
+        { kind: "replace", pattern: "^#+\\s*role\\b.*$", flags: "mi", replacement: "## ROLE", comment: null },
+        { kind: "replace", pattern: "^#+\\s*rol\\b.*$", flags: "mi", replacement: "## ROLE", comment: null },
+      ],
+    },
   },
   {
     kind: "regex",
@@ -85,6 +121,13 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
       { pattern: "^##\\s+NON\\s*NEGOTIABLE\\s+GOAL\\b", flags: "mi", suggestion: "Use hyphenated `## NON-NEGOTIABLE GOAL`.", comment: null },
       { pattern: "^#+\\s*Non[-\\s]?negotiable\\b", flags: "mi", suggestion: "Rename to `## NON-NEGOTIABLE GOAL`.", comment: null },
     ],
+    autofix: {
+      enabled: true,
+      operations: [
+        { kind: "replace", pattern: "^#+\\s*non\\s*negotiable\\s+goal\\b.*$", flags: "mi", replacement: "## NON-NEGOTIABLE GOAL", comment: null },
+        { kind: "replace", pattern: "^#+\\s*non[-\\s]?negotiable\\b.*$", flags: "mi", replacement: "## NON-NEGOTIABLE GOAL", comment: null },
+      ],
+    },
   },
   {
     kind: "regex",
@@ -100,6 +143,13 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
       { pattern: "^##\\s*PARAM\\b", flags: "mi", suggestion: "Rename to `## PARAMS`.", comment: null },
       { pattern: "^#+\\s*Params\\b", flags: "mi", suggestion: "Rename to `## PARAMS`.", comment: null },
     ],
+    autofix: {
+      enabled: true,
+      operations: [
+        { kind: "replace", pattern: "^#+\\s*param\\b.*$", flags: "mi", replacement: "## PARAMS", comment: null },
+        { kind: "replace", pattern: "^#+\\s*params\\b.*$", flags: "mi", replacement: "## PARAMS", comment: null },
+      ],
+    },
   },
   {
     kind: "regex",
@@ -114,6 +164,12 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     similar: [
       { pattern: "^#+\\s*QA\\b", flags: "mi", suggestion: "Rename to `## FINAL QA`.", comment: null },
     ],
+    autofix: {
+      enabled: true,
+      operations: [
+        { kind: "replace", pattern: "^#+\\s*qa\\b.*$", flags: "mi", replacement: "## FINAL QA", comment: null },
+      ],
+    },
   },
 ];
 
@@ -214,6 +270,31 @@ const promptValidationSimilarSchema: z.ZodType<PromptValidationSimilarPattern> =
   })
   .strict();
 
+const promptAutofixOperationSchema: z.ZodType<PromptAutofixOperation> = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("replace"),
+      pattern: z.string().trim().min(1),
+      flags: z.string().trim().optional(),
+      replacement: z.string(),
+      comment: z.string().trim().min(1).nullable().optional().default(null),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("params_json"),
+      comment: z.string().trim().min(1).nullable().optional().default(null),
+    })
+    .strict(),
+]);
+
+const promptAutofixSchema: z.ZodType<PromptAutofixConfig> = z
+  .object({
+    enabled: z.boolean().optional().default(true),
+    operations: z.array(promptAutofixOperationSchema).optional().default([]),
+  })
+  .strict();
+
 const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discriminatedUnion("kind", [
   z
     .object({
@@ -227,6 +308,7 @@ const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discrimina
       flags: z.string().trim().optional().default("mi"),
       message: z.string().trim().min(1),
       similar: z.array(promptValidationSimilarSchema).optional().default([]),
+      autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
     })
     .strict(),
   z
@@ -239,6 +321,7 @@ const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discrimina
       description: z.string().trim().min(1).nullable().optional().default(null),
       message: z.string().trim().min(1),
       similar: z.array(promptValidationSimilarSchema).optional().default([]),
+      autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
     })
     .strict(),
 ]);
@@ -312,7 +395,39 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
   try {
     const parsed = JSON.parse(raw) as unknown;
     const result = imageStudioSettingsSchema.safeParse(parsed);
-    return result.success ? result.data : defaultImageStudioSettings;
+    if (!result.success) return defaultImageStudioSettings;
+
+    const rawRules = (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+      ? (parsed as Record<string, unknown>)?.promptValidation
+      : null;
+    const rawRulesArray =
+      rawRules && typeof rawRules === "object" && !Array.isArray(rawRules)
+        ? (rawRules as Record<string, unknown>)?.rules
+        : null;
+    const hadAutofixInStorage = Array.isArray(rawRulesArray)
+      ? rawRulesArray.some((rule) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
+      : false;
+
+    if (hadAutofixInStorage) return result.data;
+
+    const defaultById = new Map(defaultPromptValidationRules.map((rule) => [rule.id, rule]));
+    const mergedRules = result.data.promptValidation.rules.map((rule) => {
+      const defaults = defaultById.get(rule.id);
+      if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
+      const needsAutofix =
+        !rule.autofix ||
+        !Array.isArray(rule.autofix.operations) ||
+        rule.autofix.operations.length === 0;
+      return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
+    });
+
+    return {
+      ...result.data,
+      promptValidation: {
+        ...result.data.promptValidation,
+        rules: mergedRules,
+      },
+    };
   } catch {
     return defaultImageStudioSettings;
   }
@@ -322,7 +437,25 @@ export function parsePromptValidationRules(raw: string): { ok: true; rules: Prom
   try {
     const parsed = JSON.parse(raw) as unknown;
     const result = z.array(promptValidationRuleSchema).safeParse(parsed);
-    if (result.success) return { ok: true, rules: result.data };
+    if (result.success) {
+      const hadAutofix = Array.isArray(parsed)
+        ? parsed.some((rule) => Boolean(rule) && typeof rule === "object" && "autofix" in (rule as Record<string, unknown>))
+        : false;
+      if (hadAutofix) return { ok: true, rules: result.data };
+
+      const defaultById = new Map(defaultPromptValidationRules.map((rule) => [rule.id, rule]));
+      const mergedRules = result.data.map((rule) => {
+        const defaults = defaultById.get(rule.id);
+        if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
+        const needsAutofix =
+          !rule.autofix ||
+          !Array.isArray(rule.autofix.operations) ||
+          rule.autofix.operations.length === 0;
+        return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
+      });
+
+      return { ok: true, rules: mergedRules };
+    }
     return { ok: false, error: "Invalid rules shape. Expected an array of rule objects." };
   } catch {
     return { ok: false, error: "Invalid JSON." };

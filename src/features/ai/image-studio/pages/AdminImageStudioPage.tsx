@@ -11,6 +11,7 @@ import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
 import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
 import { validateProgrammaticPrompt, type PromptValidationIssue } from "../utils/prompt-validator";
+import { formatProgrammaticPrompt } from "../utils/prompt-formatter";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
@@ -37,18 +38,18 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode 
   const root: TreeNode = { id: "root", name: projectId || "Project", type: "folder", path: "", children: [] };
 
   const ensureFolder = (parent: TreeNode, folderName: string, folderPath: string): TreeNode => {
-    const existing = parent.children.find((child) => child.type === "folder" && child.name === folderName);
+    const existing = parent.children.find((child: TreeNode) => child.type === "folder" && child.name === folderName);
     if (existing) return existing;
     const node: TreeNode = { id: `folder:${folderPath}`, name: folderName, type: "folder", path: folderPath, children: [] };
     parent.children.push(node);
-    parent.children.sort((a, b) => {
+    parent.children.sort((a: TreeNode, b: TreeNode) => {
       if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
     return node;
   };
 
-  assets.forEach((asset) => {
+  assets.forEach((asset: ImageFileRecord) => {
     if (!asset.filepath || !asset.filepath.startsWith(prefix)) return;
     const relative = asset.filepath.slice(prefix.length).replace(/^\/+/, "");
     const parts = relative.split("/").filter(Boolean);
@@ -68,7 +69,7 @@ function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode 
           asset,
           children: [],
         });
-        cursor.children.sort((a, b) => {
+        cursor.children.sort((a: TreeNode, b: TreeNode) => {
           if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
           return a.name.localeCompare(b.name);
         });
@@ -107,14 +108,18 @@ function AssetTree({
   onSelectAsset: (asset: ImageFileRecord) => void;
 }): React.JSX.Element {
   const tree = useMemo(() => buildAssetTree(projectId, assets), [projectId, assets]);
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["root"]));
+  const initialExpanded = useMemo(() => new Set(["root"]), [projectId]);
+  const [expanded, setExpanded] = useState<Set<string>>(initialExpanded);
 
-  useEffect(() => {
+  // Reset expanded when projectId changes
+  const prevProjectIdRef = useRef(projectId);
+  if (prevProjectIdRef.current !== projectId) {
+    prevProjectIdRef.current = projectId;
     setExpanded(new Set(["root"]));
-  }, [projectId]);
+  }
 
   const toggle = useCallback((id: string): void => {
-    setExpanded((prev) => {
+    setExpanded((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -546,21 +551,52 @@ export function AdminImageStudioPage(): React.JSX.Element {
     [uploadMutation, selectedFolder]
   );
 
-  const runProgrammaticExtraction = useCallback((): void => {
-    const result = extractParamsFromPrompt(promptText);
+  const applyProgrammaticExtraction = useCallback((sourcePrompt: string, options?: { toast?: boolean }): ExtractParamsResult => {
+    const shouldToast = options?.toast ?? true;
+    const result = extractParamsFromPrompt(sourcePrompt);
     setExtractResult(result);
     if (!result.ok) {
       setParamsState(null);
       setParamSpecs(null);
       setPromptSourceAtExtract(null);
-      toast(result.error, { variant: "error" });
-      return;
+      if (shouldToast) toast(result.error, { variant: "error" });
+      return result;
     }
     setParamsState(result.params);
     setParamSpecs(inferParamSpecs(result.params, result.rawObjectText));
-    setPromptSourceAtExtract(promptText);
-    toast("Params extracted.", { variant: "success" });
-  }, [promptText, toast]);
+    setPromptSourceAtExtract(sourcePrompt);
+    if (shouldToast) toast("Params extracted.", { variant: "success" });
+    return result;
+  }, [toast]);
+
+  const runProgrammaticExtraction = useCallback((): void => {
+    applyProgrammaticExtraction(promptText);
+  }, [applyProgrammaticExtraction, promptText]);
+
+  const autoFormatPrompt = useCallback((): void => {
+    if (!promptText.trim()) return;
+    const formatted = formatProgrammaticPrompt(promptText, studioSettings.promptValidation);
+    if (!formatted.changed) {
+      toast("No formatting changes to apply.", { variant: "info" });
+      return;
+    }
+
+    setPromptText(formatted.prompt);
+    const extraction = applyProgrammaticExtraction(formatted.prompt, { toast: false });
+
+    if (extraction.ok) {
+      toast(
+        `Auto-formatted (${formatted.applied.length} fix(es)). Issues: ${formatted.issuesBefore} → ${formatted.issuesAfter}. Params extracted.`,
+        { variant: "success" }
+      );
+      return;
+    }
+
+    toast(
+      `Auto-formatted (${formatted.applied.length} fix(es)). Issues: ${formatted.issuesBefore} → ${formatted.issuesAfter}. Extraction still failing: ${extraction.error}`,
+      { variant: "error" }
+    );
+  }, [applyProgrammaticExtraction, promptText, studioSettings.promptValidation, toast]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -959,6 +995,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={autoFormatPrompt}
+                disabled={!promptText.trim() || studioSettings.promptExtraction.mode !== "programmatic"}
+                title="Apply automatic formatting fixes (best effort)"
+              >
+                Auto format
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={runProgrammaticExtraction}
                 disabled={!promptText.trim()}
               >
@@ -1137,7 +1182,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     </label>
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Validates programmatic prompts and suggests fixes when patterns look almost correct.
+                    Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className="text-gray-300">autofix</span> operations.
                   </div>
                   <Textarea
                     value={promptValidationRulesText}

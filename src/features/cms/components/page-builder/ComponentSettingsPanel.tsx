@@ -17,6 +17,7 @@ import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
+import { logClientError } from "@/features/observability";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
@@ -502,7 +503,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
       setGridTemplateName("");
       toast("Grid saved as template.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save grid template:", error);
+      logClientError(error, { context: { source: "ComponentSettingsPanel", action: "saveGridTemplate", templateName: gridTemplateName } });
       toast("Failed to save grid template.", { variant: "error" });
     }
   }, [selectedSection, gridTemplateName, gridTemplates, updateSetting, toast]);
@@ -891,10 +892,10 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <div className="mt-2">
                       <select
                         value={currentBackgroundTarget}
-                        onChange={(e): void => handleBlockSettingChange("backgroundTarget", e.target.value as ImageBackgroundTarget)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => handleBlockSettingChange("backgroundTarget", e.target.value as ImageBackgroundTarget)}
                         className="w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200"
                       >
-                        {backgroundTargetOptions.map((opt) => (
+                        {backgroundTargetOptions.map((opt: { label: string; value: ImageBackgroundTarget }) => (
                           <option key={opt.value} value={opt.value}>
                             {opt.label}
                           </option>

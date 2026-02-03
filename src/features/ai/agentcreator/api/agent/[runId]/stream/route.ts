@@ -34,11 +34,21 @@ async function GET_handler(req: NextRequest,
               encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)
             );
           } catch (error) {
-            if (DEBUG_CHATBOT) {
-              console.error("[chatbot][agent][stream] Snapshot fetch failed", {
-                runId,
-                error,
+            try {
+              const { ErrorSystem } = await import("@/features/observability/services/error-system");
+              void ErrorSystem.captureException(error, { 
+                service: "agent-stream", 
+                action: "sendSnapshot",
+                runId 
               });
+            } catch (logError) {
+              if (DEBUG_CHATBOT) {
+                console.error("[chatbot][agent][stream] Snapshot fetch failed (and logging failed)", {
+                  runId,
+                  error,
+                  logError
+                });
+              }
             }
             controller.enqueue(
               encoder.encode(

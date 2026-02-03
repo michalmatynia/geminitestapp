@@ -23,6 +23,7 @@ import {
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSavePriceGroupMutation } from "@/features/products/hooks/useProductSettingsQueries";
+import { logClientError } from "@/features/observability";
 
 interface PriceGroupModalProps {
   isOpen: boolean;
@@ -117,7 +118,7 @@ export function PriceGroupModal({
       toast("Price group saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
-      console.error(err);
+      logClientError(err, { context: { source: "PriceGroupModal", action: "savePriceGroup", priceGroupId: priceGroup?.id } });
       toast("Failed to save price group.", { variant: "error" });
     }
   };

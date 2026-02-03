@@ -22,10 +22,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (inlineJobs) {
       processSingleJob(job.id).catch(async (error: unknown) => {
         try {
-          const { ErrorSystem } = await import("@/features/observability/services/error-system");
-          void ErrorSystem.captureException(error, { 
-            service: "api/integrations/images/sync-base/all",
-            jobId: job.id
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[integrations.images.sync-base.all] Failed to run base image sync job",
+            error,
+            source: "api/integrations/images/sync-base/all",
+            context: { jobId: job.id }
           });
         } catch (logError) {
           console.error("[integrations.images.sync-base.all] Failed to run base image sync job (and logging failed)", error, logError);

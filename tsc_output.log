@@ -1,11 +1,1 @@
-src/features/notesapp/components/editor/NoteMetadata.tsx(100,6): error TS17008: JSX element 'div' has no corresponding closing tag.
-src/features/notesapp/components/editor/NoteMetadata.tsx(158,1): error TS1005: '</' expected.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(622,11): error TS2657: JSX expressions must have one parent element.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(814,9): error TS1128: Declaration or statement expected.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(815,7): error TS1109: Expression expected.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(822,5): error TS1128: Declaration or statement expected.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(823,3): error TS1109: Expression expected.
-src/features/products/components/settings/ai/AiDescriptionSettings.tsx(824,1): error TS1128: Declaration or statement expected.
-src/features/products/components/settings/ai/AiTranslationSettings.tsx(300,5): error TS1128: Declaration or statement expected.
-src/features/products/components/settings/ai/AiTranslationSettings.tsx(301,3): error TS1109: Expression expected.
-src/features/products/components/settings/ai/AiTranslationSettings.tsx(302,1): error TS1128: Declaration or statement expected.
+src/features/ai/image-studio/pages/AdminImageStudioPage.tsx(577,23): error TS2304: Cannot find name 'formatProgrammaticPrompt'.

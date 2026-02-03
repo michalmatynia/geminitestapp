@@ -2,11 +2,7 @@
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useRef, useState } from "react";
-
-
-
-
-
+import { logClientError } from "@/features/observability";
 
 
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
@@ -29,7 +25,7 @@ export default function AuthUserPagesPage(): React.JSX.Element {
     }
     if (didNotifyErrorRef.current) return;
     didNotifyErrorRef.current = true;
-    console.error("Failed to load user page settings:", settingsQuery.error);
+    logClientError(settingsQuery.error, { context: { source: "AuthUserPagesPage", action: "loadSettings" } });
     toast("Failed to load user page settings", { variant: "error" });
   }, [settingsQuery.error, toast]);
 
@@ -73,7 +69,7 @@ function AuthUserPagesForm({
       setDirty(false);
       toast("User page settings saved", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save user page settings:", error);
+      logClientError(error, { context: { source: "AuthUserPagesPage", action: "saveSettings" } });
       toast("Failed to save user page settings", { variant: "error" });
     }
   };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logClientError } from "@/features/observability";
 import type { ValidationError } from "./validators";
 
 // Conditional validation helpers
@@ -126,7 +127,7 @@ export function withValidationMetrics<T extends (...args: unknown[]) => Promise<
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      console.error(`Validation ${name} failed after ${duration.toFixed(2)}ms`, error);
+      logClientError(error, { context: { source: "ValidationMetrics", action: "validate", name, durationMs: duration } });
       throw error;
     }
   }) as T;

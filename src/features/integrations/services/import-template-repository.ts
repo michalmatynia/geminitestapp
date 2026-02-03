@@ -66,10 +66,12 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
       })) as Template[];
   } catch (error: unknown) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "import-template-repository", 
-        action: "parseTemplates" 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[ImportTemplateRepository] Failed to parse templates",
+        error,
+        source: "import-template-repository",
+        context: { action: "parseTemplates" }
       });
     } catch (logError) {
       console.error("[ImportTemplateRepository] Failed to parse templates (and logging failed):", error, logError);

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
 import { ProductWithImages, ProductImageRecord } from "@/features/products/types";
+import { logClientError } from "@/features/observability";
 
 const STATIC_VISION_MODELS = [
   { id: "gpt-4o", name: "GPT-4o" },
@@ -135,7 +136,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
           }
         }
       } catch (error) {
-        console.error("Failed to load data:", error);
+        logClientError(error, { context: { source: "AiDescriptionSettings", action: "loadData" } });
         toast("Failed to load configuration.", { variant: "error" });
       } finally {
         setLoading(false);
@@ -234,7 +235,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
               }),
             });
           } catch (err) {
-            console.warn("Failed to save test result to database:", err);
+            logClientError(err, { context: { source: "AiDescriptionSettings", action: "saveTestResult", jobId } });
           }
 
           toast("Test completed. Results saved.", { variant: "success" });
@@ -252,7 +253,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
       }
 
     } catch (error) {
-      console.error("Test failed:", error);
+      logClientError(error, { context: { source: "AiDescriptionSettings", action: "handleTest", productId: testProductId } });
       toast(error instanceof Error ? error.message : "Test failed.", { variant: "error" });
     } finally {
       setTesting(false);
@@ -323,7 +324,7 @@ export function AiDescriptionSettings(): React.JSX.Element {
 
       toast("Settings saved.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save:", error);
+      logClientError(error, { context: { source: "AiDescriptionSettings", action: "handleSave" } });
       toast("Failed to save.", { variant: "error" });
     } finally {
       setSaving(false);

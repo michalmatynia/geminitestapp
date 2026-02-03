@@ -187,11 +187,12 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
       error instanceof Error ? error.message : "Failed to load models.";
     
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "api/chatbot", 
-        action: "getModels",
-        requestId: ctx.requestId 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[chatbot][models] Upstream fetch failed",
+        error,
+        source: "api/chatbot",
+        context: { action: "getModels", requestId: ctx.requestId }
       });
     } catch (logError) {
       if (DEBUG_CHATBOT) {
@@ -489,12 +490,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
         }
       } catch (error) {
         try {
-          const { ErrorSystem } = await import("@/features/observability/services/error-system");
-          void ErrorSystem.captureException(error, { 
-            service: "api/chatbot",
-            action: "save_session_messages",
-            sessionId,
-            requestId: ctx.requestId
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[chatbot][chat] Failed to save session messages",
+            error,
+            source: "api/chatbot",
+            context: { action: "save_session_messages", sessionId, requestId: ctx.requestId }
           });
         } catch (logError) {
           console.error("[chatbot][chat] Failed to save session messages (and logging failed)", error, logError);

@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { cn } from "@/shared/utils";
-import { Badge, type BadgeProps } from "./badge";
+import { Badge } from "./badge";
 
 export type StatusVariant = "pending" | "active" | "failed" | "removed" | "neutral" | "info" | "success" | "warning" | "error" | "processing";
 

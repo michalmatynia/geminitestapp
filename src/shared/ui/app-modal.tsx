@@ -18,9 +18,9 @@ type AppModalProps = {
   closeOnOutside?: boolean;
   closeOnEscape?: boolean;
   children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-  bodyClassName?: string;
+  className?: string | undefined;
+  contentClassName?: string | undefined;
+  bodyClassName?: string | undefined;
 };
 
 const sizeClasses = {
@@ -69,7 +69,7 @@ export function AppModal({
       <DialogContent
         className={cn(
           "max-w-none w-auto p-0 border-none bg-transparent shadow-none pointer-events-none",
-          contentClassName
+          contentClassName ?? ""
         )}
         onInteractOutside={handleInteractOutside}
         onEscapeKeyDown={handleEscapeKeyDown}
@@ -95,7 +95,7 @@ export function AppModal({
               ) : null}
             </div>
           )}
-          <div className={cn(bodyHeightClass, "overflow-y-auto pr-2", bodyClassName)}>
+          <div className={cn(bodyHeightClass, "overflow-y-auto pr-2", bodyClassName ?? "")}>
             {children}
           </div>
           {footer ? <div className="mt-6 flex justify-end gap-2">{footer}</div> : null}

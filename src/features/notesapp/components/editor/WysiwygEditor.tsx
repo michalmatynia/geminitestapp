@@ -4,6 +4,7 @@ import { Button } from "@/shared/ui";
 import React, { useEffect, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/react";
+import { logClientError } from "@/features/observability";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -146,7 +147,7 @@ export function WysiwygEditor({
         lastContentRef.current = content;
         editor.commands.setContent(sanitized, { emitUpdate: false });
       } catch (error: unknown) {
-        console.error("Failed to set WYSIWYG content:", error);
+        logClientError(error, { context: { source: "WysiwygEditor", action: "setContent" } });
         // Try to recover by clearing and setting plain text
         try {
           editor.commands.clearContent();
@@ -154,7 +155,7 @@ export function WysiwygEditor({
             editor.commands.insertContent(sanitizeContent(content));
           }
         } catch (fallbackError: unknown) {
-          console.error("Failed to recover from WYSIWYG error:", fallbackError);
+          logClientError(fallbackError, { context: { source: "WysiwygEditor", action: "recoverContent" } });
         }
       }
     }

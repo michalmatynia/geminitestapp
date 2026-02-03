@@ -72,10 +72,12 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
       })) as Template[];
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "export-template-repository", 
-        action: "parseTemplates" 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[ExportTemplateRepository] Failed to parse templates",
+        error,
+        source: "export-template-repository",
+        context: { action: "parseTemplates" }
       });
     } catch (logError) {
       console.error("[ExportTemplateRepository] Failed to parse templates (and logging failed):", error, logError);
@@ -466,10 +468,12 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
     return normalizeImageRetryPresets(parsed);
   } catch (error) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "export-template-repository", 
-        action: "getExportImageRetryPresets" 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[ExportTemplateRepository] Failed to parse image presets",
+        error,
+        source: "export-template-repository",
+        context: { action: "getExportImageRetryPresets" }
       });
     } catch (logError) {
       console.error("[ExportTemplateRepository] Failed to parse image presets (and logging failed):", error, logError);

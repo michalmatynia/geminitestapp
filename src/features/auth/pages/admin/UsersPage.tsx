@@ -2,15 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from "@/shared/ui";
-
-
-
-
-
-
-
-
-
+import { logClientError } from "@/features/observability";
 
 import {
   AUTH_SETTINGS_KEYS,
@@ -78,19 +70,19 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!authUsersQuery.error) return;
-    console.error("Failed to load users:", authUsersQuery.error);
+    logClientError(authUsersQuery.error, { context: { source: "AuthUsersPage", action: "loadUsers" } });
     toast("Failed to load users", { variant: "error" });
   }, [authUsersQuery.error, toast]);
 
   useEffect(() => {
     if (!settingsQuery.error) return;
-    console.error("Failed to load user roles:", settingsQuery.error);
+    logClientError(settingsQuery.error, { context: { source: "AuthUsersPage", action: "loadRoles" } });
     toast("Failed to load user roles", { variant: "error" });
   }, [settingsQuery.error, toast]);
 
   useEffect(() => {
     if (!userSecurityQuery.error) return;
-    console.error("Failed to load security profile:", userSecurityQuery.error);
+    logClientError(userSecurityQuery.error, { context: { source: "AuthUsersPage", action: "loadSecurityProfile", userId: editingUser?.id } });
   }, [userSecurityQuery.error]);
 
   useEffect(() => {
@@ -149,7 +141,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       setDirtyRoles(false);
       toast("User roles updated", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save user roles:", error);
+      logClientError(error, { context: { source: "AuthUsersPage", action: "saveRoles" } });
       toast("Failed to save user roles", { variant: "error" });
     }
   };
@@ -211,7 +203,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       toast("User updated", { variant: "success" });
       setEditingUser(null);
     } catch (error) {
-      console.error("Failed to update user:", error);
+      logClientError(error, { context: { source: "AuthUsersPage", action: "saveUser", userId: editingUser.id } });
       toast("Failed to update user", { variant: "error" });
     }
   };
@@ -226,7 +218,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       setEditMfaEnabled(false);
       toast("MFA disabled for user", { variant: "success" });
     } catch (error) {
-      console.error("Failed to disable MFA:", error);
+      logClientError(error, { context: { source: "AuthUsersPage", action: "disableMfa", userId: editingUser.id } });
       toast("Failed to disable MFA", { variant: "error" });
     }
   };
@@ -275,8 +267,8 @@ export default function AuthUsersPage(): React.JSX.Element {
           });
           setUserRoles(nextRoles);
           setDirtyRoles(false);
-        } catch {
-          // ignore role save errors here; user was created
+        } catch (roleError) {
+          logClientError(roleError, { context: { source: "AuthUsersPage", action: "assignRoleAfterCreate", userId: created.id, roleId: createForm.roleId } });
         }
       }
 
@@ -292,7 +284,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       setCreateForm(EMPTY_CREATE);
       void authUsersQuery.refetch();
     } catch (error) {
-      console.error("Failed to create user:", error);
+      logClientError(error, { context: { source: "AuthUsersPage", action: "createUser" } });
       toast("Failed to create user", { variant: "error" });
     }
   };
@@ -322,7 +314,7 @@ export default function AuthUsersPage(): React.JSX.Element {
         setMockMessage(payload.message ?? "Sign-in failed. Check credentials.");
       }
     } catch (error) {
-      console.error("Mock sign-in failed:", error);
+      logClientError(error, { context: { source: "AuthUsersPage", action: "mockSignIn", email: mockEmail } });
       setMockStatus("error");
       setMockMessage("Sign-in failed. Check server logs.");
     }

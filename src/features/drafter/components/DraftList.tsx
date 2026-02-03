@@ -2,6 +2,7 @@
 import { Button, ListPanel, useToast, SectionHeader, EmptyState } from "@/shared/ui";
 import { useState } from "react";
 import { useDrafts, useDeleteDraft } from "@/features/drafter/hooks/useDrafts";
+import { logClientError } from "@/features/observability";
 import type { ProductDraft } from "@/features/products/types/drafts";
 
 import {
@@ -33,7 +34,7 @@ export function DraftList({ onEdit, onCreateNew }: DraftListProps): React.JSX.El
       await deleteDraftMutation.mutateAsync(draftToDelete);
       toast("Draft deleted successfully", { variant: "success" });
     } catch (error) {
-      console.error("Failed to delete draft:", error);
+      logClientError(error, { context: { source: "DraftList", action: "deleteDraft", draftId: draftToDelete } });
       toast("Failed to delete draft", { variant: "error" });
     } finally {
       setDeleting(null);

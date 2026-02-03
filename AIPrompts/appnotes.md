@@ -6,6 +6,7 @@ I can't add Slideshow into the column
 
 * When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
 
+When a block or element has an animation effect applied to is, sllightly change it's icon
 
 When I fire run trigger on Infer, the model is not remembering the history of inputs and outputs
 

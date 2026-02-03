@@ -48,10 +48,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     if (inlineJobs) {
       processSingleJob(job.id).catch(async (error: unknown) => {
         try {
-          const { ErrorSystem } = await import("@/features/observability/services/error-system");
-          void ErrorSystem.captureException(error, { 
-            service: "api/settings/database/sync",
-            jobId: job.id
+          const { logSystemError } = await import("@/features/observability/server");
+          await logSystemError({ 
+            message: "[settings.database.sync] Failed to run db sync job",
+            error,
+            source: "api/settings/database/sync",
+            context: { jobId: job.id }
           });
         } catch (logError) {
           console.error("[settings.database.sync] Failed to run db sync job (and logging failed)", error, logError);

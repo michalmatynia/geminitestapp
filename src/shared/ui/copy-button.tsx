@@ -4,6 +4,7 @@ import { Button } from "./button";
 import { Check, Copy } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { logClientError } from "@/features/observability";
 
 type CopyButtonProps = {
   value: string;
@@ -47,7 +48,7 @@ export function CopyButton({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), timeout);
     } catch (err) {
-      console.error("Failed to copy text: ", err);
+      logClientError(err, { context: { source: "CopyButton", action: "copyToClipboard" } });
     }
   };
 

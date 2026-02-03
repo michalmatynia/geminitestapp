@@ -89,13 +89,14 @@ export async function processAgentQueue(): Promise<void> {
       await logAgentFailure(nextRun.id, error);
     }
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    // Log fatal queue error to ErrorSystem
+    const errorId = crypto.randomUUID();
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "agent-queue",
-        errorId
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({
+        message: "[chatbot][agent][queue] Fatal queue error",
+        error,
+        source: "agent-queue",
+        context: { errorId }
       });
     } catch (logError) {
       console.error("[chatbot][agent][queue] Failed to process queue", {

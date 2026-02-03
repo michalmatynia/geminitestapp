@@ -29,8 +29,6 @@ export function PromptNodeConfigSection({
   onSendToAi,
   sendingToAi,
 }: PromptNodeConfigSectionProps): React.JSX.Element | null {
-  if (selectedNode.type !== "prompt") return null;
-
   const { toast } = useToast();
 
   const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
@@ -38,9 +36,12 @@ export function PromptNodeConfigSection({
   };
   const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
   const resolvedPrompt = React.useMemo((): string => {
+    if (selectedNode.type !== "prompt") return "";
     const { promptOutput } = buildPromptOutput(promptConfig, runtimeInputs);
     return promptOutput;
-  }, [promptConfig, runtimeInputs]);
+  }, [selectedNode.type, promptConfig, runtimeInputs]);
+
+  if (selectedNode.type !== "prompt") return null;
   const handleInsertPlaceholder = (placeholder: string): void => {
     const current = promptConfig.template ?? "";
     const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";

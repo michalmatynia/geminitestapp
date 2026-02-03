@@ -107,7 +107,6 @@ export function useWebSocketQuery<T>(
 
     wsRef.current.onerror = (error: Event): void => {
       logClientError(error, { context: { source: "WebSocketQuery", url: wsUrl, queryKey } });
-      console.error('WebSocket error:', error);
       options?.onError?.(error);
     };
 

@@ -420,7 +420,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   trigger: ["trigger", "value", "result"],
   triggerName: ["triggerName", "value", "result"],
   prompt: ["prompt"],
-  result: ["result", "queryCallback", "aiQuery", "callback"],
+  result: ["result", "value", "queryCallback", "aiQuery", "callback"],
   sources: ["sources", "value", "result", "bundle"],
   images: ["images", "value", "result"],
   title: ["title", "value", "result", "prompt", "aiPrompt"],

@@ -3,6 +3,8 @@ import { AdminLayout } from "@/features/admin";
 import { auth } from "@/features/auth/server";
 import { getUserPreferences } from "@/features/auth/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function Layout({
   children,
 }: {

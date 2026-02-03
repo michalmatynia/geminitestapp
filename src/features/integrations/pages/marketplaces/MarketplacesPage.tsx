@@ -5,8 +5,6 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useSyncAllBaseImagesMutation } from "../../hooks/useIntegrationMutations";
 
-export const dynamic = "force-dynamic";
-
 const marketplaces = [
   {
     name: "Allegro",

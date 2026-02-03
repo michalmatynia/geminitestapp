@@ -559,10 +559,12 @@ export async function checkBaseSkuExists(
     return { exists: false };
   } catch (error: unknown) {
     try {
-      const { ErrorSystem } = await import("@/features/observability/services/error-system");
-      void ErrorSystem.captureException(error, { 
-        service: "base-client", 
-        action: "checkBaseSkuExists" 
+      const { logSystemError } = await import("@/features/observability/server");
+      await logSystemError({ 
+        message: "[base-client] Error checking SKU existence",
+        error,
+        source: "base-client",
+        context: { action: "checkBaseSkuExists", sku }
       });
     } catch (logError) {
       console.error("[base-client] Error checking SKU existence (and logging failed):", error, logError);

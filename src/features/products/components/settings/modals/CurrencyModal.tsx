@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 import { useSaveCurrencyMutation } from "@/features/internationalization/hooks/useInternationalizationMutations";
+import { logClientError } from "@/features/observability";
 
 interface CurrencyModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ export function CurrencyModal({
       toast("Currency saved.", { variant: "success" });
       onSuccess();
     } catch (err) {
-      console.error(err);
+      logClientError(err, { context: { source: "CurrencyModal", action: "saveCurrency", currencyId: currency?.id } });
       toast("Failed to save currency.", { variant: "error" });
     }
   };

@@ -61,7 +61,8 @@ let indexesEnsured: Promise<void> | null = null;
 
 async function ensureAnalyticsIndexes(): Promise<void> {
   if (indexesEnsured) return indexesEnsured;
-  indexesEnsured = (async () => {
+
+  async function initialize(): Promise<void> {
     const db = await getMongoDb();
     const col = db.collection<AnalyticsEventMongoDoc>(COLLECTION_NAME);
     await Promise.all([
@@ -71,7 +72,9 @@ async function ensureAnalyticsIndexes(): Promise<void> {
       col.createIndex({ visitorId: 1, ts: -1 }),
       col.createIndex({ sessionId: 1, ts: -1 }),
     ]);
-  })();
+  }
+
+  indexesEnsured = initialize();
   return indexesEnsured;
 }
 

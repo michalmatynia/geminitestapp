@@ -19,7 +19,6 @@ export function QueryDevPanel({
   open = true,
 }: QueryDevPanelProps): React.JSX.Element | null {
   const { metrics, averageTime, cacheHitRate } = useQueryPerformance();
-  const diagnostics = useQueryDiagnostics();
   const [isMounted, setIsMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
@@ -29,6 +28,10 @@ export function QueryDevPanel({
       setIsMounted(true);
     }, 0);
   }, []);
+
+  // Avoid subscribing to query-cache updates (and doing work) until we've mounted,
+  // and only when the panel is enabled.
+  const diagnostics = useQueryDiagnostics({ enabled: enabled && isMounted });
 
   const filteredQueries = useMemo(() => {
     const term = search.trim().toLowerCase();

@@ -520,6 +520,7 @@ export function RegexNodeConfigSection({
     try {
       return JSON.stringify(sampleSource, null, 2);
     } catch {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return String(sampleSource as any);
     }
   }, [sampleSource]);

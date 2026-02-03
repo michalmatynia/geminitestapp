@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchInput, Tooltip } from "@/shared/ui";
+import { Button, SearchInput, Tooltip } from "@/shared/ui";
 import Link from "next/link";
 import {
   PackageIcon,
@@ -285,7 +285,8 @@ export default function Menu(): React.ReactNode {
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [userOpenIds, setUserOpenIds] = useState<Set<string>>(new Set());
+  const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -302,7 +303,7 @@ export default function Menu(): React.ReactNode {
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setOpenIds(new Set(parsed.filter((id: unknown): id is string => typeof id === "string")));
+        setUserOpenIds(new Set(parsed.filter((id: unknown): id is string => typeof id === "string")));
       }
     } catch {
       // ignore
@@ -313,11 +314,11 @@ export default function Menu(): React.ReactNode {
     if (!mounted) return;
     if (typeof window === "undefined") return;
     try {
-      window.localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(openIds)));
+      window.localStorage.setItem(OPEN_KEY, JSON.stringify(Array.from(userOpenIds)));
     } catch {
       // ignore
     }
-  }, [mounted, openIds]);
+  }, [mounted, userOpenIds]);
 
   const handleOpenChat = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     if (typeof window === "undefined") return;
@@ -560,6 +561,7 @@ export default function Menu(): React.ReactNode {
               },
             },
             { id: "content/cms/builder", label: "Page Builder", href: "/admin/cms/builder" },
+            { id: "content/cms/builder/settings", label: "Builder Settings", href: "/admin/cms/builder/settings" },
             { id: "content/cms/zones", label: "Zones", href: "/admin/cms/zones" },
             { id: "content/cms/slugs", label: "Slugs", href: "/admin/cms/slugs" },
             { id: "content/cms/slugs/create", label: "Create Slug", href: "/admin/cms/slugs/create" },
@@ -618,20 +620,57 @@ export default function Menu(): React.ReactNode {
 
   const normalizedQuery = normalizeText(deferredQuery);
   const filteredNav = useMemo(() => filterTree(nav, normalizedQuery), [nav, normalizedQuery]);
-  const activeGroupIds = useMemo(() => collectActiveGroupIds(nav, pathname), [nav, pathname]);
-  const forcedOpenIds = useMemo(
-    () => (normalizedQuery ? collectGroupIds(filteredNav) : new Set<string>()),
-    [filteredNav, normalizedQuery]
+  const autoOpenIds = useMemo(
+    () => (normalizedQuery ? collectGroupIds(filteredNav) : collectActiveGroupIds(nav, pathname)),
+    [filteredNav, nav, normalizedQuery, pathname]
   );
+  const allGroupIds = useMemo(() => collectGroupIds(nav), [nav]);
 
-  useEffect(() => {
-    if (normalizedQuery) return;
-    setOpenIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      activeGroupIds.forEach((id: string) => next.add(id));
-      return next;
+  const [lastPathnameForClosed, setLastPathnameForClosed] = useState(pathname);
+  if (pathname !== lastPathnameForClosed) {
+    setLastPathnameForClosed(pathname);
+    if (!normalizedQuery) {
+      setClosedAutoIds((prev: Set<string>) => {
+        const next = new Set<string>();
+        prev.forEach((id: string) => {
+          if (autoOpenIds.has(id)) next.add(id);
+        });
+        return next;
+      });
+    }
+  }
+
+  const effectiveOpenIds = useMemo(() => {
+    if (normalizedQuery) {
+      const open = new Set<string>(userOpenIds);
+      autoOpenIds.forEach((id: string) => open.add(id));
+      return open;
+    }
+    const open = new Set<string>(userOpenIds);
+    autoOpenIds.forEach((id: string) => {
+      if (!closedAutoIds.has(id)) open.add(id);
     });
-  }, [activeGroupIds, normalizedQuery]);
+    return open;
+  }, [autoOpenIds, closedAutoIds, normalizedQuery, userOpenIds]);
+
+  const forcedOpenIds = useMemo(() => new Set<string>(), []);
+  const isAnyFolderOpen = effectiveOpenIds.size > 0;
+
+  const handleToggleAllFolders = useCallback((): void => {
+    // While searching, folders are intentionally opened to reveal results.
+    if (normalizedQuery) return;
+
+    if (isAnyFolderOpen) {
+      // Collapse everything, including auto-opened active groups.
+      setUserOpenIds(new Set<string>());
+      setClosedAutoIds(new Set<string>(autoOpenIds));
+      return;
+    }
+
+    // Expand everything.
+    setClosedAutoIds(new Set<string>());
+    setUserOpenIds(new Set<string>(allGroupIds));
+  }, [allGroupIds, autoOpenIds, isAnyFolderOpen, normalizedQuery]);
 
   if (!mounted) {
     return <nav className="flex flex-col space-y-2" aria-hidden="true" />;
@@ -641,33 +680,85 @@ export default function Menu(): React.ReactNode {
     <nav className={cn("flex flex-col gap-3", isMenuCollapsed ? "items-stretch" : "")}>
       {!isMenuCollapsed ? (
         <div className="space-y-2">
-          <SearchInput
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-            placeholder="Search admin pages…"
-            className="h-9 bg-gray-900/40"
-            onClear={() => setQuery("")}
-          />
+          <div className="flex items-center gap-2">
+            <SearchInput
+              value={query}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+              placeholder="Search admin pages…"
+              className="h-9 bg-gray-900/40"
+              onClear={() => setQuery("")}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0"
+              disabled={Boolean(normalizedQuery)}
+              onClick={handleToggleAllFolders}
+              title={normalizedQuery ? "Clear search to toggle all folders" : undefined}
+            >
+              {isAnyFolderOpen ? "Collapse all" : "Expand all"}
+            </Button>
+          </div>
           {normalizedQuery ? (
             <div className="text-[11px] text-gray-500">
               Filtering menu: <span className="text-gray-300">{query.trim()}</span>
             </div>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <Tooltip content={isAnyFolderOpen ? "Collapse all folders" : "Expand all folders"} side="right">
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-full"
+              disabled={Boolean(normalizedQuery)}
+              onClick={handleToggleAllFolders}
+            >
+              {isAnyFolderOpen ? "Collapse" : "Expand"}
+            </Button>
+          </div>
+        </Tooltip>
+      )}
 
       <NavTree
         items={filteredNav}
         depth={0}
         pathname={pathname}
         isCollapsed={isMenuCollapsed}
-        openIds={openIds}
+        openIds={effectiveOpenIds}
         forcedOpenIds={forcedOpenIds}
         onToggleOpen={(id: string): void => {
-          setOpenIds((prev: Set<string>) => {
+          if (normalizedQuery) return;
+          const isOpen = effectiveOpenIds.has(id);
+
+          if (isOpen) {
+            if (userOpenIds.has(id)) {
+              setUserOpenIds((prev: Set<string>) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+              });
+              return;
+            }
+            if (autoOpenIds.has(id)) {
+              setClosedAutoIds((prev: Set<string>) => {
+                const next = new Set(prev);
+                next.add(id);
+                return next;
+              });
+            }
+            return;
+          }
+
+          setClosedAutoIds((prev: Set<string>) => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            next.delete(id);
+            return next;
+          });
+          setUserOpenIds((prev: Set<string>) => {
+            const next = new Set(prev);
+            next.add(id);
             return next;
           });
         }}

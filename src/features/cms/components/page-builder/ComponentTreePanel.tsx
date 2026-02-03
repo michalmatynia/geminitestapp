@@ -7,6 +7,8 @@ import type { PageZone } from "../../types/page-builder";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { SectionNodeItem } from "./ComponentTreeNodeItem";
 import { SectionPicker } from "./SectionPicker";
+import { useSettingsMap } from "@/shared/hooks/use-settings";
+import { PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY, PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY } from "./settings/PageBuilderSettingsPage";
 
 const ZONE_LABELS: Record<PageZone, string> = {
   header: "Header",
@@ -20,6 +22,12 @@ export function ComponentTreePanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [collapsedZones, setCollapsedZones] = useState<Set<PageZone>>(new Set());
+
+  // Get the settings for showing placeholders
+  const { data: settingsMap } = useSettingsMap();
+  const showExtractPlaceholder = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY) === "true";
+  // Default to true if not set
+  const showSectionDropPlaceholder = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY) !== "false";
 
   // Drag-and-drop state for blocks
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
@@ -408,6 +416,8 @@ export function ComponentTreePanel(): React.ReactNode {
                 onDropSectionToColumn={handleDropSectionToColumn}
                 onConvertSectionToBlock={handleConvertSectionToBlock}
                 onPromoteBlockToSection={handlePromoteBlockToSection}
+                showExtractPlaceholder={showExtractPlaceholder}
+                showSectionDropPlaceholder={showSectionDropPlaceholder}
               />
             );
           })
@@ -470,6 +480,8 @@ interface ZoneGroupProps {
   onDropSectionToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
   onConvertSectionToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
   onPromoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
+  showExtractPlaceholder: boolean;
+  showSectionDropPlaceholder: boolean;
 }
 
 function ZoneGroup({
@@ -521,6 +533,8 @@ function ZoneGroup({
   onDropSectionToColumn,
   onConvertSectionToBlock,
   onPromoteBlockToSection,
+  showExtractPlaceholder,
+  showSectionDropPlaceholder,
 }: ZoneGroupProps): React.ReactNode {
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
 
@@ -598,6 +612,8 @@ function ZoneGroup({
                     setDraggedFromColumnId={setDraggedFromColumnId}
                     setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                     onPromoteBlockToSection={onPromoteBlockToSection}
+                    showExtractPlaceholder={showExtractPlaceholder}
+                    showSectionDropPlaceholder={showSectionDropPlaceholder}
                   />
                   <SectionNodeItem
                     section={section}
@@ -662,6 +678,8 @@ function ZoneGroup({
                 setDraggedFromColumnId={setDraggedFromColumnId}
                 setDraggedFromParentBlockId={setDraggedFromParentBlockId}
                 onPromoteBlockToSection={onPromoteBlockToSection}
+                showExtractPlaceholder={showExtractPlaceholder}
+                showSectionDropPlaceholder={showSectionDropPlaceholder}
               />
             </div>
           )}
@@ -694,7 +712,7 @@ function ZoneGroup({
 // ---------------------------------------------------------------------------
 
 // Block types that can be promoted to standalone sections
-const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "ButtonElement"];
+const PROMOTABLE_BLOCK_TYPES = ["ImageElement", "TextElement", "ButtonElement"];
 
 interface SectionDropTargetProps {
   zone: PageZone;
@@ -723,6 +741,8 @@ interface SectionDropTargetProps {
     toZone: PageZone,
     toIndex: number
   ) => void;
+  showExtractPlaceholder: boolean;
+  showSectionDropPlaceholder: boolean;
 }
 
 function SectionDropTarget({
@@ -744,11 +764,15 @@ function SectionDropTarget({
   setDraggedFromColumnId,
   setDraggedFromParentBlockId,
   onPromoteBlockToSection,
+  showExtractPlaceholder,
+  showSectionDropPlaceholder,
 }: SectionDropTargetProps): React.ReactNode {
   const [isOver, setIsOver] = useState(false);
-  const isDraggingSection = Boolean(draggedSectionId);
   const isDraggingBlock = Boolean(draggedBlockId);
-  const canPromoteBlock = isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? "");
+  // Only show section drop placeholder if the setting is enabled
+  const isDraggingSection = showSectionDropPlaceholder && Boolean(draggedSectionId);
+  // Only show promotable block extract option if the setting is enabled
+  const canPromoteBlock = showExtractPlaceholder && isDraggingBlock && PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? "");
   const isDragging = isDraggingSection || canPromoteBlock;
 
   const resolveDragIndex = (rawIndex: string): number | null => {

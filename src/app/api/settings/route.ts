@@ -91,6 +91,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   }
   try {
     const provider = await getAppDbProvider();
+    const hasMongo = Boolean(process.env.MONGODB_URI);
     const prismaSettings: SettingRecord[] = [];
     if (canUsePrismaSettings(provider)) {
       const settings = await prisma.setting.findMany({
@@ -106,7 +107,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       });
     } else {
       prismaSettings.forEach((setting: SettingRecord) => {
-        if (!authSettingKeys.has(setting.key)) {
+        if (!authSettingKeys.has(setting.key) || !hasMongo) {
           settingsMap.set(setting.key, setting);
         }
       });
@@ -156,11 +157,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
     }
     const provider = await getAppDbProvider();
+    const hasMongo = Boolean(process.env.MONGODB_URI);
     const shouldWriteMongo =
-      Boolean(process.env.MONGODB_URI) &&
+      hasMongo &&
       (provider === "mongodb" || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
     const shouldWritePrisma =
-      canUsePrismaSettings(provider) && !authSettingKeys.has(key);
+      canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
     const [prismaSetting, mongoSetting] = await Promise.all([
       shouldWritePrisma
         ? prisma.setting.upsert({

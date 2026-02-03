@@ -223,6 +223,19 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch]
   );
 
+  const handleAddElementToSectionBlock = useCallback(
+    (sectionId: string, parentBlockId: string, elementType: string) => {
+      dispatch({ type: "ADD_ELEMENT_TO_SECTION_BLOCK", sectionId, parentBlockId, elementType });
+      setExpandedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(sectionId);
+        next.add(parentBlockId);
+        return next;
+      });
+    },
+    [dispatch]
+  );
+
   const handleRemoveBlock = useCallback(
     (sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => {
       if (parentBlockId && columnId) {
@@ -231,6 +244,14 @@ export function ComponentTreePanel(): React.ReactNode {
           type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK",
           sectionId,
           columnId,
+          parentBlockId,
+          elementId: blockId,
+        });
+      } else if (parentBlockId) {
+        // Block inside a nested parent block within a section
+        dispatch({
+          type: "REMOVE_ELEMENT_FROM_SECTION_BLOCK",
+          sectionId,
           parentBlockId,
           elementId: blockId,
         });
@@ -422,6 +443,7 @@ export function ComponentTreePanel(): React.ReactNode {
                 onAddColumnToRow={handleAddColumnToRow}
                 onRemoveColumnFromRow={handleRemoveColumnFromRow}
                 onAddElementToNestedBlock={handleAddElementToNestedBlock}
+                onAddElementToSectionBlock={handleAddElementToSectionBlock}
                 onDropSectionInZone={handleDropSectionInZone}
                 onPasteSection={handlePasteSection}
                 onToggleSectionVisibility={handleToggleSectionVisibility}
@@ -487,6 +509,7 @@ interface ZoneGroupProps {
   onAddColumnToRow: (sectionId: string, rowId: string) => void;
   onRemoveColumnFromRow: (sectionId: string, columnId: string, rowId?: string) => void;
   onAddElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
+  onAddElementToSectionBlock: (sectionId: string, parentBlockId: string, elementType: string) => void;
   onDropSectionInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
   onPasteSection: (zone: PageZone) => void;
   onToggleSectionVisibility: (sectionId: string, isHidden: boolean) => void;
@@ -541,6 +564,7 @@ function ZoneGroup({
   onAddColumnToRow,
   onRemoveColumnFromRow,
   onAddElementToNestedBlock,
+  onAddElementToSectionBlock,
   onDropSectionInZone,
   onPasteSection,
   onToggleSectionVisibility,

@@ -7,6 +7,7 @@ import { Image as ImageIcon, Eye, EyeOff, Trash2, Megaphone, Link2, ChevronLeft,
 import type { SectionInstance, BlockInstance, InspectorSettings, PageZone } from "../../types/page-builder";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { getSectionContainerClass, getSectionStyles, getTextAlign, getBlockTypographyStyles, getVerticalAlign, type ColorSchemeColors } from "../frontend/theme-styles";
+import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
 
 type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
 
@@ -32,6 +33,31 @@ const getGapClass = (gap?: string): string => {
 const resolveGapValue = (gap: unknown, fallback: string): string => {
   if (typeof gap === "string" && gap !== "inherit") return gap;
   return fallback;
+};
+
+const getGapStyle = (gapPx: unknown): React.CSSProperties | undefined => {
+  if (typeof gapPx === "number" && Number.isFinite(gapPx) && gapPx > 0) {
+    return { gap: `${gapPx}px` };
+  }
+  return undefined;
+};
+
+const resolveJustifyContent = (value: unknown): React.CSSProperties["justifyContent"] | undefined => {
+  if (value === "center") return "center";
+  if (value === "end") return "flex-end";
+  if (value === "space-between") return "space-between";
+  if (value === "space-around") return "space-around";
+  if (value === "space-evenly") return "space-evenly";
+  if (value === "start") return "flex-start";
+  return undefined;
+};
+
+const resolveAlignItems = (value: unknown): React.CSSProperties["alignItems"] | undefined => {
+  if (value === "center") return "center";
+  if (value === "end") return "flex-end";
+  if (value === "stretch") return "stretch";
+  if (value === "start") return "flex-start";
+  return undefined;
 };
 
 const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
@@ -420,7 +446,9 @@ export function PreviewSection({
       content={inspectorContent}
       className="w-full"
     >
-      {node}
+      <EventEffectsWrapper settings={section.settings} disableClick>
+        {node}
+      </EventEffectsWrapper>
     </InspectorHover>
   );
 
@@ -476,6 +504,15 @@ export function PreviewSection({
           ? "justify-end text-right"
           : "justify-center text-center";
     const blockGap = getSpacingValue(section.settings["blockGap"]);
+    const direction = (section.settings["layoutDirection"] as string) || "row";
+    const wrapSetting = (section.settings["wrap"] as string) || "wrap";
+    const justifySetting = (section.settings["justifyContent"] as string) || "inherit";
+    const justifyContent =
+      resolveJustifyContent(justifySetting === "inherit" ? alignment : justifySetting) ??
+      (alignment === "center" ? "center" : alignment === "right" ? "flex-end" : "flex-start");
+    const alignItems = resolveAlignItems(section.settings["alignItems"]) ?? "center";
+    const flexDirClass = direction === "column" ? "flex-col" : "flex-row";
+    const wrapClass = direction === "column" ? "" : wrapSetting === "nowrap" ? "flex-nowrap" : "flex-wrap";
 
     const containerStyles: React.CSSProperties = {
       ...getSectionStyles(section.settings, colorSchemes),
@@ -510,8 +547,16 @@ export function PreviewSection({
           {divider}
           <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: "max-w-6xl" })}>
             <div
-              className={`flex flex-wrap items-center ${section.type === "Block" ? "" : "gap-3"} ${alignmentClasses}`}
-              style={section.type === "Block" ? { gap: `${blockGap}px` } : undefined}
+              className={
+                section.type === "Block"
+                  ? `flex ${flexDirClass} ${wrapClass}`
+                  : `flex flex-wrap items-center gap-3 ${alignmentClasses}`
+              }
+              style={
+                section.type === "Block"
+                  ? { gap: `${blockGap}px`, justifyContent, alignItems }
+                  : undefined
+              }
             >
               {section.blocks.length === 0 && section.type !== "Block" ? (
                 <p className="text-sm text-gray-400">Announcement bar</p>
@@ -605,7 +650,16 @@ export function PreviewSection({
     // New: Collect all ImageElements with backgroundTarget: "grid" from entire block tree
     const gridBackgroundModeImages = collectBackgroundImages(section.blocks, "grid");
     const sectionGap = (section.settings["gap"] as string) || "medium";
-    const sectionGapClass = getGapClass(sectionGap);
+    const rowGapSetting = section.settings["rowGap"] as string | undefined;
+    const columnGapSetting = section.settings["columnGap"] as string | undefined;
+    const rowGapValue = resolveGapValue(rowGapSetting, sectionGap);
+    const columnGapValue = resolveGapValue(columnGapSetting, sectionGap);
+    const sectionGapClass = getGapClass(rowGapValue);
+    const sectionGapStyle = getGapStyle(section.settings["rowGapPx"]);
+    const columnGapPx =
+      typeof section.settings["columnGapPx"] === "number" && Number.isFinite(section.settings["columnGapPx"])
+        ? (section.settings["columnGapPx"] as number)
+        : 0;
     const gridBackgroundSettings = section.settings["backgroundImage"] as Record<string, unknown> | undefined;
     const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
     const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
@@ -681,14 +735,22 @@ export function PreviewSection({
                 <div className="h-px w-full bg-border/40" />
               ) : (
                 <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-                  <div className={`flex flex-col ${sectionGapClass}`}>
+                  <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
                     {rowsToRender.map(({ row, virtual }: { row: BlockInstance; virtual: boolean }, rowIndex: number) => {
                       const rowColumns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === "Column");
                       const columnCount = Math.max(1, rowColumns.length);
                       const rowHasContent = rowColumns.some((column: BlockInstance) => (column.blocks ?? []).length > 0);
                       const isRowSelected = showEditorChrome && !virtual && selectedNodeId === row.id;
-                      const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+                      const rowGapValue = resolveGapValue(row.settings?.["gap"], columnGapValue);
                       const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : "gap-0";
+                      const rowGapPxRaw = row.settings?.["gapPx"];
+                      const rowGapPx =
+                        typeof rowGapPxRaw === "number" && Number.isFinite(rowGapPxRaw) && rowGapPxRaw > 0
+                          ? rowGapPxRaw
+                          : columnGapPx;
+                      const rowGapStyle = getGapStyle(rowGapPx);
+                      const rowJustify = resolveJustifyContent(row.settings?.["justifyContent"]);
+                      const rowAlign = resolveAlignItems(row.settings?.["alignItems"]);
                       const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
                       const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
                       const rowHeight = (row.settings?.["height"] as number) || 0;
@@ -746,10 +808,13 @@ export function PreviewSection({
                             </div>
                           )}
                           <div
-                            className={`relative z-10 grid ${rowGapClass} items-stretch`}
+                            className={`relative z-10 grid ${rowGapClass}`}
                             style={{
                               gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
                               ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
+                              ...(rowGapStyle ?? {}),
+                              ...(rowJustify ? { justifyContent: rowJustify } : {}),
+                              ...(rowAlign ? { alignItems: rowAlign } : {}),
                             }}
                           >
                             {rowColumns.map((column: BlockInstance, colIndex: number) => {
@@ -759,7 +824,15 @@ export function PreviewSection({
                                 isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
                               const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
                               const columnHeight = (column.settings?.["height"] as number) || 0;
-                              const columnStyles = getSectionStyles(column.settings ?? {}, colorSchemes);
+                              const columnGapValue = resolveGapValue(column.settings?.["gap"], "medium");
+                              const columnGapClass = shouldStretch ? "" : getGapClass(columnGapValue);
+                              const columnGapStyle = shouldStretch ? undefined : getGapStyle(column.settings?.["gapPx"]);
+                              const columnJustify = resolveJustifyContent(column.settings?.["justifyContent"]);
+                              const columnAlign = resolveAlignItems(column.settings?.["alignItems"]);
+                              const columnStyles = {
+                                ...getSectionStyles(column.settings ?? {}, colorSchemes),
+                                ...getTextAlign(column.settings?.["textAlign"]),
+                              };
                               const columnStyle: React.CSSProperties = {};
                               if (columnHeightMode === "fixed" && columnHeight > 0) {
                                 columnStyle.height = `${columnHeight}px`;
@@ -877,9 +950,14 @@ export function PreviewSection({
                                       const shouldStretch = isSingleBlock && (rowHeightMode === "fixed" || columnHeightMode === "fixed");
                                       return (
                                         <div
-                                          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : "gap-4"} ${
+                                          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : columnGapClass} ${
                                             isInspecting ? "" : "pointer-events-none"
                                           }`}
+                                          style={{
+                                            ...(columnGapStyle ?? {}),
+                                            ...(columnJustify ? { justifyContent: columnJustify } : {}),
+                                            ...(columnAlign ? { alignItems: columnAlign } : {}),
+                                          }}
                                         >
                                           {contentBlocks.map((block: BlockInstance, blockIndex: number) => (
                                             <div
@@ -1679,9 +1757,49 @@ export function PreviewSection({
   // Slideshow section
   if (section.type === "Slideshow") {
     const transition = (section.settings["transition"] as string) || "fade";
+    const showArrows = (section.settings["showArrows"] as string) !== "no";
     const showDots = (section.settings["showDots"] as string) !== "no";
-    const slideCount = section.blocks.length;
-    const firstSlide = section.blocks[0];
+    const heightMode = (section.settings["heightMode"] as string) || "auto";
+    const height = (section.settings["height"] as number) || 360;
+    const frameBlocks = section.blocks.filter((block: BlockInstance) => block.type === "SlideshowFrame");
+    const frames =
+      frameBlocks.length > 0
+        ? frameBlocks
+        : section.blocks.map((block: BlockInstance) => ({
+            id: block.id,
+            type: "SlideshowFrame",
+            settings: {},
+            blocks: [block],
+          }));
+    const slideCount = frames.length;
+    const firstFrame = frames[0];
+    const frameChildren = firstFrame?.blocks ?? [];
+    const frameSettings = (firstFrame?.settings ?? {}) as Record<string, unknown>;
+    const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
+    const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
+    const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+    const paddingTop = (frameSettings["paddingTop"] as number) || 0;
+    const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
+    const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
+    const paddingRight = (frameSettings["paddingRight"] as number) || 0;
+    const frameStyle: React.CSSProperties = {
+      backgroundColor: backgroundColor || undefined,
+      padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+      alignItems:
+        contentAlignment === "center"
+          ? "center"
+          : contentAlignment === "right"
+            ? "flex-end"
+            : "flex-start",
+      justifyContent:
+        verticalAlignment === "center"
+          ? "center"
+          : verticalAlignment === "bottom"
+            ? "flex-end"
+            : "flex-start",
+    };
+    const slideHeightStyle: React.CSSProperties | undefined =
+      heightMode === "fixed" && height > 0 ? { height: `${height}px` } : undefined;
 
     return (
       wrapInspector(
@@ -1705,34 +1823,43 @@ export function PreviewSection({
             ) : null
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-              <div className="relative overflow-hidden rounded-lg min-h-[300px]">
-                {firstSlide && (
+              <div className="relative overflow-hidden rounded-lg min-h-[300px]" style={slideHeightStyle}>
+                {firstFrame && (
                   <div
                     className={`${transition === "fade" ? "absolute inset-0" : "absolute inset-0"} flex items-center justify-center`}
                     style={{ opacity: 1 }}
                   >
-                    <div className="w-full p-6">
-                      <PreviewBlockItem
-                        block={firstSlide}
-                        isSelected={selectedNodeId === firstSlide.id}
-                        isInspecting={isInspecting}
-                        inspectorSettings={inspectorSettings}
-                        hoveredNodeId={hoveredNodeId}
-                        onHoverNode={onHoverNode}
-                        onSelect={onSelect}
-                        contained
-                        selectedNodeId={selectedNodeId}
-                        sectionId={section.id}
-                        sectionType={section.type}
-                        sectionZone={section.zone}
-                        onOpenMedia={onOpenMedia}
-                        mediaStyles={mediaStyles}
-                      />
+                    <div className="flex h-full w-full flex-col" style={frameStyle}>
+                      {frameChildren.length > 0 ? (
+                        frameChildren.map((child: BlockInstance) => (
+                          <PreviewBlockItem
+                            key={child.id}
+                            block={child}
+                            isSelected={selectedNodeId === child.id}
+                            isInspecting={isInspecting}
+                            inspectorSettings={inspectorSettings}
+                            hoveredNodeId={hoveredNodeId}
+                            onHoverNode={onHoverNode}
+                            onSelect={onSelect}
+                            contained
+                            selectedNodeId={selectedNodeId}
+                            sectionId={section.id}
+                            sectionType={section.type}
+                            sectionZone={section.zone}
+                            onOpenMedia={onOpenMedia}
+                            mediaStyles={mediaStyles}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                          Empty slide
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
-              {slideCount > 1 && (
+              {slideCount > 1 && showArrows && (
                 <div className="mt-4 flex items-center justify-center gap-4">
                   <button
                     type="button"
@@ -2037,7 +2164,9 @@ function PreviewBlockItem({
       content={inspectorContent}
       className={stretchClass}
     >
-      {node}
+      <EventEffectsWrapper settings={block.settings} disableClick>
+        {node}
+      </EventEffectsWrapper>
     </InspectorHover>
   );
   const handleSelect = (event: React.SyntheticEvent): void => {
@@ -2167,6 +2296,24 @@ function PreviewBlockItem({
               )}
               {block.type === "Carousel" && (
                 <PreviewCarouselBlock
+                  block={block}
+                  selectedNodeId={selectedNodeId}
+                  isInspecting={isInspecting}
+                  inspectorSettings={inspectorSettings}
+                  hoveredNodeId={hoveredNodeId}
+                  onHoverNode={onHoverNode}
+                  onSelect={onSelect}
+                  sectionId={sectionId}
+                  sectionType={sectionType}
+                  sectionZone={sectionZone}
+                  columnId={columnId}
+                  stretch={stretch}
+                  onOpenMedia={onOpenMedia}
+                  mediaStyles={mediaStyles}
+                />
+              )}
+              {block.type === "Slideshow" && (
+                <PreviewSlideshowBlock
                   block={block}
                   selectedNodeId={selectedNodeId}
                   isInspecting={isInspecting}
@@ -3195,18 +3342,24 @@ function PreviewBlockSectionBlock({
   };
   const stretchStyle = stretch ? { height: "100%" } : undefined;
   const alignment = (block.settings["contentAlignment"] as string) || "left";
-  const alignmentClass =
-    alignment === "center"
-      ? "justify-center"
-      : alignment === "right"
-        ? "justify-end"
-        : "justify-start";
   const blockGap = getSpacingValue(block.settings["blockGap"]);
+  const direction = (block.settings["layoutDirection"] as string) || "row";
+  const wrapSetting = (block.settings["wrap"] as string) || "wrap";
+  const justifySetting = (block.settings["justifyContent"] as string) || "inherit";
+  const justifyContent =
+    resolveJustifyContent(justifySetting === "inherit" ? alignment : justifySetting) ??
+    (alignment === "center" ? "center" : alignment === "right" ? "flex-end" : "flex-start");
+  const alignItems = resolveAlignItems(block.settings["alignItems"]) ?? "center";
+  const flexDirClass = direction === "column" ? "flex-col" : "flex-row";
+  const wrapClass = direction === "column" ? "" : wrapSetting === "nowrap" ? "flex-nowrap" : "flex-wrap";
   const shouldStretchChildren = stretch && children.length === 1;
 
   return (
     <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={stretch ? "h-full" : ""}>
-      <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
+      <div
+        className={`flex ${flexDirClass} ${wrapClass}`}
+        style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
+      >
         {children.map((child: BlockInstance) => (
           <PreviewBlockItem
             key={child.id}
@@ -3527,6 +3680,155 @@ function PreviewCarouselBlock({
             />
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Slideshow preview (inside columns)
+// ---------------------------------------------------------------------------
+
+function PreviewSlideshowBlock({
+  block,
+  selectedNodeId,
+  isInspecting = false,
+  inspectorSettings,
+  hoveredNodeId,
+  onSelect,
+  sectionId,
+  sectionType,
+  sectionZone,
+  columnId,
+  stretch = false,
+  onHoverNode,
+  onOpenMedia,
+  mediaStyles,
+}: PreviewSectionBlockProps): React.ReactNode {
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const transition = (block.settings["transition"] as string) || "fade";
+  const showArrows = (block.settings["showArrows"] as string) !== "no";
+  const showDots = (block.settings["showDots"] as string) !== "no";
+  const heightMode = (block.settings["heightMode"] as string) || "auto";
+  const height = (block.settings["height"] as number) || 360;
+  const frameBlocks = (block.blocks ?? []).filter((b: BlockInstance) => b.type === "SlideshowFrame");
+  const frames =
+    frameBlocks.length > 0
+      ? frameBlocks
+      : (block.blocks ?? []).map((b: BlockInstance) => ({
+          id: b.id,
+          type: "SlideshowFrame",
+          settings: {},
+          blocks: [b],
+        }));
+  const firstFrame = frames[0];
+  const frameChildren = firstFrame?.blocks ?? [];
+  const frameSettings = (firstFrame?.settings ?? {}) as Record<string, unknown>;
+  const backgroundColor = (frameSettings["backgroundColor"] as string) || "";
+  const contentAlignment = (frameSettings["contentAlignment"] as string) || "center";
+  const verticalAlignment = (frameSettings["verticalAlignment"] as string) || "center";
+  const paddingTop = (frameSettings["paddingTop"] as number) || 0;
+  const paddingBottom = (frameSettings["paddingBottom"] as number) || 0;
+  const paddingLeft = (frameSettings["paddingLeft"] as number) || 0;
+  const paddingRight = (frameSettings["paddingRight"] as number) || 0;
+  const frameStyle: React.CSSProperties = {
+    backgroundColor: backgroundColor || undefined,
+    padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
+    alignItems:
+      contentAlignment === "center"
+        ? "center"
+        : contentAlignment === "right"
+          ? "flex-end"
+          : "flex-start",
+    justifyContent:
+      verticalAlignment === "center"
+        ? "center"
+        : verticalAlignment === "bottom"
+          ? "flex-end"
+          : "flex-start",
+  };
+  const slideHeightStyle: React.CSSProperties | undefined =
+    heightMode === "fixed" && height > 0 ? { height: `${height}px` } : undefined;
+
+  if (frames.length === 0 && !showEditorChrome) {
+    return null;
+  }
+
+  return (
+    <div className={`relative w-full ${stretch ? "h-full" : ""}`}>
+      {frames.length === 0 ? (
+        showEditorChrome ? (
+          <div className="flex min-h-[120px] items-center justify-center text-sm text-gray-500">
+            Add blocks to create slideshow slides
+          </div>
+        ) : null
+      ) : (
+        <>
+          <div className="relative overflow-hidden rounded-lg min-h-[200px]" style={slideHeightStyle}>
+            {firstFrame && (
+              <div
+                className={`${transition === "fade" ? "absolute inset-0" : "absolute inset-0"} flex items-center justify-center`}
+                style={{ opacity: 1 }}
+              >
+                <div className="flex h-full w-full flex-col" style={frameStyle}>
+                  {frameChildren.length > 0 ? (
+                    frameChildren.map((child: BlockInstance) => (
+                      <PreviewBlockItem
+                        key={child.id}
+                        block={child}
+                        isSelected={selectedNodeId === child.id}
+                        isInspecting={isInspecting}
+                        inspectorSettings={inspectorSettings}
+                        hoveredNodeId={hoveredNodeId}
+                        onHoverNode={onHoverNode}
+                        onSelect={onSelect}
+                        contained
+                        selectedNodeId={selectedNodeId}
+                        sectionId={sectionId}
+                        sectionType={sectionType}
+                        sectionZone={sectionZone}
+                        columnId={columnId}
+                        parentBlockId={block.id}
+                        onOpenMedia={onOpenMedia}
+                        mediaStyles={mediaStyles}
+                      />
+                    ))
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+                      Empty slide
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          {frames.length > 1 && showArrows && (
+            <div className="mt-4 flex items-center justify-center gap-4">
+              <button
+                type="button"
+                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+              >
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              {showDots && (
+                <div className="flex gap-2">
+                  {frames.map((_: BlockInstance, idx: number) => (
+                    <div
+                      key={idx}
+                      className={`size-2 rounded-full transition ${idx === 0 ? "bg-white" : "bg-gray-600"}`}
+                    />
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition"
+              >
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

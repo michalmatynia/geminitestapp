@@ -289,6 +289,11 @@ export type NodeRuntimeConfig = {
   cache?: {
     mode?: NodeCacheMode;
   };
+  timeoutMs?: number;
+  retry?: {
+    attempts?: number;
+    backoffMs?: number;
+  };
 };
 
 export type NodeConfig = {

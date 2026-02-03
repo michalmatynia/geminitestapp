@@ -107,6 +107,7 @@ export function apiHandler(
       if (!response.headers.has("x-request-id")) {
         response.headers.set("x-request-id", requestId);
       }
+      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
       return createErrorResponseWithTiming(error, request, context, options);
@@ -167,6 +168,7 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
       if (!response.headers.has("x-request-id")) {
         response.headers.set("x-request-id", requestId);
       }
+      applyDefaultCacheHeaders(response, request.method, options.cacheControl);
       return response;
     } catch (error) {
       return createErrorResponseWithTiming(
@@ -177,6 +179,26 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
       );
     }
   };
+}
+
+const DEFAULT_GET_CACHE_CONTROL = "private, max-age=60, stale-while-revalidate=300";
+
+function applyDefaultCacheHeaders(
+  response: Response,
+  method: string,
+  override?: string | undefined
+): void {
+  if (response.headers.has("Cache-Control")) return;
+  if (override && override.trim()) {
+    response.headers.set("Cache-Control", override.trim());
+    return;
+  }
+  const isGetLike = method === "GET" || method === "HEAD";
+  if (isGetLike) {
+    response.headers.set("Cache-Control", DEFAULT_GET_CACHE_CONTROL);
+    return;
+  }
+  response.headers.set("Cache-Control", "no-store");
 }
 
 /**

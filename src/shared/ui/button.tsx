@@ -1,4 +1,3 @@
-import { Slot, Slottable } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 import { Loader2 } from "lucide-react";
@@ -35,6 +34,31 @@ const buttonVariants = cva(
   }
 )
 
+const mergeProps = (
+  slotProps: Record<string, unknown>,
+  childProps: Record<string, unknown>
+): Record<string, unknown> => {
+  const overrideProps: Record<string, unknown> = { ...childProps };
+  Object.keys(slotProps).forEach((propName) => {
+    const slotPropValue = slotProps[propName];
+    const childPropValue = childProps[propName];
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (
+      isHandler &&
+      typeof slotPropValue === "function" &&
+      typeof childPropValue === "function"
+    ) {
+      overrideProps[propName] = (...args: unknown[]) => {
+        (childPropValue as (...eventArgs: unknown[]) => void)(...args);
+        (slotPropValue as (...eventArgs: unknown[]) => void)(...args);
+      };
+    } else if (slotPropValue !== undefined) {
+      overrideProps[propName] = slotPropValue;
+    }
+  });
+  return overrideProps;
+};
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
@@ -45,25 +69,31 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, loadingText, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
     if (asChild && React.isValidElement(children)) {
       const child = children as React.ReactElement<{ children?: React.ReactNode }>;
-      const slottedChild =
-        loading && loadingText
-          ? React.cloneElement(child, undefined, loadingText)
-          : child
-
-      return (
-        <Comp
-          className={cn(buttonVariants({ variant, size, className }), loading && "gap-2")}
-          ref={ref}
-          disabled={loading || props.disabled}
-          {...props}
-        >
-          {loading && <Loader2 className="size-4 animate-spin" />}
-          <Slottable>{slottedChild}</Slottable>
-        </Comp>
-      )
+      const childContent = loading ? (
+        <>
+          <Loader2 className="size-4 animate-spin" />
+          {loading && loadingText ? loadingText : child.props.children}
+        </>
+      ) : (
+        child.props.children
+      );
+      const mergedClassName = cn(
+        buttonVariants({ variant, size, className }),
+        child.props.className,
+        loading && "gap-2"
+      );
+      const mergedProps = mergeProps(
+        {
+          ...props,
+          className: mergedClassName,
+          disabled: loading || props.disabled,
+          ref,
+        },
+        child.props
+      );
+      return React.cloneElement(child, mergedProps, childContent);
     }
 
     const baseContent = loading && loadingText ? loadingText : children
@@ -76,14 +106,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       baseContent
     )
     return (
-      <Comp
+      <button
         className={cn(buttonVariants({ variant, size, className }), loading && "gap-2")}
         ref={ref}
         disabled={loading || props.disabled}
         {...props}
       >
         {content}
-      </Comp>
+      </button>
     )
   }
 )

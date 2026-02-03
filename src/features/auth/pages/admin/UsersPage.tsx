@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox, Badge } from "@/shared/ui";
 import { logClientError } from "@/features/observability";
 import { useSession } from "next-auth/react";
@@ -56,6 +56,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   const [mockMessage, setMockMessage] = useState("");
   const [mockOpen, setMockOpen] = useState(false);
   const { data: session } = useSession();
+  const lastSettingsRef = useRef<{ roles: string | null; userRoles: string | null } | null>(null);
   const canReadUsers = Boolean(
     session?.user?.isElevated || session?.user?.permissions?.includes("auth.users.read")
   );
@@ -104,6 +105,12 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!settingsQuery.data) return;
+    if (
+      lastSettingsRef.current?.roles === rolesSettingRaw &&
+      lastSettingsRef.current?.userRoles === userRolesSettingRaw
+    ) {
+      return;
+    }
     const storedRoles = mergeDefaultRoles(
       parseJsonSetting<AuthRole[]>(
         settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
@@ -117,7 +124,8 @@ export default function AuthUsersPage(): React.JSX.Element {
     setRoles(storedRoles);
     setUserRoles(storedUserRoles);
     setDirtyRoles(false);
-  }, [settingsQuery.data, rolesSettingRaw, userRolesSettingRaw]);
+    lastSettingsRef.current = { roles: rolesSettingRaw, userRoles: userRolesSettingRaw };
+  }, [rolesSettingRaw, userRolesSettingRaw, settingsQuery.dataUpdatedAt]);
 
   const filteredUsers = useMemo<AuthUserSummary[]>(() => {
     const query = search.trim().toLowerCase();

@@ -153,7 +153,7 @@ export function AdminNotesPage(): React.JSX.Element {
   // Handlers
   const handleSelectNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
     try {
-      const response: Response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+      const response: Response = await fetch(`/api/notes/${noteId}`);
       if (response.ok) {
         const note: NoteWithRelations = (await response.json()) as NoteWithRelations;
         setSelectedNote(note);

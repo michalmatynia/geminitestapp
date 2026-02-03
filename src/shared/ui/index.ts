@@ -4,6 +4,7 @@ export * from "./app-modal";
 export * from "./avatar";
 export * from "./button";
 export * from "./card";
+export * from "./client-only";
 export * from "./checkbox";
 export * from "./dialog";
 export * from "./dropdown-menu";

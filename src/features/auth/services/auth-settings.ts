@@ -1,3 +1,4 @@
+import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
@@ -6,6 +7,22 @@ import {
   type AuthUserPageSettings,
 } from "@/features/auth/utils/auth-user-pages";
 import { MongoSettingRecord } from "@/shared/types/base-types";
+
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+
+const readPrismaSetting = async (key: string): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key },
+      select: { value: true },
+    });
+    return setting?.value ?? null;
+  } catch {
+    return null;
+  }
+};
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
   if (!process.env.MONGODB_URI) return null;
@@ -17,7 +34,10 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
-  return readMongoSetting(key);
+  if (process.env.MONGODB_URI) {
+    return readMongoSetting(key);
+  }
+  return readPrismaSetting(key);
 };
 
 export const getAuthUserPageSettings = async (): Promise<AuthUserPageSettings> => {

@@ -12,6 +12,35 @@ const COLOR_SCHEME_OPTIONS = [
   { label: "Scheme 5", value: "scheme-5" },
 ];
 
+const OVERFLOW_OPTIONS = [
+  { label: "Visible", value: "visible" },
+  { label: "Hidden", value: "hidden" },
+  { label: "Auto", value: "auto" },
+  { label: "Scroll", value: "scroll" },
+  { label: "Clip", value: "clip" },
+];
+
+const JUSTIFY_OPTIONS = [
+  { label: "Start", value: "start" },
+  { label: "Center", value: "center" },
+  { label: "End", value: "end" },
+  { label: "Space between", value: "space-between" },
+  { label: "Space around", value: "space-around" },
+  { label: "Space evenly", value: "space-evenly" },
+];
+
+const ALIGN_OPTIONS = [
+  { label: "Start", value: "start" },
+  { label: "Center", value: "center" },
+  { label: "End", value: "end" },
+  { label: "Stretch", value: "stretch" },
+];
+
+const WRAP_OPTIONS = [
+  { label: "Wrap", value: "wrap" },
+  { label: "No wrap", value: "nowrap" },
+];
+
 function colorSchemeField(key: string, label: string, defaultValue: string = "scheme-1"): SettingsField {
   return { key, label, type: "color-scheme", options: COLOR_SCHEME_OPTIONS, defaultValue };
 }
@@ -44,6 +73,22 @@ function marginFields(): SettingsField[] {
   ];
 }
 
+function layoutFields(): SettingsField[] {
+  return [
+    { key: "minHeight", label: "Min height (px)", type: "number", defaultValue: 0 },
+    { key: "maxWidth", label: "Max width (px)", type: "number", defaultValue: 0 },
+    {
+      key: "overflow",
+      label: "Overflow",
+      type: "select",
+      options: OVERFLOW_OPTIONS,
+      defaultValue: "visible",
+    },
+    { key: "opacity", label: "Opacity", type: "range", defaultValue: 100, min: 0, max: 100 },
+    { key: "zIndex", label: "Z-index", type: "number", defaultValue: 0 },
+  ];
+}
+
 function sectionStyleFields(): SettingsField[] {
   return [
     { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
@@ -65,6 +110,9 @@ export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement",
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "Block", "Button", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon"];
 
+// Content blocks that can be placed inside a SlideshowFrame
+export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "Image", "Heading", "Text", "TextElement", "TextAtom", "Button", "AppEmbed"];
+
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
   Row: {
     type: "Row",
@@ -73,9 +121,18 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     allowedBlockTypes: ROW_ALLOWED_BLOCK_TYPES,
     defaultSettings: {
       gap: "inherit",
+      gapPx: 0,
       direction: "horizontal",
+      wrap: "wrap",
+      justifyContent: "start",
+      alignItems: "stretch",
       heightMode: "inherit",
       height: 0,
+      minHeight: 0,
+      maxWidth: 0,
+      overflow: "visible",
+      opacity: 100,
+      zIndex: 0,
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -110,6 +167,28 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "inherit",
       },
+      { key: "gapPx", label: "Custom gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "wrap",
+        label: "Wrap",
+        type: "select",
+        options: WRAP_OPTIONS,
+        defaultValue: "wrap",
+      },
+      {
+        key: "justifyContent",
+        label: "Justify content",
+        type: "select",
+        options: JUSTIFY_OPTIONS,
+        defaultValue: "start",
+      },
+      {
+        key: "alignItems",
+        label: "Align items",
+        type: "select",
+        options: ALIGN_OPTIONS,
+        defaultValue: "stretch",
+      },
       {
         key: "heightMode",
         label: "Row height",
@@ -124,6 +203,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       ...paddingFields(),
       ...marginFields(),
       { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
+      ...layoutFields(),
     ],
   },
   Announcement: {
@@ -141,6 +221,8 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     label: "Column",
     icon: "Columns",
     defaultSettings: {
+      gap: "medium",
+      gapPx: 0,
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -149,11 +231,32 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       marginBottom: 0,
       heightMode: "inherit",
       height: 0,
+      minHeight: 0,
+      maxWidth: 0,
+      overflow: "visible",
+      opacity: 100,
+      zIndex: 0,
       colorScheme: "scheme-1",
       verticalAlignment: "top",
+      justifyContent: "start",
+      alignItems: "stretch",
+      textAlign: "left",
       background: { type: "none" },
     },
     settingsSchema: [
+      {
+        key: "gap",
+        label: "Content gap",
+        type: "select",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Small", value: "small" },
+          { label: "Medium", value: "medium" },
+          { label: "Large", value: "large" },
+        ],
+        defaultValue: "medium",
+      },
+      { key: "gapPx", label: "Custom gap (px)", type: "number", defaultValue: 0 },
       { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 0 },
       { key: "paddingBottom", label: "Bottom padding", type: "number", defaultValue: 0 },
       { key: "paddingLeft", label: "Left padding", type: "number", defaultValue: 0 },
@@ -171,6 +274,31 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         defaultValue: "inherit",
       },
       { key: "height", label: "Column height (px)", type: "range", defaultValue: 0, min: 0, max: 1000 },
+      {
+        key: "justifyContent",
+        label: "Vertical alignment",
+        type: "select",
+        options: JUSTIFY_OPTIONS,
+        defaultValue: "start",
+      },
+      {
+        key: "alignItems",
+        label: "Horizontal alignment",
+        type: "select",
+        options: ALIGN_OPTIONS,
+        defaultValue: "stretch",
+      },
+      {
+        key: "textAlign",
+        label: "Text alignment",
+        type: "select",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+        defaultValue: "left",
+      },
       colorSchemeField("colorScheme", "Color scheme"),
       {
         key: "verticalAlignment",
@@ -184,6 +312,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         defaultValue: "top",
       },
       { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
+      ...layoutFields(),
     ],
   },
   Block: {
@@ -202,11 +331,39 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       marginLeft: 0,
       marginRight: 0,
       contentAlignment: "left",
+      linkUrl: "",
+      linkTarget: "_self",
+      layoutDirection: "row",
+      wrap: "wrap",
+      alignItems: "center",
+      justifyContent: "inherit",
+      minHeight: 0,
+      maxWidth: 0,
+      overflow: "visible",
+      opacity: 100,
+      zIndex: 0,
       background: { type: "none" },
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
       { key: "blockGap", label: "Content gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "layoutDirection",
+        label: "Layout direction",
+        type: "select",
+        options: [
+          { label: "Row", value: "row" },
+          { label: "Column", value: "column" },
+        ],
+        defaultValue: "row",
+      },
+      {
+        key: "wrap",
+        label: "Wrap",
+        type: "select",
+        options: WRAP_OPTIONS,
+        defaultValue: "wrap",
+      },
       {
         key: "contentAlignment",
         label: "Content alignment",
@@ -218,9 +375,35 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "left",
       },
+      { key: "linkUrl", label: "Block link", type: "link", defaultValue: "" },
+      {
+        key: "linkTarget",
+        label: "Link target",
+        type: "select",
+        options: [
+          { label: "Same tab", value: "_self" },
+          { label: "New tab", value: "_blank" },
+        ],
+        defaultValue: "_self",
+      },
+      {
+        key: "justifyContent",
+        label: "Justify content",
+        type: "select",
+        options: [{ label: "Inherit alignment", value: "inherit" }, ...JUSTIFY_OPTIONS],
+        defaultValue: "inherit",
+      },
+      {
+        key: "alignItems",
+        label: "Align items",
+        type: "select",
+        options: ALIGN_OPTIONS,
+        defaultValue: "center",
+      },
       ...paddingFields(),
       ...marginFields(),
       ...sectionStyleFields(),
+      ...layoutFields(),
     ],
   },
   Carousel: {
@@ -394,6 +577,50 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "ease-out",
       },
+    ],
+  },
+  SlideshowFrame: {
+    type: "SlideshowFrame",
+    label: "Slideshow Frame",
+    icon: "Frame",
+    allowedBlockTypes: SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES,
+    defaultSettings: {
+      backgroundColor: "",
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      contentAlignment: "center",
+      verticalAlignment: "center",
+    },
+    settingsSchema: [
+      { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+      {
+        key: "contentAlignment",
+        label: "Content alignment",
+        type: "select",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Center", value: "center" },
+          { label: "Right", value: "right" },
+        ],
+        defaultValue: "center",
+      },
+      {
+        key: "verticalAlignment",
+        label: "Vertical alignment",
+        type: "select",
+        options: [
+          { label: "Top", value: "top" },
+          { label: "Center", value: "center" },
+          { label: "Bottom", value: "bottom" },
+        ],
+        defaultValue: "center",
+      },
+      { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 0 },
+      { key: "paddingRight", label: "Right padding", type: "number", defaultValue: 0 },
+      { key: "paddingBottom", label: "Bottom padding", type: "number", defaultValue: 0 },
+      { key: "paddingLeft", label: "Left padding", type: "number", defaultValue: 0 },
     ],
   },
   Heading: {
@@ -1264,11 +1491,18 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
+    allowedBlockTypes: ["SlideshowFrame", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
     defaultSettings: {
       transition: "fade",
+      transitionDuration: 700,
+      autoplay: "yes",
       autoplaySpeed: 5000,
+      pauseOnHover: "yes",
+      loop: "yes",
+      showArrows: "yes",
       showDots: "yes",
+      heightMode: "auto",
+      height: 360,
       colorScheme: "scheme-1",
       paddingTop: 36,
       paddingBottom: 36,
@@ -1284,7 +1518,48 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "fade",
       },
+      { key: "transitionDuration", label: "Transition duration (ms)", type: "number", defaultValue: 700 },
+      {
+        key: "autoplay",
+        label: "Autoplay",
+        type: "select",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        defaultValue: "yes",
+      },
       { key: "autoplaySpeed", label: "Autoplay speed (ms)", type: "number", defaultValue: 5000 },
+      {
+        key: "pauseOnHover",
+        label: "Pause on hover",
+        type: "select",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        defaultValue: "yes",
+      },
+      {
+        key: "loop",
+        label: "Loop",
+        type: "select",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        defaultValue: "yes",
+      },
+      {
+        key: "showArrows",
+        label: "Show arrows",
+        type: "select",
+        options: [
+          { label: "Yes", value: "yes" },
+          { label: "No", value: "no" },
+        ],
+        defaultValue: "yes",
+      },
       {
         key: "showDots",
         label: "Show dots",
@@ -1295,6 +1570,17 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "yes",
       },
+      {
+        key: "heightMode",
+        label: "Height mode",
+        type: "select",
+        options: [
+          { label: "Auto (fit content)", value: "auto" },
+          { label: "Fixed", value: "fixed" },
+        ],
+        defaultValue: "auto",
+      },
+      { key: "height", label: "Fixed height (px)", type: "number", defaultValue: 360 },
       colorSchemeField("colorScheme", "Color scheme"),
       ...paddingFields(),
     ],
@@ -1358,10 +1644,38 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       marginLeft: 0,
       marginRight: 0,
       contentAlignment: "left",
+      linkUrl: "",
+      linkTarget: "_self",
+      layoutDirection: "row",
+      wrap: "wrap",
+      alignItems: "center",
+      justifyContent: "inherit",
+      minHeight: 0,
+      maxWidth: 0,
+      overflow: "visible",
+      opacity: 100,
+      zIndex: 0,
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
       { key: "blockGap", label: "Content gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "layoutDirection",
+        label: "Layout direction",
+        type: "select",
+        options: [
+          { label: "Row", value: "row" },
+          { label: "Column", value: "column" },
+        ],
+        defaultValue: "row",
+      },
+      {
+        key: "wrap",
+        label: "Wrap",
+        type: "select",
+        options: WRAP_OPTIONS,
+        defaultValue: "wrap",
+      },
       {
         key: "contentAlignment",
         label: "Content alignment",
@@ -1373,9 +1687,35 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         ],
         defaultValue: "left",
       },
+      { key: "linkUrl", label: "Block link", type: "link", defaultValue: "" },
+      {
+        key: "linkTarget",
+        label: "Link target",
+        type: "select",
+        options: [
+          { label: "Same tab", value: "_self" },
+          { label: "New tab", value: "_blank" },
+        ],
+        defaultValue: "_self",
+      },
+      {
+        key: "justifyContent",
+        label: "Justify content",
+        type: "select",
+        options: [{ label: "Inherit alignment", value: "inherit" }, ...JUSTIFY_OPTIONS],
+        defaultValue: "inherit",
+      },
+      {
+        key: "alignItems",
+        label: "Align items",
+        type: "select",
+        options: ALIGN_OPTIONS,
+        defaultValue: "center",
+      },
       ...paddingFields(),
       ...marginFields(),
       ...sectionStyleFields(),
+      ...layoutFields(),
     ],
   },
   TextElement: {
@@ -1574,11 +1914,20 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
       rows: 1,
       columns: 2,
       gap: "medium",
+      rowGap: "inherit",
+      columnGap: "inherit",
+      rowGapPx: 0,
+      columnGapPx: 0,
       paddingTop: 36,
       paddingBottom: 36,
       marginTop: 0,
       marginBottom: 0,
       colorScheme: "scheme-1",
+      minHeight: 0,
+      maxWidth: 0,
+      overflow: "visible",
+      opacity: 100,
+      zIndex: 0,
     },
     settingsSchema: [
       { key: "rows", label: "Rows", type: "range", defaultValue: 1, min: 1, max: 8 },
@@ -1595,10 +1944,39 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         ],
         defaultValue: "medium",
       },
+      {
+        key: "rowGap",
+        label: "Row gap",
+        type: "select",
+        options: [
+          { label: "Inherit grid gap", value: "inherit" },
+          { label: "None", value: "none" },
+          { label: "Small", value: "small" },
+          { label: "Medium", value: "medium" },
+          { label: "Large", value: "large" },
+        ],
+        defaultValue: "inherit",
+      },
+      { key: "rowGapPx", label: "Row gap (px)", type: "number", defaultValue: 0 },
+      {
+        key: "columnGap",
+        label: "Column gap",
+        type: "select",
+        options: [
+          { label: "Inherit grid gap", value: "inherit" },
+          { label: "None", value: "none" },
+          { label: "Small", value: "small" },
+          { label: "Medium", value: "medium" },
+          { label: "Large", value: "large" },
+        ],
+        defaultValue: "inherit",
+      },
+      { key: "columnGapPx", label: "Column gap (px)", type: "number", defaultValue: 0 },
       ...paddingFields(),
       ...marginFields(),
       colorSchemeField("colorScheme", "Color scheme"),
       ...sectionStyleFields(),
+      ...layoutFields(),
     ],
   },
 
@@ -1726,41 +2104,9 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
     type: "Slideshow",
     label: "Slideshow",
     icon: "GalleryHorizontal",
-    allowedBlockTypes: ["Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
-    defaultSettings: {
-      transition: "fade",
-      autoplaySpeed: 5000,
-      showDots: "yes",
-      colorScheme: "scheme-1",
-      paddingTop: 36,
-      paddingBottom: 36,
-    },
-    settingsSchema: [
-      {
-        key: "transition",
-        label: "Transition",
-        type: "select",
-        options: [
-          { label: "Fade", value: "fade" },
-          { label: "Slide", value: "slide" },
-        ],
-        defaultValue: "fade",
-      },
-      { key: "autoplaySpeed", label: "Autoplay speed (ms)", type: "number", defaultValue: 5000 },
-      {
-        key: "showDots",
-        label: "Show dots",
-        type: "select",
-        options: [
-          { label: "Yes", value: "yes" },
-          { label: "No", value: "no" },
-        ],
-        defaultValue: "yes",
-      },
-      colorSchemeField("colorScheme", "Color scheme"),
-      ...paddingFields(),
-      ...sectionStyleFields(),
-    ],
+    allowedBlockTypes: ["SlideshowFrame", "Image", "Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "AppEmbed"],
+    defaultSettings: { ...BLOCK_DEFINITIONS.Slideshow!.defaultSettings },
+    settingsSchema: [...BLOCK_DEFINITIONS.Slideshow!.settingsSchema, ...sectionStyleFields()],
   },
 
   Newsletter: {

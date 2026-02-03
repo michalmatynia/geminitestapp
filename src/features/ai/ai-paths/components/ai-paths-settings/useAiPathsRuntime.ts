@@ -35,6 +35,9 @@ import {
   safeJsonStringify,
 } from "../AiPathsSettingsUtils";
 
+const AI_PATHS_SESSION_STALE_MS = 30_000;
+const AI_PATHS_ENTITY_STALE_MS = 10_000;
+
 type ToastFn = (message: string, options?: Partial<{ variant: "success" | "error" | "info"; duration: number }>) => void;
 
 type UseAiPathsRuntimeArgs = {
@@ -123,13 +126,13 @@ export function useAiPathsRuntime({
   const sessionQuery = useQuery({
     queryKey: ["auth-session"],
     queryFn: async () => {
-      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      const res = await fetch("/api/auth/session");
       if (!res.ok) return null;
       return (await res.json()) as {
         user?: { id?: string; name?: string | null; email?: string | null };
       };
     },
-    staleTime: 0,
+    staleTime: AI_PATHS_SESSION_STALE_MS,
   });
 
   const sessionUser = useMemo(() => {
@@ -155,7 +158,7 @@ export function useAiPathsRuntime({
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_ENTITY_STALE_MS,
         });
       } catch (error) {
         reportAiPathsError(error, { action: "fetchProduct", productId }, "Failed to fetch product:");
@@ -174,7 +177,7 @@ export function useAiPathsRuntime({
             const result = await entityApi.getNote(noteId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_ENTITY_STALE_MS,
         });
       } catch (error) {
         reportAiPathsError(error, { action: "fetchNote", noteId }, "Failed to fetch note:");

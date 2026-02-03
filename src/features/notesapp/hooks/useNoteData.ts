@@ -29,6 +29,8 @@ import type { UseNoteDataProps } from "@/features/notesapp/types/notes-hooks";
 
 // --- Queries ---
 
+const NOTES_STALE_MS = 10_000;
+
 export const useNotes = (
   filters: NoteFilters,
   options?: { enabled?: boolean }
@@ -55,6 +57,7 @@ export const useNotes = (
       return response.json() as Promise<NoteWithRelations[]>;
     },
     enabled: options?.enabled ?? true,
+    staleTime: NOTES_STALE_MS,
   });
 };
 
@@ -65,11 +68,12 @@ export const useNote = (
   return useQuery<NoteWithRelations, Error>({
     queryKey: ["notes", noteId],
     queryFn: async (): Promise<NoteWithRelations> => {
-      const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+      const response = await fetch(`/api/notes/${noteId}`);
       if (!response.ok) throw new Error("Failed to fetch note");
       return response.json() as Promise<NoteWithRelations>;
     },
     enabled: !!noteId && (options?.enabled ?? true),
+    staleTime: NOTES_STALE_MS,
   });
 };
 
@@ -77,11 +81,12 @@ export const useNoteTree = (options?: { enabled?: boolean }): UseQueryResult<Not
   return useQuery<NotebookRecord[], Error>({
     queryKey: ["notes", "notebooks"],
     queryFn: async (): Promise<NotebookRecord[]> => {
-      const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
+      const response = await fetch("/api/notes/notebooks");
       if (!response.ok) throw new Error("Failed to fetch notebooks");
       return response.json() as Promise<NotebookRecord[]>;
     },
     enabled: options?.enabled ?? true,
+    staleTime: NOTES_STALE_MS,
   });
 };
 
@@ -94,6 +99,7 @@ export const useNoteTags = (options?: { enabled?: boolean }): UseQueryResult<Tag
       return response.json() as Promise<TagRecord[]>;
     },
     enabled: options?.enabled ?? true,
+    staleTime: NOTES_STALE_MS,
   });
 };
 
@@ -108,6 +114,7 @@ export const useNoteCategories = (notebookId?: string | null, options?: { enable
       return response.json() as Promise<CategoryRecord[]>;
     },
     enabled: (options?.enabled ?? true) && !!notebookId,
+    staleTime: NOTES_STALE_MS,
   });
 };
 
@@ -120,6 +127,7 @@ export const useNoteThemes = (options?: { enabled?: boolean }): UseQueryResult<T
       return response.json() as Promise<ThemeRecord[]>;
     },
     enabled: options?.enabled ?? true,
+    staleTime: NOTES_STALE_MS,
   });
 };
 

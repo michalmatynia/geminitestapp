@@ -26,6 +26,10 @@ import {
 
 type TriggerEventEntityType = "product" | "note" | "custom";
 
+const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+const AI_PATHS_PREFS_STALE_MS = 5_000;
+const AI_PATHS_ENTITY_STALE_MS = 10_000;
+
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
   triggerLabel?: string | null | undefined;
@@ -65,16 +69,23 @@ const safeJsonStringify = (value: unknown): string => {
   }
 };
 
-const loadPathConfigsFromSettings = async (): Promise<{
+const loadPathConfigsFromSettings = async (
+  settingsData?: Array<{ key: string; value: string }>
+): Promise<{
   configs: Record<string, PathConfig>;
   settingsPathOrder: string[];
 }> => {
   const configs: Record<string, PathConfig> = {};
   let settingsPathOrder: string[] = [];
   try {
-    const settingsRes = await fetch("/api/settings", { cache: "no-store" });
-    if (!settingsRes.ok) return { configs: {}, settingsPathOrder: [] };
-    const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
+    const data =
+      settingsData ??
+      ((await (async (): Promise<Array<{ key: string; value: string }> | null> => {
+        const settingsRes = await fetch("/api/settings");
+        if (!settingsRes.ok) return null;
+        return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+      })()) ?? []);
+    if (!data.length) return { configs: {}, settingsPathOrder: [] };
     const map = new Map<string, string>(
       data.map((item: { key: string; value: string }) => [item.key, item.value])
     );
@@ -258,15 +269,21 @@ export function useAiPathTriggerEvent(): {
     }
 
     try {
-      const prefsRes = await fetch("/api/user/preferences", { cache: "no-store" });
-      if (!prefsRes.ok) {
-        throw new Error("Failed to load AI Paths preferences.");
-      }
-      const prefs = (await prefsRes.json()) as {
-        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-        aiPathsPathIndex?: Array<{ id?: string }> | null;
-        aiPathsActivePathId?: string | null;
-      };
+      const prefs = await queryClient.fetchQuery({
+        queryKey: ["user-preferences"],
+        queryFn: async () => {
+          const prefsRes = await fetch("/api/user/preferences");
+          if (!prefsRes.ok) {
+            throw new Error("Failed to load AI Paths preferences.");
+          }
+          return (await prefsRes.json()) as {
+            aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
+            aiPathsPathIndex?: Array<{ id?: string }> | null;
+            aiPathsActivePathId?: string | null;
+          };
+        },
+        staleTime: AI_PATHS_PREFS_STALE_MS,
+      });
 
       let configs: Record<string, PathConfig> = {};
       let settingsPathOrder: string[] = [];
@@ -283,7 +300,23 @@ export function useAiPathTriggerEvent(): {
       }
 
       if (!configs || Object.keys(configs).length === 0) {
-        const fallback = await loadPathConfigsFromSettings();
+        let settingsData: Array<{ key: string; value: string }> | null = null;
+        try {
+          settingsData = await queryClient.fetchQuery({
+            queryKey: ["settings"],
+            queryFn: async () => {
+              const settingsRes = await fetch("/api/settings");
+              if (!settingsRes.ok) {
+                throw new Error("Failed to load AI Paths settings.");
+              }
+              return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+            },
+            staleTime: AI_PATHS_SETTINGS_STALE_MS,
+          });
+        } catch {
+          settingsData = null;
+        }
+        const fallback = await loadPathConfigsFromSettings(settingsData ?? undefined);
         configs = fallback.configs;
         settingsPathOrder = fallback.settingsPathOrder;
       }
@@ -459,14 +492,26 @@ export function useAiPathTriggerEvent(): {
           fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
             if (!entityId) return null;
             if (entityType === "product") {
-              const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, { cache: "no-store" });
-              if (!res.ok) return null;
-              return (await res.json()) as Record<string, unknown>;
+              return await queryClient.fetchQuery({
+                queryKey: ["products", entityId],
+                queryFn: async () => {
+                  const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`);
+                  if (!res.ok) return null;
+                  return (await res.json()) as Record<string, unknown>;
+                },
+                staleTime: AI_PATHS_ENTITY_STALE_MS,
+              });
             }
             if (entityType === "note") {
-              const res = await fetch(`/api/notes/${encodeURIComponent(entityId)}`, { cache: "no-store" });
-              if (!res.ok) return null;
-              return (await res.json()) as Record<string, unknown>;
+              return await queryClient.fetchQuery({
+                queryKey: ["notes", entityId],
+                queryFn: async () => {
+                  const res = await fetch(`/api/notes/${encodeURIComponent(entityId)}`);
+                  if (!res.ok) return null;
+                  return (await res.json()) as Record<string, unknown>;
+                },
+                staleTime: AI_PATHS_ENTITY_STALE_MS,
+              });
             }
             return null;
           },

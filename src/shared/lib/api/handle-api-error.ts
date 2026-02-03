@@ -142,6 +142,9 @@ export const createErrorResponse = (
   response.headers.set("x-request-id", requestId);
   response.headers.set("x-error-id", resolved.errorId);
   response.headers.set("x-error-fingerprint", fingerprint);
+  if (!response.headers.has("Cache-Control")) {
+    response.headers.set("Cache-Control", "no-store");
+  }
 
   // Set Retry-After header for retryable errors
   if (resolved.retryable && resolved.retryAfterMs) {
@@ -162,13 +165,17 @@ export const createSimpleErrorResponse = (
   status: number,
   code?: string
 ): NextResponse => {
-  return NextResponse.json(
+  const response = NextResponse.json(
     {
       error: message,
       code: code ?? "ERROR",
     },
     { status }
   );
+  if (!response.headers.has("Cache-Control")) {
+    response.headers.set("Cache-Control", "no-store");
+  }
+  return response;
 };
 
 /**

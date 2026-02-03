@@ -6,17 +6,23 @@ export interface UserPreferences {
   adminMenuSectionColors?: Record<string, string> | null;
 }
 
+const USER_PREFERENCES_STALE_MS = 10_000;
+
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: ["user-preferences"],
     queryFn: async (): Promise<UserPreferences> => {
       const res = await fetch("/api/user/preferences", {
-        cache: "no-store",
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to load user preferences.");
+      if (!res.ok) {
+        console.warn("[user-preferences] Failed to load user preferences", res.status);
+        return {};
+      }
       return (await res.json()) as UserPreferences;
     },
+    staleTime: USER_PREFERENCES_STALE_MS,
+    retry: 1,
   });
 }
 

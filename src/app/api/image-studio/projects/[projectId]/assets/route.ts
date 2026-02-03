@@ -3,14 +3,14 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
-import { randomUUID } from "crypto";
+import { SecureFileUpload } from "@/features/products/security/file-upload";
+import { uploadFile } from "@/features/files/utils/fileUploader";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 
-import { getImageFileRepository } from "@/features/files/server";
 import type { ImageFileRecord } from "@/shared/types/files";
 
 const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
@@ -18,95 +18,16 @@ const projectsRoot = path.join(process.cwd(), "public", "uploads", "studio");
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
 
-const sanitizeFolderPath = (value: string): string => {
-  const normalized = value.replace(/\\/g, "/").trim();
-  const parts = normalized
-    .split("/")
-    .map((part) => part.trim())
-    .filter((part) => part && part !== "." && part !== "..")
-    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
-    .filter(Boolean);
-
-  return parts.join("/");
-};
-
-type UploadedFileLike = {
-  arrayBuffer: () => Promise<ArrayBuffer>;
-  size: number;
-  type?: string | undefined;
-  name?: string | undefined;
-};
-
-function isUploadedFileLike(value: unknown): value is UploadedFileLike {
-  if (!value || typeof value !== "object") return false;
-  const maybe = value as Record<string, unknown>;
-  return typeof maybe.arrayBuffer === "function" && typeof maybe.size === "number";
-}
+type UploadedFileLike = File;
 
 function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
   const candidates = [
     ...formData.getAll("files"),
     ...formData.getAll("files[]"),
     ...formData.getAll("file"),
-  ] as UploadedFileLike[];
+  ];
 
-  return candidates.filter(isUploadedFileLike);
-}
-
-async function uploadStudioFile(params: {
-  projectId: string;
-  file: UploadedFileLike;
-  folderPath?: string | null | undefined;
-}): Promise<ImageFileRecord> {
-  const buffer = Buffer.from(await params.file.arrayBuffer());
-  const rawName =
-    typeof params.file.name === "string" && params.file.name.trim().length > 0
-      ? params.file.name
-      : "upload.bin";
-  const filename = `${Date.now()}-${path.basename(rawName)}`;
-
-  const safeFolder =
-    params.folderPath && params.folderPath.trim()
-      ? sanitizeFolderPath(params.folderPath)
-      : "";
-
-  const diskDir = safeFolder
-    ? path.join(projectsRoot, params.projectId, safeFolder)
-    : path.join(projectsRoot, params.projectId);
-
-  const publicDir = safeFolder
-    ? `/uploads/studio/${params.projectId}/${safeFolder}`
-    : `/uploads/studio/${params.projectId}`;
-
-  await fs.mkdir(diskDir, { recursive: true });
-  await fs.writeFile(path.join(diskDir, filename), buffer);
-
-  const recordInput = {
-    filename,
-    filepath: `${publicDir}/${filename}`,
-    mimetype: params.file.type || "application/octet-stream",
-    size: params.file.size,
-    tags: [],
-  };
-
-  try {
-    const imageFileRepository = await getImageFileRepository();
-    return await imageFileRepository.createImageFile(recordInput);
-  } catch {
-    const now = new Date();
-    return {
-      id: randomUUID(),
-      filename: recordInput.filename,
-      filepath: recordInput.filepath,
-      mimetype: recordInput.mimetype,
-      size: recordInput.size,
-      width: null,
-      height: null,
-      tags: [],
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    };
-  }
+  return candidates.filter((value): value is File => value instanceof File);
 }
 
 async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRecord[]> {
@@ -212,26 +133,39 @@ async function POST_handler(
     const projectId = sanitizeProjectId(params.projectId);
     if (!projectId) throw badRequestError("Project id is required");
 
-    const formData = await req.formData();
-    const folder = formData.get("folder");
-    const files = extractUploadedFiles(formData);
+  const formData = await req.formData();
+  const folder = formData.get("folder");
+  const files = extractUploadedFiles(formData);
 
-    if (files.length === 0) {
-      return NextResponse.json({ error: "No files provided" }, { status: 400 });
-    }
+  if (files.length === 0) {
+    return NextResponse.json({ error: "No files provided" }, { status: 400 });
+  }
 
-    const uploaded: ImageFileRecord[] = [];
-    for (const file of files) {
-      uploaded.push(
-        await uploadStudioFile({
-          projectId,
-          file,
-          folderPath: typeof folder === "string" ? folder : null,
-        })
-      );
-    }
+  const uploaded: ImageFileRecord[] = [];
+  const validation = await SecureFileUpload.validateMultipleFiles(files);
+  if (!validation.isValid) {
+    const errors = [
+      ...validation.globalErrors,
+      ...validation.results.flatMap((result) => result.errors),
+    ];
+    return NextResponse.json({ error: "Invalid file upload", details: errors }, { status: 400 });
+  }
 
-    return NextResponse.json({ uploaded }, { status: 201 });
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index]!;
+    const sanitizedName = validation.results[index]?.sanitizedName ?? file.name;
+    uploaded.push(
+      await uploadFile(file, {
+        category: "studio",
+        projectId,
+        folder: typeof folder === "string" ? folder : null,
+        allowOrphanRecord: true,
+        filenameOverride: sanitizedName,
+      })
+    );
+  }
+
+  return NextResponse.json({ uploaded }, { status: 201 });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

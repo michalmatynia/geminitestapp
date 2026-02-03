@@ -8,7 +8,8 @@ export const userPreferencesQueryKey = ["user-preferences"] as const;
 async function fetchUserPreferences(): Promise<UserPreferences> {
   const res = await fetch("/api/user/preferences");
   if (!res.ok) {
-    throw new Error("Failed to load user preferences");
+    console.warn("[user-preferences] Failed to load user preferences", res.status);
+    return {} as UserPreferences;
   }
   return (await res.json()) as UserPreferences;
 }
@@ -30,6 +31,7 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
     queryKey: userPreferencesQueryKey,
     queryFn: fetchUserPreferences,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1,
   });
 }
 

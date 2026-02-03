@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Star } from "lucide-react";
 
@@ -23,19 +23,21 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const [sectionColors, setSectionColors] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
 
-  const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
-    event.preventDefault();
-  }, []);
-
-  useEffect(() => {
-    if (!preferences) return;
+  // Derived state for initialization
+  const [prevPrefs, setPrevPrefs] = useState<unknown>(null);
+  if (preferences && preferences !== prevPrefs && Object.keys(preferences).length > 0) {
+    setPrevPrefs(preferences);
     setFavorites(Array.isArray(preferences.adminMenuFavorites) ? preferences.adminMenuFavorites : []);
     setSectionColors(
       preferences.adminMenuSectionColors && typeof preferences.adminMenuSectionColors === "object"
         ? (preferences.adminMenuSectionColors as Record<string, string>)
         : {}
     );
-  }, [preferences]);
+  }
+
+  const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
+    event.preventDefault();
+  }, []);
 
   const nav = useMemo(
     () =>
@@ -50,17 +52,17 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const flattened = useMemo(() => flattenAdminNav(nav), [nav]);
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
   const favoritesList = useMemo(
-    () => favorites.map((id) => flattened.find((item) => item.id === id)).filter(Boolean),
+    () => favorites.map((id: string) => flattened.find((item: import("@/features/admin/components/Menu").AdminNavLeaf) => item.id === id)).filter(Boolean),
     [favorites, flattened]
   );
 
   const filteredItems = useMemo(() => {
     const normalized = normalize(query);
-    const items = flattened.filter((item) =>
+    const items = flattened.filter((item: import("@/features/admin/components/Menu").AdminNavLeaf) =>
       normalize([item.label, item.href ?? "", ...(item.keywords ?? []), ...item.parents].join(" "))
         .includes(normalized)
     );
-    return items.sort((a, b) => a.label.localeCompare(b.label));
+    return items.sort((a: import("@/features/admin/components/Menu").AdminNavLeaf, b: import("@/features/admin/components/Menu").AdminNavLeaf) => a.label.localeCompare(b.label));
   }, [flattened, query]);
 
   const baseline = useMemo(
@@ -84,17 +86,17 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   const isDirty = baseline !== currentPayload;
 
   const handleToggleFavorite = (id: string, checked: boolean): void => {
-    setFavorites((prev) => {
+    setFavorites((prev: string[]) => {
       if (checked) {
         if (prev.includes(id)) return prev;
         return [...prev, id];
       }
-      return prev.filter((fav) => fav !== id);
+      return prev.filter((fav: string) => fav !== id);
     });
   };
 
   const moveFavorite = (id: string, direction: "up" | "down"): void => {
-    setFavorites((prev) => {
+    setFavorites((prev: string[]) => {
       const index = prev.indexOf(id);
       if (index === -1) return prev;
       const next = [...prev];
@@ -108,7 +110,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
   };
 
   const updateSectionColor = (sectionId: string, value: string): void => {
-    setSectionColors((prev) => {
+    setSectionColors((prev: Record<string, string>) => {
       const next = { ...prev };
       if (value === "none") {
         delete next[sectionId];
@@ -121,8 +123,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
 
   const handleSave = async (): Promise<void> => {
     try {
+      const validFavorites = favorites.filter((id: string) => flattened.some((item: import("@/features/admin/components/Menu").AdminNavLeaf) => item.id === id));
       await updatePreferences.mutateAsync({
-        adminMenuFavorites: favorites,
+        adminMenuFavorites: validFavorites,
         adminMenuSectionColors: sectionColors,
       });
       toast("Admin menu settings saved.", { variant: "success" });
@@ -166,7 +169,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               </p>
             ) : (
               <div className="space-y-2">
-                {favoritesList.map((entry, index) => (
+                {favoritesList.map((entry: import("@/features/admin/components/Menu").AdminNavLeaf | undefined, index: number) => (
                   <div key={entry?.id} className="flex items-center justify-between rounded-md border border-border/60 bg-card/40 px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm text-white">{entry?.label}</div>
@@ -223,7 +226,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               onClear={() => setQuery("")}
             />
             <div className="mt-3 max-h-72 space-y-2 overflow-auto pr-2">
-              {filteredItems.map((item) => (
+              {filteredItems.map((item: import("@/features/admin/components/Menu").AdminNavLeaf) => (
                 <label
                   key={item.id}
                   className={cn(
@@ -233,7 +236,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                 >
                   <Checkbox
                     checked={favoritesSet.has(item.id)}
-                    onCheckedChange={(checked) => handleToggleFavorite(item.id, Boolean(checked))}
+                    onCheckedChange={(checked: boolean | "indeterminate") => handleToggleFavorite(item.id, Boolean(checked))}
                   />
                   <div className="min-w-0">
                     <div className="truncate text-sm text-white">{item.label}</div>

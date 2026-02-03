@@ -54,9 +54,14 @@ export function validateProgrammaticPrompt(
   if (!settings.enabled) return [];
   if (!prompt.trim()) return [];
 
+  const rules: PromptValidationRule[] = [
+    ...settings.rules,
+    ...(settings.learnedRules ?? []),
+  ];
+
   const issues: PromptValidationIssue[] = [];
 
-  settings.rules.forEach((rule: PromptValidationRule) => {
+  rules.forEach((rule: PromptValidationRule) => {
     if (!rule.enabled) return;
 
     if (rule.kind === "regex") {
@@ -123,4 +128,3 @@ export function validateProgrammaticPrompt(
 
   return issues;
 }
-

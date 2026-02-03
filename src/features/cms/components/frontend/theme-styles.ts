@@ -161,6 +161,45 @@ export function getSectionStyles(
   Object.assign(styles, getBlockBorderStyles(settings));
   Object.assign(styles, getBlockShadowStyles(settings));
   Object.assign(styles, getBlockBackgroundStyles(settings));
+  Object.assign(styles, getLayoutStyles(settings));
+
+  return styles;
+}
+
+// ---------------------------------------------------------------------------
+// Layout styles (shared)
+// ---------------------------------------------------------------------------
+
+const OVERFLOW_VALUES = new Set(["visible", "hidden", "scroll", "auto", "clip"]);
+
+export function getLayoutStyles(settings: Record<string, unknown>): React.CSSProperties {
+  const styles: React.CSSProperties = {};
+
+  const minHeight = settings["minHeight"];
+  const maxWidth = settings["maxWidth"];
+  const width = settings["width"];
+  const overflow = settings["overflow"];
+  const opacity = settings["opacity"];
+  const zIndex = settings["zIndex"];
+
+  if (typeof minHeight === "number" && Number.isFinite(minHeight) && minHeight > 0) {
+    styles.minHeight = `${minHeight}px`;
+  }
+  if (typeof maxWidth === "number" && Number.isFinite(maxWidth) && maxWidth > 0) {
+    styles.maxWidth = `${maxWidth}px`;
+  }
+  if (typeof width === "number" && Number.isFinite(width) && width > 0) {
+    styles.width = `${width}px`;
+  }
+  if (typeof overflow === "string" && OVERFLOW_VALUES.has(overflow)) {
+    styles.overflow = overflow;
+  }
+  if (typeof opacity === "number" && Number.isFinite(opacity)) {
+    styles.opacity = clampNumber(opacity, 0, 100) / 100;
+  }
+  if (typeof zIndex === "number" && Number.isFinite(zIndex)) {
+    styles.zIndex = zIndex;
+  }
 
   return styles;
 }

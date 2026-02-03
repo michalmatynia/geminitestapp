@@ -55,8 +55,27 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   return typeof doc?.value === "string" ? doc.value : null;
 };
 
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+
+const readPrismaSetting = async (key: string): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key },
+      select: { value: true },
+    });
+    return setting?.value ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const readSettingValue = async (key: string): Promise<string | null> => {
-  return readMongoSetting(key);
+  if (process.env.MONGODB_URI) {
+    return readMongoSetting(key);
+  }
+  return readPrismaSetting(key);
 };
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
@@ -396,7 +415,27 @@ export const recordLoginSuccess = async (input: {
 
 export const extractClientIp = (request?: Request | null): string | null => {
   if (!request) return null;
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() ?? null;
-  return request.headers.get("x-real-ip") ?? null;
+
+  const headerCandidates = [
+    "cf-connecting-ip",
+    "x-vercel-forwarded-for",
+    "x-forwarded-for",
+    "x-real-ip",
+    "x-client-ip",
+  ];
+
+  for (const headerName of headerCandidates) {
+    const value = request.headers.get(headerName);
+    if (!value) continue;
+    const candidate = value.split(",")[0]?.trim();
+    if (candidate) return normalizeClientIp(candidate);
+  }
+
+  return null;
+};
+
+const normalizeClientIp = (ip: string): string => {
+  if (ip.startsWith("::ffff:")) return ip.slice(7);
+  if (ip === "::1") return "127.0.0.1";
+  return ip;
 };

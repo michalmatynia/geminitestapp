@@ -86,7 +86,7 @@ export function NoteDetailView({
         const notes = await Promise.all(
           relationIds.map(async (id: string) => {
             try {
-              const res = await fetch(`/api/notes/${id}`, { cache: "no-store" });
+              const res = await fetch(`/api/notes/${id}`);
               if (!res.ok) return null;
               return (await res.json()) as NoteWithRelations;
             } catch {

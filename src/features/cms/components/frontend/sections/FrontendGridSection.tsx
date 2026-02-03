@@ -7,6 +7,7 @@ import { FrontendBlockRenderer } from "./FrontendBlockRenderer";
 import { FrontendImageWithTextBlock } from "./FrontendImageWithTextBlock";
 import { FrontendHeroBlock } from "./FrontendHeroBlock";
 import { FrontendCarousel } from "./FrontendCarousel";
+import { FrontendSlideshowSection } from "./FrontendSlideshowSection";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 
 // Section-type blocks that need special rendering inside columns
@@ -29,6 +30,31 @@ const getGapClass = (gap?: string): string => {
 const resolveGapValue = (gap: unknown, fallback: string): string => {
   if (typeof gap === "string" && gap !== "inherit") return gap;
   return fallback;
+};
+
+const getGapStyle = (gapPx: unknown): React.CSSProperties | undefined => {
+  if (typeof gapPx === "number" && Number.isFinite(gapPx) && gapPx > 0) {
+    return { gap: `${gapPx}px` };
+  }
+  return undefined;
+};
+
+const resolveJustifyContent = (value: unknown): React.CSSProperties["justifyContent"] | undefined => {
+  if (value === "center") return "center";
+  if (value === "end") return "flex-end";
+  if (value === "space-between") return "space-between";
+  if (value === "space-around") return "space-around";
+  if (value === "space-evenly") return "space-evenly";
+  if (value === "start") return "flex-start";
+  return undefined;
+};
+
+const resolveAlignItems = (value: unknown): React.CSSProperties["alignItems"] | undefined => {
+  if (value === "center") return "center";
+  if (value === "end") return "flex-end";
+  if (value === "stretch") return "stretch";
+  if (value === "start") return "flex-start";
+  return undefined;
 };
 
 const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
@@ -224,7 +250,16 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
   // New: Collect all ImageElements with backgroundTarget: "grid" from entire block tree
   const gridBackgroundModeImages = collectBackgroundImages(blocks, "grid");
   const sectionGap = (settings["gap"] as string) || "medium";
-  const sectionGapClass = getGapClass(sectionGap);
+  const rowGapSetting = settings["rowGap"] as string | undefined;
+  const columnGapSetting = settings["columnGap"] as string | undefined;
+  const rowGapValue = resolveGapValue(rowGapSetting, sectionGap);
+  const columnGapValue = resolveGapValue(columnGapSetting, sectionGap);
+  const sectionGapClass = getGapClass(rowGapValue);
+  const sectionGapStyle = getGapStyle(settings["rowGapPx"]);
+  const columnGapPx =
+    typeof settings["columnGapPx"] === "number" && Number.isFinite(settings["columnGapPx"])
+      ? (settings["columnGapPx"] as number)
+      : 0;
   const gridBackgroundSettings = settings["backgroundImage"] as Record<string, unknown> | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.["src"] as string) || "");
   const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
@@ -256,7 +291,7 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
       {hasGridBackgroundSetting && renderBackgroundImageLayer(gridBackgroundSettings)}
       <div className="relative z-10">
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <div className={`flex flex-col ${sectionGapClass}`}>
+          <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
             {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
               const rowChildren = row.blocks ?? [];
 
@@ -266,8 +301,17 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               // Collect row background mode images from this row's children
               const rowBackgroundModeImages = collectBackgroundImages(rowChildren, "row");
 
-              const rowGapValue = resolveGapValue(row.settings?.["gap"], sectionGap);
+              const rowGapValue = resolveGapValue(row.settings?.["gap"], columnGapValue);
               const rowGapClass = getGapClass(rowGapValue);
+              const rowGapPxRaw = row.settings?.["gapPx"];
+              const rowGapPx =
+                typeof rowGapPxRaw === "number" && Number.isFinite(rowGapPxRaw) && rowGapPxRaw > 0
+                  ? rowGapPxRaw
+                  : columnGapPx;
+              const rowGapStyle = getGapStyle(rowGapPx);
+              const rowJustify = resolveJustifyContent(row.settings?.["justifyContent"]);
+              const rowAlign = resolveAlignItems(row.settings?.["alignItems"]);
+              const rowWrap = (row.settings?.["wrap"] as string) || "wrap";
               const rowStyles = getSectionStyles(row.settings ?? {}, colorSchemes);
               const rowHeightMode = (row.settings?.["heightMode"] as string) || "inherit";
               const rowHeight = (row.settings?.["height"] as number) || 0;
@@ -281,6 +325,11 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
               // Direction setting: horizontal (side by side) or vertical (stacked)
               const direction = (row.settings?.["direction"] as string) || "horizontal";
               const isVertical = direction === "vertical";
+              const rowWrapClass = !isVertical
+                ? rowWrap === "nowrap"
+                  ? "flex-nowrap"
+                  : "flex-wrap"
+                : "";
 
               return (
                 <div
@@ -296,9 +345,12 @@ export function FrontendGridSection({ settings, blocks, colorSchemes, layout }: 
                   ))}
                   {hasRowBackgroundSetting && renderBackgroundImageLayer(rowBackgroundSettings)}
                   <div
-                    className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row flex-wrap"} ${rowGapClass}`}
+                    className={`relative z-10 flex ${isVertical ? "flex-col" : "flex-row"} ${rowWrapClass} ${rowGapClass}`}
                     style={{
                       ...(rowHeightMode === "fixed" && rowHeight > 0 ? { height: "100%" } : {}),
+                      ...(rowGapStyle ?? {}),
+                      ...(rowJustify ? { justifyContent: rowJustify } : {}),
+                      ...(rowAlign ? { alignItems: rowAlign } : {}),
                     }}
                   >
                     {/* Render all children in order, handling columns and direct elements */}
@@ -387,7 +439,15 @@ function ColumnRenderer({
   const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.["src"] as string) || "");
   const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
   const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
-  const columnStyles = getSectionStyles(column.settings ?? {}, colorSchemes);
+  const columnGapValue = resolveGapValue(column.settings?.["gap"], "medium");
+  const columnGapClass = shouldStretch ? "" : getGapClass(columnGapValue);
+  const columnGapStyle = shouldStretch ? undefined : getGapStyle(column.settings?.["gapPx"]);
+  const columnJustify = resolveJustifyContent(column.settings?.["justifyContent"]);
+  const columnAlign = resolveAlignItems(column.settings?.["alignItems"]);
+  const columnStyles = {
+    ...getSectionStyles(column.settings ?? {}, colorSchemes),
+    ...getTextAlign(column.settings?.["textAlign"]),
+  };
   const columnStyle: React.CSSProperties = {};
   if (columnHeightMode === "fixed" && columnHeight > 0) {
     columnStyle.height = `${columnHeight}px`;
@@ -408,7 +468,14 @@ function ColumnRenderer({
           </Fragment>
         ))}
         {hasColumnBackgroundSetting && renderBackgroundImageLayer(columnBackgroundSettings)}
-        <div className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : "gap-4"}`}>
+        <div
+          className={`relative z-10 flex flex-col ${shouldStretch ? "h-full" : columnGapClass}`}
+          style={{
+            ...(columnGapStyle ?? {}),
+            ...(columnJustify ? { justifyContent: columnJustify } : {}),
+            ...(columnAlign ? { alignItems: columnAlign } : {}),
+          }}
+        >
           {contentChildren.map((block: BlockInstance, blockIndex: number) => {
             const minHeight = getBlockMinHeight(block.type);
             const wrapperStyle: React.CSSProperties = {
@@ -496,21 +563,39 @@ function SectionBlockRenderer({
     };
     const alignment = (block.settings["contentAlignment"] as string) || "left";
     const blockGap = typeof block.settings["blockGap"] === "number" ? block.settings["blockGap"] : 0;
-    const alignmentClass =
-      alignment === "center"
-        ? "justify-center"
-        : alignment === "right"
-          ? "justify-end"
-          : "justify-start";
+    const direction = (block.settings["layoutDirection"] as string) || "row";
+    const wrap = (block.settings["wrap"] as string) || "wrap";
+    const justifySetting = (block.settings["justifyContent"] as string) || "inherit";
+    const justifyContent =
+      resolveJustifyContent(justifySetting === "inherit" ? alignment : justifySetting) ??
+      (alignment === "center" ? "center" : alignment === "right" ? "flex-end" : "flex-start");
+    const alignItems = resolveAlignItems(block.settings["alignItems"]) ?? "center";
+    const flexDirClass = direction === "column" ? "flex-col" : "flex-row";
+    const wrapClass = direction === "column" ? "" : wrap === "nowrap" ? "flex-nowrap" : "flex-wrap";
     const shouldStretchChildren = stretch && children.length === 1;
+    const linkUrl = (block.settings["linkUrl"] as string) || "";
+    const linkTarget = (block.settings["linkTarget"] as string) || "_self";
+    const linkRel = linkTarget === "_blank" ? "noopener noreferrer" : undefined;
+    const content = (
+      <div
+        className={`flex ${flexDirClass} ${wrapClass}`}
+        style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
+      >
+        {children.map((child: BlockInstance) => (
+          <FrontendBlockRenderer key={child.id} block={child} stretch={shouldStretchChildren} />
+        ))}
+      </div>
+    );
     return (
       <GsapAnimationWrapper config={animConfig}>
         <div style={{ ...sectionStyles, ...(stretchStyle ?? {}) }} className={stretchClass}>
-          <div className={`flex flex-wrap items-center ${alignmentClass}`} style={{ gap: `${blockGap}px` }}>
-            {children.map((child: BlockInstance) => (
-              <FrontendBlockRenderer key={child.id} block={child} stretch={shouldStretchChildren} />
-            ))}
-          </div>
+          {linkUrl ? (
+            <a href={linkUrl} target={linkTarget} rel={linkRel} className="block w-full">
+              {content}
+            </a>
+          ) : (
+            content
+          )}
         </div>
       </GsapAnimationWrapper>
     );
@@ -565,6 +650,15 @@ function SectionBlockRenderer({
       <GsapAnimationWrapper config={animConfig}>
         <div className={stretchClass} style={stretchStyle}>
           <FrontendCarousel settings={block.settings} blocks={children} />
+        </div>
+      </GsapAnimationWrapper>
+    );
+  }
+  if (block.type === "Slideshow") {
+    return (
+      <GsapAnimationWrapper config={animConfig}>
+        <div className={stretchClass} style={stretchStyle}>
+          <FrontendSlideshowSection settings={block.settings} blocks={children} colorSchemes={colorSchemes} layout={{ fullWidth: true }} />
         </div>
       </GsapAnimationWrapper>
     );

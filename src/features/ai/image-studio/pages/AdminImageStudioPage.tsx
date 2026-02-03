@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { Button, FileUploadButton, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Textarea, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
-import { Folder, Image as ImageIcon, MousePointer2, Pentagon, RefreshCcw, Settings, Upload } from "lucide-react";
+import { Folder, Image as ImageIcon, Maximize2, Minimize2, MousePointer2, Pentagon, RefreshCcw, Settings, Sparkles, Upload, Wand2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import FileManager from "@/features/files/components/FileManager";
 import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
@@ -17,16 +18,43 @@ import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type Pa
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { serializeSetting } from "@/shared/utils/settings-json";
 import { logClientError } from "@/features/observability";
-import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings } from "../utils/studio-settings";
+import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings, type PromptValidationRule } from "../utils/studio-settings";
 
-type ToolMode = "select" | "polygon";
+type ToolMode = "select" | "polygon" | "lasso" | "rect" | "ellipse" | "brush";
 
 type Point = { x: number; y: number }; // normalized 0..1
+type MaskShapeType = "polygon" | "lasso" | "rect" | "ellipse" | "brush";
+type MaskShape = {
+  id: string;
+  name: string;
+  type: MaskShapeType;
+  points: Point[];
+  closed: boolean;
+  visible: boolean;
+};
 
 type StudioProjectsResponse = { projects: string[] };
 type StudioAssetsResponse = { assets: ImageFileRecord[] };
 type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
 type StudioRunResponse = { outputs: ImageFileRecord[] };
+type UiSuggestion = {
+  path: string;
+  valuePreview: string;
+  control: ParamUiControl;
+  options: ParamUiControl[];
+  confidence: number;
+  reason: string | null;
+  source: "heuristic" | "ai";
+};
+type UiSuggestionRow = {
+  path: string;
+  valuePreview: string;
+  hint: string | null;
+  heuristic?: UiSuggestion;
+  ai?: UiSuggestion;
+  selected: ParamUiControl;
+  apply: boolean;
+};
 
 function safeJsonStringify(value: unknown): string {
   try {
@@ -34,6 +62,106 @@ function safeJsonStringify(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+async function loadImageElement(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Failed to load image for mask generation."));
+    img.src = src;
+  });
+}
+
+async function computeBboxFromThreshold(src: string): Promise<{ x: number; y: number; w: number; h: number } | null> {
+  const img = await loadImageElement(src);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let minX = canvas.width;
+  let minY = canvas.height;
+  let maxX = 0;
+  let maxY = 0;
+  const threshold = 30;
+  const step = 2;
+  for (let y = 0; y < canvas.height; y += step) {
+    for (let x = 0; x < canvas.width; x += step) {
+      const idx = (y * canvas.width + x) * 4;
+      const r = data[idx] ?? 255;
+      const g = data[idx + 1] ?? 255;
+      const b = data[idx + 2] ?? 255;
+      if (Math.abs(255 - r) + Math.abs(255 - g) + Math.abs(255 - b) > threshold) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (minX >= maxX || minY >= maxY) return null;
+  return {
+    x: minX / canvas.width,
+    y: minY / canvas.height,
+    w: (maxX - minX) / canvas.width,
+    h: (maxY - minY) / canvas.height,
+  };
+}
+
+async function computeBboxFromEdges(src: string): Promise<{ x: number; y: number; w: number; h: number } | null> {
+  const img = await loadImageElement(src);
+  const canvas = document.createElement("canvas");
+  const scale = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight));
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const getGray = (x: number, y: number): number => {
+    const idx = (y * canvas.width + x) * 4;
+    const r = data[idx] ?? 0;
+    const g = data[idx + 1] ?? 0;
+    const b = data[idx + 2] ?? 0;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  };
+  let minX = canvas.width;
+  let minY = canvas.height;
+  let maxX = 0;
+  let maxY = 0;
+  const edgeThreshold = 40;
+  for (let y = 1; y < canvas.height - 1; y += 1) {
+    for (let x = 1; x < canvas.width - 1; x += 1) {
+      const gx =
+        -getGray(x - 1, y - 1) + getGray(x + 1, y - 1) +
+        -2 * getGray(x - 1, y) + 2 * getGray(x + 1, y) +
+        -getGray(x - 1, y + 1) + getGray(x + 1, y + 1);
+      const gy =
+        -getGray(x - 1, y - 1) - 2 * getGray(x, y - 1) - getGray(x + 1, y - 1) +
+        getGray(x - 1, y + 1) + 2 * getGray(x, y + 1) + getGray(x + 1, y + 1);
+      const mag = Math.hypot(gx, gy);
+      if (mag > edgeThreshold) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (minX >= maxX || minY >= maxY) return null;
+  return {
+    x: minX / canvas.width,
+    y: minY / canvas.height,
+    w: (maxX - minX) / canvas.width,
+    h: (maxY - minY) / canvas.height,
+  };
 }
 
 function buildAssetTree(projectId: string, assets: ImageFileRecord[]): TreeNode {
@@ -197,18 +325,28 @@ function AssetTree({
 function MaskCanvas({
   src,
   tool,
-  points,
-  isClosed,
+  shapes,
+  activeShapeId,
+  selectedPointIndex,
   onChange,
+  onSelectShape,
+  onSelectPoint,
+  brushRadius,
 }: {
   src: string | null;
   tool: ToolMode;
-  points: Point[];
-  isClosed: boolean;
-  onChange: (nextPoints: Point[], nextClosed: boolean) => void;
+  shapes: MaskShape[];
+  activeShapeId: string | null;
+  selectedPointIndex: number | null;
+  onChange: (nextShapes: MaskShape[]) => void;
+  onSelectShape: (id: string | null) => void;
+  onSelectPoint?: (index: number | null) => void;
+  brushRadius: number;
 }): React.JSX.Element {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
+  const drawingRef = useRef<{ shapeId: string; type: MaskShapeType } | null>(null);
 
   const draw = useCallback((): void => {
     const canvas = canvasRef.current;
@@ -218,39 +356,46 @@ function MaskCanvas({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (points.length === 0) return;
     const toPx = (p: Point): { x: number; y: number } => ({
       x: p.x * canvas.width,
       y: p.y * canvas.height,
     });
 
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.95)";
-    ctx.fillStyle = "rgba(56, 189, 248, 0.15)";
+    shapes.forEach((shape: MaskShape) => {
+      if (!shape.visible) return;
+      if (shape.points.length === 0) return;
+      const isActive = shape.id === activeShapeId;
+      ctx.lineWidth = isActive ? 2.5 : 2;
+      ctx.strokeStyle = isActive ? "rgba(16, 185, 129, 0.95)" : "rgba(56, 189, 248, 0.95)";
+      ctx.fillStyle = "rgba(56, 189, 248, 0.15)";
 
-    ctx.beginPath();
-    const first = toPx(points[0]!);
-    ctx.moveTo(first.x, first.y);
-    points.slice(1).forEach((p: Point) => {
-      const px = toPx(p);
-      ctx.lineTo(px.x, px.y);
-    });
-    if (isClosed && points.length >= 3) {
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.stroke();
-
-    points.forEach((p: Point, index: number) => {
-      const px = toPx(p);
       ctx.beginPath();
-      ctx.arc(px.x, px.y, index === 0 ? 5 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = index === 0 ? "rgba(16, 185, 129, 0.95)" : "rgba(56, 189, 248, 0.95)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      const first = toPx(shape.points[0]!);
+      ctx.moveTo(first.x, first.y);
+      shape.points.slice(1).forEach((p: Point) => {
+        const px = toPx(p);
+        ctx.lineTo(px.x, px.y);
+      });
+      if (shape.closed && shape.points.length >= 3) {
+        ctx.closePath();
+        ctx.fill();
+      }
       ctx.stroke();
+
+      if (shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush") {
+        shape.points.forEach((p: Point, index: number) => {
+          const px = toPx(p);
+          ctx.beginPath();
+          ctx.arc(px.x, px.y, index === 0 ? 5 : 4, 0, Math.PI * 2);
+          const isSelected = isActive && index === (selectedPointIndex ?? -1);
+          ctx.fillStyle = isSelected ? "rgba(251, 191, 36, 0.95)" : (index === 0 ? "rgba(16, 185, 129, 0.95)" : "rgba(56, 189, 248, 0.95)");
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0,0,0,0.35)";
+          ctx.stroke();
+        });
+      }
     });
-  }, [points, isClosed]);
+  }, [activeShapeId, selectedPointIndex, shapes]);
 
   const syncCanvasSize = useCallback((): void => {
     const img = imgRef.current;
@@ -268,7 +413,7 @@ function MaskCanvas({
 
   useEffect(() => {
     syncCanvasSize();
-  }, [syncCanvasSize, src, points.length, isClosed]);
+  }, [syncCanvasSize, src, shapes.length]);
 
   useEffect(() => {
     const onResize = (): void => syncCanvasSize();
@@ -276,37 +421,186 @@ function MaskCanvas({
     return (): void => window.removeEventListener("resize", onResize);
   }, [syncCanvasSize]);
 
-  const handleClick = useCallback(
-    (event: React.MouseEvent<HTMLCanvasElement>): void => {
-      if (!src) return;
-      if (tool !== "polygon") return;
-      if (isClosed) return;
+  const toPoint = (event: React.MouseEvent<HTMLCanvasElement>): Point | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    return {
+      x: Math.min(1, Math.max(0, x)),
+      y: Math.min(1, Math.max(0, y)),
+    };
+  };
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width;
-      const y = (event.clientY - rect.top) / rect.height;
-      const nextPoint: Point = {
-        x: Math.min(1, Math.max(0, x)),
-        y: Math.min(1, Math.max(0, y)),
-      };
-
-      if (points.length >= 3) {
-        const first = points[0]!;
-        const dx = (first.x - nextPoint.x) * rect.width;
-        const dy = (first.y - nextPoint.y) * rect.height;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 10) {
-          onChange(points, true);
-          return;
+  const hitTestPoint = (event: React.MouseEvent<HTMLCanvasElement>): { shapeId: string; pointIndex: number } | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const radius = 8;
+    for (const shape of shapes) {
+      if (!shape.visible) continue;
+      if (!(shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush")) continue;
+      for (let idx = 0; idx < shape.points.length; idx += 1) {
+        const p = shape.points[idx]!;
+        const px = p.x * rect.width;
+        const py = p.y * rect.height;
+        if (Math.hypot(px - x, py - y) <= radius) {
+          return { shapeId: shape.id, pointIndex: idx };
         }
       }
+    }
+    return null;
+  };
 
-      onChange([...points, nextPoint], false);
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLCanvasElement>): void => {
+      if (!src) return;
+      if (tool === "select") {
+        const hit = hitTestPoint(event);
+        if (hit) {
+          dragRef.current = hit;
+          onSelectShape(hit.shapeId);
+          onSelectPoint?.(hit.pointIndex);
+        }
+        return;
+      }
+      if (tool === "polygon") {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+        const activeShape = shapes.find((s) => s.id === activeShapeId && s.type === "polygon" && !s.closed);
+        if (!activeShape) {
+          const newShape: MaskShape = {
+            id: `shape_${Date.now().toString(36)}`,
+            name: `Polygon ${shapes.length + 1}`,
+            type: "polygon",
+            points: [nextPoint],
+            closed: false,
+            visible: true,
+          };
+          onSelectShape(newShape.id);
+          onChange([...shapes, newShape]);
+          return;
+        }
+        if (activeShape.points.length >= 3) {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          const rect = canvas.getBoundingClientRect();
+          const first = activeShape.points[0]!;
+          const dx = (first.x - nextPoint.x) * rect.width;
+          const dy = (first.y - nextPoint.y) * rect.height;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 10) {
+            onChange(
+              shapes.map((shape) =>
+                shape.id === activeShape.id ? { ...shape, closed: true } : shape
+              )
+            );
+            return;
+          }
+        }
+        onChange(
+          shapes.map((shape) =>
+            shape.id === activeShape.id ? { ...shape, points: [...shape.points, nextPoint] } : shape
+          )
+        );
+        return;
+      }
+
+      if (tool === "lasso" || tool === "brush") {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+        const newShape: MaskShape = {
+          id: `shape_${Date.now().toString(36)}`,
+          name: tool === "brush" ? `Brush ${shapes.length + 1}` : `Lasso ${shapes.length + 1}`,
+          type: tool === "brush" ? "brush" : "lasso",
+          points: [nextPoint],
+          closed: false,
+          visible: true,
+        };
+        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
+        onSelectShape(newShape.id);
+        onChange([...shapes, newShape]);
+        return;
+      }
+
+      if (tool === "rect" || tool === "ellipse") {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+        const newShape: MaskShape = {
+          id: `shape_${Date.now().toString(36)}`,
+          name: tool === "rect" ? `Rect ${shapes.length + 1}` : `Ellipse ${shapes.length + 1}`,
+          type: tool,
+          points: [nextPoint, nextPoint],
+          closed: true,
+          visible: true,
+        };
+        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
+        onSelectShape(newShape.id);
+        onChange([...shapes, newShape]);
+      }
     },
-    [src, tool, isClosed, points, onChange]
+    [activeShapeId, onChange, onSelectPoint, onSelectShape, shapes, src, tool]
   );
+
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLCanvasElement>): void => {
+      if (!src) return;
+      if (dragRef.current) {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+        onChange(
+          shapes.map((shape) => {
+            if (shape.id !== dragRef.current?.shapeId) return shape;
+            const nextPoints = [...shape.points];
+            nextPoints[dragRef.current.pointIndex] = nextPoint;
+            return { ...shape, points: nextPoints };
+          })
+        );
+        return;
+      }
+      if (drawingRef.current) {
+        const nextPoint = toPoint(event);
+        if (!nextPoint) return;
+        onChange(
+          shapes.map((shape) => {
+            if (shape.id !== drawingRef.current?.shapeId) return shape;
+            if (shape.type === "lasso" || shape.type === "brush") {
+              const last = shape.points[shape.points.length - 1];
+              if (last) {
+                const dx = (last.x - nextPoint.x);
+                const dy = (last.y - nextPoint.y);
+                if (Math.hypot(dx, dy) < brushRadius / 200) {
+                  return shape;
+                }
+              }
+              return { ...shape, points: [...shape.points, nextPoint] };
+            }
+            if (shape.type === "rect" || shape.type === "ellipse") {
+              const nextPoints = shape.points.length >= 2 ? [shape.points[0]!, nextPoint] : [nextPoint, nextPoint];
+              return { ...shape, points: nextPoints };
+            }
+            return shape;
+          })
+        );
+      }
+    },
+    [onChange, shapes, src]
+  );
+
+  const handleMouseUp = useCallback((): void => {
+    if (drawingRef.current) {
+      onChange(
+        shapes.map((shape) =>
+          shape.id === drawingRef.current?.shapeId ? { ...shape, closed: true } : shape
+        )
+      );
+    }
+    dragRef.current = null;
+    drawingRef.current = null;
+  }, [onChange, shapes]);
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20">
@@ -328,9 +622,12 @@ function MaskCanvas({
             ref={canvasRef}
             className={cn(
               "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-              tool === "polygon" ? "cursor-crosshair" : "cursor-default"
+              tool === "select" ? "cursor-default" : "cursor-crosshair"
             )}
-            onClick={handleClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           />
         </>
       ) : (
@@ -342,6 +639,7 @@ function MaskCanvas({
 
 export function AdminImageStudioPage(): React.JSX.Element {
   const { toast } = useToast();
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const settingsQuery = useSettingsMap();
@@ -365,8 +663,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
 
   const [tool, setTool] = useState<ToolMode>("select");
-  const [maskPoints, setMaskPoints] = useState<Point[]>([]);
-  const [maskClosed, setMaskClosed] = useState<boolean>(false);
+  const [maskShapes, setMaskShapes] = useState<MaskShape[]>([]);
+  const [activeMaskId, setActiveMaskId] = useState<string | null>(null);
+  const [maskInvert, setMaskInvert] = useState<boolean>(false);
+  const [maskFeather, setMaskFeather] = useState<number>(0);
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
+  const [brushRadius, setBrushRadius] = useState<number>(8);
 
   const [promptText, setPromptText] = useState<string>("");
   const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
@@ -374,6 +676,18 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const [paramSpecs, setParamSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [promptSourceAtExtract, setPromptSourceAtExtract] = useState<string | null>(null);
   const [paramUiOverrides, setParamUiOverrides] = useState<Record<string, ParamUiControl>>({});
+  const [learnOpen, setLearnOpen] = useState<boolean>(false);
+  const [learnLoading, setLearnLoading] = useState<boolean>(false);
+  const [learnCandidates, setLearnCandidates] = useState<PromptValidationRule[]>([]);
+  const [learnSelection, setLearnSelection] = useState<Record<string, boolean>>({});
+  const [uiSuggestOpen, setUiSuggestOpen] = useState<boolean>(false);
+  const [uiSuggestLoading, setUiSuggestLoading] = useState<boolean>(false);
+  const [uiSuggestionRows, setUiSuggestionRows] = useState<UiSuggestionRow[]>([]);
+  const [uiSuggestMode, setUiSuggestMode] = useState<"heuristic" | "ai" | "both">("heuristic");
+  const [uiSuggestMinConfidence, setUiSuggestMinConfidence] = useState<number>(0.5);
+  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+  const [maskGenLoading, setMaskGenLoading] = useState<boolean>(false);
+  const [maskGenMode, setMaskGenMode] = useState<"ai-polygon" | "ai-bbox" | "threshold" | "edges">("ai-polygon");
 
   useEffect(() => {
     if (settingsLoaded) return;
@@ -561,8 +875,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
   }, [assets, selectedAssetId]);
 
   useEffect(() => {
-    setMaskPoints([]);
-    setMaskClosed(false);
+    setMaskShapes([]);
+    setActiveMaskId(null);
   }, [selectedAssetId]);
 
   const handleSelectAsset = useCallback((asset: ImageFileRecord): void => {
@@ -624,6 +938,324 @@ export function AdminImageStudioPage(): React.JSX.Element {
       { variant: "error" }
     );
   }, [applyProgrammaticExtraction, promptText, studioSettings.promptValidation, toast]);
+
+  const canManagePatterns = Boolean(
+    session?.user?.isElevated || session?.user?.permissions?.includes("ai_paths.manage")
+  );
+
+  useEffect(() => {
+    setUiSuggestMode(studioSettings.uiExtractor.mode);
+  }, [studioSettings.uiExtractor.mode]);
+
+  const buildRuleKey = (rule: PromptValidationRule, fallback: number): string =>
+    rule.id?.trim() ? rule.id : `learned_${fallback}`;
+
+  const ruleSignature = (rule: PromptValidationRule): string => {
+    if (rule.kind === "regex") {
+      return `regex:${rule.pattern}/${rule.flags}`;
+    }
+    return `params:${rule.id}`;
+  };
+
+  const handleLearnPatterns = useCallback(async (): Promise<void> => {
+    if (!promptText.trim()) {
+      toast("Paste a prompt first.", { variant: "error" });
+      return;
+    }
+    if (!canManagePatterns) {
+      toast("Admin access is required to learn patterns.", { variant: "error" });
+      return;
+    }
+    setLearnOpen(true);
+    setLearnLoading(true);
+    try {
+      const res = await fetch("/api/image-studio/validation-patterns/learn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: promptText,
+          limit: 8,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as { rules?: PromptValidationRule[]; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || "Failed to learn patterns.");
+      const rules = Array.isArray(data?.rules) ? data!.rules : [];
+      setLearnCandidates(rules);
+      const selection: Record<string, boolean> = {};
+      rules.forEach((rule: PromptValidationRule, index: number) => {
+        selection[buildRuleKey(rule, index)] = true;
+      });
+      setLearnSelection(selection);
+      if (rules.length === 0) {
+        toast("No new patterns learned from this prompt.", { variant: "info" });
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to learn patterns.", { variant: "error" });
+    } finally {
+      setLearnLoading(false);
+    }
+  }, [buildRuleKey, canManagePatterns, promptText, toast]);
+
+  const handleApplyLearned = useCallback(async (): Promise<void> => {
+    const selected = learnCandidates.filter((rule: PromptValidationRule, index: number) =>
+      Boolean(learnSelection[buildRuleKey(rule, index)])
+    );
+    if (selected.length === 0) {
+      toast("Select at least one learned pattern.", { variant: "error" });
+      return;
+    }
+
+    const existingRules = studioSettings.promptValidation.rules;
+    const existingLearned = studioSettings.promptValidation.learnedRules ?? [];
+    const existingIds = new Set([...existingRules, ...existingLearned].map((rule: PromptValidationRule) => rule.id));
+    const existingSignatures = new Set(
+      [...existingRules, ...existingLearned].map((rule: PromptValidationRule) => ruleSignature(rule))
+    );
+
+    const now = Date.now();
+    const nextLearned: PromptValidationRule[] = [];
+    selected.forEach((rule: PromptValidationRule, index: number) => {
+      let nextRule = rule;
+      if (!nextRule.id || existingIds.has(nextRule.id)) {
+        nextRule = { ...nextRule, id: `learned.${now}.${index}` };
+      }
+      if (existingIds.has(nextRule.id)) return;
+      if (existingSignatures.has(ruleSignature(nextRule))) return;
+      nextLearned.push(nextRule);
+    });
+
+    if (nextLearned.length === 0) {
+      toast("No new unique patterns to add.", { variant: "info" });
+      return;
+    }
+
+    const updatedSettings: ImageStudioSettings = {
+      ...studioSettings,
+      promptValidation: {
+        ...studioSettings.promptValidation,
+        learnedRules: [...existingLearned, ...nextLearned],
+      },
+    };
+
+    try {
+      await updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_SETTINGS_KEY,
+        value: serializeSetting(updatedSettings),
+      });
+      setStudioSettings(updatedSettings);
+      toast(`Added ${nextLearned.length} learned pattern(s).`, { variant: "success" });
+      setLearnOpen(false);
+      setLearnCandidates([]);
+      setLearnSelection({});
+    } catch (error) {
+      logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveLearnedPatterns" } });
+      toast("Failed to save learned patterns.", { variant: "error" });
+    }
+  }, [buildRuleKey, learnCandidates, learnSelection, studioSettings, toast, updateSetting]);
+
+  const paramLeaves: ParamLeaf[] = useMemo(() => {
+    if (!paramsState) return [];
+    return flattenParams(paramsState).filter((leaf: ParamLeaf) => Boolean(leaf.path));
+  }, [paramsState]);
+
+  useEffect(() => {
+    if (!paramsState) return;
+    const existingPaths = new Set(paramLeaves.map((leaf: ParamLeaf) => leaf.path));
+    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+      const next: Record<string, ParamUiControl> = {};
+      Object.entries(prev).forEach(([path, control]: [string, ParamUiControl]) => {
+        if (!existingPaths.has(path)) return;
+        next[path] = control;
+      });
+      return next;
+    });
+  }, [paramLeaves, paramsState]);
+
+  const buildHeuristicSuggestions = useCallback((): UiSuggestion[] => {
+    if (!paramsState) return [];
+    return paramLeaves.map((leaf: ParamLeaf) => {
+      const spec = paramSpecs?.[leaf.path];
+      const rec = recommendParamUiControl(leaf.value, spec);
+      return {
+        path: leaf.path,
+        valuePreview: safeJsonStringify(leaf.value),
+        control: rec.recommended,
+        options: rec.options,
+        confidence: rec.confidence,
+        reason: rec.reason,
+        source: "heuristic",
+      };
+    });
+  }, [paramLeaves, paramSpecs, paramsState]);
+
+  const buildSuggestionRows = useCallback((heuristic: UiSuggestion[], ai: UiSuggestion[]): UiSuggestionRow[] => {
+    const heuristicMap = new Map(heuristic.map((s) => [s.path, s]));
+    const aiMap = new Map(ai.map((s) => [s.path, s]));
+    const allPaths = Array.from(new Set([...heuristicMap.keys(), ...aiMap.keys()]));
+    return allPaths.map((path: string) => {
+      const h = heuristicMap.get(path);
+      const a = aiMap.get(path);
+      const spec = paramSpecs?.[path];
+      const hintParts: string[] = [];
+      if (spec?.kind) hintParts.push(`kind: ${spec.kind}`);
+      if (typeof spec?.min === "number" || typeof spec?.max === "number") {
+        hintParts.push(`range: ${spec?.min ?? "?"}–${spec?.max ?? "?"}`);
+      }
+      if (spec?.enumOptions?.length) {
+        hintParts.push(`enum: ${spec.enumOptions.length} option(s)`);
+      }
+      const hint = hintParts.length > 0 ? hintParts.join(" • ") : null;
+      const options = Array.from(
+        new Set([...(h?.options ?? []), ...(a?.options ?? []), "auto"])
+      ).filter(isParamUiControl);
+      const selected = a?.control ?? h?.control ?? "auto";
+      return {
+        path,
+        valuePreview: h?.valuePreview ?? a?.valuePreview ?? "",
+        hint,
+        heuristic: h,
+        ai: a,
+        selected,
+        apply: true,
+      };
+    });
+  }, [paramSpecs]);
+
+  const handleSuggestUi = useCallback(async (): Promise<void> => {
+    if (!paramsState || paramLeaves.length === 0) {
+      toast("Extract params first so we can infer UI controls.", { variant: "error" });
+      return;
+    }
+    setUiSuggestOpen(true);
+    setUiSuggestLoading(true);
+    try {
+      const heuristic = uiSuggestMode === "heuristic" || uiSuggestMode === "both"
+        ? buildHeuristicSuggestions()
+        : [];
+      let ai: UiSuggestion[] = [];
+      if (uiSuggestMode === "ai" || uiSuggestMode === "both") {
+        const res = await fetch("/api/image-studio/ui-extractor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: promptText,
+            params: paramLeaves.map((leaf: ParamLeaf) => ({
+              path: leaf.path,
+              value: leaf.value,
+              spec: paramSpecs?.[leaf.path] ?? null,
+            })),
+            mode: uiSuggestMode,
+          }),
+        });
+        const data = (await res.json().catch(() => null)) as { suggestions?: UiSuggestion[]; error?: string } | null;
+        if (!res.ok) throw new Error(data?.error || "Failed to extract UI suggestions.");
+        ai = Array.isArray(data?.suggestions) ? data!.suggestions : [];
+      }
+      setUiSuggestionRows(buildSuggestionRows(heuristic, ai));
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to extract UI suggestions.", { variant: "error" });
+    } finally {
+      setUiSuggestLoading(false);
+    }
+  }, [buildHeuristicSuggestions, buildSuggestionRows, paramLeaves, paramSpecs, paramsState, promptText, toast, uiSuggestMode]);
+
+  const handleApplyUiSuggestions = useCallback((): void => {
+    const toApply = uiSuggestionRows.filter((row: UiSuggestionRow) => {
+      if (!row.apply) return false;
+      const confidence = Math.max(row.ai?.confidence ?? 0, row.heuristic?.confidence ?? 0);
+      return confidence >= uiSuggestMinConfidence;
+    });
+    if (toApply.length === 0) {
+      toast("Select at least one suggestion to apply.", { variant: "error" });
+      return;
+    }
+    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
+      const next = { ...prev };
+      toApply.forEach((row) => {
+        if (row.selected === "auto") {
+          delete next[row.path];
+        } else {
+          next[row.path] = row.selected;
+        }
+      });
+      return next;
+    });
+    toast(`Applied ${toApply.length} UI suggestion(s).`, { variant: "success" });
+    setUiSuggestOpen(false);
+  }, [toast, uiSuggestionRows, uiSuggestMinConfidence]);
+
+  const addMaskFromBbox = useCallback((bbox: { x: number; y: number; w: number; h: number }, name: string): void => {
+    const minX = clamp01(bbox.x);
+    const minY = clamp01(bbox.y);
+    const maxX = clamp01(bbox.x + bbox.w);
+    const maxY = clamp01(bbox.y + bbox.h);
+    const newShape: MaskShape = {
+      id: `shape_${Date.now().toString(36)}`,
+      name,
+      type: "rect",
+      points: [{ x: minX, y: minY }, { x: maxX, y: maxY }],
+      closed: true,
+      visible: true,
+    };
+    setMaskShapes((prev: MaskShape[]) => [...prev, newShape]);
+    setActiveMaskId(newShape.id);
+  }, []);
+
+  const addMaskFromPolygon = useCallback((points: Point[], name: string): void => {
+    if (points.length < 3) return;
+    const clamped = points.map((p) => ({ x: clamp01(p.x), y: clamp01(p.y) }));
+    const newShape: MaskShape = {
+      id: `shape_${Date.now().toString(36)}`,
+      name,
+      type: "polygon",
+      points: clamped,
+      closed: true,
+      visible: true,
+    };
+    setMaskShapes((prev: MaskShape[]) => [...prev, newShape]);
+    setActiveMaskId(newShape.id);
+  }, []);
+
+  const handleGenerateMask = useCallback(async (mode: "threshold" | "edges" | "ai-bbox" | "ai-polygon"): Promise<void> => {
+    if (!selectedAsset?.filepath) {
+      toast("Select an image first.", { variant: "error" });
+      return;
+    }
+    setMaskGenLoading(true);
+    try {
+      let bbox: { x: number; y: number; w: number; h: number } | null = null;
+      let polygon: Point[] | null = null;
+      if (mode === "threshold") {
+        bbox = await computeBboxFromThreshold(selectedAsset.filepath);
+      } else if (mode === "edges") {
+        bbox = await computeBboxFromEdges(selectedAsset.filepath);
+      } else {
+        const res = await fetch("/api/image-studio/mask/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagePath: selectedAsset.filepath, mode: mode === "ai-polygon" ? "polygon" : "bbox" }),
+        });
+        const data = (await res.json().catch(() => null)) as { bbox?: { x: number; y: number; w: number; h: number }; polygon?: Point[]; error?: string } | null;
+        if (!res.ok) throw new Error(data?.error || "AI mask generation failed.");
+        bbox = data?.bbox ?? null;
+        polygon = data?.polygon ?? null;
+      }
+      if (polygon && polygon.length >= 3) {
+        addMaskFromPolygon(polygon, "AI polygon");
+      } else if (bbox) {
+        addMaskFromBbox(bbox, mode === "ai-bbox" ? "AI bbox" : mode === "edges" ? "Edge mask" : "Threshold mask");
+      } else {
+        toast("Could not detect a subject. Try another mode.", { variant: "error" });
+        return;
+      }
+      toast("Mask generated.", { variant: "success" });
+      setMaskGenOpen(false);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to generate mask.", { variant: "error" });
+    } finally {
+      setMaskGenLoading(false);
+    }
+  }, [addMaskFromBbox, addMaskFromPolygon, selectedAsset?.filepath, toast]);
 
   const handleAdvancedOverridesChange = useCallback((raw: string): void => {
     setAdvancedOverridesText(raw);
@@ -708,24 +1340,6 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setPromptValidationRulesError(null);
   }, []);
 
-  const paramLeaves: ParamLeaf[] = useMemo(() => {
-    if (!paramsState) return [];
-    return flattenParams(paramsState).filter((leaf: ParamLeaf) => Boolean(leaf.path));
-  }, [paramsState]);
-
-  useEffect(() => {
-    if (!paramsState) return;
-    const existingPaths = new Set(paramLeaves.map((leaf: ParamLeaf) => leaf.path));
-    setParamUiOverrides((prev: Record<string, ParamUiControl>) => {
-      const next: Record<string, ParamUiControl> = {};
-      Object.entries(prev).forEach(([path, control]: [string, ParamUiControl]) => {
-        if (!existingPaths.has(path)) return;
-        next[path] = control;
-      });
-      return next;
-    });
-  }, [paramLeaves, paramsState]);
-
   const validationIssues: ParamIssue[] = useMemo(() => {
     if (!paramsState || !paramSpecs) return [];
     return validateImageStudioParams(paramsState, paramSpecs);
@@ -746,6 +1360,46 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return { errors, warnings };
   }, [validationIssues]);
 
+  const maskPolygons = useMemo<Point[][]>(() => {
+    const polygons: Point[][] = [];
+    maskShapes.forEach((shape: MaskShape) => {
+      if (!shape.visible) return;
+      if (shape.type === "polygon" || shape.type === "lasso" || shape.type === "brush") {
+        if (shape.closed && shape.points.length >= 3) polygons.push(shape.points);
+        return;
+      }
+      if (shape.type === "rect" && shape.points.length >= 2) {
+        const [a, b] = shape.points;
+        const minX = Math.min(a.x, b.x);
+        const maxX = Math.max(a.x, b.x);
+        const minY = Math.min(a.y, b.y);
+        const maxY = Math.max(a.y, b.y);
+        polygons.push([
+          { x: minX, y: minY },
+          { x: maxX, y: minY },
+          { x: maxX, y: maxY },
+          { x: minX, y: maxY },
+        ]);
+        return;
+      }
+      if (shape.type === "ellipse" && shape.points.length >= 2) {
+        const [a, b] = shape.points;
+        const cx = (a.x + b.x) / 2;
+        const cy = (a.y + b.y) / 2;
+        const rx = Math.abs(a.x - b.x) / 2;
+        const ry = Math.abs(a.y - b.y) / 2;
+        const steps = 24;
+        const pts: Point[] = [];
+        for (let i = 0; i < steps; i += 1) {
+          const theta = (i / steps) * Math.PI * 2;
+          pts.push({ x: cx + Math.cos(theta) * rx, y: cy + Math.sin(theta) * ry });
+        }
+        polygons.push(pts);
+      }
+    });
+    return polygons;
+  }, [maskShapes]);
+
   const generatedPrompt = useMemo(() => {
     if (!extractResult || !extractResult.ok || !paramsState || !promptSourceAtExtract) return "";
     const json = JSON.stringify(paramsState, null, 2);
@@ -761,12 +1415,12 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return {
       projectId: projectId || null,
       asset: selectedAsset ? { id: selectedAsset.id, filepath: selectedAsset.filepath } : null,
-      mask: maskPoints.length > 0 ? { type: "polygon", points: maskPoints, closed: maskClosed } : null,
+      mask: maskPolygons.length > 0 ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather } : null,
       prompt: generatedPrompt || promptText || null,
       extractedParams: paramsState,
       studioSettings,
     };
-  }, [projectId, selectedAsset, maskPoints, maskClosed, generatedPrompt, promptText, paramsState, studioSettings]);
+  }, [projectId, selectedAsset, maskPolygons, maskInvert, maskFeather, generatedPrompt, promptText, paramsState, studioSettings]);
 
   const runMutation = useMutation({
     mutationFn: async (): Promise<StudioRunResponse> => {
@@ -778,8 +1432,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
       const payload = {
         projectId,
         asset: { id: selectedAsset.id, filepath: selectedAsset.filepath },
-        mask: maskClosed && maskPoints.length >= 3
-          ? { type: "polygon", points: maskPoints, closed: true }
+        mask: maskPolygons.length > 0
+          ? { type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather }
           : null,
         prompt,
         extractedParams: paramsState,
@@ -834,6 +1488,13 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <RefreshCcw className="mr-2 size-4" />
               Refresh
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+            >
+              {isFocusMode ? <Minimize2 className="mr-2 size-4" /> : <Maximize2 className="mr-2 size-4" />}
+              {isFocusMode ? "Edit" : "Show"}
+            </Button>
           </div>
         }
       />
@@ -851,7 +1512,308 @@ export function AdminImageStudioPage(): React.JSX.Element {
         />
       </SharedModal>
 
-      <div className="grid grid-cols-[56px_300px_1fr_420px] gap-4">
+      <SharedModal
+        open={learnOpen}
+        onClose={() => setLearnOpen(false)}
+        title="Learn patterns from prompt"
+        size="lg"
+      >
+        <div className="space-y-3 text-sm text-gray-200">
+          {learnLoading ? (
+            <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              Learning patterns from the prompt…
+            </div>
+          ) : learnCandidates.length === 0 ? (
+            <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              No learned patterns to review yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {learnCandidates.map((rule: PromptValidationRule, index: number) => {
+                const key = buildRuleKey(rule, index);
+                return (
+                  <div key={key} className="rounded border border-border bg-card/40 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <label className="flex items-start gap-2 text-xs text-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(learnSelection[key])}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setLearnSelection((prev) => ({ ...prev, [key]: e.target.checked }))
+                          }
+                        />
+                        <span>
+                          <div className="text-sm text-gray-100">{rule.title}</div>
+                          <div className="text-[11px] text-gray-400">ID: {rule.id}</div>
+                        </span>
+                      </label>
+                      <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
+                        {rule.kind}
+                      </span>
+                    </div>
+                    {rule.kind === "regex" ? (
+                      <div className="mt-2 rounded border border-border bg-card/50 p-2 font-mono text-[11px] text-gray-200">
+                        {rule.pattern}
+                        <span className="text-gray-400">{rule.flags?.trim() ? `/${rule.flags}` : ""}</span>
+                      </div>
+                    ) : null}
+                    <div className="mt-2 text-[11px] text-gray-400">{rule.message}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setLearnSelection((prev) => {
+                  const next = { ...prev };
+                  learnCandidates.forEach((rule: PromptValidationRule, index: number) => {
+                    next[buildRuleKey(rule, index)] = true;
+                  });
+                  return next;
+                })
+              }
+              disabled={learnCandidates.length === 0}
+            >
+              Select all
+            </Button>
+            <Button type="button" onClick={() => void handleApplyLearned()} disabled={learnCandidates.length === 0}>
+              Add selected
+            </Button>
+          </div>
+        </div>
+      </SharedModal>
+
+      <SharedModal
+        open={uiSuggestOpen}
+        onClose={() => setUiSuggestOpen(false)}
+        title="UI Extractor Suggestions"
+        size="lg"
+      >
+        <div className="space-y-3 text-sm text-gray-200">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-[11px] text-gray-400">Mode</div>
+            <Select
+              value={uiSuggestMode}
+              onValueChange={(value: string) =>
+                setUiSuggestMode(value === "ai" || value === "both" ? value : "heuristic")
+              }
+            >
+              <SelectTrigger className="h-8 w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="heuristic">Heuristic</SelectItem>
+                <SelectItem value="ai">AI</SelectItem>
+                <SelectItem value="both">Both</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <div className="text-[11px] text-gray-400">Min confidence</div>
+              <Input
+                type="number"
+                min={0}
+                max={1}
+                step={0.05}
+                value={uiSuggestMinConfidence}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const next = Number(e.target.value);
+                  setUiSuggestMinConfidence(Number.isFinite(next) ? Math.max(0, Math.min(1, next)) : 0.5);
+                }}
+                className="h-8 w-20"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void handleSuggestUi()}
+              disabled={uiSuggestLoading}
+            >
+              Refresh
+            </Button>
+          </div>
+
+          {uiSuggestLoading ? (
+            <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              Extracting UI suggestions…
+            </div>
+          ) : uiSuggestionRows.length === 0 ? (
+            <div className="rounded border border-dashed border-border p-4 text-center text-gray-400">
+              No suggestions yet. Click “Refresh” to run the extractor.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {uiSuggestionRows.map((row: UiSuggestionRow) => {
+                const selected = row.selected;
+                const options = row.heuristic?.options?.length ? row.heuristic.options : row.ai?.options ?? ["auto"];
+                const uniqueOptions = Array.from(new Set(options)).filter(isParamUiControl);
+                const best = row.ai?.confidence && row.heuristic?.confidence
+                  ? (row.ai.confidence >= row.heuristic.confidence ? "ai" : "heuristic")
+                  : row.ai?.confidence
+                    ? "ai"
+                    : "heuristic";
+                const bestConfidence = Math.max(row.ai?.confidence ?? 0, row.heuristic?.confidence ?? 0);
+                return (
+                  <div key={row.path} className="rounded border border-border bg-card/40 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <label className="flex items-start gap-2 text-xs text-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={row.apply}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setUiSuggestionRows((prev) =>
+                              prev.map((item) => (item.path === row.path ? { ...item, apply: e.target.checked } : item))
+                            )
+                          }
+                        />
+                        <span>
+                          <div className="text-sm text-gray-100">{row.path}</div>
+                          <div className="text-[11px] text-gray-400 truncate">
+                            {row.valuePreview}
+                          </div>
+                          {row.hint ? (
+                            <div className="text-[11px] text-gray-500">{row.hint}</div>
+                          ) : null}
+                        </span>
+                      </label>
+                      <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
+                        {best === "ai" ? "AI" : "Heuristic"} · {bestConfidence.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <div className="space-y-1 text-[11px] text-gray-400">
+                        {row.ai?.reason ? <div><span className="text-gray-300">AI:</span> {row.ai.reason}</div> : null}
+                        {row.heuristic?.reason ? <div><span className="text-gray-300">Heuristic:</span> {row.heuristic.reason}</div> : null}
+                        {!row.ai?.reason && !row.heuristic?.reason ? (
+                          <div>Suggested UI control for this parameter.</div>
+                        ) : null}
+                      </div>
+                      <Select
+                        value={selected}
+                        onValueChange={(value: string) =>
+                          setUiSuggestionRows((prev) =>
+                            prev.map((item) =>
+                              item.path === row.path && isParamUiControl(value)
+                                ? { ...item, selected: value as ParamUiControl }
+                                : item
+                            )
+                          )
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {uniqueOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {paramUiControlLabel(option)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {row.heuristic?.control ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setUiSuggestionRows((prev) =>
+                              prev.map((item) =>
+                                item.path === row.path ? { ...item, selected: row.heuristic!.control } : item
+                              )
+                            )
+                          }
+                        >
+                          Use heuristic
+                        </Button>
+                      ) : null}
+                      {row.ai?.control ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setUiSuggestionRows((prev) =>
+                              prev.map((item) =>
+                                item.path === row.path ? { ...item, selected: row.ai!.control } : item
+                              )
+                            )
+                          }
+                        >
+                          Use AI
+                        </Button>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setUiSuggestionRows((prev) =>
+                            prev.map((item) =>
+                              item.path === row.path ? { ...item, selected: "auto" } : item
+                            )
+                          )
+                        }
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setUiSuggestionRows((prev) => prev.map((row) => ({ ...row, apply: true })))
+              }
+              disabled={uiSuggestionRows.length === 0}
+            >
+              Select all
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setUiSuggestionRows((prev) =>
+                  prev.map((row) => {
+                    const best = row.ai?.confidence && row.heuristic?.confidence
+                      ? (row.ai.confidence >= row.heuristic.confidence ? row.ai.control : row.heuristic.control)
+                      : row.ai?.control ?? row.heuristic?.control ?? row.selected;
+                    return { ...row, selected: best };
+                  })
+                )
+              }
+              disabled={uiSuggestionRows.length === 0}
+            >
+              Use best
+            </Button>
+            <Button type="button" onClick={handleApplyUiSuggestions} disabled={uiSuggestionRows.length === 0}>
+              Apply selected
+            </Button>
+          </div>
+        </div>
+      </SharedModal>
+
+
+      <div
+        className={cn(
+          "grid transition-[grid-template-columns] duration-300 ease-in-out",
+          isFocusMode ? "grid-cols-[56px_0px_1fr_0px] gap-0" : "grid-cols-[56px_300px_1fr_420px] gap-4"
+        )}
+      >
         {/* Toolbar */}
         <SectionPanel className="flex flex-col items-center gap-2 p-2" variant="subtle-compact">
           <Button
@@ -874,6 +1836,77 @@ export function AdminImageStudioPage(): React.JSX.Element {
           >
             <Pentagon className="size-4" />
           </Button>
+          <Select
+            value={maskGenMode}
+            onValueChange={(value: string) => {
+              if (value === "ai-bbox" || value === "threshold" || value === "edges") {
+                setMaskGenMode(value);
+                return;
+              }
+              setMaskGenMode("ai-polygon");
+            }}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ai-polygon">AI polygon</SelectItem>
+              <SelectItem value="ai-bbox">AI bbox</SelectItem>
+              <SelectItem value="threshold">Threshold</SelectItem>
+              <SelectItem value="edges">Edges</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => void handleGenerateMask(maskGenMode)}
+            disabled={maskGenLoading}
+            title="Generate mask"
+          >
+            {maskGenLoading ? "Generating..." : "Generate"}
+          </Button>
+          <Button
+            type="button"
+            variant={tool === "lasso" ? "default" : "outline"}
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => setTool("lasso")}
+            title="Lasso mask"
+          >
+            Lasso
+          </Button>
+          <Button
+            type="button"
+            variant={tool === "rect" ? "default" : "outline"}
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => setTool("rect")}
+            title="Rectangle mask"
+          >
+            Rect
+          </Button>
+          <Button
+            type="button"
+            variant={tool === "ellipse" ? "default" : "outline"}
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => setTool("ellipse")}
+            title="Ellipse mask"
+          >
+            Ellipse
+          </Button>
+          <Button
+            type="button"
+            variant={tool === "brush" ? "default" : "outline"}
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => setTool("brush")}
+            title="Brush mask"
+          >
+            Brush
+          </Button>
           <div className="mt-2 h-px w-full bg-border" />
           <Button
             type="button"
@@ -881,10 +1914,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
             size="sm"
             className="w-full justify-center"
             onClick={() => {
-              setMaskPoints((prev: Point[]) => prev.slice(0, -1));
-              setMaskClosed(false);
+              if (!activeMaskId) return;
+              setMaskShapes((prev: MaskShape[]) =>
+                prev.map((shape) =>
+                  shape.id === activeMaskId
+                    ? { ...shape, points: shape.points.slice(0, -1), closed: false }
+                    : shape
+                )
+              );
             }}
-            disabled={maskPoints.length === 0}
+            disabled={!activeMaskId}
             title="Undo last point"
           >
             Undo
@@ -895,9 +1934,14 @@ export function AdminImageStudioPage(): React.JSX.Element {
             size="sm"
             className="w-full justify-center"
             onClick={() => {
-              if (maskPoints.length >= 3) setMaskClosed(true);
+              if (!activeMaskId) return;
+              setMaskShapes((prev: MaskShape[]) =>
+                prev.map((shape) =>
+                  shape.id === activeMaskId ? { ...shape, closed: shape.points.length >= 3 } : shape
+                )
+              );
             }}
-            disabled={maskPoints.length < 3 || maskClosed}
+            disabled={!activeMaskId}
             title="Close polygon"
           >
             Close
@@ -908,17 +1952,25 @@ export function AdminImageStudioPage(): React.JSX.Element {
             size="sm"
             className="w-full justify-center"
             onClick={() => {
-              setMaskPoints([]);
-              setMaskClosed(false);
+              setMaskShapes([]);
+              setActiveMaskId(null);
             }}
-            title="Clear mask"
+            disabled={maskShapes.length === 0}
+            title="Clear all masks"
           >
             Clear
           </Button>
         </SectionPanel>
 
         {/* Project + Assets */}
-        <SectionPanel className="flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
+        <SectionPanel
+          className={cn(
+            "flex h-[72vh] flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            isFocusMode && "pointer-events-none opacity-0 -translate-x-2"
+          )}
+          variant="subtle"
+          aria-hidden={isFocusMode}
+        >
           <div className="space-y-2">
             <Label className="text-xs text-gray-400">Project</Label>
             <div className="flex items-center gap-2">
@@ -1006,48 +2058,278 @@ export function AdminImageStudioPage(): React.JSX.Element {
         </SectionPanel>
 
         {/* Preview */}
-        <SectionPanel className="flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-xs text-gray-400">Preview</div>
-              <div className="truncate text-sm text-gray-100">{selectedAsset?.filename || "—"}</div>
+        <SectionPanel className="relative flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
+          {isFocusMode ? (
+            <div className="absolute right-3 top-3 z-20">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFocusMode(false)}
+                className="text-gray-300 hover:text-white"
+              >
+                <Minimize2 className="mr-2 size-4" />
+                Edit
+              </Button>
             </div>
-            <div className="text-[11px] text-gray-400">
-              Mask: {maskPoints.length} pt{maskPoints.length === 1 ? "" : "s"}
-              {maskClosed ? " (closed)" : ""}
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-xs text-gray-400">Preview</div>
+                <div className="truncate text-sm text-gray-100">{selectedAsset?.filename || "—"}</div>
+              </div>
+              <div className="text-[11px] text-gray-400">
+                Masks: {maskShapes.length}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex-1 overflow-hidden">
-                      <MaskCanvas
-                        src={selectedAsset?.filepath ?? null}
-                        tool={tool}
-                        points={maskPoints}
-                        isClosed={maskClosed}
-                        onChange={(nextPoints: Point[], nextClosed: boolean) => {
-                          setMaskPoints(nextPoints);
-                          setMaskClosed(nextClosed);
-                        }}
-                      />          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-gray-400">Mask JSON</Label>
-            <Textarea
-              value={maskPoints.length === 0 ? "" : safeJsonStringify({ type: "polygon", points: maskPoints, closed: maskClosed })}
-              readOnly
-              className="h-24 font-mono text-[11px]"
-              placeholder="Draw a polygon mask to populate this."
+            <MaskCanvas
+              src={selectedAsset?.filepath ?? null}
+              tool={tool}
+              shapes={maskShapes}
+              activeShapeId={activeMaskId}
+              selectedPointIndex={selectedPointIndex}
+              onSelectShape={setActiveMaskId}
+              onSelectPoint={setSelectedPointIndex}
+              onChange={(nextShapes: MaskShape[]) => {
+                setMaskShapes(nextShapes);
+              }}
+              brushRadius={brushRadius}
             />
           </div>
+
+          {!isFocusMode ? (
+            <>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs text-gray-400">Mask Layers</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setMaskShapes((prev: MaskShape[]) => prev.filter((shape) => shape.id !== activeMaskId));
+                      setActiveMaskId(null);
+                    }}
+                    disabled={!activeMaskId}
+                  >
+                    Remove active
+                  </Button>
+                </div>
+                <div className="max-h-28 overflow-auto rounded border border-border bg-card/40 p-2 text-[11px] text-gray-300">
+                  {maskShapes.length === 0 ? (
+                    <div className="text-gray-500">No mask layers yet.</div>
+                  ) : (
+                    maskShapes.map((shape) => (
+                      <button
+                        key={shape.id}
+                        type="button"
+                        onClick={() => setActiveMaskId(shape.id)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded px-2 py-1 text-left",
+                          shape.id === activeMaskId ? "bg-muted text-white" : "text-gray-300 hover:bg-muted/60"
+                        )}
+                      >
+                        <span className="truncate">{shape.name}</span>
+                        <span className="text-[10px] text-gray-500">{shape.points.length} pt</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                {activeMaskId ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px] text-gray-400">Layer name</Label>
+                      <Input
+                        value={maskShapes.find((s) => s.id === activeMaskId)?.name ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value;
+                          setMaskShapes((prev: MaskShape[]) =>
+                            prev.map((shape) => (shape.id === activeMaskId ? { ...shape, name: value } : shape))
+                          );
+                        }}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <label className="flex items-center gap-2 text-[11px] text-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(maskShapes.find((s) => s.id === activeMaskId)?.visible ?? true)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const checked = e.target.checked;
+                            setMaskShapes((prev: MaskShape[]) =>
+                              prev.map((shape) => (shape.id === activeMaskId ? { ...shape, visible: checked } : shape))
+                            );
+                          }}
+                        />
+                        Visible
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[11px] text-gray-400">Feather</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={50}
+                      step={1}
+                      value={maskFeather}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const next = Number(e.target.value);
+                        setMaskFeather(Number.isFinite(next) ? next : 0);
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <label className="flex items-center gap-2 text-[11px] text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={maskInvert}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaskInvert(e.target.checked)}
+                      />
+                      Invert mask
+                    </label>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[11px] text-gray-400">Brush radius</Label>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={64}
+                      step={1}
+                      value={brushRadius}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const next = Number(e.target.value);
+                        setBrushRadius(Number.isFinite(next) ? next : 8);
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (!activeMaskId || selectedPointIndex === null) return;
+                        setMaskShapes((prev: MaskShape[]) =>
+                          prev.map((shape) => {
+                            if (shape.id !== activeMaskId) return shape;
+                            const nextPoints = shape.points.filter((_, idx) => idx !== selectedPointIndex);
+                            return { ...shape, points: nextPoints, closed: nextPoints.length >= 3 ? shape.closed : false };
+                          })
+                        );
+                        setSelectedPointIndex(null);
+                      }}
+                      disabled={!activeMaskId || selectedPointIndex === null}
+                    >
+                      Delete point
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (!activeMaskId) return;
+                      setMaskShapes((prev: MaskShape[]) =>
+                        prev.map((shape) => {
+                          if (shape.id !== activeMaskId) return shape;
+                          if (shape.points.length < 3) return shape;
+                          const pts = shape.points;
+                          const smoothed: Point[] = [];
+                          for (let i = 0; i < pts.length; i += 1) {
+                            const p0 = pts[i]!;
+                            const p1 = pts[(i + 1) % pts.length]!;
+                            smoothed.push({ x: p0.x * 0.75 + p1.x * 0.25, y: p0.y * 0.75 + p1.y * 0.25 });
+                            smoothed.push({ x: p0.x * 0.25 + p1.x * 0.75, y: p0.y * 0.25 + p1.y * 0.75 });
+                          }
+                          return { ...shape, points: smoothed };
+                        })
+                      );
+                    }}
+                    disabled={!activeMaskId}
+                  >
+                    Smooth
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (!activeMaskId) return;
+                      setMaskShapes((prev: MaskShape[]) =>
+                        prev.map((shape) => {
+                          if (shape.id !== activeMaskId) return shape;
+                          if (shape.points.length < 2) return shape;
+                          const next: Point[] = [];
+                          for (let i = 0; i < shape.points.length - 1; i += 1) {
+                            const a = shape.points[i]!;
+                            const b = shape.points[i + 1]!;
+                            next.push(a);
+                            next.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+                          }
+                          const last = shape.points[shape.points.length - 1]!;
+                          if (shape.closed) {
+                            const first = shape.points[0]!;
+                            next.push(last);
+                            next.push({ x: (last.x + first.x) / 2, y: (last.y + first.y) / 2 });
+                          } else {
+                            next.push(last);
+                          }
+                          return { ...shape, points: next };
+                        })
+                      );
+                    }}
+                    disabled={!activeMaskId}
+                  >
+                    Add points
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedPointIndex(null)}
+                    disabled={selectedPointIndex === null}
+                  >
+                    Deselect point
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-400">Mask JSON</Label>
+                <Textarea
+                  value={maskPolygons.length === 0 ? "" : safeJsonStringify({ type: "polygons", polygons: maskPolygons, invert: maskInvert, feather: maskFeather })}
+                  readOnly
+                  className="h-24 font-mono text-[11px]"
+                  placeholder="Draw a polygon mask to populate this."
+                />
+              </div>
+            </>
+          ) : null}
         </SectionPanel>
 
         {/* Prompt + Params */}
-        <SectionPanel className="flex h-[72vh] flex-col gap-3 overflow-hidden" variant="subtle">
+        <SectionPanel
+          className={cn(
+            "flex h-[72vh] flex-col gap-3 overflow-hidden transition-all duration-300 ease-in-out",
+            isFocusMode && "pointer-events-none opacity-0 translate-x-2"
+          )}
+          variant="subtle"
+          aria-hidden={isFocusMode}
+        >
           <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="text-xs text-gray-400">Prompt</div>
-              <div className="text-sm text-gray-100">Programmatic prompt + params extraction</div>
-            </div>
+            <div />
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -1084,6 +2366,26 @@ export function AdminImageStudioPage(): React.JSX.Element {
                 title="Apply automatic formatting fixes (best effort)"
               >
                 Auto format
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleSuggestUi()}
+                disabled={!promptText.trim() || !paramsState || uiSuggestLoading}
+                title="Suggest UI controls for extracted parameters"
+              >
+                <Wand2 className="mr-2 size-4" />
+                Suggest UI
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleLearnPatterns()}
+                disabled={!promptText.trim() || !canManagePatterns || learnLoading}
+                title="Learn validation patterns from the prompt"
+              >
+                <Sparkles className="mr-2 size-4" />
+                Learn patterns
               </Button>
               <Button
                 variant="outline"
@@ -1266,7 +2568,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                     </label>
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className="text-gray-300">autofix</span> operations.
+                    Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className="text-gray-300">autofix</span> operations, and falls back to <span className="text-gray-300">similar</span> suggestions when they contain backticked replacements.
                   </div>
                   <Textarea
                     value={promptValidationRulesText}
@@ -1277,6 +2579,87 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   {promptValidationRulesError ? (
                     <div className="text-[11px] text-red-300">{promptValidationRulesError}</div>
                   ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-400">UI Extractor</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Mode</div>
+                      <Select
+                        value={studioSettings.uiExtractor.mode}
+                        onValueChange={(value: string) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            uiExtractor: {
+                              ...prev.uiExtractor,
+                              mode: value === "ai" || value === "both" ? value : "heuristic",
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="heuristic">Heuristic</SelectItem>
+                          <SelectItem value="ai">AI</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Model</div>
+                      <Input
+                        value={studioSettings.uiExtractor.model}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            uiExtractor: { ...prev.uiExtractor, model: e.target.value },
+                          }))
+                        }
+                        className="h-8"
+                        placeholder="e.g. gpt-4o-mini"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Temperature</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.uiExtractor.temperature ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const next = e.target.value === "" ? null : Number(e.target.value);
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            uiExtractor: { ...prev.uiExtractor, temperature: Number.isFinite(next as number) ? next : null },
+                          }));
+                        }}
+                        className="h-8"
+                        step={0.1}
+                        min={0}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[11px] text-gray-500">Max tokens</div>
+                      <Input
+                        type="number"
+                        value={studioSettings.uiExtractor.max_output_tokens ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const next = e.target.value === "" ? null : Number(e.target.value);
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            uiExtractor: { ...prev.uiExtractor, max_output_tokens: Number.isFinite(next as number) ? next : null },
+                          }));
+                        }}
+                        className="h-8"
+                        min={1}
+                        step={1}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Suggests UI controls for extracted params using heuristic rules, AI, or both.
+                  </div>
                 </div>
 
                 <div className="space-y-2">

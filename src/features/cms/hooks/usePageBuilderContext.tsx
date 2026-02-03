@@ -47,6 +47,17 @@ function uid(): string {
 const NODE_ID_REGEX = /node-(\d+)/;
 const TEXT_ATOM_BLOCK_TYPE = "TextAtom";
 const TEXT_ATOM_LETTER_TYPE = "TextAtomLetter";
+const CONTAINER_BLOCK_TYPES = new Set([
+  "ImageWithText",
+  "Hero",
+  "RichText",
+  "Block",
+  TEXT_ATOM_BLOCK_TYPE,
+  "Carousel",
+  "CarouselFrame",
+  "Slideshow",
+  "SlideshowFrame",
+]);
 
 function syncNextIdFromSections(sections: SectionInstance[]): void {
   let maxId = 999;
@@ -110,6 +121,31 @@ function applyTextAtomSettings(
   const text = normalizeTextAtomText(nextSettings["text"]);
   const nextBlocks = buildTextAtomLetterBlocks(text, block.blocks, seen);
   return { ...block, settings: nextSettings, blocks: nextBlocks };
+}
+
+function isContainerBlockType(type: string): boolean {
+  return CONTAINER_BLOCK_TYPES.has(type);
+}
+
+function createBlockInstance(type: string): BlockInstance | null {
+  const def = getBlockDefinition(type);
+  if (!def) return null;
+  const baseSettings = { ...def.defaultSettings };
+  if (type === TEXT_ATOM_BLOCK_TYPE) {
+    const text = normalizeTextAtomText(baseSettings["text"]);
+    return {
+      id: uid(),
+      type,
+      settings: baseSettings,
+      blocks: buildTextAtomLetterBlocks(text, undefined),
+    };
+  }
+  return {
+    id: uid(),
+    type,
+    settings: baseSettings,
+    ...(isContainerBlockType(type) ? { blocks: [] } : {}),
+  };
 }
 
 function ensureUniqueId(id: unknown, seen: Set<string>): string {
@@ -340,6 +376,22 @@ function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInsta
   });
 }
 
+function updateSectionNestedBlocks(
+  blocks: BlockInstance[],
+  parentBlockId: string,
+  updater: (block: BlockInstance) => BlockInstance
+): BlockInstance[] {
+  return blocks.map((block: BlockInstance) => {
+    if (block.id === parentBlockId) {
+      return updater(block);
+    }
+    if (block.blocks && block.blocks.length > 0) {
+      return { ...block, blocks: updateSectionNestedBlocks(block.blocks, parentBlockId, updater) };
+    }
+    return block;
+  });
+}
+
 function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
   const seen = new Set<string>();
   return sections.map((section: SectionInstance): SectionInstance => {
@@ -413,7 +465,7 @@ function findBlock(
         if (nested) return nested;
         continue;
       }
-      const nested = searchBlocks(b.blocks ?? [], section, parentColumn, parentBlock, parentRow);
+      const nested = searchBlocks(b.blocks ?? [], section, parentColumn, b, parentRow);
       if (nested) return nested;
     }
     return null;
@@ -593,8 +645,6 @@ export function basePageBuilderReducer(
     }
 
     case "ADD_BLOCK": {
-      const def = getBlockDefinition(action.blockType);
-      if (!def) return state;
       if (action.blockType === "Row") {
         const updatedSections = state.sections.map((s: SectionInstance) => {
           if (s.id !== action.sectionId) return s;
@@ -613,17 +663,8 @@ export function basePageBuilderReducer(
         });
         return { ...state, sections: updatedSections };
       }
-      const baseSettings = { ...def.defaultSettings };
-      const isTextAtom = action.blockType === TEXT_ATOM_BLOCK_TYPE;
-      const textAtomBlocks = isTextAtom
-        ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings["text"]), undefined)
-        : undefined;
-      const newBlock: BlockInstance = {
-        id: uid(),
-        type: action.blockType,
-        settings: baseSettings,
-        ...(textAtomBlocks ? { blocks: textAtomBlocks } : {}),
-      };
+      const newBlock = createBlockInstance(action.blockType);
+      if (!newBlock) return state;
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? { ...s, blocks: [...s.blocks, newBlock] }
@@ -858,20 +899,8 @@ export function basePageBuilderReducer(
     }
 
     case "ADD_BLOCK_TO_COLUMN": {
-      const blockDef = getBlockDefinition(action.blockType);
-      if (!blockDef) return state;
-      const isSectionType = ["ImageWithText", "Hero", "RichText", "Block", TEXT_ATOM_BLOCK_TYPE, "Carousel"].includes(action.blockType);
-      const isTextAtom = action.blockType === TEXT_ATOM_BLOCK_TYPE;
-      const baseSettings = { ...blockDef.defaultSettings };
-      const textAtomBlocks = isTextAtom
-        ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings["text"]), undefined)
-        : undefined;
-      const newBlock: BlockInstance = {
-        id: uid(),
-        type: action.blockType,
-        settings: baseSettings,
-        ...(textAtomBlocks ? { blocks: textAtomBlocks } : isSectionType ? { blocks: [] } : {}),
-      };
+      const newBlock = createBlockInstance(action.blockType);
+      if (!newBlock) return state;
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;
         return {
@@ -1291,13 +1320,8 @@ export function basePageBuilderReducer(
     }
 
     case "ADD_ELEMENT_TO_NESTED_BLOCK": {
-      const elemDef = getBlockDefinition(action.elementType);
-      if (!elemDef) return state;
-      const newElem: BlockInstance = {
-        id: uid(),
-        type: action.elementType,
-        settings: { ...elemDef.defaultSettings },
-      };
+      const newElem = createBlockInstance(action.elementType);
+      if (!newElem) return state;
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;
         return {
@@ -1353,6 +1377,58 @@ export function basePageBuilderReducer(
                     ),
                   }
                 : pb
+            ),
+          })),
+        };
+      });
+      return { ...state, sections: updatedSections };
+    }
+
+    case "ADD_ELEMENT_TO_SECTION_BLOCK": {
+      const newElem = createBlockInstance(action.elementType);
+      if (!newElem) return state;
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
+            ...parent,
+            blocks: [...(parent.blocks ?? []), newElem],
+          })),
+        };
+      });
+      return { ...state, sections: updatedSections, selectedNodeId: newElem.id };
+    }
+
+    case "REMOVE_ELEMENT_FROM_SECTION_BLOCK": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
+            ...parent,
+            blocks: (parent.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.elementId),
+          })),
+        };
+      });
+      return {
+        ...state,
+        sections: updatedSections,
+        selectedNodeId: state.selectedNodeId === action.elementId ? null : state.selectedNodeId,
+      };
+    }
+
+    case "UPDATE_SECTION_BLOCK_SETTINGS": {
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        return {
+          ...s,
+          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
+            ...parent,
+            blocks: (parent.blocks ?? []).map((eb: BlockInstance) =>
+              eb.id === action.blockId
+                ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
+                : eb
             ),
           })),
         };

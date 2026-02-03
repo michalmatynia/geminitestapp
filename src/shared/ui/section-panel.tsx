@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/shared/utils";
 
 type SectionPanelVariant = "default" | "compact" | "subtle" | "subtle-compact";
@@ -10,9 +10,8 @@ const variantStyles: Record<SectionPanelVariant, string> = {
   "subtle-compact": "rounded-lg border bg-card/60 p-3 backdrop-blur",
 };
 
-type SectionPanelProps = {
+type SectionPanelProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
-  className?: string;
   variant?: SectionPanelVariant;
 };
 
@@ -20,6 +19,11 @@ export function SectionPanel({
   children,
   className,
   variant = "default",
+  ...props
 }: SectionPanelProps) {
-  return <div className={cn(variantStyles[variant], className)}>{children}</div>;
+  return (
+    <div className={cn(variantStyles[variant], className)} {...props}>
+      {children}
+    </div>
+  );
 }

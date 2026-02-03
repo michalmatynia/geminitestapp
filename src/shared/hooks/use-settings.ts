@@ -17,13 +17,17 @@ export function useSettings(): UseQueryResult<SystemSetting[], Error> {
     queryKey: ["settings"],
     queryFn: async (): Promise<SystemSetting[]> => {
       const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
+      if (!res.ok) {
+        console.warn("[settings] Failed to fetch settings", res.status);
+        return [];
+      }
       return (await res.json()) as SystemSetting[];
     },
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 1,
   });
 }
 
@@ -32,15 +36,19 @@ export function useSettingsMap(): UseQueryResult<Map<string, string>, Error> {
     queryKey: ["settings"],
     queryFn: async (): Promise<SystemSetting[]> => {
       const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Failed to fetch settings");
+      if (!res.ok) {
+        console.warn("[settings] Failed to fetch settings", res.status);
+        return [];
+      }
       return (await res.json()) as SystemSetting[];
     },
     select: (data: SystemSetting[]): Map<string, string> =>
       new Map(data.map((item) => [item.key, item.value])),
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: 1,
   });
 }
 

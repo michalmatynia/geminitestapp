@@ -29,6 +29,8 @@ export interface UseProductsFilters {
   searchLanguage?: string | undefined;
 }
 
+const PRODUCTS_STALE_MS = 10_000;
+
 export function useProducts(
   filters: UseProductsFilters,
   options: { enabled?: boolean } = {}
@@ -39,8 +41,8 @@ export function useProducts(
     queryKey: ["products", filters],
     queryFn: () => getProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
     networkMode: "always",
   });
@@ -56,8 +58,8 @@ export function useProductsCount(
     queryKey: ["products-count", filters],
     queryFn: () => countProducts(filters),
     enabled,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
     networkMode: "always",
   });

@@ -58,6 +58,7 @@ export type PromptValidationRule =
 export type PromptValidationSettings = {
   enabled: boolean;
   rules: PromptValidationRule[];
+  learnedRules?: PromptValidationRule[];
 };
 
 export const defaultPromptValidationRules: PromptValidationRule[] = [
@@ -185,6 +186,12 @@ export type ImageStudioSettings = {
       max_output_tokens: number | null;
     };
   };
+  uiExtractor: {
+    mode: "heuristic" | "ai" | "both";
+    model: string;
+    temperature: number | null;
+    max_output_tokens: number | null;
+  };
   targetAi: {
     provider: "openai";
     openai: {
@@ -218,6 +225,7 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
   promptValidation: {
     enabled: true,
     rules: defaultPromptValidationRules,
+    learnedRules: [],
   },
   promptExtraction: {
     mode: "programmatic",
@@ -227,6 +235,12 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
       top_p: null,
       max_output_tokens: null,
     },
+  },
+  uiExtractor: {
+    mode: "heuristic",
+    model: "gpt-4o-mini",
+    temperature: 0.2,
+    max_output_tokens: 800,
   },
   targetAi: {
     provider: "openai",
@@ -330,6 +344,7 @@ const promptValidationSettingsSchema: z.ZodType<PromptValidationSettings> = z
   .object({
     enabled: z.boolean().optional().default(defaultImageStudioSettings.promptValidation.enabled),
     rules: z.array(promptValidationRuleSchema).optional().default(defaultImageStudioSettings.promptValidation.rules),
+    learnedRules: z.array(promptValidationRuleSchema).optional().default([]),
   })
   .strict();
 
@@ -352,6 +367,15 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
       })
       .optional()
       .default(defaultImageStudioSettings.promptExtraction),
+    uiExtractor: z
+      .object({
+        mode: z.enum(["heuristic", "ai", "both"]).optional().default(defaultImageStudioSettings.uiExtractor.mode),
+        model: z.string().trim().min(1).optional().default(defaultImageStudioSettings.uiExtractor.model),
+        temperature: finiteNumberOrNull,
+        max_output_tokens: intOrNull,
+      })
+      .optional()
+      .default(defaultImageStudioSettings.uiExtractor),
     targetAi: z
       .object({
         provider: z.literal("openai").optional().default("openai"),
@@ -426,6 +450,7 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       promptValidation: {
         ...result.data.promptValidation,
         rules: mergedRules,
+        learnedRules: result.data.promptValidation.learnedRules ?? [],
       },
     };
   } catch {

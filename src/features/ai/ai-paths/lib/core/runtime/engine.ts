@@ -109,6 +109,45 @@ export type EvaluateGraphOptions = {
 };
 
 const CACHE_VERSION = 1;
+const DEFAULT_NODE_TIMEOUT_MS = Math.max(5_000, Number.parseInt(process.env.AI_PATHS_NODE_TIMEOUT_MS ?? "", 10) || 120_000);
+const DEFAULT_RETRY_BACKOFF_MS = Math.max(250, Number.parseInt(process.env.AI_PATHS_NODE_RETRY_BACKOFF_MS ?? "", 10) || 750);
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
+  let timer: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+const withRetries = async <T>(
+  task: () => Promise<T>,
+  attempts: number,
+  backoffMs: number,
+  label: string
+): Promise<T> => {
+  let lastError: unknown = null;
+  const maxAttempts = Math.max(1, attempts);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= maxAttempts) break;
+      const delay = backoffMs * Math.pow(2, attempt - 1);
+      await sleep(delay);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed after ${maxAttempts} attempt(s)`);
+};
 
 const buildNodeInputHash = (
   node: AiNode,
@@ -635,31 +674,44 @@ export async function evaluateGraph({
           await onNodeStart({ node, nodeInputs, prevOutputs, iteration });
         }
         try {
-          const result = await handler({
-            node,
-            nodeInputs,
-            prevOutputs,
-            edges: sanitizedEdges,
-            nodes,
-            nodeById,
-            activePathId,
-            triggerNodeId,
-            triggerEvent,
-            triggerContext,
-            deferPoll,
-            skipAiJobs,
-            now,
-            allOutputs: outputs,
-            allInputs: nextInputs,
-            fetchEntityCached,
-            reportAiPathsError,
-            toast,
-            simulationEntityType,
-            simulationEntityId,
-            resolvedEntity,
-            fallbackEntityId,
-            executed,
-          });
+          const timeoutMs = node.config?.runtime?.timeoutMs ?? DEFAULT_NODE_TIMEOUT_MS;
+          const retryAttempts = node.config?.runtime?.retry?.attempts ?? 1;
+          const retryBackoffMs = node.config?.runtime?.retry?.backoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
+          const result = await withRetries(
+            () =>
+              withTimeout(
+                handler({
+                  node,
+                  nodeInputs,
+                  prevOutputs,
+                  edges: sanitizedEdges,
+                  nodes,
+                  nodeById,
+                  activePathId,
+                  triggerNodeId,
+                  triggerEvent,
+                  triggerContext,
+                  deferPoll,
+                  skipAiJobs,
+                  now,
+                  allOutputs: outputs,
+                  allInputs: nextInputs,
+                  fetchEntityCached,
+                  reportAiPathsError,
+                  toast,
+                  simulationEntityType,
+                  simulationEntityId,
+                  resolvedEntity,
+                  fallbackEntityId,
+                  executed,
+                }),
+                timeoutMs,
+                `${node.type}:${node.id}`
+              ),
+            retryAttempts,
+            retryBackoffMs,
+            `${node.type}:${node.id}`
+          );
           nextOutputs = result;
         } catch (error) {
           if (recordHistory) {

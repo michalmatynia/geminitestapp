@@ -71,4 +71,5 @@ export interface CmsDomain {
 }
 
 export * from "./page-builder";
+export * from "./event-effects";
 export * from "./theme";

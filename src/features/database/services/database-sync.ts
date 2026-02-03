@@ -1731,7 +1731,7 @@ async function syncPrismaToMongo(results: DatabaseSyncCollectionResult[]): Promi
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
       targetInserted: docs.length,
-      warnings: ["Mongo-only user preference fields (adminMenuCollapsed, cms*) are not restored from Prisma."],
+      warnings: ["Mongo-only user preference fields (adminMenuCollapsed, adminMenuFavorites, adminMenuSectionColors, cms*) are not restored from Prisma."],
     };
   });
 

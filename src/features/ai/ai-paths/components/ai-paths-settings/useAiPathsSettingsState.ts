@@ -53,6 +53,8 @@ type AiPathsSettingsStateOptions = {
   activeTab: "canvas" | "paths" | "docs";
 };
 
+const AI_PATHS_SAMPLE_STALE_MS = 10_000;
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptions) {
   const { toast } = useToast();
@@ -180,7 +182,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
             const result = await entityApi.getProduct(entityId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_SAMPLE_STALE_MS,
         });
       } else if (resolvedType === "note") {
         sample = await queryClient.fetchQuery({
@@ -189,7 +191,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
             const result = await entityApi.getNote(entityId);
             return result.ok ? result.data : null;
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_SAMPLE_STALE_MS,
         });
       }
       if (!sample) {
@@ -242,7 +244,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
             if (!result.ok) return { documents: [] as Record<string, unknown>[] };
             return { documents: result.data.documents ?? [] };
           },
-          staleTime: 0,
+          staleTime: AI_PATHS_SAMPLE_STALE_MS,
         });
         const firstDoc = data.documents?.[0];
         if (firstDoc) {
@@ -255,22 +257,22 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         if (normalized === "product") {
           sample = await queryClient.fetchQuery({
             queryKey: ["products", entityId],
-            queryFn: async () => {
-              const result = await entityApi.getProduct(entityId);
-              return result.ok ? result.data : null;
-            },
-            staleTime: 0,
-          });
-        } else if (normalized === "note") {
-          sample = await queryClient.fetchQuery({
-            queryKey: ["notes", entityId],
-            queryFn: async () => {
-              const result = await entityApi.getNote(entityId);
-              return result.ok ? result.data : null;
-            },
-            staleTime: 0,
-          });
-        }
+          queryFn: async () => {
+            const result = await entityApi.getProduct(entityId);
+            return result.ok ? result.data : null;
+          },
+          staleTime: AI_PATHS_SAMPLE_STALE_MS,
+        });
+      } else if (normalized === "note") {
+        sample = await queryClient.fetchQuery({
+          queryKey: ["notes", entityId],
+          queryFn: async () => {
+            const result = await entityApi.getNote(entityId);
+            return result.ok ? result.data : null;
+          },
+          staleTime: AI_PATHS_SAMPLE_STALE_MS,
+        });
+      }
       }
 
       if (!sample) {

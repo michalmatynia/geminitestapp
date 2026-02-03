@@ -23,6 +23,7 @@ import { FrontendImageElementSection } from "./sections/FrontendImageElementSect
 import { FrontendTextAtomSection } from "./sections/FrontendTextAtomSection";
 import { FrontendButtonElementSection } from "./sections/FrontendButtonElementSection";
 import { FrontendModel3DElementSection } from "./sections/FrontendModel3DElementSection";
+import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
 
 interface SectionContent {
   zone?: PageZone;
@@ -86,13 +87,15 @@ export function CmsPageRenderer({
 
             return (
               <GsapAnimationWrapper key={section.key} config={animConfig}>
-                <SectionRenderer
-                  type={section.type}
-                  settings={section.settings}
-                  blocks={section.blocks}
-                  colorSchemes={colorSchemes ?? {}}
-                  layout={layout ?? {}}
-                />
+                <EventEffectsWrapper settings={section.settings}>
+                  <SectionRenderer
+                    type={section.type}
+                    settings={section.settings}
+                    blocks={section.blocks}
+                    colorSchemes={colorSchemes ?? {}}
+                    layout={layout ?? {}}
+                  />
+                </EventEffectsWrapper>
               </GsapAnimationWrapper>
             );
           })

@@ -169,6 +169,9 @@ export type PageBuilderAction =
   | { type: "ADD_ELEMENT_TO_NESTED_BLOCK"; sectionId: string; columnId: string; parentBlockId: string; elementType: string }
   | { type: "REMOVE_ELEMENT_FROM_NESTED_BLOCK"; sectionId: string; columnId: string; parentBlockId: string; elementId: string }
   | { type: "UPDATE_NESTED_BLOCK_SETTINGS"; sectionId: string; columnId: string; parentBlockId: string; blockId: string; settings: Record<string, unknown> }
+  | { type: "ADD_ELEMENT_TO_SECTION_BLOCK"; sectionId: string; parentBlockId: string; elementType: string }
+  | { type: "REMOVE_ELEMENT_FROM_SECTION_BLOCK"; sectionId: string; parentBlockId: string; elementId: string }
+  | { type: "UPDATE_SECTION_BLOCK_SETTINGS"; sectionId: string; parentBlockId: string; blockId: string; settings: Record<string, unknown> }
   | { type: "REORDER_SECTIONS"; zone: PageZone; fromIndex: number; toIndex: number }
   | { type: "MOVE_SECTION_TO_ZONE"; sectionId: string; toZone: PageZone; toIndex: number }
   | { type: "SET_PAGE_STATUS"; status: PageStatus }

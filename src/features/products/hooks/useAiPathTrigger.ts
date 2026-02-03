@@ -29,6 +29,10 @@ import {
   sanitizeEdges,
 } from "@/features/ai/ai-paths/lib/core/utils/graph";
 
+const AI_PATHS_PREFS_STALE_MS = 5_000;
+const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+const AI_PATHS_ENTITY_STALE_MS = 10_000;
+
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({
     ...node,
@@ -169,15 +173,21 @@ export function useAiPathTrigger(): {
       return;
     }
     try {
-      const prefsRes = await fetch("/api/user/preferences", { cache: "no-store" });
-      if (!prefsRes.ok) {
-        throw new Error("Failed to load AI Paths preferences.");
-      }
-      const prefs = (await prefsRes.json()) as {
-        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
-        aiPathsPathIndex?: Array<{ id?: string }> | null;
-        aiPathsActivePathId?: string | null;
-      };
+      const prefs = await queryClient.fetchQuery({
+        queryKey: ["user-preferences"],
+        queryFn: async () => {
+          const prefsRes = await fetch("/api/user/preferences");
+          if (!prefsRes.ok) {
+            throw new Error("Failed to load AI Paths preferences.");
+          }
+          return (await prefsRes.json()) as {
+            aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
+            aiPathsPathIndex?: Array<{ id?: string }> | null;
+            aiPathsActivePathId?: string | null;
+          };
+        },
+        staleTime: AI_PATHS_PREFS_STALE_MS,
+      });
       let configs: Record<string, PathConfig> = {};
       let settingsPathOrder: string[] = [];
       if (typeof prefs.aiPathsPathConfigs === "string") {
@@ -192,59 +202,64 @@ export function useAiPathTrigger(): {
       }
       if (!configs || Object.keys(configs).length === 0) {
         try {
-          const settingsRes = await fetch("/api/settings", { cache: "no-store" });
-          if (settingsRes.ok) {
-            const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
-            const map = new Map<string, string>(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-            const indexRaw = map.get(PATH_INDEX_KEY);
-            if (indexRaw) {
-              try {
-                const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
-                if (Array.isArray(parsedIndex)) {
-                  settingsPathOrder = parsedIndex
-                    .map((meta: PathMeta) => meta?.id)
-                    .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0);
-                  parsedIndex.forEach((meta: PathMeta) => {
-                    if (!meta?.id) return;
-                    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-                    if (!configRaw) {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
-                      return;
-                    }
-                    try {
-                      const parsedConfig = JSON.parse(configRaw) as PathConfig;
-                      configs[meta.id] = {
-                        ...createDefaultPathConfig(meta.id),
-                        ...parsedConfig,
-                        id: meta.id,
-                        name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
-                      };
-                    } catch {
-                      configs[meta.id] = createDefaultPathConfig(meta.id);
-                    }
-                  });
-                }
-              } catch {
-                settingsPathOrder = [];
+          const data = await queryClient.fetchQuery({
+            queryKey: ["settings"],
+            queryFn: async () => {
+              const settingsRes = await fetch("/api/settings");
+              if (!settingsRes.ok) throw new Error("Failed to load AI Paths settings.");
+              return (await settingsRes.json()) as Array<{ key: string; value: string }>;
+            },
+            staleTime: AI_PATHS_SETTINGS_STALE_MS,
+          });
+          const map = new Map<string, string>(data.map((item: { key: string; value: string }) => [item.key, item.value]));
+          const indexRaw = map.get(PATH_INDEX_KEY);
+          if (indexRaw) {
+            try {
+              const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
+              if (Array.isArray(parsedIndex)) {
+                settingsPathOrder = parsedIndex
+                  .map((meta: PathMeta) => meta?.id)
+                  .filter((id: string | undefined): id is string => typeof id === "string" && id.length > 0);
+                parsedIndex.forEach((meta: PathMeta) => {
+                  if (!meta?.id) return;
+                  const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+                  if (!configRaw) {
+                    configs[meta.id] = createDefaultPathConfig(meta.id);
+                    return;
+                  }
+                  try {
+                    const parsedConfig = JSON.parse(configRaw) as PathConfig;
+                    configs[meta.id] = {
+                      ...createDefaultPathConfig(meta.id),
+                      ...parsedConfig,
+                      id: meta.id,
+                      name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
+                    };
+                  } catch {
+                    configs[meta.id] = createDefaultPathConfig(meta.id);
+                  }
+                });
               }
+            } catch {
+              settingsPathOrder = [];
             }
-            if (Object.keys(configs).length === 0) {
-              const legacyRaw =
-                map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
-              if (legacyRaw) {
-                try {
-                  const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
-                  const fallback = createDefaultPathConfig(parsedConfig.id ?? "default");
-                  configs[fallback.id] = {
-                    ...fallback,
-                    ...parsedConfig,
-                    id: parsedConfig.id ?? fallback.id,
-                    name: parsedConfig.name || fallback.name,
-                  };
-                } catch {
-                  const fallback = createDefaultPathConfig("default");
-                  configs[fallback.id] = fallback;
-                }
+          }
+          if (Object.keys(configs).length === 0) {
+            const legacyRaw =
+              map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
+            if (legacyRaw) {
+              try {
+                const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
+                const fallback = createDefaultPathConfig(parsedConfig.id ?? "default");
+                configs[fallback.id] = {
+                  ...fallback,
+                  ...parsedConfig,
+                  id: parsedConfig.id ?? fallback.id,
+                  name: parsedConfig.name || fallback.name,
+                };
+              } catch {
+                const fallback = createDefaultPathConfig("default");
+                configs[fallback.id] = fallback;
               }
             }
           }
@@ -330,11 +345,15 @@ export function useAiPathTrigger(): {
         deferPoll: false,
         fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
           if (entityType !== "product") return null;
-          const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, {
-            cache: "no-store",
+          return await queryClient.fetchQuery({
+            queryKey: ["products", entityId],
+            queryFn: async () => {
+              const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`);
+              if (!res.ok) return null;
+              return (await res.json()) as Record<string, unknown>;
+            },
+            staleTime: AI_PATHS_ENTITY_STALE_MS,
           });
-          if (!res.ok) return null;
-          return (await res.json()) as Record<string, unknown>;
         },
         reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
           logger.error(summary ?? "AI Paths trigger failed", error, meta);

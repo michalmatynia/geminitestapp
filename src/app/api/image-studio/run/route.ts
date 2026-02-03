@@ -27,11 +27,21 @@ const pointSchema = z.object({
   y: z.number().min(0).max(1),
 });
 
-const maskSchema = z.object({
-  type: z.literal("polygon"),
-  points: z.array(pointSchema).min(3),
-  closed: z.boolean(),
-});
+const polygonSchema = z.array(pointSchema).min(3);
+
+const maskSchema = z.union([
+  z.object({
+    type: z.literal("polygon"),
+    points: polygonSchema,
+    closed: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("polygons"),
+    polygons: z.array(polygonSchema).min(1),
+    invert: z.boolean().optional(),
+    feather: z.number().min(0).max(50).optional(),
+  }),
+]);
 
 const runSchema = z.object({
   projectId: z.string().min(1).max(120),
@@ -84,23 +94,30 @@ const coerceImageSize = (value: string | null | undefined): OpenAI.Images.ImageE
 
 async function buildMaskBuffer(params: {
   imagePath: string;
-  points: Array<{ x: number; y: number }>;
+  polygons: Array<Array<{ x: number; y: number }>>;
+  invert?: boolean;
+  feather?: number;
 }): Promise<Buffer | null> {
   const metadata = await sharp(params.imagePath).metadata();
   const width = metadata.width ?? null;
   const height = metadata.height ?? null;
   if (!width || !height) return null;
 
-  const points = params.points
-    .map((p) => `${Math.round(p.x * width)},${Math.round(p.y * height)}`)
-    .join(" ");
+  const polygons = params.polygons
+    .map((poly) => poly.map((p) => `${Math.round(p.x * width)},${Math.round(p.y * height)}`).join(" "))
+    .map((points) => `<polygon points="${points}" fill="${params.invert ? "white" : "black"}" fill-opacity="${params.invert ? 1 : 0}" />`)
+    .join("\n");
 
   const svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="white" />
-  <polygon points="${points}" fill="black" fill-opacity="0" />
+  <rect width="100%" height="100%" fill="${params.invert ? "black" : "white"}" fill-opacity="${params.invert ? 0 : 1}" />
+  ${polygons}
 </svg>`;
 
-  return sharp(Buffer.from(svg)).png().toBuffer();
+  let output = sharp(Buffer.from(svg));
+  if (params.feather && params.feather > 0) {
+    output = output.blur(Math.min(10, params.feather / 10));
+  }
+  return output.png().toBuffer();
 }
 
 async function createImageRecord(params: {
@@ -189,9 +206,23 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         ? settings.targetAi.openai.advanced_overrides
         : null;
 
+    let polygons: Array<Array<{ x: number; y: number }>> = [];
+    let invert = false;
+    let feather = 0;
+    if (parsed.data.mask) {
+      if (parsed.data.mask.type === "polygon") {
+        if (parsed.data.mask.closed && parsed.data.mask.points.length >= 3) {
+          polygons = [parsed.data.mask.points];
+        }
+      } else {
+        polygons = parsed.data.mask.polygons;
+        invert = Boolean(parsed.data.mask.invert);
+        feather = typeof parsed.data.mask.feather === "number" ? parsed.data.mask.feather : 0;
+      }
+    }
     const mask =
-      parsed.data.mask && parsed.data.mask.closed && parsed.data.mask.points.length >= 3
-        ? await buildMaskBuffer({ imagePath: diskPath, points: parsed.data.mask.points })
+      polygons.length > 0
+        ? await buildMaskBuffer({ imagePath: diskPath, polygons, invert, feather })
         : null;
 
     const payload: OpenAI.Images.ImageEditParamsNonStreaming = {

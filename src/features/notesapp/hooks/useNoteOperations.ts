@@ -14,6 +14,8 @@ import {
   useUpdateNoteMutation,
 } from "./useNoteData";
 
+const NOTES_STALE_MS = 10_000;
+
 export function useNoteOperations({
   selectedNotebookId,
   notesRef,
@@ -101,10 +103,11 @@ export function useNoteOperations({
       const note = await queryClient.fetchQuery<NoteWithRelations>({
         queryKey: ["notes", noteId],
         queryFn: async (): Promise<NoteWithRelations> => {
-          const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+          const response = await fetch(`/api/notes/${noteId}`);
           if (!response.ok) throw new Error("Failed to fetch note");
           return response.json() as Promise<NoteWithRelations>;
-        }
+        },
+        staleTime: NOTES_STALE_MS,
       });
 
       const baseTitle = note.title.replace(/\s*\(\d+\)$/, "");
@@ -276,18 +279,20 @@ export function useNoteOperations({
         queryClient.fetchQuery<NoteWithRelations>({
           queryKey: ["notes", sourceNoteId],
           queryFn: async (): Promise<NoteWithRelations> => {
-            const res = await fetch(`/api/notes/${sourceNoteId}`, { cache: "no-store" });
+            const res = await fetch(`/api/notes/${sourceNoteId}`);
             if (!res.ok) throw new Error("Failed to fetch source note");
             return res.json() as Promise<NoteWithRelations>;
-          }
+          },
+          staleTime: NOTES_STALE_MS,
         }),
         queryClient.fetchQuery<NoteWithRelations>({
           queryKey: ["notes", targetNoteId],
           queryFn: async (): Promise<NoteWithRelations> => {
-            const res = await fetch(`/api/notes/${targetNoteId}`, { cache: "no-store" });
+            const res = await fetch(`/api/notes/${targetNoteId}`);
             if (!res.ok) throw new Error("Failed to fetch target note");
             return res.json() as Promise<NoteWithRelations>;
-          }
+          },
+          staleTime: NOTES_STALE_MS,
         }),
       ]);
 

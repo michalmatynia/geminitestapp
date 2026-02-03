@@ -25,8 +25,8 @@ const QUERY_PANEL_KEYS = {
   open: "query_status_panel_open",
 };
 
-const parseEnabled = (value: string | undefined): boolean => {
-  if (!value) return true;
+const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
+  if (!value) return fallback;
   return ["true", "1", "yes", "on"].includes(value.toLowerCase());
 };
 
@@ -42,10 +42,10 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   const resolvedSettings = useMemo(() => {
     const map = settingsQuery.data;
     return {
-      enabled: parseEnabled(map?.get(BACKGROUND_SYNC_KEYS.enabled)),
+      enabled: parseEnabled(map?.get(BACKGROUND_SYNC_KEYS.enabled), true),
       intervalSeconds: parseIntervalSeconds(map?.get(BACKGROUND_SYNC_KEYS.intervalSeconds)),
-      queryPanelEnabled: parseEnabled(map?.get(QUERY_PANEL_KEYS.enabled)),
-      queryPanelOpen: parseEnabled(map?.get(QUERY_PANEL_KEYS.open)),
+      queryPanelEnabled: parseEnabled(map?.get(QUERY_PANEL_KEYS.enabled), false),
+      queryPanelOpen: parseEnabled(map?.get(QUERY_PANEL_KEYS.open), false),
     };
   }, [settingsQuery.data]);
 

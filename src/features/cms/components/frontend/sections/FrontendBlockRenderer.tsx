@@ -8,6 +8,7 @@ import { getBlockTypographyStyles } from "../theme-styles";
 import { APP_EMBED_OPTIONS, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { useMediaStyles } from "../media-styles-context";
 import { Viewer3D, type EnvironmentPreset, type LightingPreset } from "@/features/viewer3d";
+import { EventEffectsWrapper } from "@/features/cms/components/shared/EventEffectsWrapper";
 
 // ---------------------------------------------------------------------------
 // Render a single element block to real HTML
@@ -27,7 +28,9 @@ export function FrontendBlockRenderer({ block, stretch = false }: FrontendBlockR
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      {content}
+      <EventEffectsWrapper settings={block.settings}>
+        {content}
+      </EventEffectsWrapper>
     </GsapAnimationWrapper>
   );
 }

@@ -9,14 +9,17 @@ import type {
   NotebookRecord 
 } from "@/shared/types/notes";
 
+const NOTES_STALE_MS = 10_000;
+
 export function useNotebooks(): UseQueryResult<NotebookRecord[]> {
   return useQuery({
     queryKey: ["notebooks"],
     queryFn: async (): Promise<NotebookRecord[]> => {
-      const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
+      const response = await fetch("/api/notes/notebooks");
       if (!response.ok) throw new Error("Failed to fetch notebooks");
       return (await response.json()) as NotebookRecord[];
     },
+    staleTime: NOTES_STALE_MS,
   });
 }
 
@@ -26,11 +29,12 @@ export function useNoteFolderTree(notebookId?: string): UseQueryResult<CategoryW
     queryFn: async (): Promise<CategoryWithChildren[]> => {
       if (!notebookId) return [] as CategoryWithChildren[];
       const params = new URLSearchParams({ notebookId });
-      const response = await fetch(`/api/notes/categories/tree?${params.toString()}`, { cache: "no-store" });
+      const response = await fetch(`/api/notes/categories/tree?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch folder tree");
       return (await response.json()) as CategoryWithChildren[];
     },
     enabled: !!notebookId,
+    staleTime: NOTES_STALE_MS,
   });
 }
 
@@ -40,11 +44,12 @@ export function useNoteTags(notebookId?: string): UseQueryResult<TagRecord[]> {
     queryFn: async (): Promise<TagRecord[]> => {
       if (!notebookId) return [] as TagRecord[];
       const params = new URLSearchParams({ notebookId });
-      const response = await fetch(`/api/notes/tags?${params.toString()}`, { cache: "no-store" });
+      const response = await fetch(`/api/notes/tags?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch tags");
       return (await response.json()) as TagRecord[];
     },
     enabled: !!notebookId,
+    staleTime: NOTES_STALE_MS,
   });
 }
 
@@ -54,11 +59,12 @@ export function useNoteThemes(notebookId?: string): UseQueryResult<ThemeRecord[]
     queryFn: async (): Promise<ThemeRecord[]> => {
       if (!notebookId) return [] as ThemeRecord[];
       const params = new URLSearchParams({ notebookId });
-      const response = await fetch(`/api/notes/themes?${params.toString()}`, { cache: "no-store" });
+      const response = await fetch(`/api/notes/themes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch themes");
       return (await response.json()) as ThemeRecord[];
     },
     enabled: !!notebookId,
+    staleTime: NOTES_STALE_MS,
   });
 }
 
@@ -92,10 +98,11 @@ export function useNotes(params: FetchNotesParams): UseQueryResult<NoteWithRelat
       if (tagIds && tagIds.length > 0) urlParams.append("tagIds", tagIds.join(","));
       if (categoryIds && categoryIds.length > 0) urlParams.append("categoryIds", categoryIds.join(","));
 
-      const response = await fetch(`/api/notes?${urlParams}`, { cache: "no-store" });
+      const response = await fetch(`/api/notes?${urlParams}`);
       if (!response.ok) throw new Error("Failed to fetch notes");
       return (await response.json()) as NoteWithRelations[];
     },
     enabled: !!params.notebookId,
+    staleTime: NOTES_STALE_MS,
   });
 }

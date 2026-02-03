@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Trash2, Globe, FileText, MousePointer2, Monitor, Smartphone, PanelRightClose } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, useToast } from "@/shared/ui";
 import type { SettingsField, InspectorSettings, BlockInstance, SectionInstance } from "../../types/page-builder";
@@ -18,6 +18,14 @@ import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from "@/features/app-embeds/lib/constants";
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates, type GridTemplateRecord } from "./grid-templates";
 import { logClientError } from "@/features/observability";
+import { RangeField, SelectField } from "./shared-fields";
+import {
+  EVENT_CLICK_ACTION_OPTIONS,
+  EVENT_CLICK_TARGET_OPTIONS,
+  EVENT_HOVER_EFFECT_OPTIONS,
+  EVENT_SCROLL_BEHAVIOR_OPTIONS,
+  getEventEffectsConfig,
+} from "@/features/cms/utils/event-effects";
 
 const PADDING_KEYS = new Set(["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]);
 const MARGIN_KEYS = new Set(["marginTop", "marginRight", "marginBottom", "marginLeft"]);
@@ -138,7 +146,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [gridTemplateName, setGridTemplateName] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "connections">("settings");
+  const [activeTab, setActiveTab] = useState<"settings" | "animation" | "events" | "connections">("settings");
   const isRowBlock = selectedBlock?.type === "Row" && selectedParentSection?.type === "Grid";
   const rowCount = useMemo((): number => {
     if (!selectedParentSection || selectedParentSection.type !== "Grid") return 0;
@@ -255,6 +263,15 @@ export function ComponentSettingsPanel(): React.ReactNode {
           blockId: selectedBlock.id,
           settings: nextSettings,
         });
+      } else if (selectedParentBlock) {
+        // Element inside a nested block within a section (e.g. slideshow frame)
+        dispatch({
+          type: "UPDATE_SECTION_BLOCK_SETTINGS",
+          sectionId: selectedParentSection.id,
+          parentBlockId: selectedParentBlock.id,
+          blockId: selectedBlock.id,
+          settings: nextSettings,
+        });
       } else if (selectedParentColumn) {
         // Block directly inside a column
         dispatch({
@@ -275,6 +292,19 @@ export function ComponentSettingsPanel(): React.ReactNode {
       }
     },
     [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentBlock, dispatch]
+  );
+
+  const handleEventSettingChange = useCallback(
+    (key: string, value: unknown): void => {
+      if (selectedBlock) {
+        handleBlockSettingChange(key, value);
+        return;
+      }
+      if (selectedSection) {
+        handleSectionSettingChange(key, value);
+      }
+    },
+    [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]
   );
 
   const handleRemoveBlock = useCallback((): void => {
@@ -519,6 +549,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
+  const showEventsTab = Boolean(selectedBlock || selectedSection);
+  const eventSettingsSource = selectedBlock?.settings ?? selectedSection?.settings ?? null;
+  const eventConfig = useMemo(
+    () => (eventSettingsSource ? getEventEffectsConfig(eventSettingsSource) : null),
+    [eventSettingsSource]
+  );
 
   const selectedLabel = useMemo((): string => {
     if (selectedSection) return sectionDef?.label ?? selectedSection.type;
@@ -593,6 +629,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
       setActiveTab("settings");
     }
   }, [activeTab, dispatch, state.inspectorEnabled]);
+
+  useEffect(() => {
+    if (!showEventsTab && activeTab === "events") {
+      setActiveTab("settings");
+    }
+  }, [showEventsTab, activeTab]);
 
   return (
     <aside className="flex w-80 min-h-0 flex-col border-l border-border bg-gray-900">
@@ -750,13 +792,16 @@ export function ComponentSettingsPanel(): React.ReactNode {
         <Tabs
           value={activeTab}
           onValueChange={(value: string): void =>
-            setActiveTab(value as "settings" | "animation" | "connections")
+            setActiveTab(value as "settings" | "animation" | "events" | "connections")
           }
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <TabsList className="mx-4 mt-3 w-[calc(100%-2rem)]">
             <TabsTrigger value="settings" className="flex-1 text-xs">Settings</TabsTrigger>
             <TabsTrigger value="animation" className="flex-1 text-xs">Animation</TabsTrigger>
+            {showEventsTab && (
+              <TabsTrigger value="events" className="flex-1 text-xs">Events</TabsTrigger>
+            )}
             {showConnectionsTab && (
               <TabsTrigger value="connections" className="flex-1 text-xs">Connections</TabsTrigger>
             )}
@@ -1014,6 +1059,102 @@ export function ComponentSettingsPanel(): React.ReactNode {
               onChange={handleAnimationChange}
             />
           </TabsContent>
+          {showEventsTab && (
+            <TabsContent value="events" className="flex-1 overflow-y-auto p-4 mt-0">
+              {!eventConfig ? (
+                <div className="text-xs text-gray-500">Select a block or section to configure event effects.</div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="rounded border border-border/40 bg-gray-800/30 px-3 py-2 text-xs text-gray-400">
+                    Event effects for{" "}
+                    <span className="text-gray-200">
+                      {selectedBlock ? blockDef?.label ?? "Block" : sectionDef?.label ?? "Section"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
+                    <div className="text-xs font-semibold text-gray-200">Hover</div>
+                    <SelectField
+                      label="Hover effect"
+                      value={eventConfig.hoverEffect}
+                      onChange={(value: string): void => handleEventSettingChange("eventHoverEffect", value)}
+                      options={EVENT_HOVER_EFFECT_OPTIONS}
+                    />
+                    <RangeField
+                      label="Hover scale"
+                      value={eventConfig.hoverScale}
+                      onChange={(value: number): void => handleEventSettingChange("eventHoverScale", value)}
+                      min={1}
+                      max={1.2}
+                      step={0.01}
+                      suffix="x"
+                      disabled={eventConfig.hoverEffect === "none"}
+                    />
+                    <p className="text-[11px] text-gray-500">
+                      Hover effects preview in the builder; they apply on the live site too.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 rounded border border-border/40 bg-gray-900/40 p-3">
+                    <div className="text-xs font-semibold text-gray-200">Click</div>
+                    <SelectField
+                      label="Click action"
+                      value={eventConfig.clickAction}
+                      onChange={(value: string): void => handleEventSettingChange("eventClickAction", value)}
+                      options={EVENT_CLICK_ACTION_OPTIONS}
+                    />
+
+                    {eventConfig.clickAction === "navigate" && (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+                          URL
+                        </Label>
+                        <Input
+                          value={eventConfig.clickUrl}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                            handleEventSettingChange("eventClickUrl", e.target.value)
+                          }
+                          placeholder="https://example.com"
+                          className="h-8 text-xs"
+                        />
+                        <SelectField
+                          label="Open link"
+                          value={eventConfig.clickTarget}
+                          onChange={(value: string): void => handleEventSettingChange("eventClickTarget", value)}
+                          options={EVENT_CLICK_TARGET_OPTIONS}
+                        />
+                      </div>
+                    )}
+
+                    {eventConfig.clickAction === "scroll" && (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-wider text-gray-500">
+                          Target ID
+                        </Label>
+                        <Input
+                          value={eventConfig.clickScrollTarget}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                            handleEventSettingChange("eventClickScrollTarget", e.target.value)
+                          }
+                          placeholder="hero-section"
+                          className="h-8 text-xs"
+                        />
+                        <SelectField
+                          label="Scroll behavior"
+                          value={eventConfig.clickScrollBehavior}
+                          onChange={(value: string): void => handleEventSettingChange("eventClickScrollBehavior", value)}
+                          options={EVENT_SCROLL_BEHAVIOR_OPTIONS}
+                        />
+                        <p className="text-[11px] text-gray-500">
+                          The target should match an element ID (with or without #).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          )}
           {showConnectionsTab && (
             <TabsContent value="connections" className="flex-1 overflow-y-auto p-4 mt-0">
               {!hasSelection ? (

@@ -29,6 +29,11 @@ export interface ApiHandlerOptions {
   successLogLevel?: "info" | "warn" | "error";
   fallbackMessage?: string;
   includeDetails?: boolean;
+  /**
+   * Optional Cache-Control override for this route.
+   * If omitted, default cache headers are applied based on HTTP method.
+   */
+  cacheControl?: string;
 }
 
 export type ApiRouteHandler = (

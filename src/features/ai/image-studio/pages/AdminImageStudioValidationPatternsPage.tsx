@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, RefreshCcw } from "lucide-react";
 
 import {
   Button,
+  ClientOnly,
   Input,
   Label,
   SectionHeader,
@@ -49,10 +50,8 @@ const SEVERITY_ORDER: Record<PromptValidationSeverity, number> = {
   info: 2,
 };
 
-const createDraftId = (): string => `rule_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-
-const createRuleDraft = (rule: PromptValidationRule): RuleDraft => ({
-  uid: createDraftId(),
+const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): RuleDraft => ({
+  uid,
   text: JSON.stringify(rule, null, 2),
   parsed: rule,
   error: null,
@@ -139,26 +138,31 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
 
   const rawSettings = settingsQuery.data?.get(IMAGE_STUDIO_SETTINGS_KEY) ?? null;
   const studioSettings = useMemo(() => parseImageStudioSettings(rawSettings), [rawSettings]);
-
   const [query, setQuery] = useState<string>("");
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
-  const [draftsLoaded, setDraftsLoaded] = useState<boolean>(false);
+  const [initializedAt, setInitializedAt] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [learnedDrafts, setLearnedDrafts] = useState<RuleDraft[]>([]);
+  const [learnedDirty, setLearnedDirty] = useState<boolean>(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importLearnedInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Derived state pattern for drafts initialization
-  const [prevRawSettings, setPrevRawSettings] = useState<string | null>(null);
-  if (rawSettings !== prevRawSettings && !draftsLoaded) {
-    setPrevRawSettings(rawSettings);
+  useEffect(() => {
+    if (!settingsQuery.isSuccess) return;
+    if (initializedAt === settingsQuery.dataUpdatedAt) return;
     const settings = parseImageStudioSettings(rawSettings);
     const rules = settings.promptValidation.rules ?? defaultImageStudioSettings.promptValidation.rules;
-    setDrafts(rules.map((rule: PromptValidationRule) => createRuleDraft(rule)));
-    setDraftsLoaded(true);
+    setDrafts(rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+    const learnedRules = settings.promptValidation.learnedRules ?? [];
+    setLearnedDrafts(learnedRules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
     setSaveError(null);
     setIsDirty(false);
-  }
+    setLearnedDirty(false);
+    setInitializedAt(settingsQuery.dataUpdatedAt);
+  }, [initializedAt, rawSettings, settingsQuery.dataUpdatedAt, settingsQuery.isSuccess]);
 
   const sortedDrafts = useMemo((): RuleDraft[] => {
     const list = [...drafts];
@@ -213,10 +217,45 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
     setSaveError(null);
   }, []);
 
+  const handleLearnedRuleTextChange = useCallback((uid: string, nextText: string): void => {
+    setLearnedDrafts((prev: RuleDraft[]) =>
+      prev.map((draft: RuleDraft) => {
+        if (draft.uid !== uid) return draft;
+        try {
+          const parsed = JSON.parse(nextText) as unknown;
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return { ...draft, text: nextText, parsed: null, error: "Rule JSON must be an object." };
+          }
+          return { ...draft, text: nextText, parsed: parsed as PromptValidationRule, error: null };
+        } catch (error) {
+          return {
+            ...draft,
+            text: nextText,
+            parsed: null,
+            error: error instanceof Error ? error.message : "Invalid JSON.",
+          };
+        }
+      })
+    );
+    setLearnedDirty(true);
+    setSaveError(null);
+  }, []);
+
   const handleAddRule = useCallback((): void => {
     const newRule = createNewRule();
     setDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);
     setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  const handleAddLearnedRule = useCallback((): void => {
+    const newRule: PromptValidationRule = {
+      ...createNewRule(),
+      id: `learned.${Date.now()}`,
+      title: "Learned validation rule",
+    };
+    setLearnedDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);
+    setLearnedDirty(true);
     setSaveError(null);
   }, []);
 
@@ -226,11 +265,96 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
     setSaveError(null);
   }, []);
 
+  const handleRemoveLearnedRule = useCallback((uid: string): void => {
+    setLearnedDrafts((prev: RuleDraft[]) => prev.filter((draft: RuleDraft) => draft.uid !== uid));
+    setLearnedDirty(true);
+    setSaveError(null);
+  }, []);
+
   const handleRefresh = useCallback(async (): Promise<void> => {
-    setDraftsLoaded(false);
     setSaveError(null);
     await settingsQuery.refetch();
   }, [settingsQuery]);
+
+  const handleExport = useCallback((): void => {
+    const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
+    if (invalidJson.length > 0) {
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before exporting.`, { variant: "error" });
+      return;
+    }
+    const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
+    const result = parsePromptValidationRules(JSON.stringify(parsedRules));
+    if (!result.ok) {
+      toast(result.error, { variant: "error" });
+      return;
+    }
+    const blob = new Blob([JSON.stringify(result.rules, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `image-studio-validation-patterns-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, [drafts, toast]);
+
+  const handleExportLearned = useCallback((): void => {
+    const invalidJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
+    if (invalidJson.length > 0) {
+      toast(`Fix invalid JSON in ${invalidJson.length} learned rule(s) before exporting.`, { variant: "error" });
+      return;
+    }
+    const parsedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
+    const result = parsePromptValidationRules(JSON.stringify(parsedRules));
+    if (!result.ok) {
+      toast(result.error, { variant: "error" });
+      return;
+    }
+    const blob = new Blob([JSON.stringify(result.rules, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `image-studio-learned-patterns-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, [learnedDrafts, toast]);
+
+  const handleImport = useCallback(async (file: File): Promise<void> => {
+    const text = await file.text();
+    const result = parsePromptValidationRules(text);
+    if (!result.ok) {
+      toast(result.error, { variant: "error" });
+      return;
+    }
+    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+    setIsDirty(true);
+    setSaveError(null);
+    toast("Validation patterns imported. Review and save to apply.", { variant: "success" });
+  }, [toast]);
+
+  const handleImportLearned = useCallback(async (file: File): Promise<void> => {
+    const text = await file.text();
+    const result = parsePromptValidationRules(text);
+    if (!result.ok) {
+      toast(result.error, { variant: "error" });
+      return;
+    }
+    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+    setLearnedDirty(true);
+    setSaveError(null);
+    toast("Learned patterns imported. Review and save to apply.", { variant: "success" });
+  }, [toast]);
+
+  const handleImportClick = useCallback((): void => {
+    importInputRef.current?.click();
+  }, []);
+
+  const handleImportLearnedClick = useCallback((): void => {
+    importLearnedInputRef.current?.click();
+  }, []);
 
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
@@ -238,8 +362,14 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
       toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, { variant: "error" });
       return;
     }
+    const invalidLearnedJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
+    if (invalidLearnedJson.length > 0) {
+      toast(`Fix invalid JSON in ${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: "error" });
+      return;
+    }
 
     const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
+    const parsedLearnedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
     const invalidRuleIds: string[] = [];
     parsedRules.forEach((rule: PromptValidationRule, index: number) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
@@ -249,10 +379,24 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
       toast(`Invalid rule(s): ${invalidRuleIds.join(", ")}.`, { variant: "error" });
       return;
     }
+    const invalidLearnedIds: string[] = [];
+    parsedLearnedRules.forEach((rule: PromptValidationRule, index: number) => {
+      const result = parsePromptValidationRules(JSON.stringify([rule]));
+      if (!result.ok) invalidLearnedIds.push(rule.id || `#${index + 1}`);
+    });
+    if (invalidLearnedIds.length > 0) {
+      toast(`Invalid learned rule(s): ${invalidLearnedIds.join(", ")}.`, { variant: "error" });
+      return;
+    }
 
     const result = parsePromptValidationRules(JSON.stringify(parsedRules));
     if (!result.ok) {
       toast(result.error, { variant: "error" });
+      return;
+    }
+    const learnedResult = parsePromptValidationRules(JSON.stringify(parsedLearnedRules));
+    if (!learnedResult.ok) {
+      toast(learnedResult.error, { variant: "error" });
       return;
     }
 
@@ -263,20 +407,23 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
         promptValidation: {
           ...currentSettings.promptValidation,
           rules: result.rules,
+          learnedRules: learnedResult.rules,
         },
       };
       await updateSetting.mutateAsync({
         key: IMAGE_STUDIO_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      setDrafts(result.rules.map((rule: PromptValidationRule) => createRuleDraft(rule)));
+      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
       setIsDirty(false);
+      setLearnedDirty(false);
       toast("Validation patterns saved.", { variant: "success" });
     } catch (error) {
       logClientError(error, { context: { source: "AdminImageStudioValidationPatternsPage", action: "saveRules" } });
       toast("Failed to save rules.", { variant: "error" });
     }
-  }, [drafts, rawSettings, toast, updateSetting]);
+  }, [drafts, learnedDrafts, rawSettings, toast, updateSetting]);
 
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {
@@ -298,13 +445,28 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
             <Button type="button" variant="outline" asChild>
               <Link href="/admin/image-studio">Back to Studio</Link>
             </Button>
+            <Button type="button" variant="outline" onClick={handleExport}>
+              Export JSON
+            </Button>
+            <Button type="button" variant="outline" onClick={handleExportLearned}>
+              Export learned
+            </Button>
+            <Button type="button" variant="outline" onClick={handleImportClick}>
+              Import JSON
+            </Button>
+            <Button type="button" variant="outline" onClick={handleImportLearnedClick}>
+              Import learned
+            </Button>
             <Button type="button" variant="outline" onClick={handleAddRule}>
               Add rule
+            </Button>
+            <Button type="button" variant="outline" onClick={handleAddLearnedRule}>
+              Add learned
             </Button>
             <Button
               type="button"
               onClick={() => void handleSave()}
-              disabled={updateSetting.isPending || !isDirty}
+              disabled={updateSetting.isPending || (!isDirty && !learnedDirty)}
             >
               {updateSetting.isPending ? "Saving..." : "Save changes"}
             </Button>
@@ -320,6 +482,31 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
             </Button>
           </>
         }
+      />
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          const file = event.target.files?.[0] ?? null;
+          event.target.value = "";
+          if (!file) return;
+          void handleImport(file);
+        }}
+      />
+      <input
+        ref={importLearnedInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          const file = event.target.files?.[0] ?? null;
+          event.target.value = "";
+          if (!file) return;
+          void handleImportLearned(file);
+        }}
       />
 
       <SectionPanel variant="subtle">
@@ -353,17 +540,28 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
 
           <div>
             <Label className="text-[11px] text-gray-400">Severity</Label>
-            <Select value={severity} onValueChange={(value: string) => setSeverity((value as SeverityFilter) || "all")}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-              </SelectContent>
-            </Select>
+            <ClientOnly
+              fallback={
+                <div className="flex h-9 w-full items-center justify-between rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-muted-foreground/70">
+                  All
+                </div>
+              }
+            >
+              <Select
+                value={severity}
+                onValueChange={(value: string) => setSeverity((value as SeverityFilter) || "all")}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+                </SelectContent>
+              </Select>
+            </ClientOnly>
           </div>
 
           <div className="flex items-end">
@@ -598,6 +796,72 @@ export function AdminImageStudioValidationPatternsPage(): React.JSX.Element {
           );
         })}
       </div>
+
+      <SectionPanel variant="subtle">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm text-gray-100">Learned Patterns</div>
+          <div className="text-[11px] text-gray-400">
+            {learnedDrafts.length} learned rule(s)
+          </div>
+        </div>
+        {learnedDrafts.length === 0 ? (
+          <div className="mt-3 rounded border border-dashed border-border p-3 text-xs text-gray-400">
+            No learned patterns yet. Use “Learn patterns” in Image Studio to add some.
+          </div>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {learnedDrafts.map((draft: RuleDraft) => {
+              const rule = draft.parsed;
+              return (
+                <div key={draft.uid} className="rounded-md border border-border bg-card/50 p-2 text-[11px] text-gray-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm text-gray-100">{rule?.title ?? "Invalid rule JSON"}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {rule ? (
+                        <span className="rounded-full border border-border bg-card/60 px-2 py-0.5 text-[10px] text-gray-300">
+                          {rule.kind}
+                        </span>
+                      ) : null}
+                      {draft.error ? (
+                        <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">
+                          Invalid JSON
+                        </span>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRemoveLearnedRule(draft.uid)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[11px] text-gray-400">ID: {rule?.id ?? "—"}</div>
+                  {rule?.kind === "regex" ? (
+                    <div className="mt-2 rounded border border-border bg-card/50 p-2 font-mono text-[11px] text-gray-200">
+                      {rule.pattern}
+                      <span className="text-gray-400">{rule.flags?.trim() ? `/${rule.flags}` : ""}</span>
+                    </div>
+                  ) : null}
+                  {draft.error ? (
+                    <div className="mt-2 rounded border border-red-500/30 bg-red-500/10 p-2 text-[11px] text-red-200">
+                      {draft.error}
+                    </div>
+                  ) : null}
+                  <div className="mt-2 text-[11px] text-gray-500">Rule JSON</div>
+                  <Textarea
+                    value={draft.text}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleLearnedRuleTextChange(draft.uid, e.target.value)}
+                    className="min-h-[140px] font-mono text-[11px]"
+                    placeholder="Paste JSON for this learned rule"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </SectionPanel>
     </div>
   );
 }

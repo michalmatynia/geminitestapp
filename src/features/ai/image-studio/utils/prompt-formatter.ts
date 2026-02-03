@@ -1,5 +1,5 @@
 import { validateProgrammaticPrompt } from "./prompt-validator";
-import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings } from "./studio-settings";
+import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from "./studio-settings";
 
 type AppliedFix = {
   ruleId: string;
@@ -297,12 +297,34 @@ function applyAutofixOperation(prompt: string, operation: PromptAutofixOperation
   }
 }
 
+const extractReplacementFromSuggestion = (suggestion: string): string | null => {
+  const match = suggestion.match(/`([^`]+)`/);
+  return match?.[1] ?? null;
+};
+
+function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarPattern): string {
+  const replacement = extractReplacementFromSuggestion(suggestion.suggestion);
+  if (!replacement) return prompt;
+  const flags = normalizeRegexFlags(suggestion.flags, true);
+  try {
+    const re = new RegExp(suggestion.pattern, flags);
+    const safeReplacement = replacement.replace(/\$/g, "$$");
+    return prompt.replace(re, safeReplacement);
+  } catch {
+    return prompt;
+  }
+}
+
 function getRuleById(rules: PromptValidationRule[], id: string): PromptValidationRule | null {
   return rules.find((rule: PromptValidationRule) => rule.id === id) ?? null;
 }
 
 export function formatProgrammaticPrompt(prompt: string, settings: PromptValidationSettings): FormatPromptResult {
-  const validationSettings = { ...settings, enabled: true };
+  const mergedRules: PromptValidationRule[] = [
+    ...settings.rules,
+    ...(settings.learnedRules ?? []),
+  ];
+  const validationSettings = { ...settings, enabled: true, rules: mergedRules };
   const issuesBeforeList = validateProgrammaticPrompt(prompt, validationSettings);
   const issuesBefore = issuesBeforeList.length;
   if (issuesBefore === 0) {
@@ -313,17 +335,29 @@ export function formatProgrammaticPrompt(prompt: string, settings: PromptValidat
   const applied: AppliedFix[] = [];
 
   for (const issue of issuesBeforeList) {
-    const rule = getRuleById(settings.rules, issue.ruleId);
+    const rule = getRuleById(mergedRules, issue.ruleId);
     const autofix = rule?.autofix;
-    if (!rule || !autofix?.enabled || !Array.isArray(autofix.operations) || autofix.operations.length === 0) {
-      continue;
+    let appliedFix = false;
+    if (rule && autofix?.enabled && Array.isArray(autofix.operations) && autofix.operations.length > 0) {
+      for (const op of autofix.operations) {
+        const before = nextPrompt;
+        nextPrompt = applyAutofixOperation(nextPrompt, op);
+        if (nextPrompt !== before) {
+          applied.push({ ruleId: rule.id, operationKind: op.kind });
+          appliedFix = true;
+        }
+      }
     }
 
-    for (const op of autofix.operations) {
-      const before = nextPrompt;
-      nextPrompt = applyAutofixOperation(nextPrompt, op);
-      if (nextPrompt !== before) {
-        applied.push({ ruleId: rule.id, operationKind: op.kind });
+    if (!rule || appliedFix) continue;
+
+    if (Array.isArray(rule.similar) && rule.similar.length > 0) {
+      for (const sim of rule.similar) {
+        const before = nextPrompt;
+        nextPrompt = applySuggestionFix(nextPrompt, sim);
+        if (nextPrompt !== before) {
+          applied.push({ ruleId: rule.id, operationKind: "replace" });
+        }
       }
     }
   }

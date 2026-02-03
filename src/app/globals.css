@@ -168,6 +168,23 @@
     box-shadow: var(--cms-hover-shadow, 0 12px 20px rgba(0, 0, 0, 0.25));
   }
 
+  .cms-event-hover {
+    transform: translateY(0) translateZ(0);
+    perspective: var(--cms-event-hover-perspective, none);
+    transform-style: preserve-3d;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+    will-change: transform;
+  }
+
+  .cms-event-hover:hover {
+    transform: var(--cms-event-hover-transform, translateY(-4px));
+    box-shadow: var(--cms-event-hover-shadow, 0 12px 20px rgba(0, 0, 0, 0.25));
+  }
+
+  .cms-event-clickable {
+    cursor: pointer;
+  }
+
   .cms-media {
     border-radius: var(--cms-media-radius, 0px);
     border-width: var(--cms-media-border-width, 0px);

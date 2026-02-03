@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
 import { normalizeAuthEmail } from "@/features/auth/server";
 import { getAuthSecurityPolicy, validatePasswordStrength } from "@/features/auth/server";
 import { getAuthUserPageSettings } from "@/features/auth/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError, validationError, forbiddenError } from "@/shared/errors/app-error";
+import { getAuthDataProvider, requireAuthProvider } from "@/features/auth/services/auth-provider";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
@@ -52,6 +54,35 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     }
     const email = normalizeAuthEmail(data.email);
     const passwordHash = await hash(data.password, 12);
+
+    const provider = requireAuthProvider(await getAuthDataProvider());
+    if (provider === "prisma") {
+      if (!process.env.DATABASE_URL) {
+        throw internalError("Prisma is not configured.");
+      }
+      const existing = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (existing) {
+        throw conflictError("User already exists.", { email });
+      }
+      const now = new Date();
+      const user = await prisma.user.create({
+        data: {
+          email,
+          name: data.name ?? null,
+          passwordHash,
+          emailVerified: data.emailVerified ? now : null,
+          image: null,
+        },
+        select: { id: true, email: true, name: true },
+      });
+      return NextResponse.json(
+        { id: user.id, email: user.email, name: user.name },
+        { status: 201 }
+      );
+    }
 
     if (!process.env.MONGODB_URI) {
       throw internalError("MongoDB is not configured.");

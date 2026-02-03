@@ -14,6 +14,7 @@ import type { ImageFileRecord } from "@/features/files/types/services/image-file
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const productsRoot = path.join(uploadsRoot, "products");
 const notesRoot = path.join(uploadsRoot, "notes");
+const studioRoot = path.join(uploadsRoot, "studio");
 const tempFolderName = "temp";
 
 export function getDiskPathFromPublicPath(publicPath: string): string {
@@ -24,14 +25,40 @@ function sanitizeSku(sku: string): string {
   return sku.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
 }
 
+function sanitizeSegment(value: string): string {
+  return value.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+}
+
+function sanitizeFolderPath(value: string): string {
+  const normalized = value.replace(/\\/g, "/").trim();
+  const parts = normalized
+    .split("/")
+    .map((part) => part.trim())
+    .filter((part) => part && part !== "." && part !== "..")
+    .map((part) => part.replace(/[^a-zA-Z0-9-_]/g, "_"))
+    .filter(Boolean);
+
+  return parts.join("/");
+}
+
+function sanitizeFilename(filename: string): string {
+  const base = path.basename(filename);
+  const sanitized = base.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^_+/, "");
+  return sanitized || "upload.bin";
+}
+
 function getUploadTarget({
   category,
   sku,
   noteId,
+  projectId,
+  folder,
 }: {
-  category?: "products" | "notes" | "cms" | undefined;
+  category?: "products" | "notes" | "cms" | "studio" | undefined;
   sku?: string | null | undefined;
   noteId?: string | null | undefined;
+  projectId?: string | null | undefined;
+  folder?: string | null | undefined;
 }): { diskDir: string; publicDir: string } {
   if (category === "products") {
     const folderName = sku ? sanitizeSku(sku) : tempFolderName;
@@ -52,25 +79,50 @@ function getUploadTarget({
     return { diskDir, publicDir };
   }
 
+  if (category === "studio") {
+    if (!projectId) {
+      throw new Error("projectId is required for studio uploads.");
+    }
+    const safeProject = sanitizeSegment(projectId);
+    const safeFolder = folder && folder.trim() ? sanitizeFolderPath(folder) : "";
+    const diskDir = safeFolder
+      ? path.join(studioRoot, safeProject, safeFolder)
+      : path.join(studioRoot, safeProject);
+    const publicDir = safeFolder
+      ? `/uploads/studio/${safeProject}/${safeFolder}`
+      : `/uploads/studio/${safeProject}`;
+    return { diskDir, publicDir };
+  }
+
   return { diskDir: uploadsRoot, publicDir: "/uploads" };
 }
 
 export async function uploadFile(
   file: File,
   options?: {
-    category?: "products" | "notes" | "cms" | undefined;
+    category?: "products" | "notes" | "cms" | "studio" | undefined;
     sku?: string | null | undefined;
     noteId?: string | null | undefined;
+    projectId?: string | null | undefined;
+    folder?: string | null | undefined;
     allowOrphanRecord?: boolean | undefined;
+    filenameOverride?: string | null | undefined;
   }
 ): Promise<ImageFileRecord> {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const rawName = typeof file.name === "string" && file.name.trim().length > 0 ? file.name : "upload.bin";
-  const filename = `${Date.now()}-${path.basename(rawName)}`;
+  const rawName =
+    options?.filenameOverride && options.filenameOverride.trim().length > 0
+      ? options.filenameOverride
+      : typeof file.name === "string" && file.name.trim().length > 0
+      ? file.name
+      : "upload.bin";
+  const filename = `${Date.now()}-${sanitizeFilename(rawName)}`;
   const { diskDir, publicDir } = getUploadTarget({
     category: options?.category,
     sku: options?.sku,
     noteId: options?.noteId,
+    projectId: options?.projectId,
+    folder: options?.folder,
   });
   const filepath = path.join(diskDir, filename);
 

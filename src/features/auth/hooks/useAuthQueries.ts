@@ -19,11 +19,15 @@ const authKeys = {
   userSecurity: (userId: string) => ["auth-user-security", userId] as const,
 };
 
+const AUTH_USERS_STALE_MS = 10_000;
+const AUTH_SECURITY_STALE_MS = 10_000;
+
 export function useAuthUsers(enabled = true): UseQueryResult<AuthUsersResponse, Error> {
   return useQuery({
     queryKey: authKeys.users,
     queryFn: fetchAuthUsers,
     enabled,
+    staleTime: AUTH_USERS_STALE_MS,
   });
 }
 
@@ -32,6 +36,7 @@ export function useAuthUserSecurity(userId?: string | null): UseQueryResult<Auth
     queryKey: userId ? authKeys.userSecurity(userId) : authKeys.userSecurity(""),
     queryFn: () => fetchAuthUserSecurity(userId as string),
     enabled: Boolean(userId),
+    staleTime: AUTH_SECURITY_STALE_MS,
   });
 }
 

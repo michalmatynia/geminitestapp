@@ -48,6 +48,8 @@ type AnalyticsEventMongoDoc = {
   connection?: AnalyticsConnectionInfo;
   meta?: Record<string, unknown>;
   clientTs?: Date;
+  ip?: string;
+  ipMasked?: string;
   ipHash?: string;
   userAgent?: string;
   country?: string;
@@ -105,6 +107,49 @@ const hashIp = (ip: string): string => {
   return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
 };
 
+const normalizeIpMode = (): "full" | "masked" | "hash" | "none" => {
+  const raw = process.env.ANALYTICS_IP_MODE?.toLowerCase().trim();
+  if (raw === "full" || raw === "masked" || raw === "hash" || raw === "none") {
+    return raw;
+  }
+  return "masked";
+};
+
+const maskIp = (ip: string): string => {
+  if (ip.includes(".")) {
+    const parts = ip.split(".");
+    if (parts.length === 4) {
+      return `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+    }
+  }
+
+  if (ip.includes(":")) {
+    const parts = ip.split(":").filter(Boolean);
+    const head = parts.slice(0, 3).join(":");
+    if (head) {
+      return `${head}:xxxx:xxxx:xxxx:xxxx`;
+    }
+  }
+
+  return ip;
+};
+
+const buildIpFields = (ip: string | undefined): { ip?: string; ipMasked?: string; ipHash?: string } => {
+  if (!ip) return {};
+  const mode = normalizeIpMode();
+  if (mode === "none") return {};
+  const ipMasked = maskIp(ip);
+  const ipHash = hashIp(ip);
+
+  if (mode === "hash") {
+    return { ipHash };
+  }
+  if (mode === "full") {
+    return { ip, ipMasked, ipHash };
+  }
+  return { ipMasked, ipHash };
+};
+
 const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
   id: doc._id.toString(),
   ts: doc.ts.toISOString(),
@@ -127,6 +172,8 @@ const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
   ...(doc.connection ? { connection: doc.connection } : {}),
   ...(doc.meta ? { meta: doc.meta } : {}),
   ...(doc.clientTs ? { clientTs: doc.clientTs.toISOString() } : {}),
+  ...(doc.ip ? { ip: doc.ip } : {}),
+  ...(doc.ipMasked ? { ipMasked: doc.ipMasked } : {}),
   ...(doc.ipHash ? { ipHash: doc.ipHash } : {}),
   ...(doc.userAgent ? { userAgent: doc.userAgent } : {}),
   ...(doc.country ? { country: doc.country } : {}),
@@ -164,6 +211,7 @@ export async function insertAnalyticsEvent(
   const serverCountry = normalizeOptionalString(server?.country ?? null);
   const serverRegion = normalizeOptionalString(server?.region ?? null);
   const serverCity = normalizeOptionalString(server?.city ?? null);
+  const ipFields = buildIpFields(serverIp ?? undefined);
 
   const doc = {
     ts: new Date(),
@@ -186,7 +234,7 @@ export async function insertAnalyticsEvent(
     ...(input.connection ? { connection: input.connection } : {}),
     ...(input.meta ? { meta: input.meta } : {}),
     ...(clientTsDate ? { clientTs: clientTsDate } : {}),
-    ...(serverIp ? { ipHash: hashIp(serverIp) } : {}),
+    ...ipFields,
     ...(serverUserAgent ? { userAgent: serverUserAgent } : {}),
     ...(serverCountry ? { country: serverCountry } : {}),
     ...(serverRegion ? { region: serverRegion } : {}),

@@ -1,7 +1,6 @@
 import { JSX } from "react";
-import * as ImageStudio from "@/features/ai/image-studio";
+import ClientPage from "./ClientPage";
 
 export default function Page(): JSX.Element {
-  return <ImageStudio.AdminImageStudioValidationPatternsPage />;
+  return <ClientPage />;
 }
-

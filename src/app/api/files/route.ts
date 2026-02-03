@@ -21,15 +21,26 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const tags = tagsParam ? tagsParam.split(",").map((tag) => tag.trim()).filter(Boolean) : [];
 
     const imageFileRepository = await getImageFileRepository();
-    const productRepository = await getProductRepository();
     const files = await imageFileRepository.listImageFiles({ filename, tags });
 
     const getProductDisplayName = (product: ProductWithImages): string =>
       product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
 
-    const products = await productRepository.getProducts(
-      productName ? { search: productName } : {}
-    );
+    let products: ProductWithImages[] = [];
+    let productRepoAvailable = true;
+    try {
+      const productRepository = await getProductRepository();
+      products = await productRepository.getProducts(
+        productName ? { search: productName } : {}
+      );
+    } catch (error) {
+      productRepoAvailable = false;
+      await ErrorSystem.captureException(error, {
+        service: "api/files",
+        method: "GET",
+        action: "loadProducts",
+      });
+    }
     const filteredProducts = productId
       ? products.filter((product: ProductWithImages) => product.id === productId)
       : products;
@@ -51,7 +62,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     }
 
     const allowedImageFileIds =
-      productId || productName
+      productRepoAvailable && (productId || productName)
         ? new Set(imageFileToProducts.keys())
         : null;
 

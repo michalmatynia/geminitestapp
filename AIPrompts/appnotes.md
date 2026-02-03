@@ -1,4 +1,4 @@
-CMS Drop ImageElemnt into Row Column Take it Out , the same for the Block
+Test If I can Put the Block in and Out the same for the Block
 Non overflowing images option in CMSBuilder
 
 
@@ -10,11 +10,11 @@ CMS Inspector is not working in the CMS Page Builder not working
 
 Admin Menu Favourites
 
+Attach itself to Background,  Backgroun Image Layering
 
 
 GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
 
- Backgroun Image Layering
 Reordering of Grids,
 
 App manager

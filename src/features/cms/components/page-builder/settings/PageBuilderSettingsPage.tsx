@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Card, Checkbox, Label, Button, useToast } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { Loader2 } from "lucide-react";
@@ -13,32 +13,19 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
   const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
 
-  const extractValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-  const sectionDropValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  // Get server values
+  const serverExtractValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const serverSectionDropValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
 
-  const [showExtractPlaceholder, setShowExtractPlaceholder] = useState(false);
-  const [showSectionDropPlaceholder, setShowSectionDropPlaceholder] = useState(true);
-  const [isDirty, setIsDirty] = useState(false);
-  const lastAppliedValuesRef = useRef<{
-    extractValue: string | undefined;
-    sectionDropValue: string | undefined;
-  } | null>(null);
+  // Local state for user edits (null means use server value)
+  const [localExtractPlaceholder, setLocalExtractPlaceholder] = useState<boolean | null>(null);
+  const [localSectionDropPlaceholder, setLocalSectionDropPlaceholder] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    // Don't key this effect off the Map reference (it may be recreated),
-    // use the primitive values instead to avoid render → effect → setState loops.
-    if (isDirty) return;
+  // Compute displayed values: use local if edited, otherwise derive from server
+  const showExtractPlaceholder = localExtractPlaceholder ?? (serverExtractValue === "true");
+  const showSectionDropPlaceholder = localSectionDropPlaceholder ?? (serverSectionDropValue !== "false");
 
-    const last = lastAppliedValuesRef.current;
-    if (last && last.extractValue === extractValue && last.sectionDropValue === sectionDropValue) {
-      return;
-    }
-    lastAppliedValuesRef.current = { extractValue, sectionDropValue };
-
-    setShowExtractPlaceholder(extractValue === "true");
-    // Default to true if not set
-    setShowSectionDropPlaceholder(sectionDropValue !== "false");
-  }, [extractValue, sectionDropValue, isDirty]);
+  const isDirty = localExtractPlaceholder !== null || localSectionDropPlaceholder !== null;
 
   const handleSave = async (): Promise<void> => {
     try {
@@ -52,7 +39,9 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
           value: showSectionDropPlaceholder ? "true" : "false",
         },
       ]);
-      setIsDirty(false);
+      // Reset local state after successful save
+      setLocalExtractPlaceholder(null);
+      setLocalSectionDropPlaceholder(null);
       toast("Settings saved successfully.", { variant: "success" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save settings";
@@ -84,8 +73,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
             <Checkbox
               checked={showSectionDropPlaceholder}
               onCheckedChange={(checked: boolean | "indeterminate"): void => {
-                setShowSectionDropPlaceholder(checked === true);
-                setIsDirty(true);
+                setLocalSectionDropPlaceholder(checked === true);
               }}
             />
             <div>
@@ -102,8 +90,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
             <Checkbox
               checked={showExtractPlaceholder}
               onCheckedChange={(checked: boolean | "indeterminate"): void => {
-                setShowExtractPlaceholder(checked === true);
-                setIsDirty(true);
+                setLocalExtractPlaceholder(checked === true);
               }}
             />
             <div>

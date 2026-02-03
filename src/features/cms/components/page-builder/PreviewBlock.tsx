@@ -329,7 +329,8 @@ export function PreviewSection({
   const label = resolveNodeLabel(section.type, section.settings["label"]);
   // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
   const inspectorActive = isInspecting;
-  const isSectionHovered = isInspecting && showEditorChrome && hoveredNodeId === section.id;
+  const isSectionHovered = inspectorActive && hoveredNodeId === section.id;
+  const inspectorZ = inspectorActive && (isSectionHovered || isSectionSelected) ? "z-30" : "";
   const showDivider = shouldShowSectionDivider(section.settings);
   const divider = showDivider ? (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/5" />
@@ -458,15 +459,19 @@ export function PreviewSection({
       ...getSectionStyles(section.settings, colorSchemes),
       ...getTextAlign(section.settings["contentAlignment"]),
     };
-    const containerRingClass = showEditorChrome
+    const containerRingClass = inspectorActive
       ? isSectionSelected
-        ? isInspecting
-          ? "ring-2 ring-inset ring-blue-500/60"
-          : "ring-2 ring-inset ring-blue-500/40"
+        ? "ring-4 ring-blue-500/65"
         : isSectionHovered
-          ? "ring-2 ring-inset ring-blue-500/30"
+          ? "ring-4 ring-blue-500/45"
           : "hover:ring-1 hover:ring-inset hover:ring-border/40"
-      : "";
+      : showEditorChrome
+        ? isSectionSelected
+          ? isInspecting
+            ? "ring-2 ring-inset ring-blue-500/60"
+            : "ring-2 ring-inset ring-blue-500/40"
+          : "hover:ring-1 hover:ring-inset hover:ring-border/40"
+        : "";
     return (
       wrapInspector(
         <div
@@ -477,7 +482,7 @@ export function PreviewSection({
             if (e.key === "Enter" || e.key === " ") handleSelect();
           }}
           style={containerStyles}
-          className={`relative w-full transition cursor-pointer ${containerRingClass}`}
+          className={`relative w-full transition cursor-pointer ${containerRingClass} ${inspectorZ}`}
         >
           {renderSectionActions()}
           {divider}
@@ -520,15 +525,20 @@ export function PreviewSection({
   // Shared section wrapper — uses getSectionStyles for real inline styles
   // ---------------------------------------------------------------------------
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
-  const selectedRing = showEditorChrome
+  const selectedRingBase = inspectorActive
     ? isSectionSelected
-      ? isInspecting
-        ? "ring-2 ring-inset ring-blue-500/60"
-        : "ring-2 ring-inset ring-blue-500/40"
+      ? "ring-4 ring-blue-500/65"
       : isSectionHovered
-        ? "ring-2 ring-inset ring-blue-500/30"
+        ? "ring-4 ring-blue-500/45"
         : "hover:ring-1 hover:ring-inset hover:ring-border/40"
-    : "";
+    : showEditorChrome
+      ? isSectionSelected
+        ? isInspecting
+          ? "ring-2 ring-inset ring-blue-500/60"
+          : "ring-2 ring-inset ring-blue-500/40"
+        : "hover:ring-1 hover:ring-inset hover:ring-border/40"
+      : "";
+  const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
 
   const sectionImage = section.settings["image"] as string | undefined;
 
@@ -1900,21 +1910,22 @@ function PreviewBlockItem({
   const selectedSoftBg = isInspecting ? "bg-blue-500/15" : "bg-blue-500/10";
   // Inspector should work independently of "editor chrome" (chrome only affects visual overlays / actions).
   const inspectorActive = isInspecting;
-  const isHovered = isInspecting && showEditorChrome && hoveredNodeId === block.id;
+  const isHovered = inspectorActive && hoveredNodeId === block.id;
+  const inspectorZ = inspectorActive && (isHovered || isSelected) ? "z-30" : "";
   const hoverFrameClass = isHovered && !isSelected
-    ? "border-blue-400/70 ring-1 ring-inset ring-blue-500/30 bg-blue-500/5"
+    ? "border-blue-400/70 ring-4 ring-blue-500/45"
     : "";
   const isFaithful = !showEditorChrome;
-  const canvasSelectedClass = showEditorChrome && isSelected
+  const canvasSelectedClass = isSelected
     ? isInspecting
-      ? "ring-2 ring-inset ring-blue-500/40"
-      : "ring-1 ring-inset ring-blue-500/30"
+      ? "ring-4 ring-blue-500/45"
+      : "ring-2 ring-blue-500/35"
     : "";
-  const canvasHoverClass = showEditorChrome && isHovered && !isSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
+  const canvasHoverClass = isHovered && !isSelected ? "ring-4 ring-blue-500/45" : "";
   const canvasFrameClass = `${canvasSelectedClass} ${canvasHoverClass}`.trim();
   const stretchClass = stretch ? "h-full" : "";
   const buildContainerClass = (base: string, editor: string): string =>
-    `${base} ${stretchClass} ${isFaithful ? canvasFrameClass : `${editor} ${hoverFrameClass}`}`.trim();
+    `${base} ${stretchClass} ${inspectorZ} ${isFaithful ? canvasFrameClass : `${editor} ${hoverFrameClass}`}`.trim();
   const metaEntries: InspectorEntry[] = [{ label: "Type", value: block.type }];
   if (inspectorSettings.showIdentifiers) {
     metaEntries.push({ label: "ID", value: block.id });

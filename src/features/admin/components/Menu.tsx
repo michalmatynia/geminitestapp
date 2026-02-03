@@ -137,7 +137,8 @@ function NavTree({
     <div className={cn(depth === 0 ? "space-y-1.5" : "space-y-1")}>
       {items.map((item: NavItem) => {
         const hasChildren = !!item.children?.length;
-        const active = item.href ? isActiveHref(pathname, item.href, item.exact) : false;
+        // Only highlight leaf links (not folders). Folders get their "current" indicator via being open.
+        const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
         const isOpen = !isCollapsed && hasChildren && (forcedOpenIds.has(item.id) || openIds.has(item.id));
 
         const rowStyle: React.CSSProperties | undefined =
@@ -401,17 +402,17 @@ export default function Menu(): React.ReactNode {
       href: "/admin/products",
       icon: <PackageIcon className="size-4" />,
       children: [
-        {
-          id: "commerce/products",
-          label: "Products",
-          href: "/admin/products",
-          children: [
-            { id: "commerce/products/all", label: "All Products", href: "/admin/products" },
-            { id: "commerce/products/drafts", label: "Drafts", href: "/admin/drafts" },
-            { id: "commerce/products/builder", label: "Builder", href: "/admin/products/builder" },
-            { id: "commerce/products/producers", label: "Producers", href: "/admin/products/producers" },
-            { id: "commerce/products/preferences", label: "Preferences", href: "/admin/products/preferences" },
-            { id: "commerce/products/settings", label: "Settings", href: "/admin/products/settings" },
+            {
+              id: "commerce/products",
+              label: "Products",
+              href: "/admin/products",
+              children: [
+                { id: "commerce/products/all", label: "All Products", href: "/admin/products", exact: true },
+                { id: "commerce/products/drafts", label: "Drafts", href: "/admin/drafts" },
+                { id: "commerce/products/builder", label: "Builder", href: "/admin/products/builder" },
+                { id: "commerce/products/producers", label: "Producers", href: "/admin/products/producers" },
+                { id: "commerce/products/preferences", label: "Preferences", href: "/admin/products/preferences" },
+                { id: "commerce/products/settings", label: "Settings", href: "/admin/products/settings" },
           ],
         },
         {

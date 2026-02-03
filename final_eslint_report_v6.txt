@@ -1,0 +1,127 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/hooks/useAgentCreatorSettings.ts
+   55:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   56:28  error  Unsafe member access .agentBrowser on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+   58:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   59:28  error  Unsafe member access .runHeadless on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+   61:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   62:28  error  Unsafe member access .ignoreRobotsTxt on a type that cannot be resolved                                      @typescript-eslint/no-unsafe-member-access
+   64:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   65:28  error  Unsafe member access .requireHumanApproval on a type that cannot be resolved                                 @typescript-eslint/no-unsafe-member-access
+   68:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   68:28  error  Unsafe member access .memoryValidationModel on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+   71:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   71:28  error  Unsafe member access .plannerModel on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+   74:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   74:28  error  Unsafe member access .selfCheckModel on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+   77:29  error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   77:52  error  Unsafe member access .extractionValidationModel on a type that cannot be resolved                            @typescript-eslint/no-unsafe-member-access
+   79:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   79:28  error  Unsafe member access .toolRouterModel on a type that cannot be resolved                                      @typescript-eslint/no-unsafe-member-access
+   82:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   82:28  error  Unsafe member access .loopGuardModel on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+   85:5   error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   85:28  error  Unsafe member access .approvalGateModel on a type that cannot be resolved                                    @typescript-eslint/no-unsafe-member-access
+   88:29  error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   88:52  error  Unsafe member access .memorySummarizationModel on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+   90:29  error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   90:52  error  Unsafe member access .selectorInferenceModel on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+   92:29  error  Unsafe argument of type error typed assigned to a parameter of type `string | (() => string | null) | null`  @typescript-eslint/no-unsafe-argument
+   92:52  error  Unsafe member access .outputNormalizationModel on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+   93:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   94:28  error  Unsafe member access .maxSteps on a type that cannot be resolved                                             @typescript-eslint/no-unsafe-member-access
+   96:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+   97:28  error  Unsafe member access .maxStepAttempts on a type that cannot be resolved                                      @typescript-eslint/no-unsafe-member-access
+   99:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  100:28  error  Unsafe member access .maxReplanCalls on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+  102:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  103:28  error  Unsafe member access .replanEverySteps on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  105:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  106:28  error  Unsafe member access .maxSelfChecks on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  108:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  109:28  error  Unsafe member access .loopGuardThreshold on a type that cannot be resolved                                   @typescript-eslint/no-unsafe-member-access
+  111:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  112:28  error  Unsafe member access .loopBackoffBaseMs on a type that cannot be resolved                                    @typescript-eslint/no-unsafe-member-access
+  114:10  error  Unsafe array destructuring of a tuple element with an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  115:28  error  Unsafe member access .loopBackoffMaxMs on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  121:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  123:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  125:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  127:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  149:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  151:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  153:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  155:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  157:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  159:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  161:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+  163:5   error  Unsafe assignment of an error typed value                                                                    @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
+  34:9  warning  The 'promptConfig' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. To fix this, wrap the initialization of 'promptConfig' in its own useMemo() Hook                                           react-hooks/exhaustive-deps
+  37:9  warning  The 'runtimeInputs' logical expression could make the dependencies of useMemo Hook (at line 42) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'runtimeInputs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx
+  168:19  error  'value' will use Object's default stringification format ('[object Object]') when stringified          @typescript-eslint/no-base-to-string
+  280:17  error  Missing return type on function                                                                        @typescript-eslint/explicit-function-return-type
+  284:31  error  'callbackValue' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/utils/constants.ts
+  7:14  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioPage.tsx
+  113:60  warning  React Hook useMemo has an unnecessary dependency: 'projectId'. Either exclude it or remove the dependency array                                                                               react-hooks/exhaustive-deps
+  555:9   warning  The 'assets' logical expression could make the dependencies of useMemo Hook (at line 560) change on every render. To fix this, wrap the initialization of 'assets' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx
+   81:33  error  Expected sim to have a type annotation  @typescript-eslint/typedef
+   87:45  error  Expected op to have a type annotation   @typescript-eslint/typedef
+  334:42  error  Expected sim to have a type annotation  @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-params.ts
+  395:11  error  Expected segment to have a type annotation  @typescript-eslint/typedef
+  396:14  error  Expected value to have a type annotation    @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-validator.ts
+  30:29  error  Unsafe argument of type error typed assigned to a parameter of type `string`              @typescript-eslint/no-unsafe-argument
+  30:33  error  Unsafe member access .pattern on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  30:42  error  Unsafe argument of type error typed assigned to a parameter of type `string | undefined`  @typescript-eslint/no-unsafe-argument
+  30:46  error  Unsafe member access .flags on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  35:7   error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  35:23  error  Unsafe member access .suggestion on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  37:7   error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+  37:20  error  Unsafe member access .comment on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/studio-settings.ts
+  383:54  warning  Avoid using z.unknown() in Zod schemas. Prefer more specific types like z.record(z.string(), z.unknown()) or z.object({}) to maintain type safety when assigning validated data to typed interfaces  no-restricted-syntax
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'editingUser?.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/dtos/chatbot.ts
+  125:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/providers/BackgroundSyncProvider.tsx
+  6:1  error  '@/shared/ui/QueryDevPanel' import is restricted from being used by a pattern. Import shared UI from '@/shared/ui'  no-restricted-imports
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/agent-teaching.ts
+  25:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  27:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  29:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+  31:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/chatbot.ts
+  30:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/domain/user-preferences.ts
+  9:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  36:23  error  'TData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/status-badge.tsx
+  41:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 90 problems (84 errors, 6 warnings)
+

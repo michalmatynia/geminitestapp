@@ -56,11 +56,11 @@ function sectionStyleFields(): SettingsField[] {
 // Block definitions
 // ---------------------------------------------------------------------------
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero", "Block", "Carousel"];
+export const COLUMN_ALLOWED_BLOCK_TYPES = ["Heading", "Text", "TextElement", "TextAtom", "ImageElement", "Button", "Image", "Model3D", "Model3DElement", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "ImageWithText", "RichText", "Hero", "Block", "Carousel", "Slideshow"];
 const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ["Announcement", ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 // Row can contain columns and also elements/blocks directly (not just inside columns)
-export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement", "TextAtom", "Button", "Image", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "Hero", "ImageWithText", "RichText", "Block", "Model3D", "Carousel"];
+export const ROW_ALLOWED_BLOCK_TYPES = ["Column", "TextElement", "ImageElement", "TextAtom", "Button", "Image", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon", "AppEmbed", "Hero", "ImageWithText", "RichText", "Block", "Model3D", "Model3DElement", "Carousel", "Slideshow"];
 
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ["ImageElement", "TextElement", "TextAtom", "Block", "Button", "Heading", "Text", "VideoEmbed", "Divider", "SocialLinks", "Icon"];

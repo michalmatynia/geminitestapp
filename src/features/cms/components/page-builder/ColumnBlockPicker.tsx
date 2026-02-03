@@ -8,7 +8,7 @@ import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from "@/features/app-embeds/lib/constants";
 import { PickerDropdown, type PickerGroup } from "./PickerDropdown";
 
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"];
 
 interface ColumnBlockPickerProps {
   onSelect: (blockType: string) => void;

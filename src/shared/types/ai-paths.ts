@@ -181,10 +181,12 @@ export type TemplateConfig = {
 
 export type RegexMatchMode = "first" | "all";
 export type RegexGroupOutputMode = "object" | "array";
+export type RegexMode = "group" | "extract";
 
 export type RegexConfig = {
   pattern: string;
   flags?: string;
+  mode?: RegexMode;
   matchMode?: RegexMatchMode;
   groupBy?: string;
   outputMode?: RegexGroupOutputMode;
@@ -429,6 +431,7 @@ export type AiPathRunRecord = {
   finishedAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt?: Date | string | null;
+  _count?: { browserSnapshots?: number; browserLogs?: number } | null;
 };
 
 export type AiPathRunNodeRecord = {

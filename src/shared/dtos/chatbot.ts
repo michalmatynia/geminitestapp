@@ -122,7 +122,7 @@ export interface SendMessageDto {
 /**
  * DTO for updating chatbot settings
  */
-export interface UpdateChatbotSettingsDto extends Partial<ChatbotSettingsDto> {}
+export type UpdateChatbotSettingsDto = Partial<ChatbotSettingsDto>;
 
 /**
  * DTO for chatbot debug state
@@ -156,7 +156,11 @@ export interface AgentSnapshotDto extends DtoBase {
   url: string;
   title: string | null;
   domText: string;
-  screenshotUrl: string | null;
+  domHtml?: string | null;
+  screenshotUrl?: string | null;
+  screenshotData?: string | null;
+  screenshotPath?: string | null;
+  stepId?: string | null;
   mouseX: number | null;
   mouseY: number | null;
   viewportWidth: number | null;

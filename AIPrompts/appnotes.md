@@ -1,3 +1,36 @@
+I want Regex Grouper to have an additional Mode, Where I can extraxt a part of string only, 
+for example, I have a string like "The price is 45.67 USD", I want to extract only the number 45.67 from it with Regex, so that I can use it later on in my path, or, as a more advance options, extract the containing object like this { _id: "69822500fcafd8a829929428", name: "Pin"} from an object like this
+
+{
+  "result": "The most fitting category is **Pin** (with `_id\":\"69822500fcafd8a829929428\"`). The product description explicitly refers to it as a \"pin\" and describes features like a butterfly clasp, which are characteristic of pins.",
+  "modelId": "gemma3:12b",
+  "prompt": "Based on the product desription \"Step back in time to the vibrant world of Nintendo's original Super Mario Bros. with this meticulously crafted 2cm Koopa Shell Pin! Perfectly capturing the iconic 8-bit pixelated charm of the classic NES era, this enamel pin brings the beloved enemy shell to life. Designed in the signature vibrant green of the Koopa Troopa, its surface is a work of nostalgic artistry – every blocky ridge and the distinctive white band near the base is rendered with precise enamel detailing, framed by crisp black outlines that mimic the pixelated textures of the original game. Made from high-quality metal with a smooth, glossy finish, the pin is tiny but mighty, measuring just 2cm across, making it an ideal miniature accessory for your jacket, cap, or bag. The secure butterfly clasp features a textured backing for comfortable wear. More than just a pin, it's a tiny tribute to retro gaming history, instantly recognizable to fans and adding a playful splash of vintage Nintendo spirit to your everyday style. Wear your love for the Mushroom Kingdom on your sleeve (or shoulder, or sleeve, or anywhere)!\" infer the most fitting category from the following set of category objects [{\"_id\":\"6981fba7ea274721c2756a03\",\"id\":\"93d88cf2-5120-4027-8fa0-22a127d95e4b\",\"name\":\"Jewellery\",\"description\":null,\"color\":\"#10b981\",\"parentId\":null,\"catalogId\":\"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\"createdAt\":\"2026-02-03T13:44:07.302Z\",\"updatedAt\":\"2026-02-03T13:44:07.302Z\"},{\"_id\":\"6981fbaeea274721c2756a04\",\"id\":\"2c85e48f-31c9-4883-aacd-3ffcc2cf2e42\",\"name\":\"Keychains\",\"description\":null,\"color\":\"#10b981\",\"parentId\":\"93d88cf2-5120-4027-8fa0-22a127d95e4b\",\"catalogId\":\"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\"createdAt\":\"2026-02-03T13:44:14.531Z\",\"updatedAt\":\"2026-02-03T13:44:18.757Z\"},{\"_id\":\"6981fc36ea274721c2756a07\",\"id\":\"0a2310cf-c5d2-4a1d-83f1-aee9c00a990c\",\"name\":\"Pendants\",\"description\":null,\"color\":\"#10b981\",\"parentId\":\"93d88cf2-5120-4027-8fa0-22a127d95e4b\",\"catalogId\":\"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\"createdAt\":\"2026-02-03T13:46:30.624Z\",\"updatedAt\":\"2026-02-03T13:47:24.781Z\"},{\"_id\":\"6981fc638f71041557216aa2\",\"id\":\"77a9f296-39c9-4014-b915-375d5d879d82\",\"name\":\"Rings\",\"description\":null,\"color\":\"#10b981\",\"parentId\":\"93d88cf2-5120-4027-8fa0-22a127d95e4b\",\"catalogId\":\"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\"createdAt\":\"2026-02-03T13:47:15.456Z\",\"updatedAt\":\"2026-02-03T13:47:26.649Z\"},{\"_id\":\"69822500fcafd8a829929428\",\"id\":\"91a8fa6f-d754-42d2-b979-ca19ffd596f3\",\"name\":\"Pin\",\"description\":null,\"color\":\"#10b981\",\"parentId\":\"93d88cf2-5120-4027-8fa0-22a127d95e4b\",\"catalogId\":\"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\"createdAt\":\"2026-02-03T16:40:32.105Z\",\"updatedAt\":\"2026-02-03T16:40:34.917Z\"}]",
+  "imageUrls": [
+    "/uploads/products/KEYCHA928/1769695769729-a-1.png",
+    "/uploads/products/KEYCHA928/1769695769837-a-2.png",
+    "/uploads/products/KEYCHA928/1769695769943-a-3.png"
+  ],
+  "temperature": 0.7,
+  "maxTokens": 800,
+  "source": "ai_paths",
+  "graph": {
+    "pathId": "path_gz1oz1",
+    "nodeId": "node-xfxuap",
+    "nodeTitle": "Model"
+  },
+  "productId": "f3327a86-e770-493b-90dc-32b05b9074ac"
+}
+
+
+
+
+
+The AI Replies should be retained in Regex Grouper
+The same goes for my settings an selections in Model Node
+All of the node settings and selections should be retained in Path Settings.
+
+I need Hover Effects on Elements and Blocks
+
 * In the Grid, Row, Block Column I should be able to select Background colors as gradients or transparent gradients, consisting of 2 colors. I also want to be able to select the direction of the gradient.
 
 I can't add Slideshow into the column
@@ -6,6 +39,7 @@ When I run my model Nodes in AI Paths, II don't see any history entires of Input
 
 * CMS Builder - when I insert an image element into a Grid, Row Or column, I woul like an additional setting to apperar in my ImageElement. The one to attach the Image to a given Grid or Row or Column as Background Image, in that case, the Image becomes a background image of a given element and receives a different set of settings until it's unlocked from the Background image state.
 
+Settings in my Admin Menu where I can style my Admin Menu color code, and also add pages to favourites
 
 * When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
 

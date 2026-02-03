@@ -106,13 +106,14 @@ export const palette: NodeDefinition[] = [
   {
     type: "regex",
     title: "Regex Grouper",
-    description: "Group strings with a regex and emit grouped output.",
+    description: "Group strings with regex or extract matched fragments.",
     inputs: REGEX_INPUT_PORTS,
     outputs: REGEX_OUTPUT_PORTS,
     config: {
       regex: {
         pattern: "",
         flags: "g",
+        mode: "group",
         matchMode: "first",
         groupBy: "match",
         outputMode: "object",

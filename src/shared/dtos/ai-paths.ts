@@ -1,5 +1,5 @@
 import { DtoBase, NamedDto } from '../types/base';
-import type { Status } from '../core/base-types';
+import type { Status } from '../types/common';
 
 /**
  * Types of nodes available in AI paths

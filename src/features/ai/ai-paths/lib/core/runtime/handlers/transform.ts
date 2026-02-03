@@ -252,6 +252,7 @@ type RegexMatchRecord = {
   captures: string[];
   groups: Record<string, string> | null;
   key: string;
+  extracted: unknown;
 };
 
 const normalizeRegexFlags = (flags: string | undefined): string => {
@@ -286,32 +287,58 @@ const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
   return strings;
 };
 
-const resolveGroupKey = (
+const resolveRegexSelection = (
   match: RegExpExecArray,
-  groupBy: string | undefined
-): string | null => {
-  const key = (groupBy ?? "match").trim();
+  selector: string | undefined
+): unknown => {
+  const key = (selector ?? "match").trim();
   if (!key || key === "match" || key === "0") {
     return match[0] ?? null;
+  }
+  if (key === "captures") {
+    return match.slice(1).map((value: string | undefined) => value ?? "");
+  }
+  const rawGroups =
+    match.groups && typeof match.groups === "object"
+      ? (match.groups as Record<string, unknown>)
+      : null;
+  const groups =
+    rawGroups
+      ? (Object.fromEntries(
+          Object.entries(rawGroups).map(([name, value]: [string, unknown]) => [
+            name,
+            typeof value === "string" ? value : value === undefined || value === null ? "" : safeStringify(value),
+          ])
+        ) as Record<string, string>)
+      : null;
+  if (key === "groups") {
+    return groups;
   }
   const asIndex = Number(key);
   if (Number.isInteger(asIndex)) {
     return match[asIndex] ?? null;
   }
-  const groups =
-    match.groups && typeof match.groups === "object"
-      ? (match.groups as Record<string, unknown>)
-      : null;
-  const candidate = groups ? groups[key] : undefined;
+  const candidate = rawGroups ? rawGroups[key] : undefined;
   if (typeof candidate === "string") return candidate;
   if (candidate === undefined || candidate === null) return null;
   return safeStringify(candidate);
+};
+
+const resolveGroupKey = (
+  match: RegExpExecArray,
+  groupBy: string | undefined
+): string | null => {
+  const selected = resolveRegexSelection(match, groupBy);
+  if (selected === undefined || selected === null) return null;
+  if (typeof selected === "string") return selected;
+  return safeStringify(selected);
 };
 
 export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const regexConfig: RegexConfig = node.config?.regex ?? {
     pattern: "",
     flags: "g",
+    mode: "group",
     matchMode: "first",
     groupBy: "match",
     outputMode: "object",
@@ -328,6 +355,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
 
   const pattern = (regexConfig.pattern ?? "").trim();
   const flags = normalizeRegexFlags(regexConfig.flags);
+  const mode = regexConfig.mode ?? "group";
   const matchMode = regexConfig.matchMode ?? "first";
   const groupBy = regexConfig.groupBy ?? "match";
   const includeUnmatched = regexConfig.includeUnmatched ?? true;
@@ -348,6 +376,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     return {
       grouped: regexConfig.outputMode === "array" ? [] : {},
       matches: [],
+      ...(mode === "extract" ? { value: null } : {}),
       ...(aiPrompt ? { aiPrompt } : {}),
     };
   }
@@ -359,6 +388,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     return {
       grouped: regexConfig.outputMode === "array" ? [] : {},
       matches: [],
+      ...(mode === "extract" ? { value: null } : {}),
       ...(aiPrompt ? { aiPrompt } : {}),
     };
   }
@@ -387,6 +417,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
                 Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
               ) as Record<string, string>)
             : null;
+        const extracted = resolveRegexSelection(match, groupBy);
         const record: RegexMatchRecord = {
           input,
           match: match[0] ?? null,
@@ -394,6 +425,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
           captures: match.slice(1).map((value: string | undefined) => value ?? ""),
           groups,
           key,
+          extracted,
         };
         matches.push(record);
         pushGrouped(key, record);
@@ -410,6 +442,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
           captures: [],
           groups: null,
           key: unmatchedKey,
+          extracted: null,
         };
         matches.push(record);
         pushGrouped(unmatchedKey, record);
@@ -429,6 +462,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
         captures: [],
         groups: null,
         key: unmatchedKey,
+        extracted: null,
       };
       matches.push(record);
       pushGrouped(unmatchedKey, record);
@@ -441,6 +475,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
             Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
           ) as Record<string, string>)
         : null;
+    const extracted = resolveRegexSelection(match, groupBy);
     const record: RegexMatchRecord = {
       input,
       match: match[0] ?? null,
@@ -448,6 +483,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
       captures: match.slice(1).map((value: string | undefined) => value ?? ""),
       groups,
       key,
+      extracted,
     };
     matches.push(record);
     pushGrouped(key, record);
@@ -458,10 +494,16 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     regexConfig.outputMode === "array"
       ? Object.entries(groupedObject).map(([key, items]: [string, RegexMatchRecord[]]) => ({ key, items }))
       : groupedObject;
+  const extractedValues = matches
+    .filter((record: RegexMatchRecord): boolean => record.match !== null)
+    .map((record: RegexMatchRecord): unknown => cloneValue(record.extracted));
+  const extractedValue =
+    extractedValues.length <= 1 ? (extractedValues[0] ?? null) : extractedValues;
 
   return {
     grouped,
     matches,
+    ...(mode === "extract" ? { value: extractedValue } : {}),
     ...(aiPrompt ? { aiPrompt } : {}),
   };
 };

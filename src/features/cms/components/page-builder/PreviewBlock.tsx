@@ -20,7 +20,7 @@ export type MediaReplaceTarget = {
 };
 
 // Section-type block types that get a richer preview
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"];
 
 const getGapClass = (gap?: string): string => {
   if (gap === "none") return "gap-0";

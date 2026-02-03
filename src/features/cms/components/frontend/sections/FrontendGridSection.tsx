@@ -10,7 +10,7 @@ import { FrontendCarousel } from "./FrontendCarousel";
 import { GsapAnimationWrapper } from "../GsapAnimationWrapper";
 
 // Section-type blocks that need special rendering inside columns
-const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"]);
+const SECTION_BLOCK_TYPES = new Set(["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"]);
 
 interface FrontendGridSectionProps {
   settings: Record<string, unknown>;

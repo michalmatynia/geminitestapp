@@ -106,7 +106,7 @@ export const DATABASE_INPUT_PORTS = [
   "aiQuery",
 ];
 export const REGEX_INPUT_PORTS = ["value", "prompt", "regexCallback"];
-export const REGEX_OUTPUT_PORTS = ["grouped", "matches", "aiPrompt"];
+export const REGEX_OUTPUT_PORTS = ["grouped", "matches", "value", "aiPrompt"];
 export const ITERATOR_INPUT_PORTS = ["value", "callback"];
 export const ITERATOR_OUTPUT_PORTS = ["value", "index", "total", "done", "status"];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {

@@ -45,7 +45,12 @@ const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>())
   return [];
 };
 
-const formatPortLabel = (port: string): string => (port === "images" ? "images (urls)" : port);
+const formatPortLabel = (port: string): string => {
+  if (port === "images") return "images (urls)";
+  if (port === "regexCallback") return "ai regex reply";
+  if (port === "queryCallback") return "ai query reply";
+  return port;
+};
 
 const formatPlaceholderLabel = (port: string): string =>
   port === "images" ? "{{images}} (urls)" : `{{${port}}}`;

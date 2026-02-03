@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 163ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 167ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -15,3 +15,7 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 - Environments: .env
 
   Creating an optimized production build ...
+
+> Build error occurred
+Error: ENOENT: no such file or directory, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/static/ClL1rGSQzhUWwnfzSe2yN/_buildManifest.js.tmp.r6kqrcv8r6k'
+    at ignore-listed frames

@@ -152,6 +152,11 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       defaultValue: '"g"',
     },
     {
+      path: "regex.mode",
+      description: "group = emit grouped matches; extract = emit selected capture on value output.",
+      defaultValue: "group",
+    },
+    {
       path: "regex.matchMode",
       description: "first = one match per input string; all = all matches per input string.",
       defaultValue: "first",
@@ -159,12 +164,12 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: "regex.groupBy",
       description:
-        "Which capture becomes the grouping key: match/0 for full match, 1 for first capture, or a named group (/(?<name>...)/).",
+        "Selector used for grouping (group mode) or extraction (extract mode): match/0, capture index (1...), named group, groups, or captures.",
       defaultValue: "match",
     },
     {
       path: "regex.outputMode",
-      description: "grouped output mode: object (Record) or array (list of groups).",
+      description: "Grouped output mode: object (Record) or array (list of groups).",
       defaultValue: "object",
     },
     {

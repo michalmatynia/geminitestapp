@@ -33,6 +33,7 @@ type RegexPreviewRecord = {
   captures: string[];
   groups: Record<string, string> | null;
   key: string;
+  extracted: unknown;
 };
 
 /** Extract code blocks from markdown-style ``` delimiters */
@@ -158,22 +159,52 @@ const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
   });
 };
 
-const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): string | null => {
-  const key = (groupBy ?? "match").trim();
+const stringifyRegexSelection = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (value === undefined || value === null) return "";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const resolveRegexSelection = (match: RegExpExecArray, selector: string | undefined): unknown => {
+  const key = (selector ?? "match").trim();
   if (!key || key === "match" || key === "0") {
     return match[0] ?? null;
+  }
+  if (key === "captures") {
+    return match.slice(1).map((value: string | undefined) => value ?? "");
+  }
+  const rawGroups =
+    match.groups && typeof match.groups === "object"
+      ? (match.groups as Record<string, string | undefined>)
+      : null;
+  const groups =
+    rawGroups
+      ? (Object.fromEntries(
+          Object.entries(rawGroups).map(([name, value]: [string, string | undefined]) => [name, value ?? ""])
+        ) as Record<string, string>)
+      : null;
+  if (key === "groups") {
+    return groups;
   }
   const asIndex = Number(key);
   if (Number.isInteger(asIndex)) {
     return match[asIndex] ?? null;
   }
-  const groups =
-    match.groups && typeof match.groups === "object"
-      ? (match.groups as Record<string, string | undefined>)
-      : null;
-  const candidate = groups ? groups[key] : undefined;
+  const candidate = rawGroups ? rawGroups[key] : undefined;
   if (typeof candidate === "string") return candidate;
-  return null;
+  if (candidate === undefined || candidate === null) return null;
+  return stringifyRegexSelection(candidate);
+};
+
+const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): string | null => {
+  const selected = resolveRegexSelection(match, groupBy);
+  if (selected === undefined || selected === null) return null;
+  if (typeof selected === "string") return selected;
+  return stringifyRegexSelection(selected);
 };
 
 type RegexNodeConfigSectionProps = {
@@ -203,6 +234,7 @@ export function RegexNodeConfigSection({
     return (isRegexNode ? selectedNode.config?.regex : undefined) ?? {
       pattern: "",
       flags: "g",
+      mode: "group",
       matchMode: "first",
       groupBy: "match",
       outputMode: "object",
@@ -296,6 +328,7 @@ export function RegexNodeConfigSection({
   );
 
   const preview = React.useMemo(() => {
+    const mode = regexConfig.mode ?? "group";
     const includeUnmatched = regexConfig.includeUnmatched ?? true;
     const unmatchedKey = (regexConfig.unmatchedKey ?? "__unmatched__").trim() || "__unmatched__";
     const matchMode = regexConfig.matchMode ?? "first";
@@ -313,6 +346,7 @@ export function RegexNodeConfigSection({
       return {
         matches,
         grouped: regexConfig.outputMode === "array" ? [] : {},
+        extracted: null,
       };
     }
 
@@ -336,6 +370,7 @@ export function RegexNodeConfigSection({
                   Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
                 ) as Record<string, string>)
               : null;
+          const extracted = resolveRegexSelection(match, groupBy);
           const record: RegexPreviewRecord = {
             input,
             match: match[0] ?? null,
@@ -343,6 +378,7 @@ export function RegexNodeConfigSection({
             captures: match.slice(1).map((value: string | undefined) => value ?? ""),
             groups,
             key,
+            extracted,
           };
           matches.push(record);
           pushGrouped(key, record);
@@ -358,6 +394,7 @@ export function RegexNodeConfigSection({
             captures: [],
             groups: null,
             key: unmatchedKey,
+            extracted: null,
           };
           matches.push(record);
           pushGrouped(unmatchedKey, record);
@@ -375,6 +412,7 @@ export function RegexNodeConfigSection({
           captures: [],
           groups: null,
           key: unmatchedKey,
+          extracted: null,
         };
         matches.push(record);
         pushGrouped(unmatchedKey, record);
@@ -387,6 +425,7 @@ export function RegexNodeConfigSection({
               Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ""])
             ) as Record<string, string>)
           : null;
+      const extracted = resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,
         match: match[0] ?? null,
@@ -394,6 +433,7 @@ export function RegexNodeConfigSection({
         captures: match.slice(1).map((value: string | undefined) => value ?? ""),
         groups,
         key,
+        extracted,
       };
       matches.push(record);
       pushGrouped(key, record);
@@ -404,8 +444,16 @@ export function RegexNodeConfigSection({
       regexConfig.outputMode === "array"
         ? Object.entries(groupedObject).map(([key, items]: [string, RegexPreviewRecord[]]) => ({ key, items }))
         : groupedObject;
+    const extractedValues = matches
+      .filter((record: RegexPreviewRecord): boolean => record.match !== null)
+      .map((record: RegexPreviewRecord): unknown => record.extracted);
+    const extracted = extractedValues.length <= 1 ? (extractedValues[0] ?? null) : extractedValues;
 
-    return { matches, grouped };
+    return {
+      matches,
+      grouped,
+      extracted: mode === "extract" ? extracted : null,
+    };
   }, [regexConfig, regexValidation, sampleLines]);
 
   const pendingAiRegexSection = pendingAiRegex ? (
@@ -548,6 +596,7 @@ export function RegexNodeConfigSection({
   }, [regexConfig, sampleLines, sampleTextForAi]);
 
   if (!isRegexNode) return null;
+  const regexMode = regexConfig.mode ?? "group";
 
   return (
     <div className="space-y-6">
@@ -601,7 +650,24 @@ export function RegexNodeConfigSection({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div>
+            <Label className="text-xs text-gray-400">Mode</Label>
+            <Select
+              value={regexMode}
+              onValueChange={(value: string): void =>
+                updateRegex({ mode: value as NonNullable<RegexConfig["mode"]> })
+              }
+            >
+              <SelectTrigger className="mt-2 h-8 w-full border-border bg-card/70 text-xs text-white">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-gray-900">
+                <SelectItem value="group">Group matches</SelectItem>
+                <SelectItem value="extract">Extract value</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label className="text-xs text-gray-400">Match Mode</Label>
             <Select
@@ -620,7 +686,7 @@ export function RegexNodeConfigSection({
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-gray-400">Output Mode</Label>
+            <Label className="text-xs text-gray-400">Grouped Output Mode</Label>
             <Select
               value={regexConfig.outputMode ?? "object"}
               onValueChange={(value: string): void =>
@@ -640,17 +706,29 @@ export function RegexNodeConfigSection({
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
-            <Label className="text-xs text-gray-400">Group By</Label>
+            <Label className="text-xs text-gray-400">
+              {regexMode === "extract" ? "Extract By" : "Group By"}
+            </Label>
             <Input
               className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={regexConfig.groupBy ?? "match"}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateRegex({ groupBy: event.target.value })
               }
-              placeholder='match | 1 | prefix'
+              placeholder={regexMode === "extract" ? "match | 1 | amount | groups | captures" : "match | 1 | prefix"}
             />
             <p className="mt-1 text-[11px] text-gray-500">
-              Use <span className="text-gray-300">match</span>, a capture index (1,2,...) or a named group.
+              {regexMode === "extract" ? (
+                <>
+                  Use <span className="text-gray-300">match</span>, a capture index, a named group,{" "}
+                  <span className="text-gray-300">groups</span> (named-group object), or{" "}
+                  <span className="text-gray-300">captures</span> (captures array).
+                </>
+              ) : (
+                <>
+                  Use <span className="text-gray-300">match</span>, a capture index (1,2,...) or a named group.
+                </>
+              )}
             </p>
           </div>
           <div className="flex flex-col justify-between">
@@ -667,7 +745,11 @@ export function RegexNodeConfigSection({
             <div className="mt-2 flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2">
               <div>
                 <div className="text-[11px] text-gray-300">Include unmatched</div>
-                <div className="text-[11px] text-gray-500">Keep non-matching inputs under a group key.</div>
+                <div className="text-[11px] text-gray-500">
+                  {regexMode === "extract"
+                    ? "Keep non-matching inputs in matches with the fallback key."
+                    : "Keep non-matching inputs under a group key."}
+                </div>
               </div>
               <Switch
                 checked={regexConfig.includeUnmatched ?? true}
@@ -724,9 +806,11 @@ export function RegexNodeConfigSection({
             </pre>
           </div>
           <div className="rounded-md border border-border bg-card/50 p-3">
-            <div className="text-[11px] text-gray-300">Grouped Output</div>
+            <div className="text-[11px] text-gray-300">
+              {regexMode === "extract" ? "Extracted Value (value port)" : "Grouped Output"}
+            </div>
             <pre className="mt-2 max-h-48 overflow-auto rounded bg-card/70 p-2 text-[11px] text-gray-200 whitespace-pre-wrap break-all">
-              {JSON.stringify(preview.grouped, null, 2)}
+              {JSON.stringify(regexMode === "extract" ? preview.extracted : preview.grouped, null, 2)}
             </pre>
           </div>
         </div>

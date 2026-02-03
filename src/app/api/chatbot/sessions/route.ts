@@ -60,7 +60,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
     const session = await chatbotSessionRepository.create({
       title: title?.trim() || `Chat ${new Date().toLocaleString()}`,
-      settings,
+      ...(settings !== undefined ? { settings } : {}),
     });
 
     if (DEBUG_CHATBOT) {

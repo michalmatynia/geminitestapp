@@ -126,12 +126,13 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
     updatedAt: now,
   };
 
+  const descriptionValue: string | null = next.description ?? null;
   await db.collection<AgentDoc>(AGENTS_COLLECTION).updateOne(
     { _id: id },
     {
       $set: {
         name: next.name,
-        description: next.description,
+        description: descriptionValue,
         llmModel: next.llmModel,
         embeddingModel: next.embeddingModel,
         systemPrompt: next.systemPrompt,
@@ -208,12 +209,13 @@ export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbe
     updatedAt: now,
   };
 
+  const collectionDescriptionValue: string | null = next.description ?? null;
   await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).updateOne(
     { _id: id },
     {
       $set: {
         name: next.name,
-        description: next.description,
+        description: collectionDescriptionValue,
         embeddingModel: next.embeddingModel,
         updatedAt: now,
       },
@@ -250,16 +252,22 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
     db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).countDocuments({ collectionId }),
   ]);
 
-  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, "embedding">) => ({
-    id: doc._id,
-    collectionId: doc.collectionId,
-    text: doc.text,
-    metadata: doc.metadata ?? null,
-    embeddingModel: doc.embeddingModel,
-    embeddingDimensions: typeof doc.embeddingDimensions === "number" ? doc.embeddingDimensions : 0,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  }));
+  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, "embedding">) => {
+    const docMetadata = doc.metadata ?? null;
+    const docName = docMetadata?.title ?? doc.text.slice(0, 50).trim() || "Untitled";
+    return {
+      id: doc._id,
+      name: docName,
+      description: docMetadata?.source ?? null,
+      collectionId: doc.collectionId,
+      text: doc.text,
+      metadata: docMetadata,
+      embeddingModel: doc.embeddingModel,
+      embeddingDimensions: typeof doc.embeddingDimensions === "number" ? doc.embeddingDimensions : 0,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    };
+  });
 
   return { items, total };
 }
@@ -287,11 +295,15 @@ export async function createEmbeddingDocument(params: {
     updatedAt: now,
   };
   await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).insertOne(doc);
+  const returnMetadata = params.metadata ?? null;
+  const returnName = returnMetadata?.title ?? params.text.slice(0, 50).trim() || "Untitled";
   return {
     id,
+    name: returnName,
+    description: returnMetadata?.source ?? null,
     collectionId: params.collectionId,
     text: params.text,
-    metadata: params.metadata ?? null,
+    metadata: returnMetadata,
     embeddingModel: params.embeddingModel,
     embeddingDimensions: params.embedding.length,
     createdAt: now,

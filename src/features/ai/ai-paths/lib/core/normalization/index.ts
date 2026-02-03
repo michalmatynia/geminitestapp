@@ -176,6 +176,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           regex: {
             pattern: config?.pattern ?? "",
             flags: config?.flags ?? "g",
+            mode: config?.mode ?? "group",
             matchMode: config?.matchMode ?? "first",
             groupBy: config?.groupBy ?? "match",
             outputMode: config?.outputMode ?? "object",
@@ -811,6 +812,7 @@ export const getDefaultConfigForType = (
       regex: {
         pattern: "",
         flags: "g",
+        mode: "group",
         matchMode: "first",
         groupBy: "match",
         outputMode: "object",

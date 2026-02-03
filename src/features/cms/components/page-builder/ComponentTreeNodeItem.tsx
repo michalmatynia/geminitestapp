@@ -83,7 +83,7 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   CarouselFrame: Frame,
 };
 
-const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel"];
+const SECTION_BLOCK_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextAtom", "Carousel", "Slideshow"];
 const CONVERTIBLE_SECTION_TYPES = ["ImageWithText", "Hero", "RichText", "Block", "TextElement", "ImageElement", "TextAtom", "ButtonElement"];
 
 const resolveNodeLabel = (fallback: string, value: unknown): string => {

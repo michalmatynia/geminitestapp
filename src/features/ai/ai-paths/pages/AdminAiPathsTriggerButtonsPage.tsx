@@ -50,25 +50,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
   const [orderedRows, setOrderedRows] = useState<AiTriggerButtonRecord[]>([]);
+
+  useEffect(() => {
+    if (triggerButtonsQuery.data) {
+      setOrderedRows(triggerButtonsQuery.data);
+    }
+  }, [triggerButtonsQuery.data]);
+
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
-
-  const triggerButtonsQuery = useQuery({
-    queryKey: ["ai-paths", "trigger-buttons"],
-    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.list();
-      if (!result.ok) return [];
-      return Array.isArray(result.data) ? result.data : [];
-    },
-    staleTime: 10_000,
-  });
-
-  // Keep orderedRows in sync with query data using adjustment during render pattern
-  const [lastData, setLastData] = useState<AiTriggerButtonRecord[] | undefined>(triggerButtonsQuery.data);
-  if (triggerButtonsQuery.data !== lastData) {
-    setLastData(triggerButtonsQuery.data);
-    setOrderedRows(triggerButtonsQuery.data ?? []);
-  }
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],

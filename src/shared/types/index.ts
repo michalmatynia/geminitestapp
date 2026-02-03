@@ -19,6 +19,7 @@ export * from './api/jobs';
 export * from './ai-paths';
 export * from './ai-paths-runtime';
 export * from './chatbot';
+export * from './agent-teaching';
 
 // System types
 export * from './system';

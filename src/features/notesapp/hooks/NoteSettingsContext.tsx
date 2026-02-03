@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
+import { logClientError } from "@/features/observability";
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   sortBy: "created",
@@ -46,7 +47,7 @@ async function saveSelectedFolderToDb(folderId: string | null): Promise<void> {
       }),
     });
   } catch (error: unknown) {
-    console.error("Failed to save selectedFolderId to database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "saveSelectedFolderToDb", folderId } });
   }
 }
 
@@ -61,7 +62,7 @@ async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void
       }),
     });
   } catch (error: unknown) {
-    console.error("Failed to save selectedNotebookId to database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "saveSelectedNotebookToDb", notebookId } });
   }
 }
 
@@ -79,7 +80,7 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load selectedFolderId from database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "loadSelectedFolderFromDb" } });
     return null;
   }
 }
@@ -97,7 +98,7 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load selectedNotebookId from database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "loadSelectedNotebookFromDb" } });
     return null;
   }
 }
@@ -113,7 +114,7 @@ async function saveAutoformatToDb(enabled: boolean): Promise<void> {
       }),
     });
   } catch (error: unknown) {
-    console.error("Failed to save autoformatOnPaste to database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "saveAutoformatToDb", enabled } });
   }
 }
 
@@ -130,7 +131,7 @@ async function loadAutoformatFromDb(): Promise<boolean | null> {
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load autoformatOnPaste from database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "loadAutoformatFromDb" } });
     return null;
   }
 }
@@ -146,7 +147,7 @@ async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promis
       }),
     });
   } catch (error: unknown) {
-    console.error("Failed to save editorMode to database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "saveEditorModeToDb", mode } });
   }
 }
 
@@ -163,7 +164,7 @@ async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" |
     }
     return null;
   } catch (error: unknown) {
-    console.error("Failed to load editorMode from database:", error);
+    logClientError(error, { context: { source: "NoteSettingsContext", action: "loadEditorModeFromDb" } });
     return null;
   }
 }
@@ -191,7 +192,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
           previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         }
       } catch (error: unknown) {
-        console.error("Failed to load note settings from localStorage:", error);
+        logClientError(error, { context: { source: "NoteSettingsContext", action: "loadSettingsFromLocalStorage" } });
       }
 
       // Then, load selectedFolderId from database (authoritative source)
@@ -208,7 +209,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, selectedFolderId: dbFolderId })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: "NoteSettingsContext", action: "updateLocalStorageCache", key: "selectedFolderId" } });
         }
       }
 
@@ -227,7 +228,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, selectedNotebookId: dbNotebookId })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: "NoteSettingsContext", action: "updateLocalStorageCache", key: "selectedNotebookId" } });
         }
       }
 
@@ -244,7 +245,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, autoformatOnPaste: dbAutoformat })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: "NoteSettingsContext", action: "updateLocalStorageCache", key: "autoformatOnPaste" } });
         }
       }
 
@@ -261,7 +262,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
             JSON.stringify({ ...current, editorMode: dbEditorMode })
           );
         } catch (error: unknown) {
-          console.error("Failed to update localStorage cache:", error);
+          logClientError(error, { context: { source: "NoteSettingsContext", action: "updateLocalStorageCache", key: "editorMode" } });
         }
       }
     };
@@ -276,7 +277,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
-      console.error("Failed to save note settings:", error);
+      logClientError(error, { context: { source: "NoteSettingsContext", action: "saveSettingsToLocalStorage" } });
     }
   }, [settings, isInitialized]);
 

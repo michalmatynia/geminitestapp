@@ -1116,11 +1116,16 @@ export async function exportProductToBase(
       ...(productId ? { productId } : {}),
     };
   } catch (error) {
-    console.error("[base-exporter] Export failed", {
-      productId: product.id,
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "base-exporter", 
+        action: "exportProductToBase",
+        productId: product.id 
+      });
+    } catch (logError) {
+      console.error("[base-exporter] Export failed (and logging failed)", error, logError);
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -1168,11 +1173,17 @@ export async function exportProductImagesToBase(
       productId,
     };
   } catch (error) {
-    console.error("[base-exporter] Image-only export failed", {
-      productId: product.id,
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "base-exporter", 
+        action: "exportProductImagesToBase",
+        productId: product.id,
+        externalProductId
+      });
+    } catch (logError) {
+      console.error("[base-exporter] Image-only export failed (and logging failed)", error, logError);
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

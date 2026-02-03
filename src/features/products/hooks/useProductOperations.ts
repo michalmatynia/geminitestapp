@@ -4,6 +4,7 @@
 import { useToast } from "@/shared/ui";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { logClientError } from "@/features/observability";
 
 import type { ProductWithImages } from "@/features/products/types";
 import type { ProductDraft } from "@/features/products/types/drafts";
@@ -53,7 +54,7 @@ export function useProductOperations(
         return;
       }
     } catch (error) {
-      console.error("Failed to validate SKU:", error);
+      logClientError(error, { context: { source: "useProductOperations", action: "validateSku", sku } });
       setActionError(error instanceof Error ? error.message : "Failed to validate SKU. Please try again.");
       return;
     }

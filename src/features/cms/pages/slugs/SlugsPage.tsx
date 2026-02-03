@@ -31,6 +31,7 @@ import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelectio
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from "@/features/cms/types/domain-settings";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import type { CmsDomain, Slug } from "@/features/cms/types";
 import { useCallback } from "react";
 
@@ -145,7 +146,7 @@ export default function SlugsPage(): React.JSX.Element {
     try {
       await deleteSlug.mutateAsync({ id: slugToDelete.id, domainId: activeDomainId });
     } catch (error) {
-      console.error("Failed to delete slug:", error);
+      logClientError(error, { context: { source: "slugs-page", action: "deleteSlug", slugId: slugToDelete.id } });
     } finally {
       setSlugToDelete(null);
     }

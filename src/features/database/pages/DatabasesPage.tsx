@@ -3,6 +3,7 @@
 import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel, ConfirmDialog } from "@/shared/ui";
 import { useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { logClientError } from "@/features/observability";
 
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
@@ -89,7 +90,7 @@ export default function DatabasesPage(): React.JSX.Element {
         );
       }
     } catch (error: unknown) {
-      console.error("Error restoring backup:", error);
+      logClientError(error, { context: { source: "DatabasesPage", action: "restoreBackup", backupName, dbType: activeTab } });
       openLogModal(`An error occurred during restoration.\n\n${String(error)}`);
     }
   };
@@ -119,7 +120,7 @@ export default function DatabasesPage(): React.JSX.Element {
         );
       }
     } catch (error: unknown) {
-      console.error("Error creating backup:", error);
+      logClientError(error, { context: { source: "DatabasesPage", action: "createBackup", dbType: activeTab } });
       openLogModal(`An error occurred during backup.\n\n${String(error)}`);
     }
   };
@@ -138,7 +139,7 @@ export default function DatabasesPage(): React.JSX.Element {
         toast("Failed to delete backup.", { variant: "error" });
       }
     } catch (error: unknown) {
-      console.error("Error deleting backup:", error);
+      logClientError(error, { context: { source: "DatabasesPage", action: "deleteBackup", backupName: backupToDelete, dbType: activeTab } });
       toast("An error occurred during deletion.", { variant: "error" });
     } finally {
       setBackupToDelete(null);
@@ -157,7 +158,7 @@ export default function DatabasesPage(): React.JSX.Element {
         toast("Failed to upload backup.", { variant: "error" });
       }
     } catch (error: unknown) {
-      console.error("Error uploading backup:", error);
+      logClientError(error, { context: { source: "DatabasesPage", action: "uploadBackup", filename: file.name, dbType: activeTab } });
       toast("An error occurred during upload.", { variant: "error" });
     } finally {
       event.target.value = "";

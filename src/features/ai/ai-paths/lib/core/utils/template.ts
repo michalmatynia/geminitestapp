@@ -6,23 +6,24 @@ export const renderTemplate = (
   context: Record<string, unknown>,
   currentValue: unknown
 ): string =>
-  template
-    .replace(/{{\s*([^}]+)\s*}}/g, (_match: string, token: string) => {
-      const key = String(token).trim();
+  // Single-pass replacement prevents an inserted value (e.g. JSON arrays like `[{...}]`) from being
+  // re-interpreted as another placeholder by a second `.replace()` call.
+  //
+  // Square-bracket placeholders are intentionally conservative so we don't accidentally treat
+  // JSON arrays (or other bracketed text) as placeholders.
+  template.replace(
+    /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g,
+    (_match: string, curlyToken: string | undefined, bracketToken: string | undefined) => {
+      const raw = curlyToken ?? bracketToken ?? "";
+      const key = String(raw).trim();
+      if (!key) return "";
       if (key === "value" || key === "current") {
         return safeStringify(currentValue);
       }
       const resolved = getValueAtMappingPath(context, key);
       return safeStringify(resolved);
-    })
-    .replace(/\[\s*([^\]]+)\s*\]/g, (_match: string, token: string) => {
-      const key = String(token).trim();
-      if (key === "value" || key === "current") {
-        return safeStringify(currentValue);
-      }
-      const resolved = getValueAtMappingPath(context, key);
-      return safeStringify(resolved);
-    });
+    }
+  );
 
 export const renderJsonTemplate = (
   template: string,

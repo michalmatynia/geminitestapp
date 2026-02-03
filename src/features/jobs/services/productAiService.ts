@@ -89,7 +89,16 @@ export async function getProductAiJobs(
         const product = await productService.getProductById(id);
         return { id, product: isRecord(product) ? product : null };
       } catch (error: unknown) {
-        console.error(`[getProductAiJobs] Failed to fetch product ${id}:`, error);
+        try {
+          const { ErrorSystem } = await import("@/features/observability/services/error-system");
+          void ErrorSystem.captureException(error, { 
+            service: "product-ai-service", 
+            action: "getProductAiJobs",
+            productId: id
+          });
+        } catch (logError) {
+          console.error(`[getProductAiJobs] Failed to fetch product ${id} (and logging failed):`, error, logError);
+        }
         return { id, product: null };
       }
     })
@@ -142,7 +151,17 @@ export async function getProductAiJob(
       const result = await productService.getProductById(job.productId);
       product = isRecord(result) ? result : null;
     } catch (error: unknown) {
-      console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
+      try {
+        const { ErrorSystem } = await import("@/features/observability/services/error-system");
+        void ErrorSystem.captureException(error, { 
+          service: "product-ai-service", 
+          action: "getProductAiJob",
+          productId: job.productId,
+          jobId: job.id
+        });
+      } catch (logError) {
+        console.error(`[getProductAiJob] Failed to fetch product ${job.productId} (and logging failed):`, error, logError);
+      }
       // Continue without product details if it fails
     }
   }

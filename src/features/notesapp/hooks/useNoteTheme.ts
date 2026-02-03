@@ -2,6 +2,7 @@ import { useMemo, useCallback } from "react";
 import type { NoteWithRelations, NotebookRecord, ThemeRecord } from "@/shared/types/notes";
 import type { UseNoteThemeProps } from "@/features/notesapp/types/notes-hooks";
 import { findFolderById } from "@/features/foldertree";
+import { logClientError } from "@/features/observability";
 
 export function useNoteTheme({
   themes,
@@ -92,7 +93,7 @@ export function useNoteTheme({
           await fetchFolderTree();
         }
       } catch (error: unknown) {
-        console.error("Failed to update folder theme:", error);
+        logClientError(error, { context: { source: "useNoteTheme", action: "updateFolderTheme", folderId: selectedFolderId, themeId } });
       }
     },
     [selectedFolderId, fetchFolderTree]
@@ -112,7 +113,7 @@ export function useNoteTheme({
           setNotebook(updated);
         }
       } catch (error: unknown) {
-        console.error("Failed to update notebook default theme:", error);
+        logClientError(error, { context: { source: "useNoteTheme", action: "updateNotebookDefaultTheme", notebookId: selectedNotebookId, themeId } });
       }
     },
     [selectedNotebookId, setNotebook]

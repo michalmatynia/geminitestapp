@@ -18,6 +18,7 @@ import { useSearchParams } from "next/navigation";
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../utils/constants";
 import * as chatbotApi from "../api";
 import { useAgentCreatorSettings } from "@/features/ai/agentcreator";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 export interface UseChatbotLogicReturn {
   messages: ChatMessage[];
@@ -278,7 +279,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setCurrentSessionId(data.sessions[0]?.id ?? null);
       }
     } catch (error: unknown) {
-      console.error("Failed to fetch sessions:", error);
+      logClientError(error, { context: { source: "useChatbotLogic.fetchSessions" } });
       toast("Failed to load chat sessions", { variant: "error" });
     } finally {
       setSessionsLoading(false);
@@ -290,7 +291,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       const session = await chatbotApi.fetchChatbotSession(id);
       setMessages(session?.messages || []);
     } catch (error: unknown) {
-      console.error("Failed to load session messages:", error);
+      logClientError(error, { context: { source: "useChatbotLogic.loadSessionMessages", sessionId: id } });
     }
   }, []);
 
@@ -304,7 +305,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setCurrentSessionId(data.sessionId);
       setMessages([]);
     } catch (error: unknown) {
-      console.error("Failed to create session:", error);
+      logClientError(error, { context: { source: "useChatbotLogic.createNewSession" } });
       toast("Failed to create new chat session", { variant: "error" });
     }
   }, [model, webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
@@ -317,7 +318,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setCurrentSessionId(sessions[0]?.id || null);
       }
     } catch (error: unknown) {
-      console.error("Failed to delete session:", error);
+      logClientError(error, { context: { source: "useChatbotLogic.deleteSession", sessionId: id } });
       toast("Failed to delete chat session", { variant: "error" });
     }
   }, [currentSessionId, sessions, fetchSessions, toast]);
@@ -349,7 +350,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           setModel(models[0]!);
         }
       } catch (error: unknown) {
-        console.error("Error fetching Ollama models:", error);
+        logClientError(error, { context: { source: "useChatbotLogic.fetchModels" } });
         toast("Failed to load models from Ollama server", { variant: "error" });
       } finally {
         setModelLoading(false);
@@ -512,7 +513,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
-      console.error("Error sending message:", error);
+      logClientError(error, { context: { source: "useChatbotLogic.sendMessage", sessionId } });
       toast("Failed to send message", { variant: "error" });
     } finally {
       setIsSending(false);

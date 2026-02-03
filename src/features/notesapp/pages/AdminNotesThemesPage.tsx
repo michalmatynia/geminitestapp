@@ -3,7 +3,7 @@
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import React, { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-
+import { logClientError } from "@/features/observability";
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { useNotebooks, useNoteThemes } from "@/features/notesapp/api/useNoteQueries";
@@ -82,7 +82,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       setForm(defaultTheme);
       toast("Theme created", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to create theme:", error);
+      logClientError(error, { context: { source: "AdminNotesThemesPage", action: "createTheme", name: form.name, notebookId: selectedNotebookId } });
       toast("Failed to create theme", { variant: "error" });
     }
   };
@@ -93,7 +93,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       await deleteTheme.mutateAsync(themeId);
       toast("Theme deleted", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to delete theme:", error);
+      logClientError(error, { context: { source: "AdminNotesThemesPage", action: "deleteTheme", themeId } });
       toast("Failed to delete theme", { variant: "error" });
     }
   };
@@ -134,7 +134,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast("Theme updated", { variant: "success" });
       handleEditCancel();
     } catch (error: unknown) {
-      console.error("Failed to update theme:", error);
+      logClientError(error, { context: { source: "AdminNotesThemesPage", action: "updateTheme", themeId } });
       toast("Failed to update theme", { variant: "error" });
     }
   };

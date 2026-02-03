@@ -1,9 +1,9 @@
 export interface ErrorContext {
-  service?: string;
-  runId?: string; // For agent runs
-  jobId?: string; // For background jobs
-  productId?: string;
-  errorId?: string;
+  service?: string | null | undefined;
+  runId?: string | null | undefined; // For agent runs
+  jobId?: string | null | undefined; // For background jobs
+  productId?: string | null | undefined;
+  errorId?: string | null | undefined;
   [key: string]: unknown;
 }
 

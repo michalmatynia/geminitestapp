@@ -1,6 +1,7 @@
 "use client";
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SharedModal } from "@/shared/ui";
 import { useState } from "react";
+import { logClientError } from "@/features/observability";
 
 import { ProductWithImages } from "@/features/products/types";
 import type {
@@ -134,6 +135,7 @@ export function ListProductModal({
         onSuccess();
       }
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ListProductModal", action: "submit", productId: product.id, integrationId: selectedIntegrationId } });
       setError(err instanceof Error ? err.message : "Failed to list product");
     }
   };
@@ -152,6 +154,7 @@ export function ListProductModal({
       });
       onSuccess();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ListProductModal", action: "imageRetry", productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to export product");
     }
   };

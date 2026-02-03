@@ -8,6 +8,7 @@ import type { ExpandedImageFile } from "@/features/products";
 import { useFiles, useDeleteFile, useUpdateFileTags } from "@/features/files/hooks/useFiles";
 import { useAssets3D } from "@/features/viewer3d/hooks/useAsset3dQueries";
 import type { Asset3DRecord, Asset3DListFilters } from "@/features/viewer3d/types";
+import { logClientError } from "@/features/observability";
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -178,7 +179,7 @@ export default function FileManager({
       setSelectedFiles([]);
       toast("Selected files deleted.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to delete files:", error);
+      logClientError(error, { context: { source: "FileManager", action: "deleteSelected", count: selectedFiles.length } });
       toast("Failed to delete selected files.", { variant: "error" });
     }
   };
@@ -206,7 +207,7 @@ export default function FileManager({
       toast("Tags updated.", { variant: "success" });
       setBulkTagInput("");
     } catch (error) {
-      console.error("Failed to update tags:", error);
+      logClientError(error, { context: { source: "FileManager", action: "applyTags", count: selectedFiles.length } });
       toast("Failed to update tags.", { variant: "error" });
     }
   };
@@ -218,7 +219,7 @@ export default function FileManager({
         await deleteFileMutation.mutateAsync(fileId);
         toast("File deleted successfully.", { variant: "success" });
       } catch (error) {
-        console.error("Failed to delete file:", error);
+        logClientError(error, { context: { source: "FileManager", action: "deleteFile", fileId } });
         toast("Failed to delete file.", { variant: "error" });
       }
     }

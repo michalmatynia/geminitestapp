@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from "@/shared/ui";
+import { Button, Input, Label, SectionHeader, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SharedModal, Textarea, useToast } from "@/shared/ui";
 import { cn } from "@/shared/utils";
 import { Folder, Image as ImageIcon, MousePointer2, Pentagon, RefreshCcw, Settings, Upload } from "lucide-react";
 
-import type { ImageFileRecord } from "@/shared/types/files";
+import FileManager from "@/features/files/components/FileManager";
+import type { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 import { extractParamsFromPrompt, flattenParams, inferParamSpecs, setDeepValue, validateImageStudioParams } from "../utils/prompt-params";
 import type { ExtractParamsResult, ParamIssue, ParamLeaf, ParamSpec } from "../utils/prompt-params";
+import { validateProgrammaticPrompt, type PromptValidationIssue } from "../utils/prompt-validator";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
 import { serializeSetting } from "@/shared/utils/settings-json";
-import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, type ImageStudioSettings } from "../utils/studio-settings";
+import { logClientError } from "@/features/observability";
+import { defaultImageStudioSettings, IMAGE_STUDIO_SETTINGS_KEY, parseImageStudioSettings, parsePromptValidationRules, type ImageStudioSettings } from "../utils/studio-settings";
 
 type ToolMode = "select" | "polygon";
 
@@ -19,6 +22,7 @@ type Point = { x: number; y: number }; // normalized 0..1
 
 type StudioProjectsResponse = { projects: string[] };
 type StudioAssetsResponse = { assets: ImageFileRecord[] };
+type StudioImportResponse = { uploaded: ImageFileRecord[]; failures?: Array<{ filepath: string; error: string }> };
 
 function safeJsonStringify(value: unknown): string {
   try {
@@ -337,11 +341,16 @@ export function AdminImageStudioPage(): React.JSX.Element {
     JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
   );
   const [advancedOverridesError, setAdvancedOverridesError] = useState<string | null>(null);
+  const [promptValidationRulesText, setPromptValidationRulesText] = useState<string>(
+    JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2)
+  );
+  const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
 
   const [projectId, setProjectId] = useState<string>("");
   const [newProjectId, setNewProjectId] = useState<string>("");
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
 
   const [tool, setTool] = useState<ToolMode>("select");
   const [maskPoints, setMaskPoints] = useState<Point[]>([]);
@@ -376,6 +385,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setPromptValidationRulesText(JSON.stringify(hydrated.promptValidation.rules, null, 2));
+    setPromptValidationRulesError(null);
     setSettingsLoaded(true);
   }, [settingsLoaded, settingsQuery.data]);
 
@@ -392,10 +403,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const projectsQuery = useQuery({
     queryKey: ["image-studio", "projects"],
     queryFn: async (): Promise<string[]> => {
-      const res = await fetch("/api/image-studio/projects");
-      if (!res.ok) throw new Error("Failed to load projects");
-      const data = (await res.json()) as StudioProjectsResponse;
-      return Array.isArray(data.projects) ? data.projects : [];
+      try {
+        const res = await fetch("/api/image-studio/projects");
+        if (!res.ok) throw new Error("Failed to load projects");
+        const data = (await res.json()) as StudioProjectsResponse;
+        return Array.isArray(data.projects) ? data.projects : [];
+      } catch (error) {
+        logClientError(error, { context: { source: "AdminImageStudioPage", action: "loadProjects" } });
+        throw error;
+      }
     },
     staleTime: 10_000,
   });
@@ -427,10 +443,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
     queryKey: ["image-studio", "assets", projectId],
     enabled: Boolean(projectId),
     queryFn: async (): Promise<ImageFileRecord[]> => {
-      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`);
-      if (!res.ok) throw new Error("Failed to load assets");
-      const data = (await res.json()) as StudioAssetsResponse;
-      return Array.isArray(data.assets) ? data.assets : [];
+      try {
+        const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`);
+        if (!res.ok) throw new Error("Failed to load assets");
+        const data = (await res.json()) as StudioAssetsResponse;
+        return Array.isArray(data.assets) ? data.assets : [];
+      } catch (error) {
+        logClientError(error, { context: { source: "AdminImageStudioPage", action: "loadAssets", projectId } });
+        throw error;
+      }
     },
     staleTime: 5_000,
   });
@@ -462,6 +483,33 @@ export function AdminImageStudioPage(): React.JSX.Element {
     },
   });
 
+  const importFromDriveMutation = useMutation({
+    mutationFn: async (payload: { files: ImageFileSelection[]; folder: string }): Promise<StudioImportResponse> => {
+      if (!projectId) throw new Error("Select or create a project first.");
+      const res = await fetch(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: payload.files, folder: payload.folder }),
+      });
+      const data = (await res.json().catch(() => null)) as StudioImportResponse | { error?: string } | null;
+      if (!res.ok) {
+        throw new Error((data && "error" in data && data.error) || "Import failed");
+      }
+      return (data ?? { uploaded: [], failures: [] }) as StudioImportResponse;
+    },
+    onSuccess: async (data: StudioImportResponse): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ["image-studio", "assets", projectId] });
+      if (data.failures && data.failures.length > 0) {
+        toast(`Imported ${data.uploaded.length} file(s). ${data.failures.length} failed.`, { variant: "info" });
+      } else {
+        toast("Import complete.", { variant: "success" });
+      }
+    },
+    onError: (error: unknown): void => {
+      toast(error instanceof Error ? error.message : "Import failed.", { variant: "error" });
+    },
+  });
+
   const assets = assetsQuery.data ?? [];
 
   const selectedAsset = useMemo(() => {
@@ -477,6 +525,15 @@ export function AdminImageStudioPage(): React.JSX.Element {
   const handleSelectAsset = useCallback((asset: ImageFileRecord): void => {
     setSelectedAssetId(asset.id);
   }, []);
+
+  const handleDriveSelection = useCallback(
+    async (files: ImageFileSelection[]): Promise<void> => {
+      setDriveImportOpen(false);
+      if (files.length === 0) return;
+      await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
+    },
+    [importFromDriveMutation, selectedFolder]
+  );
 
   const handleUploadInput = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -534,9 +591,27 @@ export function AdminImageStudioPage(): React.JSX.Element {
     }
   }, []);
 
+  const handlePromptValidationRulesChange = useCallback((raw: string): void => {
+    setPromptValidationRulesText(raw);
+    const parsed = parsePromptValidationRules(raw);
+    if (!parsed.ok) {
+      setPromptValidationRulesError(parsed.error);
+      return;
+    }
+    setPromptValidationRulesError(null);
+    setStudioSettings((prev) => ({
+      ...prev,
+      promptValidation: { ...prev.promptValidation, rules: parsed.rules },
+    }));
+  }, []);
+
   const saveStudioSettings = useCallback(async (): Promise<void> => {
     if (advancedOverridesError) {
       toast(`Settings not saved: ${advancedOverridesError}`, { variant: "error" });
+      return;
+    }
+    if (promptValidationRulesError) {
+      toast(`Settings not saved: ${promptValidationRulesError}`, { variant: "error" });
       return;
     }
 
@@ -557,7 +632,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
       });
       toast("Image Studio settings saved.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save Image Studio settings:", error);
+      logClientError(error, { context: { source: "AdminImageStudioPage", action: "saveSettings" } });
       toast("Failed to save Image Studio settings.", { variant: "error" });
     }
   }, [advancedOverridesError, studioSettings, toast, updateSetting]);
@@ -566,6 +641,8 @@ export function AdminImageStudioPage(): React.JSX.Element {
     setStudioSettings(defaultImageStudioSettings);
     setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
     setAdvancedOverridesError(null);
+    setPromptValidationRulesText(JSON.stringify(defaultImageStudioSettings.promptValidation.rules, null, 2));
+    setPromptValidationRulesError(null);
   }, []);
 
   const paramLeaves: ParamLeaf[] = useMemo(() => {
@@ -599,6 +676,11 @@ export function AdminImageStudioPage(): React.JSX.Element {
     return `${promptSourceAtExtract.slice(0, extractResult.objectStart)}${json}${promptSourceAtExtract.slice(extractResult.objectEnd)}`;
   }, [extractResult, paramsState, promptSourceAtExtract]);
 
+  const promptValidationIssues: PromptValidationIssue[] = useMemo(() => {
+    if (studioSettings.promptExtraction.mode !== "programmatic") return [];
+    return validateProgrammaticPrompt(promptText, studioSettings.promptValidation);
+  }, [promptText, studioSettings.promptExtraction.mode, studioSettings.promptValidation]);
+
   const runPayload = useMemo(() => {
     return {
       projectId: projectId || null,
@@ -629,6 +711,19 @@ export function AdminImageStudioPage(): React.JSX.Element {
           </div>
         }
       />
+
+      <SharedModal
+        open={driveImportOpen}
+        onClose={() => setDriveImportOpen(false)}
+        title="Import from Drive"
+        size="xl"
+      >
+        <FileManager
+          mode="select"
+          selectionMode="multiple"
+          onSelectFile={(files) => void handleDriveSelection(files)}
+        />
+      </SharedModal>
 
       <div className="grid grid-cols-[56px_300px_1fr_420px] gap-4">
         {/* Toolbar */}
@@ -743,19 +838,37 @@ export function AdminImageStudioPage(): React.JSX.Element {
               <div className="text-[11px] text-gray-400">
                 Folder: <span className="text-gray-200">{selectedFolder || "(root)"}</span>
               </div>
-              <label className={cn("inline-flex cursor-pointer items-center gap-2", !projectId && "opacity-50 pointer-events-none")}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => void handleUploadInput(e)}
-                />
-                <Button type="button" variant="outline" size="sm" disabled={!projectId || uploadMutation.isPending}>
-                  <Upload className="mr-2 size-4" />
-                  Upload
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDriveImportOpen(true)}
+                  disabled={!projectId || importFromDriveMutation.isPending}
+                  title="Import existing images from Drive"
+                >
+                  <Folder className="mr-2 size-4" />
+                  Drive
                 </Button>
-              </label>
+                <label
+                  className={cn(
+                    "inline-flex cursor-pointer items-center gap-2",
+                    !projectId && "opacity-50 pointer-events-none"
+                  )}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => void handleUploadInput(e)}
+                  />
+                  <Button type="button" variant="outline" size="sm" disabled={!projectId || uploadMutation.isPending}>
+                    <Upload className="mr-2 size-4" />
+                    Upload
+                  </Button>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -870,7 +983,7 @@ export function AdminImageStudioPage(): React.JSX.Element {
                   <Button
                     size="sm"
                     onClick={() => void saveStudioSettings()}
-                    disabled={updateSetting.isPending || Boolean(advancedOverridesError)}
+                    disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
                   >
                     {updateSetting.isPending ? "Saving..." : "Save"}
                   </Button>
@@ -1004,6 +1117,37 @@ export function AdminImageStudioPage(): React.JSX.Element {
                       Stores config only; AI extraction endpoint is next.
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-gray-400">Prompt Validator</Label>
+                    <label className="flex items-center gap-2 text-xs text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={studioSettings.promptValidation.enabled}
+                        onChange={(e) =>
+                          setStudioSettings((prev) => ({
+                            ...prev,
+                            promptValidation: { ...prev.promptValidation, enabled: e.target.checked },
+                          }))
+                        }
+                      />
+                      Enabled
+                    </label>
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Validates programmatic prompts and suggests fixes when patterns look almost correct.
+                  </div>
+                  <Textarea
+                    value={promptValidationRulesText}
+                    onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
+                    className="h-40 font-mono text-[11px]"
+                    placeholder="JSON array of validator rules"
+                  />
+                  {promptValidationRulesError ? (
+                    <div className="text-[11px] text-red-300">{promptValidationRulesError}</div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -1469,6 +1613,39 @@ export function AdminImageStudioPage(): React.JSX.Element {
               className="h-40 font-mono text-[11px]"
               placeholder="Paste your prompt here. It must include `params = { ... }` with JSON-like content (quoted keys/strings)."
             />
+            {promptValidationIssues.length > 0 ? (
+              <div className="space-y-2 rounded border border-border bg-gray-900/30 p-2">
+                <div className="text-[11px] text-gray-400">
+                  Prompt validation:{" "}
+                  <span className="text-gray-200">{promptValidationIssues.length} issue(s)</span>
+                </div>
+                {promptValidationIssues.map((issue) => {
+                  const tone =
+                    issue.severity === "error"
+                      ? "border-red-500/30 bg-red-500/10 text-red-200"
+                      : issue.severity === "warning"
+                        ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-200"
+                        : "border-blue-500/30 bg-blue-500/10 text-blue-200";
+                  return (
+                    <div key={issue.ruleId} className={`rounded border px-2 py-1.5 ${tone}`}>
+                      <div className="text-[11px] font-semibold">{issue.title}</div>
+                      <div className="text-[11px] opacity-90">{issue.message}</div>
+                      {issue.suggestions.length > 0 ? (
+                        <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[11px] opacity-90">
+                          {issue.suggestions.map((s, idx) => (
+                            <li key={`${issue.ruleId}-${idx}`}>
+                              {s.suggestion}
+                              {s.found ? <span className="ml-1 opacity-80">(found: {s.found})</span> : null}
+                              {s.comment ? <span className="ml-1 opacity-80">— {s.comment}</span> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
             {extractResult && !extractResult.ok ? (
               <div className="text-xs text-red-300">{extractResult.error}</div>
             ) : null}

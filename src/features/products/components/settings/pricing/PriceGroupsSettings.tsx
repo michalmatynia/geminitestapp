@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge } from "@/shared/ui";
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, SectionHeader, SectionPanel } from "@/shared/ui";
 import { PriceGroup } from "@/features/products/types";
 
 
@@ -26,8 +26,10 @@ export function PriceGroupsSettings({
 }: PriceGroupsSettingsProps): React.JSX.Element {
   return (
     <div className="space-y-4">
-      <div>
-        <div className="flex items-center gap-4">
+      <SectionHeader
+        title="Price Groups"
+        description="Configure pricing tiers and group rules for products."
+        actions={
           <Button
             className="min-w-[100px] border border-white/20 hover:border-white/40"
             type="button"
@@ -35,12 +37,9 @@ export function PriceGroupsSettings({
           >
             Add Price Group
           </Button>
-          <h2 className="text-xl font-semibold text-white">Price Groups</h2>
-        </div>
-        <p className="mt-1 text-sm text-gray-400">
-          Configure pricing tiers and group rules for products.
-        </p>
-      </div>
+        }
+        size="md"
+      />
       {loadingGroups ? (
         <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
           Loading price groups...
@@ -52,9 +51,10 @@ export function PriceGroupsSettings({
       ) : (
         <div className="space-y-3">
           {priceGroups.map((group: PriceGroup) => (
-            <div
+            <SectionPanel
               key={group.id}
-              className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
+              variant="subtle-compact"
+              className="flex items-center justify-between"
             >
               <div>
                 <div className="flex items-center gap-2 text-white">
@@ -91,11 +91,11 @@ export function PriceGroupsSettings({
                   Delete
                 </Button>
               </div>
-            </div>
+            </SectionPanel>
           ))}
         </div>
       )}
-      <div className="rounded-md border border-border bg-card/60 p-4">
+      <SectionPanel variant="subtle" className="p-4">
         <Label className="text-sm font-semibold text-white">
           Default price group
         </Label>
@@ -123,7 +123,8 @@ export function PriceGroupsSettings({
         {defaultGroupSaving ? (
           <p className="mt-2 text-xs text-gray-500">Saving default...</p>
         ) : null}
-      </div>
+      </SectionPanel>
     </div>
   );
 }
+

@@ -78,11 +78,21 @@ function renderFieldGroups(
     if (group.kind === "single") {
       const raw = group.fields[0]!;
       const field = resolveField ? resolveField(raw) : raw;
+      const legacyBackground =
+        field.type === "background" && settings[field.key] === undefined
+          ? ((): Record<string, unknown> | undefined => {
+              const bgColor = settings["backgroundColor"];
+              if (typeof bgColor !== "string") return undefined;
+              const trimmed = bgColor.trim();
+              if (!trimmed) return undefined;
+              return { type: "solid", color: trimmed };
+            })()
+          : undefined;
       return (
         <SettingsFieldRenderer
           key={field.key}
           field={field}
-          value={settings[field.key]}
+          value={legacyBackground ?? settings[field.key]}
           onChange={onChange}
         />
       );
@@ -192,10 +202,14 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleSectionSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedSection) return;
+      const nextSettings = {
+        [key]: value,
+        ...(key === "background" ? { backgroundColor: "" } : {}),
+      };
       dispatch({
         type: "UPDATE_SECTION_SETTINGS",
         sectionId: selectedSection.id,
-        settings: { [key]: value },
+        settings: nextSettings,
       });
     },
     [selectedSection, dispatch]
@@ -224,7 +238,11 @@ export function ComponentSettingsPanel(): React.ReactNode {
     (key: string, value: unknown): void => {
       if (!selectedBlock || !selectedParentSection) return;
       const shouldResetRowHeight = selectedBlock.type === "Row" && key === "heightMode" && value === "inherit";
-      const nextSettings = { [key]: value, ...(shouldResetRowHeight ? { height: 0 } : {}) };
+      const nextSettings = {
+        [key]: value,
+        ...(key === "background" ? { backgroundColor: "" } : {}),
+        ...(shouldResetRowHeight ? { height: 0 } : {}),
+      };
 
       if (selectedParentBlock && selectedParentColumn) {
         // Element inside a section-type block inside a column
@@ -363,7 +381,10 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleColumnSettingChange = useCallback(
     (key: string, value: unknown): void => {
       if (!selectedColumn || !selectedColumnParentSection) return;
-      const nextSettings: Record<string, unknown> = { [key]: value };
+      const nextSettings: Record<string, unknown> = {
+        [key]: value,
+        ...(key === "background" ? { backgroundColor: "" } : {}),
+      };
       if (key === "heightMode" && value === "inherit") {
         nextSettings.height = 0;
       }

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
 import { useCmsPages, useCmsSlugs, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import { CmsDomainSelector } from "@/features/cms/components/CmsDomainSelector";
 import { useCmsDomainSelection } from "@/features/cms/hooks/useCmsDomainSelection";
 import type { PageStatus, PageSummary, PageSlugLink, Slug } from "@/features/cms/types";
@@ -66,7 +67,7 @@ export default function PagesPage(): React.ReactNode {
     try {
       await deletePage.mutateAsync(pageToDelete.id);
     } catch (error) {
-      console.error("Failed to delete page:", error);
+      logClientError(error, { context: { source: "PagesPage.handleConfirmDelete", pageId: pageToDelete.id } });
     } finally {
       setPageToDelete(null);
     }

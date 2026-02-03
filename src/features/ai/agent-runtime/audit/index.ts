@@ -56,13 +56,25 @@ export async function logAgentAudit(
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][audit] Failed to write audit log", {
-        runId,
-        level,
-        message,
-        error,
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-audit", 
+        action: "logAgentAudit",
+        originalMessage: message,
+        auditLevel: level,
+        targetRunId: runId
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error("[chatbot][agent][audit] Failed to write audit log (and logging failed)", {
+          runId,
+          level,
+          message,
+          error,
+          logError
+        });
+      }
     }
   }
 }

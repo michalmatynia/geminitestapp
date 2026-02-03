@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Switch,
+  ThemeToggle as ThemeToggleComponent,
 } from "@/shared/ui";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/use-settings";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -107,6 +108,11 @@ export function UserNav(): React.ReactNode {
             </Button>
           </div>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="flex items-center justify-between px-2 py-1.5">
+          <span className="text-sm font-medium">Appearance</span>
+          <ThemeToggleComponent />
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => { void signOut(); }}>
           <LogOut className="mr-2 h-4 w-4" />

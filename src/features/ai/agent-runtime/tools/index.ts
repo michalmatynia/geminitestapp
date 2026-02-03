@@ -1582,11 +1582,21 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           }
         }
       } catch (recordError) {
-        if (debugEnabled) {
-          console.error("[chatbot][agent][tool] Video capture failed", {
-            runId,
-            recordError,
+        try {
+          const { ErrorSystem } = await import("@/features/observability/services/error-system");
+          void ErrorSystem.captureException(recordError, { 
+            service: "agent-tool", 
+            action: "captureVideo",
+            runId 
           });
+        } catch (logError) {
+          if (debugEnabled) {
+            console.error("[chatbot][agent][tool] Video capture failed (and logging failed)", {
+              runId,
+              recordError,
+              logError
+            });
+          }
         }
       }
       if (videoPath) {
@@ -1596,11 +1606,22 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             data: { recordingPath: videoPath },
           });
         } catch (updateError) {
-          if (debugEnabled) {
-            console.error("[chatbot][agent][tool] Recording update failed", {
+          try {
+            const { ErrorSystem } = await import("@/features/observability/services/error-system");
+            void ErrorSystem.captureException(updateError, { 
+              service: "agent-tool", 
+              action: "updateRecordingPath",
               runId,
-              updateError,
+              videoPath 
             });
+          } catch (logError) {
+            if (debugEnabled) {
+              console.error("[chatbot][agent][tool] Recording update failed (and logging failed)", {
+                runId,
+                updateError,
+                logError
+              });
+            }
           }
         }
       }
@@ -1642,9 +1663,21 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
   } catch (error) {
      const errorId = randomUUID();
     const message = error instanceof Error ? error.message : "Tool failed.";
-    if (debugEnabled) {
-      console.error("[chatbot][agent][tool] Failed", { runId, errorId, error });
+    
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-tool", 
+        action: "runAgentTool",
+        runId,
+        errorId
+      });
+    } catch (logError) {
+      if (debugEnabled) {
+        console.error("[chatbot][agent][tool] Failed (and logging failed)", { runId, errorId, error, logError });
+      }
     }
+
     try {
       await prisma.agentBrowserLog.create({
         data: {
@@ -1796,9 +1829,22 @@ export async function runAgentBrowserControl({
   } catch (error) {
      const errorId = randomUUID();
     const message = error instanceof Error ? error.message : "Control action failed.";
-    if (debugEnabled) {
-      console.error("[chatbot][agent][control] Failed", { runId, errorId, error });
+    
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-control", 
+        action: "runAgentBrowserControl",
+        runId,
+        errorId,
+        requestedAction: action
+      });
+    } catch (logError) {
+      if (debugEnabled) {
+        console.error("[chatbot][agent][control] Failed (and logging failed)", { runId, errorId, error, logError });
+      }
     }
+
     try {
       await prisma.agentBrowserLog.create({
         data: {

@@ -56,7 +56,7 @@ const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =
     return !BASEHOST_MAPPING_KEYS.has(sourceKey) && !BASEHOST_MAPPING_KEYS.has(targetField);
   });
 
-const parseTemplates = (value: string | null): Template[] => {
+const parseTemplates = async (value: string | null): Promise<Template[]> => {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -71,7 +71,15 @@ const parseTemplates = (value: string | null): Template[] => {
         mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
       })) as Template[];
   } catch (error) {
-    console.error("[ExportTemplateRepository] Failed to parse templates:", error);
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "export-template-repository", 
+        action: "parseTemplates" 
+      });
+    } catch (logError) {
+      console.error("[ExportTemplateRepository] Failed to parse templates (and logging failed):", error, logError);
+    }
     return [];
   }
 };
@@ -347,7 +355,7 @@ const writeImageRetryPresetsValue = async (value: string): Promise<void> => {
 
 export const listExportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();
-  return parseTemplates(raw);
+  return await parseTemplates(raw);
 };
 
 export const getExportTemplate = async (
@@ -457,7 +465,15 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
     const parsed = JSON.parse(raw) as unknown;
     return normalizeImageRetryPresets(parsed);
   } catch (error) {
-    console.error("[ExportTemplateRepository] Failed to parse image presets:", error);
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "export-template-repository", 
+        action: "getExportImageRetryPresets" 
+      });
+    } catch (logError) {
+      console.error("[ExportTemplateRepository] Failed to parse image presets (and logging failed):", error, logError);
+    }
     return getDefaultImageRetryPresets();
   }
 };

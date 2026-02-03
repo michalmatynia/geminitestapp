@@ -185,13 +185,25 @@ async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<R
 
     const message =
       error instanceof Error ? error.message : "Failed to load models.";
-    if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][models] Upstream fetch failed", {
-        message,
-        durationMs: Date.now() - requestStart,
-        requestId: ctx.requestId,
+    
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "api/chatbot", 
+        action: "getModels",
+        requestId: ctx.requestId 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.warn("[chatbot][models] Upstream fetch failed (and logging failed)", {
+          message,
+          durationMs: Date.now() - requestStart,
+          requestId: ctx.requestId,
+          logError
+        });
+      }
     }
+
     return NextResponse.json({
       models: [],
       warning: { code: "OLLAMA_UNAVAILABLE", message },

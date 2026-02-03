@@ -24,6 +24,7 @@ const MODEL_DEFAULTS: Record<string, any> = {
   country: { languages: [], currencies: [] },
   category: { notes: [], children: [] },
   imageFile: { products: [] },
+  systemLog: {}, // Add systemLog default
 };
 
 const RELATION_MAP: Record<string, Record<string, string>> = {

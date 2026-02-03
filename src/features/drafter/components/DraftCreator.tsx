@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
 import type { CatalogRecord } from "@/features/products";
 import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import { PRODUCT_ICONS } from "@/shared/constants/product-icons";
 import { useDraft, useCreateDraft, useUpdateDraft } from "@/features/drafter/hooks/useDrafts";
 import { useCatalogs } from "@/features/products/hooks/useProductMetadata";
@@ -230,7 +231,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
       });
       onSaveSuccess();
     } catch (error) {
-      console.error("Failed to save draft:", error);
+      logClientError(error, { context: { source: "DraftCreator", action: "saveDraft", draftId } });
       toast("Failed to save draft", { variant: "error" });
     }
   };

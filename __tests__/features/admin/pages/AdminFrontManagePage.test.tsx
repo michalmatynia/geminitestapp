@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from "../../../../test-utils";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/useSettings';

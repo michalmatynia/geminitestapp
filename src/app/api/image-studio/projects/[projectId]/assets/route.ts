@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
+import { randomUUID } from "crypto";
 
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
@@ -29,9 +30,32 @@ const sanitizeFolderPath = (value: string): string => {
   return parts.join("/");
 };
 
+type UploadedFileLike = {
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  size: number;
+  type?: string | undefined;
+  name?: string | undefined;
+};
+
+function isUploadedFileLike(value: unknown): value is UploadedFileLike {
+  if (!value || typeof value !== "object") return false;
+  const maybe = value as Record<string, unknown>;
+  return typeof maybe.arrayBuffer === "function" && typeof maybe.size === "number";
+}
+
+function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
+  const candidates = [
+    ...formData.getAll("files"),
+    ...formData.getAll("files[]"),
+    ...formData.getAll("file"),
+  ] as UploadedFileLike[];
+
+  return candidates.filter(isUploadedFileLike);
+}
+
 async function uploadStudioFile(params: {
   projectId: string;
-  file: File;
+  file: UploadedFileLike;
   folderPath?: string | null | undefined;
 }): Promise<ImageFileRecord> {
   const buffer = Buffer.from(await params.file.arrayBuffer());
@@ -57,14 +81,73 @@ async function uploadStudioFile(params: {
   await fs.mkdir(diskDir, { recursive: true });
   await fs.writeFile(path.join(diskDir, filename), buffer);
 
-  const imageFileRepository = await getImageFileRepository();
-  return imageFileRepository.createImageFile({
+  const recordInput = {
     filename,
     filepath: `${publicDir}/${filename}`,
     mimetype: params.file.type || "application/octet-stream",
     size: params.file.size,
     tags: [],
-  });
+  };
+
+  try {
+    const imageFileRepository = await getImageFileRepository();
+    return await imageFileRepository.createImageFile(recordInput);
+  } catch {
+    const now = new Date();
+    return {
+      id: randomUUID(),
+      filename: recordInput.filename,
+      filepath: recordInput.filepath,
+      mimetype: recordInput.mimetype,
+      size: recordInput.size,
+      width: null,
+      height: null,
+      tags: [],
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+  }
+}
+
+async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRecord[]> {
+  const projectDir = path.join(projectsRoot, projectId);
+  const publicPrefix = `/uploads/studio/${projectId}`;
+  const results: ImageFileRecord[] = [];
+
+  const stack: Array<{ diskDir: string; relDir: string }> = [{ diskDir: projectDir, relDir: "" }];
+
+  while (stack.length > 0) {
+    const { diskDir, relDir } = stack.pop()!;
+    const entries = await fs.readdir(diskDir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const diskPath = path.join(diskDir, entry.name);
+      const relPath = relDir ? `${relDir}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        stack.push({ diskDir: diskPath, relDir: relPath });
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      const stats = await fs.stat(diskPath).catch(() => null);
+      if (!stats) continue;
+      const filepath = `${publicPrefix}/${relPath}`.replace(/\\/g, "/");
+      const createdAt = (stats.birthtime ?? stats.ctime).toISOString();
+      const updatedAt = (stats.mtime ?? stats.ctime).toISOString();
+      results.push({
+        id: `disk:${filepath}`,
+        filename: entry.name,
+        filepath,
+        mimetype: "application/octet-stream",
+        size: stats.size,
+        width: null,
+        height: null,
+        tags: [],
+        createdAt,
+        updatedAt,
+      });
+    }
+  }
+
+  return results;
 }
 
 async function GET_handler(
@@ -76,12 +159,38 @@ async function GET_handler(
     const projectId = sanitizeProjectId(params.projectId);
     if (!projectId) throw badRequestError("Project id is required");
 
-    const imageFileRepository = await getImageFileRepository();
-    const files = await imageFileRepository.listImageFiles();
     const prefix = `/uploads/studio/${projectId}/`;
-    const result = files
-      .filter((file: ImageFileRecord) => typeof file.filepath === "string" && file.filepath.startsWith(prefix))
-      .sort((a: ImageFileRecord, b: ImageFileRecord) => b.createdAt.localeCompare(a.createdAt));
+    let repoAssets: ImageFileRecord[] = [];
+    try {
+      const imageFileRepository = await getImageFileRepository();
+      const files = await imageFileRepository.listImageFiles();
+      repoAssets = files
+        .filter((file: ImageFileRecord) => typeof file.filepath === "string" && file.filepath.startsWith(prefix));
+    } catch {
+      // If repository/DB is down, we still want to show disk assets.
+      repoAssets = [];
+    }
+
+    let diskAssets: ImageFileRecord[] = [];
+    try {
+      diskAssets = await listStudioAssetsFromDisk(projectId);
+    } catch {
+      diskAssets = [];
+    }
+
+    const byFilepath = new Map<string, ImageFileRecord>();
+    repoAssets.forEach((asset) => {
+      if (typeof asset.filepath === "string" && asset.filepath.startsWith(prefix)) {
+        byFilepath.set(asset.filepath, asset);
+      }
+    });
+    diskAssets.forEach((asset) => {
+      if (!byFilepath.has(asset.filepath)) {
+        byFilepath.set(asset.filepath, asset);
+      }
+    });
+
+    const result = Array.from(byFilepath.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
     return NextResponse.json({ assets: result });
   } catch (error) {
@@ -105,7 +214,7 @@ async function POST_handler(
 
     const formData = await req.formData();
     const folder = formData.get("folder");
-    const files = formData.getAll("files").filter((item): item is File => item instanceof File);
+    const files = extractUploadedFiles(formData);
 
     if (files.length === 0) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
@@ -144,4 +253,3 @@ export const POST = apiHandlerWithParams<{ projectId: string }>(
     POST_handler(req, ctx, params),
   { source: "image-studio.projects.[projectId].assets.POST" }
 );
-

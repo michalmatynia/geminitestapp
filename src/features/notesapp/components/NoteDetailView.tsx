@@ -1,6 +1,7 @@
 import { Button, useToast } from "@/shared/ui";
 import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
+import { logClientError } from "@/features/observability";
 
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
@@ -100,7 +101,7 @@ export function NoteDetailView({
         });
         setRelatedPreviewNotes(nextMap);
       } catch (error: unknown) {
-        console.error("Failed to load related notes:", error);
+        logClientError(error, { context: { source: "NoteDetailView", action: "fetchRelated", noteId: selectedNote.id } });
       }
     };
 

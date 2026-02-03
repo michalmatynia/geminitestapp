@@ -1,3 +1,5 @@
+import { DtoBase } from '../types/base';
+
 // Database DTOs
 export interface DatabaseInfoDto {
   name: string;
@@ -8,12 +10,10 @@ export interface DatabaseInfoDto {
   status: 'healthy' | 'warning' | 'error';
 }
 
-export interface DatabaseBackupDto {
-  id: string;
+export interface DatabaseBackupDto extends DtoBase {
   name: string;
   type: 'postgresql' | 'mongodb';
   size: string;
-  createdAt: string;
   path: string;
   status: 'completed' | 'failed' | 'in_progress';
 }

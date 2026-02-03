@@ -3,7 +3,7 @@
 import { Button, useToast } from "@/shared/ui";
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from "lucide-react";
-
+import { logClientError } from "@/features/observability";
 
 import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui";
@@ -186,7 +186,7 @@ function FolderTreeBase({
         await onRefreshFolders();
       }
     } catch (error) {
-      console.error("Failed to import folder:", error);
+      logClientError(error, { context: { source: "FolderTree", action: "importFolder" } });
       const message = error instanceof Error ? error.message : "An unexpected error occurred while importing";
       toast(message, { variant: "error" });
     } finally {

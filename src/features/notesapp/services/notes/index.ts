@@ -129,11 +129,22 @@ export const noteService: NoteRepository = {
           
           await repoCall("update", relatedId, { relatedNoteIds: nextIds });
         } catch (syncError) {
-          console.error("[noteService][update] Failed to sync relation", {
-            noteId: id,
-            relatedId,
-            syncError,
-          });
+          try {
+            const { ErrorSystem } = await import("@/features/observability/services/error-system");
+            void ErrorSystem.captureException(syncError, { 
+              service: "note-service", 
+              action: "syncRelatedNote",
+              noteId: id,
+              relatedId
+            });
+          } catch (logError) {
+            console.error("[noteService][update] Failed to sync relation (and logging failed)", {
+              noteId: id,
+              relatedId,
+              syncError,
+              logError
+            });
+          }
         }
       };
 
@@ -153,7 +164,16 @@ export const noteService: NoteRepository = {
             files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath))
         );
     } catch (error) {
-        console.error("[noteService][delete] Failed to cleanup files", error);
+        try {
+          const { ErrorSystem } = await import("@/features/observability/services/error-system");
+          void ErrorSystem.captureException(error, { 
+            service: "note-service", 
+            action: "deleteNoteFiles",
+            noteId: id
+          });
+        } catch (logError) {
+          console.error("[noteService][delete] Failed to cleanup files (and logging failed)", error, logError);
+        }
     }
     return repoCall("delete", id);
   },

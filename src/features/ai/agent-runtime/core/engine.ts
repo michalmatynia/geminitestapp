@@ -511,12 +511,23 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         });
       }
     } catch (innerError) {
-      if (DEBUG_CHATBOT) {
-        console.error("[chatbot][agent][engine] Failed to persist error", {
-          runId,
-          errorId,
-          innerError,
+      try {
+        const { ErrorSystem } = await import("@/features/observability/services/error-system");
+        void ErrorSystem.captureException(innerError, { 
+          service: "agent-engine", 
+          action: "persistError",
+          targetRunId: runId,
+          originalErrorId: errorId
         });
+      } catch (logError) {
+        if (DEBUG_CHATBOT) {
+          console.error("[chatbot][agent][engine] Failed to persist error (and logging failed)", {
+            runId,
+            errorId,
+            innerError,
+            logError
+          });
+        }
       }
     }
   } finally {

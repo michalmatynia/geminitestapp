@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import type { ProductWithImages } from '@/shared/types/domain/products';
+import type { ProductWithImages } from '@/features/products/types';
 
 export type ApiVersion = 'v1' | 'v2' | 'v3';
 

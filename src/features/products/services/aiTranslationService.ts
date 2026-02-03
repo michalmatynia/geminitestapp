@@ -161,7 +161,10 @@ Important:
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        console.error(`[aiTranslationService] No content in response for ${targetLang}`);
+        void ErrorSystem.logWarning(`No content in response for ${targetLang}`, {
+          service: "ai-translation-service",
+          targetLanguage: targetLang,
+        });
         throw operationFailedError(`No translation received for ${targetLang}`, undefined, {
           targetLanguage: targetLang,
         });
@@ -177,8 +180,6 @@ Important:
 
       console.log(`[aiTranslationService] Successfully translated to ${targetLang}`);
     } catch (error) {
-      console.error(`[aiTranslationService] Error translating to ${targetLang}:`, error);
-      
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
                                errorMessage.includes("fetch failed") || 

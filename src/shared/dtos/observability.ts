@@ -1,37 +1,30 @@
-import { NamedDto } from '../types/base';
+import { DtoBase, NamedDto } from '../types/base';
 
 // Observability DTOs
-export interface MetricDto {
-  id: string;
+export interface MetricDto extends DtoBase {
   name: string;
   value: number;
   unit: string;
   tags: Record<string, string>;
-  timestamp: string;
 }
 
-export interface LogEntryDto {
-  id: string;
+export interface LogEntryDto extends DtoBase {
   level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
   message: string;
   source: string;
-  timestamp: string;
   metadata: Record<string, unknown> | null;
   traceId: string | null;
 }
 
-export interface TraceDto {
-  id: string;
+export interface TraceDto extends DtoBase {
   operationName: string;
   duration: number;
   status: 'ok' | 'error' | 'timeout';
   spans: SpanDto[];
-  startTime: string;
   endTime: string;
 }
 
-export interface SpanDto {
-  id: string;
+export interface SpanDto extends DtoBase {
   traceId: string;
   parentId: string | null;
   operationName: string;
@@ -39,7 +32,6 @@ export interface SpanDto {
   status: 'ok' | 'error';
   tags: Record<string, string>;
   logs: SpanLogDto[];
-  startTime: string;
   endTime: string;
 }
 

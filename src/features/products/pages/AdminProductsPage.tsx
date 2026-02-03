@@ -25,9 +25,9 @@ import { ProductListPanel } from "@/features/products/components/ProductListPane
 import { ProductModals } from "@/features/products/components/ProductModals";
 import { getProductColumns } from "@/features/products/components/list/ProductColumns";
 import DebugPanel from "@/features/products/components/DebugPanel";
-import type { RowSelectionState } from "@tanstack/react-table";
 import type { ProductDraft } from "@/features/products/types/drafts";
 import type { ProductWithImages } from "@/features/products/types";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import { logger } from "@/shared/utils/logger";
 import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 import { getProducts } from "@/features/products/api";
@@ -226,7 +226,7 @@ export function AdminProductsPage(): React.JSX.Element {
         handleOpenCreateFromDraft(draft);
         toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
       } catch (error) {
-        console.error("Failed to load draft:", error);
+        logClientError(error, { context: { source: "AdminProductsPage", action: "createFromDraft", draftId } });
         toast("Failed to load draft template", { variant: "error" });
       }
     };
@@ -335,7 +335,7 @@ export function AdminProductsPage(): React.JSX.Element {
       setRowSelection(newSelection);
       toast(`Selected ${allProducts.length} products.`, { variant: "success" });
     } catch (error) {
-      console.error(error);
+      logClientError(error, { context: { source: "AdminProductsPage", action: "selectAllGlobal" } });
       toast("Failed to select all products", { variant: "error" });
     } finally {
       setLoadingGlobalSelection(false);
@@ -355,7 +355,7 @@ export function AdminProductsPage(): React.JSX.Element {
       setRowSelection({});
       setRefreshTrigger((prev: number) => prev + 1);
     } catch (error) {
-      logger.error("Error during mass deletion:", error);
+      logClientError(error, { context: { source: "AdminProductsPage", action: "massDelete", productIds: selectedProductIds } });
       setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
     }
   }, [rowSelection, setActionError, toast, bulkDeleteMutation]);
@@ -367,7 +367,7 @@ export function AdminProductsPage(): React.JSX.Element {
       toast("Product deleted successfully.", { variant: "success" });
       setRefreshTrigger((prev: number) => prev + 1);
     } catch (error) {
-      logger.error("Error deleting product:", error);
+      logClientError(error, { context: { source: "AdminProductsPage", action: "singleDelete", productId: productToDelete.id } });
       setActionError(error instanceof Error ? error.message : "An error occurred during deletion.");
     } finally {
       setProductToDelete(null);

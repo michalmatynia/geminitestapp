@@ -387,6 +387,7 @@ function ColumnRenderer({
   const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.["src"] as string) || "");
   const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
   const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
+  const columnStyles = getSectionStyles(column.settings ?? {}, colorSchemes);
   const columnStyle: React.CSSProperties = {};
   if (columnHeightMode === "fixed" && columnHeight > 0) {
     columnStyle.height = `${columnHeight}px`;
@@ -396,7 +397,10 @@ function ColumnRenderer({
 
   return (
     <GsapAnimationWrapper config={animConfig}>
-      <div className={`relative ${hasColumnBackground ? "overflow-hidden" : ""}`} style={columnStyle}>
+      <div
+        className={`relative ${hasColumnBackground ? "overflow-hidden" : ""}`}
+        style={{ ...columnStyles, ...columnStyle }}
+      >
         {/* Column background mode images */}
         {columnBackgroundModeImages.map((block: BlockInstance) => (
           <Fragment key={`col-bg-mode-${block.id}`}>

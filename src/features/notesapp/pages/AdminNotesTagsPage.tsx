@@ -3,7 +3,7 @@
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
-
+import { logClientError } from "@/features/observability";
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { useNotebooks, useNoteTags } from "@/features/notesapp/api/useNoteQueries";
@@ -53,7 +53,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       setName("");
       toast("Tag created", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to create tag:", error);
+      logClientError(error, { context: { source: "AdminNotesTagsPage", action: "createTag", name, notebookId: selectedNotebookId } });
       toast("Failed to create tag", { variant: "error" });
     }
   };
@@ -64,7 +64,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       await deleteTag.mutateAsync(tagId);
       toast("Tag deleted", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to delete tag:", error);
+      logClientError(error, { context: { source: "AdminNotesTagsPage", action: "deleteTag", tagId } });
       toast("Failed to delete tag", { variant: "error" });
     }
   };
@@ -94,7 +94,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       toast("Tag updated", { variant: "success" });
       handleEditCancel();
     } catch (error: unknown) {
-      console.error("Failed to update tag:", error);
+      logClientError(error, { context: { source: "AdminNotesTagsPage", action: "updateTag", tagId } });
       toast("Failed to update tag", { variant: "error" });
     }
   };

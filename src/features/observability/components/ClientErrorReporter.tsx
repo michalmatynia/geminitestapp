@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { initClientErrorReporting, setClientErrorBaseContext } from "@/features/observability/utils/client-error-logger";
+import { initClientErrorReporting, setClientErrorBaseContext } from "@/shared/utils/observability/client-error-logger";
 import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap } from "@/shared/hooks/use-settings";

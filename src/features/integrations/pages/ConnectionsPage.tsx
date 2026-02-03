@@ -4,6 +4,7 @@ import { useToast, ConfirmDialog } from "@/shared/ui";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { logClientError } from "@/features/observability";
 
 import {
   Integration,
@@ -377,7 +378,7 @@ function IntegrationsContent(): React.JSX.Element {
       });
       toast("Allegro disconnected.", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to disconnect Allegro:", error);
+      logClientError(error, { context: { source: "ConnectionsPage", action: "disconnectAllegro" } });
       toast("Failed to disconnect Allegro.", { variant: "error" });
     }
   };

@@ -46,7 +46,7 @@ function marginFields(): SettingsField[] {
 
 function sectionStyleFields(): SettingsField[] {
   return [
-    { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+    { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
     { key: "sectionBorder", label: "Border", type: "border", defaultValue: { width: 0, style: "none", color: "#4b5563", radius: 0 } },
     { key: "sectionShadow", label: "Shadow", type: "shadow", defaultValue: { x: 0, y: 0, blur: 0, spread: 0, color: "#00000000" } },
   ];
@@ -84,7 +84,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       marginBottom: 0,
       marginLeft: 0,
       marginRight: 0,
-      backgroundColor: "",
+      background: { type: "none" },
     },
     settingsSchema: [
       {
@@ -123,7 +123,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       { key: "height", label: "Row height (px)", type: "range", defaultValue: 0, min: 0, max: 1000 },
       ...paddingFields(),
       ...marginFields(),
-      { key: "backgroundColor", label: "Background color", type: "color", defaultValue: "" },
+      { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
     ],
   },
   Announcement: {
@@ -151,6 +151,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       height: 0,
       colorScheme: "scheme-1",
       verticalAlignment: "top",
+      background: { type: "none" },
     },
     settingsSchema: [
       { key: "paddingTop", label: "Top padding", type: "number", defaultValue: 0 },
@@ -182,6 +183,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
         ],
         defaultValue: "top",
       },
+      { key: "background", label: "Background", type: "background", defaultValue: { type: "none" } },
     ],
   },
   Block: {
@@ -200,6 +202,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       marginLeft: 0,
       marginRight: 0,
       contentAlignment: "left",
+      background: { type: "none" },
     },
     settingsSchema: [
       colorSchemeFieldWithNone("colorScheme", "Color scheme", "none"),
@@ -556,6 +559,7 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
       borderWidth: 0,
       borderStyle: "solid",
       borderColor: "#ffffff",
+      clipOverflow: "false",
       overlayType: "none",
       overlayColor: "#000000",
       overlayOpacity: 0,
@@ -636,6 +640,16 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
           { label: "Circle", value: "circle" },
         ],
         defaultValue: "none",
+      },
+      {
+        key: "clipOverflow",
+        label: "Contain image",
+        type: "select",
+        options: [
+          { label: "Allow overflow", value: "false" },
+          { label: "Clip to block", value: "true" },
+        ],
+        defaultValue: "false",
       },
       { key: "borderRadius", label: "Corner radius (px)", type: "range", defaultValue: 0, min: 0, max: 40 },
       { key: "borderWidth", label: "Border width (px)", type: "range", defaultValue: 0, min: 0, max: 12 },
@@ -826,12 +840,22 @@ export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
     type: "Image",
     label: "Image",
     icon: "ImageIcon",
-    defaultSettings: { src: "", alt: "", width: 100, borderRadius: 0 },
+    defaultSettings: { src: "", alt: "", width: 100, borderRadius: 0, clipOverflow: "false" },
     settingsSchema: [
       { key: "src", label: "Image", type: "image" },
       { key: "alt", label: "Alt text", type: "text", defaultValue: "" },
       { key: "width", label: "Width (%)", type: "range", defaultValue: 100, min: 10, max: 100 },
       { key: "borderRadius", label: "Border radius", type: "number", defaultValue: 0 },
+      {
+        key: "clipOverflow",
+        label: "Contain image",
+        type: "select",
+        options: [
+          { label: "Allow overflow", value: "false" },
+          { label: "Clip to block", value: "true" },
+        ],
+        defaultValue: "false",
+      },
     ],
   },
   Model3D: {

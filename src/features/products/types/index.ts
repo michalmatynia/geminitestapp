@@ -39,6 +39,7 @@ export type {
   ProductCatalogRecord,
   ProductWithImages,
   PriceGroupWithDetails,
+  PriceGroupForCalculation,
   CatalogRecord as Catalog,
   PriceGroupRecord as PriceGroup,
 } from "./records";

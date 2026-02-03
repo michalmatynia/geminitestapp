@@ -15,6 +15,7 @@ import {
 import { CmsDomainSelector } from "@/features/cms";
 import type { PageZone, SectionInstance } from "../../types/page-builder";
 import type { PageSlugLink, Slug } from "../../types";
+import { logClientError } from "@/features/observability";
 import { usePageBuilder } from "../../hooks/usePageBuilderContext";
 import { useCmsSlugs, useUpdatePage } from "../../hooks/useCmsQueries";
 import { useCmsDomainSelection } from "../../hooks/useCmsDomainSelection";
@@ -229,7 +230,7 @@ export function PagePreviewPanel(): React.ReactNode {
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
-      console.error("Failed to save before preview:", error);
+      logClientError(error, { context: { source: "PagePreviewPanel", action: "saveBeforePreview", pageId: state.currentPage.id } });
       toast("Save before preview failed. Try again.", { variant: "error" });
     }
   }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);

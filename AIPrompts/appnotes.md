@@ -1,8 +1,13 @@
-In the Grid, Row, Block Column I should be able to select Background colors as gradients or transparent gradients, consisting of 2 colors. I also want to be able to select the direction of the gradient.
+* In the Grid, Row, Block Column I should be able to select Background colors as gradients or transparent gradients, consisting of 2 colors. I also want to be able to select the direction of the gradient.
+
+I can't add Slideshow into the column
 
 * CMS Builder - when I insert an image element into a Grid, Row Or column, I woul like an additional setting to apperar in my ImageElement. The one to attach the Image to a given Grid or Row or Column as Background Image, in that case, the Image becomes a background image of a given element and receives a different set of settings until it's unlocked from the Background image state.
 
-When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
+* When I insert images in blocks the sometimes overflow the blocks, I want to have a setting on blocks to choose the whether the image is contained within the block or not.
+
+
+When I fire run trigger on Infer, the model is not remembering the history of inputs and outputs
 
 In CMS Builder Folder Tree, When I choose a Row, my pointer changes to Text Cursor, it should be a inger pointer instead
 
@@ -10,7 +15,7 @@ I want to be able to apply GSAP Parallax effects unto my Blocks, elements, Image
 
 check - GSAP effects are missing from my CMS Builder Page testP, I no longer see Fade in Animations.
 
-ate-I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
+* I need a carousel Element which will be a “folder” type and will contain Frames. in Each frame I shoul be able to drop different elements like Block, ImageElement or TextElement, In the Main Carousel folder, I should be able to set number of frames, the speed at which the frames change. Individual Fade in Animations should be set per frame folder
 
 Per node Animation specs
 Element node: “animate me”
@@ -75,7 +80,15 @@ AI-PAths result does not enter the prompt node
 
 --- Image Stuiod Polygon Postproduction studio. Where I can inpaint parts of images and insert programmatic prompts to template settings.
 
-prompt formatter, validator and extractor. AI Based and programmatic, I also want ai to extract parameters but to teach  patterns for extraction to my formatter and validator. All of these patterns should be availabe to see in a separate Tabbed lists under Image studio sections
+* In my Image Studio Feature, I want to add a Prompt Validator to the programmatic prompt that servers the extraction of parameters from the prompt into different silders, buttons dropdowns that can be easily manipulated by the user and as soon as the user selects all the values wanted, the prompt resolved the placeholders with the values entered in this friendly UI and send a proper prompt to AI for post-production. When I enter a programmatic prompt for paramters extraction, I want a Programmatic Validator feature that will validate the prompt if it has all the proper patterns inside and suggets corrections if similar patterns to the correct ones arise, but are not quite the same. In Image-Studio feature settings I want to have a complete list of these patterns, similarity patterns and suggestions and comments that come with them, I want to be able to add new patterns as well. The goal is to make the programmatic as easily assignable to different parametrs as possible, but at the same time, large chunks of explanatory prompt need to be ommited. I want my validator to have suggestion engine as well (like the one in Database Query Node) where I can move with arrows through different suggestion patterns and decide whether I want them to be added to Pattern list or not.
+
+* In my Image Stduio feature, Image upload doesn't work, I want to upload images from both the Drive and File Manager
+
+* In my Image Studio Feature I need additional functionality that will auto format the prompt in accordance with Validator suggestions. Again, the Formatter will the formatting pattern database to automatically apply the correct formatting to the prompt, so that the UI can be extracted more readily
+
+* Third I want an extractor, that will recognise the prompt pattern and assign the promper UI Element to each parameter value. Be it a dropdown a slider, checkbox, text field, set of buttons or a text field. If not sure, The extractor needs to have a suggestion pattern, where you can choose which aspect to map to UI or even choose the type of UI you want for a given parameter value.
+
+AI Based and programmatic, I also want ai to extract parameters but to teach  patterns for extraction to my formatter and validator. All of these patterns should be availabe to see in a separate Tabbed lists under Image studio sections
 AI Based mask creator ?
 GPT settings still not visible
 
@@ -83,8 +96,6 @@ Address the draggable resortable list component from categories, make it a unify
 Create a Category Modal should save on Enter keystroke
 I don't need a cancel Buttons in my Category List
 I want each project to have a separate folder tree
-
-
 
 Test If I can Put the Block in and Out the same for the Block
 Non overflowing images option in CMSBuilder
@@ -151,6 +162,7 @@ Iterator Node (will take object list take one send somewhere and wait for the ca
 
 * Move my Query Diagnostic into a Separate Admin Menu Link Called Analytics
 
+LATER - Role base file upload Limiter, Develop File Feature more
 
 * When the product is exported to Base or was imported from Base, generally has established a connection with base.com,
 I would like to be able to click on B (Base.com connection icon) and have a section images in SYNC CONFIGURATION, and with the click of the button, I would like to manually sync image URLS from Base into my own database. So that in the image slots I can have both Image file uploads and the links in case files go missing.

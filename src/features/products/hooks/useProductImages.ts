@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ProductWithImages, ProductImageRecord } from "@/features/products/types";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ProductImageSlot } from "@/features/products/types/products-ui";
+import { logClientError } from "@/features/observability";
 
 const TOTAL_IMAGE_SLOTS = 15;
 
@@ -218,7 +219,7 @@ export function useProductImages(
             imageFileId: slotToClear.data.id,
           });
         } catch (error) {
-          console.error("Failed to disconnect image from product:", error);
+          logClientError(error, { context: { source: "useProductImages", action: "disconnectImage", productId: product.id, imageFileId: slotToClear.data.id } });
         }
       } else if (slotToClear.type === "file") {
         URL.revokeObjectURL(slotToClear.previewUrl);

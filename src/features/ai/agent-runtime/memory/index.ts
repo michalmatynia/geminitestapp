@@ -52,11 +52,21 @@ export async function addAgentMemory(params: {
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to add memory", {
-        runId: params.runId,
-        error,
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-memory", 
+        action: "addAgentMemory",
+        runId: params.runId ?? undefined 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error("[chatbot][agent][memory] Failed to add memory (and logging failed)", {
+          runId: params.runId,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -81,12 +91,23 @@ export async function listAgentMemory(params: {
       orderBy: { createdAt: "asc" },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to list memory", {
-        runId: params.runId,
-        scope: params.scope,
-        error,
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-memory", 
+        action: "listAgentMemory",
+        runId: params.runId ?? undefined,
+        scope: params.scope
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error("[chatbot][agent][memory] Failed to list memory (and logging failed)", {
+          runId: params.runId,
+          scope: params.scope,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -123,12 +144,23 @@ export async function addAgentLongTermMemory(params: {
       },
     });
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to add long-term memory", {
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-memory", 
+        action: "addAgentLongTermMemory",
         memoryKey: params.memoryKey,
-        runId: params.runId,
-        error,
+        runId: params.runId ?? undefined 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error("[chatbot][agent][memory] Failed to add long-term memory (and logging failed)", {
+          memoryKey: params.memoryKey,
+          runId: params.runId,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }
@@ -318,11 +350,21 @@ export async function listAgentLongTermMemory(params: {
     }
     return items;
   } catch (error) {
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][memory] Failed to list long-term memory", {
-        memoryKey: params.memoryKey,
-        error,
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "agent-memory", 
+        action: "listAgentLongTermMemory",
+        memoryKey: params.memoryKey 
       });
+    } catch (logError) {
+      if (DEBUG_CHATBOT) {
+        console.error("[chatbot][agent][memory] Failed to list long-term memory (and logging failed)", {
+          memoryKey: params.memoryKey,
+          error,
+          logError
+        });
+      }
     }
     throw error;
   }

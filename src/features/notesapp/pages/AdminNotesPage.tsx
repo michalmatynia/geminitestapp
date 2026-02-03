@@ -2,6 +2,7 @@
 import { useToast, SectionPanel } from "@/shared/ui";
 import React, { useState, useCallback, useMemo } from "react";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
+import { logClientError } from "@/features/observability";
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { FolderTree } from "@/features/foldertree/components/FolderTree";
 import { NoteListView } from "@/features/notesapp/components/NoteListView";
@@ -159,7 +160,7 @@ export function AdminNotesPage(): React.JSX.Element {
         setIsEditing(false);
       }
     } catch (error: unknown) {
-      console.error("Failed to fetch note:", error);
+      logClientError(error, { context: { source: "AdminNotesPage", action: "fetchNote", noteId } });
     }
   }, []);
 
@@ -200,7 +201,7 @@ export function AdminNotesPage(): React.JSX.Element {
         prev && prev.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
       );
     } catch (error: unknown) {
-      console.error("Failed to toggle favorite:", error);
+      logClientError(error, { context: { source: "AdminNotesPage", action: "toggleFavorite", noteId: note.id } });
       toast("Failed to update favorite", { variant: "error" });
     }
   }, [toast, setNotes, updateNoteMutation]);
@@ -225,7 +226,7 @@ export function AdminNotesPage(): React.JSX.Element {
       await fetchNotes();
       void handleSelectNoteFromTree(selectedNote.id);
     } catch (error: unknown) {
-      console.error("Failed to unlink note:", error);
+      logClientError(error, { context: { source: "AdminNotesPage", action: "unlinkNote", noteId: selectedNote.id, relatedId } });
       toast("Failed to unlink note", { variant: "error" });
     }
   }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast, updateNoteMutation]);
@@ -240,7 +241,7 @@ export function AdminNotesPage(): React.JSX.Element {
       // await fetchNotes(); // Mutation handles invalidation
       // await fetchFolderTree(); // Mutation handles invalidation
     } catch (error: unknown) {
-      console.error("Failed to delete note:", error);
+      logClientError(error, { context: { source: "AdminNotesPage", action: "deleteNote", noteId: selectedNote.id } });
       toast("Failed to delete note", { variant: "error" });
     }
   }, [selectedNote, deleteNoteMutation, toast]);
@@ -296,7 +297,7 @@ export function AdminNotesPage(): React.JSX.Element {
       // await fetchFolderTree();
       // await fetchNotes();
     } catch (error: unknown) {
-      console.error("Failed to undo folder tree action:", error);
+      logClientError(error, { context: { source: "AdminNotesPage", action: "undoFolderTree", count } });
       toast("Failed to undo", { variant: "error" });
     }
   }, [undoStack, applyUndoAction, toast]);

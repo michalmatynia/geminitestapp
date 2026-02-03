@@ -1,10 +1,11 @@
-src/app/api/products/tags/route.ts(70,30): error TS2352: Conversion of type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }[]' to type 'ProductTagDto[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }' is not comparable to type 'ProductTagDto'.
-    Types of property 'createdAt' are incompatible.
-      Type 'Date' is not comparable to type 'string'.
-src/app/api/products/tags/route.ts(121,32): error TS2352: Conversion of type '{ id: `${string}-${string}-${string}-${string}-${string}`; name: string; color: string; catalogId: string; createdAt: Date; updatedAt: Date; }' to type 'ProductTagDto' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'createdAt' are incompatible.
-    Type 'Date' is not comparable to type 'string'.
-src/app/api/products/tags/route.ts(146,30): error TS2352: Conversion of type '{ name: string; id: string; createdAt: Date; updatedAt: Date; catalogId: string; color: string | null; }' to type 'ProductTagDto' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Types of property 'createdAt' are incompatible.
-    Type 'Date' is not comparable to type 'string'.
+src/features/notesapp/components/editor/NoteMetadata.tsx(100,6): error TS17008: JSX element 'div' has no corresponding closing tag.
+src/features/notesapp/components/editor/NoteMetadata.tsx(158,1): error TS1005: '</' expected.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(622,11): error TS2657: JSX expressions must have one parent element.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(814,9): error TS1128: Declaration or statement expected.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(815,7): error TS1109: Expression expected.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(822,5): error TS1128: Declaration or statement expected.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(823,3): error TS1109: Expression expected.
+src/features/products/components/settings/ai/AiDescriptionSettings.tsx(824,1): error TS1128: Declaration or statement expected.
+src/features/products/components/settings/ai/AiTranslationSettings.tsx(300,5): error TS1128: Declaration or statement expected.
+src/features/products/components/settings/ai/AiTranslationSettings.tsx(301,3): error TS1109: Expression expected.
+src/features/products/components/settings/ai/AiTranslationSettings.tsx(302,1): error TS1128: Declaration or statement expected.

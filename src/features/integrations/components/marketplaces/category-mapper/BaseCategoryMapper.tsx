@@ -1,6 +1,7 @@
 import { useToast, Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
+import { logClientError } from "@/features/observability";
 
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
 import type { ProductCategoryDto, Catalog } from "@/features/products";
@@ -101,7 +102,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to fetch from Base.com:", error);
+      logClientError(error, { context: { source: "BaseCategoryMapper", action: "fetchFromBase", connectionId } });
       const message = error instanceof Error ? error.message : "Failed to fetch categories";
       toast(message, { variant: "error" });
     }
@@ -158,7 +159,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       toast(result.message, { variant: "success" });
       setPendingMappings(new Map());
     } catch (error: unknown) {
-      console.error("Failed to save mappings:", error);
+      logClientError(error, { context: { source: "BaseCategoryMapper", action: "saveMappings", connectionId, catalogId: selectedCatalogId } });
       const message = error instanceof Error ? error.message : "Failed to save mappings";
       toast(message, { variant: "error" });
     }

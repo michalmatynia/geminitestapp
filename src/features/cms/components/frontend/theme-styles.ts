@@ -258,10 +258,70 @@ export function getBlockShadowStyles(settings: Record<string, unknown>): React.C
 
 export function getBlockBackgroundStyles(settings: Record<string, unknown>): React.CSSProperties {
   const styles: React.CSSProperties = {};
-  const bgColor = settings["backgroundColor"] as string | undefined;
-  if (bgColor) {
-    styles.backgroundColor = bgColor;
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+  const resolveColorWithOpacity = (color: unknown, opacityPercent: unknown): string => {
+    if (typeof color !== "string") return "";
+    const trimmed = color.trim();
+    if (!trimmed) return "";
+    if (trimmed.toLowerCase() === "transparent") return "rgba(0, 0, 0, 0)";
+    const opacity =
+      typeof opacityPercent === "number" && Number.isFinite(opacityPercent)
+        ? clampNumber(opacityPercent, 0, 100)
+        : 100;
+    if (opacity >= 100) return trimmed;
+    if (opacity <= 0) return "rgba(0, 0, 0, 0)";
+    return withOpacity(trimmed, opacity);
+  };
+
+  const background = settings["background"];
+  let appliedBackground = false;
+  if (isRecord(background)) {
+    const type = background.type;
+    if (typeof type === "string") {
+      if (type === "none") {
+        appliedBackground = true;
+      } else if (type === "solid") {
+        const color = background.color;
+        const resolved = resolveColorWithOpacity(color, 100);
+        if (resolved) {
+          styles.backgroundColor = resolved;
+        }
+        appliedBackground = true;
+      } else if (type === "gradient") {
+        const from = resolveColorWithOpacity(background.gradientFrom, background.gradientFromOpacity);
+        const to = resolveColorWithOpacity(background.gradientTo, background.gradientToOpacity);
+        const angleRaw = background.gradientAngle;
+        const angle =
+          typeof angleRaw === "number" && Number.isFinite(angleRaw)
+            ? ((Math.round(angleRaw) % 360) + 360) % 360
+            : 180;
+        if (from || to) {
+          styles.backgroundImage = `linear-gradient(${angle}deg, ${from || "transparent"}, ${to || "transparent"})`;
+          styles.backgroundRepeat = "no-repeat";
+        }
+        appliedBackground = true;
+      } else if (type === "image") {
+        const url = typeof background.imageUrl === "string" ? background.imageUrl.trim() : "";
+        if (url) {
+          styles.backgroundImage = `url(${url})`;
+          styles.backgroundRepeat = "no-repeat";
+          styles.backgroundSize = "cover";
+          styles.backgroundPosition = "center";
+        }
+        appliedBackground = true;
+      }
+    }
   }
+
+  if (!appliedBackground) {
+    const bgColor = settings["backgroundColor"] as string | undefined;
+    if (bgColor) {
+      styles.backgroundColor = bgColor;
+    }
+  }
+
   return styles;
 }
 

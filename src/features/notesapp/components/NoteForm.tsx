@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord, TagRecord, ThemeRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
 import { useQuery, useQueries, UseQueryResult } from "@tanstack/react-query";
+import { logClientError } from "@/features/observability";
 
 import { autoformatMarkdown } from "../utils";
 import { useUndo } from "@/shared/hooks/use-undo";
@@ -436,7 +437,7 @@ export function NoteForm({
       setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] => [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort((a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex));
       toast("File uploaded successfully");
     } catch (error: unknown) {
-      console.error("Failed to upload file:", error);
+      logClientError(error, { context: { source: "NoteForm", action: "uploadFile", noteId: note?.id, slotIndex } });
       const message = error instanceof Error ? error.message : "Failed to upload file";
       toast(message);
     } finally {
@@ -451,8 +452,8 @@ export function NoteForm({
       await deleteFileMutation.mutateAsync(slotIndex);
       removeFile(noteFiles.find((f: NoteFileRecord): boolean => f.slotIndex === slotIndex)?.id || "");
       toast("File deleted successfully");
-    } catch (_error) {
-      console.error("Failed to delete file:", _error);
+    } catch (error: unknown) {
+      logClientError(error, { context: { source: "NoteForm", action: "deleteFile", noteId: note?.id, slotIndex } });
       toast("Failed to delete file");
     }
   };
@@ -557,7 +558,7 @@ export function NoteForm({
 
         toast("Image pasted and uploaded");
       } catch (error) {
-        console.error("Failed to upload pasted image:", error);
+        logClientError(error, { context: { source: "NoteForm", action: "uploadPastedImage", noteId: note?.id } });
         toast("Failed to upload pasted image");
       } finally {
         setIsPasting(false);
@@ -649,7 +650,7 @@ export function NoteForm({
       toast(note ? "Note updated successfully" : "Note created successfully");
       onSuccess();
     } catch (error: unknown) {
-      console.error("Failed to save note:", error);
+      logClientError(error, { context: { source: "NoteForm", action: "saveNote", noteId: note?.id } });
       const message = error instanceof Error ? error.message : "Failed to save note";
       toast(message, { variant: "error" });
     }

@@ -217,7 +217,13 @@ export const deleteCategory = async (
     }
     return true;
   } catch (error) {
-    console.error("[PrismaNoteRepository][deleteCategory] Error:", error);
+    const { logSystemError } = await import("@/features/observability/server");
+    await logSystemError({
+      message: "[PrismaNoteRepository][deleteCategory] Error",
+      error,
+      context: { id, recursive },
+      source: "note-repository-prisma"
+    });
     return false;
   }
 };

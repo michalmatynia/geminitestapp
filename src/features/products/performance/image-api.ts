@@ -56,7 +56,13 @@ export async function GET(
     return response;
 
   } catch (error) {
-    console.error('Image optimization error:', error);
+    const { logSystemError } = await import("@/features/observability/server");
+    await logSystemError({
+      message: 'Image optimization error',
+      error,
+      source: 'image-api',
+      request: req
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -100,7 +106,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ results });
 
   } catch (error) {
-    console.error('Batch optimization error:', error);
+    const { logSystemError } = await import("@/features/observability/server");
+    await logSystemError({
+      message: 'Batch optimization error',
+      error,
+      source: 'image-api',
+      request: req
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

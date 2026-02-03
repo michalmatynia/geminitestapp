@@ -1,22 +1,10 @@
 "use client";
 
 import { Button, Input, Label, useToast, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui";
-
 import { useEffect, useState, type ChangeEvent } from "react";
-
 import { ChevronLeftIcon, SaveIcon } from "lucide-react";
-
 import Link from "next/link";
-
-
-
-
-
-
-
-
-
-
+import { logClientError } from "@/features/observability";
 
 import { useSettings, useUpdateSetting, type SystemSetting } from "@/shared/hooks/use-settings";
 
@@ -126,27 +114,47 @@ export default function AiApiSettingsPage() {
 
 
 
-      ]);
+            ]);
 
 
 
-      toast("API keys saved successfully", { variant: "success" });
+      
 
 
 
-    } catch (error: unknown) {
+            toast("API keys saved successfully", { variant: "success" });
 
 
 
-      console.error("Failed to save settings:", error);
+      
 
 
 
-      toast("Failed to save settings", { variant: "error" });
+          } catch (error: unknown) {
 
 
 
-    } finally {
+      
+
+
+
+            logClientError(error, { context: { source: "AiApiSettingsPage", action: "saveSettings" } });
+
+
+
+      
+
+
+
+            toast("Failed to save settings", { variant: "error" });
+
+
+
+      
+
+
+
+          } finally {
 
 
 

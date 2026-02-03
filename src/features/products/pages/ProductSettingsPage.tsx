@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { logClientError } from "@/features/observability";
 
 import {
   settingSections,
@@ -116,7 +117,7 @@ export function ProductSettingsPage(): React.JSX.Element {
       await updatePriceGroupMutation.mutateAsync({ ...group, isDefault: true });
       toast("Default price group updated.", { variant: "success" });
     } catch (error) {
-      console.error(error);
+      logClientError(error, { context: { source: "ProductSettingsPage", action: "handleSetDefaultGroup", groupId } });
     }
   };
 
@@ -124,7 +125,9 @@ export function ProductSettingsPage(): React.JSX.Element {
     if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
     try {
       await deleteCatalogMutation.mutateAsync(catalog.id);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      logClientError(err, { context: { source: "ProductSettingsPage", action: "handleDeleteCatalog", catalogId: catalog.id } });
+    }
   };
 
   const handleDeleteGroup = async (group: PriceGroup): Promise<void> => {
@@ -135,7 +138,9 @@ export function ProductSettingsPage(): React.JSX.Element {
     if (!confirm(`Delete price group "${group.name}"?`)) return;
     try {
       await deletePriceGroupMutation.mutateAsync(group.id);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      logClientError(err, { context: { source: "ProductSettingsPage", action: "handleDeleteGroup", groupId: group.id } });
+    }
   };
 
   return (

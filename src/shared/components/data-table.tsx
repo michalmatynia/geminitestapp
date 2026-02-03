@@ -18,54 +18,22 @@ import {
 import { useQueryClient, QueryClient } from "@tanstack/react-query";
 
 
-export type PriceGroupForCalculation = {
-  id: string;
-  groupId?: string;
-  currencyId: string;
-  type: string;
-  isDefault: boolean;
-  sourceGroupId: string | null;
-  priceMultiplier: number;
-  addToPrice: number;
-  currency: { code: string };
-  currencyCode?: string;
-};
-
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   initialSorting?: SortingState;
   sortingStorageKey?: string;
-  setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-  productNameKey?: "name_en" | "name_pl" | "name_de";
-  currencyCode?: string;
-  priceGroups?: PriceGroupForCalculation[];
-  onProductNameClick?: (row: TData) => void;
-  onProductEditClick?: (row: TData) => void;
-  onIntegrationsClick?: (row: TData) => void;
-  onExportSettingsClick?: (row: TData) => void;
-  integrationBadgeIds?: Set<string>;
-  integrationBadgeStatuses?: Map<string, string>;
   getRowId?: (row: TData) => string | number;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   isLoading?: boolean;
   skeletonRows?: React.ReactNode;
+  meta?: Record<string, unknown>;
 }
 
 declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
-    setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-    productNameKey?: "name_en" | "name_pl" | "name_de";
-    currencyCode?: string;
-    priceGroups?: PriceGroupForCalculation[];
-    onProductNameClick?: (row: TData) => void;
-    onProductEditClick?: (row: TData) => void;
-    onIntegrationsClick?: (row: TData) => void;
-    onExportSettingsClick?: (row: TData) => void;
-    integrationBadgeIds?: Set<string>;
-    integrationBadgeStatuses?: Map<string, string>;
+  interface TableMeta<TData> extends Record<string, unknown> {
     queryClient?: QueryClient;
   }
 }
@@ -75,22 +43,13 @@ export const DataTable = memo(function DataTable<TData>({
   data,
   initialSorting,
   sortingStorageKey,
-  setRefreshTrigger,
-  productNameKey,
-  currencyCode,
-  priceGroups,
-  onProductNameClick,
-  onProductEditClick,
-  onIntegrationsClick,
-  onExportSettingsClick,
-  integrationBadgeIds,
-  integrationBadgeStatuses,
   getRowId,
   footer,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: controlledOnRowSelectionChange,
   isLoading = false,
   skeletonRows,
+  meta,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
@@ -124,28 +83,10 @@ export const DataTable = memo(function DataTable<TData>({
 
   // Memoize table meta to prevent unnecessary re-renders
   const tableMeta = useMemo(() => ({
-    ...(setRefreshTrigger ? { setRefreshTrigger } : {}),
-    ...(productNameKey ? { productNameKey } : {}),
-    ...(currencyCode ? { currencyCode } : {}),
-    ...(priceGroups ? { priceGroups } : {}),
-    ...(onProductNameClick ? { onProductNameClick } : {}),
-    ...(onProductEditClick ? { onProductEditClick } : {}),
-    ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
-    ...(onExportSettingsClick ? { onExportSettingsClick } : {}),
-    ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
-    ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
+    ...meta,
     queryClient,
   }), [
-    setRefreshTrigger,
-    productNameKey,
-    currencyCode,
-    priceGroups,
-    onProductNameClick,
-    onProductEditClick,
-    onIntegrationsClick,
-    onExportSettingsClick,
-    integrationBadgeIds,
-    integrationBadgeStatuses,
+    meta,
     queryClient,
   ]);
 

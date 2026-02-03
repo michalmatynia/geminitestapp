@@ -71,9 +71,22 @@ const BORDER_STYLE_OPTIONS: SettingsFieldOption[] = [
 ];
 
 const BG_TYPE_OPTIONS: SettingsFieldOption[] = [
+  { label: "None", value: "none" },
   { label: "Solid", value: "solid" },
   { label: "Gradient", value: "gradient" },
   { label: "Image", value: "image" },
+];
+
+const GRADIENT_DIRECTION_OPTIONS: SettingsFieldOption[] = [
+  { label: "Top → Bottom", value: "180" },
+  { label: "Bottom → Top", value: "0" },
+  { label: "Left → Right", value: "90" },
+  { label: "Right → Left", value: "270" },
+  { label: "Top Left → Bottom Right", value: "135" },
+  { label: "Bottom Right → Top Left", value: "315" },
+  { label: "Top Right → Bottom Left", value: "225" },
+  { label: "Bottom Left → Top Right", value: "45" },
+  { label: "Custom angle…", value: "custom" },
 ];
 
 const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
@@ -468,11 +481,26 @@ function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode 
 }
 
 function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactNode {
-  const bg = (value as Record<string, unknown>) ?? { type: "solid", color: "#000000" };
-  const bgType = (bg.type as string) ?? "solid";
+  const isRecord = (input: unknown): input is Record<string, unknown> =>
+    Boolean(input) && typeof input === "object" && !Array.isArray(input);
+  const bg: Record<string, unknown> = isRecord(value) ? value : { type: "none" };
+  const bgType = typeof bg.type === "string" ? bg.type : "none";
   const update = (key: string, v: unknown): void => {
     onChange({ ...bg, [key]: v });
   };
+  const normalizeAngle = (angle: unknown): number => {
+    if (typeof angle !== "number" || !Number.isFinite(angle)) return 180;
+    const normalized = ((Math.round(angle) % 360) + 360) % 360;
+    return normalized;
+  };
+  const currentAngle = normalizeAngle(bg.gradientAngle);
+  const currentDirectionValue =
+    GRADIENT_DIRECTION_OPTIONS.find((opt: SettingsFieldOption) => opt.value === String(currentAngle))
+      ? String(currentAngle)
+      : "custom";
+  const fromOpacity = typeof bg.gradientFromOpacity === "number" ? bg.gradientFromOpacity : 100;
+  const toOpacity = typeof bg.gradientToOpacity === "number" ? bg.gradientToOpacity : 100;
+
   return (
     <div className="space-y-2">
       <Select value={bgType} onValueChange={(v: string): void => update("type", v)}>
@@ -485,6 +513,12 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
           ))}
         </SelectContent>
       </Select>
+
+      {bgType === "none" && (
+        <div className="rounded border border-border/40 bg-gray-900/30 px-3 py-2 text-[11px] text-gray-400">
+          No background override (uses color scheme / inherited background).
+        </div>
+      )}
 
       {bgType === "solid" && (
         <div className="flex items-center gap-2">
@@ -506,6 +540,27 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
       {bgType === "gradient" && (
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-500 w-10">Dir</span>
+            <Select
+              value={currentDirectionValue}
+              onValueChange={(v: string): void => {
+                if (v === "custom") return;
+                update("gradientAngle", Number(v));
+              }}
+            >
+              <SelectTrigger className="text-xs h-7 flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GRADIENT_DIRECTION_OPTIONS.map((opt: SettingsFieldOption) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500 w-10">From</span>
             <input
               type="color"
@@ -518,6 +573,15 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientFrom", e.target.value)}
               className="flex-1 text-xs font-mono"
               maxLength={7}
+            />
+            <Input
+              type="number"
+              value={fromOpacity}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientFromOpacity", Number(e.target.value))}
+              className="w-16 text-xs h-7"
+              min={0}
+              max={100}
+              title="Opacity (%)"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -534,12 +598,21 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
               className="flex-1 text-xs font-mono"
               maxLength={7}
             />
+            <Input
+              type="number"
+              value={toOpacity}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientToOpacity", Number(e.target.value))}
+              className="w-16 text-xs h-7"
+              min={0}
+              max={100}
+              title="Opacity (%)"
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500 w-10">Angle</span>
             <Input
               type="number"
-              value={(bg.gradientAngle as number) ?? 180}
+              value={currentAngle}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update("gradientAngle", Number(e.target.value))}
               className="w-20 text-xs h-7"
               min={0}
@@ -547,6 +620,9 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
             />
             <span className="text-xs text-gray-500">deg</span>
           </div>
+          <p className="text-[11px] text-gray-500">
+            Use opacity to create transparent gradients (0–100%).
+          </p>
         </div>
       )}
 

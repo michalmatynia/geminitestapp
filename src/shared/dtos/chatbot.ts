@@ -7,12 +7,10 @@ export interface ChatbotSessionDto extends DtoBase {
   messageCount: number;
 }
 
-export interface ChatbotMessageDto {
-  id: string;
+export interface ChatbotMessageDto extends DtoBase {
   sessionId: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  createdAt: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -22,12 +20,10 @@ export interface ChatbotMemoryItemDto extends DtoBase {
   type: string;
 }
 
-export interface ChatbotContextSegmentDto {
-  id: string;
+export interface ChatbotContextSegmentDto extends DtoBase {
   content: string;
   type: string;
   priority: number;
-  createdAt: string;
 }
 
 export interface ChatbotSettingsDto {

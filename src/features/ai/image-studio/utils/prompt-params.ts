@@ -232,7 +232,7 @@ function removeTrailingCommas(input: string): string {
 }
 
 export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
-  const match = /params\\s*=\\s*\\{/.exec(prompt);
+  const match = /params\s*=\s*\{/.exec(prompt);
   if (!match) {
     return { ok: false, error: "Could not find `params = { ... }` in the prompt." };
   }

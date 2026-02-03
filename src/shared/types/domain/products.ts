@@ -1,5 +1,28 @@
 import { Entity } from '../base-types';
 import type { ImageFileRecord } from './files';
+import type { 
+  ProductDto, 
+  ProductTagDto, 
+  CatalogDto, 
+  PriceGroupDto, 
+  ProductCategoryDto,
+  CreateProductDto,
+  UpdateProductDto,
+  CreateCategoryDto,
+  UpdateCategoryDto
+} from '../dtos';
+
+export type {
+  ProductDto, 
+  ProductTagDto, 
+  CatalogDto, 
+  PriceGroupDto, 
+  ProductCategoryDto,
+  CreateProductDto,
+  UpdateProductDto,
+  CreateCategoryDto,
+  UpdateCategoryDto
+};
 
 export type ProductDbProvider = "prisma" | "mongodb";
 export type ProductMigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
@@ -42,6 +65,19 @@ export type PriceGroupRecord = Entity & {
 export type PriceGroupWithDetails = PriceGroupRecord & {
   currency: CurrencyRecord;
   currencyCode: string;
+};
+
+export type PriceGroupForCalculation = {
+  id: string;
+  groupId?: string;
+  currencyId: string;
+  type: string;
+  isDefault: boolean;
+  sourceGroupId: string | null;
+  priceMultiplier: number;
+  addToPrice: number;
+  currency: { code: string };
+  currencyCode?: string;
 };
 
 export type CatalogRecord = Entity & {
@@ -129,47 +165,6 @@ export type Producer = Entity & {
   name: string;
   website: string | null;
 };
-
-// DTO re-exports for consistency if needed, but here we define structural types
-export type ProductDto = ProductRecord & { id: string };
-export type ProductTagDto = ProductTag;
-export type CatalogDto = CatalogRecord & { id: string };
-export type PriceGroupDto = PriceGroupRecord & { id: string };
-export type ProductCategoryDto = ProductCategory;
-
-export interface CreateProductDto {
-  name: string;
-  description?: string;
-  price?: number;
-  published?: boolean;
-  categoryId?: string;
-  catalogId: string;
-  tags?: string[];
-}
-
-export interface UpdateProductDto {
-  name?: string;
-  description?: string;
-  price?: number;
-  published?: boolean;
-  categoryId?: string;
-  tags?: string[];
-}
-
-export interface CreateCategoryDto {
-  name: string;
-  description?: string;
-  color?: string;
-  parentId?: string;
-  catalogId: string;
-}
-
-export interface UpdateCategoryDto {
-  name?: string;
-  description?: string;
-  color?: string;
-  parentId?: string;
-}
 
 export interface CreateProductDraftInput extends Partial<CreateProductDto> {
   sku: string;

@@ -7,6 +7,7 @@ import type { ProductWithImages } from "@/features/products/types";
 import type { ProductListingWithDetails, ProductListingExportEvent, IntegrationWithConnections, IntegrationConnectionBasic } from "@/features/integrations/types/listings";
 import { SyncDirection } from "@/features/products/types";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
+import { logClientError } from "@/features/observability";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
 import type { ImageRetryPreset, ImageTransformOptions } from "@/features/data-import-export";
@@ -421,6 +422,7 @@ export function ProductListingsModal({
       
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "deleteFromBase", listingId, productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to delete from Base.com");
     } finally {
       setDeletingFromBase(null);
@@ -437,6 +439,7 @@ export function ProductListingsModal({
       await purgeListingMutation.mutateAsync({ listingId });
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "purgeListing", listingId, productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to remove listing history");
     } finally {
       setPurgingListing(null);
@@ -462,6 +465,7 @@ export function ProductListingsModal({
       });
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "saveInventoryId", listingId, productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to save inventory ID");
     } finally {
       setSavingInventoryId(null);
@@ -483,6 +487,7 @@ export function ProductListingsModal({
       });
       toast(`Synced ${response.count} image link(s) from Base.com`, { variant: "success" });
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "syncBaseImages", productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to sync image URLs");
     } finally {
       setSyncingImages(null);
@@ -573,6 +578,7 @@ export function ProductListingsModal({
       await exportListingToBase(listingId);
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "exportAgain", listingId, productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setExportingListing(null);
@@ -595,6 +601,7 @@ export function ProductListingsModal({
       } : undefined);
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "exportImagesOnly", listingId, productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to export product images");
     } finally {
       setExportingListing(null);
@@ -614,6 +621,7 @@ export function ProductListingsModal({
       });
       onListingsUpdated?.();
     } catch (err: unknown) {
+      logClientError(err, { context: { source: "ProductListingsModal", action: "imageRetry", productId: product.id } });
       setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setExportingListing(null);

@@ -5,7 +5,6 @@ import {
   Button,
   Input,
   Label,
-  LoadingButton,
   SharedModal,
   Alert,
 } from "@/shared/ui";
@@ -254,13 +253,13 @@ export function Asset3DEditModal({
           <Button variant="ghost" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <LoadingButton
+          <Button
             onClick={() => { void handleSave(); }}
             loading={isSaving}
             loadingText="Saving..."
           >
             Save Changes
-          </LoadingButton>
+          </Button>
         </div>
       </div>
     </SharedModal>

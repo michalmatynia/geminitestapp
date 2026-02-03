@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { useOfflineMutation } from "@/shared/hooks/useOfflineMutation";
+import { logClientError } from "@/features/observability";
 import type { ProductListPreferences } from "@/features/products/types/products-ui";
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
@@ -144,7 +145,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
       try {
         return await fetchUserPreferences();
       } catch (error) {
-        console.error("Failed to load user preferences:", error);
+        logClientError(error, { context: { source: "useUserPreferences", action: "loadPreferences" } });
         // Fall back to localStorage if database fails
         const fallback = getLocalStorageFallback();
         return { ...DEFAULT_PREFERENCES, ...fallback };

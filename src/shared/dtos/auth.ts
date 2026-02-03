@@ -1,4 +1,4 @@
-import { DtoBase } from '../types/base';
+import { DtoBase, NamedDto } from '../types/base';
 
 export interface AuthUserDto extends DtoBase {
   name: string | null;
@@ -33,8 +33,7 @@ export interface AuthPermissionDto {
   resource: string;
 }
 
-export interface AuthRoleDto {
-  name: string;
+export interface AuthRoleDto extends NamedDto {
   permissions: AuthPermissionDto[];
 }
 

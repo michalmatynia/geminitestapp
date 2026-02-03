@@ -3,7 +3,7 @@
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { MoreVertical } from "lucide-react";
-
+import { logClientError } from "@/features/observability";
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { useNotebooks } from "@/features/notesapp/api/useNoteQueries";
@@ -49,7 +49,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       setName("");
       toast("Notebook created", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to create notebook:", error);
+      logClientError(error, { context: { source: "AdminNotesNotebooksPage", action: "createNotebook", name } });
       toast("Failed to create notebook", { variant: "error" });
     }
   };
@@ -75,7 +75,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast("Notebook updated", { variant: "success" });
       handleEditCancel();
     } catch (error: unknown) {
-      console.error("Failed to update notebook:", error);
+      logClientError(error, { context: { source: "AdminNotesNotebooksPage", action: "updateNotebook", id } });
       toast("Failed to update notebook", { variant: "error" });
     }
   };
@@ -89,7 +89,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       }
       toast("Notebook deleted", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to delete notebook:", error);
+      logClientError(error, { context: { source: "AdminNotesNotebooksPage", action: "deleteNotebook", id } });
       toast("Failed to delete notebook", { variant: "error" });
     }
   };
@@ -108,7 +108,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       await createNotebook.mutateAsync({ name: newName });
       toast("Notebook duplicated", { variant: "success" });
     } catch (error: unknown) {
-      console.error("Failed to duplicate notebook:", error);
+      logClientError(error, { context: { source: "AdminNotesNotebooksPage", action: "duplicateNotebook", originalId: notebook.id } });
       toast("Failed to duplicate notebook", { variant: "error" });
     } finally {
       setMenuNotebookId(null);

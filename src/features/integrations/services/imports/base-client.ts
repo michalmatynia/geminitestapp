@@ -558,7 +558,15 @@ export async function checkBaseSkuExists(
 
     return { exists: false };
   } catch (error: unknown) {
-    console.error("[base-client] Error checking SKU existence:", error);
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "base-client", 
+        action: "checkBaseSkuExists" 
+      });
+    } catch (logError) {
+      console.error("[base-client] Error checking SKU existence (and logging failed):", error, logError);
+    }
     // On error, assume SKU doesn't exist to avoid blocking export
     return { exists: false };
   }

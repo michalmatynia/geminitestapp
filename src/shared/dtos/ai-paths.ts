@@ -1,4 +1,4 @@
-import { NamedDto } from '../types/base';
+import { DtoBase, NamedDto } from '../types/base';
 
 // AI Paths DTOs
 export interface AiPathDto extends NamedDto {
@@ -8,24 +8,21 @@ export interface AiPathDto extends NamedDto {
   enabled: boolean;
 }
 
-export interface AiNodeDto {
-  id: string;
+export interface AiNodeDto extends DtoBase {
   type: string;
   position: { x: number; y: number };
   data: Record<string, unknown>;
   config: Record<string, unknown>;
 }
 
-export interface AiEdgeDto {
-  id: string;
+export interface AiEdgeDto extends DtoBase {
   source: string;
   target: string;
   type: string;
   data: Record<string, unknown>;
 }
 
-export interface AiPathRunDto {
-  id: string;
+export interface AiPathRunDto extends DtoBase {
   pathId: string;
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   triggerNode: string;
@@ -33,8 +30,6 @@ export interface AiPathRunDto {
   context: Record<string, unknown>;
   result: Record<string, unknown> | null;
   error: string | null;
-  createdAt: string;
-  updatedAt: string;
   completedAt: string | null;
 }
 

@@ -6,6 +6,7 @@ import { Button, Checkbox, SectionHeader, SectionPanel, useToast } from "@/share
 import { APP_EMBED_OPTIONS, type AppEmbedId, APP_EMBED_SETTING_KEY } from "@/features/app-embeds/lib/constants";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/use-settings";
+import { logClientError } from "@/features/observability";
 
 export function AdminAppEmbedsPage(): React.ReactNode {
   const settingsQuery = useSettingsMap();
@@ -57,7 +58,7 @@ function AdminAppEmbedsContent({
       });
       toast("App embed settings saved.", { variant: "success" });
     } catch (error) {
-      console.error("Failed to save app embed settings:", error);
+      logClientError(error, { context: { source: "AdminAppEmbedsPage", action: "saveSettings" } });
       toast("Failed to save app embed settings.", { variant: "error" });
     }
   };

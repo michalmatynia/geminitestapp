@@ -15,15 +15,11 @@ export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element
     open={true}
     onClose={onClose}
     title="Operation Log"
+    size="md"
+    footer={<Button onClick={onClose}>Close</Button>}
   >
-    <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 shadow-lg">
-      <h2 className="mb-4 text-xl font-bold">Operation Log</h2>
-      <SyntaxHighlighter language="bash" style={atomDark}>
-        {content}
-      </SyntaxHighlighter>
-      <div className="mt-6 text-right">
-        <Button onClick={onClose}>Close</Button>
-      </div>
-    </div>
+    <SyntaxHighlighter language="bash" style={atomDark}>
+      {content}
+    </SyntaxHighlighter>
   </SharedModal>
 );

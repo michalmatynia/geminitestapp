@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/ui";
 import { logger } from "@/shared/utils/logger";
+import { logClientError } from "@/features/observability";
 import type {
   AiNode,
   PathConfig,
@@ -421,13 +422,13 @@ export function useAiPathTrigger(): {
             });
           }
         } catch (error) {
-          logger.error("Failed to persist AI Paths settings snapshot", error);
+          logClientError(error, { context: { source: "useAiPathTrigger", action: "persistSettingsSnapshot", pathId: updatedConfig.id } });
         }
       } catch (error) {
-        logger.error("Failed to persist AI Paths runtime state", error);
+        logClientError(error, { context: { source: "useAiPathTrigger", action: "persistRuntimeState", pathId: selectedConfig.id } });
       }
     } catch (error) {
-      logger.error("Failed to run AI Path trigger", error);
+      logClientError(error, { context: { source: "useAiPathTrigger", action: "runPathTrigger", productId: product.id } });
       toast("Failed to run AI Path trigger.", { variant: "error" });
     }
   };

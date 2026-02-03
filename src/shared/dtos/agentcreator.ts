@@ -23,13 +23,11 @@ export interface AgentRunDto extends DtoBase {
   completedAt: string | null;
 }
 
-export interface AgentLogDto {
-  id: string;
+export interface AgentLogDto extends DtoBase {
   runId: string;
   level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
   data: Record<string, unknown> | null;
-  timestamp: string;
 }
 
 export interface AgentPersonaDto extends NamedDto {

@@ -2,8 +2,7 @@
 
 import { Button, SharedModal } from "@/shared/ui";
 import { useState } from "react";
-
-import { logger } from "@/shared/utils/logger";
+import { logClientError } from "@/features/observability";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
 
@@ -103,11 +102,11 @@ export function MassListProductModal({
                 await createListingMutation.mutateAsync({
                   productId,
                   integrationId: initialIntegrationId,
-                  connectionId: selectedConnectionId,
+                  connectionId: initialConnectionId,
                 });
               }
         } catch (e: unknown) {
-            logger.error("Failed to list product", e);
+            logClientError(e, { context: { source: "MassListProductModal", action: "listProduct", productId, integrationId: initialIntegrationId } });
             errors++;
         }
         

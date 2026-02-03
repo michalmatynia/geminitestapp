@@ -359,6 +359,7 @@ function ImageElementBlock({
   const transparencyMode = (settings["transparencyMode"] as string) || "none";
   const transparencyDirection = (settings["transparencyDirection"] as string) || "bottom";
   const transparencyStrength = clampNumber(settings["transparencyStrength"], 0, 100, 0);
+  const clipOverflow = toBoolean(settings["clipOverflow"], false);
 
   const wrapperStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
@@ -377,6 +378,9 @@ function ImageElementBlock({
     wrapperStyles.overflow = "hidden";
   } else if (shape === "rounded" && borderRadius > 0) {
     wrapperStyles.borderRadius = `${borderRadius}px`;
+    wrapperStyles.overflow = "hidden";
+  }
+  if (clipOverflow) {
     wrapperStyles.overflow = "hidden";
   }
 
@@ -471,6 +475,7 @@ function ImageBlock({
   const alt = (settings["alt"] as string) || "";
   const width = (settings["width"] as number) || 100;
   const borderRadius = (settings["borderRadius"] as number) || 0;
+  const clipOverflow = toBoolean(settings["clipOverflow"], false);
   const resolvedStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
     ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
@@ -491,6 +496,7 @@ function ImageBlock({
     width: `${width}%`,
     ...(stretch ? { height: "100%" } : {}),
     ...resolvedStyles,
+    ...(clipOverflow ? { overflow: "hidden" } : {}),
   };
   const imageClassName = stretch
     ? "block h-full w-full object-cover"

@@ -1,5 +1,6 @@
 import { useToast } from "@/shared/ui";
 import { useState, useMemo } from "react";
+import { logClientError } from "@/features/observability";
 
 import type { TagRecord } from "@/shared/types/notes";
 
@@ -82,7 +83,7 @@ export function useNoteTags(
         setIsTagDropdownOpen(false);
       }
     } catch (error: unknown) {
-      console.error("Failed to create tag:", error);
+      logClientError(error, { context: { source: "useNoteTags", action: "createTag", name: tagInput.trim(), notebookId: notebookId ?? noteNotebookId } });
       toast("Failed to create tag", { variant: "error" });
     }
   };

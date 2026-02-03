@@ -50,7 +50,7 @@ const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =
     return !BASEHOST_MAPPING_KEYS.has(sourceKey) && !BASEHOST_MAPPING_KEYS.has(targetField);
   });
 
-const parseTemplates = (value: string | null): Template[] => {
+const parseTemplates = async (value: string | null): Promise<Template[]> => {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -65,7 +65,15 @@ const parseTemplates = (value: string | null): Template[] => {
         mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
       })) as Template[];
   } catch (error: unknown) {
-    console.error("[ImportTemplateRepository] Failed to parse templates:", error);
+    try {
+      const { ErrorSystem } = await import("@/features/observability/services/error-system");
+      void ErrorSystem.captureException(error, { 
+        service: "import-template-repository", 
+        action: "parseTemplates" 
+      });
+    } catch (logError) {
+      console.error("[ImportTemplateRepository] Failed to parse templates (and logging failed):", error, logError);
+    }
     return [];
   }
 };
@@ -449,7 +457,7 @@ const writeParameterCacheValue = async (value: string): Promise<void> => {
 };
 export const listImportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();
-  return parseTemplates(raw);
+  return await parseTemplates(raw);
 };
 
 export const getImportSampleProductId = async (): Promise<string | null> => {

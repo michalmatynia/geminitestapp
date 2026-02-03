@@ -7,6 +7,7 @@ import { useUserPreferences, useUpdateUserPreferencesMutation } from "@/features
 import { useCatalogs } from "@/features/products/hooks/useProductSettingsQueries";
 import type { Catalog } from "@/features/products/types";
 import type { ProductListPreferences } from "@/features/products/types/products-ui";
+import { logClientError } from "@/features/observability";
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: "name_en",
@@ -48,7 +49,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
       toast("Preferences saved successfully", { variant: "success" });
       router.push("/admin/products");
     } catch (error) {
-      console.error("Failed to save preferences:", error);
+      logClientError(error, { context: { source: "ProductPreferencesPage", action: "handleSave" } });
       toast("Failed to save preferences", { variant: "error" });
     }
   };
@@ -59,7 +60,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
       setPreferences(DEFAULT_PREFERENCES);
       toast("Preferences reset to default", { variant: "success" });
     } catch (error) {
-      console.error("Failed to reset preferences:", error);
+      logClientError(error, { context: { source: "ProductPreferencesPage", action: "handleResetToDefault" } });
       toast("Failed to reset preferences", { variant: "error" });
     }
   };

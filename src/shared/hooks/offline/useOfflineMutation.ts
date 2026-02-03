@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, type UseMutationResult, type QueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useToast } from "@/shared/ui";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 
 interface QueuedMutation {
   id: string;
@@ -32,7 +33,13 @@ class OfflineMutationQueue {
         await mutation.mutationFn();
         void queryClient.invalidateQueries({ queryKey: mutation.queryKey });
       } catch (error) {
-        console.error('Failed to process queued mutation:', error);
+        logClientError(error, { 
+          context: { 
+            source: 'offline-queue', 
+            mutationId: mutation.id,
+            queryKey: mutation.queryKey
+          } 
+        });
         // Re-queue if it's a network error
         if (error instanceof Error && error.message.includes('fetch')) {
           this.queue.unshift(mutation);

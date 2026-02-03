@@ -759,6 +759,7 @@ export function PreviewSection({
                                 isColumnHovered && !isColumnSelected ? "ring-1 ring-inset ring-blue-500/30" : "";
                               const columnHeightMode = (column.settings?.["heightMode"] as string) || "inherit";
                               const columnHeight = (column.settings?.["height"] as number) || 0;
+                              const columnStyles = getSectionStyles(column.settings ?? {}, colorSchemes);
                               const columnStyle: React.CSSProperties = {};
                               if (columnHeightMode === "fixed" && columnHeight > 0) {
                                 columnStyle.height = `${columnHeight}px`;
@@ -853,7 +854,7 @@ export function PreviewSection({
                                         onSelect(column.id);
                                       }
                                     }}
-                                    style={columnStyle}
+                                    style={{ ...columnStyles, ...columnStyle }}
                                     className={`relative h-full text-left transition cursor-pointer ${
                                       isColumnSelected ? "ring-1 ring-inset ring-blue-500/40" : ""
                                     } ${columnHoverClass} ${hasColumnBackground ? "overflow-hidden" : ""}`}
@@ -2596,6 +2597,7 @@ function PreviewBlockItem({
     const alt = (block.settings["alt"] as string) || "Image";
     const width = (block.settings["width"] as number) || 100;
     const borderRadius = (block.settings["borderRadius"] as number) || 0;
+    const clipOverflow = ((block.settings["clipOverflow"] as string) || "").toLowerCase() === "true";
     if (!src && !showEditorChrome) {
       return null;
     }
@@ -2607,6 +2609,9 @@ function PreviewBlockItem({
     const wrapperStyles: React.CSSProperties = stretch
       ? { width: `${width}%`, height: "100%", ...resolvedStyles }
       : { width: `${width}%`, ...resolvedStyles };
+    if (clipOverflow) {
+      wrapperStyles.overflow = "hidden";
+    }
     const imageClassName = stretch
       ? "block h-full w-full object-cover"
       : "block h-auto w-full max-h-full object-cover";
@@ -3567,6 +3572,12 @@ function buildImageElementPresentation(
   const transparencyMode = (settings["transparencyMode"] as string) || "none";
   const transparencyDirection = (settings["transparencyDirection"] as string) || "bottom";
   const transparencyStrength = clampNumber(settings["transparencyStrength"], 0, 100, 0);
+  const clipOverflow = ((): boolean => {
+    const raw = settings["clipOverflow"];
+    if (raw === true) return true;
+    if (typeof raw === "string") return raw.toLowerCase() === "true";
+    return false;
+  })();
 
   const wrapperStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
@@ -3584,6 +3595,9 @@ function buildImageElementPresentation(
     wrapperStyles.overflow = "hidden";
   } else if (shape === "rounded" && borderRadius > 0) {
     wrapperStyles.borderRadius = `${borderRadius}px`;
+    wrapperStyles.overflow = "hidden";
+  }
+  if (clipOverflow) {
     wrapperStyles.overflow = "hidden";
   }
 

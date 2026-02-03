@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider, type Query } from "@tanstack/react-qu
 import React, { useState, useEffect } from "react";
 import { setupOfflineSupport, isOfflineQuery } from "@/shared/lib/offline-support";
 import { useGlobalQueryErrorHandler } from "@/shared/hooks/query/useQueryErrorHandling";
+import { logClientError } from "@/shared/utils/observability/client-error-logger";
 import { usePerformanceMonitor } from "@/shared/hooks/useQueryAnalytics";
 import { useQueryPersistence } from "@/shared/hooks/query/useQueryPersistence";
 import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from "@/shared/hooks/query/useQueryMiddleware";
@@ -115,7 +116,7 @@ export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Eleme
             },
             networkMode: 'online', // Only run mutations when online
             onError: (error: Error): void => {
-              console.error('Mutation error:', error);
+              logClientError(error, { context: { source: 'mutation' } });
             },
             onSuccess: (): void => {
               // Trigger background sync for offline mutations

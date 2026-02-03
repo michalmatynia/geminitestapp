@@ -623,11 +623,15 @@ export function DatabaseNodeConfigSection({
                     });
                     return;
                   }
+
                   if (presetId === "query_by_id") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "read",
+                        action: "findOne",
                         operation: "query",
                         entityType: "product",
                         query: {
@@ -636,16 +640,21 @@ export function DatabaseNodeConfigSection({
                           mode: "preset",
                           preset: "by_id",
                           idType: "string",
+                          single: true,
                         },
                       },
                     });
                     return;
                   }
+
                   if (presetId === "query_recent_products") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "read",
+                        action: "find",
                         operation: "query",
                         entityType: "product",
                         query: {
@@ -655,16 +664,21 @@ export function DatabaseNodeConfigSection({
                           queryTemplate: "{}",
                           sort: "{\n  \"createdAt\": -1\n}",
                           limit: 10,
+                          single: false,
                         },
                       },
                     });
                     return;
                   }
+
                   if (presetId === "query_name_contains") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "read",
+                        action: "find",
                         operation: "query",
                         entityType: "product",
                         query: {
@@ -673,20 +687,26 @@ export function DatabaseNodeConfigSection({
                           mode: "custom",
                           queryTemplate:
                             "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
+                          single: false,
                         },
                       },
                     });
                     return;
                   }
+
                   if (presetId === "update_content_en_from_result") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "update",
+                        action: "updateOne",
                         operation: "update",
                         entityType: "product",
                         idField: "entityId",
                         mode: "replace",
+                        updateTemplate: "",
                         mappings: [
                           {
                             targetPath: "content_en",
@@ -696,31 +716,59 @@ export function DatabaseNodeConfigSection({
                             sourcePath: "",
                           },
                         ],
+                        query: {
+                          ...defaultQuery,
+                          collection: "products",
+                          mode: "custom",
+                          queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+                          single: true,
+                        },
                         writeSource: databaseConfig.writeSource ?? "bundle",
                         writeSourcePath: databaseConfig.writeSourcePath ?? "",
                       },
                     });
                     return;
                   }
+
                   if (presetId === "delete_product_by_entity") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "delete",
+                        action: "deleteOne",
                         operation: "delete",
                         entityType: "product",
                         idField: "entityId",
+                        query: {
+                          ...defaultQuery,
+                          collection: "products",
+                          mode: "custom",
+                          queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+                          single: true,
+                        },
                       },
                     });
                     return;
                   }
+
                   if (presetId === "insert_from_bundle") {
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
                         presetId,
+                        useMongoActions: true,
+                        actionCategory: "create",
+                        action: "insertOne",
                         operation: "insert",
                         entityType: "product",
+                        query: {
+                          ...defaultQuery,
+                          collection: "products",
+                          mode: "custom",
+                          queryTemplate: "",
+                        },
                         writeSource: "bundle",
                         writeSourcePath: "",
                       },
@@ -786,6 +834,10 @@ export function DatabaseNodeConfigSection({
                   overrideName?: string,
                   options?: { forceNew?: boolean }
                 ): Promise<void> => {
+                  const previousPresets = dbQueryPresets;
+                  const previousSelectedPresetId = selectedQueryPresetId;
+                  const previousPresetName = queryPresetName;
+
                   const name = (overrideName ?? queryPresetName).trim();
                   const filterTemplate = queryTemplateValue.trim();
                   const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
@@ -831,8 +883,14 @@ export function DatabaseNodeConfigSection({
                     setSelectedQueryPresetId(newPreset.id);
                   }
                   setDbQueryPresets(nextPresets);
-                  await saveDbQueryPresets(nextPresets);
-                  toast("Query preset saved.", { variant: "success" });
+                  try {
+                    await saveDbQueryPresets(nextPresets);
+                    toast("Query preset saved.", { variant: "success" });
+                  } catch {
+                    setDbQueryPresets(previousPresets);
+                    setSelectedQueryPresetId(previousSelectedPresetId);
+                    setQueryPresetName(previousPresetName);
+                  }
                 };
                 const handleRenameQueryPreset = async (presetId: string, nextName: string): Promise<void> => {
                   const trimmed = nextName.trim();
@@ -850,11 +908,17 @@ export function DatabaseNodeConfigSection({
                       : preset
                   );
                   setDbQueryPresets(nextPresets);
-                  await saveDbQueryPresets(nextPresets);
-                  if (selectedQueryPresetId === presetId) {
-                    setQueryPresetName(trimmed);
+                  const previousPresetName = queryPresetName;
+                  try {
+                    await saveDbQueryPresets(nextPresets);
+                    if (selectedQueryPresetId === presetId) {
+                      setQueryPresetName(trimmed);
+                    }
+                    toast("Query preset renamed.", { variant: "success" });
+                  } catch {
+                    setDbQueryPresets(dbQueryPresets);
+                    setQueryPresetName(previousPresetName);
                   }
-                  toast("Query preset renamed.", { variant: "success" });
                 };
                 const handleDeleteQueryPresetById = async (presetId: string): Promise<void> => {
                   const target = dbQueryPresets.find((preset: DbQueryPreset) => preset.id === presetId);
@@ -863,16 +927,25 @@ export function DatabaseNodeConfigSection({
                     `Delete query preset \"${target.name}\"?`
                   );
                   if (!confirmed) return;
+                  const previousPresets = dbQueryPresets;
+                  const previousSelectedPresetId = selectedQueryPresetId;
+                  const previousPresetName = queryPresetName;
                   const nextPresets = dbQueryPresets.filter(
                     (preset: DbQueryPreset) => preset.id !== presetId
                   );
                   setDbQueryPresets(nextPresets);
-                  await saveDbQueryPresets(nextPresets);
                   if (selectedQueryPresetId === presetId) {
                     setSelectedQueryPresetId("");
                     setQueryPresetName("");
                   }
-                  toast("Query preset deleted.", { variant: "success" });
+                  try {
+                    await saveDbQueryPresets(nextPresets);
+                    toast("Query preset deleted.", { variant: "success" });
+                  } catch {
+                    setDbQueryPresets(previousPresets);
+                    setSelectedQueryPresetId(previousSelectedPresetId);
+                    setQueryPresetName(previousPresetName);
+                  }
                 };
                 const closeSaveQueryPresetModal = (): void => {
                   setSaveQueryPresetModalOpen(false);

@@ -123,6 +123,7 @@ export function useAiPathsPresets({
     } catch (error: unknown) {
       reportAiPathsError(error, { action: "saveDbQueryPresets" }, "Failed to save query presets:");
       toast("Failed to save query presets.", { variant: "error" });
+      throw error;
     }
   };
 

@@ -1,34 +1,109 @@
 "use client";
 
-import { Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Button, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 
+import { logger } from "@/shared/utils/logger";
 import { cn } from "@/shared/utils";
 import { ProductFormData } from "@/features/products/types";
+import { useDescriptionGeneration } from "@/features/products/hooks/useDescriptionGeneration";
+import { useAiPathTrigger } from "@/features/products/hooks/useAiPathTrigger";
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
     filteredLanguages,
     errors,
+    generationError,
+    setGenerationError,
+    product,
+    imageSlots,
     selectedCatalogIds,
   } = useProductFormContext();
 
-  const { register, getValues, watch } = useFormContext<ProductFormData>();
+  const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
+  const { toast } = useToast();
+
+  const [translating, setTranslating] = useState<boolean>(false);
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
   const allValues = watch();
   const hasCatalogs = selectedCatalogIds.length > 0;
   const languagesReady = filteredLanguages.length > 0;
 
+  const { generate, generating } = useDescriptionGeneration({
+    ...(product?.id ? { productId: product.id } : {}),
+    onSuccess: (description: string) => {
+      setValue("description_en", description);
+    },
+    onError: (error: string) => {
+      setGenerationError(error);
+    },
+  });
+
+  const { handlePathGenerateDescription: runPathTrigger } = useAiPathTrigger();
+
   useEffect((): void => {
     const vals = getValues();
     if (vals.asin) {
-      void Promise.resolve().then(() => setIdentifierType("asin"));
+      setIdentifierType("asin");
     } else if (vals.gtin) {
-      void Promise.resolve().then(() => setIdentifierType("gtin"));
+      setIdentifierType("gtin");
     }
   }, [getValues]);
+
+  const handleGenerateDescription = async (): Promise<void> => {
+    logger.log("Generating description...");
+    setGenerationError(null);
+    const productData = getValues();
+    await generate(productData, imageSlots);
+  };
+
+  const handlePathGenerateDescription = async (
+    event?: React.MouseEvent<HTMLButtonElement>
+  ): Promise<void> => {
+    await runPathTrigger(product || null, event);
+  };
+
+  const handleTranslate = async (): Promise<void> => {
+    logger.log("Translating product...");
+    setTranslating(true);
+
+    try {
+      if (!product?.id) {
+        throw new Error("Product must be saved before translating.");
+      }
+
+      const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          type: "translation",
+          payload: {}
+        }),
+      });
+
+      const enqueueData = (await enqueueRes.json()) as { error?: string; jobId?: string };
+      if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue translation job.");
+
+      logger.log(`Translation job ${enqueueData.jobId} created successfully.`);
+
+      // Show success message - user can check Jobs page for progress
+      toast("Translation job created successfully. Check the AI Jobs page for progress.", {
+        variant: "success"
+      });
+
+    } catch (error) {
+      logger.error("Failed to translate:", error);
+      toast(
+        error instanceof Error ? error.message : "Failed to create translation job.",
+        { variant: "error" }
+      );
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -140,6 +215,58 @@ export default function ProductFormGeneral(): React.JSX.Element {
                     <p className="text-red-500 text-sm mt-1" role="alert">
                       {error.message}
                     </p>
+                  )}
+                  {language.code === "EN" && (
+                    <>
+                      {generationError && (
+                        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                          {generationError}
+                          <Button
+                            onClick={(): void => setGenerationError(null)}
+                            className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          onClick={(): void => {
+                            void handleGenerateDescription();
+                          }}
+                          disabled={generating}
+                          aria-label="Generate product description"
+                          aria-disabled={generating}
+                          className="border border-white/20 hover:border-white/40"
+                        >
+                          {generating ? "Generating..." : "Generate Description"}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                            void handlePathGenerateDescription(event);
+                          }}
+                          aria-label="Generate description via AI Path"
+                          className="border border-white/20 hover:border-white/40"
+                        >
+                          Path Generate Description
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={(): void => {
+                            void handleTranslate();
+                          }}
+                          disabled={translating || !product?.id}
+                          aria-label="Translate product names and descriptions"
+                          aria-disabled={translating || !product?.id}
+                          title={!product?.id ? "Save product before translating" : "Translate to other languages"}
+                        >
+                          {translating ? "Translating..." : "Translate"}
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </TabsContent>
               );

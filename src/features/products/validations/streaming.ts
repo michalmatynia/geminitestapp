@@ -33,89 +33,89 @@ class ValidationStreamer {
     return stream;
   }
 
-  async streamValidation(
+  streamValidation(
     id: string,
     data: Record<string, unknown>,
     validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>,
     options: StreamValidationOptions = {}
-  ): Promise<void> {
+  ): void {
     const { debounceMs = 300, fields, onProgress, onComplete, onError } = options;
 
     // Clear existing timer
-    const existingTimer = this.timers.get(id);
+    const existingTimer: NodeJS.Timeout | undefined = this.timers.get(id);
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
 
     // Debounce validation
-    const timer = setTimeout(async (): Promise<void> => {
-      const stream: ValidationStream | undefined = this.streams.get(id);
-      if (!stream) return;
+    const timer: NodeJS.Timeout = setTimeout(() => {
+      void (async (): Promise<void> => { // IIAFE to contain async logic
+        const stream: ValidationStream | undefined = this.streams.get(id);
+        if (!stream) return;
 
-      try {
-        stream.status = 'validating';
-        stream.progress = 0;
-        onProgress?.(stream);
+        try {
+          stream.status = 'validating';
+          stream.progress = 0;
+          onProgress?.(stream);
 
-        // Validate fields incrementally if specified
-        if (fields) {
-          const totalFields: number = fields.length;
-          const fieldErrors: ValidationError[] = [];
+          // Validate fields incrementally if specified
+          if (fields) {
+            const totalFields: number = fields.length;
+            const fieldErrors: ValidationError[] = [];
 
-          for (let i: number = 0; i < fields.length; i++) {
-            const field: string | undefined = fields[i];
-            if (field === undefined) continue;
-            
-            stream.currentField = field;
-            stream.progress = ((i + 1) / totalFields) * 100;
-            
-            // Validate individual field
-            const fieldData: Record<string, unknown> = { [field]: data[field] };
-            const result = await validator(fieldData);
-            
-            if (!result.success) {
-              fieldErrors.push(...result.errors);
+            for (let i: number = 0; i < fields.length; i++) {
+              const field: string | undefined = fields[i];
+              if (field === undefined) continue;
+              
+              stream.currentField = field;
+              stream.progress = ((i + 1) / totalFields) * 100;
+              
+              // Validate individual field
+              const fieldData: Record<string, unknown> = { [field]: data[field] };
+              const result = await validator(fieldData);
+              
+              if (!result.success) {
+                fieldErrors.push(...result.errors);
+              }
+
+              onProgress?.(stream);
+              
+              // Small delay to show progress
+              await new Promise((resolve: (value: void) => void) => setTimeout(resolve, 10));
             }
 
-            onProgress?.(stream);
-            
-            // Small delay to show progress
-            await new Promise((resolve: (value: void) => void) => setTimeout(resolve, 10));
+            stream.errors = fieldErrors;
+            stream.status = fieldErrors.length > 0 ? 'error' : 'completed';
+          } else {
+            // Validate entire object
+            const result = await validator(data);
+            stream.errors = result.success ? [] : result.errors;
+            stream.status = result.success ? 'completed' : 'error';
+            stream.progress = 100;
           }
 
-          stream.errors = fieldErrors;
-          stream.status = fieldErrors.length > 0 ? 'error' : 'completed';
-        } else {
-          // Validate entire object
-          const result = await validator(data);
-          stream.errors = result.success ? [] : result.errors;
-          stream.status = result.success ? 'completed' : 'error';
-          stream.progress = 100;
-        }
+          stream.data = data;
+          stream.currentField = undefined;
 
-        stream.data = data;
-        stream.currentField = undefined;
+          if (stream.status === 'completed') {
+            onComplete?.(stream);
+          } else {
+            onError?.(stream);
+          }
 
-        if (stream.status === 'completed') {
-          onComplete?.(stream);
-        }
-
-        else {
+        } catch (error: unknown) {
+          stream.status = 'error';
+          stream.errors = [{
+            field: 'stream',
+            message: error instanceof Error ? error.message : 'Stream validation failed',
+            code: 'stream_error',
+            severity: 'high'
+          }];
           onError?.(stream);
         }
 
-      } catch (error: unknown) {
-        stream.status = 'error';
-        stream.errors = [{
-          field: 'stream',
-          message: error instanceof Error ? error.message : 'Stream validation failed',
-          code: 'stream_error',
-          severity: 'high'
-        }];
-        onError?.(stream);
-      }
-
-      this.timers.delete(id);
+        this.timers.delete(id);
+      })();
     }, debounceMs);
 
     this.timers.set(id, timer);
@@ -162,7 +162,7 @@ export function useStreamValidation(
   options: StreamValidationOptions = {}
 ): {
   stream: ValidationStream;
-  startValidation: (data: Record<string, unknown>, validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>) => Promise<void>;
+  startValidation: (data: Record<string, unknown>, validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>) => void;
   cancelValidation: () => void;
   cleanup: () => void;
 } {
@@ -170,10 +170,9 @@ export function useStreamValidation(
 
   const startValidation = (
     data: Record<string, unknown>,
-    validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }>
-  ): Promise<void> => {
-    void validationStreamer.streamValidation(id, data, validator, options);
-    return Promise.resolve();
+    validator: (data: unknown) => Promise<{ success: boolean; errors: ValidationError[] }> 
+  ): void => {
+    validationStreamer.streamValidation(id, data, validator, options);
   };
 
   const cancelValidation = (): void => {
@@ -195,7 +194,7 @@ export function useStreamValidation(
 // Server-Sent Events for real-time validation updates
 export function createValidationSSE(streamId: string): ReadableStream {
   return new ReadableStream({
-    start(controller: ReadableStreamDefaultController<Uint8Array>): void {
+    start(controller: ReadableStreamDefaultController): void {
       const encoder: TextEncoder = new TextEncoder();
       
       const sendUpdate = (stream: ValidationStream): void => {

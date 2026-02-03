@@ -15,7 +15,7 @@ import { RunDetailDialog } from "../run-detail-dialog";
 import { RunHistoryPanel } from "../run-history-panel";
 import { SimulationDialog } from "../simulation-dialog";
 import type { AiNode } from "@/features/ai/ai-paths/lib";
-import type { PathConfig } from "@/shared/types/ai-paths";
+import type { PathConfig, PathMeta } from "@/shared/types/ai-paths";
 import type { AiPathsSettingsState } from "./useAiPathsSettingsState";
 
 type AiPathsSettingsViewProps = {
@@ -200,7 +200,7 @@ export function AiPathsSettingsView({
 
   const groupPaths = useMemo(() => {
     if (!groupKey) return paths;
-    const filtered = paths.filter((p) => {
+    const filtered = paths.filter((p: PathMeta) => {
       const cfg = pathConfigs?.[p.id];
       const trig = typeof cfg?.trigger === "string" ? cfg.trigger : "";
       return trig === groupKey;
@@ -357,7 +357,7 @@ export function AiPathsSettingsView({
                       <SelectValue placeholder="Switch path" />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-gray-900">
-                      {groupPaths.map((path: PathConfig) => (
+                      {groupPaths.map((path: PathMeta) => (
                         <SelectItem key={path.id} value={path.id}>
                           {path.name}
                         </SelectItem>
@@ -533,7 +533,7 @@ export function AiPathsSettingsView({
           paths={paths}
           pathFlagsById={pathFlagsById}
           onCreatePath={() => { void handleCreatePath(); }}
-          onSaveList={(paths: PathConfig[]) => { void savePathIndex(paths); }}
+          onSaveList={() => { void savePathIndex(paths); }}
           onEditPath={(pathId: string): void => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");

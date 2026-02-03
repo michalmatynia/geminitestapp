@@ -404,6 +404,23 @@ export function DatabaseConstructorTab({
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            className="h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10 disabled:opacity-40"
+            disabled={!selectedAiQueryId}
+            onClick={(): void => {
+              if (!selectedAiQueryId) return;
+              const targetId = selectedAiQueryId;
+              setAiQueries((prev: AiQuery[]): AiQuery[] =>
+                prev.filter((query: AiQuery): boolean => query.id !== targetId)
+              );
+              setSelectedAiQueryId("");
+              toast("AI query removed.", { variant: "success" });
+            }}
+            title="Remove selected AI query"
+          >
+            Remove AI Query
+          </Button>
         </div>
       </div>
 

@@ -27,8 +27,8 @@ export function AdminProductProducersPage(): React.JSX.Element {
   const [form, setForm] = useState<ProducerFormState>({ name: "", website: "" });
 
   const filtered = useMemo((): Producer[] => {
-    const producersData = producersQuery.data ?? [];
-    const q = query.trim().toLowerCase();
+    const producersData: Producer[] = producersQuery.data ?? [];
+    const q: string = query.trim().toLowerCase();
     if (!q) return producersData;
     return producersData.filter((p: Producer) => p.name.toLowerCase().includes(q));
   }, [producersQuery.data, query]);

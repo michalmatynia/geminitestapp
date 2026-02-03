@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -63,12 +63,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     staleTime: 10_000,
   });
 
-  useEffect(() => {
-    // The persisted order is the array order returned by the API/settings value.
-    if (triggerButtonsQuery.data) {
-      void Promise.resolve().then(() => setOrderedRows(triggerButtonsQuery.data ?? []));
-    }
-  }, [triggerButtonsQuery.data]);
+  // Keep orderedRows in sync with query data using adjustment during render pattern
+  const [lastData, setLastData] = useState<AiTriggerButtonRecord[] | undefined>(triggerButtonsQuery.data);
+  if (triggerButtonsQuery.data !== lastData) {
+    setLastData(triggerButtonsQuery.data);
+    setOrderedRows(triggerButtonsQuery.data ?? []);
+  }
 
   const pathsQuery = useQuery({
     queryKey: ["ai-paths", "path-configs"],
@@ -485,7 +485,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                               variant="destructive"
                               size="sm"
                               onClick={(): void => {
-                                const ok = confirm(`Delete trigger button \"${row.name}\"?`);
+                                const ok = confirm(`Delete trigger button "${row.name}"?`);
                                 if (!ok) return;
                                 void deleteMutation.mutateAsync(row.id);
                               }}
@@ -549,11 +549,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                         iconId: prev.iconId === item.id ? null : item.id,
                       }))
                     }
-                    className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
-                      selected
-                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
-                        : "border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300"
-                    }`}
+                    className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${selected ? "border-emerald-500 bg-emerald-500/20 text-emerald-400" : "border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300"}`}
                     title={item.label}
                   >
                     <IconComponent className="h-5 w-5" />
@@ -578,7 +574,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                   >
                     <Checkbox
                       checked={checked}
-                      onCheckedChange={(value: boolean | "indeterminate"): void => {
+                      onCheckedChange={(value: boolean | "indeterminate") => {
                         const nextChecked = Boolean(value);
                         setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
                           const next = new Set(prev.locations);

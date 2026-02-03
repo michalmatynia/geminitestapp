@@ -266,10 +266,10 @@ export function getValidationSummary(result: ValidationResult<unknown>): {
   criticalErrors: ValidationError[];
   fieldErrors: Record<string, ValidationError[]>;
 } {
-  const errors: ValidationError[] = result.success ? [] : result.errors;
-  const warnings: ValidationError[] = result.warnings || [];
+  const errors = result.success ? [] : (result.errors || []);
+  const warnings = result.warnings || [];
   
-  const criticalErrors: ValidationError[] = errors.filter((e: ValidationError) => e.severity === 'critical');
+  const criticalErrors = errors.filter((e: ValidationError) => e.severity === 'critical');
   const fieldErrors: Record<string, ValidationError[]> = {};
   
   [...errors, ...warnings].forEach((error: ValidationError) => {

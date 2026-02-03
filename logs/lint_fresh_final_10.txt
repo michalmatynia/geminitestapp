@@ -1,0 +1,29 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx
+  69:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsTriggerButtonsPage.tsx:69:7
+  67 |     // The persisted order is the array order returned by the API/settings value.
+  68 |     if (triggerButtonsQuery.data) {
+> 69 |       setOrderedRows(prev => {
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  70 |         if (prev === triggerButtonsQuery.data) return prev;
+  71 |         return triggerButtonsQuery.data ?? [];
+  72 |       });  react-hooks/set-state-in-effect
+  69:22  error  Expected prev to have a type annotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/typedef
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormGeneral.tsx
+   4:20  error  'useEffect' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+  15:5   error  'selectedCatalogIds' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/validations/validators-enhanced.ts
+  113:31  error  Parsing error: Identifier expected
+
+✖ 5 problems (5 errors, 0 warnings)
+
